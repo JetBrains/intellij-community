@@ -608,7 +608,14 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         PsiElement placeHolderCopy = PsiTreeUtil.releaseMark(returnCopy, mark);
         LOG.assertTrue(placeHolderCopy != null);
         PsiElement replacement = placeHolderCopy.replace(createExpression(conditionalExpression.getTrueBranch()));
-        return (placeHolderCopy == returnCopy ? replacement : returnCopy).getText();
+        if (returnCopy == placeHolderCopy) {
+          returnCopy = replacement;
+        }
+        String text = returnCopy.getText();
+        if (returnCopy.getLastChild() instanceof PsiComment) {
+          text += "\n";
+        }
+        return text;
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(myStreamExpression.getParent());
       if(parent instanceof PsiIfStatement && conditionalExpression instanceof ConditionalExpression.Boolean &&

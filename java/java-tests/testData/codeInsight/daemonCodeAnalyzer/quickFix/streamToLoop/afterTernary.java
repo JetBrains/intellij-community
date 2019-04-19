@@ -5,6 +5,9 @@ import java.util.List;
 
 public class Main {
   private static String test(List<String> list) {
+      // otherwise not null
+      // if list is null 
+      // return null
       if (list == null) {
           return null;
       } else {

@@ -5,9 +5,16 @@ import java.util.List;
 
 public class Main {
   private static String test(List<String> list) {
-    return list == null ? // if list is null 
-           null :  // return null
-           list.stream().filter(str -> str.contains("x")).find<caret>First().orElse(null); // otherwise not null
+    if (list == null) {
+      return null;
+    } else {
+        for (String str : list) {
+            if (str.contains("x")) {
+                return str; // comment 
+            }
+        }
+        return null; // comment 
+    }
   }
 
   public static void main(String[] args) {
