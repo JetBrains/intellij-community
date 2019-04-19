@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   @NotNull private final List<String> myBranches;
   @NotNull private final List<Pattern> myPatterns;
