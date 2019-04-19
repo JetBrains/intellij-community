@@ -159,8 +159,7 @@ public class VcsCachingHistory {
       }
     }
 
-    VcsRevisionNumber firstCachedRevision = cached.getRevisionList().get(0).getRevisionNumber();
-    if (currentRevision != null && firstCachedRevision.equals(currentRevision)) {
+    if (cached.getRevisionList().get(0).getRevisionNumber().equals(currentRevision)) {
       return cached;
     }
     return null;
