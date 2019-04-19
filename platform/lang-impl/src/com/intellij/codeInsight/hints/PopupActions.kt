@@ -77,8 +77,9 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?
 
   val selectedLanguage = (info as? HintInfo.MethodInfo)?.language ?: fileLanguage
 
-  val dialog = ParameterNameHintsConfigurable(selectedLanguage, getPattern(info))
-  dialog.show()
+// TODO get back configurable
+//  val dialog = ParameterNameHintsConfigurable(selectedLanguage, getPattern(info))
+//  dialog.show()
 }
 
 class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
