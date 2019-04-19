@@ -37,10 +37,6 @@ public class GraphicsUtil {
     return ourGraphics.getFontMetrics(font).stringWidth(text);
   }
 
-  public static int charsWidth(char[] data, int off, int len, Font font) {
-    return ourGraphics.getFontMetrics(font).charsWidth(data, off, len);
-  }
-
   public static int charWidth(char ch,Font font) {
     return ourGraphics.getFontMetrics(font).charWidth(ch);
   }
@@ -53,14 +49,13 @@ public class GraphicsUtil {
     if (g2 instanceof Graphics2D) {
       Graphics2D g = (Graphics2D)g2;
       Toolkit tk = Toolkit.getDefaultToolkit();
-      //noinspection HardCodedStringLiteral
-      Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
-
+      @SuppressWarnings("SpellCheckingInspection") Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
       if (map != null && !ignoreSystemSettings) {
         g.addRenderingHints(map);
-      } else {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                           enableAA ? RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+      }
+      else {
+        Object hint = enableAA ? RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF;
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, hint);
       }
     }
   }
@@ -82,37 +77,35 @@ public class GraphicsUtil {
   }
 
   /**
-   * Invoking {@link Component#getGraphics()} disables true double buffering withing {@link JRootPane},
-   * even if no subsequent drawing is actually performed.
-   * <p>
-   * This matters only if we use the default {@link RepaintManager} and {@code swing.bufferPerWindow = true}.
-   * <p>
-   * True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
-   * frame buffer content without the usual repainting, even when the EDT is blocked.
-   * <p>
-   * As a rule of thumb, you should never invoke neither {@link Component#getGraphics()}
-   * nor {@link GraphicsUtil#safelyGetGraphics(Component)} unless you really need to perform some drawing.
-   * <p>
-   * Under the hood, "getGraphics" is actually "createGraphics" - it creates a new object instance and allocates native resources,
+   * <p>Invoking {@link Component#getGraphics()} disables true double buffering withing {@link JRootPane},
+   * even if no subsequent drawing is actually performed.</p>
+   *
+   * <p>This matters only if we use the default {@link RepaintManager} and {@code swing.bufferPerWindow = true}.</p>
+   *
+   * <p>True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+   * frame buffer content without the usual repainting, even when the EDT is blocked.</p>
+   *
+   * <p>As a rule of thumb, you should never invoke neither {@link Component#getGraphics()}
+   * nor this method unless you really need to perform some drawing.</p>
+   *
+   * <p>Under the hood, "getGraphics" is actually "createGraphics" - it creates a new object instance and allocates native resources,
    * that should be subsequently released by calling {@link Graphics#dispose()} (called from {@link Graphics#finalize()},
-   * but there's no need to retain resources unnecessarily).
-   * <p>
-   * If you need {@link GraphicsConfiguration}, rely on {@link Component#getGraphicsConfiguration()},
-   * instead of {@link Graphics2D#getDeviceConfiguration()}.
-   * <p>
-   * If you absolutely have to acquire an instance of {@link Graphics}, do that via {@link GraphicsUtil#safelyGetGraphics(Component)}
-   * and don't forget to invoke {@link Graphics#dispose()} afterwards.
+   * but there's no need to retain resources unnecessarily).</p>
+   *
+   * <p>If you need {@link GraphicsConfiguration}, rely on {@link Component#getGraphicsConfiguration()},
+   * instead of {@link Graphics2D#getDeviceConfiguration()}.</p>
+   *
+   * <p>If you absolutely have to acquire an instance of {@link Graphics}, do that via calling this method
+   * and don't forget to invoke {@link Graphics#dispose()} afterwards.</p>
    *
    * @see JRootPane#disableTrueDoubleBuffering()
    */
   public static Graphics safelyGetGraphics(Component c) {
-    return ourSafelyGetGraphicsMethod.isAvailable()
-           ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c)
-           : c.getGraphics();
+    return ourSafelyGetGraphicsMethod.isAvailable() ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c) : c.getGraphics();
   }
 
-  public static Object getAntialiasingType(@NotNull JComponent list) {
-    return AATextInfo.getClientProperty(list);
+  public static Object getAntialiasingType(@NotNull JComponent component) {
+    return AATextInfo.getClientProperty(component);
   }
 
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {

@@ -550,15 +550,14 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private static final Object SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
     private static final Object GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-    private final boolean useEditorAASettings;
+    private final boolean myUseEditorFont;
 
-    AAListCellRenderer(boolean useEditorAASettings) {
-      this.useEditorAASettings = useEditorAASettings;
+    AAListCellRenderer(boolean useEditorFont) {
+      myUseEditorFont = useEditorFont;
     }
 
     @Override
     public Component getListCellRendererComponent(JList<? extends AntialiasingType> list, AntialiasingType value, int i, boolean s, boolean f) {
-
       if (value == AntialiasingType.SUBPIXEL) {
         GraphicsUtil.setAntialiasingType(this, SUBPIXEL_HINT);
       }
@@ -569,7 +568,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
         GraphicsUtil.setAntialiasingType(this, null);
       }
 
-      if (useEditorAASettings) {
+      if (myUseEditorFont) {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         setFont(new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize()));
       }
