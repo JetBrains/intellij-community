@@ -12,35 +12,46 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BashKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   @NotNull
   private final String[] myKeywords;
+  private final boolean withDescription;
 
   public BashKeywordCompletionProvider(@NotNull String... myKeywords) {
+    this(false, myKeywords);
+  }
+
+  public BashKeywordCompletionProvider(boolean withDescription, @NotNull String... myKeywords) {
     this.myKeywords = myKeywords;
+    this.withDescription = withDescription;
   }
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+    Project project = parameters.getOriginalFile().getProject();
     for (String keyword : myKeywords) {
-      result.addElement(createKeywordLookupElement(keyword));
+      result.addElement(createKeywordLookupElement(project, keyword));
     }
   }
 
   @NotNull
-  private LookupElement createKeywordLookupElement(@NotNull final String keyword) {
-    InsertHandler<LookupElement> insertHandler = createTemplateBasedInsertHandler("bash_" + keyword);
-    return LookupElementBuilder.create(keyword).withBoldness(true).withInsertHandler(insertHandler);
+  private LookupElement createKeywordLookupElement(@NotNull Project project, @NotNull final String keyword) {
+    TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManager.getInstance(project);
+    Template template = TemplateSettings.getInstance().getTemplateById("bash_" + keyword);
+
+    InsertHandler<LookupElement> insertHandler = createTemplateBasedInsertHandler(templateManager, template);
+    return LookupElementBuilder.create(keyword).withTypeText(template != null && withDescription ? template.getDescription() : "")
+                               .withBoldness(true).withInsertHandler(insertHandler);
   }
 
-  private InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull String templateId) {
+  private InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull TemplateManagerImpl templateManager,  @Nullable Template template) {
     return (context, item) -> {
-      TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManager.getInstance(context.getProject());
-      Template template = TemplateSettings.getInstance().getTemplateById(templateId);
       Editor editor = context.getEditor();
       if (template != null) {
         editor.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());

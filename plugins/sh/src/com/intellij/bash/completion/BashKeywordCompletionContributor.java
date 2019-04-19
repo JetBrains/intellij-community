@@ -14,10 +14,14 @@ public class BashKeywordCompletionContributor extends CompletionContributor impl
   public BashKeywordCompletionContributor() {
     extend(CompletionType.BASIC, keywordElementPattern(), new BashKeywordCompletionProvider("if", "select", "case", "for", "while", "until", "function"));
     extend(CompletionType.BASIC, insideThenOrElse(), new BashKeywordCompletionProvider("elif"));
+    extend(CompletionType.BASIC, insideCondition(), new BashKeywordCompletionProvider(true, "string equal",
+        "string not equal", "string is empty", "string not empty", "number equal", "number not equal", "number less",
+        "number less or equal", "number greater", "number greater or equal", "file exists", "file not empty"));
   }
 
   private static PsiElementPattern.Capture<PsiElement> keywordElementPattern() {
     return psiElement().andNot(psiElement().andOr(insideForClause(), insideIfDeclaration(), insideWhileDeclaration(),
-        insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration()));
+        insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration(),
+        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion()));
   }
 }

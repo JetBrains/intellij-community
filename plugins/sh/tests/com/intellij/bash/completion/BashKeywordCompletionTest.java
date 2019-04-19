@@ -1,7 +1,9 @@
 package com.intellij.bash.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
 
@@ -9,7 +11,7 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.sh", "if<caret>");
     myFixture.completeBasic();
     myFixture.type(Lookup.NORMAL_SELECT_CHAR);
-    myFixture.checkResult("if [ condition ]; then\n    <caret>\nfi");
+    myFixture.checkResult("if [  ]; then\n    <caret>\nfi");
   }
 
   public void testCompletionInsideIf() {
@@ -25,9 +27,9 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testElifCompletion() {
-    myFixture.configureByText("a.sh", "if [ condition ]; then\n    \nelif<caret>\nfi");
+    myFixture.configureByText("a.sh", "if [  ]; then\n    \nelif<caret>\nfi");
     myFixture.completeBasic();
-    myFixture.checkResult("if [ condition ]; then\n    \nelif [ condition ]; then\n    <caret>\nfi");
+    myFixture.checkResult("if [  ]; then\n    \nelif [  ]; then\n    <caret>\nfi");
   }
 
   public void testCompletionInsideElif() {
@@ -72,7 +74,7 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testWhileCompletion() {
     myFixture.configureByText("a.sh", "while<caret>");
     myFixture.completeBasic();
-    myFixture.checkResult("while [ condition ]; do\n    <caret>\ndone");
+    myFixture.checkResult("while [  ]; do\n    <caret>\ndone");
   }
 
   public void testCompletionInsideWhile() {
@@ -82,7 +84,7 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNoCompletionInWhileCondition() {
     myFixture.configureByText("a.sh", "while [ <caret> ]; do\n    \ndone");
-    assertEmpty(myFixture.completeBasic());
+    assertTrue(myFixture.completeBasic().length > 0);
     myFixture.configureByText("a.sh", "while [  ]whi<caret>; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
     myFixture.configureByText("a.sh", "while [  ]; wh<caret> do\n    \ndone");
@@ -92,7 +94,7 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testUntilCompletion() {
     myFixture.configureByText("a.sh", "until<caret>");
     myFixture.completeBasic();
-    myFixture.checkResult("until [ condition ]; do\n    <caret>\ndone");
+    myFixture.checkResult("until [  ]; do\n    <caret>\ndone");
   }
 
   public void testCompletionInsideUntil() {
@@ -102,7 +104,7 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNoCompletionInUntilCondition() {
     myFixture.configureByText("a.sh", "until [ <caret> ]; do\n    \ndone");
-    assertEmpty(myFixture.completeBasic());
+    assertTrue(myFixture.completeBasic().length > 0);
     myFixture.configureByText("a.sh", "until [  ]un<caret>; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
     myFixture.configureByText("a.sh", "until [  ]; un<caret> do\n    \ndone");
@@ -112,7 +114,7 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testSelectCompletion() {
     myFixture.configureByText("a.sh", "select<caret>");
     myFixture.completeBasic();
-    myFixture.checkResult("select  in ; do\n    <caret>\ndone");
+    myFixture.checkResult("select item in *; do\n    <caret>\ndone");
   }
 
   public void testCompletionInsideSelect() {
@@ -165,5 +167,116 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEmpty(myFixture.completeBasic());
     myFixture.configureByText("a.sh", "function foo() f<caret>{\n    \n}");
     assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testStringEqual() {
+    final String completionRule = "string equal";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $string1 == $string2 ]");
+  }
+
+  public void testStringNotEqual() {
+    final String completionRule = "string not equal";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $string1 != $string2 ]");
+  }
+
+  public void testStringIsEmpty() {
+    final String completionRule = "string is empty";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -z $string1 ]");
+  }
+
+  public void testStringNotEmpty() {
+    final String completionRule = "string not empty";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -n $string1 ]");
+  }
+
+  public void testNumberEqual() {
+    final String completionRule = "number equal";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $a -eq $b ]");
+  }
+
+  public void testNumberNotEqual() {
+    final String completionRule = "number not equal";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $a -nq $b ]");
+  }
+
+  public void testNumberLess() {
+    final String completionRule = "number less";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $a -lt $b ]");
+  }
+
+  public void testNumberLessOrEqual() {
+    final String completionRule = "number less or equal";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $a -le $b ]");
+  }
+
+  public void testNumberGreater() {
+    final String completionRule = "number greater";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $a -gt $b ]");
+  }
+
+  public void testNumberGreaterOrEqual() {
+    final String completionRule = "number greater or equal";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $a -ge $b ]");
+  }
+
+  public void testFileExists() {
+    final String completionRule = "file exists";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -e $file ]");
+  }
+
+  public void testFileNotEmpty() {
+    final String completionRule = "file not empty";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -s $file ]");
+  }
+
+  public void testNoCompletionInArithmeticExpansions() {
+    myFixture.configureByText("a.sh", "(( <caret> ))");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testNoCompletionInOldArithmeticExpansions() {
+    myFixture.configureByText("a.sh", "$[ <caret> ]");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testNoCompletionInParameterExpansion() {
+    myFixture.configureByText("a.sh", "${ <caret> }");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  private void completeByRule(@NotNull String rule) {
+    myFixture.completeBasic();
+    LookupImpl lookup = (LookupImpl) myFixture.getLookup();
+    assertNotNull(lookup);
+    lookup.getItems().stream()
+        .filter(item -> item.getLookupString().equals(rule))
+        .findFirst().ifPresent(lookupElement -> {
+      lookup.setCurrentItem(lookupElement);
+      lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+    });
   }
 }

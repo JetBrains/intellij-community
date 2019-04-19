@@ -21,6 +21,22 @@ class BashCompletionUtil {
     return psiElement().inside(psiElement().andOr(psiElement(BashTypes.THEN_CLAUSE), psiElement(BashTypes.ELSE_CLAUSE)));
   }
 
+  static PsiElementPattern.Capture<PsiElement> insideCondition() {
+    return psiElement().inside(psiElement(BashTypes.CONDITIONAL_COMMAND));
+  }
+
+  static PsiElementPattern.Capture<PsiElement> insideArithmeticExpansions() {
+    return psiElement().inside(psiElement(BashTypes.ARITHMETIC_EXPANSION));
+  }
+
+  static PsiElementPattern.Capture<PsiElement> insideOldArithmeticExpansions() {
+    return psiElement().inside(psiElement(BashTypes.OLD_ARITHMETIC_EXPANSION));
+  }
+
+  static PsiElementPattern.Capture<PsiElement> insideParameterExpansion() {
+    return psiElement().inside(psiElement(BashTypes.SHELL_PARAMETER_EXPANSION));
+  }
+
   static PsiElementPattern.Capture<PsiElement> insideUntilDeclaration() {
     return psiElement().inside(false, psiElement(BashTypes.UNTIL_COMMAND), psiElement(BashTypes.DO_BLOCK));
   }

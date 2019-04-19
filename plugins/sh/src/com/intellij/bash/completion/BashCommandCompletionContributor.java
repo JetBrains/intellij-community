@@ -94,7 +94,8 @@ public class BashCommandCompletionContributor extends CompletionContributor impl
 
   private static PsiElementPattern.Capture<PsiElement> elementPattern() {
     return psiElement().andNot(psiElement().andOr(insideForClause(), insideIfDeclaration(), insideWhileDeclaration(),
-        insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration()));
+        insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration(),
+        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion()));
   }
 
   private static final List<String> BUILTIN = ContainerUtil.newSmartList(

@@ -1,36 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="BashHiddenTemplate">
-  <template id="bash_if" name="bash_if" value="if [ $CONDITION$ ]; then&#10;    $END$$SELECTION$&#10;fi" description="If statement"
+  <template id="bash_if" name="bash_if" value="if [ $CONDITION$ ]; then&#10;    $END$$SELECTION$&#10;fi"
+            description="If statement"
             toReformat="true"
             toShortenFQNames="false">
-    <variable name="CONDITION" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
+    <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="bash_elif" name="bash_elif"
-            value="elif [ $CONDITION$ ]; then&#10;    $END$$SELECTION$"
+  <template id="bash_elif" name="bash_elif" value="elif [ $CONDITION$ ]; then&#10;    $END$$SELECTION$"
             description="Elif expression"
             toReformat="true"
             toShortenFQNames="false">
-    <variable name="CONDITION" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
+    <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="bash_select" name="bash_select" value="select $VARIABLE_1$ in $VARIABLE_2$; do&#10;    $END$$SELECTION$&#10;done" description="Select expression"
+  <template id="bash_select" name="bash_select"
+            value="select $VARIABLE_1$ in $VARIABLE_2$; do&#10;    $END$$SELECTION$&#10;done"
+            description="Select expression"
             toReformat="true"
             toShortenFQNames="false">
-    <variable name="VARIABLE_1" expression="" defaultValue="" alwaysStopAt="true"/>
-    <variable name="VARIABLE_2" expression="" defaultValue="" alwaysStopAt="true"/>
+    <variable name="VARIABLE_1" expression="" defaultValue="&quot;item&quot;" alwaysStopAt="true"/>
+    <variable name="VARIABLE_2" expression="" defaultValue="&quot;*&quot;" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="bash_case" name="bash_case" value="case $VALUE$ in&#10;$PATTERN$)&#10;  $END$$SELECTION$&#10;  ;;&#10;esac"
+  <template id="bash_case" name="bash_case"
+            value="case $VALUE$ in&#10;$PATTERN$)&#10;  $END$$SELECTION$&#10;  ;;&#10;esac"
             description="Case statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="VALUE" expression="" defaultValue="&quot;$x&quot;" alwaysStopAt="true"/>
@@ -54,7 +57,7 @@
   <template id="bash_while" name="bash_while" value="while [ $CONDITION$ ]; do&#10;    $END$$SELECTION$&#10;done"
             description="While loop by condition" toReformat="true"
             toShortenFQNames="false">
-    <variable name="CONDITION" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
+    <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>
@@ -63,13 +66,14 @@
   <template id="bash_until" name="bash_until" value="until [ $CONDITION$ ]; do&#10;    $END$$SELECTION$&#10;done"
             description="Until loop by condition" toReformat="true"
             toShortenFQNames="false">
-    <variable name="CONDITION" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
+    <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="bash_function" name="bash_function" value="function $FUNCNAME$() {&#10;    $END$$SELECTION$&#10;}" description="Define a function"
+  <template id="bash_function" name="bash_function" value="function $FUNCNAME$() {&#10;    $END$$SELECTION$&#10;}"
+            description="Define a function"
             toReformat="true" toShortenFQNames="false">
     <variable name="FUNCNAME" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
     <context>
@@ -77,4 +81,114 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
+  <template id="bash_string equal" name="bash_string equal" value="$VAR_1$ == $VAR_2$" description="String are equal"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$string2&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_string not equal" name="bash_string not equal" value="$VAR_1$ != $VAR_2$"
+            description="String not equal"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$string2&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_string is empty" name="bash_string is empty" value="-z $VAR_1$" description="String is empty"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_string not empty" name="bash_string not empty" value="-n $VAR_1$" description="String isn't empty"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_number equal" name="bash_number equal" value="$VAR_1$ -eq $VAR_2$" description="Numbers are equal"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_number not equal" name="bash_number not equal" value="$VAR_1$ -nq $VAR_2$"
+            description="Numbers not equal"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_number less" name="bash_number less" value="$VAR_1$ -lt $VAR_2$" description="Number less than"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_number less or equal" name="bash_number less or equal" value="$VAR_1$ -le $VAR_2$"
+            description="Number less than or equal"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_number greater" name="bash_number greater" value="$VAR_1$ -gt $VAR_2$"
+            description="Number greater than"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_number greater or equal" name="bash_number greater or equal" value="$VAR_1$ -ge $VAR_2$"
+            description="Number greater than or equal"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file exists" name="bash_file exists" value="-e $VAR_1$" description="File exists"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file not empty" name="bash_file not empty" value="-s $VAR_1$" description="File not empty"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
 </templateSet>
