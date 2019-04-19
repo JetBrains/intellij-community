@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -54,6 +55,10 @@ class EditorModel {
   private boolean isLocalScrollBarStabilized = false;
   AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
 
+  private boolean isRealCaretCanAffectOnTarget = true;
+  private AbsoluteCaretPostioin targetCaretPosition = new AbsoluteCaretPostioin(0, 0);
+  private boolean isNeedToShowCaret = false;
+
   private final JPanel panelMain;
   private final ExecutorService myPageReaderExecutor =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Large File Editor Page Reader Executor", 1);
@@ -73,6 +78,12 @@ class EditorModel {
 
     editor = createSpecialEditor(document, project);
 
+    editor.getCaretModel().addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent event) {
+        fireRealCaretPositionChanged();
+      }
+    });
 
     //gui.setEditorComponent(editor);
     //registerShortcutsActions();
@@ -228,8 +239,29 @@ class EditorModel {
     }*/
   }
 
+  private void fireRealCaretPositionChanged() {
+    if (isRealCaretCanAffectOnTarget) {
+      if (tryGetTargetCaretOffsetInDocumentWithMargin() != -1) {
+        reflectRealToTargetCaretPostion();
+        isNeedToShowCaret = true;
+        requestUpdate();
+      }
+    }
+  }
+
+  private void reflectRealToTargetCaretPostion() {
+    int caretOffset = editor.getCaretModel().getPrimaryCaret().getOffset();
+
+    for (int i = pagesInDocument.size() - 1; i >= 0; i--) {
+      int symbolOffsetToStartOfPage = getSymbolOffsetToStartOfPage(i, pagesInDocument);
+      if (caretOffset >= symbolOffsetToStartOfPage) {
+        targetCaretPosition.set(pagesInDocument.get(i).getPageNumber(), caretOffset - symbolOffsetToStartOfPage);
+        break;
+      }
+    }
+  }
+
   public void fireGlobalScrollBarValueChangedFromOutside(long pageNumber) {
-    // FIXME: 2019-04-11 it decrements by itself after calling this method. Probably it's need to set local SB destabilized
     long pagesAmount;
     try {
       pagesAmount = dataProvider.getPagesAmount();
@@ -264,11 +296,14 @@ class EditorModel {
     }
   }
 
-  // FIXME: 2019-04-12 scrolling to caret causes jumping over pages (goto any place in file and press "left" or "right")
-
   @CalledInAwt
   void update() {
     // TODO: 2019-04-05 encapsulate document+pagesInDocumentList ?
+
+    if (isNeedToShowCaret) {
+      targetVisiblePosition.set(targetCaretPosition.pageNumber,
+                                targetVisiblePosition.verticalScrollOffset);
+    }
 
     normalizePagesInDocumentListBeginning();
 
@@ -285,11 +320,13 @@ class EditorModel {
       }
     }
 
-    tryNormalizeTargetEditorViewPosition();
+    normalizePagesInDocumentListEnding();
+
+    tryReflectTargetCaretPositionToReal();
+
+    tryNormalizeTargetVisiblePosition();
 
     tryShowWhatNeedToShow();
-
-    normalizePagesInDocumentListEnding();
 
     updateGlobalStrollBarView();
 
@@ -310,10 +347,132 @@ class EditorModel {
       else {
         requestReadPage(nextPageNumberToAdd);
       }
+      return;
+    }
+
+    pagesCash.clear();
+
+    if (isNeedToShowCaret) {
+      if (tryGetTargetCaretOffsetInDocumentWithMargin() != -1) {
+        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        isNeedToShowCaret = false;
+      }
+      else {
+        LOG.warn("[Large File Editor Subsystem] EditorMode.update(): can't show caret. "
+                 + " targetCaretPosition.pageNumber=" + targetCaretPosition.pageNumber
+                 + " targetCaretPosition.symbolOffsetInPage=" + targetCaretPosition.symbolOffsetInPage
+                 + " targetVisiblePosition.pageNumber=" + targetVisiblePosition.pageNumber
+                 + " targetVisiblePosition.verticalScrollOffset=" + targetVisiblePosition.verticalScrollOffset);
+      }
     }
     else {
-      pagesCash.clear();
+      if (!isRealCaretMathesTarget()) {
+        setCaretToConvenientPosition();
+      }
     }
+  }
+
+  private void setCaretToConvenientPosition() {
+    int offset = tryGetConvenientOffsetForCaret();
+    if (offset != -1) {
+      editor.getCaretModel().moveToOffset(offset);
+      reflectRealToTargetCaretPostion();
+    }
+    else {
+      LOG.info("[Large File Editor Subsystem] EditorModel.setCaretToConvenientPosition(): " +
+               "Can't set caret to convenient position.");
+    }
+  }
+
+  private boolean isRealCaretMathesTarget() {
+    int targetCaretOffsetInDocument = tryGetTargetCaretOffsetInDocumentWithMargin();
+    return targetCaretOffsetInDocument == editor.getCaretModel().getOffset();
+  }
+
+  private void tryReflectTargetCaretPositionToReal() {
+    int targetCaretOffsetInDocument = tryGetTargetCaretOffsetInDocumentWithMargin();
+
+    if (targetCaretOffsetInDocument != -1) {
+      isRealCaretCanAffectOnTarget = false;
+      editor.getCaretModel().moveToOffset(targetCaretOffsetInDocument);
+      isRealCaretCanAffectOnTarget = true;
+    }
+  }
+
+  private int tryGetConvenientOffsetForCaret() {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleAreaOnScrollingFinished();
+    return editor.logicalPositionToOffset(editor.xyToLogicalPosition(new Point(
+      0, visibleArea.y + editor.getLineHeight()
+    )));
+
+    /*int indexOfPage = tryGetIndexOfNeededPageInList(targetVisiblePosition.pageNumber, pagesInDocument);
+    if (indexOfPage == -1) {
+      return -1;
+    }
+
+    int symbolOffsetToStartOfPage = getSymbolOffsetToStartOfPage(indexOfPage, pagesInDocument);
+    return symbolOffsetToStartOfPage;*/
+    /*Point point = editor.offsetToXY(symbolOffsetToStartOfPage);
+    if (point.x == 0) {
+      return symbolOffsetToStartOfPage;
+    } else {
+      point.x = 0;
+      return editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
+    }*/
+  }
+
+  private int tryGetTargetCaretOffsetInDocumentWithMargin() {
+    int offset = tryGetTargetCaretOffsetInDocument();
+    if (offset == -1) return -1;
+
+    int startOfAllowedRange = tryGetStartMarginForTargetCaretInDocument();
+
+    int endOfAllowedRange = getSymbolOffsetToStartOfPage(pagesInDocument.size(), pagesInDocument);
+    try {
+      if (pagesInDocument.get(pagesInDocument.size() - 1).getPageNumber() != dataProvider.getPagesAmount() - 1) {
+        endOfAllowedRange -= pagesInDocument.get(pagesInDocument.size() - 1).getText().length() / 2;
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+
+    if (offset > startOfAllowedRange && offset < endOfAllowedRange) {
+      return offset;
+    }
+    else {
+      return -1;
+    }
+  }
+
+  private int tryGetStartMarginForTargetCaretInDocument() {
+    if (pagesInDocument.size() > 0 && pagesInDocument.get(0).getPageNumber() != 0) {
+      return pagesInDocument.get(0).getText().length() / 2;
+    }
+    else {
+      return -1;
+    }
+  }
+
+  private int tryGetTargetCaretOffsetInDocument() {
+    int indexOfPage = tryGetIndexOfNeededPageInList(targetCaretPosition.pageNumber, pagesInDocument);
+    if (indexOfPage != -1) {
+      int targetCaretOffsetInDocument =
+        getSymbolOffsetToStartOfPage(indexOfPage, pagesInDocument) + targetCaretPosition.symbolOffsetInPage;
+
+      if (targetCaretOffsetInDocument >= 0 && targetCaretOffsetInDocument < document.getTextLength()) {
+        return targetCaretOffsetInDocument;
+      }
+      else {
+        LOG.warn("[Large File Editor Subsystem] EditorModel.tryGetTargetCaretOffsetInDocument():"
+                 + " Invalid targetCaretPosition state."
+                 + " targetCaretPosition.pageNumber=" + targetCaretPosition.pageNumber
+                 + " targetCaretPosition.symbolOffsetInPage=" + targetCaretPosition.symbolOffsetInPage
+                 + " targetCaretOffsetInDocument=" + targetCaretOffsetInDocument
+                 + " document.getTextLength()=" + document.getTextLength());
+      }
+    }
+    return -1;
   }
 
   // TODO: 2019-04-10 need to handle possible 'long' values
@@ -371,7 +530,7 @@ class EditorModel {
     return nextPageNumber < dataProvider.getPagesAmount() ? nextPageNumber : -1;
   }
 
-  private void tryNormalizeTargetEditorViewPosition() {
+  private void tryNormalizeTargetVisiblePosition() {
     boolean smthChanged = true;
     try {
       while (smthChanged) {
@@ -391,7 +550,7 @@ class EditorModel {
 
     if (targetVisiblePosition.verticalScrollOffset < 0) {
       if (targetVisiblePosition.pageNumber == 0) {
-        targetVisiblePosition.verticalScrollOffset = 0;
+        targetVisiblePosition.set(0,0);
         return true;
       }
 
@@ -405,8 +564,9 @@ class EditorModel {
       int verticalOffsetToBeginningOfPrevPage = offsetToY(symbolOffsetToBeginningOfPrevPage);
       int verticalOffsetToBeginningOfTargetPage = offsetToY(symbolOffsetToBeginningOfTargetPage);
 
-      targetVisiblePosition.pageNumber -= 1;
-      targetVisiblePosition.verticalScrollOffset += verticalOffsetToBeginningOfTargetPage - verticalOffsetToBeginningOfPrevPage;
+      targetVisiblePosition.set(targetVisiblePosition.pageNumber - 1,
+                                targetVisiblePosition.verticalScrollOffset
+                                + verticalOffsetToBeginningOfTargetPage - verticalOffsetToBeginningOfPrevPage);
       return true;
     }
 
@@ -425,11 +585,13 @@ class EditorModel {
     int bottomOfExpectedVisibleArea =
       topOfTargetVisiblePage + targetVisiblePosition.verticalScrollOffset + editor.getScrollingModel().getVisibleArea().height;
     if (bottomOfExpectedVisibleArea > editor.getContentComponent().getHeight()) {
-      int indexOfLastPage = tryGetIndexOfNeededPageInList(pagesAmountInFile - 1, pagesInDocument);
-      if (indexOfLastPage == -1) {
+      int indexOfLastLastPage = tryGetIndexOfNeededPageInList(pagesAmountInFile - 1, pagesInDocument);
+      if (indexOfLastLastPage == -1) {
         return false;
       }
-      targetVisiblePosition.verticalScrollOffset -= bottomOfExpectedVisibleArea - editor.getContentComponent().getHeight();
+      int extraDifference = bottomOfExpectedVisibleArea - editor.getContentComponent().getHeight();
+      targetVisiblePosition.set(targetVisiblePosition.pageNumber,
+                                targetVisiblePosition.verticalScrollOffset - extraDifference);
       return true;
     }
 
@@ -439,8 +601,9 @@ class EditorModel {
 
     int bottomOfTargetVisiblePage = offsetToY(symbolOffsetToEndOfTargetVisiblePage);
     if (topOfTargetVisiblePage + targetVisiblePosition.verticalScrollOffset >= bottomOfTargetVisiblePage) {
-      targetVisiblePosition.pageNumber += 1;
-      targetVisiblePosition.verticalScrollOffset -= bottomOfTargetVisiblePage - topOfTargetVisiblePage;
+      targetVisiblePosition.set(targetVisiblePosition.pageNumber + 1,
+                                targetVisiblePosition.verticalScrollOffset
+                                - bottomOfTargetVisiblePage + topOfTargetVisiblePage);
       return true;
     }
     return false;
@@ -553,30 +716,28 @@ class EditorModel {
 
   private void setFirstPageIntoEmptyDocument(Page page) {
     pagesInDocument.add(page);
-    //ApplicationManager.getApplication().runWriteAction(
+    isRealCaretCanAffectOnTarget = false;
     WriteCommandAction.runWriteCommandAction(dataProvider.getProject(),
                                              () -> document.setText(page.getText()));
+    isRealCaretCanAffectOnTarget = true;
   }
 
   private void setNextPageIntoDocument(Page page) {
     pagesInDocument.add(page);
-    if (document.getTextLength() == 0) {
-      //ApplicationManager.getApplication().runWriteAction(
-      WriteCommandAction.runWriteCommandAction(dataProvider.getProject(),
-                                               () -> document.setText(page.getText()));
-    }
-    else {
-      //ApplicationManager.getApplication().runWriteAction(
-      WriteCommandAction.runWriteCommandAction(dataProvider.getProject(),
-                                               () -> document.insertString(document.getTextLength(), page.getText()));
-    }
+    isRealCaretCanAffectOnTarget = false;
+    WriteCommandAction.runWriteCommandAction(
+      dataProvider.getProject(),
+      document.getTextLength() == 0 ? () -> document.setText(page.getText())
+                                    : () -> document.insertString(document.getTextLength(), page.getText()));
+    isRealCaretCanAffectOnTarget = true;
   }
 
   private void deleteAllPagesFromDocument() {
     pagesCash.addAll(pagesInDocument);
     pagesInDocument.clear();
+    isRealCaretCanAffectOnTarget = false;
     WriteCommandAction.runWriteCommandAction(dataProvider.getProject(), () -> document.deleteString(0, document.getTextLength()));
-    //ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(0, document.getTextLength()));
+    isRealCaretCanAffectOnTarget = true;
   }
 
   private Page tryGetPageFromCash(long pageNumber) {
@@ -842,8 +1003,8 @@ class EditorModel {
       bottomOfPage = offsetToY(getSymbolOffsetToStartOfPage(indexOfPage + 1, pagesInDocument));
 
       if (localScrollBarValue < bottomOfPage) {
-        targetVisiblePosition.pageNumber = pagesInDocument.get(indexOfPage).getPageNumber();
-        targetVisiblePosition.verticalScrollOffset = localScrollBarValue - topOfPage;
+        targetVisiblePosition.set(pagesInDocument.get(indexOfPage).getPageNumber(),
+                                  localScrollBarValue - topOfPage);
         return;
       }
 
