@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public interface NullableFunction<Param, Result> extends Function<Param, Result> {
-  @Override
   @Nullable
   Result fun(final Param param);
 
@@ -29,7 +28,6 @@ public interface NullableFunction<Param, Result> extends Function<Param, Result>
    * @see FunctionUtil#nullConstant()
    */
   NullableFunction NULL = new NullableFunction() {
-    @Override
     public Object fun(final Object o) {
       return null;
     }

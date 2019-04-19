@@ -29,7 +29,6 @@ public interface Function<Param, Result> {
   Result fun(Param param);
 
   Function ID = new Function.Mono() {
-    @Override
     public Object fun(Object o) {
       return o;
     }
@@ -43,7 +42,6 @@ public interface Function<Param, Result> {
   Function NULL = NullableFunction.NULL;
 
   Function TO_STRING = new Function() {
-    @Override
     public Object fun(Object o) {
       return String.valueOf(o);
     }
@@ -64,7 +62,6 @@ public interface Function<Param, Result> {
       myResultClass = resultClass;
     }
 
-    @Override
     @Nullable
     public R fun(P p) {
       //noinspection unchecked
@@ -73,7 +70,6 @@ public interface Function<Param, Result> {
   }
 
   final class First<P, R extends P> implements Function<P[], R> {
-    @Override
     public R fun(P[] ps) {
       //noinspection unchecked
       return (R)ps[0];
@@ -81,7 +77,6 @@ public interface Function<Param, Result> {
   }
 
   final class FirstInCollection<P, R extends P> implements Function<Collection<P>, R> {
-    @Override
     public R fun(Collection<P> ps) {
       //noinspection unchecked
       return (R)ps.iterator().next();
