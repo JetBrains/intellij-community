@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.java18api;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -18,15 +17,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(Java8ArraySetAllInspection.class);
+public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(ExplicitArrayFillingInspection.class);
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitForStatement(PsiForStatement statement) {
@@ -36,12 +32,29 @@ public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionT
         if (!ExpressionUtils.isZero(loop.getInitializer())) return;
         IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
         if (container == null || !(container.getQualifier().getType() instanceof PsiArrayType)) return;
-        if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;
         PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(ControlFlowUtils.stripBraces(statement.getBody()));
         if (assignment == null) return;
         PsiExpression index = container.extractIndexFromGetExpression(assignment.getLExpression());
         if (!ExpressionUtils.isReferenceTo(index, loop.getCounter())) return;
-        if (!LambdaGenerationUtil.canBeUncheckedLambda(assignment.getRExpression(), Predicate.isEqual(loop.getCounter()))) return;
+        PsiExpression rValue = assignment.getRExpression();
+        if (rValue == null) return;
+        if (!VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) &&
+            !SideEffectChecker.mayHaveSideEffects(rValue)) {
+          holder.registerProblem(statement, getRange(statement),
+                                 InspectionsBundle.message("explicit.array.filling.inspection.description", "fill"),
+                                 new ReplaceWithArraysCallFix(true));
+          return;
+        }
+        if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) return;
+        if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(rValue, Predicate.isEqual(loop.getCounter()))) return;
+        holder.registerProblem(statement, getRange(statement),
+                               InspectionsBundle.message("explicit.array.filling.inspection.description", "setAll"),
+                               new ReplaceWithArraysCallFix(false));
+      }
+
+      @NotNull
+      private TextRange getRange(@NotNull PsiForStatement statement) {
         PsiStatement initialization = statement.getInitialization();
         LOG.assertTrue(initialization != null);
         TextRange range = TextRange.from(initialization.getStartOffsetInParent(), initialization.getTextLength());
@@ -50,18 +63,24 @@ public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionT
         if (wholeStatement && rParenth != null) {
           range = new TextRange(0, rParenth.getStartOffsetInParent() + 1);
         }
-        holder.registerProblem(statement, range, InspectionsBundle.message("inspection.replace.loop.with.arrays.setall.message"),
-                               new ReplaceWithArraysSetAllFix());
+        return range;
       }
     };
   }
 
-  private static class ReplaceWithArraysSetAllFix implements LocalQuickFix {
+  private static class ReplaceWithArraysCallFix implements LocalQuickFix {
+
+    private final boolean myIsRhsConstant;
+
+    private ReplaceWithArraysCallFix(boolean isRhsConstant) {
+      myIsRhsConstant = isRhsConstant;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.loop.with.arrays.setall.fix.family.name");
+      return InspectionsBundle.message("explicit.array.filling.inspection.fix.text", myIsRhsConstant ? "fill" : "setAll");
     }
 
     @Override
@@ -77,10 +96,18 @@ public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionT
       PsiExpression rValue = assignment.getRExpression();
       if (rValue == null) return;
       CommentTracker ct = new CommentTracker();
-      String replacement = CommonClassNames.JAVA_UTIL_ARRAYS + ".setAll(" +
-                           ct.text(container.getQualifier()) + ", " + loop.getCounter().getName() + "->" + ct.text(rValue) + ");";
-      PsiElement result = ct.replaceAndRestoreComments(statement, replacement);
-      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+      PsiElement result;
+      if (myIsRhsConstant) {
+        String replacement = CommonClassNames.JAVA_UTIL_ARRAYS + ".fill(" +
+                             ct.text(container.getQualifier()) + ", " + ct.text(rValue) + ");";
+        result = ct.replaceAndRestoreComments(statement, replacement);
+      }
+      else {
+        String replacement = CommonClassNames.JAVA_UTIL_ARRAYS + ".setAll(" +
+                             ct.text(container.getQualifier()) + ", " + loop.getCounter().getName() + "->" + ct.text(rValue) + ");";
+        result = ct.replaceAndRestoreComments(statement, replacement);
+        LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+      }
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }

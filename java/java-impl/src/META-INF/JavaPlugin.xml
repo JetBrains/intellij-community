@@ -1413,11 +1413,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
                      displayName="Loop can be replaced with Collection.removeIf()"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8ArraySetAll"
+    <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArrayFilling"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.java18api.Java8ArraySetAllInspection"
-                     displayName="Loop can be replaced with Arrays.setAll()"/>
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.ExplicitArrayFillingInspection"
+                     displayName="Explicit array filling"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
