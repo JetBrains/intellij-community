@@ -10,5 +10,4 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class GroovyLightProjectDescriptor {
   public static final LightProjectDescriptor GROOVY_LATEST = GroovyProjectDescriptors.GROOVY_LATEST
-  public static final LightProjectDescriptor GROOVY_LATEST_REAL_JDK = GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
 }
