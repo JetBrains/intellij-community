@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -66,6 +67,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInComments;
   private final boolean mySearchForTextOccurrences;
   private final boolean myDeleteTheDeclaration;
+  private final Function<PsiReference, InlineTransformer> myTransformerChooser;
 
   private final PsiManager myManager;
   private final PsiElementFactory myFactory;
@@ -106,6 +108,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                boolean isDeleteTheDeclaration) {
     super(project);
     myMethod = method;
+    myTransformerChooser = InlineTransformer.getSuitableTransformer(myMethod);
     myReference = reference;
     myEditor = editor;
     myInlineThisOnly = isInlineThisOnly;
@@ -225,12 +228,18 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
           }
         }
+        if (element instanceof PsiReferenceExpression && myTransformerChooser.apply((PsiReference)element).isFallBackTransformer()) {
+          conflicts.putValue(element, RefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+        }
 
         final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
         if (errorMessage != null) {
           conflicts.putValue(element, errorMessage);
         }
       }
+    }
+    else if (myReference != null && myTransformerChooser.apply(myReference).isFallBackTransformer()) {
+      conflicts.putValue(myReference, RefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
     }
 
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
@@ -809,7 +818,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final PsiStatement[] originalStatements = block.getStatements();
 
     PsiType returnType = callSubstitutor.substitute(myMethod.getReturnType());
-    InlineTransformer transformer = InlineTransformer.getSuitableTransformer(myMethod, ref);
+    InlineTransformer transformer = myTransformerChooser.apply(ref);
 
     PsiLocalVariable[] parmVars = declareParameters(block, argumentList, callSubstitutor);
 

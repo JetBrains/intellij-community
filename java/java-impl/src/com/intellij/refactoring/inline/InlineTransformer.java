@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 public abstract class InlineTransformer {
   /**
@@ -42,6 +43,13 @@ public abstract class InlineTransformer {
    * @return result variable or null if unnecessary
    */
   public abstract PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType);
+
+  /**
+   * @return true if this transformer is a fallback transformer which may significantly rewrite the method body
+   */
+  public boolean isFallBackTransformer() {
+    return false;
+  }
 
   static class NormalTransformer extends InlineTransformer {
     @Override
@@ -177,6 +185,11 @@ public abstract class InlineTransformer {
     }
 
     @Override
+    public boolean isFallBackTransformer() {
+      return true;
+    }
+
+    @Override
     public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
       if (callSite.getParent() instanceof PsiMethodCallExpression && ExpressionUtils.isVoidContext((PsiExpression)callSite.getParent())) {
         InlineTransformer.extractReturnValues(methodCopy, false);
@@ -204,16 +217,12 @@ public abstract class InlineTransformer {
    * Returns the most suitable transformer for given method and given call site
    * 
    * @param method method to inline (must have body)
-   * @param reference call site where inlining should be performed
-   * @return a transformer. Should always succeed as fallback transformer which accepts any method is available
+   * @return a function which produces a transformer for given reference to the inlined method. 
+   *        Should always succeed as fallback transformer which accepts any method is available.
    */
   @NotNull
-  static InlineTransformer getSuitableTransformer(PsiMethod method, PsiReference reference) {
-    for (InlineTransformer transformer : getTransformers()) {
-      if (transformer.isMethodAccepted(method) && transformer.isReferenceAccepted(reference)) {
-        return transformer;
-      }
-    }
-    throw new InternalError("Transformer is unavailable");
+  static Function<PsiReference, InlineTransformer> getSuitableTransformer(PsiMethod method) {
+    List<InlineTransformer> methodAccepted = ContainerUtil.filter(getTransformers(), t -> t.isMethodAccepted(method));
+    return ref -> Objects.requireNonNull(ContainerUtil.find(methodAccepted, t -> t.isReferenceAccepted(ref)));
   }
 }

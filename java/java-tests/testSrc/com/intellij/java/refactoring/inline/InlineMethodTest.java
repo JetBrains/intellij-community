@@ -503,7 +503,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   private void doTestAssertBadReturn() {
     @NonNls String fileName = configure();
-    performAction(new MockInlineMethodOptions(), false, true);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> performAction(new MockInlineMethodOptions(), false, true));
     checkResultByFile(fileName + ".after");
   }
 

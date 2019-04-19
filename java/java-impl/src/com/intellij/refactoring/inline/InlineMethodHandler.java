@@ -58,17 +58,6 @@ class InlineMethodHandler extends JavaInlineActionHandler {
         return;
       }
     }
-    boolean allowInlineThisOnly = false;
-    if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
-      if (reference != null) {
-        allowInlineThisOnly = true;
-      }
-      else {
-        String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
-        return;
-      }
-    }
 
     if (reference == null && checkRecursive(method)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", REFACTORING_NAME);
@@ -84,6 +73,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       }
     }
 
+    boolean allowInlineThisOnly = false;
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);
