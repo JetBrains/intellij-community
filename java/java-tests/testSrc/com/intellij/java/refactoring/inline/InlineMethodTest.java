@@ -462,6 +462,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testNotTailCallInsideIf() {
     doTestAssertBadReturn();
   }
+  
+  public void testConvertToSingleReturnWithFinished() {
+    doTestAssertBadReturn();
+  }
 
   @Override
   protected Sdk getProjectJDK() {

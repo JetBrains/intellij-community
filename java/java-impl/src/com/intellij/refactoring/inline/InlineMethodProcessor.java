@@ -652,8 +652,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiElement firstAdded = null;
     if (firstBodyElement != null && firstBodyElement != blockData.block.getRBrace()) {
       int last = statements.length - 1;
-      /*PsiElement first = statements[0];
-      PsiElement last = statements[statements.length - 1];*/
 
       if (last > 0 && statements[last] instanceof PsiReturnStatement &&
           tailCall != InlineUtil.TailCallType.Return) {
@@ -668,22 +666,28 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
       firstAdded = anchorParent.addRangeBefore(firstBodyElement, beforeRBraceStatement, anchor);
 
-      PsiElement current = firstAdded.getPrevSibling();
-      LOG.assertTrue(current != null);
-      if (blockData.resultVar != null) {
-        PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
-        resultVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
-        current = statement;
-      }
-      if (blockData.thisVar != null) {
-        PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
-        thisVar = (PsiLocalVariable)statement.getDeclaredElements()[0];
-        current = statement;
-      }
-      for (int i = 0; i < parmVars.length; i++) {
-        PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
-        parmVars[i] = (PsiLocalVariable)statement.getDeclaredElements()[0];
-        current = statement;
+      for (PsiElement e = firstAdded; e != anchor; e = e.getNextSibling()) {
+        if (e instanceof PsiDeclarationStatement) {
+          PsiElement[] elements = ((PsiDeclarationStatement)e).getDeclaredElements();
+          PsiLocalVariable var = ObjectUtils.tryCast(ArrayUtil.getFirstElement(elements), PsiLocalVariable.class);
+          if (var != null) {
+            String name = var.getName();
+            LOG.assertTrue(name != null);
+            if (blockData.resultVar != null && name.equals(blockData.resultVar.getName())) {
+              resultVar = var;
+            }
+            else if (blockData.thisVar != null && name.equals(blockData.thisVar.getName())) {
+              thisVar = var;
+            } else {
+              for (int i = 0; i < blockData.parmVars.length; i++) {
+                if (name.equals(blockData.parmVars[i].getName())) {
+                  parmVars[i] = var;
+                  break;
+                }
+              }
+            }
+          }
+        }
       }
 
       if (statements.length > 0) {
