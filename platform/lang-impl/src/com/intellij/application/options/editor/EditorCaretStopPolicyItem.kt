@@ -11,6 +11,7 @@ internal interface EditorCaretStopPolicyItem {
   val title: String
   val caretStopBoundary: CaretStopBoundary
   val isOsDefault: Boolean
+  val isRegistryHidden: Boolean
 
   val osDefaultHint: String get () = if (isOsDefault) " ($currentOsDefaultString)" else ""
 
@@ -30,13 +31,15 @@ internal interface EditorCaretStopPolicyItem {
 
   enum class WordBoundary(override val title: String,
                           override val caretStopBoundary: CaretStopBoundary,
-                          override val isOsDefault: Boolean = false) : EditorCaretStopPolicyItem {
+                          override val isOsDefault: Boolean = false,
+                          override val isRegistryHidden: Boolean = false) : EditorCaretStopPolicyItem {
     STICK_TO_WORD_BOUNDARIES(ApplicationBundle.message("combobox.item.stick.to.word.boundaries"), CaretStopBoundary.CURRENT,
                              isOsDefault = SystemInfo.isUnix),
     JUMP_TO_WORD_START(ApplicationBundle.message("combobox.item.jump.to.word.start"), CaretStopBoundary.START,
                        isOsDefault = SystemInfo.isWindows),
     JUMP_TO_WORD_END(ApplicationBundle.message("combobox.item.jump.to.word.end"), CaretStopBoundary.END),
-    JUMP_TO_NEIGHBORING_WORD(ApplicationBundle.message("combobox.item.jump.to.neighboring.word"), CaretStopBoundary.NEIGHBOR),
+    JUMP_TO_NEIGHBORING_WORD(ApplicationBundle.message("combobox.item.jump.to.neighboring.word"), CaretStopBoundary.NEIGHBOR,
+                             isRegistryHidden = true),
     STOP_AT_ALL_WORD_BOUNDARIES(ApplicationBundle.message("combobox.item.stop.at.all.word.boundaries"), CaretStopBoundary.BOTH);
 
     override fun toString(): String = title + osDefaultHint
@@ -49,9 +52,10 @@ internal interface EditorCaretStopPolicyItem {
 
   enum class LineBoundary(override val title: String,
                           override val caretStopBoundary: CaretStopBoundary,
-                          override val isOsDefault: Boolean = false) : EditorCaretStopPolicyItem {
-    STAY_ON_CURRENT_LINE(ApplicationBundle.message("combobox.item.stay.on.current.line"), CaretStopBoundary.CURRENT),
-    JUMP_TO_NEIGHBORING_LINE(ApplicationBundle.message("combobox.item.jump.to.neighboring.line"), CaretStopBoundary.NEIGHBOR),
+                          override val isOsDefault: Boolean = false,
+                          override val isRegistryHidden: Boolean = false) : EditorCaretStopPolicyItem {
+    STAY_ON_CURRENT_LINE(ApplicationBundle.message("combobox.item.stay.on.current.line"), CaretStopBoundary.CURRENT, isRegistryHidden = true),
+    JUMP_TO_NEIGHBORING_LINE(ApplicationBundle.message("combobox.item.jump.to.neighboring.line"), CaretStopBoundary.NEIGHBOR, isRegistryHidden = true),
     JUMP_TO_LINE_START(ApplicationBundle.message("combobox.item.stop.at.line.start"), CaretStopBoundary.START),
     JUMP_TO_LINE_END(ApplicationBundle.message("combobox.item.stop.at.line.end"), CaretStopBoundary.END),
     STOP_AT_BOTH_LINE_BOUNDARIES(ApplicationBundle.message("combobox.item.stop.at.both.line.ends"), CaretStopBoundary.BOTH,

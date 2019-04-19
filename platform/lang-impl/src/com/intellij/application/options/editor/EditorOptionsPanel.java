@@ -34,6 +34,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
@@ -154,12 +155,18 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
       }
     });
 
+    final boolean showRegistryHiddenOptions = Registry.is("ide.settings.show.advanced.options", false);
+
     for (EditorCaretStopPolicyItem.WordBoundary item : EditorCaretStopPolicyItem.WordBoundary.values()) {
-      myWordBoundaryCaretStopComboBox.insertItemAt(item, item.isOsDefault() ? 0 : myWordBoundaryCaretStopComboBox.getItemCount());
+      if (showRegistryHiddenOptions || !item.isRegistryHidden()) {
+        myWordBoundaryCaretStopComboBox.insertItemAt(item, item.isOsDefault() ? 0 : myWordBoundaryCaretStopComboBox.getItemCount());
+      }
     }
 
     for (EditorCaretStopPolicyItem.LineBoundary item : EditorCaretStopPolicyItem.LineBoundary.values()) {
-      myLineBoundaryCaretStopComboBox.insertItemAt(item, item.isOsDefault() ? 0 : myLineBoundaryCaretStopComboBox.getItemCount());
+      if (showRegistryHiddenOptions || !item.isRegistryHidden()) {
+        myLineBoundaryCaretStopComboBox.insertItemAt(item, item.isOsDefault() ? 0 : myLineBoundaryCaretStopComboBox.getItemCount());
+      }
     }
 
     initQuickDocProcessing();
@@ -180,8 +187,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     // Caret Movement
     final CaretStopOptions caretStopOptions = editorSettings.getCaretStopOptions();
-    myWordBoundaryCaretStopComboBox.setSelectedItem(EditorCaretStopPolicyItem.WordBoundary.itemForPolicy(caretStopOptions));
-    myLineBoundaryCaretStopComboBox.setSelectedItem(EditorCaretStopPolicyItem.LineBoundary.itemForPolicy(caretStopOptions));
+    setCaretStopPolicy(myWordBoundaryCaretStopComboBox, EditorCaretStopPolicyItem.WordBoundary.itemForPolicy(caretStopOptions));
+    setCaretStopPolicy(myLineBoundaryCaretStopComboBox, EditorCaretStopPolicyItem.LineBoundary.itemForPolicy(caretStopOptions));
 
     // Brace highlighting
 
@@ -505,6 +512,14 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     isModified |= !Comparing.equal(settings.getSchemeName(), myRichCopyColorSchemeComboBox.getSelectedItem());
 
     return isModified;
+  }
+
+  protected static <E extends EditorCaretStopPolicyItem> void setCaretStopPolicy(@NotNull JComboBox<E> comboBox, @NotNull E item) {
+    comboBox.setSelectedItem(item);
+    if (comboBox.getSelectedItem() != item) {  // might have been hidden through the registry key
+      comboBox.addItem(item);
+      comboBox.setSelectedItem(item);
+    }
   }
 
   @NotNull
