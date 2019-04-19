@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templateSet group="BashArray">
+<templateSet group="Bash">
   <template name="array create" value="$ARRAY$=($ITEMS$)&#10;" description="Create array" toReformat="true"
             toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>

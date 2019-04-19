@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templateSet group="BashHiddenTemplate">
+<templateSet group="BashHidden">
   <template id="bash_if" name="bash_if" value="if [ $CONDITION$ ]; then&#10;    $END$$SELECTION$&#10;fi"
             description="If statement"
             toReformat="true"

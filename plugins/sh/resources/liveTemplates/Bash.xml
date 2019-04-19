@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templateSet group="BashTemplate">
+<templateSet group="Bash">
   <template name="bash" value="#!/usr/bin/env bash&#10;" description="Shebang line" toReformat="true"
             toShortenFQNames="false">
     <context>
