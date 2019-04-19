@@ -15,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
@@ -34,7 +35,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   private final List<MemoryStateChange> myHistoryForContext = new ArrayList<>();
   private final PsiExpression myExpression;
 
-  public TrackingRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context, PsiExpression expression) {
+  private TrackingRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context, PsiExpression expression) {
     super(unknownMembersAreNullable, context);
     myExpression = expression;
   }
@@ -92,7 +93,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   public static class CauseItem {
     final @NotNull List<CauseItem> myChildren;
     final @NotNull DfaProblemType myProblem;
-    final @Nullable SmartPsiElementPointer<PsiElement> myTarget;
+    final @Nullable SmartPsiFileRange myTarget;
 
     CauseItem(@NotNull String problem, @Nullable PsiElement target) {
       this(new CustomDfaProblemType(problem), target);
@@ -101,7 +102,12 @@ public class TrackingRunner extends StandardDataFlowRunner {
     CauseItem(@NotNull DfaProblemType problem, @Nullable PsiElement target) {
       myChildren = new ArrayList<>();
       myProblem = problem;
-      myTarget = target == null ? null : SmartPointerManager.createPointer(target);
+      if (target != null) {
+        PsiFile file = target.getContainingFile();
+        myTarget = SmartPointerManager.getInstance(file.getProject()).createSmartPsiFileRangePointer(file, target.getTextRange());
+      } else {
+        myTarget = null;
+      }
     }
 
     CauseItem(@NotNull String problem, @NotNull MemoryStateChange change) {
@@ -136,8 +142,14 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
 
     private String dump(Document doc, int indent) {
-      PsiElement target = myTarget != null ? myTarget.getElement() : null;
-      return StringUtil.repeat("  ", indent) + render(doc) + (target == null ? "" : " (" + target.getText() + ")") + "\n" +
+      String text = null;
+      if (myTarget != null) {
+        Segment range = myTarget.getRange();
+        if (range != null) {
+          text = doc.getText(TextRange.create(range));
+        }
+      }
+      return StringUtil.repeat("  ", indent) + render(doc) + (text == null ? "" : " (" + text + ")") + "\n" +
              StreamEx.of(myChildren).map(child -> child.dump(doc, indent + 1)).joining();
     }
 

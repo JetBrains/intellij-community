@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
@@ -68,7 +69,8 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(this::findCause));
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.run(this::findCause), "Finding Cause", true, project);
   }
 
   private void findCause() {
