@@ -18,6 +18,7 @@ package com.intellij.vcsUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -402,21 +404,34 @@ public class VcsUtil {
     });
   }
 
-  public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)
-    throws VcsException {
-    final Ref<VcsException> ex = new Ref<>();
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      try {
-        runnable.run();
+  /**
+   * @deprecated Use {@link ProgressManager#runProcessWithProgressSynchronously(ThrowableComputable, String, boolean, Project)}
+   * and other run methods from the ProgressManager.
+   */
+  @Deprecated
+  public static boolean runVcsProcessWithProgress(@NotNull VcsRunnable runnable,
+                                                  @NotNull String progressTitle,
+                                                  boolean canBeCanceled,
+                                                  @Nullable Project project) throws VcsException {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      final Ref<VcsException> ex = new Ref<>();
+      boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        try {
+          runnable.run();
+        }
+        catch (VcsException e) {
+          ex.set(e);
+        }
+      }, progressTitle, canBeCanceled, project);
+      if (!ex.isNull()) {
+        throw ex.get();
       }
-      catch (VcsException e) {
-        ex.set(e);
-      }
-    }, progressTitle, canBeCanceled, project);
-    if (!ex.isNull()) {
-      throw ex.get();
+      return result;
     }
-    return result;
+    else {
+      runnable.run();
+      return true;
+    }
   }
 
   public static <T> T computeWithModalProgress(@Nullable Project project,

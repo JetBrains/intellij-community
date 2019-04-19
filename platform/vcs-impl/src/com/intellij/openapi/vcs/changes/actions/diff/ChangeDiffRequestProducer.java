@@ -34,7 +34,6 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -49,7 +48,6 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -309,24 +307,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       throw new DiffRequestProducerException("Can't show merge conflict - operation nos supported");
     }
     try {
-      // FIXME: loadRevisions() can call runProcessWithProgressSynchronously() inside
-      final Ref<Throwable> exceptionRef = new Ref<>();
-      final Ref<MergeData> mergeDataRef = new Ref<>();
-      final VirtualFile finalFile = file;
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        try {
-          mergeDataRef.set(vcs.getMergeProvider().loadRevisions(finalFile));
-        }
-        catch (VcsException e) {
-          exceptionRef.set(e);
-        }
-      });
-      if (!exceptionRef.isNull()) {
-        Throwable e = exceptionRef.get();
-        if (e instanceof VcsException) throw (VcsException)e;
-        ExceptionUtil.rethrow(e);
-      }
-      MergeData mergeData = mergeDataRef.get();
+      MergeData mergeData = vcs.getMergeProvider().loadRevisions(file);
 
       ContentRevision bRev = change.getBeforeRevision();
       ContentRevision aRev = change.getAfterRevision();

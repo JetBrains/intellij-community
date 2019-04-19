@@ -13,9 +13,13 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressManager.checkCanceled
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -33,10 +37,12 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
@@ -342,27 +348,28 @@ open class MultipleFileMergeDialog(
     }
 
     for (file in files) {
-      val mergeData: MergeData
+      val conflictData: ConflictData
       try {
-        mergeData = mergeProvider.loadRevisions(file)
+        conflictData = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ConflictData, VcsException> {
+          val mergeData = mergeProvider.loadRevisions(file)
+
+          val leftTitle = mergeDialogCustomizer.getLeftPanelTitle(file)
+          val baseTitle = mergeDialogCustomizer.getCenterPanelTitle(file)
+          val rightTitle = mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
+          val title = mergeDialogCustomizer.getMergeWindowTitle(file)
+
+          ConflictData(mergeData, title, listOf(leftTitle, baseTitle, rightTitle))
+        }, "Loading Revisions", true, project)
       }
       catch (ex: VcsException) {
         Messages.showErrorDialog(contentPanel, "Error loading revisions to merge: " + ex.message)
         break
       }
 
-      if (mergeData.CURRENT == null || mergeData.LAST == null || mergeData.ORIGINAL == null) {
-        Messages.showErrorDialog(contentPanel, "Error loading revisions to merge")
-        break
-      }
-
-      val leftTitle = mergeDialogCustomizer.getLeftPanelTitle(file)
-      val baseTitle = mergeDialogCustomizer.getCenterPanelTitle(file)
-      val rightTitle = mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
-      val title = mergeDialogCustomizer.getMergeWindowTitle(file)
-
+      val mergeData = conflictData.mergeData
       val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-      val contentTitles = listOf(leftTitle, baseTitle, rightTitle)
+      val contentTitles = conflictData.contentTitles
+      val title = conflictData.title
 
       val callback = { result: MergeResult ->
         val document = FileDocumentManager.getInstance().getCachedDocument(file)
@@ -420,4 +427,7 @@ open class MultipleFileMergeDialog(
     private val LOG = Logger.getInstance(MultipleFileMergeDialog::class.java)
   }
 
+  private data class ConflictData(val mergeData: MergeData,
+                                  val title: String,
+                                  val contentTitles: List<String>)
 }
