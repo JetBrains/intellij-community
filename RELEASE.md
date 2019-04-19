@@ -97,27 +97,6 @@ betas.)
        </component>
     ```
 
- 8. Turn off CLASS retention in
-    `platform/annotations/java8/src/org/jetbrains/annotations`
-    (Sadly, we can't also do this in
-      `platform/annotations/java5/src/org/jetbrains/annotations`
-     because the Kotlin compiler seems to require class retention; without it
-     Kotlin compilation fails.)
-
-    ```
-    --- a/platform/annotations/src/org/jetbrains/annotations/NotNull.java
-    +++ b/platform/annotations/src/org/jetbrains/annotations/NotNull.java
-    @@ -27,7 +27,7 @@ import java.lang.annotation.*;
-      * @author max
-      */
-     @Documented
-    -@Retention(RetentionPolicy.CLASS)
-    +@Retention(RetentionPolicy.SOURCE)
-     @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
-     public @interface NotNull {
-       /**
-    ```
-
 --------------------------------------------------------------------------------
 For stable, RC, beta builds :
 
