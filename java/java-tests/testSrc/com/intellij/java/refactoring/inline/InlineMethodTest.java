@@ -467,6 +467,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestAssertBadReturn();
   }
 
+  public void testConvertToSingleReturnWithFinishedUnusedResult() {
+    doTestAssertBadReturn();
+  }
+
+  public void testUnusedResult() {
+    doTest();
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();

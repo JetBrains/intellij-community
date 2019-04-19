@@ -13,10 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.StatementExtractor;
-import com.siyeh.ig.psiutils.VariableNameGenerator;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -40,10 +37,11 @@ public abstract class InlineTransformer {
    * Transforms method body in the way so it can be inserted into the call site. May declare result variable if necessary.  
    * 
    * @param methodCopy non-physical copy of the method to be inlined (may be changed by this call)
+   * @param callSite method call
    * @param returnType substituted method return type
    * @return result variable or null if unnecessary
    */
-  public abstract PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType);
+  public abstract PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType);
 
   static class NormalTransformer extends InlineTransformer {
     @Override
@@ -57,7 +55,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
       if (returnType == null || PsiType.VOID.equals(returnType)) return null;
       PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
       Project project = methodCopy.getProject();
@@ -92,7 +90,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
       return null;
     }
   }
@@ -116,7 +114,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
       extractReturnValues(methodCopy, true);
       return null;
     }
@@ -135,13 +133,14 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
       extractReturnValues(methodCopy, false);
       return null;
     }
   }
 
   private static void extractReturnValues(PsiMethod methodCopy, boolean replaceWithContinue) {
+    PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
     PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(methodCopy);
     for (PsiReturnStatement returnStatement : returnStatements) {
       final PsiExpression returnValue = returnStatement.getReturnValue();
@@ -158,7 +157,9 @@ public abstract class InlineTransformer {
         }
         ct.insertCommentsBefore(returnStatement);
       }
-      if (replaceWithContinue) {
+      if (ControlFlowUtils.blockCompletesWithStatement(block, returnStatement)) {
+        new CommentTracker().deleteAndRestoreComments(returnStatement);
+      } else if (replaceWithContinue) {
         new CommentTracker().replaceAndRestoreComments(returnStatement, "continue;");
       }
     }
@@ -176,7 +177,11 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
+      if (callSite.getParent() instanceof PsiMethodCallExpression && ExpressionUtils.isVoidContext((PsiExpression)callSite.getParent())) {
+        InlineTransformer.extractReturnValues(methodCopy, false);
+        returnType = PsiType.VOID;
+      }
       PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
       List<PsiReturnStatement> returns = Arrays.asList(PsiUtil.findReturnStatements(block));
       FinishMarker marker = FinishMarker.defineFinishMarker(block, returnType, returns);
