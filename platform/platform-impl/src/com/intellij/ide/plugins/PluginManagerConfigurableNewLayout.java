@@ -2,12 +2,12 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -17,25 +17,37 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
@@ -88,7 +100,16 @@ public class PluginManagerConfigurableNewLayout
   private Map<String, IdeaPluginDescriptor> myAllRepositoriesMap;
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoriesMap;
   private final Object myRepositoriesLock = new Object();
-  private List<String> myAllTagSorted;
+  private List<String> myTagsSorted;
+  private List<String> myVendorsSorted;
+
+  private DefaultActionGroup myMarketplaceSortByGroup;
+  private Consumer<MarketplaceSortByAction> myMarketplaceSortByCallback;
+  private LinkComponent myMarketplaceSortByAction;
+
+  private DefaultActionGroup myInstalledSearchGroup;
+  private Runnable myInstalledSearchCallback;
+  private boolean myInstalledSearchSetState = true;
 
   @NotNull
   @Override
@@ -215,12 +236,59 @@ public class PluginManagerConfigurableNewLayout
     return actions;
   }
 
+  private static void showRightBottomPopup(@NotNull Component component, @NotNull String title, @NotNull ActionGroup group) {
+    DefaultActionGroup actions = new GroupByActionGroup();
+    actions.addSeparator("  " + title);
+    actions.addAll(group);
+
+    DataContext context = DataManager.getInstance().getDataContext(component);
+
+    JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actions, context, false, false, false, true, null, -1, null, null) {
+      @Override
+      protected ListCellRenderer getListElementRenderer() {
+        return new PopupListElementRenderer(this) {
+          @Override
+          protected SeparatorWithText createSeparator() {
+            return new SeparatorWithText() {
+              {
+                setTextForeground(JBColor.BLACK);
+                setFont(UIUtil.getLabelFont());
+                setCaptionCentered(false);
+              }
+
+              @Override
+              protected void paintLine(Graphics g, int x, int y, int width) {
+              }
+            };
+          }
+
+          @Override
+          protected Border getDefaultItemComponentBorder() {
+            return new EmptyBorder(JBUI.insets(UIUtil.getListCellVPadding(), 15));
+          }
+        };
+      }
+    };
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
+        Point location = component.getLocationOnScreen();
+        Dimension size = popup.getSize();
+        popup.setLocation(new Point(location.x + component.getWidth() - size.width, location.y + component.getHeight()));
+      }
+    });
+    popup.show(component);
+  }
+
   private void resetPanels() {
     synchronized (myRepositoriesLock) {
       myAllRepositoriesList = null;
       myAllRepositoriesMap = null;
       myCustomRepositoriesMap = null;
     }
+
+    myTagsSorted = null;
+    myVendorsSorted = null;
 
     myPluginUpdatesService.recalculateUpdates();
 
@@ -345,11 +413,12 @@ public class PluginManagerConfigurableNewLayout
           @Override
           protected List<String> getAttributes() {
             List<String> attributes = new ArrayList<>();
-            attributes.add("tag:");
+            attributes.add("/tag:");
+            attributes.add("/sortBy:");
+            attributes.add("/vendor:");
             if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
-              attributes.add("repository:");
+              attributes.add("/repository:");
             }
-            attributes.add("sortBy:");
             return attributes;
           }
 
@@ -357,8 +426,8 @@ public class PluginManagerConfigurableNewLayout
           @Override
           protected List<String> getValues(@NotNull String attribute) {
             switch (attribute) {
-              case "tag:":
-                if (ContainerUtil.isEmpty(myAllTagSorted)) {
+              case "/tag:":
+                if (ContainerUtil.isEmpty(myTagsSorted)) {
                   Set<String> allTags = new HashSet<>();
                   for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
                     if (descriptor instanceof PluginNode) {
@@ -368,13 +437,25 @@ public class PluginManagerConfigurableNewLayout
                       }
                     }
                   }
-                  myAllTagSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
+                  myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
                 }
-                return myAllTagSorted;
-              case "repository:":
-                return UpdateSettings.getInstance().getPluginHosts();
-              case "sortBy:":
+                return myTagsSorted;
+              case "/sortBy:":
                 return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
+              case "/vendor:":
+                if (ContainerUtil.isEmpty(myVendorsSorted)) {
+                  Set<String> vendors = new HashSet<>();
+                  for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
+                    String vendor = StringUtil.trim(descriptor.getVendor());
+                    if (!StringUtil.isEmptyOrSpaces(vendor)) {
+                      vendors.add(vendor);
+                    }
+                  }
+                  myVendorsSorted = ContainerUtil.sorted(vendors, String::compareToIgnoreCase);
+                }
+                return myVendorsSorted;
+              case "/repository:":
+                return UpdateSettings.getInstance().getPluginHosts();
             }
             return null;
           }
@@ -403,6 +484,98 @@ public class PluginManagerConfigurableNewLayout
           }
         };
 
+        myMarketplaceSortByGroup = new DefaultActionGroup();
+
+        for (SortBySearchOption option : SortBySearchOption.values()) {
+          myMarketplaceSortByGroup.addAction(new MarketplaceSortByAction(option));
+        }
+
+        myMarketplaceSortByAction = new LinkComponent() {
+          @Override
+          protected boolean isInClickableArea(Point pt) {
+            return true;
+          }
+        };
+        myMarketplaceSortByAction.setIcon(new Icon() {
+          @Override
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+            getIcon().paintIcon(c, g, x, y + 1);
+          }
+
+          @Override
+          public int getIconWidth() {
+            return getIcon().getIconWidth();
+          }
+
+          @Override
+          public int getIconHeight() {
+            return getIcon().getIconHeight();
+          }
+
+          @NotNull
+          private Icon getIcon() {
+            return AllIcons.General.ButtonDropTriangle;
+          }
+        }); // TODO: icon
+        myMarketplaceSortByAction.setPaintUnderline(false);
+        myMarketplaceSortByAction.setIconTextGap(JBUI.scale(4));
+        myMarketplaceSortByAction.setHorizontalTextPosition(SwingConstants.LEFT);
+        myMarketplaceSortByAction.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
+
+        //noinspection unchecked
+        myMarketplaceSortByAction.setListener(
+          (component, __) -> showRightBottomPopup(component.getParent().getParent(), "Sort By", myMarketplaceSortByGroup), null);
+
+        myMarketplaceSortByCallback = updateAction -> {
+          MarketplaceSortByAction removeAction = null;
+          MarketplaceSortByAction addAction = null;
+
+          if (updateAction.myState) {
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+              MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
+              if (sortByAction != updateAction && sortByAction.myState) {
+                sortByAction.myState = false;
+                removeAction = sortByAction;
+                break;
+              }
+            }
+            addAction = updateAction;
+          }
+          else {
+            removeAction = updateAction;
+          }
+
+          List<String> queries = new ArrayList<>();
+          new SearchQueryParser.Marketplace(searchTextField.getText()) {
+            @Override
+            protected void setSearchQuery(@NotNull String query) {
+              super.setSearchQuery(query);
+              queries.add(query);
+            }
+
+            @Override
+            protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
+              super.handleAttribute(name, value, invert);
+              queries.add(name + ":" + value);
+            }
+          };
+          if (removeAction != null) {
+            queries.remove(removeAction.getQuery());
+          }
+          if (addAction != null) {
+            queries.add(addAction.getQuery());
+          }
+
+          String query = StringUtil.join(queries, " ");
+          searchTextField.setTextIgnoreEvents(query);
+          if (query.isEmpty()) {
+            myMarketplaceTab.hideSearchPanel();
+          }
+          else {
+            myMarketplaceTab.showSearchPanel(query);
+          }
+        };
+
         PluginsGroupComponentWithProgress panel =
           new PluginsGroupComponentWithProgress(new PluginListLayout(), new MultiSelectionEventHandler(), myNameListener,
                                                 PluginManagerConfigurableNewLayout.this.mySearchListener,
@@ -420,7 +593,18 @@ public class PluginManagerConfigurableNewLayout
                 Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
                 Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
 
-                SearchQueryParser.Trending parser = new SearchQueryParser.Trending(query);
+                SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
+
+                // TODO: parser.vendors on server
+                if (!parser.vendors.isEmpty()) {
+                  for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
+                    if (parser.vendors.contains(StringUtil.trim(descriptor.getVendor()))) {
+                      result.descriptors.add(descriptor);
+                    }
+                  }
+                  result.sortByName();
+                  return;
+                }
 
                 if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
@@ -467,6 +651,21 @@ public class PluginManagerConfigurableNewLayout
 
                   result.descriptors.addAll(0, builtinList);
                 }
+
+                if (!result.descriptors.isEmpty()) {
+                  String title = "Sort By";
+
+                  for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+                    MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
+                    sortByAction.setState(parser);
+                    if (sortByAction.myState) {
+                      title = "Sort By: " + sortByAction.myOption.name();
+                    }
+                  }
+
+                  myMarketplaceSortByAction.setText(title);
+                  result.addRightAction(myMarketplaceSortByAction);
+                }
               }
               catch (IOException e) {
                 PluginManagerMain.LOG.info(e);
@@ -483,7 +682,25 @@ public class PluginManagerConfigurableNewLayout
   }
 
   private void createInstalledTab() {
+    myInstalledSearchGroup = new DefaultActionGroup();
+
+    for (InstalledSearchOption option : InstalledSearchOption.values()) {
+      myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
+    }
+
     myInstalledTab = new PluginsTab() {
+      @Override
+      protected void createSearchTextField() {
+        super.createSearchTextField();
+
+        JBTextField textField = mySearchTextField.getTextEditor();
+        textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
+          .create(AllIcons.Actions.More, AllIcons.Actions.More, "Search Options", // TODO: icon
+                  () -> showRightBottomPopup(textField, "Show", myInstalledSearchGroup)));
+        textField.putClientProperty("JTextField.variant", null);
+        textField.putClientProperty("JTextField.variant", "search");
+      }
+
       @NotNull
       @Override
       protected PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
@@ -595,6 +812,16 @@ public class PluginManagerConfigurableNewLayout
         selectionListener.accept(myInstalledPanel);
       }
 
+      @Override
+      public void hideSearchPanel() {
+        super.hideSearchPanel();
+        if (myInstalledSearchSetState) {
+          for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+            ((InstalledSearchOptionAction)action).setState(null);
+          }
+        }
+      }
+
       @NotNull
       @Override
       protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
@@ -603,13 +830,14 @@ public class PluginManagerConfigurableNewLayout
           @NotNull
           @Override
           protected List<String> getAttributes() {
-            return ContainerUtil.list("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
+            return ContainerUtil
+              .list("/disabled", "/enabled", "/bundled", "/custom", "/inactive", "/invalid", "/outdated", "/uninstalled", "/vendor:");
           }
 
           @Nullable
           @Override
           protected List<String> getValues(@NotNull String attribute) {
-            return null;
+            return "/vendor:".equals(attribute) ? myPluginModel.getVendors() : null;
           }
 
           @Override
@@ -636,48 +864,122 @@ public class PluginManagerConfigurableNewLayout
         panel.setSelectionListener(selectionListener);
         PluginManagerConfigurableNew.registerCopyProvider(panel);
 
+        myInstalledSearchCallback = () -> {
+          StringBuilder queryBuilder = new StringBuilder();
+
+          for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+            InstalledSearchOptionAction optionAction = (InstalledSearchOptionAction)action;
+
+            if (optionAction.myState) {
+              if (queryBuilder.length() > 0) {
+                queryBuilder.append(" ");
+              }
+
+              switch (optionAction.myOption) {
+                case Enabled:
+                  queryBuilder.append("/enabled");
+                  break;
+                case Disabled:
+                  queryBuilder.append("/disabled");
+                  break;
+                case Custom:
+                  queryBuilder.append("/custom");
+                  break;
+                case Bundled:
+                  queryBuilder.append("/bundled");
+                  break;
+                case Invalid:
+                  queryBuilder.append("/invalid");
+                  break;
+                case NeedUpdate:
+                  queryBuilder.append("/outdated");
+                  break;
+                case Deleted:
+                  queryBuilder.append("/uninstalled");
+                  break;
+                case NeedRestart:
+                  queryBuilder.append("/inactive");
+                  break;
+              }
+            }
+          }
+
+          try {
+            myInstalledSearchSetState = false;
+
+            String query = queryBuilder.toString();
+            searchTextField.setTextIgnoreEvents(query);
+            if (query.isEmpty()) {
+              myInstalledTab.hideSearchPanel();
+            }
+            else {
+              myInstalledTab.showSearchPanel(query);
+            }
+          }
+          finally {
+            myInstalledSearchSetState = true;
+          }
+        };
+
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
             InstalledPluginsState state = InstalledPluginsState.getInstance();
-            SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
+            SearchQueryParser.InstalledWithVendor parser = new SearchQueryParser.InstalledWithVendor(query);
 
-            for (UIPluginGroup uiGroup : myInstalledPanel.getGroups()) {
-              for (CellPluginComponent plugin : uiGroup.plugins) {
-                if (parser.attributes) {
-                  if (parser.enabled != null && parser.enabled != myPluginModel.isEnabled(plugin.myPlugin)) {
-                    continue;
-                  }
-                  if (parser.bundled != null && parser.bundled != plugin.myPlugin.isBundled()) {
-                    continue;
-                  }
-                  if (parser.invalid != null && parser.invalid != myPluginModel.hasErrors(plugin.myPlugin)) {
-                    continue;
-                  }
-                  if (parser.deleted != null) {
-                    if (plugin.myPlugin instanceof IdeaPluginDescriptorImpl) {
-                      if (parser.deleted != ((IdeaPluginDescriptorImpl)plugin.myPlugin).isDeleted()) {
+            if (myInstalledSearchSetState) {
+              for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+                ((InstalledSearchOptionAction)action).setState(parser);
+              }
+            }
+
+            if (parser.vendors.isEmpty()) {
+              for (UIPluginGroup uiGroup : myInstalledPanel.getGroups()) {
+                for (CellPluginComponent plugin : uiGroup.plugins) {
+                  if (parser.attributes) {
+                    if (parser.enabled != null && parser.enabled != myPluginModel.isEnabled(plugin.myPlugin)) {
+                      continue;
+                    }
+                    if (parser.bundled != null && parser.bundled != plugin.myPlugin.isBundled()) {
+                      continue;
+                    }
+                    if (parser.invalid != null && parser.invalid != myPluginModel.hasErrors(plugin.myPlugin)) {
+                      continue;
+                    }
+                    if (parser.deleted != null) {
+                      if (plugin.myPlugin instanceof IdeaPluginDescriptorImpl) {
+                        if (parser.deleted != ((IdeaPluginDescriptorImpl)plugin.myPlugin).isDeleted()) {
+                          continue;
+                        }
+                      }
+                      else if (parser.deleted) {
                         continue;
                       }
                     }
-                    else if (parser.deleted) {
+                    PluginId pluginId = plugin.myPlugin.getPluginId();
+                    if (parser.needUpdate != null && parser.needUpdate != state.hasNewerVersion(pluginId)) {
                       continue;
                     }
+                    if (parser.needRestart != null) {
+                      if (parser.needRestart != (state.wasInstalled(pluginId) || state.wasUpdated(pluginId))) {
+                        continue;
+                      }
+                    }
                   }
-                  PluginId pluginId = plugin.myPlugin.getPluginId();
-                  if (parser.needUpdate != null && parser.needUpdate != state.hasNewerVersion(pluginId)) {
+                  if (parser.searchQuery != null && !StringUtil.containsIgnoreCase(plugin.myPlugin.getName(), parser.searchQuery)) {
                     continue;
                   }
-                  if (parser.needRestart != null) {
-                    if (parser.needRestart != (state.wasInstalled(pluginId) || state.wasUpdated(pluginId))) {
-                      continue;
-                    }
+                  result.descriptors.add(plugin.myPlugin);
+                }
+              }
+            }
+            else {
+              for (UIPluginGroup uiGroup : myInstalledPanel.getGroups()) {
+                for (CellPluginComponent plugin : uiGroup.plugins) {
+                  if (parser.vendors.contains(StringUtil.trim(plugin.myPlugin.getVendor()))) {
+                    result.descriptors.add(plugin.myPlugin);
                   }
                 }
-                if (parser.searchQuery != null && !StringUtil.containsIgnoreCase(plugin.myPlugin.getName(), parser.searchQuery)) {
-                  continue;
-                }
-                result.descriptors.add(plugin.myPlugin);
               }
             }
           }
@@ -686,6 +988,136 @@ public class PluginManagerConfigurableNewLayout
         return myInstalledSearchPanel;
       }
     };
+  }
+
+  private enum SortBySearchOption {
+    Downloads, Name, Rating, Relevance, Updated
+  }
+
+  private class MarketplaceSortByAction extends ToggleAction {
+    private final SortBySearchOption myOption;
+    private boolean myState;
+
+    private MarketplaceSortByAction(@NotNull SortBySearchOption option) {
+      super(option.name());
+      myOption = option;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myState;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myState = state;
+      myMarketplaceSortByCallback.accept(this);
+    }
+
+    public void setState(@NotNull SearchQueryParser.Marketplace parser) {
+      if (parser.sortBy == null) {
+        myState = myOption == SortBySearchOption.Relevance;
+      }
+      else if (myOption == SortBySearchOption.Relevance) {
+        myState = "featured".equals(parser.sortBy);
+      }
+      else {
+        myState = myOption.name().equalsIgnoreCase(parser.sortBy);
+      }
+    }
+
+    @NotNull
+    public String getQuery() {
+      switch (myOption) {
+        case Downloads:
+          return "/sortBy:downloads";
+        case Name:
+          return "/sortBy:name";
+        case Rating:
+          return "/sortBy:rating";
+        case Updated:
+          return "/sortBy:updated";
+        case Relevance:
+        default:
+          return "/sortBy:featured";
+      }
+    }
+  }
+
+  private enum InstalledSearchOption {
+    Enabled, Disabled, Custom, Bundled, Invalid, NeedUpdate, Deleted, NeedRestart
+  }
+
+  private class InstalledSearchOptionAction extends ToggleAction {
+    private final InstalledSearchOption myOption;
+    private boolean myState;
+
+    private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
+      myOption = option;
+
+      String text;
+      if (option == InstalledSearchOption.Custom) {
+        text = "Downloaded";
+      }
+      else if (option == InstalledSearchOption.NeedUpdate) {
+        text = "Update available";
+      }
+      else if (option == InstalledSearchOption.NeedRestart) {
+        text = "Installed or Updated";
+      }
+      else {
+        text = option.name();
+      }
+      getTemplatePresentation().setText(text);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myState;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myState = state;
+      myInstalledSearchCallback.run();
+    }
+
+    public void setState(@Nullable SearchQueryParser.Installed parser) {
+      if (parser == null) {
+        myState = false;
+        return;
+      }
+
+      switch (myOption) {
+        case Enabled:
+          myState = parser.enabled != null && parser.enabled;
+          break;
+        case Disabled:
+          myState = parser.enabled != null && !parser.enabled;
+          break;
+        case Custom:
+          myState = parser.bundled != null && !parser.bundled;
+          break;
+        case Bundled:
+          myState = parser.bundled != null && parser.bundled;
+          break;
+        case Invalid:
+          myState = parser.invalid != null && parser.invalid;
+          break;
+        case NeedUpdate:
+          myState = parser.needUpdate != null && parser.needUpdate;
+          break;
+        case Deleted:
+          myState = parser.deleted != null && parser.deleted;
+          break;
+        case NeedRestart:
+          myState = parser.needRestart != null && parser.needRestart;
+          break;
+      }
+    }
+  }
+
+  private static class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
   }
 
   private class ChangePluginStateAction extends AnAction {

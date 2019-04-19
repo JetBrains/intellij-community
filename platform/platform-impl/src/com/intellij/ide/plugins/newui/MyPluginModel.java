@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -37,6 +38,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private PluginsGroup myInstalling;
   private PluginsGroup myUpdates;
   private Configurable.TopComponentController myTopController;
+  private List<String> myVendorsSorted;
 
   private static final Set<IdeaPluginDescriptor> myInstallingPlugins = new HashSet<>();
   private static final Set<IdeaPluginDescriptor> myInstallingWithUpdatesPlugins = new HashSet<>();
@@ -387,6 +389,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       return;
     }
 
+    myVendorsSorted = null;
+
     if (myDownloaded.ui == null) {
       myDownloaded.descriptors.add(descriptor);
       myDownloaded.titleWithEnabled(this);
@@ -410,6 +414,23 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       myDownloadedPanel.setSelection(myDownloaded.ui.plugins.get(myDownloaded.descriptors.indexOf(descriptor)));
       myDownloadedPanel.doLayout();
     }
+  }
+
+  @NotNull
+  public List<String> getVendors() {
+    if (ContainerUtil.isEmpty(myVendorsSorted)) {
+      assert myDownloaded != null;
+
+      Set<String> vendors = new HashSet<>();
+      for (IdeaPluginDescriptor descriptor : myDownloaded.descriptors) {
+        String vendor = StringUtil.trim(descriptor.getVendor());
+        if (!StringUtil.isEmptyOrSpaces(vendor)) {
+          vendors.add(vendor);
+        }
+      }
+      myVendorsSorted = ContainerUtil.sorted(vendors, String::compareToIgnoreCase);
+    }
+    return myVendorsSorted;
   }
 
   public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {

@@ -112,7 +112,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     }
   }
 
-  private static final Color SECTION_HEADER_FOREGROUND =
+  public static final Color SECTION_HEADER_FOREGROUND =
     JBColor.namedColor("Plugins.SectionHeader.foreground", new JBColor(0x787878, 0x999999));
   private static final Color SECTION_HEADER_BACKGROUND =
     JBColor.namedColor("Plugins.SectionHeader.background", new JBColor(0xF7F7F7, 0x3C3F41));

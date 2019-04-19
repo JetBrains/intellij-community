@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.newui.CellPluginComponent;
-import com.intellij.ide.plugins.newui.TextHorizontalLayout;
 import com.intellij.ui.components.labels.LinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,18 +14,19 @@ import javax.swing.*;
  */
 public class LinkPanel {
   private final JLabel myTextLabel = new JLabel();
-  private final JLabel myLinkLabel = createLink();
+  private final JLabel myLinkLabel;
   private Runnable myRunnable;
 
-  public LinkPanel(@NotNull JPanel parent) {
+  public LinkPanel(@NotNull JPanel parent, boolean icon, @Nullable Object labelConstraints, @Nullable Object linkConstraints) {
+    myLinkLabel = createLink(icon);
     myTextLabel.setForeground(CellPluginComponent.GRAY_COLOR);
-    parent.add(myTextLabel, TextHorizontalLayout.FIX_LABEL);
-    parent.add(myLinkLabel);
+    parent.add(myTextLabel, labelConstraints);
+    parent.add(myLinkLabel, linkConstraints);
   }
 
   @NotNull
-  private JLabel createLink() {
-    LinkLabel<Object> linkLabel = new LinkLabel<>(null, AllIcons.Ide.External_link_arrow, (__, ___) -> myRunnable.run());
+  private JLabel createLink(boolean icon) {
+    LinkLabel<Object> linkLabel = new LinkLabel<>(null, icon ? AllIcons.Ide.External_link_arrow : null, (__, ___) -> myRunnable.run());
     linkLabel.setIconTextGap(0);
     linkLabel.setHorizontalTextPosition(SwingConstants.LEFT);
     return linkLabel;

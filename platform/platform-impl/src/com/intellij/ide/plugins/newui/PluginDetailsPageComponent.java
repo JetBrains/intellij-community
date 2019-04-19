@@ -132,7 +132,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
     if (!myMarketplace) {
-      myErrorComponent = ErrorComponent.create(centerPanel, VerticalLayout.FILL_HORIZONTAL);
+      myErrorComponent = ErrorComponent.create(centerPanel, false, VerticalLayout.FILL_HORIZONTAL);
     }
     createMetricsPanel(centerPanel);
 
@@ -208,9 +208,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myDownloads =
         GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
     }
-    myVendor = new LinkPanel(panel1);
+    myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUI.scale(7)));
+    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)));
     if (myMarketplace) {
       panel2.add(myTagPanel = new TagPanel(mySearchListener));
     }
@@ -251,7 +251,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       bottomPanel.add(mySize = new JLabel());
     }
 
-    myHomePage = new LinkPanel(bottomPanel);
+    myHomePage = new LinkPanel(bottomPanel, true, null, null);
   }
 
   public void showPlugin(@Nullable CellPluginComponent component) {
@@ -354,7 +354,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myVendor.hide();
     }
     else {
-      myVendor.show(vendor, null); // TODO: link for search
+      myVendor.show(vendor, () -> mySearchListener
+        .linkSelected(null, "/vendor:" + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
     }
 
     if (bundled) {

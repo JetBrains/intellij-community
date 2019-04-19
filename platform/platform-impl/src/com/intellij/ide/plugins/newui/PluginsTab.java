@@ -38,7 +38,7 @@ public abstract class PluginsTab {
 
   private PluginDetailsPageComponent myDetailsPage;
   private MultiPanel myCardPanel;
-  private PluginSearchTextField mySearchTextField;
+  protected PluginSearchTextField mySearchTextField;
   private SearchResultPanel mySearchPanel;
 
   public final LinkListener<Object> mySearchListener = (__, data) -> {
@@ -47,7 +47,7 @@ public abstract class PluginsTab {
       query = (String)data;
     }
     else if (data instanceof TagComponent) {
-      query = SearchQueryParser.getTagQuery(((TagComponent)data).getText());
+      query = "/" + SearchQueryParser.getTagQuery(((TagComponent)data).getText());
     }
     else {
       return;
@@ -73,13 +73,9 @@ public abstract class PluginsTab {
       @Override
       public void addNotify() {
         super.addNotify();
-        EventHandler.addGlobalAction(mySearchTextField, new CustomShortcutSet(KeyStroke.getKeyStroke("meta alt F")), () -> {
-          IdeFocusManager.getGlobalInstance()
-            .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true));
-          if (mySearchPanel.controller != null) {
-            showSearchPopup();
-          }
-        });
+        EventHandler.addGlobalAction(mySearchTextField, new CustomShortcutSet(KeyStroke.getKeyStroke("meta alt F")),
+                                     () -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+                                       () -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true)));
       }
 
       @Override
@@ -115,7 +111,7 @@ public abstract class PluginsTab {
     return splitter;
   }
 
-  private void createSearchTextField() {
+  protected void createSearchTextField() {
     mySearchTextField = new PluginSearchTextField() {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent event) {
@@ -239,7 +235,7 @@ public abstract class PluginsTab {
     mySearchPanel.setQuery(query);
   }
 
-  private void hideSearchPanel() {
+  public void hideSearchPanel() {
     if (!mySearchPanel.isEmpty()) {
       myCardPanel.select(0, true);
       mySearchPanel.setQuery("");

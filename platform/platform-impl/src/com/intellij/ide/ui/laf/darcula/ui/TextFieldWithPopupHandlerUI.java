@@ -535,6 +535,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         }
       }
       else if ("search".equals(variant)) {
+        Object extension = getComponent().getClientProperty("search.extension");
+        if (extension instanceof Extension) {
+          addExtension((Extension)extension);
+        }
         addExtension(new SearchExtension());
         addExtension(new ClearExtension());
       }
