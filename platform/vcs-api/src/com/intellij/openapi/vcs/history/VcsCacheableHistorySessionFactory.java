@@ -26,15 +26,31 @@ import java.util.List;
  * @author irengrig
  */
 public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializable, T extends VcsAbstractHistorySession> {
-  /**
-   * define if path should be changed for session construction (file can be moved)
-   */
-  @Nullable
-  FilePath getUsedFilePath(final T session);
-  @Nullable
-  Cacheable getAddinionallyCachedData(final T session);
+
   T createFromCachedData(@Nullable final Cacheable cacheable,
                          @NotNull final List<VcsFileRevision> revisions,
                          @NotNull final FilePath filePath,
                          @Nullable final VcsRevisionNumber currentRevision);
+
+  /**
+   * define if path should be changed for session construction (file can be moved)
+   */
+  @Nullable
+  default FilePath getUsedFilePath(final T session) {
+    return null;
+  }
+
+  @Nullable
+  default Cacheable getAdditionallyCachedData(final T session) {
+    return getAddinionallyCachedData(session);
+  }
+
+  /**
+   * @Deprecated implement getAdditionallyCachedData
+   */
+  @Deprecated
+  @Nullable
+  default Cacheable getAddinionallyCachedData(final T session) {
+    return null;
+  }
 }
