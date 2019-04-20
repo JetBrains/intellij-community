@@ -270,10 +270,6 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitRedirectionList(@NotNull BashRedirectionList o) {
-    visitCompositeElement(o);
-  }
-
   public void visitSelectCommand(@NotNull BashSelectCommand o) {
     visitCommand(o);
   }

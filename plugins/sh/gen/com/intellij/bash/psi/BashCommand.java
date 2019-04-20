@@ -13,7 +13,7 @@ public interface BashCommand extends BashCompositeElement {
   @Nullable
   BashHeredoc getHeredoc();
 
-  @Nullable
-  BashRedirectionList getRedirectionList();
+  @NotNull
+  List<BashRedirection> getRedirectionList();
 
 }

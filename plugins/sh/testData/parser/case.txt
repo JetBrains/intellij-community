@@ -631,12 +631,11 @@ BASH_FILE
                                 PsiElement(var)('$n')
                       PsiElement())(')')
                     PsiWhiteSpace(' ')
-                    REDIRECTION_LIST
-                      REDIRECTION
-                        NUMBER
-                          PsiElement(int)('2')
-                        PsiElement(>)('>')
-                        PsiElement(word)('/dev/null')
+                    REDIRECTION
+                      NUMBER
+                        PsiElement(int)('2')
+                      PsiElement(>)('>')
+                      PsiElement(word)('/dev/null')
             PsiElement(`)('`')
           PsiWhiteSpace(' ')
           PsiElement(in)('in')

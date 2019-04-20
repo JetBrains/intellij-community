@@ -118,154 +118,7 @@ private file ::=
   shebang? newlines
   simple_list
 
-private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
-private word_list ::= w+
-private w ::= word | string | number | not_lvalue
-private not_lvalue ::= '!' | vars | '$' | bash_expansion | 'file descriptor'
-
-redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
-private redirection_inner ::= ('<&' | '>&') (number | '-')
-                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
-
-number ::= int | hex | octal {extends=literal}
-string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
-  pin(".*")=1
-  methods=[getReferences]
-  extends=literal
-}
-
-variable ::= var {extends=literal}
-private vars ::= variable | composed_var | command_substitution_command
-private composed_var ::= '$' &('(' | '((' | '{' | ARITH_SQUARE_LEFT) composed_var_inner {pin=2}
-private composed_var_inner ::= arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion
-private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
-shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
-bash_expansion ::= '{' (word | bash_expansion)* '}'
-
-command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
-
-conditional_command ::=  '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
-                       | '['  condition* ( ']'|']]' <<differentBracketsWarning>>) {pin(".*")=1}
-process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
-
-literal ::= word | string | number | variable {extends=simple_command_element}
-simple_command_element ::= simple_command_element_inner
-private simple_command_element_inner ::=  literal assignment_command?
-                                        | not_lvalue
-                                        | redirection
-                                        | composed_var
-                                        | heredoc
-                                        | conditional_command
-                                        | command_substitution_command
-                                        | arithmetic_expansion
-                                        | old_arithmetic_expansion {pin(".*")=1}
-
-assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
-array_assignment ::= newlines '='? expression newlines
-
-heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-            HEREDOC_CONTENT*
-            (HEREDOC_MARKER_END | <<eof>>)
-private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
-
-arithmetic_expansion ::= '((' expression? '))' {pin=1}
-old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression? ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
-private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
-private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
-left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
-                            {'=' <<parseUntilSpace literal >>}* {pin=0}
-
-redirection_list ::= redirection redirection*
-simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
-  pin=1
-  methods=[getReferences]
-}
-generic_command_directive ::= simple_command_element_inner {extends=simple_command}
-
-command ::= shell_command [heredoc | redirection_list]
-          | include_command
-          | simple_command
-
-include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
-include_directive ::= &('source' | '.') word {extends=generic_command_directive}
-
-shell_command ::=   for_command
-                  | case_command
-                  | while_command
-                  | until_command
-                  | select_command
-                  | if_command
-                  | subshell_command
-                  | block
-                  | function_definition
-
-private any_block ::= block | do_block
-do_block ::= do  block_compound_list done {pin(".*")=1 extends=block}
-block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
-
-while_command ::= while block_compound_list do_block
-until_command ::= until block_compound_list do_block
-
-block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list newlines {
-  pin(".*")=1
-  elementType=compound_list
-  recoverWhile=block_compound_list_recover
-}
-private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done)
-
-select_command ::= select w select_expression newlines any_block
-private select_expression ::=  in_clause | list_terminator?
-
-for_command ::= for for_clause any_block
-for_clause ::= arithmetic_for_clause | in_for_clause
-private in_for_clause ::= w (';' newlines | newlines in_clause?)
-private arithmetic_for_clause ::= '((' arithmetic_for_expression '))' list_terminator? newlines
-private arithmetic_for_expression ::= expression? ';' newlines expression? ';' newlines expression? {recoverWhile=arithmetic_for_expression_recover}
-private arithmetic_for_expression_recover ::= !('))')
-
-private in_clause ::= "in" word_list list_terminator newlines
-
-list_terminator ::= '\n' | ';' {recoverWhile = any_block_recover}
-private any_block_recover ::= !(do | '{' | '\n')
-
-function_definition ::= &(function | word '(') function_definition_inner {extends=command}
-private function_definition_inner ::=           word argument_list  newlines block
-                                     | function word argument_list? newlines block {pin(".*")="function|argument_list"}
-private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
-private argument_list_recover ::= !('\n'| '{')
-
-subshell_command ::= '(' list ')'
-
-if_command ::= if compound_list then_clause
-               elif_clause*
-               else_clause?
-               fi
-
-elif_clause ::= elif compound_list then_clause
-else_clause ::= else compound_list
-then_clause ::= then compound_list
-
-compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile = compound_list_recover}
-private compound_list_recover ::= !(elif | else | then | fi)
-
-case_command ::= case w+ in case_clause_list esac
-private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1 recoverWhile = case_clause_recover}
-case_clause ::= newlines pattern ')' (compound_case_list|newlines) {pin=3}
-compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
-
-pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
-private case_pattern_recover ::= !(')'|';;'|esac)
-private case_clause_recover ::= !(esac)
-
-list               ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
-private nl ::= '\n'+
-private end_of_list ::= '\n' | ';' | '&'
-
-private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
-  pin=1
-} // todo with pin
-private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
 commands_list ::= pipeline_command (
                      '&&' newlines? pipeline_command
@@ -279,18 +132,194 @@ pipeline_command ::=  '!'? pipeline
                     | '!' timespec pipeline
                     | trap_command
                     | let_command {recoverWhile=pipeline_recover}
-
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'|
                                '\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
-
 let_command ::= let expression
+time_opt ::= '-p'
+timespec ::= time time_opt?
+trap_command ::= trap literal*
 
 pipeline ::= command (('|&'|'|') newlines command)* {pin(".*")=1}
 
-time_opt ::= '-p'
-timespec ::= time time_opt?
+command ::= shell_command [heredoc | redirection+]
+          | include_command
+          | simple_command
 
-trap_command ::= trap literal*
+
+
+redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
+private redirection_inner ::= ('<&' | '>&') (number | '-')
+                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
+process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
+
+
+
+include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
+include_directive ::= &('source' | '.') word {extends=generic_command_directive}
+
+
+
+
+shell_command ::=   for_command
+                  | case_command
+                  | while_command
+                  | until_command
+                  | select_command
+                  | if_command
+                  | subshell_command
+                  | block
+                  | function_definition
+
+//FOR COMMAND
+for_command ::= for for_clause any_block
+for_clause ::= arithmetic_for_clause | in_for_clause
+private in_for_clause ::= w (';' newlines | newlines in_clause?)
+private arithmetic_for_clause ::= '((' arithmetic_for_expression '))' list_terminator? newlines
+private arithmetic_for_expression ::= expression? ';' newlines expression? ';' newlines expression? {recoverWhile=arithmetic_for_expression_recover}
+private arithmetic_for_expression_recover ::= !('))')
+
+//SELECT COMMAND
+select_command ::= select w select_expression newlines any_block
+private select_expression ::=  in_clause | list_terminator?
+
+private in_clause ::= "in" w+ list_terminator newlines
+list_terminator ::= '\n' | ';' {recoverWhile = list_terminator_recover}
+private list_terminator_recover ::= !(do | '{' | '\n')
+
+//WHILE COMMAND
+while_command ::= while block_compound_list do_block
+
+//UNTIL COMMAND
+until_command ::= until block_compound_list do_block
+
+//CASE COMMAND
+case_command ::= case w+ in case_clause_list esac
+private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1 recoverWhile = case_clause_recover}
+private case_clause_recover ::= !(esac)
+
+case_clause ::= newlines pattern ')' (compound_case_list|newlines) {pin=3}
+compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
+private case_pattern_recover ::= !(')'|';;'|esac)
+
+//IF COMMAND
+if_command ::= if compound_list then_clause
+               elif_clause*
+               else_clause?
+               fi
+
+elif_clause ::= elif compound_list then_clause
+else_clause ::= else compound_list
+then_clause ::= then compound_list
+
+compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile = compound_list_recover}
+private compound_list_recover ::= !(elif | else | then | fi)
+
+private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
+  pin=1
+} // todo with pin
+private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
+
+
+//FUNCTION
+function_definition ::= &(function | word '(') function_definition_inner {extends=command}
+private function_definition_inner ::=           word argument_list  newlines block
+                                     | function word argument_list? newlines block {pin(".*")="function|argument_list"}
+private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
+private argument_list_recover ::= !('\n'| '{')
+
+//CONDITIONALCOMMAND
+conditional_command ::=  '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
+                       | '['  condition* ( ']'|']]' <<differentBracketsWarning>>) {pin(".*")=1}
+
+//BLOCK
+private any_block ::= block | do_block
+do_block ::= do  block_compound_list done {pin(".*")=1 extends=block}
+block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
+
+block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list newlines {
+  pin(".*")=1
+  elementType=compound_list
+  recoverWhile=block_compound_list_recover
+}
+private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done)
+
+
+
+
+simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
+  pin=1
+  methods=[getReferences]
+}
+generic_command_directive ::= simple_command_element_inner {extends=simple_command}
+simple_command_element ::= simple_command_element_inner
+private simple_command_element_inner ::=  literal assignment_command?
+                                        | not_lvalue
+                                        | redirection
+                                        | composed_var
+                                        | heredoc
+                                        | conditional_command
+                                        | command_substitution_command
+                                        | arithmetic_expansion
+                                        | old_arithmetic_expansion {pin(".*")=1}
+
+//HEREDOC
+heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
+            HEREDOC_CONTENT*
+            (HEREDOC_MARKER_END | <<eof>>)
+private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
+
+//VARS
+private vars ::= variable | composed_var | command_substitution_command
+private composed_var ::= '$' &('(' | '((' | '{' | ARITH_SQUARE_LEFT) composed_var_inner {pin=2}
+private composed_var_inner ::= arithmetic_expansion
+                              | old_arithmetic_expansion
+                              | subshell_command
+                              | shell_parameter_expansion
+
+//COMMAND SUBSTITUTION
+command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
+
+//ARITHMETIC EXPANSION
+arithmetic_expansion ::= '((' expression? '))' {pin=1}
+
+//OLD ARITHMETIC EXPANSION
+old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression? ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
+private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
+private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
+
+//SUBSHELL COMMAND
+subshell_command ::= '(' list ')'
+list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+private nl ::= '\n'+
+private end_of_list ::= '\n' | ';' | '&'
+
+//PARAMETER EXPANSION
+shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
+
+//ASSIGNMENT
+left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
+                            {'=' <<parseUntilSpace literal >>}* {pin=0}
+assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
+array_assignment ::= newlines '='? expression newlines
+
+
+
+literal ::= word | string | number | variable {extends=simple_command_element}
+private not_lvalue ::= '!' | vars | '$' | bash_expansion | 'file descriptor'
+bash_expansion ::= '{' (word | bash_expansion)* '}'
+variable ::= var {extends=literal}
+
+number ::= int | hex | octal {extends=literal}
+string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
+  pin(".*")=1
+  methods=[getReferences]
+  extends=literal
+}
+private w ::= word | string | number | not_lvalue
+private newlines ::= '\n'*
+
+
 
 expression ::=
     comma_expression

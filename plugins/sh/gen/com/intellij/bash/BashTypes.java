@@ -75,7 +75,6 @@ public interface BashTypes {
   IElementType PRE_EXPRESSION = new BashCompositeElementType("PRE_EXPRESSION");
   IElementType PROCESS_SUBSTITUTION = new BashCompositeElementType("PROCESS_SUBSTITUTION");
   IElementType REDIRECTION = new BashCompositeElementType("REDIRECTION");
-  IElementType REDIRECTION_LIST = new BashCompositeElementType("REDIRECTION_LIST");
   IElementType SELECT_COMMAND = new BashCompositeElementType("SELECT_COMMAND");
   IElementType SHELL_COMMAND = new BashCompositeElementType("SHELL_COMMAND");
   IElementType SHELL_PARAMETER_EXPANSION = new BashCompositeElementType("SHELL_PARAMETER_EXPANSION");
@@ -382,9 +381,6 @@ public interface BashTypes {
       }
       else if (type == REDIRECTION) {
         return new BashRedirectionImpl(node);
-      }
-      else if (type == REDIRECTION_LIST) {
-        return new BashRedirectionListImpl(node);
       }
       else if (type == SELECT_COMMAND) {
         return new BashSelectCommandImpl(node);

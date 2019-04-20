@@ -37,12 +37,11 @@ BASH_FILE
                       PsiWhiteSpace('  ')
                       PsiElement(})('}')
                     PsiWhiteSpace(' ')
-                    REDIRECTION_LIST
-                      REDIRECTION
-                        PsiElement(>)('>')
-                        PsiWhiteSpace(' ')
-                        VARIABLE
-                          PsiElement(var)('$out_dir')
-                        PsiElement(word)('/kernel.txt')
+                    REDIRECTION
+                      PsiElement(>)('>')
+                      PsiWhiteSpace(' ')
+                      VARIABLE
+                        PsiElement(var)('$out_dir')
+                      PsiElement(word)('/kernel.txt')
               PsiElement(\n)('\n')
             PsiElement(})('}')

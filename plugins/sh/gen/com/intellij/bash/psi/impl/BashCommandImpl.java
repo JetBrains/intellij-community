@@ -38,9 +38,9 @@ public class BashCommandImpl extends BashCompositeElementImpl implements BashCom
   }
 
   @Override
-  @Nullable
-  public BashRedirectionList getRedirectionList() {
-    return findChildByClass(BashRedirectionList.class);
+  @NotNull
+  public List<BashRedirection> getRedirectionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashRedirection.class);
   }
 
 }

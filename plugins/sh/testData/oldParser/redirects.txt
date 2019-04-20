@@ -86,12 +86,11 @@ BASH_FILE
                       PsiElement(word)('echo')
             PsiElement())(')')
           PsiWhiteSpace(' ')
-          REDIRECTION_LIST
-            REDIRECTION
-              NUMBER
-                PsiElement(int)('2')
-              PsiElement(>)('>')
-              PsiElement(word)('OUT')
+          REDIRECTION
+            NUMBER
+              PsiElement(int)('2')
+            PsiElement(>)('>')
+            PsiElement(word)('OUT')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

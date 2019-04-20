@@ -624,16 +624,15 @@ BASH_FILE
                       PsiWhiteSpace('        ')
                       PsiElement())(')')
                     PsiWhiteSpace(' ')
-                    REDIRECTION_LIST
-                      REDIRECTION
-                        PsiElement(>)('>')
-                        PsiWhiteSpace(' ')
-                        STRING
-                          PsiElement(")('"')
-                          VARIABLE
-                            PsiElement(var)('$PACKAGE_DIR')
-                          PsiElement(word)('/Main.java')
-                          PsiElement(")('"')
+                    REDIRECTION
+                      PsiElement(>)('>')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(")('"')
+                        VARIABLE
+                          PsiElement(var)('$PACKAGE_DIR')
+                        PsiElement(word)('/Main.java')
+                        PsiElement(")('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('        ')
               PIPELINE_COMMAND

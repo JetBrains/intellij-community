@@ -66,10 +66,9 @@ BASH_FILE
                       PsiWhiteSpace('  ')
                       PsiElement(fi)('fi')
                     PsiWhiteSpace(' ')
-                    REDIRECTION_LIST
-                      REDIRECTION
-                        PsiElement(>)('>')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('a')
+                    REDIRECTION
+                      PsiElement(>)('>')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('a')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
