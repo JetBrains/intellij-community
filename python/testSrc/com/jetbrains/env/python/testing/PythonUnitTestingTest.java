@@ -53,7 +53,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author traff
  */
-@Staging //Disabled temporary because of race conditions
 public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUnitTestProcessRunner> {
 
   @Test(expected = RuntimeConfigurationWarning.class)
