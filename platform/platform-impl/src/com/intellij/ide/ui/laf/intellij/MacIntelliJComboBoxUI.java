@@ -4,14 +4,11 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,45 +132,11 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     }
     return new CustomComboPopup(comboBox) {
       @Override
-      protected void configurePopup() {
-        super.configurePopup();
-        setBorderPainted(false);
-        setBorder(JBUI.Borders.empty());
-        setBackground(Gray.xFF);
-      }
-
-      @Override
       protected void configureList() {
         super.configureList();
         list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
       }
-
-      @SuppressWarnings("unchecked")
-      @Override
-      protected void wrapRenderer() {
-        ListCellRenderer<Object> renderer = list.getCellRenderer();
-        if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
-          list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
-        }
-      }
     };
-  }
-
-  private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
-    private final ListCellRenderer<Object> myRenderer;
-
-    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
-      myRenderer = renderer;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(JBUI.Borders.empty(0, 8));
-      panel.setBackground(c.getBackground());
-      c.setBackground(UIUtil.TRANSPARENT_COLOR);
-      return panel;
-    }
   }
 
   @Override

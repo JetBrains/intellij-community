@@ -9,7 +9,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -596,11 +595,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configurePopup() {
       super.configurePopup();
-
       Border border = UIManager.getBorder("ComboPopup.border");
-      if (border != null) {
-        setBorder(border);
-      }
+      setBorder(border != null ? border : JBUI.Borders.empty());
+      putClientProperty("JComboBox.isCellEditor", DarculaUIUtil.isTableCellEditor(comboBox));
     }
 
     @Override
@@ -643,11 +640,16 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configureList() {
       super.configureList();
-      wrapRenderer();
+      list.setBackground(UIManager.getColor("Label.background"));
+      //noinspection unchecked
+      list.setCellRenderer(new MyDelegateRenderer());
+    }
+
+    protected void customizeListRendererComponent(JComponent component) {
+      component.setBorder(JBUI.Borders.empty(2, 8));
     }
 
     @Override
-
     protected PropertyChangeListener createPropertyChangeListener() {
       PropertyChangeListener listener = super.createPropertyChangeListener();
       return new PropertyChangeListener() {
@@ -655,37 +657,30 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         public void propertyChange(PropertyChangeEvent evt) {
           listener.propertyChange(evt);
           if ("renderer".equals(evt.getPropertyName())) {
-            wrapRenderer();
+            if (!(list.getCellRenderer() instanceof MyDelegateRenderer)) {
+              //noinspection unchecked
+              list.setCellRenderer(new MyDelegateRenderer());
+            }
           }
         }
       };
     }
 
-    @SuppressWarnings("unchecked")
-    protected void wrapRenderer() {
-      ListCellRenderer<Object> renderer = list.getCellRenderer();
-      if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
-        list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
-      }
-    }
-  }
-
-  private static class ComboBoxRendererWrapper<T> implements ListCellRenderer<T> {
-    private final ListCellRenderer<T> myRenderer;
-
-    ComboBoxRendererWrapper(@NotNull ListCellRenderer<T> renderer) {
-      myRenderer = renderer;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      return new NonOpaquePanel((JComponent)c) {
-        @Override
-        public Dimension getPreferredSize() {
-          return UIUtil.updateListRowHeight(super.getPreferredSize());
+    private class MyDelegateRenderer implements ListCellRenderer {
+      @Override
+      public Component getListCellRendererComponent(JList list,
+                                                    Object value,
+                                                    int index,
+                                                    boolean isSelected,
+                                                    boolean cellHasFocus) {
+        //noinspection unchecked
+        Component component = comboBox.getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (component instanceof JComponent) {
+          customizeListRendererComponent((JComponent)component);
+          component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
         }
-      };
+        return component;
+      }
     }
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -571,23 +570,20 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           }
         });
         setBorder(UIManager.getBorder("PopupMenu.border"));
-        putClientProperty("JComboBox.isCellEditor", DarculaUIUtil.isTableCellEditor(comboBox));
       }
 
-      @SuppressWarnings("unchecked")
       @Override
       protected void configureList() {
         super.configureList();
         list.setBackground(UIManager.getColor("TextField.background"));
       }
 
-      @SuppressWarnings("unchecked")
       @Override
-      protected void wrapRenderer() {
-        ListCellRenderer renderer = list.getCellRenderer();
-        if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
-          list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
-        }
+      protected void customizeListRendererComponent(JComponent component) {
+        super.customizeListRendererComponent(component);
+        component.setBorder(list.getComponentOrientation().isLeftToRight()
+                            ? JBUI.Borders.empty(0, 5, 0, 1)
+                            : JBUI.Borders.empty(0, 1, 0, 5));
       }
 
       @Override
@@ -596,23 +592,5 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         super.show(invoker, x, y - yOffset);
       }
     };
-  }
-
-  private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
-    private final ListCellRenderer<Object> myRenderer;
-
-    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
-      myRenderer = renderer;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(
-        list.getComponentOrientation().isLeftToRight() ? JBUI.Borders.empty(0, 5, 0, 1) : JBUI.Borders.empty(0, 1, 0, 5));
-      panel.setBackground(c.getBackground());
-      panel.setDelegateAccessibleContextToWrappedComponent(true);
-      return panel;
-    }
   }
 }
