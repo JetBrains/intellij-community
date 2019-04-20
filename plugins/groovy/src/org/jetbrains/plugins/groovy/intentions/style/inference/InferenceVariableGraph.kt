@@ -16,9 +16,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class InferenceVariableGraph(merges: List<List<InferenceVariable>>, private val session: GroovyInferenceSession) {
 
-  private val representativeMap: MutableMap<InferenceVariable, InferenceVariable> = HashMap()
-  val nodes: MutableMap<InferenceVariable, InferenceVariableNode> = HashMap()
-  val variableInstantiations: MutableMap<InferenceVariable, PsiType> = HashMap()
+  private val representativeMap: MutableMap<InferenceVariable, InferenceVariable> = LinkedHashMap()
+  val nodes: MutableMap<InferenceVariable, InferenceVariableNode> = LinkedHashMap()
+  val variableInstantiations: MutableMap<InferenceVariable, PsiType> = LinkedHashMap()
 
   init {
     merges.flatten().forEach { variableInstantiations[it] = it.instantiation; it.instantiation = PsiType.NULL }
@@ -32,8 +32,9 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, private val 
     }
     val order = topologicalOrder()
     for (node in order) {
-      for (dependentNodes in node.subtypes) {
-        dependentNodes.directParent = node
+      for (dependentNode in node.subtypes) {
+        dependentNode.directParent = node
+        dependentNode.graphDepth = node.graphDepth + 1
       }
     }
     collapseEdges(order)
@@ -66,6 +67,18 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, private val 
   private fun collapseEdges(order: List<InferenceVariableNode>) {
     var iterativeSubstitutor = PsiSubstitutor.EMPTY
     for (node in order) {
+      if (node.supertypes.size >= 2) {
+        val orderedSupertypes = node.supertypes.filter { it.graphDepth + 1 == node.graphDepth && it != node.directParent }.toList()
+        for (index in orderedSupertypes.indices) {
+          if (index == 0) {
+            node.directParent!!.directParent = orderedSupertypes[0]
+          } else {
+            orderedSupertypes[index].directParent = orderedSupertypes[index - 1]
+          }
+        }
+      }
+
+
       if (node.supertypes.isEmpty() && node.supertypes.isEmpty()) {
         node.inferenceVariable.instantiation = node.inferenceVariable.getBounds(
           InferenceBound.UPPER).firstOrNull { it is PsiClassType && it.hasParameters() } ?: PsiType.NULL

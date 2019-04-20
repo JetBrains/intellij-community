@@ -112,6 +112,7 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
     graph.adjustFlexibleVariables(method)
     val representatives = inferenceVariables.map { graph.getRepresentative(it)!! }.toSet()
     val representativeSubstitutor = collectRepresentativeSubstitutor(graph)
+    var resultSubstitutor = PsiSubstitutor.EMPTY
     for (variable in representatives) {
       val equalTypeParameters = inferenceVariables.filter {
         it.instantiation == PsiType.NULL &&
@@ -125,17 +126,18 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
                                                              inferenceSession.restoreNameSubstitution, representativeSubstitutor,
                                                              advice)
         defaultTypeParameterList.add(newTypeParam)
-        variable.instantiation = newTypeParam.type()
-        equalTypeParameters.forEach { it.instantiation = newTypeParam.type() }
+        resultSubstitutor = resultSubstitutor.put(variable, newTypeParam.type())
+//        variable.instantiation = newTypeParam.type()
+        equalTypeParameters.forEach { resultSubstitutor = resultSubstitutor.put(it, newTypeParam.type()) }
       }
       else {
-        variable.instantiation = inferenceSession.restoreNameSubstitution.substitute(
-          representativeSubstitutor.substitute(variable.instantiation))
+        resultSubstitutor = resultSubstitutor.put(variable, inferenceSession.restoreNameSubstitution.substitute(
+          representativeSubstitutor.substitute(variable.instantiation)))
       }
     }
-    val inferenceSubstitutor = inferenceSession.inferSubst()
+//    val inferenceSubstitutor = inferenceSession.inferSubst()
     for (param in targetParameters) {
-      param.setType(inferenceSubstitutor.substitute(param.type))
+      param.setType(resultSubstitutor.substitute(inferenceSession.substituteWithInferenceVariables(param.type)))
     }
     method.typeParameterList?.replace(defaultTypeParameterList)
   }

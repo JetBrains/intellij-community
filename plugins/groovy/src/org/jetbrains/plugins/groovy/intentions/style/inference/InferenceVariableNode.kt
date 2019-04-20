@@ -15,11 +15,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  */
 
 class InferenceVariableNode(val inferenceVariable: InferenceVariable) {
-  val supertypes: MutableSet<InferenceVariableNode> = HashSet()
-  val subtypes: MutableSet<InferenceVariableNode> = HashSet()
-  val weakSupertypes: MutableSet<InferenceVariableNode> = HashSet()
-  val weakSubtypes: MutableSet<InferenceVariableNode> = HashSet()
+  val supertypes: MutableSet<InferenceVariableNode> = LinkedHashSet()
+  val subtypes: MutableSet<InferenceVariableNode> = LinkedHashSet()
+  val weakSupertypes: MutableSet<InferenceVariableNode> = LinkedHashSet()
+  val weakSubtypes: MutableSet<InferenceVariableNode> = LinkedHashSet()
   var directParent: InferenceVariableNode? = null
+  var graphDepth: Int = 0
 
   fun collectDependencies(variable: InferenceVariable,
                           session: GroovyInferenceSession,
@@ -27,28 +28,32 @@ class InferenceVariableNode(val inferenceVariable: InferenceVariable) {
     for (upperType in variable.getBounds(InferenceBound.UPPER)
       .flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else arrayOf(it).asIterable() }) {
       val dependentVariable = session.getInferenceVariable(upperType)
-      if (dependentVariable != null && dependentVariable in nodes.keys) {
+      if (dependentVariable != null && dependentVariable in nodes.keys && dependentVariable != inferenceVariable) {
         supertypes.add(nodes.getValue(dependentVariable))
         nodes.getValue(dependentVariable).subtypes.add(this)
       }
       else {
         collectBounds({
-                        weakSupertypes.add(it);
-                        it.weakSubtypes.add(this)
+                        if (it != this) {
+                          weakSupertypes.add(it);
+                          it.weakSubtypes.add(this)
+                        }
                       }, upperType, session, nodes)
       }
     }
     for (lowerType in variable.getBounds(InferenceBound.LOWER)
       .flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else arrayOf(it).asIterable() }) {
       val dependentVariable = session.getInferenceVariable(lowerType)
-      if (dependentVariable != null && dependentVariable in nodes.keys) {
+      if (dependentVariable != null && dependentVariable in nodes.keys && dependentVariable != inferenceVariable) {
         subtypes.add(nodes.getValue(dependentVariable))
         nodes.getValue(dependentVariable).supertypes.add(this)
       }
       else {
         collectBounds({
-                        weakSubtypes.add(it);
-                        it.weakSupertypes.add(this)
+                        if (it != this) {
+                          weakSubtypes.add(it);
+                          it.weakSupertypes.add(this)
+                        }
                       }, lowerType, session, nodes)
       }
     }

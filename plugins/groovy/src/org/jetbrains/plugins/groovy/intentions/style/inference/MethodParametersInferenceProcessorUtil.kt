@@ -54,6 +54,22 @@ fun determineDependencyRelation(left: InferenceVariable, right: InferenceVariabl
   return null
 }
 
+fun getDependencies(type: PsiType, session: GroovyInferenceSession): Iterable<InferenceVariable> {
+  return if (type is PsiIntersectionType) {
+    type.conjuncts.flatMap { getDependencies(it, session) }
+  }
+  else if (session.getInferenceVariable(type) != null) {
+    listOf(session.getInferenceVariable(type)).asIterable()
+  }
+  else {
+    emptyList<InferenceVariable>()
+  }
+}
+
+fun InferenceVariable.getFullDependencies(session: GroovyInferenceSession): List<InferenceVariable> {
+  val combined = getBounds(InferenceBound.LOWER) + this.getBounds(InferenceBound.UPPER) + this.getBounds(InferenceBound.EQ)
+  return combined.flatMap { getDependencies(it, session) }
+}
 
 typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceVariable>
 
@@ -64,7 +80,7 @@ fun createInferenceVariableGraph(inferenceVars: Collection<InferenceVariable>,
 
   for (inferenceVar in inferenceVars) {
     val node = nodes[inferenceVar]!!
-    for (dependency in inferenceVar.getDependencies(session)) {
+    for (dependency in inferenceVar.getFullDependencies(session)) {
       val dependencyNode = nodes[dependency] ?: continue
       val relation = determineDependencyRelation(inferenceVar, dependency) ?: continue
       when (relation) {
