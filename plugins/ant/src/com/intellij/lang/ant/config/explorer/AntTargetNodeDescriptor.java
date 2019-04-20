@@ -122,11 +122,6 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
   }
 
   @Override
-  public boolean isAutoExpand() {
-    return false;
-  }
-
-  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     getHighlightedText().customize(component);
     component.setIcon(getIcon());

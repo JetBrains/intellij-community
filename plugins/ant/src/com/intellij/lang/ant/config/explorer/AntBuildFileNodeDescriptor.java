@@ -55,9 +55,4 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
       super.customize(component);
     }
   }
-
-  @Override
-  public boolean isAutoExpand() {
-    return myBuildFile.shouldExpand();
-  }
 }
