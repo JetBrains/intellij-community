@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.intentions
 
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-
 /**
  * @author knisht
  */
@@ -113,6 +112,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   }
 
   void testThreeSupertypes2() {
+    doTest(true)
+  }
+
+  void testCustomSetter() {
     doTest(true)
   }
 }

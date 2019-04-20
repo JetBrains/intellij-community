@@ -8,15 +8,16 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import java.util.*
 import kotlin.collections.set
 
@@ -241,9 +242,8 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
     for (occurrence in references) {
       if (occurrence is GrReferenceExpression) {
         val call = occurrence.parent
-        if (call is GrCall) {
-          val methodResult = call.advancedResolve() as GroovyMethodResult
-          resolveSession.addConstraint(MethodCallConstraint(null, methodResult, method.context ?: continue))
+        if (call is GrExpression) {
+          resolveSession.addConstraint(ExpressionConstraint(null, call))
         }
       }
     }
