@@ -92,4 +92,12 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testRedundantTypeParameter() {
     doTest(true)
   }
+
+  void testTwoTypeParameters() {
+    doTest(true)
+  }
+
+  void testTwoSupertypes() {
+    doTest(true)
+  }
 }

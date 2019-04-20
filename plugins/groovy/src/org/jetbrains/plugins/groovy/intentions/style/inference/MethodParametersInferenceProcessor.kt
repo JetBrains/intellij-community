@@ -119,8 +119,11 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
         it !in constantInferenceVariables
       }
       if (equalTypeParameters.isNotEmpty()) {
+        val parent = graph.nodes[variable]?.directParent?.inferenceVariable
+        val advice = if (parent?.instantiation == PsiType.NULL) parent?.type() else parent?.instantiation
         val newTypeParam = createBoundedTypeParameterElement(variable,
-                                                             inferenceSession.restoreNameSubstitution, representativeSubstitutor)
+                                                             inferenceSession.restoreNameSubstitution, representativeSubstitutor,
+                                                             advice)
         defaultTypeParameterList.add(newTypeParam)
         variable.instantiation = newTypeParam.type()
         equalTypeParameters.forEach { it.instantiation = newTypeParam.type() }
@@ -189,14 +192,14 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
    */
   private fun createBoundedTypeParameterElement(variable: InferenceVariable,
                                                 restoreNameSubstitution: PsiSubstitutor,
-                                                relationSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY): PsiTypeParameter {
-    val typeParameterAmongSuperclasses = variable.getBounds(InferenceBound.UPPER).firstOrNull {
+                                                relationSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
+                                                supertypeAdvice: PsiType? = null): PsiTypeParameter {
+    val typeParameterAmongSuperclasses = ((if (supertypeAdvice != null) arrayOf(supertypeAdvice) else emptyArray()) + variable.getBounds(
+      InferenceBound.UPPER)).firstOrNull {
       restoreNameSubstitution.substitute(it) != it
     }
     val superTypes = if (typeParameterAmongSuperclasses != null) {
-      val directSuperType = if (relationSubstitutor.substitute(variable) != variable.type()) variable.type()
-      else typeParameterAmongSuperclasses
-      arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(directSuperType)) as PsiClassType)
+      arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(typeParameterAmongSuperclasses)) as PsiClassType)
     }
     else
       variable.getBounds(InferenceBound.UPPER)

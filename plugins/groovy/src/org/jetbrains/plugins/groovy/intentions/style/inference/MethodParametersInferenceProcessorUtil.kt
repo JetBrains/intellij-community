@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
@@ -33,6 +34,27 @@ class NameGenerator {
     }
 }
 
+fun catchDependency(types: List<PsiType>, targetType: PsiType): Boolean {
+  return types.any { it == targetType || (if (it is PsiIntersectionType) catchDependency(it.conjuncts.toList(), targetType) else false) }
+}
+
+fun determineDependencyRelation(left: InferenceVariable, right: InferenceVariable): InferenceBound? {
+  if (catchDependency(left.getBounds(InferenceBound.EQ), right.type()) ||
+      catchDependency(right.getBounds(InferenceBound.EQ), left.type())) {
+    return InferenceBound.EQ
+  }
+  if (catchDependency(left.getBounds(InferenceBound.UPPER), right.type()) ||
+      catchDependency(right.getBounds(InferenceBound.LOWER), left.type())) {
+    return InferenceBound.UPPER
+  }
+  if (catchDependency(left.getBounds(InferenceBound.LOWER), right.type()) ||
+      catchDependency(right.getBounds(InferenceBound.UPPER), left.type())) {
+    return InferenceBound.LOWER
+  }
+  return null
+}
+
+
 typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceVariable>
 
 fun createInferenceVariableGraph(inferenceVars: Collection<InferenceVariable>,
@@ -44,18 +66,13 @@ fun createInferenceVariableGraph(inferenceVars: Collection<InferenceVariable>,
     val node = nodes[inferenceVar]!!
     for (dependency in inferenceVar.getDependencies(session)) {
       val dependencyNode = nodes[dependency] ?: continue
-      if (dependency.type() in inferenceVar.getBounds(InferenceBound.EQ) || inferenceVar.type() in dependency.getBounds(
-          InferenceBound.EQ)) {
-        dependencyNode.addDependency(node)
-        node.addDependency(dependencyNode)
-      }
-      if (dependency.type() in inferenceVar.getBounds(InferenceBound.UPPER) ||
-          inferenceVar.type() in dependency.getBounds(InferenceBound.LOWER)) {
-        node.addDependency(dependencyNode)
-      }
-      if (dependency.type() in inferenceVar.getBounds(InferenceBound.LOWER) ||
-          inferenceVar.type() in dependency.getBounds(InferenceBound.UPPER)) {
-        dependencyNode.addDependency(node)
+      val relation = determineDependencyRelation(inferenceVar, dependency) ?: continue
+      when (relation) {
+        InferenceBound.UPPER -> node.addDependency(dependencyNode)
+        InferenceBound.LOWER -> dependencyNode.addDependency(node)
+        InferenceBound.EQ -> {
+          dependencyNode.addDependency(node); node.addDependency(dependencyNode);
+        }
       }
     }
   }

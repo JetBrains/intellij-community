@@ -25,9 +25,10 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, private val 
     for (merge in merges) {
       val representative = merge[0]
       nodes[representative] = InferenceVariableNode(representative)
-      merge.forEach {
-        representativeMap[it] = representative; nodes[representative]!!.collectDependencies(it, session, nodes)
-      }
+      merge.forEach { representativeMap[it] = representative }
+    }
+    representativeMap.values.forEach {
+      nodes[it]!!.collectDependencies(it, session, nodes)
     }
     val order = topologicalOrder()
     for (node in order) {
