@@ -34,7 +34,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
-  private final OutputLineSplitter mySplitter;
+  private final OutputEventSplitter mySplitter;
 
   private volatile GeneralTestEventsProcessor myProcessor;
   private Runnable myTestingStartedHandler;
@@ -59,10 +59,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputLineSplitter(false) {
+    mySplitter = new OutputEventSplitter() {
       @Override
-      protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
-        processConsistentText(text, outputType, tcLikeFakeOutput);
+      public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
+        processConsistentText(text, outputType);
       }
     };
   }
@@ -103,13 +103,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     processConsistentText(text, outputType);
   }
 
-  protected void processConsistentText(@NotNull String text, final Key<?> outputType) {
-    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitter.SM_MESSAGE_PREFIX) {
-      final StringBuilder builder = new StringBuilder(myCycleBufferSize);
-      builder.append(text, 0, myCycleBufferSize - OutputLineSplitter.SM_MESSAGE_PREFIX);
-      builder.append(ELLIPSIS);
-      builder.append(text, text.length() - OutputLineSplitter.SM_MESSAGE_PREFIX + ELLIPSIS.length(), text.length());
-      text = builder.toString();
+  protected void processConsistentText(@NotNull String text, @NotNull final Key<?> outputType) {
+    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputEventSplitterKt.SM_MESSAGE_PREFIX) {
+      text = text.substring(0, myCycleBufferSize - OutputEventSplitterKt.SM_MESSAGE_PREFIX) +
+             ELLIPSIS +
+             text.substring(text.length() - OutputEventSplitterKt.SM_MESSAGE_PREFIX + ELLIPSIS.length());
     }
 
     try {
