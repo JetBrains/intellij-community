@@ -80,7 +80,6 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
-
   void testAppearedWildcard() {
     doTest(true)
   }

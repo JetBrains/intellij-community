@@ -1,6 +1,7 @@
 class C {
-  List<Integer> l = new ArrayList<>();
-  C<caret>(a) {
+  List<Integer> l = new ArrayList<>()
+
+    C<caret>(Integer a) {
     l.add(a)
   }
 }

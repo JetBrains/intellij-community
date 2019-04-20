@@ -66,10 +66,7 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, private val 
   private fun collapseEdges(order: List<InferenceVariableNode>) {
     var iterativeSubstitutor = PsiSubstitutor.EMPTY
     for (node in order) {
-      if ((node.subtypes + node.supertypes + node.weakSupertypes + node.weakSubtypes).isEmpty()) {
-        node.inferenceVariable.instantiation = variableInstantiations[node.inferenceVariable]
-      }
-      else if (node.supertypes.isEmpty() && node.supertypes.isEmpty()) {
+      if (node.supertypes.isEmpty() && node.supertypes.isEmpty()) {
         node.inferenceVariable.instantiation = node.inferenceVariable.getBounds(
           InferenceBound.UPPER).firstOrNull { it is PsiClassType && it.hasParameters() } ?: PsiType.NULL
         node.inferenceVariable.instantiation = iterativeSubstitutor.substitute(node.inferenceVariable.instantiation)
@@ -89,7 +86,10 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, private val 
       val variable = session.getInferenceVariable(session.substituteWithInferenceVariables(parameter.type))
       if (variable in representativeMap) {
         val node = nodes[getRepresentative(variable)]!!
-        if (node.directParent != null) {
+        if ((node.subtypes + node.supertypes + node.weakSupertypes + node.weakSubtypes).isEmpty()) {
+          node.inferenceVariable.instantiation = variableInstantiations[node.inferenceVariable]
+        }
+        else if (node.directParent != null) {
           node.inferenceVariable.instantiation = node.directParent?.inferenceVariable?.type() ?: PsiType.NULL
         }
       }

@@ -3,20 +3,14 @@ package org.jetbrains.plugins.groovy.intentions.style
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
-import com.intellij.util.containers.toArray
+import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
-import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceVariableGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParametersInferenceProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 /**
@@ -37,10 +31,16 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    AddReturnTypeFix.applyFix(project, element)
+    if (!method.isConstructor) {
+      AddReturnTypeFix.applyFix(project, element)
+    }
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
     val processor = MethodParametersInferenceProcessor(method, elementFactory)
     processor.runInferenceProcess()
+    if (!method.hasTypeParameters() || method.isConstructor) {
+      // todo: there is exist GrUnnecessaryDefModifierFix, I should call it somehow
+      method.firstChild.delete()
+    }
   }
 
   /**
