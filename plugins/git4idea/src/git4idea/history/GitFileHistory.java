@@ -143,7 +143,7 @@ public class GitFileHistory {
     GitLogParser<GitLogFullRecord> parser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
                                                                              HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+    h.addParameters("-M", "-m", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
     if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myProject)) {
       h.addParameters("--follow");
       h.endOptions();
@@ -157,13 +157,15 @@ public class GitFileHistory {
 
     if (records.isEmpty()) return null;
     // we have information about all changed files of the commit. Extracting information about the file we need.
-    GitLogFullRecord record = records.get(0);
-    List<Change> changes = record.parseChanges(myProject, myRoot);
-    for (Change change : changes) {
-      if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
-        String[] parents = record.getParentsHashes();
-        String parent = parents.length > 0 ? parents[0] : null;
-        return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
+    for (int i = 0; i < records.size(); i++) {
+      GitLogFullRecord record = records.get(i);
+      List<Change> changes = record.parseChanges(myProject, myRoot);
+      for (Change change : changes) {
+        if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
+          String[] parents = record.getParentsHashes();
+          String parent = parents.length > 0 ? parents[i] : null;
+          return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
+        }
       }
     }
     return null;
