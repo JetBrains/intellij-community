@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -179,8 +178,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     }
     else {
-      int maxSize = getMaxSize(detailsList);
-      if (maxSize > Registry.intValue("vcs.log.max.changes.shown") && !showBigCommits) {
+      int maxSize = VcsLogUtil.getMaxSize(detailsList);
+      if (maxSize > VcsLogUtil.getShownChangesLimit() && !showBigCommits) {
         String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
         String sizeText = getSizeText(maxSize);
         myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
@@ -237,23 +236,6 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       return format.format(maxSize / 1_000_000.0) + "M";
     }
     return (maxSize / 1_000_000) + "M";
-  }
-
-  private static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    int maxSize = 0;
-    for (VcsFullCommitDetails details : detailsList) {
-      int size = 0;
-      if (details instanceof VcsChangesLazilyParsedDetails) {
-        size = ((VcsChangesLazilyParsedDetails)details).size();
-      }
-      else {
-        for (int i = 0; i < details.getParents().size(); i++) {
-          size += details.getChanges(i).size();
-        }
-      }
-      maxSize = Math.max(size, maxSize);
-    }
-    return maxSize;
   }
 
   @NotNull

@@ -238,6 +238,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
       return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class, VcsLogUtil::createCommittedChangeList);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
