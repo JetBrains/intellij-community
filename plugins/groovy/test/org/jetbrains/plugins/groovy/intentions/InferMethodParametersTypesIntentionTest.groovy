@@ -71,4 +71,25 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testDeepEqualityOfWildcards() {
     doTest(true)
   }
+
+  void testDeepDependencyOfWildcards() {
+    doTest(true)
+  }
+
+  void testDeepDependencyOfWildcards2() {
+    doTest(true)
+  }
+
+
+  void testAppearedWildcard() {
+    doTest(true)
+  }
+
+  void testConstructor() {
+    doTest(true)
+  }
+
+  void testRedundantTypeParameter() {
+    doTest(true)
+  }
 }

@@ -1,3 +1,3 @@
-def <T, T0 extends T> void fo<caret>o(List<T> a, T0 b) {
+def <T> void fo<caret>o(List<T> a, T b) {
   a.add(b)
 }

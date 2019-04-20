@@ -10,11 +10,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import java.util.HashSet
-import kotlin.collections.Collection
 import kotlin.collections.LinkedHashMap
-import kotlin.collections.Set
-import kotlin.collections.forEach
-import kotlin.collections.map
 import kotlin.collections.set
 
 
@@ -85,11 +81,7 @@ fun getConstantInferenceVariables(constantTypeParameters: Array<PsiTypeParameter
 fun collectRepresentativeSubstitutor(graph: InferenceVariableGraph): PsiSubstitutor {
   var representativeSubstitutor = PsiSubstitutor.EMPTY
   graph.variableInstantiations.keys.forEach {
-    representativeSubstitutor = representativeSubstitutor.put(it, graph.getRepresentative(it)?.type());
-    val upperType = graph.getParent(it)?.type()
-    if (upperType != null) {
-      representativeSubstitutor = representativeSubstitutor.put(it, upperType)
-    }
+    representativeSubstitutor = representativeSubstitutor.put(it, graph.getRepresentative(it)?.type())
   }
   return representativeSubstitutor
 }

@@ -1,15 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 /**
  * @author knisht
  */
 
-class InferenceVariableGraph(merges: List<List<InferenceVariable>>, session: GroovyInferenceSession) {
+class InferenceVariableGraph(merges: List<List<InferenceVariable>>, private val session: GroovyInferenceSession) {
 
   private val representativeMap: MutableMap<InferenceVariable, InferenceVariable> = HashMap()
   val nodes: MutableMap<InferenceVariable, InferenceVariableNode> = HashMap()
@@ -30,7 +35,7 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, session: Gro
         dependentNodes.directParent = node
       }
     }
-    collapseEdges()
+    collapseEdges(order)
   }
 
   private fun topologicalOrder(): List<InferenceVariableNode> {
@@ -48,8 +53,7 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, session: Gro
                             visited: MutableSet<InferenceVariableNode>,
                             order: MutableList<InferenceVariableNode>) {
     visited.add(node)
-    // todo: weak dependencies
-    for (dependentNode in node.subtypes) {
+    for (dependentNode in node.subtypes + node.weakSubtypes) {
       if (dependentNode !in visited) {
         traverseGraph(dependentNode, visited, order)
       }
@@ -58,10 +62,35 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, session: Gro
   }
 
 
-  private fun collapseEdges() {
-    for (node in nodes.values) {
-      if (node.subtypes.isEmpty() && node.supertypes.isEmpty() && node.weakDependencies.isEmpty()) {
+  private fun collapseEdges(order: List<InferenceVariableNode>) {
+    var iterativeSubstitutor = PsiSubstitutor.EMPTY
+    for (node in order) {
+      if ((node.subtypes + node.supertypes + node.weakSupertypes + node.weakSubtypes).isEmpty()) {
         node.inferenceVariable.instantiation = variableInstantiations[node.inferenceVariable]
+      }
+      else if (node.supertypes.isEmpty() && node.supertypes.isEmpty()) {
+        node.inferenceVariable.instantiation = node.inferenceVariable.getBounds(
+          InferenceBound.UPPER).firstOrNull { it is PsiClassType && it.hasParameters() } ?: PsiType.NULL
+        node.inferenceVariable.instantiation = iterativeSubstitutor.substitute(node.inferenceVariable.instantiation)
+      }
+      if (node.inferenceVariable.instantiation != PsiType.NULL) {
+        iterativeSubstitutor = iterativeSubstitutor.put(node.inferenceVariable, node.inferenceVariable.instantiation)
+      }
+    }
+  }
+
+  /**
+   * Allows to collapse redundant type parameter if it represents parameter of the [method]
+   * Example: `def <T, U> void foo(List<T> ts, U u)` {}. Here U will be flexible type parameter and may be removed.
+   */
+  fun adjustFlexibleVariables(method: GrMethod) {
+    for (parameter in method.parameters) {
+      val variable = session.getInferenceVariable(session.substituteWithInferenceVariables(parameter.type))
+      if (variable in representativeMap) {
+        val node = nodes[getRepresentative(variable)]!!
+        if (node.directParent != null) {
+          node.inferenceVariable.instantiation = node.directParent?.inferenceVariable?.type() ?: PsiType.NULL
+        }
       }
     }
   }

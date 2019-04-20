@@ -109,6 +109,7 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
     inferenceSession.inferSubst()
     val inferenceVariables = method.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }.toList()
     val graph = createInferenceVariableGraph(inferenceVariables, inferenceSession)
+    graph.adjustFlexibleVariables(method)
     val representatives = inferenceVariables.map { graph.getRepresentative(it)!! }.toSet()
     val representativeSubstitutor = collectRepresentativeSubstitutor(graph)
     for (variable in representatives) {
@@ -123,6 +124,10 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
         defaultTypeParameterList.add(newTypeParam)
         variable.instantiation = newTypeParam.type()
         equalTypeParameters.forEach { it.instantiation = newTypeParam.type() }
+      }
+      else {
+        variable.instantiation = inferenceSession.restoreNameSubstitution.substitute(
+          representativeSubstitutor.substitute(variable.instantiation))
       }
     }
     val inferenceSubstitutor = inferenceSession.inferSubst()
@@ -149,15 +154,10 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
 
       override fun visitClassType(classType: PsiClassType?): PsiType? {
         classType ?: return classType
-        //todo: below if should be removed in future
-        if (classType.parameters.isEmpty()) {
-          return classType
-        }
         val parameters = classType.parameters
         val replacedParameters = parameters.map { it.accept(this) }.toArray(emptyArray())
         val resolveResult = classType.resolveGenerics()
-        val correctSuperclass = elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
-        return registerTypeParameter(correctSuperclass)
+        return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
       }
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {

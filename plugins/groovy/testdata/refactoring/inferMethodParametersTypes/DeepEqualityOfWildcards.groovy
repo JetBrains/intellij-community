@@ -1,8 +1,8 @@
-def void foo(a, b) {
+def foo(a, b) {
   a.add(b.get(0))
 }
 
 void  m () {
-  foo([[2]], [[1]])
-  foo([["q"]], [["s"]])
+  foo([[1]], [[2]])
+  foo([['s']], [["q"]])
 }

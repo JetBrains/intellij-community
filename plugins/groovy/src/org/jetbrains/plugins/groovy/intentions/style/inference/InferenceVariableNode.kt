@@ -15,20 +15,22 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInfe
 class InferenceVariableNode(val inferenceVariable: InferenceVariable) {
   val supertypes: MutableSet<InferenceVariableNode> = HashSet()
   val subtypes: MutableSet<InferenceVariableNode> = HashSet()
-  val weakDependencies: MutableSet<InferenceVariableNode> = HashSet()
+  val weakSupertypes: MutableSet<InferenceVariableNode> = HashSet()
+  val weakSubtypes: MutableSet<InferenceVariableNode> = HashSet()
   var directParent: InferenceVariableNode? = null
-
 
   fun collectDependencies(variable: InferenceVariable,
                           session: GroovyInferenceSession,
                           nodes: Map<InferenceVariable, InferenceVariableNode>) {
+    val enclosingNode = this
     val typeVisitor = object : PsiTypeVisitor<PsiType>() {
 
       override fun visitClassType(classType: PsiClassType?): PsiType? {
         classType ?: return classType
         val dependentVariable = session.getInferenceVariable(classType)
         if (dependentVariable != null && dependentVariable in nodes) {
-          weakDependencies.add(nodes.getValue(dependentVariable))
+          weakSupertypes.add(nodes.getValue(dependentVariable))
+          nodes.getValue(dependentVariable).weakSubtypes.add(enclosingNode)
         }
         else {
           classType.parameters.forEach { it.accept(this) }

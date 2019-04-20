@@ -1,4 +1,4 @@
-def <U extends Number, T0 extends U> voi<caret>d f(List<U> a, T0 b) {
+def <U extends Number> voi<caret>d f(List<U> a, U b) {
   a.add(b)
 }
 
