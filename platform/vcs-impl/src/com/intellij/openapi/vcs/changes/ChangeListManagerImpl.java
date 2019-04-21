@@ -1229,7 +1229,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, emptyList(), FunctionUtil.nullConstant(), null, changeList.getName(), false);
+      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), emptyList(), null, changeList.getName(), false);
 
     committer.addResultHandler(new DefaultCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);

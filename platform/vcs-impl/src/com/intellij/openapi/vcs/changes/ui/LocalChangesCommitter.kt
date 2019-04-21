@@ -12,17 +12,16 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
-import com.intellij.util.NullableFunction
 import com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress
 
 open class LocalChangesCommitter(
   project: Project,
   changes: List<Change>,
   commitMessage: String,
+  commitContext: CommitContext,
   handlers: List<CheckinHandler>,
-  additionalData: NullableFunction<Any, Any>,
   private val localHistoryActionName: String = "Commit Changes"
-) : AbstractCommitter(project, changes, commitMessage, handlers, additionalData) {
+) : AbstractCommitter(project, changes, commitMessage, commitContext, handlers) {
 
   private var myAction = LocalHistoryAction.NULL
 
