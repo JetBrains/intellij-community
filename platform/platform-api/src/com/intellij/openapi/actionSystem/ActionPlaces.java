@@ -17,13 +17,12 @@ public abstract class ActionPlaces {
   public static final String TOOLBAR = "toolbar";
   public static final String POPUP = "popup";
 
-  /**
-   * consider to use {@link #isMainMenuOrActionSearch(String)} instead
-   */
+  // prefer isMainMenuOrActionSearch(String) for the following places
   public static final String KEYBOARD_SHORTCUT = "keyboard shortcut";
   public static final String MOUSE_SHORTCUT = "mouse shortcut";
   public static final String FORCE_TOUCH = "force touch";
   public static final String MAIN_MENU = "MainMenu";
+
   public static final String MAIN_TOOLBAR = "MainToolbar";
   public static final String EDITOR_POPUP = "EditorPopup";
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
@@ -133,7 +132,8 @@ public abstract class ActionPlaces {
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
   public static boolean isMainMenuOrActionSearch(String place) {
-    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place);
+    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
+           KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
   }
 
   private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
