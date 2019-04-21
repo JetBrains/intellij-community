@@ -18,9 +18,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('shell')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('    ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   FUNCTION_DEFINITION

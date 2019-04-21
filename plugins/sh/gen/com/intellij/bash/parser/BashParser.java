@@ -587,7 +587,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // newlines pattern ')' (compound_case_list|newlines)
+  // newlines pattern ')' newlines compound_case_list?
   public static boolean case_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause")) return false;
     boolean r, p;
@@ -596,18 +596,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = r && pattern(b, l + 1);
     r = r && consumeToken(b, RIGHT_PAREN);
     p = r; // pin = 3
-    r = r && case_clause_3(b, l + 1);
+    r = r && report_error_(b, newlines(b, l + 1));
+    r = p && case_clause_4(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // compound_case_list|newlines
-  private static boolean case_clause_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_clause_3")) return false;
-    boolean r;
-    r = compound_case_list(b, l + 1);
-    if (!r) r = newlines(b, l + 1);
-    return r;
+  // compound_case_list?
+  private static boolean case_clause_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_clause_4")) return false;
+    compound_case_list(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -994,47 +993,17 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines
+  // pipeline_command_list end_of_list? newlines
   public static boolean compound_case_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_case_list")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<compound case list>");
-    r = compound_case_list_0(b, l + 1);
+    r = pipeline_command_list(b, l + 1);
     p = r; // pin = 1
     r = r && report_error_(b, compound_case_list_1(b, l + 1));
     r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // nl pipeline_command_list?| pipeline_command_list
-  private static boolean compound_case_list_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "compound_case_list_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = compound_case_list_0_0(b, l + 1);
-    if (!r) r = pipeline_command_list(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // nl pipeline_command_list?
-  private static boolean compound_case_list_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "compound_case_list_0_0")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = nl(b, l + 1);
-    p = r; // pin = 1
-    r = r && compound_case_list_0_0_1(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // pipeline_command_list?
-  private static boolean compound_case_list_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "compound_case_list_0_0_1")) return false;
-    pipeline_command_list(b, l + 1);
-    return true;
   }
 
   // end_of_list?
@@ -2329,7 +2298,6 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                   | select_command
   //                   | subshell_command
   //                   | block
-  // //                  | function_definition
   //                   | &(function | word '(') function_definition
   public static boolean shell_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_command")) return false;

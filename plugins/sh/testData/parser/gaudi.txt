@@ -295,9 +295,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('init')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
@@ -667,9 +667,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('resolve')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -841,9 +841,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('download')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
@@ -1132,9 +1132,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('artifact-versions')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
@@ -1318,9 +1318,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('artifact-file')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
@@ -1639,9 +1639,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('classpath')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   IF_COMMAND
@@ -1948,9 +1948,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('compile-classpath')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
@@ -2164,9 +2164,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('compile')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
@@ -3905,9 +3905,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('run-classpath')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
@@ -4090,9 +4090,9 @@ BASH_FILE
             PATTERN
               PsiElement(word)('run')
             PsiElement())(')')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('        ')
             COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('        ')
               PIPELINE_COMMAND
                 PIPELINE
                   IF_COMMAND

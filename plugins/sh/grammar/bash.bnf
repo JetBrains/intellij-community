@@ -193,8 +193,8 @@ case_command ::= case w+ in case_clause_list esac
 private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1 recoverWhile = case_clause_recover}
 private case_clause_recover ::= !(esac)
 
-case_clause ::= newlines pattern ')' (compound_case_list|newlines) {pin=3}
-compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+case_clause ::= newlines pattern ')' newlines compound_case_list? {pin=3}
+compound_case_list ::= pipeline_command_list end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
 private case_pattern_recover ::= !(')'|';;'|esac)
 
