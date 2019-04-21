@@ -39,7 +39,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   private fun doCommit() {
     LOG.debug("Do actual commit")
-    val committer = LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitHandlers, additionalData)
+    val committer = LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, commitHandlers)
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
     committer.addResultHandler(ResultHandler(this))

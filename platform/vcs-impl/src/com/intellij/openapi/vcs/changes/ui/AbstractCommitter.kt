@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.NullableFunction
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 
@@ -55,8 +54,8 @@ private fun unmarkCommittingDocuments(committingDocuments: Collection<Document>)
 abstract class AbstractCommitter(val project: Project,
                                  val changes: List<Change>,
                                  val commitMessage: String,
-                                 val handlers: List<CheckinHandler>,
-                                 val additionalData: NullableFunction<Any, Any>) {
+                                 val commitContext: CommitContext,
+                                 val handlers: List<CheckinHandler>) {
   private val committingDocuments = mutableListOf<Document>()
   private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
 
@@ -111,7 +110,7 @@ abstract class AbstractCommitter(val project: Project,
     val environment = vcs.checkinEnvironment
     if (environment != null) {
       _pathsToRefresh.addAll(ChangesUtil.getPaths(changes))
-      val exceptions = environment.commit(changes, commitMessage, additionalData, _feedback)
+      val exceptions = environment.commit(changes, commitMessage, commitContext.additionalData, _feedback)
       if (!exceptions.isNullOrEmpty()) {
         _exceptions.addAll(exceptions)
         _failedToCommitChanges.addAll(changes)

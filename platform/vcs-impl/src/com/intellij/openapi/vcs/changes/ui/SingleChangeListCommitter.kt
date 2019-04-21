@@ -9,13 +9,9 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
 import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.util.NullableFunction
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
 import org.jetbrains.annotations.CalledInAwt
 
@@ -24,12 +20,12 @@ class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<C
 class SingleChangeListCommitter(
   project: Project,
   private val commitState: ChangeListCommitState,
+  commitContext: CommitContext,
   handlers: List<CheckinHandler>,
-  additionalData: NullableFunction<Any, Any>,
   private val vcsToCommit: AbstractVcs<*>?,
   localHistoryActionName: String,
   private val isDefaultChangeListFullyIncluded: Boolean
-) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, handlers, additionalData, localHistoryActionName) {
+) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, handlers, localHistoryActionName) {
 
   private val changeList get() = commitState.changeList
 

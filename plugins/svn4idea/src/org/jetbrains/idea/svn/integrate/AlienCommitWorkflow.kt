@@ -18,7 +18,7 @@ class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, chang
   override fun canExecute(executor: CommitExecutor, changes: Collection<Change>) = true
 
   override fun doCommit(commitState: ChangeListCommitState) {
-    val committer = AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitHandlers, additionalData)
+    val committer = AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext, commitHandlers)
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
     committer.runCommit(DIALOG_TITLE, false)

@@ -4,12 +4,13 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
 
+@Suppress("DEPRECATION")
+@Deprecated("Use CommitContext")
 class PseudoMap<Key, Value> : PairConsumer<Key, Value>, NullableFunction<Key, Value> {
-  private val myMap = mutableMapOf<Key, Value>()
+  val commitContext: CommitContext = CommitContext()
 
-  override fun `fun`(key: Key): Value? = myMap[key]
+  @Suppress("UNCHECKED_CAST")
+  override fun `fun`(key: Key): Value? = commitContext.additionalData.`fun`(key) as? Value
 
-  override fun consume(key: Key, value: Value) {
-    myMap[key] = value
-  }
+  override fun consume(key: Key, value: Value) = commitContext.additionalDataConsumer.consume(key, value)
 }

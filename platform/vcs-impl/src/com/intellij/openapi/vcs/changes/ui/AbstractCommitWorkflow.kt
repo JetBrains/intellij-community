@@ -8,7 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -16,8 +19,6 @@ import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.util.NullableFunction
-import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import java.util.*
@@ -43,11 +44,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   val commitContext: CommitContext = CommitContext()
 
   abstract val isDefaultCommitEnabled: Boolean
-
-  // TODO Probably unify with "CommitContext"
-  private val _additionalData = PseudoMap<Any, Any>()
-  val additionalDataConsumer: PairConsumer<Any, Any> get() = _additionalData
-  protected val additionalData: NullableFunction<Any, Any> get() = _additionalData
 
   private val _vcses = mutableSetOf<AbstractVcs<*>>()
   val vcses: Set<AbstractVcs<*>> get() = unmodifiableOrEmptySet(_vcses.toSet())
@@ -132,7 +128,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     commitHandlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
       LOG.debug("CheckinHandler.beforeCheckin: $handler")
 
-      val result = handler.beforeCheckin(executor, additionalDataConsumer)
+      val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
       if (result != CheckinHandler.ReturnResult.COMMIT) return result
     }
 

@@ -26,7 +26,6 @@ import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -320,7 +319,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(getProject(), commitState, handlers, FunctionUtil.nullConstant(), null, "Commit", false);
+      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), handlers, null, "Commit", false);
 
     committer.runCommit("Commit", true);
   }

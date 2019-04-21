@@ -110,7 +110,7 @@ open class SingleChangeListCommitWorkflow(
 
   protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
-    val committer = SingleChangeListCommitter(project, commitState, commitHandlers, additionalData, vcsToCommit, DIALOG_TITLE,
+    val committer = SingleChangeListCommitter(project, commitState, commitContext, commitHandlers, vcsToCommit, DIALOG_TITLE,
                                               isDefaultChangeListFullyIncluded)
 
     committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))

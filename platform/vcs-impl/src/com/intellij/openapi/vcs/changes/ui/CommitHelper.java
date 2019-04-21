@@ -3,10 +3,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.CommitResultHandler;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +33,11 @@ public class CommitHelper {
     myForceSyncCommit = synchronously;
 
     ChangeListCommitState commitState = new ChangeListCommitState((LocalChangeList)changeList, changes, commitMessage);
+    // for compatibility with external plugins
+    CommitContext commitContext =
+      additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
     myCommitter =
-      new SingleChangeListCommitter(project, commitState, handlers, additionalData, null, actionName, isDefaultChangeListFullyIncluded);
+      new SingleChangeListCommitter(project, commitState, commitContext, handlers, null, actionName, isDefaultChangeListFullyIncluded);
 
     myCommitter.addResultHandler(notNull(resultHandler, new DefaultCommitResultHandler(myCommitter)));
   }
