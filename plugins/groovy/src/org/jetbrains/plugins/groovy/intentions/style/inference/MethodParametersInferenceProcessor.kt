@@ -128,7 +128,6 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
                                                              advice)
         defaultTypeParameterList.add(newTypeParam)
         resultSubstitutor = resultSubstitutor.put(variable, newTypeParam.type())
-//        variable.instantiation = newTypeParam.type()
         equalTypeParameters.forEach { resultSubstitutor = resultSubstitutor.put(it, newTypeParam.type()) }
       }
       else {
@@ -136,7 +135,6 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
           representativeSubstitutor.substitute(variable.instantiation)))
       }
     }
-//    val inferenceSubstitutor = inferenceSession.inferSubst()
     for (param in targetParameters) {
       param.setType(resultSubstitutor.substitute(inferenceSession.substituteWithInferenceVariables(param.type)))
     }

@@ -107,6 +107,14 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testTwoSupertypes4() {
+    doTest(true)
+  }
+
+  void testTwoSupertypes5() {
+    doTest(true)
+  }
+
   void testThreeSupertypes() {
     doTest(true)
   }
