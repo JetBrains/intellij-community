@@ -20,48 +20,42 @@ class InferenceVariableNode(val inferenceVariable: InferenceVariable) {
   val weakSupertypes: MutableSet<InferenceVariableNode> = LinkedHashSet()
   val weakSubtypes: MutableSet<InferenceVariableNode> = LinkedHashSet()
   var directParent: InferenceVariableNode? = null
-  var graphDepth: Int = 0
 
+  /**
+   * Sets up node dependencies basing on inference variable bounds.
+   */
   fun collectDependencies(variable: InferenceVariable,
                           session: GroovyInferenceSession,
                           nodes: Map<InferenceVariable, InferenceVariableNode>) {
-    for (upperType in variable.getBounds(InferenceBound.UPPER)
-      .flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else arrayOf(it).asIterable() }) {
-      val dependentVariable = session.getInferenceVariable(upperType)
-      if (dependentVariable != null && dependentVariable in nodes.keys && dependentVariable != inferenceVariable) {
-        supertypes.add(nodes.getValue(dependentVariable))
-        nodes.getValue(dependentVariable).subtypes.add(this)
-      }
-      else {
-        collectBounds({
-                        if (it != this) {
-                          weakSupertypes.add(it);
-                          it.weakSubtypes.add(this)
-                        }
-                      }, upperType, session, nodes)
+    val weakUpperBoundHandler: (InferenceVariableNode) -> Unit = {
+      if (it != this) {
+        weakSupertypes.add(it);
+        it.weakSubtypes.add(this)
       }
     }
-    for (lowerType in variable.getBounds(InferenceBound.LOWER)
-      .flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else arrayOf(it).asIterable() }) {
-      val dependentVariable = session.getInferenceVariable(lowerType)
-      if (dependentVariable != null && dependentVariable in nodes.keys && dependentVariable != inferenceVariable) {
-        subtypes.add(nodes.getValue(dependentVariable))
-        nodes.getValue(dependentVariable).supertypes.add(this)
-      }
-      else {
-        collectBounds({
-                        if (it != this) {
-                          weakSubtypes.add(it);
-                          it.weakSupertypes.add(this)
-                        }
-                      }, lowerType, session, nodes)
+    val weakLowerBoundHandler: (InferenceVariableNode) -> Unit = {
+      if (it != this) {
+        weakSubtypes.add(it);
+        it.weakSupertypes.add(this)
       }
     }
+    val strongUpperBoundHandler: (InferenceVariableNode) -> Unit = {
+      supertypes.add(it)
+      it.subtypes.add(this)
+    }
+    val strongLowerBoundHandler: (InferenceVariableNode) -> Unit = {
+      subtypes.add(it)
+      it.supertypes.add(this)
+    }
+    collectBounds(weakUpperBoundHandler, strongUpperBoundHandler, InferenceBound.UPPER, variable, session, nodes)
+    collectBounds(weakLowerBoundHandler, strongLowerBoundHandler, InferenceBound.LOWER, variable, session, nodes)
   }
 
 
-  private fun collectBounds(relationHandler: (InferenceVariableNode) -> Unit,
-                            type: PsiType,
+  private fun collectBounds(weakRelationHandler: (InferenceVariableNode) -> Unit,
+                            strongRelationHandler: (InferenceVariableNode) -> Unit,
+                            relationBound: InferenceBound,
+                            variable: InferenceVariable,
                             session: GroovyInferenceSession,
                             nodes: Map<InferenceVariable, InferenceVariableNode>) {
     val typeVisitor = object : PsiTypeVisitor<PsiType>() {
@@ -70,7 +64,7 @@ class InferenceVariableNode(val inferenceVariable: InferenceVariable) {
         classType ?: return classType
         val dependentVariable = session.getInferenceVariable(classType)
         if (dependentVariable != null && dependentVariable in nodes) {
-          relationHandler(nodes.getValue(dependentVariable))
+          weakRelationHandler(nodes.getValue(dependentVariable))
         }
         else {
           classType.parameters.forEach { it.accept(this) }
@@ -85,7 +79,17 @@ class InferenceVariableNode(val inferenceVariable: InferenceVariable) {
       }
     }
 
-    type.accept(typeVisitor)
+    for (dependentType in variable.getBounds(relationBound)
+      .flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else listOf(it) }) {
+      val dependentVariable = session.getInferenceVariable(dependentType)
+      if (dependentVariable != null && dependentVariable in nodes.keys && dependentVariable != inferenceVariable) {
+        strongRelationHandler(nodes.getValue(dependentVariable))
+      }
+      else {
+        dependentType.accept(typeVisitor)
+      }
+    }
+
   }
 
   override fun toString(): String {

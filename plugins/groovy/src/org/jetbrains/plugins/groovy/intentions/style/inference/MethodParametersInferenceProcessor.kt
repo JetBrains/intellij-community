@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.containers.toArray
@@ -82,9 +81,9 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
     val inferenceSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method,
                                                   propagateVariablesToNestedSessions = true)
     collectOuterMethodCalls(inferenceSession)
-    val substitutor = inferenceSession.inferSubst()
+    val signatureSubstitutor = inferenceSession.inferSubst()
     for ((parameter, typeParameter) in parameterIndex) {
-      parameter.setType(substitutor.substitute(typeParameter))
+      parameter.setType(signatureSubstitutor.substitute(typeParameter))
     }
 
     method.typeParameterList?.replace(defaultTypeParameterList.copy())
@@ -189,21 +188,18 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
 
 
   /**
-   * Allows to create ready PSI type parameter with correct dependency on other type parameter.
+   * Creates ready for insertion type parameter with correct dependency on other type parameter.
    */
   private fun createBoundedTypeParameterElement(variable: InferenceVariable,
                                                 restoreNameSubstitution: PsiSubstitutor,
                                                 relationSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
                                                 supertypeAdvice: PsiType? = null): PsiTypeParameter {
-    val typeParameterAmongSuperclasses = ((if (supertypeAdvice != null) arrayOf(supertypeAdvice) else emptyArray()) + variable.getBounds(
-      InferenceBound.UPPER)).firstOrNull {
-      restoreNameSubstitution.substitute(it) != it
-    }
-    val superTypes = if (typeParameterAmongSuperclasses != null) {
-      arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(typeParameterAmongSuperclasses)) as PsiClassType)
+    val parametrizedSupertype = supertypeAdvice ?: variable.upperBounds().firstOrNull { restoreNameSubstitution.substitute(it) != it }
+    val superTypes = if (parametrizedSupertype != null) {
+      arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(parametrizedSupertype)) as PsiClassType)
     }
     else
-      variable.getBounds(InferenceBound.UPPER)
+      variable.upperBounds()
         .filter { it != PsiType.getJavaLangObject(variable.manager, variable.resolveScope) }
         .map { it as PsiClassType }
         .toTypedArray()

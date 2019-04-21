@@ -55,14 +55,10 @@ fun determineDependencyRelation(left: InferenceVariable, right: InferenceVariabl
 }
 
 fun getDependencies(type: PsiType, session: GroovyInferenceSession): Iterable<InferenceVariable> {
-  return if (type is PsiIntersectionType) {
-    type.conjuncts.flatMap { getDependencies(it, session) }
-  }
-  else if (session.getInferenceVariable(type) != null) {
-    listOf(session.getInferenceVariable(type)).asIterable()
-  }
-  else {
-    emptyList<InferenceVariable>()
+  return when {
+    type is PsiIntersectionType -> type.conjuncts.flatMap { getDependencies(it, session) }
+    session.getInferenceVariable(type) != null -> listOf(session.getInferenceVariable(type))
+    else -> emptyList()
   }
 }
 
@@ -81,13 +77,13 @@ fun createInferenceVariableGraph(inferenceVars: Collection<InferenceVariable>,
   for (inferenceVar in inferenceVars) {
     val node = nodes[inferenceVar]!!
     for (dependency in inferenceVar.getFullDependencies(session)) {
-      val dependencyNode = nodes[dependency] ?: continue
+      val dependentNode = nodes[dependency] ?: continue
       val relation = determineDependencyRelation(inferenceVar, dependency) ?: continue
       when (relation) {
-        InferenceBound.UPPER -> node.addDependency(dependencyNode)
-        InferenceBound.LOWER -> dependencyNode.addDependency(node)
+        InferenceBound.UPPER -> node.addDependency(dependentNode)
+        InferenceBound.LOWER -> dependentNode.addDependency(node)
         InferenceBound.EQ -> {
-          dependencyNode.addDependency(node); node.addDependency(dependencyNode);
+          dependentNode.addDependency(node); node.addDependency(dependentNode);
         }
       }
     }
@@ -113,8 +109,12 @@ fun getConstantInferenceVariables(constantTypeParameters: Array<PsiTypeParameter
 
 fun collectRepresentativeSubstitutor(graph: InferenceVariableGraph): PsiSubstitutor {
   var representativeSubstitutor = PsiSubstitutor.EMPTY
-  graph.variableInstantiations.keys.forEach {
+  graph.initialVariableInstantiations.keys.forEach {
     representativeSubstitutor = representativeSubstitutor.put(it, graph.getRepresentative(it)?.type())
   }
   return representativeSubstitutor
 }
+
+fun InferenceVariable.upperBounds() = getBounds(InferenceBound.UPPER)
+
+fun PsiSubstitutor.invoke(type: PsiType?): PsiType = substitute(type)
