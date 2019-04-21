@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class VirtualFileManager implements ModificationTracker {
   public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>("NewVirtualFileSystem changes", BulkFileListener.class);
 
+  @NotNull
   public static final ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
   private static VirtualFileManager ourInstance = CachedSingletonsRegistry.markCachedField(VirtualFileManager.class);
