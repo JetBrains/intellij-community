@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
-import com.intellij.util.PairConsumer
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
@@ -65,8 +64,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
 
   protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
-    if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, workflow.commitContext.additionalDataConsumer)
-    else emptyMap(),
+    if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, workflow.commitContext) else emptyMap(),
     getBeforeOptions(workflow.commitHandlers),
     getAfterOptions(workflow.commitHandlers, this)
   )
@@ -147,9 +145,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected abstract fun saveCommitMessage(success: Boolean)
 
-  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs<*>>, additionalData: PairConsumer<Any, Any>) =
+  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs<*>>, commitContext: CommitContext) =
     vcses.sortedWith(VCS_COMPARATOR)
-      .associateWith { it.checkinEnvironment?.createAdditionalOptionsPanel(commitPanel, additionalData) }
+      .associateWith { it.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) }
       .filterValues { it != null }
       .mapValues { it.value!! }
 

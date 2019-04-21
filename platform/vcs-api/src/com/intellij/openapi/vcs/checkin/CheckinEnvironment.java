@@ -7,9 +7,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.PseudoMap;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
@@ -28,9 +29,23 @@ import static com.intellij.util.containers.ContainerUtil.newHashSet;
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
 public interface CheckinEnvironment extends VcsProviderMarker {
+
   @Nullable
-  RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
-                                                      @NotNull PairConsumer<Object, Object> additionalDataConsumer);
+  default RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+    //noinspection deprecation
+    return createAdditionalOptionsPanel(commitPanel, commitContext.getAdditionalDataConsumer());
+  }
+
+  @Deprecated
+  @Nullable
+  default RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+                                                              @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
+    // for compatibility with external plugins
+    if (additionalDataConsumer instanceof PseudoMap) {
+      return createCommitOptions(panel, ((PseudoMap)additionalDataConsumer).getCommitContext());
+    }
+    return null;
+  }
 
   @Nullable
   default String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
@@ -45,14 +60,26 @@ public interface CheckinEnvironment extends VcsProviderMarker {
 
   @Nullable
   default List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.nullConstant(), newHashSet());
+    return commit(changes, preparedComment, new CommitContext(), newHashSet());
   }
 
   @Nullable
-  List<VcsException> commit(@NotNull List<Change> changes,
-                            @NotNull String preparedComment,
-                            @NotNull NullableFunction<Object, Object> parametersHolder,
-                            Set<String> feedback);
+  default List<VcsException> commit(@NotNull List<Change> changes,
+                                    @NotNull String commitMessage,
+                                    @NotNull CommitContext commitContext,
+                                    @NotNull Set<String> feedback) {
+    //noinspection deprecation
+    return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
+  }
+
+  @Deprecated
+  @Nullable
+  default List<VcsException> commit(@NotNull List<Change> changes,
+                                    @NotNull String preparedComment,
+                                    @NotNull NullableFunction<Object, Object> parametersHolder,
+                                    Set<String> feedback) {
+    return null;
+  }
 
   @Nullable
   List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files);

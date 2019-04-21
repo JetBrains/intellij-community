@@ -40,7 +40,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
@@ -127,11 +126,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return true;
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
-                                                             @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
-    return new GitCheckinOptions(myProject, panel);
+  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+    return new GitCheckinOptions(myProject, commitPanel);
   }
 
   @Override
@@ -182,10 +180,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return GitBundle.getString("commit.action.name");
   }
 
+  @NotNull
   @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
-                                   @NotNull String message,
-                                   @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
+                                   @NotNull String commitMessage,
+                                   @NotNull CommitContext commitContext,
+                                   @NotNull Set<String> feedback) {
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
@@ -197,7 +197,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
       if (myNextCommitCommitRenamesSeparately) {
-        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, message);
+        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
         toCommit = pair.first;
         List<VcsException> moveExceptions = pair.second;
 
@@ -207,7 +207,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
 
-      exceptions.addAll(commitRepository(repository, toCommit, message));
+      exceptions.addAll(commitRepository(repository, toCommit, commitMessage));
     }
 
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
