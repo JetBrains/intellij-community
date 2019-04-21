@@ -83,9 +83,6 @@ public interface BashTypes {
   IElementType STRING = new BashCompositeElementType("STRING");
   IElementType SUBSHELL_COMMAND = new BashCompositeElementType("SUBSHELL_COMMAND");
   IElementType THEN_CLAUSE = new BashCompositeElementType("THEN_CLAUSE");
-  IElementType TIMESPEC = new BashCompositeElementType("TIMESPEC");
-  IElementType TIME_OPT = new BashCompositeElementType("TIME_OPT");
-  IElementType TRAP_COMMAND = new BashCompositeElementType("TRAP_COMMAND");
   IElementType UNARY_EXPRESSION = new BashCompositeElementType("UNARY_EXPRESSION");
   IElementType UNTIL_COMMAND = new BashCompositeElementType("UNTIL_COMMAND");
   IElementType VARIABLE = new BashCompositeElementType("VARIABLE");
@@ -402,15 +399,6 @@ public interface BashTypes {
       }
       else if (type == THEN_CLAUSE) {
         return new BashThenClauseImpl(node);
-      }
-      else if (type == TIMESPEC) {
-        return new BashTimespecImpl(node);
-      }
-      else if (type == TIME_OPT) {
-        return new BashTimeOptImpl(node);
-      }
-      else if (type == TRAP_COMMAND) {
-        return new BashTrapCommandImpl(node);
       }
       else if (type == UNARY_EXPRESSION) {
         return new BashUnaryExpressionImpl(node);

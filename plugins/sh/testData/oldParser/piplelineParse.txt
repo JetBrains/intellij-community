@@ -3,14 +3,14 @@ BASH_FILE
     PIPELINE_COMMAND
       PsiElement(!)('!')
       PsiWhiteSpace(' ')
-      TIMESPEC
-        PsiElement(time)('time')
-      PsiWhiteSpace(' ')
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
             LITERAL
-              PsiElement(word)('echo')
+              PsiElement(word)('time')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           LITERAL
             PsiElement(word)('a')

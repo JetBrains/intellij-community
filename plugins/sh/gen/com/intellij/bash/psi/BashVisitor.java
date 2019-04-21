@@ -302,18 +302,6 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitTimeOpt(@NotNull BashTimeOpt o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitTimespec(@NotNull BashTimespec o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitTrapCommand(@NotNull BashTrapCommand o) {
-    visitCommand(o);
-  }
-
   public void visitUnaryExpression(@NotNull BashUnaryExpression o) {
     visitExpression(o);
   }

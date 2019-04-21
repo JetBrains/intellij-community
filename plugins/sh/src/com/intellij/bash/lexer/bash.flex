@@ -286,9 +286,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     "then"                        { return THEN; }
     "until"                       { pushState(OTHER_CONDITIONS); return UNTIL; }
     "while"                       { pushState(OTHER_CONDITIONS); return WHILE; }
-    "trap"                        { return TRAP; }
     "let"                         { pushState(LET_EXPRESSION); return LET; }
-    "time"                        { return TIME; }
 }
 
 <YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION,

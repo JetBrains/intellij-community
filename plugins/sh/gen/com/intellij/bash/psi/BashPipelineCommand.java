@@ -11,9 +11,6 @@ public interface BashPipelineCommand extends BashCommand {
   BashPipeline getPipeline();
 
   @Nullable
-  BashTimespec getTimespec();
-
-  @Nullable
   PsiElement getBang();
 
 }

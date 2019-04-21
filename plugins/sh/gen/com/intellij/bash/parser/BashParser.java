@@ -155,15 +155,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == THEN_CLAUSE) {
       r = then_clause(b, 0);
     }
-    else if (t == TIME_OPT) {
-      r = time_opt(b, 0);
-    }
-    else if (t == TIMESPEC) {
-      r = timespec(b, 0);
-    }
-    else if (t == TRAP_COMMAND) {
-      r = trap_command(b, 0);
-    }
     else if (t == UNTIL_COMMAND) {
       r = until_command(b, 0);
     }
@@ -194,8 +185,8 @@ public class BashParser implements PsiParser, LightPsiParser {
       COMMAND_SUBSTITUTION_COMMAND, CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND,
       FUNCTION_DEFINITION, GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND,
       INCLUDE_DIRECTIVE, LET_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND,
-      SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND,
-      UNTIL_COMMAND, WHILE_COMMAND),
+      SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND, UNTIL_COMMAND,
+      WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -1977,18 +1968,12 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // '!'? pipeline
-  //                     | timespec '!'? pipeline
-  //                     | '!' timespec pipeline
-  //                     | trap_command
   //                     | let_command
   public static boolean pipeline_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, PIPELINE_COMMAND, "<pipeline command>");
     r = pipeline_command_0(b, l + 1);
-    if (!r) r = pipeline_command_1(b, l + 1);
-    if (!r) r = pipeline_command_2(b, l + 1);
-    if (!r) r = trap_command(b, l + 1);
     if (!r) r = let_command(b, l + 1);
     exit_section_(b, l, m, r, false, pipeline_recover_parser_);
     return r;
@@ -2010,37 +1995,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "pipeline_command_0_0")) return false;
     consumeToken(b, BANG);
     return true;
-  }
-
-  // timespec '!'? pipeline
-  private static boolean pipeline_command_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = timespec(b, l + 1);
-    r = r && pipeline_command_1_1(b, l + 1);
-    r = r && pipeline(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '!'?
-  private static boolean pipeline_command_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_1_1")) return false;
-    consumeToken(b, BANG);
-    return true;
-  }
-
-  // '!' timespec pipeline
-  private static boolean pipeline_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, BANG);
-    r = r && timespec(b, l + 1);
-    r = r && pipeline(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -2662,62 +2616,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = r && compound_list(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  /* ********************************************************** */
-  // '-p'
-  public static boolean time_opt(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "time_opt")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TIME_OPT, "<time opt>");
-    r = consumeToken(b, "-p");
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // time time_opt?
-  public static boolean timespec(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "timespec")) return false;
-    if (!nextTokenIs(b, TIME)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, TIME);
-    r = r && timespec_1(b, l + 1);
-    exit_section_(b, m, TIMESPEC, r);
-    return r;
-  }
-
-  // time_opt?
-  private static boolean timespec_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "timespec_1")) return false;
-    time_opt(b, l + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // trap literal*
-  public static boolean trap_command(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "trap_command")) return false;
-    if (!nextTokenIs(b, TRAP)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, TRAP_COMMAND, null);
-    r = consumeToken(b, TRAP);
-    p = r; // pin = 1
-    r = r && trap_command_1(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // literal*
-  private static boolean trap_command_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "trap_command_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!literal(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "trap_command_1", c)) break;
-    }
-    return true;
   }
 
   /* ********************************************************** */

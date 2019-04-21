@@ -128,23 +128,18 @@ commands_list ::= pipeline_command (
                  )*
 
 pipeline_command ::=  '!'? pipeline
-                    | timespec '!'? pipeline
-                    | '!' timespec pipeline
-                    | trap_command
                     | let_command {recoverWhile=pipeline_recover}
+let_command ::= let expression
+
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'|
                                '\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
-let_command ::= let expression
-time_opt ::= '-p'
-timespec ::= time time_opt?
-trap_command ::= trap literal*
+
 
 pipeline ::= command (('|&'|'|') newlines command)* {pin(".*")=1}
 
 command ::= shell_command [heredoc | redirection+]
           | include_command
           | simple_command
-
 
 
 redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution

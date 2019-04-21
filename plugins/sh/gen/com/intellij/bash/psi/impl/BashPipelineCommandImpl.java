@@ -33,12 +33,6 @@ public class BashPipelineCommandImpl extends BashCommandImpl implements BashPipe
 
   @Override
   @Nullable
-  public BashTimespec getTimespec() {
-    return findChildByClass(BashTimespec.class);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getBang() {
     return findChildByType(BANG);
   }
