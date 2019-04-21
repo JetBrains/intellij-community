@@ -15,10 +15,11 @@ import java.awt.*;
 import static com.intellij.openapi.util.Pair.pair;
 
 /**
- * Use this class when you need a customizable text-and-icon cell renderer.
+ * @deprecated use {@link SimpleListCellRenderer} instead.
  *
  * @author oleg
  */
+@Deprecated
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> {
   private final ListCellRenderer<? super T> myRenderer;
   private boolean mySeparator;
@@ -68,6 +69,10 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
     return component;
   }
 
+  /**
+   * @deprecated Use plain {@link JSeparator} instead
+   */
+  @Deprecated
   @NotNull
   public static Component createSeparator(@Nullable String text) {
     TitledSeparator separator = new TitledSeparator(text);
