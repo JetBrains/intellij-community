@@ -1,44 +1,15 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.openapi.vcs.changes;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.NullableFunction
+import com.intellij.util.PairConsumer
 
-import java.util.HashMap;
-import java.util.Map;
+class PseudoMap<Key, Value> : PairConsumer<Key, Value>, NullableFunction<Key, Value> {
+  private val myMap = mutableMapOf<Key, Value>()
 
-public class PseudoMap<Key, Value> implements PairConsumer<Key, Value>, NullableFunction<Key, Value> {
-  private final Map<Key, Value> myMap;
+  override fun `fun`(key: Key): Value? = myMap[key]
 
-  public PseudoMap() {
-    myMap = createMap();
-  }
-
-  protected Map<Key, Value> createMap() {
-    return new HashMap<>();
-  }
-
-  @Override
-  public Value fun(Key key) {
-    return myMap.get(key);
-  }
-
-  @Override
-  public void consume(Key key, Value value) {
-    myMap.put(key, value);
+  override fun consume(key: Key, value: Value) {
+    myMap[key] = value
   }
 }
