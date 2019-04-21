@@ -23,16 +23,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -76,11 +71,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
-                                                             @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
+  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     reset();
-    return new HgCommitAdditionalComponent(myProject, panel);
+    return new HgCommitAdditionalComponent(myProject, commitPanel);
   }
 
   private void reset() {
@@ -101,11 +96,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return HgVcsMessages.message("hg4idea.commit");
   }
 
+  @NotNull
   @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
-                                   @NotNull String preparedComment,
-                                   @NotNull NullableFunction<Object, Object> parametersHolder,
-                                   Set<String> feedback) {
+                                   @NotNull String commitMessage,
+                                   @NotNull CommitContext commitContext,
+                                   @NotNull Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap);
@@ -113,8 +109,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
       HgRepository repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
-      HgCommitTypeCommand command = myMqNewPatch ? new HgQNewCommand(myProject, repo, preparedComment, myNextCommitAmend) :
-                                    new HgCommitCommand(myProject, repo, preparedComment, myNextCommitAmend, myCloseBranch,
+      HgCommitTypeCommand command = myMqNewPatch ? new HgQNewCommand(myProject, repo, commitMessage, myNextCommitAmend) :
+                                    new HgCommitCommand(myProject, repo, commitMessage, myNextCommitAmend, myCloseBranch,
                                                         myShouldCommitSubrepos && !selectedFiles.isEmpty());
 
       if (isMergeCommit(repo.getRoot())) {

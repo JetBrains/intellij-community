@@ -110,7 +110,7 @@ abstract class AbstractCommitter(val project: Project,
     val environment = vcs.checkinEnvironment
     if (environment != null) {
       _pathsToRefresh.addAll(ChangesUtil.getPaths(changes))
-      val exceptions = environment.commit(changes, commitMessage, commitContext.additionalData, _feedback)
+      val exceptions = environment.commit(changes, commitMessage, commitContext, _feedback)
       if (!exceptions.isNullOrEmpty()) {
         _exceptions.addAll(exceptions)
         _failedToCommitChanges.addAll(changes)
