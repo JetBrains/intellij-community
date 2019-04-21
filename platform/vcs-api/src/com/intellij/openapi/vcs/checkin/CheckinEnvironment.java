@@ -36,6 +36,7 @@ public interface CheckinEnvironment extends VcsProviderMarker {
     return createAdditionalOptionsPanel(commitPanel, commitContext.getAdditionalDataConsumer());
   }
 
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @Nullable
   default RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
@@ -72,6 +73,7 @@ public interface CheckinEnvironment extends VcsProviderMarker {
     return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
   }
 
+  @SuppressWarnings("unused")
   @Deprecated
   @Nullable
   default List<VcsException> commit(@NotNull List<Change> changes,
