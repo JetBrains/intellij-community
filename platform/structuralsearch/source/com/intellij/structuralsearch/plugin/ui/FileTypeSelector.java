@@ -11,7 +11,7 @@ import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -130,22 +130,22 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
     }
   }
 
-  private static class MyCellRenderer extends ListCellRendererWrapper<FileTypeInfo> {
+  private static class MyCellRenderer extends SimpleListCellRenderer<FileTypeInfo> {
     private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
     private static final Icon WIDE_EMPTY_ICON = JBUI.scale(EmptyIcon.create(32, 18));
 
     @Override
-    public void customize(JList list, FileTypeInfo info, int index, boolean selected, boolean hasFocus) {
-      if (info == null) {
+    public void customize(JList<? extends FileTypeInfo> list, FileTypeInfo value, int index, boolean selected, boolean hasFocus) {
+      if (value == null) {
         return;
       }
-      if (info.isNested() && index >= 0) {
+      if (value.isNested() && index >= 0) {
         setIcon(WIDE_EMPTY_ICON);
-        setText(info.getText());
+        setText(value.getText());
       }
       else {
-        setIcon(getFileTypeIcon(info));
-        setText(info.getFullText());
+        setIcon(getFileTypeIcon(value));
+        setText(value.getFullText());
       }
     }
 

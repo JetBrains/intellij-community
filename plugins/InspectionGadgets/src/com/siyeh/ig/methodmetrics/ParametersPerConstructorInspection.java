@@ -19,7 +19,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -37,12 +37,7 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
   public JComponent createOptionsPanel() {
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
     final JComboBox<Scope> comboBox = new ComboBox<>(new Scope[] {Scope.NONE, Scope.PRIVATE, Scope.PACKAGE_LOCAL, Scope.PROTECTED});
-    comboBox.setRenderer(new ListCellRendererWrapper<Scope>() {
-      @Override
-      public void customize(JList list, Scope value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getText());
-      }
-    });
+    comboBox.setRenderer(SimpleListCellRenderer.create("", Scope::getText));
     comboBox.setSelectedItem(ignoreScope);
     comboBox.addActionListener(new ActionListener() {
       @Override

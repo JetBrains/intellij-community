@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -67,9 +68,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myFontSizeCombo.setEditable(true);
     myComponent.myPresentationModeFontSize.setEditable(true);
 
-    //noinspection unchecked
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
-    myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
+    myComponent.myLafComboBox.setRenderer(SimpleListCellRenderer.create("", UIManager.LookAndFeelInfo::getName));
 
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
     myComponent.myAntialiasingInEditor.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
@@ -487,7 +487,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myWindowShortcutsCheckBox;
     private JCheckBox myShowToolStripesCheckBox;
     private JCheckBox myShowMemoryIndicatorCheckBox;
-    private JComboBox myLafComboBox;
+    private JComboBox<UIManager.LookAndFeelInfo> myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
 
     private JCheckBox myMoveMouseOnDefaultButtonCheckBox;

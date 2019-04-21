@@ -70,9 +70,9 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     myConstantSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMinSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMaxSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
-    myConstantSizeUnitsCombo.setRenderer(new MappingListCellRenderer(myConstantSizeUnitsCombo.getRenderer(), UNITS_MAP));
-    myMinSizeUnitsCombo.setRenderer(new MappingListCellRenderer(myMinSizeUnitsCombo.getRenderer(), UNITS_MAP));
-    myMaxSizeUnitsCombo.setRenderer(new MappingListCellRenderer(myMaxSizeUnitsCombo.getRenderer(), UNITS_MAP));
+    myConstantSizeUnitsCombo.setRenderer(new MappingListCellRenderer(UNITS_MAP));
+    myMinSizeUnitsCombo.setRenderer(new MappingListCellRenderer(UNITS_MAP));
+    myMaxSizeUnitsCombo.setRenderer(new MappingListCellRenderer(UNITS_MAP));
     final MyRadioListener listener = new MyRadioListener();
     myDefaultRadioButton.addActionListener(listener);
     myPreferredRadioButton.addActionListener(listener);

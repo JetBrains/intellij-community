@@ -38,8 +38,8 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -420,15 +420,12 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
           }
         }
       }
-      comboBox.setRenderer(new ListCellRendererWrapper<String>() {
-        @Override
-        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-          setText(value);
-          if (invalid.contains(value)) {
-            setForeground(JBColor.RED);
-          }
+      comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+        label.setText(value);
+        if (invalid.contains(value)) {
+          label.setForeground(JBColor.RED);
         }
-      });
+      }));
       comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtil.toStringArray(names)));
       String baseName = templatesManager.getDefaultTemplateBaseName();
       if (invalid.contains(baseName)) { //preselect default template but do not remember as default

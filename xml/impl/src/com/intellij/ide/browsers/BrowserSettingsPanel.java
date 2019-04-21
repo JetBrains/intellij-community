@@ -9,23 +9,19 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.LocalPathCellEditor;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import com.intellij.util.ui.table.TableModelEditor;
-import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -126,7 +122,7 @@ final class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private ComboBox defaultBrowserPolicyComboBox;
+  private ComboBox<DefaultBrowserPolicy> defaultBrowserPolicyComboBox;
   private JBCheckBox showBrowserHover;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
@@ -144,8 +140,7 @@ final class BrowserSettingsPanel {
     defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST);
     defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE);
 
-    // noinspection unchecked
-    defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<>(defaultBrowserPolicies));
+    defaultBrowserPolicyComboBox.setModel(new CollectionComboBoxModel<>(defaultBrowserPolicies));
     defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -162,30 +157,16 @@ final class BrowserSettingsPanel {
       }
     });
 
-    defaultBrowserPolicyComboBox.setRenderer(new ListCellRendererWrapper<DefaultBrowserPolicy>() {
-      @Override
-      public void customize(JList list, DefaultBrowserPolicy value, int index, boolean selected, boolean hasFocus) {
-        String name;
-        switch (value) {
-          case SYSTEM:
-            name = "System default";
-            break;
-          case FIRST:
-            name = "First listed";
-            break;
-          case ALTERNATIVE:
-            name = "Custom path";
-            break;
-          default:
-            throw new IllegalStateException();
-        }
-
-        setText(name);
-      }
-    });
-
+    defaultBrowserPolicyComboBox.setRenderer(SimpleListCellRenderer.create("", value -> {
+      String text = value == DefaultBrowserPolicy.SYSTEM ? "System default" :
+                    value == DefaultBrowserPolicy.FIRST ? "First listed" :
+                    value == DefaultBrowserPolicy.ALTERNATIVE ? "Custom path" :
+                    null;
+      if (text == null) throw new IllegalStateException(String.valueOf(value));
+      return text;
+    }));
     if (UIUtil.isUnderAquaLookAndFeel()) {
-      defaultBrowserPolicyComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
+      defaultBrowserPolicyComboBox.setBorder(JBUI.Borders.emptyTop(3));
     }
   }
 

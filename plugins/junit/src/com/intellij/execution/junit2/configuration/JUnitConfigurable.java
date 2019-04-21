@@ -156,43 +156,31 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     };
 
     reloadTestKindModel();
-    myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>() {
-      @Override
-      public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
-        switch (value) {
-          case JUnitConfigurationModel.ALL_IN_PACKAGE:
-            setText("All in package");
-            break;
-          case JUnitConfigurationModel.DIR:
-            setText("All in directory");
-            break;
-          case JUnitConfigurationModel.PATTERN:
-            setText("Pattern");
-            break;
-          case JUnitConfigurationModel.CLASS:
-            setText("Class");
-            break;
-          case JUnitConfigurationModel.METHOD:
-            setText("Method");
-            break;
-          case JUnitConfigurationModel.CATEGORY:
-            setText("Category");
-            break;
-          case JUnitConfigurationModel.UNIQUE_ID:
-            setText("UniqueId");
-            break;
-          case JUnitConfigurationModel.TAGS:
-            setText("Tags");
-            break;
-          case JUnitConfigurationModel.BY_SOURCE_POSITION:
-            setText("Through source location");
-            break;
-          case JUnitConfigurationModel.BY_SOURCE_CHANGES:
-            setText("Over changes in sources");
-            break;
-        }
+    myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> {
+      switch (value) {
+        case JUnitConfigurationModel.ALL_IN_PACKAGE:
+          return "All in package";
+        case JUnitConfigurationModel.DIR:
+          return "All in directory";
+        case JUnitConfigurationModel.PATTERN:
+          return "Pattern";
+        case JUnitConfigurationModel.CLASS:
+          return "Class";
+        case JUnitConfigurationModel.METHOD:
+          return "Method";
+        case JUnitConfigurationModel.CATEGORY:
+          return "Category";
+        case JUnitConfigurationModel.UNIQUE_ID:
+          return "UniqueId";
+        case JUnitConfigurationModel.TAGS:
+          return "Tags";
+        case JUnitConfigurationModel.BY_SOURCE_POSITION:
+          return "Through source location";
+        case JUnitConfigurationModel.BY_SOURCE_CHANGES:
+          return "Over changes in sources";
       }
-    });
+      throw new IllegalArgumentException(String.valueOf(value));
+    }));
 
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;

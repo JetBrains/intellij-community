@@ -27,7 +27,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -116,14 +116,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
       }
     };
     llCombo.setSelectedItem(myEffectiveLanguageLevel != null ? myEffectiveLanguageLevel : LanguageLevel.JDK_1_3);
-    llCombo.setRenderer(new ListCellRendererWrapper<LanguageLevel>() {
-      @Override
-      public void customize(JList list, LanguageLevel value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-          setText(value.getPresentableText());
-        }
-      }
-    });
+    llCombo.setRenderer(SimpleListCellRenderer.create("", LanguageLevel::getPresentableText));
     llCombo.addActionListener(e -> myEffectiveLanguageLevel = (LanguageLevel)llCombo.getSelectedItem());
 
     JPanel comboPanel = new JPanel(new BorderLayout());
