@@ -118,7 +118,7 @@ private file ::=
   shebang? newlines
   simple_list
 
-private simple_list ::= (commands_list ['&' | ';' | newlines])*
+private simple_list ::= (commands_list newlines)*
 
 commands_list ::= pipeline_command (
                      '&&' newlines? pipeline_command
@@ -160,23 +160,24 @@ include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
 
 
-shell_command ::=   for_command
+shell_command ::=  if_command
+                  | for_command
                   | case_command
                   | while_command
                   | until_command
                   | select_command
-                  | if_command
                   | subshell_command
                   | block
                   | function_definition
 
 //FOR COMMAND
 for_command ::= for for_clause any_block
-for_clause ::= arithmetic_for_clause | in_for_clause
-private in_for_clause ::= w (';' newlines | newlines in_clause?)
+for_clause ::= arithmetic_for_clause
+              | in_for_clause
 private arithmetic_for_clause ::= '((' arithmetic_for_expression '))' list_terminator? newlines
 private arithmetic_for_expression ::= expression? ';' newlines expression? ';' newlines expression? {recoverWhile=arithmetic_for_expression_recover}
 private arithmetic_for_expression_recover ::= !('))')
+private in_for_clause ::= w (';' newlines | newlines in_clause?)
 
 //SELECT COMMAND
 select_command ::= select w select_expression newlines any_block
@@ -212,7 +213,7 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile = compound_list_recover}
+compound_list ::= newlines pipeline_command_list end_of_list  newlines {pin(".*")=2 recoverWhile = compound_list_recover}
 private compound_list_recover ::= !(elif | else | then | fi)
 
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
@@ -290,7 +291,7 @@ private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
 
 //SUBSHELL COMMAND
 subshell_command ::= '(' list ')'
-list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+list ::= newlines pipeline_command_list end_of_list? newlines {pin(".*")=2 elementType=compound_list}
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
 
