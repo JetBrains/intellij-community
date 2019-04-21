@@ -10,6 +10,8 @@ import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion
@@ -46,6 +48,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
@@ -299,36 +302,41 @@ open class MultipleFileMergeDialog(
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
 
-    if (!beforeResolve(files)) {
-      return
-    }
-
-    try {
-      if (mergeSession is MergeSessionEx) {
-        mergeSession.acceptFilesRevisions(files, resolution)
-
-        for (file in files) {
-          checkMarkModifiedProject(file)
-        }
-
-        markFilesProcessed(files, resolution)
+    ProgressManager.getInstance().runProcessWithProgressSynchronously({
+      if (!beforeResolve(files)) {
+        return@runProcessWithProgressSynchronously
       }
-      else {
-        for (file in files) {
-          resolveFileViaContent(file, resolution)
-          checkMarkModifiedProject(file)
-          markFileProcessed(file, resolution)
+
+      try {
+        if (mergeSession is MergeSessionEx) {
+          mergeSession.acceptFilesRevisions(files, resolution)
+
+          for (file in files) {
+            checkMarkModifiedProject(file)
+          }
+
+          markFilesProcessed(files, resolution)
+        }
+        else {
+          for (file in files) {
+            ApplicationManager.getApplication().invokeAndWait({
+            resolveFileViaContent(file, resolution) // todo edt only
+                                                              }, modalityState)
+            checkMarkModifiedProject(file)
+            markFileProcessed(file, resolution)
+          }
         }
       }
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-      Messages.showErrorDialog(contentPanel, "Error saving merged data: " + e.message)
-    }
+      catch (e: Exception) {
+        LOG.warn(e)
+        Messages.showErrorDialog(contentPanel, "Error saving merged data: " + e.message)
+      }
+    }, "Resolving Conflicts", false, project)
 
     updateModelFromFiles()
   }
 
+  @CalledInAwt
   private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution) {
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException("File is read-only: " + file.presentableName)
