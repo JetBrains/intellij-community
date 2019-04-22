@@ -4,6 +4,8 @@ package org.jetbrains.uast.java
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import com.intellij.psi.javadoc.PsiDocComment
+import com.intellij.psi.javadoc.PsiDocToken
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.ClassSet
 import org.jetbrains.uast.internal.UElementToPsiElementMapping
@@ -42,7 +44,8 @@ private val conversionMapping = UElementToPsiElementMapping(
   UImportStatement::class.java to ClassSet(PsiImportStatementBase::class.java),
   USimpleNameReferenceExpression::class.java to ClassSet(PsiIdentifier::class.java,
                                                          PsiReferenceExpression::class.java,
-                                                         PsiJavaCodeReferenceElement::class.java),
+                                                         PsiJavaCodeReferenceElement::class.java,
+                                                         PsiDocToken::class.java),
   UIdentifier::class.java to ClassSet(PsiIdentifier::class.java),
   UNamedExpression::class.java to ClassSet(PsiNameValuePair::class.java),
   UCallExpression::class.java to ClassSet(
@@ -96,7 +99,8 @@ private val conversionMapping = UElementToPsiElementMapping(
   UExpressionList::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java),
 
   UExpression::class.java to ClassSet(PsiExpressionStatement::class.java),
-  USwitchClauseExpression::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java)
+  USwitchClauseExpression::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java),
+  UComment::class.java to ClassSet(PsiComment::class.java)
 )
 
 val uElementClassSet = ClassSet(*conversionMapping.baseMapping.flatMap { it.value.initialClasses.asIterable() }.toTypedArray())
