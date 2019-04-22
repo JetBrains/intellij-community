@@ -80,4 +80,5 @@ public class RedundantCast15Test extends LightCodeInsightFixtureTestCase {
   public void testDifferentNullness() { doTest();}
 
   public void testPrimitiveWidening() { doTest(); }
+  public void testCastLongLiteral() { doTest(); }
 }

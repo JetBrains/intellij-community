@@ -469,17 +469,22 @@ public class RedundantCastUtil {
 
       final PsiType topCastType = typeCast.getType();
       if (expr instanceof PsiTypeCastExpression) {
-        PsiTypeElement typeElement = ((PsiTypeCastExpression)expr).getCastType();
+        PsiTypeCastExpression innerCast = (PsiTypeCastExpression)expr;
+        PsiTypeElement typeElement = innerCast.getCastType();
         if (typeElement == null) return;
         PsiType castType = typeElement.getType();
-        final PsiExpression innerOperand = ((PsiTypeCastExpression)expr).getOperand();
+        final PsiExpression innerOperand = innerCast.getOperand();
         final PsiType operandType = innerOperand != null ? innerOperand.getType() : null;
         if (!(castType instanceof PsiPrimitiveType) && !(topCastType instanceof PsiPrimitiveType)) {
           if (operandType != null && topCastType != null && TypeConversionUtil.areTypesConvertible(operandType, topCastType)) {
-            addToResults((PsiTypeCastExpression)expr);
+            addToResults(innerCast);
           }
         } else if (Comparing.equal(PsiPrimitiveType.getUnboxedType(operandType), topCastType)) {
-          addToResults((PsiTypeCastExpression)expr);
+          addToResults(innerCast);
+        }
+        else if (operandType != null && operandType.equals(castType)) {
+          // like (int)(long)1L
+          addToResults(innerCast);
         }
       }
       else {
