@@ -761,7 +761,7 @@ public class RedundantCastUtil {
     PsiType castType = typeElement.getType();
     if (castType instanceof PsiPrimitiveType) {
       if (opType instanceof PsiPrimitiveType) {
-        return !opType.equals(castType); // let's suppose all not equal primitive casts are necessary
+        return !TypeConversionUtil.isSafeConversion(castType, opType); // let's suppose that casts losing precision are important 
       }
       final PsiPrimitiveType unboxedOpType = PsiPrimitiveType.getUnboxedType(opType);
       if (unboxedOpType != null && !unboxedOpType.equals(castType) ) {

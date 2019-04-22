@@ -78,4 +78,6 @@ public class RedundantCast15Test extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
   public void testDifferentNullness() { doTest();}
+
+  public void testPrimitiveWidening() { doTest(); }
 }

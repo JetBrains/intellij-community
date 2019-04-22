@@ -422,6 +422,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testPrivateFieldInSuperClassInSameFile() {
     doTest();
   }
+  
+  public void testWidenArgument() {
+    doTest();
+  }
 
   public void testInlineMultipleOccurrencesInFieldInitializer() {
     doTest();
