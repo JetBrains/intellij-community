@@ -174,7 +174,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="bash_file exists" name="bash_file exists" value="-e $VAR_1$" description="File exists"
+  <template id="bash_file exists" name="bash_file exists" value="-f $VAR_1$" description="File exists"
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
@@ -185,6 +185,81 @@
   <template id="bash_file not empty" name="bash_file not empty" value="-s $VAR_1$" description="File not empty"
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file readable" name="bash_file readable" value="-r $VAR_1$" description="File readable"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file writable" name="bash_file writable" value="-w $VAR_1$" description="File writable"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file executable" name="bash_file executable" value="-x $VAR_1$" description="File executable"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file equals" name="bash_file equals" value="$VAR_1$ -ef $VAR_2$" description="File equals"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file newer" name="bash_file newer" value="$VAR_1$ -nt $VAR_2$" description="File newer"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_file older" name="bash_file older" value="$VAR_1$ -ot $VAR_2$" description="File older"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
+    <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_path exists" name="bash_path exists" value="-e $VAR_1$" description="Path exists"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$path&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_directory exists" name="bash_directory exists" value="-d $VAR_1$" description="Directory exists"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="VAR_1" expression="" defaultValue="&quot;$directory&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template id="bash_command exists" name="bash_command exists" value="`command -v $COMMAND$`" description="Command exists"
+            toReformat="true" toShortenFQNames="false">
+    <variable name="COMMAND" expression="" defaultValue="&quot;command&quot;" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>

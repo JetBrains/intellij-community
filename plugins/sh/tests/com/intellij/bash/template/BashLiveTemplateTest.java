@@ -50,13 +50,16 @@ public class BashLiveTemplateTest extends LightCodeInsightFixtureTestCase {
     doTest("git commit<caret>", "git commit -m \"commit_message\"");
   }
   public void testCurl() {
-    doTest("curl<caret>", "curl --request GET -sL \\\n     --url 'http://example.com'");
+    doTest("curl<caret>", "curl --request GET -sL \\\n     --url 'http://example.com'\\\n     --output './path/to/file'");
   }
   public void testRm() {
     doTest("rm<caret>", "rm -f ./path/file");
   }
   public void testFind() {
-    doTest("find<caret>", "result=`find ./path -type f -name \"file_name\"`");
+    doTest("find<caret>", "find ./path -type f -name \"file_name\"");
+  }
+  public void testXargs() {
+    doTest("xargs<caret>", " | xargs command");
   }
   public void testHeredoc() {
     doTest("heredoc<caret>", "<<EOF\n    text\nEOF");

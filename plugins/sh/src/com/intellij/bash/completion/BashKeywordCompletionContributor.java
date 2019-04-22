@@ -16,7 +16,9 @@ public class BashKeywordCompletionContributor extends CompletionContributor impl
     extend(CompletionType.BASIC, insideThenOrElse(), new BashKeywordCompletionProvider("elif"));
     extend(CompletionType.BASIC, insideCondition(), new BashKeywordCompletionProvider(true, "string equal",
         "string not equal", "string is empty", "string not empty", "number equal", "number not equal", "number less",
-        "number less or equal", "number greater", "number greater or equal", "file exists", "file not empty"));
+        "number less or equal", "number greater", "number greater or equal", "file exists", "file not empty",
+        "command exists", "path exists", "directory exists", "file readable", "file writable", "file executable",
+        "file equals", "file newer", "file older"));
   }
 
   private static PsiElementPattern.Capture<PsiElement> keywordElementPattern() {

@@ -243,7 +243,7 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     final String completionRule = "file exists";
     myFixture.configureByText("a.sh", "[ <caret> ]");
     completeByRule(completionRule);
-    myFixture.checkResult("[ -e $file ]");
+    myFixture.checkResult("[ -f $file ]");
   }
 
   public void testFileNotEmpty() {
@@ -251,6 +251,69 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.sh", "[ <caret> ]");
     completeByRule(completionRule);
     myFixture.checkResult("[ -s $file ]");
+  }
+
+  public void testCommandExists() {
+    final String completionRule = "command exists";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ `command -v command` ]");
+  }
+
+  public void testPathExists() {
+    final String completionRule = "path exists";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -e $path ]");
+  }
+
+  public void testDirectoryExists() {
+    final String completionRule = "directory exists";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -d $directory ]");
+  }
+
+  public void testFileReadable() {
+    final String completionRule = "file readable";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -r $file ]");
+  }
+
+  public void testFileWritable() {
+    final String completionRule = "file writable";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -w $file ]");
+  }
+
+  public void testFileExecutable() {
+    final String completionRule = "file executable";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ -x $file ]");
+  }
+
+  public void testFileEquals() {
+    final String completionRule = "file equals";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $file1 -ef $file2 ]");
+  }
+
+  public void testFileNewer() {
+    final String completionRule = "file newer";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $file1 -nt $file2 ]");
+  }
+
+  public void testFileOlder() {
+    final String completionRule = "file older";
+    myFixture.configureByText("a.sh", "[ <caret> ]");
+    completeByRule(completionRule);
+    myFixture.checkResult("[ $file1 -ot $file2 ]");
   }
 
   public void testNoCompletionInArithmeticExpansions() {

@@ -103,11 +103,12 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="curl" value="curl --request $METHOD$ -sL \&#10;     --url '$URL$'"
+  <template name="curl" value="curl --request $METHOD$ -sL \&#10;     --url '$URL$'\&#10;     --output '$FILE$'"
             description="Http request" toReformat="true"
             toShortenFQNames="false">
     <variable name="METHOD" expression="enum(&quot;GET&quot;,&quot;POST&quot;,&quot;PUT&quot;,&quot;DELETE&quot;)" defaultValue="" alwaysStopAt="true"/>
     <variable name="URL" expression="" defaultValue="&quot;http://example.com&quot;" alwaysStopAt="true"/>
+    <variable name="FILE" expression="" defaultValue="&quot;./path/to/file&quot;" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>
@@ -121,7 +122,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="find" value="result=`find $PATH$ -type $PARAM$ -name &quot;$NAME$&quot;`"
+  <template name="find" value="find $PATH$ -type $PARAM$ -name &quot;$NAME$&quot;"
             description="Find file or directory" toReformat="true" toShortenFQNames="false">
     <variable name="PATH" expression="" defaultValue="&quot;./path&quot;" alwaysStopAt="true"/>
     <variable name="PARAM" expression="enum(&quot;f&quot;,&quot;d&quot;)" defaultValue="" alwaysStopAt="true"/>
@@ -134,6 +135,13 @@
   <template name="heredoc" value="&#60;&#60;EOF&#10;    $TEXT$$END$&#10;EOF"
             description="Multiline string" toReformat="true" toShortenFQNames="false">
     <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template name="xargs" value=" | xargs $COMMAND$" description="Execute commands from standard input" toReformat="true" toShortenFQNames="false">
+    <variable name="COMMAND" expression="" defaultValue="&quot;command&quot;" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>
