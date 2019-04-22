@@ -16,7 +16,7 @@ public interface BuildOutputInstantReader {
 
   void pushBack();
 
-  /***
+  /**
    * Push back the given number of lines.
    */
   void pushBack(int numberOfLines);
