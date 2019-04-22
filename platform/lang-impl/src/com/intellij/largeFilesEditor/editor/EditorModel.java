@@ -244,8 +244,8 @@ class EditorModel {
       if (tryGetTargetCaretOffsetInDocumentWithMargin() != -1) {
         reflectRealToTargetCaretPostion();
         isNeedToShowCaret = true;
-        requestUpdate();
       }
+      requestUpdate();
     }
   }
 
@@ -430,7 +430,7 @@ class EditorModel {
       LOG.warn(e);
     }
 
-    if (offset > startOfAllowedRange && offset < endOfAllowedRange) {
+    if (offset >= startOfAllowedRange && offset < endOfAllowedRange) {  // ">=" bacause for page number 0 startOfAllowedRange will be 0
       return offset;
     }
     else {
@@ -439,8 +439,13 @@ class EditorModel {
   }
 
   private int tryGetStartMarginForTargetCaretInDocument() {
-    if (pagesInDocument.size() > 0 && pagesInDocument.get(0).getPageNumber() != 0) {
-      return pagesInDocument.get(0).getText().length() / 2;
+    if (pagesInDocument.size() > 0) {
+      if (pagesInDocument.get(0).getPageNumber() == 0) {
+        return 0;
+      }
+      else {
+        return pagesInDocument.get(0).getText().length() / 2;
+      }
     }
     else {
       return -1;
@@ -625,11 +630,9 @@ class EditorModel {
     }
 
     int maxAllowedAmountOfPagesInDocumentHere = lastVisiblePageIndex + 2 + 1;  // max 2 invisible pages in the end
-    if (pagesInDocument.size() > maxAllowedAmountOfPagesInDocumentHere) {
-      for (int i = pagesInDocument.size() - 1; i >= maxAllowedAmountOfPagesInDocumentHere; i--) {
-        pagesCash.add(pagesInDocument.get(i));
-        pagesInDocument.remove(i);
-      }
+
+    while (pagesInDocument.size() > maxAllowedAmountOfPagesInDocumentHere) {
+      removeLastPageFromDocument();
     }
   }
 
@@ -705,6 +708,18 @@ class EditorModel {
         document.getTextLength() == 0 ? () -> document.setText(page.getText())
                                       : () -> document.insertString(document.getTextLength(), page.getText()))
     );
+  }
+
+  private void removeLastPageFromDocument() {
+    int indexOfLastPage = pagesInDocument.size() - 1;
+    Page lastPage = pagesInDocument.get(indexOfLastPage);
+
+    pagesCash.add(lastPage);
+    pagesInDocument.remove(indexOfLastPage);
+    runCaretListeningTransparentCommand(
+      () -> WriteCommandAction.runWriteCommandAction(
+        dataProvider.getProject(),
+        () -> document.deleteString(document.getTextLength() - lastPage.getText().length(), document.getTextLength())));
   }
 
   private void deleteAllPagesFromDocument() {
