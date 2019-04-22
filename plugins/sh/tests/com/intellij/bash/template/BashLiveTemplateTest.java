@@ -16,53 +16,81 @@ public class BashLiveTemplateTest extends LightCodeInsightFixtureTestCase {
   public void testBashShebang() {
     doTest("bash<caret>", "#!/usr/bin/env bash\n");
   }
+
   public void testShShebang() {
     doTest("sh<caret>", "#!/usr/bin/env sh\n");
   }
+
   public void testZshShebang() {
     doTest("zsh<caret>", "#!/usr/bin/env zsh\n");
   }
+
   public void testForiExpression() {
     doTest("fori<caret>", "for i in {1..5} ; do\n    \ndone");
   }
+
   public void testCmd() {
     doTest("cmd<caret>", "`command`");
   }
+
   public void testCmdCheckResult() {
     doTest("cmd success check<caret>", "if [[ $? == 0 ]]; then\n    echo \"Succeed\"\nelse\n    echo \"Failed\"\nfi");
   }
+
   public void testTarCompress() {
     doTest("tar compress<caret>", "tar -czvf /path/to/archive.tar.gz /path/to/directory");
   }
+
   public void testTarDecompress() {
     doTest("tar decompress<caret>", "tar -C /extract/to/path -xzvf /path/to/archive.tar.gz");
   }
+
   public void testMkdir() {
     doTest("mkdir<caret>", "mkdir \"dirname\"");
   }
+
   public void testGitBranchCreate() {
     doTest("git branch create<caret>", "git checkout -b branch_name");
   }
+
   public void testGitPush() {
     doTest("git push<caret>", "git push origin branch_name");
   }
+
   public void testGitCommit() {
     doTest("git commit<caret>", "git commit -m \"commit_message\"");
   }
+
   public void testCurl() {
     doTest("curl<caret>", "curl --request GET -sL \\\n     --url 'http://example.com'\\\n     --output './path/to/file'");
   }
+
   public void testRm() {
     doTest("rm<caret>", "rm -f ./path/file");
   }
+
   public void testFind() {
     doTest("find<caret>", "find ./path -type f -name \"file_name\"");
   }
+
   public void testXargs() {
     doTest("xargs<caret>", " | xargs command");
   }
+
   public void testHeredoc() {
     doTest("heredoc<caret>", "<<EOF\n    text\nEOF");
+  }
+
+  public void testKernelInfo() {
+    doTest("system kernel info<caret>", "uname -a");
+  }
+
+  public void testLinuxInfo() {
+    doTest("system info linux<caret>", "lsb_release -a");
+  }
+
+  public void testMacOSInfo() {
+    doTest("system info mac<caret>", "sw_vers");
   }
 
   private void doTest(String actual, String expected) {

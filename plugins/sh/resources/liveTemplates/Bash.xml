@@ -147,4 +147,22 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
+  <template name="system info linux" value="lsb_release -a" description="Linux system information" toReformat="true" toShortenFQNames="false">
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template name="system info mac" value="sw_vers" description="Mac OS system information" toReformat="true" toShortenFQNames="false">
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+  <template name="system kernel info" value="uname -a" description="Kernel information" toReformat="true" toShortenFQNames="false">
+    <context>
+      <option name="BASH" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
 </templateSet>
