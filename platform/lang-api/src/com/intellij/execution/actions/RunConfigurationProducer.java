@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -178,7 +178,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @return a configuration (new or existing) matching the context, or null if the context is not applicable to this producer.
    */
   @Nullable
-  public ConfigurationFromContext findOrCreateConfigurationFromContext(ConfigurationContext context) {
+  public ConfigurationFromContext findOrCreateConfigurationFromContext(@NotNull ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
       return null;
