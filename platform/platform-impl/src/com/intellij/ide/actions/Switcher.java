@@ -84,6 +84,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 public class Switcher extends AnAction implements DumbAware {
   private static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
+  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherToggleCheckBox";
 
   private static final int MINIMUM_HEIGHT = JBUI.scale(100);
 
@@ -143,17 +144,17 @@ public class Switcher extends AnAction implements DumbAware {
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null) {
       boolean sameShortcut = Comparing.equal(switcher.myTitle, title);
-      if (switcher.isCheckboxMode()) {
-        if (sameShortcut) {
+      if (sameShortcut) {
+        if (switcher.isCheckboxMode() && !ToggleCheckBoxAction.isEnabled()) {
           switcher.toggleShowEditedFiles();
         }
         else {
-          switcher.setShowOnlyEditedFiles(onlyEdited);
+          switcher.goForward();
         }
         return null;
       }
-      else if (sameShortcut) {
-        switcher.goForward();
+      else if (switcher.isCheckboxMode()) {
+        switcher.setShowOnlyEditedFiles(onlyEdited);
         return null;
       }
     }
@@ -169,6 +170,27 @@ public class Switcher extends AnAction implements DumbAware {
     SwitcherPanel switcher = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
     SWITCHER_KEY.set(project, switcher);
     return switcher;
+  }
+
+  public static class ToggleCheckBoxAction extends DumbAwareAction implements DumbAware {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      SwitcherPanel switcherPanel = SWITCHER_KEY.get(project);
+      if (switcherPanel != null) {
+        switcherPanel.toggleShowEditedFiles();
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      e.getPresentation().setEnabledAndVisible(SWITCHER_KEY.get(project) != null);
+    }
+
+    static boolean isEnabled() {
+      return getActiveKeymapShortcuts(TOGGLE_CHECK_BOX_ACTION_ID).getShortcuts().length > 0;
+    }
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
@@ -188,7 +210,6 @@ public class Switcher extends AnAction implements DumbAware {
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
-    final String myActionId;
     final int myBaseModifier;
     private JBPopup myHint;
 
@@ -293,7 +314,6 @@ public class Switcher extends AnAction implements DumbAware {
       setLayout(new SwitcherLayouter());
       this.project = project;
       myTitle = title;
-      myActionId = actionId;
       myPinned = pinned;
       mySpeedSearch = pinned ? new SwitcherSpeedSearch(this) : null;
 
@@ -469,7 +489,9 @@ public class Switcher extends AnAction implements DumbAware {
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
-      myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
+      myShowOnlyEditedFilesCheckBox = new MyCheckBox(ToggleCheckBoxAction.isEnabled() ? TOGGLE_CHECK_BOX_ACTION_ID
+                                                                                      : actionId,
+                                                     onlyEdited);
       myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
                                   isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
                                   pinned);
