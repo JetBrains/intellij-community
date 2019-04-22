@@ -143,7 +143,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
             add(Box.createRigidArea(JBDimension(UIUtil.DEFAULT_HGAP, 0)))
           }
           add(JLabel().apply {
-            icon = assignee.let { avatarIconsProvider.getIcon(it) }
+            icon = avatarIconsProvider.getIcon(assignee?.avatarUrl)
             toolTipText = assignee.login
           })
         }

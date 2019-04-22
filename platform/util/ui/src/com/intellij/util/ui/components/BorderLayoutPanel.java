@@ -25,31 +25,31 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   }
 
   @NotNull
-  public BorderLayoutPanel addToCenter(@NotNull Component comp) {
+  public final BorderLayoutPanel addToCenter(@NotNull Component comp) {
     add(comp, BorderLayout.CENTER);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToRight(@NotNull Component comp) {
+  public final BorderLayoutPanel addToRight(@NotNull Component comp) {
     add(comp, BorderLayout.EAST);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToLeft(@NotNull Component comp) {
+  public final BorderLayoutPanel addToLeft(@NotNull Component comp) {
     add(comp, BorderLayout.WEST);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToTop(@NotNull Component comp) {
+  public final BorderLayoutPanel addToTop(@NotNull Component comp) {
     add(comp, BorderLayout.NORTH);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToBottom(@NotNull Component comp) {
+  public final BorderLayoutPanel addToBottom(@NotNull Component comp) {
     add(comp, BorderLayout.SOUTH);
     return this;
   }
