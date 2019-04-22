@@ -767,7 +767,7 @@ public class RedundantCastUtil {
     if (castType instanceof PsiPrimitiveType) {
       if (opType instanceof PsiPrimitiveType) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
-        if (parent instanceof PsiReturnStatement || parent instanceof PsiMethodCallExpression || parent instanceof PsiVariable ||
+        if (parent instanceof PsiReturnStatement || parent instanceof PsiExpressionList || parent instanceof PsiVariable ||
             parent instanceof PsiAssignmentExpression) {
           return !TypeConversionUtil.isSafeConversion(castType, opType); // let's suppose that casts losing precision are important 
         } else {
