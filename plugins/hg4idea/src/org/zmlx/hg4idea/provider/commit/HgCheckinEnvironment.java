@@ -308,7 +308,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
 
-      myAmend = new MyAmendComponent(project, getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
+      myAmend = new MyAmendComponent(getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
       myAmend.getComponent().setEnabled(vcs.getVersion().isAmendSupported());
 
       myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
@@ -360,11 +360,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      MyAmendComponent(@NotNull Project project,
-                              @NotNull HgRepositoryManager repoManager,
-                              @NotNull CheckinProjectPanel panel,
-                              @NotNull String title) {
-        super(project, repoManager, panel, title);
+      MyAmendComponent(@NotNull HgRepositoryManager repoManager, @NotNull CheckinProjectPanel panel, @NotNull String title) {
+        super(repoManager, panel, title);
       }
 
       @NotNull

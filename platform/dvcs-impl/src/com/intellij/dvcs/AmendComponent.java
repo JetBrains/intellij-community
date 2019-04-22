@@ -45,14 +45,11 @@ public abstract class AmendComponent {
   @Nullable private String myAmendedMessage;
   @Nullable private String myPreviousMessage;
 
-  public AmendComponent(@NotNull Project project,
-                        @NotNull RepositoryManager<? extends Repository> repoManager,
-                        @NotNull CheckinProjectPanel panel) {
-    this(project, repoManager, panel, DvcsBundle.message("commit.amend"));
+  public AmendComponent(@NotNull RepositoryManager<? extends Repository> repoManager, @NotNull CheckinProjectPanel panel) {
+    this(repoManager, panel, DvcsBundle.message("commit.amend"));
   }
 
-  public AmendComponent(@NotNull Project project,
-                        @NotNull RepositoryManager<? extends Repository> repoManager,
+  public AmendComponent(@NotNull RepositoryManager<? extends Repository> repoManager,
                         @NotNull CheckinProjectPanel panel,
                         @NotNull String title) {
     myRepoManager = repoManager;
@@ -67,7 +64,7 @@ public abstract class AmendComponent {
         if (myAmend.isSelected()) {
           if (myCheckinPanel.getCommitMessage().equals(myPreviousMessage)) { // if user has already typed something, don't revert it
             if (myMessagesForRoots == null) {
-              loadMessagesInModalTask(project); // load all commit messages for all repositories
+              loadMessagesInModalTask(myRepoManager.getVcs().getProject()); // load all commit messages for all repositories
             }
             String message = constructAmendedMessage();
             if (!StringUtil.isEmptyOrSpaces(message)) {

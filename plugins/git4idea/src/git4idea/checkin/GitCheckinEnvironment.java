@@ -1159,7 +1159,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
       authorLabel.setLabelFor(myAuthorField);
 
-      myAmendComponent = new MyAmendComponent(project, getRepositoryManager(project), panel);
+      myAmendComponent = new MyAmendComponent(getRepositoryManager(project), panel);
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
       mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
@@ -1229,8 +1229,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
-        super(project, manager, panel);
+      MyAmendComponent(@NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+        super(manager, panel);
         myAmend.addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
