@@ -702,4 +702,11 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                      " not support equality signs in f-strings", equalitySignInFStringFragment.getPsi());
     }
   }
+
+  @Override
+  public void visitPyAssignmentExpression(PyAssignmentExpression node) {
+    super.visitPyAssignmentExpression(node);
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
+                                   " not support assignment expressions", node);
+  }
 }

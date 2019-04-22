@@ -141,13 +141,14 @@ public class PyTokenTypes {
   public static final PyElementType GTGTEQ = new PyElementType("GTGTEQ");// >>=
   public static final PyElementType EXPEQ = new PyElementType("EXPEQ");// **=
   public static final PyElementType RARROW = new PyElementType("RARROW");// ->
+  public static final PyElementType COLONEQ = new PyElementType("COLONEQ");// :=
 
   public static final TokenSet OPERATIONS = TokenSet.create(
       PLUS, MINUS, MULT, AT, EXP, DIV, FLOORDIV, PERC, LTLT, GTGT, AND, OR,
       XOR, TILDE, LT, GT, LE, GE, EQEQ, NE, NE_OLD, AT, COLON, TICK, EQ,
       PLUSEQ, MINUSEQ,
       MULTEQ, ATEQ, DIVEQ, FLOORDIVEQ, PERCEQ, ANDEQ, OREQ, XOREQ, LTLTEQ, GTGTEQ,
-      EXPEQ);
+      EXPEQ, COLONEQ);
 
   public static final TokenSet COMPARISON_OPERATIONS = TokenSet.create(
       LT, GT, EQEQ, GE, LE, NE, NE_OLD, IN_KEYWORD, IS_KEYWORD, NOT_KEYWORD);

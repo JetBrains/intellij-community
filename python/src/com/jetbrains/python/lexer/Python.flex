@@ -265,6 +265,7 @@ return PyTokenTypes.DOCSTRING; }
 "`"                   { return PyTokenTypes.TICK; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
+":="                  { return PyTokenTypes.COLONEQ; }
 
 {FSTRING_START}       { return fStringHelper.handleFStringStart(); }
 
