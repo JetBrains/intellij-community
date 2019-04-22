@@ -1569,8 +1569,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   public static boolean checkBadReturns(PsiMethod method) {
     PsiReturnStatement[] returns = PsiUtil.findReturnStatements(method);
-    if (returns.length == 0) return false;
     PsiCodeBlock body = method.getBody();
+    return checkBadReturns(returns, body);
+  }
+
+  public static boolean checkBadReturns(PsiReturnStatement[] returns, PsiCodeBlock body) {
+    if (returns.length == 0) return false;
     ControlFlow controlFlow;
     try {
       controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, new LocalsControlFlowPolicy(body), false);
