@@ -147,6 +147,8 @@ class CommunityLibraryLicenses {
                        license: "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl: "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
     new LibraryLicense(name: "completion-ranking-java", attachedTo: "intellij.statsCollector.completionRanker", version: "0.0.5",
                        license: "Apache 2.0"),
+    new LibraryLicense(name: "completion-ranking-python", attachedTo: "intellij.statsCollector.completionRanker", version: "0.0.1",
+                       license: "Apache 2.0"),
     new LibraryLicense(name: "coverage.py", attachedTo: "intellij.python.helpers", version: "3.7.1", license: "Apache 2.0",
                        url: "http://coverage.readthedocs.org/"),
     new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "1.2.4", license: "MIT License",
