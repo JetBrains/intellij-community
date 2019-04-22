@@ -91,7 +91,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * not applicable to this run configuration producer.
    */
   @Nullable
-  public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
+  public ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
