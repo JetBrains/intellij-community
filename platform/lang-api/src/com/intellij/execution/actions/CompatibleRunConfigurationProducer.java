@@ -21,8 +21,10 @@ public abstract class CompatibleRunConfigurationProducer<T extends RunConfigurat
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
-    if (configuration == null || context == null || sourceElement == null || !isContextCompatible(context)) {
+  protected boolean setupConfigurationFromContext(@NotNull T configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
+    if (!isContextCompatible(context)) {
       return false;
     }
     return setupConfigurationFromCompatibleContext(configuration, context, sourceElement);

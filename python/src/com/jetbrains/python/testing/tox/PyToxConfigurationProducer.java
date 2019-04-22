@@ -46,9 +46,9 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(final PyToxConfiguration configuration,
-                                                  final ConfigurationContext context,
-                                                  final Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull final PyToxConfiguration configuration,
+                                                  @NotNull final ConfigurationContext context,
+                                                  @NotNull final Ref<PsiElement> sourceElement) {
     final PsiFile file = sourceElement.get().getContainingFile();
     if (file == null) {
       return false;

@@ -43,9 +43,9 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
 
   @Override
-  protected boolean setupConfigurationFromContext(final JavaTestConfigurationWithDiscoverySupport configuration,
-                                                  ConfigurationContext configurationContext,
-                                                  Ref<PsiElement> ref) {
+  protected boolean setupConfigurationFromContext(@NotNull final JavaTestConfigurationWithDiscoverySupport configuration,
+                                                  @NotNull ConfigurationContext configurationContext,
+                                                  @NotNull Ref<PsiElement> ref) {
     if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
       return false;
     }

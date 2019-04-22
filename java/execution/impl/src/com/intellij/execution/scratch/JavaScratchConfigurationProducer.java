@@ -29,7 +29,9 @@ public class JavaScratchConfigurationProducer extends AbstractApplicationConfigu
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(JavaScratchConfiguration configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull JavaScratchConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final Location location = context.getLocation();
     if (location != null) {
       final VirtualFile vFile = location.getVirtualFile();

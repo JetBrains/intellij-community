@@ -51,9 +51,9 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration> configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration> configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final PsiElement element = sourceElement.get();
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (!(configuration instanceof PyTestRunConfiguration)) {

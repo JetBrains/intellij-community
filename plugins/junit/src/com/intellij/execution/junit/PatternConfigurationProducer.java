@@ -28,9 +28,9 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final PsiElement element = checkPatterns(context, classes);
     if (element == null) {

@@ -24,9 +24,9 @@ public final class JarApplicationConfigurationProducer extends LazyRunConfigurat
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(JarApplicationConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull JarApplicationConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     VirtualFile file = getJarFileFromContext(context);
     if (file != null) {
       configuration.setName(file.getName());

@@ -32,7 +32,9 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull T configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final Location contextLocation = context.getLocation();
     if (contextLocation == null) {
       return false;

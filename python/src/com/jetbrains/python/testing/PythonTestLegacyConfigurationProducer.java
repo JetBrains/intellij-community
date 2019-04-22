@@ -113,10 +113,9 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
 
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration<T> configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
-    if (context == null) return false;
+  protected boolean setupConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration<T> configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
     PsiElement element = location.getPsiElement();

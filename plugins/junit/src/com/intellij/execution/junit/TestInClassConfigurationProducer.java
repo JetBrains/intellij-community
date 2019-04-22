@@ -14,9 +14,9 @@ public final class TestInClassConfigurationProducer extends JUnitConfigurationPr
   private final JUnitInClassConfigurationProducerDelegate myDelegate = new JUnitInClassConfigurationProducerDelegate();
 
   @Override
-  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     return myDelegate.setupConfigurationFromContext(configuration, context, sourceElement);
   }
 
@@ -60,7 +60,9 @@ public final class TestInClassConfigurationProducer extends JUnitConfigurationPr
     }
 
     @Override
-    protected boolean setupConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+    protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
+                                                    @NotNull ConfigurationContext context,
+                                                    @NotNull Ref<PsiElement> sourceElement) {
       return super.setupConfigurationFromContext(configuration, context, sourceElement);
     }
   }

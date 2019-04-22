@@ -114,11 +114,12 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @param context       contains the information about a location in the source code.
    * @param sourceElement a reference to the source element for the run configuration (by default contains the element at caret,
    *                      can be updated by the producer to point to a higher-level element in the tree).
-   *
    * @return true if the context is applicable to this run configuration producer, false if the context is not applicable and the
    * configuration should be discarded.
    */
-  protected abstract boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement);
+  protected abstract boolean setupConfigurationFromContext(@NotNull T configuration,
+                                                           @NotNull ConfigurationContext context,
+                                                           @NotNull Ref<PsiElement> sourceElement);
 
   /**
    * Checks if the specified configuration was created from the specified context.

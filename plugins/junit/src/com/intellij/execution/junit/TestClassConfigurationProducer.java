@@ -29,9 +29,9 @@ public class TestClassConfigurationProducer extends AbstractInClassConfiguration
 
   @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @Override
-  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     return super.setupConfigurationFromContext(configuration, context, sourceElement);
   }
 }

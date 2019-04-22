@@ -33,9 +33,9 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(PythonRunConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull PythonRunConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
 
     final Location location = context.getLocation();
     if (location == null) return false;

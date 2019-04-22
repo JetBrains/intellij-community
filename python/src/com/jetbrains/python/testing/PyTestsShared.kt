@@ -758,20 +758,17 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
   override fun isPreferredConfiguration(self: ConfigurationFromContext?,
                                         other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
 
-  override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration?,
-                                             context: ConfigurationContext?,
-                                             sourceElement: Ref<PsiElement>?): Boolean {
-    if (sourceElement == null || configuration == null) {
-      return false
-    }
+  override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration,
+                                             context: ConfigurationContext,
+                                             sourceElement: Ref<PsiElement>): Boolean {
     val element = sourceElement.get() ?: return false
 
     if (element.containingFile !is PyFile && element !is PsiDirectory) {
       return false
     }
 
-    val location = context?.location
-    configuration.module = context?.module
+    val location = context.location
+    configuration.module = context.module
     configuration.isUseModuleSdk = true
     if (location is PyTargetBasedPsiLocation) {
       location.target.copyTo(configuration.target)
