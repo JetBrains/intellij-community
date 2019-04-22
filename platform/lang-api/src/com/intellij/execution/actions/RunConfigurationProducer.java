@@ -212,7 +212,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @return an existing configuration matching the context, or null if no such configuration is found.
    */
   @Nullable
-  public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
+  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(context.getProject());
     final List<RunnerAndConfigurationSettings> configurations = getConfigurationSettingsList(runManager);
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {
