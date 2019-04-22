@@ -126,4 +126,9 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testCustomSetter() {
     doTest(true)
   }
+
+  void testOuterTypeParameter() {
+    doTest(true)
+  }
+
 }

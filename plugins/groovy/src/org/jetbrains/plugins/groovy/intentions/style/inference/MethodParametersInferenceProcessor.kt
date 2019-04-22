@@ -85,7 +85,6 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
     for ((parameter, typeParameter) in parameterIndex) {
       parameter.setType(signatureSubstitutor.substitute(typeParameter))
     }
-
     method.typeParameterList?.replace(defaultTypeParameterList.copy())
     val defaultTypeParameters = method.typeParameters
     for (parameter in parameterIndex.keys) {
@@ -160,7 +159,12 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
         val parameters = classType.parameters
         val replacedParameters = parameters.map { it.accept(this) }.toArray(emptyArray())
         val resolveResult = classType.resolveGenerics()
-        return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
+        if (resolveResult.isValidResult) {
+          return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
+        }
+        else {
+          return registerTypeParameter(*(replacedParameters.map { it as PsiClassType }.toTypedArray()))
+        }
       }
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
@@ -173,6 +177,11 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
         type ?: return type
         val upperBound = type.upperBound.accept(this) as PsiClassType
         return registerTypeParameter(upperBound)
+      }
+
+      override fun visitTypeVariable(`var`: PsiTypeVariable?): PsiType? {
+        println("wow")
+        return super.visitTypeVariable(`var`)
       }
 
     }
