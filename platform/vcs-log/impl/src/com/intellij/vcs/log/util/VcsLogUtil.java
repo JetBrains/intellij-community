@@ -27,10 +27,7 @@ import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -360,5 +357,26 @@ public class VcsLogUtil {
         }
       }.queue();
     }
+  }
+
+  public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
+    int maxSize = 0;
+    for (VcsFullCommitDetails details : detailsList) {
+      int size = 0;
+      if (details instanceof VcsChangesLazilyParsedDetails) {
+        size = ((VcsChangesLazilyParsedDetails)details).size();
+      }
+      else {
+        for (int i = 0; i < details.getParents().size(); i++) {
+          size += details.getChanges(i).size();
+        }
+      }
+      maxSize = Math.max(size, maxSize);
+    }
+    return maxSize;
+  }
+
+  public static int getShownChangesLimit() {
+    return Registry.intValue("vcs.log.max.changes.shown");
   }
 }

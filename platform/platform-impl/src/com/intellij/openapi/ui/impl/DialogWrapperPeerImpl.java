@@ -6,12 +6,11 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -30,10 +29,15 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
+import com.intellij.ui.AppIcon;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
@@ -388,6 +392,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
+
+    Container contentPane = getContentPane();
+    if (IdeFrameDecorator.isCustomDecoration() && contentPane instanceof JComponent) {
+      setContentPane(CustomFrameDialogContent.Companion.getContent(getWindow(), (JComponent) contentPane));
+    }
+
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
@@ -616,6 +626,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     protected JRootPane createRootPane() {
       return new DialogRootPane();
+    }
+
+    @Override
+    public void addNotify() {
+      if (IdeFrameDecorator.isCustomDecoration()) {
+        JdkEx.setHasCustomDecoration(this);
+      }
+      super.addNotify();
     }
 
     @Override
@@ -942,6 +960,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motino events for a11y
         }
       }
+
 
       @Override
       public Object getData(@NotNull @NonNls String dataId) {

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.HyperlinkListener
 import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
@@ -77,7 +78,8 @@ fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): J
     }
 
     val linkUrl = matcher.group(1)
-    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, if (linkHandler == null) SimpleColoredComponent.BrowserLauncherTag(linkUrl) else Runnable { linkHandler(linkUrl) })
+    val tag = if (linkHandler == null) SimpleColoredComponent.BrowserLauncherTag(linkUrl) else Runnable { linkHandler(linkUrl) }
+    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, tag)
     prev = matcher.end()
   }
   while (matcher.find())
@@ -92,14 +94,19 @@ fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): J
 }
 
 @JvmOverloads
-fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), background: Color? = null, foreground: Color? = null, lineWrap: Boolean = false): JEditorPane {
+fun htmlComponent(text: String = "",
+                  font: Font? = null,
+                  background: Color? = null,
+                  foreground: Color? = null,
+                  lineWrap: Boolean = false,
+                  hyperlinkListener: HyperlinkListener? = BrowserHyperlinkListener.INSTANCE): JEditorPane {
   val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  if (!text.isEmpty()) {
-    pane.text = "<html><head>${UIUtil.getCssFontDeclaration(font, UIUtil.getLabelForeground(), null, null)}</head><body>$text</body></html>"
-  }
+  pane.text = text
   pane.border = null
   pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
-  pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+  if (hyperlinkListener != null) {
+    pane.addHyperlinkListener(hyperlinkListener)
+  }
   return pane
 }
 
@@ -131,7 +138,7 @@ private fun setTitledBorder(title: String, panel: JPanel) {
 }
 
 /**
- * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme) to create panel.
+ * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme).
  */
 @JvmOverloads
 fun dialog(title: String,
@@ -232,16 +239,17 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
     return
   }
 
-  component.addActionListener(object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
-    override fun onFileChosen(chosenFile: VirtualFile) {
-      if (fileChosen == null) {
-        super.onFileChosen(chosenFile)
+  component.addActionListener(
+    object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
+      override fun onFileChosen(chosenFile: VirtualFile) {
+        if (fileChosen == null) {
+          super.onFileChosen(chosenFile)
+        }
+        else {
+          textComponentAccessor.setText(myTextComponent, fileChosen(chosenFile))
+        }
       }
-      else {
-        textComponentAccessor.setText(myTextComponent.childComponent, fileChosen(chosenFile))
-      }
-    }
-  })
+    })
   FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, project)
 }
 

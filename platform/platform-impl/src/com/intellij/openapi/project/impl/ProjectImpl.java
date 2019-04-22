@@ -60,7 +60,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   private String myName;
   private final boolean myLight;
-  private static boolean ourClassesAreLoaded;
+  static boolean ourClassesAreLoaded;
 
   /**
    * @param filePath System-independent path
@@ -378,7 +378,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
                          : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
            (isDefault() ? " (Default)" : "") +
-           " " + getName();
+           " " + myName;
   }
 
   @Nullable

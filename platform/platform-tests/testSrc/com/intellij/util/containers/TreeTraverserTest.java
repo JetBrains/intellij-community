@@ -83,6 +83,11 @@ public class TreeTraverserTest extends TestCase {
       build();
   }
 
+  private static final Function<Integer, Integer> ASSERT_NUMBER = o -> {
+    if (o instanceof Number) return o;
+    throw new AssertionError(String.valueOf(o));
+  };
+
   private static final Condition<Integer> IS_ODD = integer -> integer.intValue() % 2 == 1;
 
   private static final Condition<Integer> IS_POSITIVE = integer -> integer.intValue() > 0;
@@ -501,12 +506,12 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   private static Function<Integer, JBIterable<Integer>> numTraverser(TreeTraversal t) {
-    return t.traversal(Functions.fromMap(numbers()));
+    return t.traversal(Functions.compose(ASSERT_NUMBER, Functions.fromMap(numbers())));
   }
 
   @NotNull
   private static Function<Integer, JBIterable<Integer>> numTraverser2(TreeTraversal t) {
-    return t.traversal(Functions.fromMap(numbers2()));
+    return t.traversal(Functions.compose(ASSERT_NUMBER, Functions.fromMap(numbers2())));
   }
 
   @NotNull
@@ -735,11 +740,65 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList());
     assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList()); // same results again
 
-    JBIterable<Integer> uniqueMod7 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5).unique((Integer o) -> o % 7)).fun(1);
-    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 4), uniqueMod7.toList());
+    JBIterable<Integer> uniqueMod57 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5).unique((Integer o) -> o % 7)).fun(1);
+    JBIterable<Integer> uniqueMod75 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 7).unique((Integer o) -> o % 5)).fun(1);
+    assertEquals(Arrays.asList(1, 2, 5, 3, 4), uniqueMod57.toList());
+    assertEquals(Arrays.asList(1, 2, 5, 3), uniqueMod75.toList());
 
     assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique()).fun(1).toList());
     assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique().unique()).fun(1).toList());
+  }
+
+  public void testTraverseMap() {
+    Condition<String> notEmpty = o -> !o.isEmpty();
+    Condition<String> isThirteen = o -> "13".equals(o);
+    JBTreeTraverser<Integer> t = numberTraverser().withRoot(1).filter(IS_ODD).regard(IS_POSITIVE);
+    JBTreeTraverser<String> mappedA = t.map(String::valueOf, Integer::parseInt);
+    JBTreeTraverser<String> mappedB = t.map(String::valueOf);
+    JBTreeTraverser<Integer> mapped2A = mappedA.map(Integer::parseInt);
+    JBTreeTraverser<Integer> mapped2B = mappedB.map(Integer::parseInt);
+    JBTreeTraverser<Integer> mapped3A = mappedA.expand(notEmpty).regard(notEmpty).forceDisregard(isThirteen).map(o -> Integer.parseInt(o));
+    JBTreeTraverser<Integer> mapped3B = mappedB.expand(notEmpty).regard(notEmpty).forceDisregard(isThirteen).map(o -> Integer.parseInt(o));
+    JBTreeTraverser<String> mapped4A = mapped3B.map(String::valueOf).map(Integer::parseInt).map(String::valueOf);
+    JBTreeTraverser<String> mapped4B = mapped3B.map(String::valueOf).map(Integer::parseInt).map(String::valueOf);
+
+    assertFalse(mappedA.children("1").isEmpty());
+    assertTrue(mappedB.children("1").isEmpty()); // not supported in irreversible mapped trees
+
+    assertEquals(Arrays.asList("1", "5", "7", "3", "9", "11", "13"), mappedA.toList());
+    assertEquals(Arrays.asList("1", "5", "7", "3", "9", "11", "13"), mappedB.toList());
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), mapped2A.toList());
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), mapped2B.toList());
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), mapped2A.reset().toList());
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), mapped2B.reset().toList());
+    assertEquals(t.toList(), mapped2A.toList());
+    assertEquals(t.toList(), mapped2B.toList());
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11), mapped3A.toList());
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11), mapped3B.toList());
+    assertEquals(Arrays.asList("1", "5", "7", "3", "9", "11"), mapped4A.toList());
+    assertEquals(Arrays.asList("1", "5", "7", "3", "9", "11"), mapped4B.toList());
+  }
+
+  public void testTraverseMapStateful() {
+    JBTreeTraverser<Integer> t = numberTraverser().withRoot(1);
+    class F extends JBIterable.SFun<Integer, String> {
+      int count;
+
+      @Override
+      public String fun(Integer o) {
+        count++;
+        return count + ":" + o;
+      }
+    }
+
+    JBTreeTraverser<String> mappedA = t.map(new F(), o -> Integer.parseInt(o.substring(o.indexOf(":") + 1)));
+    JBTreeTraverser<String> mappedB = t.map(new F());
+
+    assertEquals(Arrays.asList("1:1", "1:2", "1:5", "2:6", "3:7"), mappedA.traverse().take(5).toList()); // FIXME
+    assertEquals(Arrays.asList("1:1", "1:2", "1:5", "2:6", "3:7"), mappedA.traverse().take(5).toList()); // FIXME
+
+    assertEquals(Arrays.asList("1:1", "2:2", "3:5", "4:6", "5:7"), mappedB.traverse().take(5).toList());
+    assertEquals(Arrays.asList("1:1", "2:2", "3:5", "4:6", "5:7"), mappedB.traverse().take(5).toList());
   }
 
   // GuidedTraversal ----------------------------------------------
@@ -775,7 +834,7 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   private static JBTreeTraverser<Integer> numberTraverser() {
-    return new JBTreeTraverser<>(Functions.fromMap(numbers()));
+    return new JBTreeTraverser<>(Functions.compose(ASSERT_NUMBER, Functions.fromMap(numbers())));
   }
 
   @NotNull

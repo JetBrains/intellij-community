@@ -24,11 +24,16 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.intellij.lang.regexp.psi.RegExpBackref;
 import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.trimStart;
 
 public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackref {
     public RegExpBackrefImpl(ASTNode astNode) {
@@ -37,9 +42,20 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
     @Override
     public int getIndex() {
+        return Integer.parseInt(getIndexNumberText());
+    }
+
+    @NotNull
+    private String getIndexNumberText() {
         final String s = getUnescapedText();
         assert s.charAt(0) == '\\';
-        return Integer.parseInt(s.substring(1));
+        boolean pcreBackReference = s.charAt(1) == 'g';
+        return pcreBackReference ? getPcreBackrefIndexNumberText(s.substring(2)) : s.substring(1);
+    }
+
+    @NotNull
+    private static String getPcreBackrefIndexNumberText(String s) {
+        return trimEnd(trimStart(s, "{"), "}");
     }
 
     @Override
@@ -50,6 +66,9 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
     @Override
     public RegExpGroup resolve() {
         final int index = getIndex();
+        if (index < 0) {
+            return resolveRelativeGroup(Math.abs(index));
+        }
 
         final PsiElementProcessor.FindFilteredElement<RegExpElement> processor =
           new PsiElementProcessor.FindFilteredElement<>(new PsiElementFilter() {
@@ -71,6 +90,16 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
             return (RegExpGroup)processor.getFoundElement();
         }
         return null;
+    }
+
+    @Nullable
+    private RegExpGroup resolveRelativeGroup(int index) {
+        PsiElementProcessor.CollectFilteredElements<RegExpElement> processor =
+          new PsiElementProcessor.CollectFilteredElements<>(
+            element -> element instanceof RegExpGroup && ((RegExpGroup)element).isCapturing());
+        PsiTreeUtil.processElements(getContainingFile(), processor);
+        SmartList<RegExpElement> elements = new SmartList<>(processor.getCollection());
+        return index <= elements.size() ? (RegExpGroup)elements.get(elements.size() - index) : null;
     }
 
     @Override

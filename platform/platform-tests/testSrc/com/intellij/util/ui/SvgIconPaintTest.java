@@ -33,7 +33,6 @@ public class SvgIconPaintTest {
 
   @BeforeClass
   public static void beforeClass() {
-    TestScaleHelper.setRegistryProperty("ide.svg.icon", "true");
   }
 
   @Test

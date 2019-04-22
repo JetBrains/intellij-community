@@ -91,7 +91,7 @@ public class CompilerReferenceIndex<Input> {
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
     }
     catch (IOException e) {
-      removeIndexFiles(myBuildDir);
+      removeIndexFiles(myBuildDir, e);
       throw new BuildDataCorruptedException(e);
     }
   }
@@ -134,21 +134,26 @@ public class CompilerReferenceIndex<Input> {
     }
     final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
-      removeIndexFiles(myBuildDir);
+      removeIndexFiles(myBuildDir, exception);
       if (myRebuildRequestCause == null) {
         throw new RuntimeException(exception);
       }
       return;
     }
     if (myRebuildRequestCause != null) {
-      removeIndexFiles(myBuildDir);
+      removeIndexFiles(myBuildDir, myRebuildRequestCause);
     }
   }
 
   public static void removeIndexFiles(File buildDir) {
+    removeIndexFiles(buildDir, null);
+  }
+
+  public static void removeIndexFiles(File buildDir, Throwable cause) {
     final File indexDir = getIndexDir(buildDir);
     if (indexDir.exists()) {
       FileUtil.delete(indexDir);
+      LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
     }
   }
 
@@ -162,6 +167,11 @@ public class CompilerReferenceIndex<Input> {
 
   public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
     File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
+
+    if (!versionFile.exists()) {
+      LOG.info("backward reference index version doesn't exist");
+      return true;
+    }
 
     try (DataInputStream is = new DataInputStream(new FileInputStream(versionFile))) {
       int currentIndexVersion = is.readInt();

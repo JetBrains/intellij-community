@@ -52,6 +52,11 @@ public class PluginLogo {
   }
 
   @NotNull
+  public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, int width, int height) {
+    return null;
+  }
+
+  @NotNull
   public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean jb, boolean error, boolean disabled) {
     return getIcon(descriptor).getIcon(big, jb, error, disabled);
   }

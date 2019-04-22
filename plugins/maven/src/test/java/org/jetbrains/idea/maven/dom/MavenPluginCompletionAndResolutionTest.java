@@ -40,9 +40,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
   }
 
   public void testGroupIdCompletion() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -78,9 +75,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
   }
 
   public void testVersionCompletion() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -95,7 +89,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
+    assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
   }
 
   public void testArtifactWithoutGroupCompletion() {
@@ -118,9 +112,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
   }
 
   public void testVersionWithoutGroupCompletion() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -134,7 +125,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
+    assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
   }
 
   public void testResolvingPlugins() throws Exception {

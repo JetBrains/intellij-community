@@ -34,13 +34,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 /**
  * @author nik
  */
-public abstract class FileIndexBase implements FileIndex {
+abstract class FileIndexBase implements FileIndex {
   private final FileTypeRegistry myFileTypeRegistry;
   final DirectoryIndex myDirectoryIndex;
-  private final VirtualFileFilter myContentFilter = file -> {
-    assert file != null;
-    return ReadAction.compute(() -> !isScopeDisposed() && isInContent(file));
-  };
 
   FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
     myDirectoryIndex = directoryIndex;
@@ -58,13 +54,12 @@ public abstract class FileIndexBase implements FileIndex {
   public boolean iterateContentUnderDirectory(@NotNull final VirtualFile dir,
                                               @NotNull final ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
-    final VirtualFileFilter filter = customFilter != null ? myContentFilter.and(customFilter) : myContentFilter;
     final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
+        DirectoryInfo info = getInfoForFileOrDirectory(file);
         if (file.isDirectory()) {
-          DirectoryInfo info = getInfoForFileOrDirectory(file);
           if (info.isExcluded(file)) {
             if (!info.processContentBeneathExcluded(file, content -> iterateContentUnderDirectory(content, processor, customFilter))) {
               return skipTo(dir);
@@ -72,7 +67,9 @@ public abstract class FileIndexBase implements FileIndex {
             return SKIP_CHILDREN;
           }
         }
-        return !filter.accept(file) || processor.processFile(file) ? CONTINUE : skipTo(dir);
+        boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info))
+                           && (customFilter == null || customFilter.accept(file));
+        return !accepted || processor.processFile(file) ? CONTINUE : skipTo(dir);
       }
     });
     return !Comparing.equal(result.skipToParent, dir);
@@ -107,5 +104,9 @@ public abstract class FileIndexBase implements FileIndex {
   static VirtualFile[][] getModuleContentAndSourceRoots(@NotNull Module module) {
     return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(),
       ModuleRootManager.getInstance(module).getSourceRoots()};
+  }
+
+  boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+    return ProjectFileIndexImpl.isFileInContent(file, info);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -33,10 +32,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.EverythingGlobalScope;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -50,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -73,6 +70,7 @@ public class JavaDocInfoGenerator {
   private static final String LINK_TAG = "link";
   private static final String LITERAL_TAG = "literal";
   private static final String CODE_TAG = "code";
+  private static final String SYSTEM_PROPERTY_TAG = "systemProperty";
   private static final String LINKPLAIN_TAG = "linkplain";
   private static final String INHERIT_DOC_TAG = "inheritDoc";
   private static final String DOC_ROOT_TAG = "docRoot";
@@ -467,7 +465,8 @@ public class JavaDocInfoGenerator {
     boolean generateLink = place == SignaturePlace.Javadoc;
     generateAnnotations(buffer, aClass, place, true);
     generateModifiers(buffer, aClass, false);
-    buffer.append(LangBundle.message(aClass.isInterface() ? "java.terms.interface" : "java.terms.class"));
+    buffer.append(LangBundle.message(aClass.isInterface() ? "java.terms.interface"
+                                                          : aClass.isEnum() ? "java.terms.enum" : "java.terms.class"));
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
     if (refText == null) {
@@ -1022,7 +1021,7 @@ public class JavaDocInfoGenerator {
 
   private static void generateLinkToParentIfNeeded(StringBuilder buffer, PsiMember member) {
     PsiClass parentClass = member.getContainingClass();
-    if (parentClass != null) {
+    if (parentClass != null && !PsiUtil.isArrayClass(parentClass)) {
       String qName = parentClass.getQualifiedName();
       if (qName != null) {
         generateLink(buffer, qName, qName + generateTypeParameters(parentClass, true), member, false);
@@ -1117,7 +1116,7 @@ public class JavaDocInfoGenerator {
       try (InputStream commentStream = JavaDocInfoGenerator.class.getResourceAsStream(resourceName)) {
         if (commentStream == null) return null;
         byte[] bytes = FileUtil.loadBytes(commentStream);
-        text = new String(bytes, CharsetToolkit.UTF8_CHARSET);
+        text = new String(bytes, StandardCharsets.UTF_8);
       }
       text = StringUtil.replace(text, "<ClassName>", containingClassName);
       return JavaPsiFacade.getElementFactory(myProject).createDocCommentFromText(text);
@@ -1222,7 +1221,7 @@ public class JavaDocInfoGenerator {
         else if (tagName.equals(LITERAL_TAG)) {
           generateLiteralValue(buffer, tag);
         }
-        else if (tagName.equals(CODE_TAG)) {
+        else if (tagName.equals(CODE_TAG) || tagName.equals(SYSTEM_PROPERTY_TAG)) {
           generateCodeValue(tag, buffer);
         }
         else if (tagName.equals(LINKPLAIN_TAG)) {

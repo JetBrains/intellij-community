@@ -47,8 +47,10 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Reso
   }
 
   void 'distributions closure delegate'() {
+    def type = isGradleAtLeast("3.5") ? "org.gradle.api.NamedDomainObjectContainer<org.gradle.api.distribution.Distribution>"
+                                      : "org.gradle.api.distribution.internal.DefaultDistributionContainer"
     doTest('distributions { <caret> }') {
-      closureDelegateTest("org.gradle.api.distribution.internal.DefaultDistributionContainer", 1)
+      closureDelegateTest(type, 1)
     }
   }
 

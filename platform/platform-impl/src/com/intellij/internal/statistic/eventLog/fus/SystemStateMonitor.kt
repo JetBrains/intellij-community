@@ -12,7 +12,7 @@ import com.intellij.util.lang.JavaVersion
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
-  private val OS_GROUP = EventLogGroup("system.os", 1)
+  private val OS_GROUP = EventLogGroup("system.os", 2)
   private val JAVA_GROUP = EventLogGroup("system.java", 1)
 
   private val INITIAL_DELAY = 0
@@ -54,7 +54,7 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
       SystemInfo.isLinux -> "Linux"
       SystemInfo.isMac -> "Mac"
       SystemInfo.isWindows -> "Windows"
-      SystemInfo.isFreeBSD -> "FreeBDS"
+      SystemInfo.isFreeBSD -> "FreeBSD"
       SystemInfo.isSolaris -> "Solaris"
       else -> "Other"
     }

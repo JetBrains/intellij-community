@@ -15,15 +15,13 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -51,9 +49,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private final EditorSizeManager mySizeManager;
   private final TextLayoutCache myTextLayoutCache;
   private final LogicalPositionCache myLogicalPositionCache;
+  private final CharWidthCache myCharWidthCache;
   private final TabFragment myTabFragment;
 
-  private FontRenderContext myFontRenderContext;
+  private FontRenderContext myFontRenderContext; // guarded by myLock
   private String myPrefixText; // accessed only in EDT
   private LineLayout myPrefixLayout; // guarded by myLock
   private TextAttributes myPrefixAttributes; // accessed only in EDT
@@ -79,6 +78,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this);
     myLogicalPositionCache = new LogicalPositionCache(this);
+    myCharWidthCache = new CharWidthCache(this);
     myTabFragment = new TabFragment(this);
 
     myEditor.getContentComponent().addHierarchyListener(this);
@@ -94,7 +94,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   FontRenderContext getFontRenderContext() {
-    return myFontRenderContext;
+    synchronized (myLock) {
+      return myFontRenderContext;
+    }
   }
 
   EditorSizeManager getSizeManager() {
@@ -327,6 +329,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     synchronized (myLock) {
       myPlainSpaceWidth = -1;
       myTabSize = -1;
+      setFontRenderContext(null);
     }
     switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
       case LTR:
@@ -338,10 +341,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       default:
         myBidiFlags = Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
     }
-    setFontRenderContext(null);
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
+    myCharWidthCache.clear();
     setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
     mySizeManager.reset();
   }
@@ -537,6 +540,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
+  // guarded by myLock
   private boolean setFontRenderContext(FontRenderContext context) {
     FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
     if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
@@ -549,12 +553,17 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   private void checkFontRenderContext(FontRenderContext context) {
-    if (setFontRenderContext(context)) {
-      synchronized (myLock) {
+    boolean contextUpdated = false;
+    synchronized (myLock) {
+      if (setFontRenderContext(context)) {
         myPlainSpaceWidth = -1;
+        contextUpdated = true;
       }
+    }
+    if (contextUpdated) {
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
+      myCharWidthCache.clear();
     }
   }
 
@@ -583,7 +592,11 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
     }
   }
-  
+
+  float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
+    return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
+  }
+
   Insets getInsets() {
     return myEditor.getContentComponent().getInsets();
   }

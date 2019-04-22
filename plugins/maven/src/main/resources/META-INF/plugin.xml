@@ -1,10 +1,10 @@
 <idea-plugin>
   <id>org.jetbrains.idea.maven</id>
 
-  <name>Maven Integration</name>
+  <name>Maven</name>
   <description>
     <![CDATA[
-      This plugin provides <a href="http://maven.apache.org/">Maven</a> support.
+      Provides <a href="http://maven.apache.org/">Maven</a> support.
       The following features are available:
         <ul>
         <li>Maven Projects tool window.</li>
@@ -150,9 +150,6 @@
 
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionProvider"/>
-
-    <completion.contributor language="XML"
-                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenArtifactCompletionContributor"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 

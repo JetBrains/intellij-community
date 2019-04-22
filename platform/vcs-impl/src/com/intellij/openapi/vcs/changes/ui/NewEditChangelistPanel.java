@@ -166,24 +166,21 @@ public abstract class NewEditChangelistPanel extends JPanel {
   }
 
   private static EditorTextField createEditorField(final Project project, final int defaultLines) {
-    final EditorTextField editorField;
-
     final Set<EditorCustomization> editorFeatures = ContainerUtil.newHashSet();
     ContainerUtil.addIfNotNull(editorFeatures, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
-    double scaleFactor = 1.3;
     if (defaultLines == 1) {
       editorFeatures.add(HorizontalScrollBarEditorCustomization.DISABLED);
       editorFeatures.add(OneLineEditorCustomization.ENABLED);
     }
     else {
       editorFeatures.add(SoftWrapsEditorCustomization.ENABLED);
-      scaleFactor = 2.1;
     }
-    editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
-    final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
-    editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * scaleFactor)));
-    editorField.addSettingsProvider(editor -> editor.getContentComponent()
-      .setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2))));
+    EditorTextField editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
+
+    if (defaultLines > 1) {
+      editorField.addSettingsProvider(editor -> editor.getContentComponent()
+        .setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.empty(2, 5))));
+    }
     return editorField;
   }
 

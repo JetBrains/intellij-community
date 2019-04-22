@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -291,7 +291,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * This method is called each time UI is shown.
    *
-   * @return null if no UI options required.
+   * @return {@code null} if no UI options required.
    */
   @Nullable
   public JComponent createOptionsPanel() {
@@ -391,9 +391,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
-   * Override this method to return a html inspection description. Otherwise it will be loaded from resources using ID.
+   * Override this method to return a HTML inspection description. Otherwise it will be loaded from resources using ID.
    *
-   * @return hard-code inspection description.
+   * @return hard-coded inspection description.
    */
   @Nullable
   public String getStaticDescription() {

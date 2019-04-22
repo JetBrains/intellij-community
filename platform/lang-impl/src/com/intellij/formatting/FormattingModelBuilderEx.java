@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public interface FormattingModelBuilderEx extends FormattingModelBuilder {
    * @param settings  code style settings holder
    * @return          indent options to use for the target formatting operation (if any adjustment is required);
    *                  {@code null} to trigger default algorithm usage
-   * @deprecated Use {@code com.intellij.psi.codeStyle.FileIndentOptionsProvider} instead.
+   * @deprecated Use {@link com.intellij.psi.codeStyle.FileIndentOptionsProvider} instead.
    * @see com.intellij.psi.codeStyle.FileIndentOptionsProvider
    */
   @Nullable

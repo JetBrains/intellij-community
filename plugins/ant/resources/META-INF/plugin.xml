@@ -1,7 +1,9 @@
 <idea-plugin>
-  <name>Ant Support</name>
+  <name>Ant</name>
   <id>AntSupport</id>
-  <description>Editing, maintaining and running Ant build scripts inside IntelliJ IDEA.</description>
+  <description><![CDATA[
+  Supports editing, maintaining and running <a href="http://ant.apache.org/">Ant</a> build scripts.
+  ]]></description>
   <vendor>JetBrains</vendor>
 
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
@@ -15,8 +17,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <tipAndTrick file="CreateTargetTag.html" />
 
+    <statistics.projectUsagesCollector implementation="com.intellij.lang.ant.AntSettingsCollector"/>
+    <statistics.counterUsagesCollector groupId="build.ant.actions" version="1"/>
+
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
-    <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
+    <projectService serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
 
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>

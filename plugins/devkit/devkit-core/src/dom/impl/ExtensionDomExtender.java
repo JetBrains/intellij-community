@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -94,6 +95,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void collectDependencies(final IdeaPlugin ideaPlugin, Set<IdeaPlugin> result, final MultiMap<String, IdeaPlugin> byId) {
+    ProgressManager.checkCanceled();
     if (!result.add(ideaPlugin)) {
       return;
     }

@@ -242,7 +242,6 @@ public class MigrationPanel extends JPanel implements Disposable {
     tree.setCellRenderer(rootsTreeCellRenderer);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(tree);
 
     TreeUtil.installActions(tree);
     TreeUtil.expandAll(tree);
@@ -363,7 +362,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     @Nullable
     private TypeMigrationUsageInfo[] getUsages(AnActionEvent context) {
-      return MIGRATION_USAGES_KEYS.getData(context.getDataContext());
+      return context.getData(MIGRATION_USAGES_KEYS);
     }
 
     @Override

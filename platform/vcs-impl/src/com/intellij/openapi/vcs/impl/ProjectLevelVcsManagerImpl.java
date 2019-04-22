@@ -79,6 +79,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final NewMappings myMappings;
   private final Project myProject;
+  private final ToolWindowManager myToolWindowManager;
   private final MappingsToRoots myMappingsToRoots;
 
   private ConsoleView myConsole;
@@ -118,7 +119,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myDefaultVcsRootPolicy = defaultVcsRootPolicy;
 
-    if (!project.isDefault()) {
+    if (project.isDefault()) {
+      myInitialization = null;
+      myToolWindowManager = null;
+    }
+    else {
+      // there is no ToolWindowManager for default project, can't pass it via parameter
+      myToolWindowManager = ToolWindowManager.getInstance(project);
       myInitialization = new VcsInitialization(myProject);
       Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
       projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
@@ -127,9 +134,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           Disposer.dispose(myInitialization);
         }
       });
-    }
-    else {
-      myInitialization = null;
     }
 
     myMappings = new NewMappings(myProject, this, manager);
@@ -187,9 +191,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings.disposeMe();
     Disposer.dispose(myAnnotationLocalChangesListener);
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
-      toolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
+    if (myToolWindowManager != null && myToolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
+      myToolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
     }
   }
 

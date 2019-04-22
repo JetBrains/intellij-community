@@ -68,7 +68,6 @@ public abstract class AttachToProcessActionBase extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
 
     Project project = getEventProject(e);
     int attachDebuggerProvidersNumber = myAttachProvidersSupplier.get().size();

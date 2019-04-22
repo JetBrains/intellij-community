@@ -134,6 +134,7 @@ public class ConsoleViewUtil {
         return getConsoleLineSpacing();
       }
 
+      @NotNull
       @Override
       public Font getFont(EditorFontType key) {
         return super.getFont(EditorFontType.getConsoleType(key));

@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,7 @@ import javax.swing.plaf.IconUIResource;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +52,8 @@ public class UITheme {
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
   private SVGLoader.SvgColorPatcher colorPatcher;
+
+  private static final Logger LOG = Logger.getInstance(UITheme.class);
 
   private UITheme() {
   }
@@ -101,11 +105,13 @@ public class UITheme {
       Object palette = theme.icons.get("ColorPalette");
       if (palette instanceof Map) {
         Map colors = (Map)palette;
-        Map<String, String> newPalette = new HashMap<>();
-        Map<String, Integer> alphas = new HashMap<>();
+        PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
         for (Object o : colors.keySet()) {
-          String key = toColorString(o.toString(), theme.isDark());
-          Object v = colors.get(o.toString());
+          String colorKey = o.toString();
+          PaletteScope scope = paletteScopeManager.getScope(colorKey);
+          if (scope == null) continue;
+          String key = toColorString(colorKey, theme.isDark());
+          Object v = colors.get(colorKey);
           if (v instanceof String) {
             String value = (String)v;
             String alpha = null;
@@ -114,7 +120,7 @@ public class UITheme {
               value = value.substring(0, 7);
             }
             if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
-              newPalette.put(key, value);
+              scope.newPalette.put(key, value);
               int fillTransparency = -1;
               if (alpha != null) {
                 try {
@@ -122,7 +128,7 @@ public class UITheme {
                 } catch (Exception ignore) {}
               }
               if (fillTransparency != -1) {
-                alphas.put(value, fillTransparency);
+                scope.alphas.put(value, fillTransparency);
               }
             }
           }
@@ -130,14 +136,18 @@ public class UITheme {
 
         theme.colorPatcher = new SVGLoader.SvgColorPatcher() {
           @Override
-          public void patchColors(Element svg) {
+          public void patchColors(URL url, Element svg) {
+            PaletteScope scope = paletteScopeManager.getScopeByURL(url);
+            if (scope == null) {
+              return;
+            }
             String fill = svg.getAttribute("fill");
             if (fill != null) {
-              String newFill = newPalette.get(StringUtil.toLowerCase(fill));
+              String newFill = scope.newPalette.get(StringUtil.toLowerCase(fill));
               if (newFill != null) {
                 svg.setAttribute("fill", newFill);
-                if (alphas.get(newFill) != null) {
-                  svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(alphas.get(newFill)) / 255f)));
+                if (scope.alphas.get(newFill) != null) {
+                  svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(scope.alphas.get(newFill)) / 255f)));
                 }
               }
             }
@@ -146,10 +156,9 @@ public class UITheme {
             for (int i = 0; i < length; i++) {
               Node item = nodes.item(i);
               if (item instanceof Element) {
-                patchColors((Element)item);
+                patchColors(url, (Element)item);
               }
             }
-
           }
         };
       }
@@ -256,6 +265,7 @@ public class UITheme {
 
   private static void apply(String key, Object value, UIDefaults defaults) {
     if (value instanceof HashMap) {
+      //noinspection unchecked
       for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
         apply(key + "." + o.getKey(), o.getValue(), defaults);
       }
@@ -276,6 +286,7 @@ public class UITheme {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private static void addPattern(String key, Object value, UIDefaults defaults) {
     Object o = defaults.get("*");
     if (! (o instanceof Map)) {
@@ -314,7 +325,7 @@ public class UITheme {
           return Class.forName(value).newInstance();
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
     } else if (key.endsWith("Size")) {
       return parseSize(value);
@@ -393,6 +404,42 @@ public class UITheme {
   @Contract("null -> false")
   public static boolean isThemeFile(@Nullable VirtualFile file) {
     return file != null && StringUtil.endsWithIgnoreCase(file.getName(), FILE_EXT_ENDING);
+  }
+
+  static class PaletteScope {
+    Map<String, String> newPalette = new HashMap<>();
+    Map<String, Integer> alphas = new HashMap<>();
+  }
+
+  static class PaletteScopeManager {
+    PaletteScope ui = new PaletteScope();
+    PaletteScope checkBoxes = new PaletteScope();
+    PaletteScope radioButtons = new PaletteScope();
+
+    PaletteScope getScope(String colorKey) {
+      if (colorKey.startsWith("Checkbox.")) return checkBoxes;
+      if (colorKey.startsWith("Radio.")) return radioButtons;
+      if (colorKey.startsWith("Objects.")) return ui;
+      if (colorKey.startsWith("Actions.")) return ui;
+      if (colorKey.startsWith("#")) return ui;
+
+      LOG.warn("No color scope defined for key: " + colorKey);
+      return null;
+    }
+
+    PaletteScope getScopeByURL(URL url) {
+      if (url != null) {
+        String path = url.toString();
+        String file = path.substring(path.lastIndexOf('/') + 1);
+
+        if (path.contains("/com/intellij/ide/ui/laf/icons/")) {
+          if (file.startsWith("check")) return checkBoxes;
+          if (file.startsWith("radio")) return checkBoxes; //same set of colors as for checkboxes
+          return null;
+        }
+      }
+      return ui;
+    }
   }
 
   //

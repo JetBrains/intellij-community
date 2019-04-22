@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Graphics;
 
 final class CompactPainter implements Control.Painter {
-  static final Control.Painter DEFAULT = new CompactPainter(true, null, null, null);
+  static final Control.Painter DEFAULT = new CompactPainter(true, null, null, 0);
   private final boolean paintLines;
   private final Integer myLeftIndent;
   private final Integer myRightIndent;

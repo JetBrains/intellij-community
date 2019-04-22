@@ -42,7 +42,7 @@ public class BranchFilterPopupComponent
   @NotNull
   @Override
   protected List<String> getFilterValues(@NotNull BranchFilters filters) {
-    return myFilterModel.getFilterPresentation(filters);
+    return VcsLogClassicFilterUi.BranchFilterModel.getFilterPresentation(filters);
   }
 
   @Override

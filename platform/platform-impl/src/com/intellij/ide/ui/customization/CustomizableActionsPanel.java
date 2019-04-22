@@ -69,7 +69,6 @@ public class CustomizableActionsPanel {
     myActionsTree.setModel(model);
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myActionsTree);
     myActionsTree.setCellRenderer(new MyTreeCellRenderer());
 
     patchActionsTreeCorrespondingToSchema(root);

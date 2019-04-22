@@ -19,7 +19,6 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -62,11 +61,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
                                 @Nullable SnapshotInputMappings<Key, Value, Input> snapshotInputMappings) throws IOException {
     this(extension,
          storage,
-         snapshotInputMappings != null ? new SharedMapForwardIndex(extension,
-                                                                   snapshotInputMappings.getForwardIndexAccessor(),
-                                                                   snapshotInputMappings.getInputIndexStorageFile(),
-                                                                   true,
-                                                                   true) : getForwardIndexMap(extension),
+         snapshotInputMappings != null ? new SharedIntMapForwardIndex(extension, snapshotInputMappings.getInputIndexStorageFile(), true)
+                                       : getForwardIndexMap(extension),
          snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor() : getForwardIndexAccessor(extension),
          snapshotInputMappings);
   }
@@ -91,10 +87,31 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   @NotNull
   @Override
   protected Map<Key, Value> mapInput(@Nullable Input content) {
-    if (mySnapshotInputMappings != null && !myInMemoryMode.get()) {
-      return mySnapshotInputMappings.readDataOrMap(content);
+    Map<Key, Value> data;
+    boolean containsSnapshotData = true;
+    if (mySnapshotInputMappings != null && !myInMemoryMode.get() && content != null) {
+      try {
+        data = mySnapshotInputMappings.readData(content);
+        if (data != null) {
+          return data;
+        } else {
+          containsSnapshotData = false;
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
-    return super.mapInput(content);
+    data = super.mapInput(content);
+    if (!containsSnapshotData) {
+      try {
+        mySnapshotInputMappings.putData(content, data);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return data;
   }
 
   @NotNull

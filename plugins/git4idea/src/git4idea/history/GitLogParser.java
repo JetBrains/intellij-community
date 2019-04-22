@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.GitFormatException;
 import git4idea.GitUtil;
 import git4idea.config.GitVersionSpecialty;
@@ -47,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @see GitLogRecord
  */
-public class GitLogParser {
+public class GitLogParser<R extends GitLogRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
 
   // Single records begin with %x01%x01, end with %03%03. Items of commit information (hash, committer, subject, etc.) are separated by %x02%x02.
@@ -67,16 +66,20 @@ public class GitLogParser {
   @NotNull private final OptionsParser myOptionsParser;
   @NotNull private final PathsParser myPathsParser;
 
+  @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
+
   private final String myRecordStart;
   private final String myRecordEnd;
   private final String myItemsSeparator;
 
   private boolean myIsInBody = true;
 
-  private GitLogParser(boolean supportsRawBody,
+  private GitLogParser(@NotNull GitLogRecordBuilder<R> recordBuilder,
+                       boolean supportsRawBody,
                        @NotNull NameStatus nameStatusOption,
                        @NotNull GitLogOption... options) {
     mySupportsRawBody = supportsRawBody;
+    myRecordBuilder = recordBuilder;
 
     myRecordStart = RECORD_START + generateRandomSequence();
     myRecordEnd = RECORD_END + generateRandomSequence();
@@ -89,24 +92,33 @@ public class GitLogParser {
   }
 
   public GitLogParser(@NotNull Project project,
+                      @NotNull GitLogRecordBuilder<R> recordBuilder,
                       @NotNull NameStatus nameStatus,
                       @NotNull GitLogOption... options) {
-    this(GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project), nameStatus, options);
-  }
-
-  public GitLogParser(@NotNull Project project,
-                      @NotNull GitLogOption... options) {
-    this(project, NameStatus.NONE, options);
+    this(recordBuilder, GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project), nameStatus, options);
   }
 
   @NotNull
-  public List<GitLogRecord> parse(@NotNull CharSequence output) {
-    List<GitLogRecord> result = ContainerUtil.newArrayList();
+  public static GitLogParser<GitLogFullRecord> createDefaultParser(@NotNull Project project,
+                                                                   @NotNull NameStatus nameStatus,
+                                                                   @NotNull GitLogOption... options) {
+    return new GitLogParser<>(project, new DefaultGitLogFullRecordBuilder(), nameStatus, options);
+  }
+
+  @NotNull
+  public static GitLogParser<GitLogRecord> createDefaultParser(@NotNull Project project,
+                                                               @NotNull GitLogOption... options) {
+    return new GitLogParser<>(project, new DefaultGitLogRecordBuilder(), NameStatus.NONE, options);
+  }
+
+  @NotNull
+  public List<R> parse(@NotNull CharSequence output) {
+    List<R> result = ContainerUtil.newArrayList();
 
     List<CharSequence> lines = StringUtil.split(output, "\n", true, false);
-    for (CharSequence line: lines) {
+    for (CharSequence line : lines) {
       try {
-        GitLogRecord record = parseLine(line);
+        R record = parseLine(line);
         if (record != null) {
           result.add(record);
         }
@@ -117,15 +129,15 @@ public class GitLogParser {
       }
     }
 
-    GitLogRecord record = finish();
+    R record = finish();
     if (record != null) result.add(record);
 
     return result;
   }
 
   @Nullable
-  public GitLogRecord parseOneRecord(@NotNull CharSequence output) {
-    List<GitLogRecord> records = parse(output);
+  public R parseOneRecord(@NotNull CharSequence output) {
+    List<R> records = parse(output);
     clear();
     if (records.isEmpty()) return null;
     return ContainerUtil.getFirstItem(records);
@@ -135,7 +147,7 @@ public class GitLogParser {
    * Expects a line without separator.
    */
   @Nullable
-  public GitLogRecord parseLine(@NotNull CharSequence line) {
+  public R parseLine(@NotNull CharSequence line) {
     if (myPathsParser.expectsPaths()) {
       return parseLineWithPaths(line);
     }
@@ -143,13 +155,13 @@ public class GitLogParser {
   }
 
   @Nullable
-  private GitLogRecord parseLineWithPaths(@NotNull CharSequence line) {
+  private R parseLineWithPaths(@NotNull CharSequence line) {
     if (myIsInBody) {
       myIsInBody = !myOptionsParser.parseLine(line);
     }
     else {
       if (CharArrayUtil.regionMatches(line, 0, myRecordStart)) {
-        GitLogRecord record = createRecord();
+        R record = createRecord();
         myIsInBody = !myOptionsParser.parseLine(line);
         return record;
       }
@@ -161,7 +173,7 @@ public class GitLogParser {
   }
 
   @Nullable
-  private GitLogRecord parseLineWithoutPaths(@NotNull CharSequence line) {
+  private R parseLineWithoutPaths(@NotNull CharSequence line) {
     if (myOptionsParser.parseLine(line)) {
       return createRecord();
     }
@@ -169,27 +181,26 @@ public class GitLogParser {
   }
 
   @Nullable
-  public GitLogRecord finish() {
+  public R finish() {
     if (myOptionsParser.isEmpty()) return null;
     return createRecord();
   }
 
   @NotNull
-  private GitLogRecord createRecord() {
+  private R createRecord() {
     Map<GitLogOption, String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
-    List<VcsFileStatusInfo> result = myPathsParser.getResult();
-    myPathsParser.clear();
-
+    R record = myRecordBuilder.build(options, mySupportsRawBody);
+    myRecordBuilder.clear();
     myIsInBody = true;
 
-    return new GitLogRecord(options, result, mySupportsRawBody);
+    return record;
   }
 
   public void clear() {
     myOptionsParser.clear();
-    myPathsParser.clear();
+    myRecordBuilder.clear();
     myIsInBody = true;
   }
 
@@ -349,7 +360,6 @@ public class GitLogParser {
 
   private class PathsParser {
     @NotNull private final NameStatus myNameStatusOption;
-    @NotNull private List<VcsFileStatusInfo> myStatuses = ContainerUtil.newArrayList();
 
     PathsParser(@NotNull NameStatus nameStatusOption) {
       myNameStatusOption = nameStatusOption;
@@ -371,19 +381,18 @@ public class GitLogParser {
         }
         else {
           if (match.size() == 2) {
-            myStatuses.add(createStatusInfo(match.get(0), match.get(1), null));
+            addPath(match.get(0), match.get(1), null);
           }
           else {
-            myStatuses.add(createStatusInfo(match.get(0), match.get(1), match.get(2)));
+            addPath(match.get(0), match.get(1), match.get(2));
           }
         }
       }
     }
 
-    @NotNull
-    private VcsFileStatusInfo createStatusInfo(@NotNull String type, @NotNull String firstPath, @Nullable String secondPath) {
-      return new VcsFileStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(type)), tryUnescapePath(firstPath),
-                                   tryUnescapePath(secondPath));
+    private void addPath(@NotNull String type, @NotNull String firstPath, @Nullable String secondPath) {
+      myRecordBuilder.addPath(GitChangesParser.getChangeType(GitChangeType.fromString(type)), tryUnescapePath(firstPath),
+                              tryUnescapePath(secondPath));
     }
 
     @Nullable
@@ -428,15 +437,6 @@ public class GitLogParser {
       while (offset < line.length() && (line.charAt(offset) == '\t')) offset++;
       if (offset == line.length() || (line.charAt(offset) == '\n' || line.charAt(offset) == '\r')) return true;
       return false;
-    }
-
-    @NotNull
-    public List<VcsFileStatusInfo> getResult() {
-      return myStatuses;
-    }
-
-    public void clear() {
-      myStatuses = ContainerUtil.newArrayList();
     }
 
     public boolean expectsPaths() {

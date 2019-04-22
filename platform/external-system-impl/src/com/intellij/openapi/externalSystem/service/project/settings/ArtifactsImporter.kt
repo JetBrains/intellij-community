@@ -13,10 +13,7 @@ import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.packaging.artifacts.ArtifactManager
-import com.intellij.packaging.artifacts.ArtifactPointerManager
-import com.intellij.packaging.artifacts.ArtifactType
-import com.intellij.packaging.artifacts.ModifiableArtifact
+import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.*
@@ -34,6 +31,7 @@ class ArtifactsImporter: ConfigurationHandler {
     }
 
     val modifiableModel = modelsProvider.modifiableArtifactModel
+    val postponedOps: MutableList<(ModifiableArtifactModel) -> Unit> = mutableListOf()
 
     artifacts.forEach { value ->
       val artifactConfig = value as? Map<*, *> ?: return@forEach
@@ -44,12 +42,16 @@ class ArtifactsImporter: ConfigurationHandler {
                                            .findArtifact(name)?.let { modifiableModel.getOrCreateModifiableArtifact(it) }
                                          ?: modifiableModel.addArtifact(name, type)
       val rootElement = type.createRootElement(name)
-      populateArtifact(project, rootElement, artifactConfig)
+      populateArtifact(project, rootElement, artifactConfig, postponedOps)
       artifact.rootElement = rootElement
     }
+
+    postponedOps.forEach { it.invoke(modifiableModel) }
   }
 
-  private fun populateArtifact(project: Project, element: CompositePackagingElement<*>, config: Map<*, *>) {
+  private fun populateArtifact(project: Project, element: CompositePackagingElement<*>,
+                               config: Map<*, *>,
+                               postponedOps: MutableList<(ModifiableArtifactModel) -> Unit>) {
     consumeIfCast(config["children"], List::class.java) {
       it.forEach { child ->
         consumeIfCast(child, Map::class.java) child@{ config ->
@@ -59,13 +61,13 @@ class ArtifactsImporter: ConfigurationHandler {
 
             "DIR" -> {
               val directory = DirectoryPackagingElement(config["name"] as? String ?: "no_name")
-              populateArtifact(project, directory, config)
+              populateArtifact(project, directory, config,postponedOps)
               element.addOrFindChild(directory)
             }
 
             "ARCHIVE" -> {
               val archive = ArchivePackagingElement(config["name"] as? String ?: "no_name")
-              populateArtifact(project, archive, config)
+              populateArtifact(project, archive, config, postponedOps)
               element.addOrFindChild(archive)
             }
 
@@ -139,11 +141,12 @@ class ArtifactsImporter: ConfigurationHandler {
 
             "ARTIFACT_REF"  -> {
               val artifactName = config["artifactName"] as? String ?: return@child
-              val artifactsManager = ArtifactManager.getInstance(project)
-              artifactsManager.findArtifact(artifactName)?.let {
-                val pointer = ArtifactPointerManager.getInstance(project).createPointer(it)
-                val artifactRef = ArtifactPackagingElement(project, pointer)
-                element.addOrFindChild(artifactRef)
+              postponedOps.add { model ->
+                model.findArtifact(artifactName)?.let {
+                  val pointer = ArtifactPointerManager.getInstance(project).createPointer(it)
+                  val artifactRef = ArtifactPackagingElement(project, pointer)
+                  element.addOrFindChild(artifactRef)
+                }
               }
             }
           }

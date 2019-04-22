@@ -26,14 +26,14 @@ class ExpandUtils {
   private static final Map<IElementType, IElementType> INVERTED_OPS = new HashMap<>();
 
   static {
-    OPS.put(JavaTokenType.MINUS, " - ");
-    OPS.put(JavaTokenType.PLUS, " + ");
-    OPS.put(JavaTokenType.ASTERISK, " * ");
-    OPS.put(JavaTokenType.DIV, " / ");
-    OPS.put(JavaTokenType.OR, " | ");
-    OPS.put(JavaTokenType.AND, " & ");
-    OPS.put(JavaTokenType.OROR, " || ");
-    OPS.put(JavaTokenType.ANDAND, " && ");
+    OPS.put(JavaTokenType.MINUS, "-");
+    OPS.put(JavaTokenType.PLUS, "+");
+    OPS.put(JavaTokenType.ASTERISK, "*");
+    OPS.put(JavaTokenType.DIV, "/");
+    OPS.put(JavaTokenType.OR, "|");
+    OPS.put(JavaTokenType.AND, "&");
+    OPS.put(JavaTokenType.OROR, "||");
+    OPS.put(JavaTokenType.ANDAND, "&&");
 
     INVERTED_OPS.put(JavaTokenType.MINUS, JavaTokenType.PLUS);
     INVERTED_OPS.put(JavaTokenType.PLUS, JavaTokenType.MINUS);

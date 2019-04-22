@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.impl.AbstractUrl;
+import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -80,8 +81,7 @@ public class DefaultSearchScopeProviders {
       List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(project).getFilteredScopes();
       if (!changeLists.isEmpty()) {
         for (NamedScope changeListScope : changeLists) {
-          GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(project, changeListScope);
-          result.add(scope);
+          result.add(wrapNamedScope(project, changeListScope));
         }
       }
       return result;
@@ -102,11 +102,30 @@ public class DefaultSearchScopeProviders {
       for (NamedScopesHolder holder : holders) {
         NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
         for (NamedScope scope : scopes) {
-          GlobalSearchScope searchScope = GlobalSearchScopesCore.filterScope(project, scope);
-          result.add(searchScope);
+          result.add(wrapNamedScope(project, scope));
         }
       }
       return result;
+    }
+  }
+
+  @NotNull
+  private static GlobalSearchScope wrapNamedScope(@NotNull Project project, @NotNull NamedScope namedScope) {
+    GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(project, namedScope);
+    return namedScope instanceof WeighedItem ? new MyWeightedScope(scope, ((WeighedItem)namedScope).getWeight()) : scope;
+  }
+
+  private static class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem {
+    final int weight;
+
+    MyWeightedScope(@NotNull GlobalSearchScope scope, int weight) {
+      super(scope);
+      this.weight = weight;
+    }
+
+    @Override
+    public int getWeight() {
+      return weight;
     }
   }
 }

@@ -393,8 +393,19 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   public String getCoordinateText() {
-    final JTextField field = (JTextField)myCombobox.getEditor().getEditorComponent();
-    return field.getText();
+    String text = getFullCoordinateText();
+    List<String> parts = StringUtil.split(text, ":");
+    return parts.size() == 4 ? parts.get(0) + ":" + parts.get(1) + ":" + parts.get(3) : text;
+  }
+
+  @Nullable
+  public String getPackaging() {
+    List<String> parts = StringUtil.split(getFullCoordinateText(), ":");
+    return parts.size() == 4 ? parts.get(2) : null;
+  }
+
+  private String getFullCoordinateText() {
+    return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText();
   }
 
   private void createUIComponents() {

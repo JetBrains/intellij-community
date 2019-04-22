@@ -5,6 +5,16 @@ import com.intellij.openapi.components.ServiceManager;
 
 public interface Formatter extends IndentFactory, WrapFactory, AlignmentFactory, SpacingFactory, FormattingModelFactory {
   static Formatter getInstance() {
-    return ServiceManager.getService(Formatter.class);
+    Formatter instance = Holder.INSTANCE;
+    if (instance == null) {
+      instance = ServiceManager.getService(Formatter.class);
+      Holder.INSTANCE = instance;
+    }
+    return instance;
   }
+}
+
+class Holder {
+  // NotNullLazyValue is not used here because ServiceManager.getService can return null and better to avoid any possible issues here
+  volatile static Formatter INSTANCE;
 }

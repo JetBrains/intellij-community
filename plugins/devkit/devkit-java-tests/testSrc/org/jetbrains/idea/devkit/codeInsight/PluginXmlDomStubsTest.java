@@ -97,10 +97,10 @@ public class PluginXmlDomStubsTest extends DomStubTest {
     assertEquals("actions", included.getName());
 
     List<Actions> actions = element.getRootElement().getActions();
-    assertEquals(1, actions.size());
-    assertNotNull(actions.get(0).getXmlTag());
+    assertEquals(2, actions.size());
 
-    Action action = actions.get(0).getGroups().get(0).getActions().get(0);
+    assertNotNull(actions.get(1).getXmlTag());
+    Action action = actions.get(1).getGroups().get(0).getActions().get(0);
     DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(action.getId());
     assertNotNull(handler.getStub());
 

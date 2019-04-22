@@ -30,7 +30,6 @@ public interface Hint {
    * @param x                  x coordinate of hint in parent coordinate system
    * @param y                  y coordinate of hint in parent coordinate system
    * @param focusBackComponent component which should get focus when the hint will
-   * @param hintInfo
    */
   void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent, @NotNull HintHint hintInfo);
 

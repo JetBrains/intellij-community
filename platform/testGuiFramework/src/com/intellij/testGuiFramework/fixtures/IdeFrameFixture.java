@@ -766,13 +766,6 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return MessagesFixture.findByTitle(robot(), target(), title);
   }
 
-
-  @NotNull
-  public FindDialogFixture invokeFindInPathDialog() {
-    invokeMenuPath("Edit", "Find", "Find in Path...");
-    return FindDialogFixture.find(robot());
-  }
-
   @NotNull
   public FindToolWindowFixture getFindToolWindow() {
     return new FindToolWindowFixture(this);

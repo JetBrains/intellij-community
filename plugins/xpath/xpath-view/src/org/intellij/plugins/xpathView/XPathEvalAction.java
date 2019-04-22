@@ -141,7 +141,7 @@ public class XPathEvalAction extends XPathAction {
             return;
         }
 
-        Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = event.getData(CommonDataKeys.EDITOR);
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();

@@ -61,22 +61,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private final File myPath;
   private final boolean myBundled;
-
-  private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
-    @Override
-    protected String compute() {
-      return computeDescription();
-    }
-  };
   private String myName;
   private PluginId myId;
-
-  @Nullable
-  private String myProductCode;
-  @Nullable
-  private Date myReleaseDate;
+  private final NullableLazyValue<String> myDescription = NullableLazyValue.createValue(() -> computeDescription());
+  private @Nullable String myProductCode;
+  private @Nullable Date myReleaseDate;
   private int myReleaseVersion;
-
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -90,51 +80,33 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, List<String>> myOptionalConfigs;
   private Map<PluginId, List<IdeaPluginDescriptorImpl>> myOptionalDescriptors;
-  @Nullable private List<Element> myActionElements;
-
-  @Nullable
-  private List<ComponentConfig> myAppComponents;
-  @Nullable
-  private List<ComponentConfig> myProjectComponents;
-  @Nullable
-  private List<ComponentConfig> myModuleComponents;
-
-  private boolean myDeleted;
+  private @Nullable List<Element> myActionElements;
+  private @Nullable List<ComponentConfig> myAppComponents;
+  private @Nullable List<ComponentConfig> myProjectComponents;
+  private @Nullable List<ComponentConfig> myModuleComponents;
+  private @Nullable MultiMap<String, Element> myExtensions;  // extension point name -> list of extension elements
+  private @Nullable List<ServiceDescriptor> myAppServices;
+  private @Nullable List<ServiceDescriptor> myProjectServices;
+  private @Nullable List<ServiceDescriptor> myModuleServices;
+  private @Nullable MultiMap<String, Element> myExtensionsPoints;
+  private List<String> myModules;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
-
-  @Nullable
-  // extension point name -> list of extension elements
-  private MultiMap<String, Element> myExtensions;
-
-  @Nullable
-  private List<ServiceDescriptor> myAppServices;
-  @Nullable
-  private List<ServiceDescriptor> myProjectServices;
-  @Nullable
-  private List<ServiceDescriptor> myModuleServices;
-
-  @Nullable
-  private MultiMap<String, Element> myExtensionsPoints;
-
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   private boolean myAllowBundledUpdate;
-  private boolean myEnabled = true;
+  private boolean myImplementationDetail;
   private String mySinceBuild;
   private String myUntilBuild;
+
+  private boolean myEnabled = true;
+  private boolean myDeleted;
   private Boolean mySkipped;
-  private List<String> myModules;
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
     myPath = pluginPath;
     myBundled = bundled;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private static String createDescriptionKey(final PluginId id) {
-    return "plugin." + id + ".description";
   }
 
   @Override
@@ -142,22 +114,25 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
-  /** @deprecated changing a plugin path after loading is not expected (to be removed in IDEA 2019) */
-  @Deprecated
-  public void setPath(@SuppressWarnings("unused") File path) { }
+  public void readExternal(@NotNull Element element,
+                           @NotNull URL url,
+                           @NotNull JDOMXIncluder.PathResolver pathResolver,
+                           @Nullable Interner<String> stringInterner) throws InvalidDataException, MalformedURLException {
+    Application app = ApplicationManager.getApplication();
+    readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner);
+  }
 
-  public void readExternal(@NotNull Element element, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver, @Nullable Interner<String> stringInterner)
-    throws InvalidDataException, MalformedURLException {
-    Application application = ApplicationManager.getApplication();
-    readExternal(element, url, application != null && application.isUnitTestMode(), pathResolver, stringInterner);
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
+    Application app = ApplicationManager.getApplication();
+    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), app != null && app.isUnitTestMode(),
+                 JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner());
   }
 
   private void readExternal(@NotNull Element element,
                             @NotNull URL url,
                             boolean ignoreMissingInclude,
                             @NotNull JDOMXIncluder.PathResolver pathResolver,
-                            @Nullable Interner<String> stringInterner)
-    throws InvalidDataException, MalformedURLException {
+                            @Nullable Interner<String> stringInterner) throws InvalidDataException, MalformedURLException {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -166,11 +141,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
     readExternal(element, stringInterner);
-  }
-
-  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
-    Application app = ApplicationManager.getApplication();
-    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), app != null && app.isUnitTestMode(), JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner());
   }
 
   // used in upsource
@@ -183,7 +153,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myId = idString != null ? PluginId.getId(idString) : nameString != null ? PluginId.getId(nameString) : null;
     myName = ObjectUtils.chooseNotNull(nameString, idString);
 
-    final ProductDescriptor pd = pluginBean.productDescriptor;
+    ProductDescriptor pd = pluginBean.productDescriptor;
     myProductCode = pd != null? pd.code : null;
     myReleaseDate = parseReleaseDate(pluginBean);
     myReleaseVersion = pd != null? pd.releaseVersion : 0;
@@ -199,6 +169,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
     myAllowBundledUpdate = pluginBean.allowBundledUpdate;
+    myImplementationDetail = pluginBean.implementationDetail;
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
       myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
@@ -561,7 +532,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
      category in its .xml file so to be consistent in plugins representation
      (e.g. in the Plugins form) we have to set this value outside.
   */
-  public void setCategory( String category ){
+  public void setCategory(String category) {
     myCategory = category;
   }
 
@@ -669,14 +640,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUrl;
   }
 
-  public void setUrl( final String val )
-  {
+  public void setUrl(String val) {
     myUrl = val;
-  }
-
-  @Override
-  public String toString() {
-    return "PluginDescriptor(name=" + myName + ", classpath=" + myPath + ")";
   }
 
   public boolean isDeleted() {
@@ -692,26 +657,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
-
-    final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
-    return Objects.equals(myName, pluginDescriptor.myName);
-  }
-
-  @Override
-  public int hashCode() {
-    return myName != null ? myName.hashCode() : 0;
-  }
-
-  @Override
   @NotNull
   public HelpSetPath[] getHelpSets() {
     return myHelpSets;
   }
 
-  @Nullable
   @Override
   public PluginId getPluginId() {
     return myId;
@@ -743,7 +693,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUseCoreClassLoader;
   }
 
-  void setUseCoreClassLoader(final boolean useCoreClassLoader) {
+  void setUseCoreClassLoader(@SuppressWarnings("SameParameterValue") boolean useCoreClassLoader) {
     myUseCoreClassLoader = useCoreClassLoader;
   }
 
@@ -762,7 +712,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return myDescriptionChildText;
     }
 
-    return CommonBundle.messageOrDefault(bundle, createDescriptionKey(myId), myDescriptionChildText == null ? "" : myDescriptionChildText);
+    return CommonBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
   }
 
   void insertDependency(@NotNull IdeaPluginDescriptor d) {
@@ -867,8 +817,28 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myAllowBundledUpdate;
   }
 
+  @Override
+  public boolean isImplementationDetail() {
+    return myImplementationDetail;
+  }
+
   @NotNull
   public List<String> getModules() {
     return ContainerUtil.notNullize(myModules);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof IdeaPluginDescriptorImpl && myId == ((IdeaPluginDescriptorImpl)o).myId;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(myId);
+  }
+
+  @Override
+  public String toString() {
+    return "PluginDescriptor(name=" + myName + ", classpath=" + myPath + ")";
   }
 }

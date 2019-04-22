@@ -18,7 +18,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -408,11 +408,12 @@ public class RootsChangedTest extends ModuleTestCase {
     // create .idea
     StateStorageManagerKt.saveComponentManager(getProject());
     VirtualFile shelf = createChildDirectory(getProject().getProjectFile().getParent(), "shelf");
+    VcsIgnoreManager vcsIgnoreManager = VcsIgnoreManager.getInstance(myProject);
 
     myModuleRootListener.reset();
 
     VirtualFile xxx = createChildData(shelf, "shelf1.dat");
-    assertTrue(ChangeListManager.getInstance(myProject).isPotentiallyIgnoredFile(xxx));
+    assertTrue(vcsIgnoreManager.isPotentiallyIgnoredFile(xxx));
 
     assertEquals(myModuleRootListener.modificationCount, ProjectRootManager.getInstance(myProject).getModificationCount());
 
@@ -423,7 +424,7 @@ public class RootsChangedTest extends ModuleTestCase {
     myModuleRootListener.reset();
 
     VirtualFile xxx2 = createChildData(newShelf, "shelf1.dat");
-    assertTrue(ChangeListManager.getInstance(myProject).isPotentiallyIgnoredFile(xxx2));
+    assertTrue(vcsIgnoreManager.isPotentiallyIgnoredFile(xxx2));
   }
 
   public void testCreationDeletionOfRootDirectoriesMustLeadToRootsChanged() {

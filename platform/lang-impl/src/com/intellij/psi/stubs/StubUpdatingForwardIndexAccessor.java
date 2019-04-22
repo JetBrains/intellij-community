@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
@@ -42,8 +43,10 @@ class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Inte
     public IndexedStubs read(@NotNull DataInput in) throws IOException {
       int fileId = DataInputOutputUtil.readINT(in);
       if (!myEnsuredStubElementTypesLoaded) {
-        SerializationManager.getInstance().initSerializers();
-        StubIndexImpl.initExtensions();
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          SerializationManager.getInstance().initSerializers();
+          StubIndexImpl.initExtensions();
+        });
         myEnsuredStubElementTypesLoaded = true;
       }
       int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);

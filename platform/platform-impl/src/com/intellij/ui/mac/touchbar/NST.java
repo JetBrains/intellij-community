@@ -145,7 +145,7 @@ public class NST {
 
   public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<TBItemScrubber.ItemData> items, int itemsCount) {
     final Memory mem = _packItems(items, 0, itemsCount);
-    final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
+    final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
     return scrubberNativePeer;
   }
 
@@ -206,7 +206,7 @@ public class NST {
 
   static void appendScrubberItems(ID scrubObj, List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
     final Memory mem = _packItems(items, fromIndex, itemsCount);
-    ourNSTLibrary.appendScrubberItems(scrubObj, mem, (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
+    ourNSTLibrary.appendScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
   }
   public static void enableScrubberItem(ID scrubObj, Collection<Integer> indices, boolean enabled) {
     if (indices == null || indices.isEmpty())
@@ -222,8 +222,16 @@ public class NST {
   }
 
   private static @Nullable Memory _packItems(List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
-    if (items == null)
+    if (items == null || itemsCount <= 0)
       return null;
+    if (fromIndex < 0) {
+      LOG.error("_packItems: fromIndex < 0 (" + fromIndex + ")");
+      return null;
+    }
+    if (fromIndex + itemsCount > items.size()) {
+      LOG.error("_packItems: fromIndex + itemsCount > items.size() (" + fromIndex + ", " + itemsCount + ", " + items.size() + ")");
+      return null;
+    }
 
     // 1. calculate size
     int byteCount = 4;

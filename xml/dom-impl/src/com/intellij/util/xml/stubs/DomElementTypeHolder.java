@@ -26,5 +26,6 @@ public class DomElementTypeHolder {
     SerializationManager.getInstance().registerSerializer(ElementStubSerializer.INSTANCE);
     SerializationManager.getInstance().registerSerializer(AttributeStubSerializer.INSTANCE);
     SerializationManager.getInstance().registerSerializer(FileStubSerializer.INSTANCE);
+    SerializationManager.getInstance().registerSerializer(XIncludeStub.ourSerializer);
   }
 }

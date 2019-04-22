@@ -312,14 +312,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
   }
 
   private static class CheckboxColorIcon extends ColorIcon {
-    private final int mySize;
     private boolean mySelected;
     private SizedIcon mySizedIcon;
 
     CheckboxColorIcon(int size, @NotNull Color color) {
       super(size, color);
-      mySize = size;
-      mySizedIcon = new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, mySize, mySize);
+      mySizedIcon = new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, size, size);
     }
 
     public void prepare(boolean selected) {

@@ -5,4 +5,8 @@ public interface PluginDescriptor {
   PluginId getPluginId();
 
   ClassLoader getPluginClassLoader();
+
+  default boolean isBundled() {
+    return false;
+  }
 }

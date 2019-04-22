@@ -52,6 +52,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
+  private final AtomicBoolean isDisposed = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
   @NotNull
   private ExternalProjectsState myState = new ExternalProjectsState();
@@ -169,7 +170,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
     synchronized (isInitializationFinished) {
       isInitializationFinished.set(true);
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      invokeLater(() -> {
         myPostInitializationActivities.run();
         myPostInitializationActivities.clear();
       });
@@ -182,15 +183,20 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   @Override
-  public void runWhenInitialized(Runnable runnable) {
+  public void runWhenInitialized(@NotNull Runnable runnable) {
+    if (isDisposed.get()) return;
     synchronized (isInitializationFinished) {
       if (isInitializationFinished.get()) {
-        ApplicationManager.getApplication().executeOnPooledThread(runnable);
+        invokeLater(runnable);
       }
       else {
         myPostInitializationActivities.add(runnable);
       }
     }
+  }
+
+  private void invokeLater(@NotNull Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(runnable, o -> myProject.isDisposed() || isDisposed.get());
   }
 
   public void updateExternalProjectData(ExternalProjectInfo externalProject) {
@@ -296,6 +302,8 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   @Override
   public void dispose() {
+    if (isDisposed.getAndSet(true)) return;
+    myPostInitializationActivities.clear();
     myProjectsViews.clear();
     myRunManagerListener.detach();
     if (myWatcher != null) {

@@ -220,7 +220,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     JComponent component = myToolbarWest.getComponent();
     component.setOpaque(false);
-    if (!JBTabsFactory.getUseNewTabs()) {
+    if (JBTabsFactory.getUseNewTabs()) {
+      component.setBorder(JBUI.Borders.empty());
+    }
+    else {
       int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPaddingOld();
       component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
     }

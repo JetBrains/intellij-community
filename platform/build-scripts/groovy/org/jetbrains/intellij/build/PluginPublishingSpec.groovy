@@ -4,11 +4,15 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 
 /**
+ * Specifies how a plugin is published.
+ *
  * @see org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish
  * @see org.jetbrains.intellij.build.ProductModulesLayout#setPluginPublishingSpec
  */
 @CompileStatic
 class PluginPublishingSpec {
+  public static final PluginPublishingSpec DO_NOT_UPLOAD_AUTOMATICALLY = new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: false)
+
   /**
    * Whether since-build/until-build range should be restricted.
    * {@code null} means, the compatibility build range will be automatically determined depending on the other parameters. 

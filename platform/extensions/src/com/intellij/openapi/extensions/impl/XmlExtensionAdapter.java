@@ -10,7 +10,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoInitializationException;
 import org.picocontainer.PicoIntrospectionException;
 import org.picocontainer.PicoVisitor;
 
@@ -18,7 +17,7 @@ import java.util.Objects;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   @Nullable
-  private final Element myExtensionElement;
+  private Element myExtensionElement;
 
   private Object myComponentInstance;
 
@@ -55,13 +54,10 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
   @Override
   protected void initInstance(@NotNull Object instance) {
-    if (myExtensionElement != null) {
-      try {
-        XmlSerializer.deserializeInto(instance, myExtensionElement);
-      }
-      catch (Exception e) {
-        throw new PicoInitializationException(e);
-      }
+    Element element = myExtensionElement;
+    if (element != null) {
+      XmlSerializer.deserializeInto(instance, element);
+      myExtensionElement = null;
     }
   }
 

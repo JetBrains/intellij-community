@@ -1,0 +1,12 @@
+class Tester {
+    boolean a;
+
+    native void doB();
+
+    void useInlinedMethod() {
+        if (!a) {
+            doB();
+        }
+        System.out.println("ok");
+    }
+}

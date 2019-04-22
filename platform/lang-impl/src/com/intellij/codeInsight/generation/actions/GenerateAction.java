@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.generation.actions;
 
@@ -49,21 +35,27 @@ public class GenerateAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setEnabledAndVisible(isEnabled(event));
+    }
+    else {
+      presentation.setEnabled(isEnabled(event));
+    }
+  }
+
+  private static boolean isEnabled(@NotNull AnActionEvent event) {
+    Project project = event.getProject();
     if (project == null) {
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
     boolean groupEmpty = ActionGroupUtil.isGroupEmpty(getGroup(), event, LaterInvocator.isInModalContext());
-    presentation.setEnabled(!groupEmpty);
+    return !groupEmpty;
   }
 
   private static DefaultActionGroup getGroup() {

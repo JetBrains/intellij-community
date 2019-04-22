@@ -5,6 +5,16 @@
       <val name="value" val="&quot;2.0&quot;"/>
     </annotation>
   </item>
+  <item name='library.RecentInterface'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.RecentSamInterface'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
   <item name='library.OldClass recentField'>
     <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
       <val name="value" val="&quot;2.0&quot;"/>
@@ -52,6 +62,11 @@
       <val name="value" val="&quot;2.0&quot;"/>
     </annotation>
   </item>
+  <item name='library.RecentKotlinInterface'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
   <item name='library.OldKotlinClass recentField'>
     <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
       <val name="value" val="&quot;2.0&quot;"/>
@@ -83,6 +98,11 @@
     </annotation>
   </item>
   <item name='library.OldKotlinClass void recentStaticMethod()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldKotlinClass.Companion void recentStaticMethod()'>
     <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
       <val name="value" val="&quot;2.0&quot;"/>
     </annotation>

@@ -17,10 +17,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -75,7 +72,8 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
     if (expression.getQualifierExpression() != null) {
       return;
     }
-    final PsiExpression thisQualifier = ExpressionUtils.getQualifierOrThis(expression);
+    final PsiExpression thisQualifier = ExpressionUtils.getEffectiveQualifier(expression);
+    if (!(thisQualifier instanceof PsiThisExpression)) return;
     CommentTracker commentTracker = new CommentTracker();
     @NonNls final String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);

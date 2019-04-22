@@ -184,6 +184,8 @@ class CommunityRepositoryModules {
       withProjectLibrary("Gradle")
     },
     plugin("intellij.platform.testGuiFramework") {
+      //the plugin is for internal use for now so it shouldn't be published
+      defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
       mainJarName = "testGuiFramework"
       withModule("intellij.platform.testGuiFramework")
       withProjectLibrary("fest")
@@ -244,15 +246,12 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
+      bundlingRestrictions.includeInEapOnly = true
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
       withResource("features/resources", "lib")
     },
-    plugin("intellij.griffon") {
-      withModule("intellij.griffon.jps", "griffon-jps-plugin.jar")
-      withModule("intellij.griffon.rt", "griffon-rt.jar")
-    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {

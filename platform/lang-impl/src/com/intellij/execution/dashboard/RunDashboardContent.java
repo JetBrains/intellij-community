@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
+import com.intellij.execution.services.ServiceViewTreeLinkMouseListener;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
@@ -111,10 +112,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
-    myTree.setLineStyleAngled();
 
     myTree.setCellRenderer(new RunDashboardTreeCellRenderer());
-    RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
+    ServiceViewTreeLinkMouseListener mouseListener = new ServiceViewTreeLinkMouseListener(myTree);
     mouseListener.installOn(myTree);
     RowsDnDSupport.install(myTree, myTreeModel);
     UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);

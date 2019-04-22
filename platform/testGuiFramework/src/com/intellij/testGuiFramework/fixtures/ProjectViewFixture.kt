@@ -215,11 +215,9 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         val tree = myPane.tree
         val boundsRef = Ref<Rectangle>()
         waitUntil("bounds of tree node with a tree path $myTreePath will be not null", Timeouts.defaultTimeout) {
-          return@waitUntil computeOnEdt {
-            val bounds = tree.getPathBounds(myTreePath)
-            if (bounds != null) boundsRef.set(bounds)
-            bounds != null
-          }!!
+          val bounds = computeOnEdt { tree.getPathBounds(myTreePath) }
+          if (bounds != null) boundsRef.set(bounds)
+          return@waitUntil bounds != null
         }
 
         val bounds = boundsRef.get()

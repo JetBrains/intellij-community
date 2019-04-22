@@ -2293,6 +2293,7 @@
 
     <!--group.names.code.style.issues-->
     <inspectionElementsMerger implementation="com.siyeh.ig.style.MultipleVariablesInDeclarationInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.style.ConstantOnWrongSideOfComparisonInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertMessageNotString" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="assert.message.not.string.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.style.AssertMessageNotStringInspection"/>
@@ -2318,14 +2319,10 @@
                      key="confusing.octal.escape.sequence.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.ConfusingOctalEscapeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="ConstantOnLeftSideOfComparison" shortName="ConstantOnLHSOfComparison"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="constant.on.lhs.of.comparison.display.name"
+    <localInspection groupPath="Java" language="JAVA" shortName="ConstantOnWrongSideOfComparison"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="constant.on.side.of.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.style.ConstantOnLHSOfComparisonInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="ConstantOnRightSideOfComparison" shortName="ConstantOnRHSOfComparison"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="constant.on.rhs.of.comparison.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.style.ConstantOnRHSOfComparisonInspection"/>
+                     level="WARNING" implementationClass="com.siyeh.ig.style.ConstantOnWrongSideOfComparisonInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ControlFlowStatementWithoutBraces" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="control.flow.statement.without.braces.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
@@ -2394,7 +2391,7 @@
                      implementationClass="com.siyeh.ig.controlflow.SimplifiableEqualsExpressionInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringBufferReplaceableByString" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.style.StringBufferReplaceableByStringInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="TypeParameterExplicitlyExtendsObject" shortName="TypeParameterExtendsObject"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="type.parameter.extends.object.display.name"

@@ -139,9 +139,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   @NotNull
   private static String removeSlashes(String s) {
-    if (s.startsWith("/")) return removeSlashes(s.substring(1));
-    if (s.endsWith("/")) return removeSlashes(s.substring(0, s.length() - 1));
-    return s;
+    return StringUtil.trimLeading(StringUtil.trimTrailing(s, '/'), '/');
   }
 
   @Nullable
@@ -159,7 +157,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return null;
   }
 
-  private Iterable<PsiFileSystemItem> matchQualifiers(MinusculeMatcher qualifierMatcher, Iterable<PsiFileSystemItem> iterable) {
+  private Iterable<PsiFileSystemItem> matchQualifiers(MinusculeMatcher qualifierMatcher, Iterable<? extends PsiFileSystemItem> iterable) {
     Map<PsiFileSystemItem, Integer> qualifierMatchingDegrees = new HashMap<>();
     List<PsiFileSystemItem> matching = new ArrayList<>();
     for (PsiFileSystemItem item : iterable) {
@@ -180,7 +178,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   @Nullable
-  private String getParentPath(PsiFileSystemItem item) {
+  private String getParentPath(@NotNull PsiFileSystemItem item) {
     String fullName = myModel.getFullName(item);
     return fullName == null ? null : StringUtil.getPackageName(FileUtilRt.toSystemIndependentName(fullName), '/') + '/';
   }
@@ -264,7 +262,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     /** Names placed into buckets where the index of bucket == {@link #findMatchStartingPosition} */
     private final List<List<String>> candidateNames;
 
-    private int index = 0;
+    private int index;
 
     NameGrouper(@NotNull String namePattern, @NotNull ProgressIndicator indicator) {
       this.namePattern = namePattern;
@@ -347,7 +345,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"), matchingNames);
       for (List<String> group : groups) {
         Iterable<PsiFileSystemItem> files = getFilesMatchingPath(pattern, everywhere, group, dirMatcher, indicator);
-        if (qualifierPattern.length() > 0) {
+        if (!qualifierPattern.isEmpty()) {
           files = matchQualifiers(qualifierMatcher, files);
         }
         files = moveDirectoriesToEnd(files);
@@ -360,20 +358,17 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         }
       }
 
-      if (!hasSuggestions.get() && !everywhere && hasSuggestionsOutsideProject(pattern, groups, dirMatcher)) {
-        // let the framework switch to searching outside project to display these well-matching suggestions
-        // instead of worse-matching ones in project (that are very expensive to calculate)
-        return false;
-      }
-      return true;
+      // let the framework switch to searching outside project to display these well-matching suggestions
+      // instead of worse-matching ones in project (that are very expensive to calculate)
+      return hasSuggestions.get() || everywhere || !hasSuggestionsOutsideProject(pattern, groups, dirMatcher);
     }
 
     private boolean hasSuggestionsOutsideProject(@NotNull String pattern,
-                                                 List<List<String>> groups, DirectoryPathMatcher dirMatcher) {
+                                                 List<? extends List<String>> groups, DirectoryPathMatcher dirMatcher) {
       return ContainerUtil.exists(groups, group -> !getFilesMatchingPath(pattern, true, group, dirMatcher, indicator).isEmpty());
     }
 
-    private List<List<String>> groupByMatchingDegree(boolean preferStartMatches, List<MatchResult> matchingNames) {
+    private List<List<String>> groupByMatchingDegree(boolean preferStartMatches, List<? extends MatchResult> matchingNames) {
       Comparator<MatchResult> comparator = (mr1, mr2) -> {
         boolean exactPrefix1 = StringUtil.startsWith(mr1.elementName, patternSuffix);
         boolean exactPrefix2 = StringUtil.startsWith(mr2.elementName, patternSuffix);
@@ -388,7 +383,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   }
 
-  private static <T> List<List<T>> sortAndGroup(List<T> items, Comparator<T> comparator) {
+  private static <T> List<List<T>> sortAndGroup(List<T> items, Comparator<? super T> comparator) {
     return StreamEx.of(items).sorted(comparator).groupRuns((n1, n2) -> comparator.compare(n1, n2) == 0).toList();
   }
 }

@@ -54,7 +54,7 @@ public class ConfigImportHelper {
 
   public static final String CONFIG = "config";
   private static final String[] OPTIONS = {
-    OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE,
+    OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,
     OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
     OPTIONS_DIRECTORY + "/options.xml"};
   private static final String BIN = "bin";
@@ -420,8 +420,7 @@ public class ConfigImportHelper {
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile);
-        List<String> updatedLines =
-          ContainerUtil.map(lines, line -> line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line);
+        List<String> updatedLines = ContainerUtil.map(lines, ConfigImportHelper::replaceVMOptions);
         if (!updatedLines.equals(lines)) {
           PathKt.write(vmOptionsFile, StringUtil.join(updatedLines, "\n"));
         }
@@ -430,6 +429,11 @@ public class ConfigImportHelper {
         log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
       }
     }
+  }
+
+  private static String replaceVMOptions(String line) {
+    line = line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line;
+    return line.trim().startsWith("-agentlib:yjpagent") ? "" : line;
   }
 
   private static boolean blockImport(@NotNull Path path, Path oldConfig, Path newConfig) {

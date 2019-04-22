@@ -4,22 +4,16 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -29,7 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement;
+import static java.util.Collections.emptyList;
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDependencies;
 import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
 import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
 
@@ -119,7 +114,8 @@ class InferenceCache {
   }
 
   @NotNull
-  private Set<Pair<Instruction, VariableDescriptor>> findDependencies(@NotNull Instruction instruction, @NotNull VariableDescriptor descriptor) {
+  private Set<Pair<Instruction, VariableDescriptor>> findDependencies(@NotNull Instruction instruction,
+                                                                      @NotNull VariableDescriptor descriptor) {
     DefinitionMap definitionMap = myDefinitions.get(instruction.num());
     int varIndex = myVarIndexes.get(descriptor);
     int[] definitions = definitionMap.getDefinitions(varIndex);
@@ -128,45 +124,14 @@ class InferenceCache {
     LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = ContainerUtil.newLinkedHashSet();
     for (int defIndex : definitions) {
       Instruction write = myFlow[defIndex];
-      pairs.add(Pair.create(write, descriptor));
-      PsiElement statement = findDependencyScope(write.getElement());
-      if (statement != null) {
-        pairs.addAll(findAllInstructionsInside(statement));
+      if (write != instruction) {
+        pairs.add(Pair.create(write, descriptor));
+      }
+      for (ReadWriteVariableInstruction dependency : findReadDependencies(write, it -> myFromByElements.getOrDefault(it, emptyList()))) {
+        pairs.add(Pair.create(dependency, dependency.getDescriptor()));
       }
     }
     return pairs;
-  }
-
-  @NotNull
-  private List<Pair<Instruction, VariableDescriptor>> findAllInstructionsInside(@NotNull PsiElement scope) {
-    final List<Pair<Instruction, VariableDescriptor>> result = ContainerUtil.newArrayList();
-    scope.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof GrReferenceExpression && !((GrReferenceExpression)element).isQualified()) {
-          VariableDescriptor descriptor = VariableDescriptorFactory.createDescriptor((GrReferenceExpression)element);
-          List<Instruction> instructionList = myFromByElements.get(element);
-          if (descriptor != null && instructionList != null) {
-            for (Instruction dependency : instructionList) {
-              result.add(Pair.create(dependency, descriptor));
-            }
-          }
-        }
-        super.visitElement(element);
-      }
-    });
-    return result;
-  }
-
-  @Nullable
-  private static PsiElement findDependencyScope(@Nullable PsiElement element) {
-    return PsiTreeUtil.findFirstParent(
-      element,
-      element1 -> !(element1.getParent() instanceof GrExpression)
-                  || element1 instanceof GrBinaryExpression
-                  || element1 instanceof GrInstanceOfExpression
-                  || isExpressionStatement(element1)
-    );
   }
 
   private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult) {

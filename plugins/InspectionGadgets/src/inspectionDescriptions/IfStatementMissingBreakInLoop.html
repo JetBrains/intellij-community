@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports cases when loop contains <b>if</b> statement and this <b>if</b> statement can end with <b>break</b>.
+Reports cases in which a loop contains the <b>if</b> statement that can end with <b>break</b>.
 <p>
   For instance, consider the following code:
 <pre><code>
@@ -11,7 +11,7 @@ Reports cases when loop contains <b>if</b> statement and this <b>if</b> statemen
     }
   }
 </code></pre>
-In this case iterations have no effect after condition is met. So, <b>break</b> should be added:
+In this case, iterations have no effect after the condition is met, and you can skip them by adding a <b>break</b>.
 <pre><code>
   <b>boolean</b> found = <b>false</b>;
   <b>for</b> (<b>int</b> i = 0; i &lt; arr.length; i++) {

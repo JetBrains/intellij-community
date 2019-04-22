@@ -27,7 +27,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class EncapsulateFieldsAction extends BaseRefactoringAction {
+public class EncapsulateFieldsAction extends BaseJavaRefactoringAction {
   @Override
   public boolean isAvailableInEditorOnly() {
     return false;

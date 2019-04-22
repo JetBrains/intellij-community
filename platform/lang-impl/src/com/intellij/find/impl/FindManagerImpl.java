@@ -215,7 +215,7 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
-    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup") && Registry.is("ide.find.as.popup.allow.multiline"));
+    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup.allow.multiline"));
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }

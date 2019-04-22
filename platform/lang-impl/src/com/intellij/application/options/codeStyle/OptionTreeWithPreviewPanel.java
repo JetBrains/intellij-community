@@ -179,7 +179,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     new TreeSpeedSearch(optionsTree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(optionsTree);
     optionsTree.setRootVisible(false);
-    UIUtil.setLineStyleAngled(optionsTree);
     optionsTree.setShowsRootHandles(true);
 
 

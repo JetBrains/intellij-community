@@ -13,7 +13,6 @@ import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.impl.DebugAssertions;
-import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
@@ -69,85 +68,59 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     return Collections.emptyMap();
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public Map<Key, Value> readDataOrMap(@Nullable Input content) {
-    if (content == null) return Collections.emptyMap();
+  public Map<Key, Value> readData(@NotNull Input content) throws IOException {
     Map<Key, Value> data = null;
-    boolean havePersistentData = false;
-    int hashId;
-    boolean skippedReadingPersistentDataButMayHaveIt = false;
 
-    try {
-      FileContent fileContent = (FileContent)content;
-      hashId = getHashOfContent(fileContent);
-      if (doReadSavedPersistentData) {
-        if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
-          ByteArraySequence bytes = readContents(hashId);
+    if (doReadSavedPersistentData) {
+      if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
+        int hashId = getHashId(content);
+        ByteArraySequence bytes = readContents(hashId);
 
-          if (bytes != null) {
-            data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
-            havePersistentData = true;
-            if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-              Map<Key, Value> contentData = myIndexer.map(content);
-              boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
-              if (!sameValueForSavedIndexedResultAndCurrentOne) {
-                DebugAssertions.error(
-                  "Unexpected difference in indexing of %s by index %s, file type %s, charset %s\ndiff %s\nprevious indexed info %s",
-                  fileContent.getFile(),
-                  myIndexId,
-                  fileContent.getFileType().getName(),
-                  ((FileContentImpl)fileContent).getCharset(),
-                  buildDiff(data, contentData),
-                  myIndexingTrace.get(hashId)
-                );
-              }
+        if (bytes != null) {
+          data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
+          if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+            Map<Key, Value> contentData = myIndexer.map(content);
+            boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
+            if (!sameValueForSavedIndexedResultAndCurrentOne) {
+              DebugAssertions.error(
+                "Unexpected difference in indexing of %s by index %s\ndiff %s\nprevious indexed info %s",
+                getContentDebugData(content),
+                myIndexId,
+                buildDiff(data, contentData),
+                myIndexingTrace.get(hashId)
+              );
             }
           }
         }
-        else {
-          skippedReadingPersistentDataButMayHaveIt = true;
-        }
-      }
-      else {
-        havePersistentData = myContents.containsMapping(hashId);
       }
     }
-    catch (IOException ex) {
-      // todo:
-      throw new RuntimeException(ex);
-    }
-
-    if (data == null) {
-      data = myIndexer.map(content);
-      if (DebugAssertions.DEBUG) {
-        MapReduceIndex.checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myMapExternalizer.getValueExternalizer());
-      }
-    }
-
-    if (!havePersistentData) {
-      boolean saved = savePersistentData(data, hashId, skippedReadingPersistentDataButMayHaveIt);
-      if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-        if (saved) {
-
-          FileContent fileContent = (FileContent)content;
-          try {
-            myIndexingTrace.put(hashId, ((FileContentImpl)fileContent).getCharset() +
-                                        "," +
-                                        fileContent.getFileType().getName() +
-                                        "," +
-                                        fileContent.getFile().getPath() +
-                                        "," +
-                                        ExceptionUtil.getThrowableText(new Throwable()));
-          }
-          catch (IOException ex) {
-            LOG.error(ex);
-          }
-        }
-      }
-    }
-
     return data;
+  }
+
+  @Override
+  public void putData(@Nullable Input content, @NotNull Map<Key, Value> data) throws IOException {
+    int hashId = getHashId(content);
+    boolean saved = savePersistentData(data, hashId);
+    if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+      if (saved) {
+        try {
+          myIndexingTrace.put(hashId, getContentDebugData(content) +
+                                      "," +
+                                      ExceptionUtil.getThrowableText(new Throwable()));
+        }
+        catch (IOException ex) {
+          LOG.error(ex);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private String getContentDebugData(Input input) {
+    FileContentImpl content = (FileContentImpl) input;
+    return "[" + content.getFile().getPath() + ";" + content.getFileType().getName() + ";" + content.getCharset() + "]";
   }
 
   @Override
@@ -346,9 +319,9 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     return moreInfo;
   }
 
-  private boolean savePersistentData(Map<Key, Value> data, int id, boolean delayedReading) {
+  private boolean savePersistentData(Map<Key, Value> data, int id) {
     try {
-      if (delayedReading && myContents.containsMapping(id)) return false;
+      if (myContents != null && myContents.isBusyReading() && myContents.containsMapping(id)) return false;
       saveContents(id, AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size()));
     } catch (IOException ex) {
       throw new RuntimeException(ex);

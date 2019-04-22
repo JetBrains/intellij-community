@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -106,7 +105,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
       //noinspection SimplifiableIfStatement
-      if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() || getSchemaFile() == null) return false;
+      if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid()) return false;
       return myPatterns.stream().anyMatch(processor -> processor.process(myProject, file));
     }
 

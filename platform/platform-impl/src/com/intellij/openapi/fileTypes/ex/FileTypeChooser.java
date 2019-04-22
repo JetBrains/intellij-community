@@ -69,7 +69,7 @@ public class FileTypeChooser extends DialogWrapper {
     }
     myList.setModel(model);
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
-    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getName());
+    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getDescription());
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
@@ -176,7 +176,7 @@ public class FileTypeChooser extends DialogWrapper {
 
   @NotNull
   static List<String> suggestPatterns(@NotNull String fileName) {
-    List<String> patterns = ContainerUtil.newLinkedList(fileName);
+    List<String> patterns = ContainerUtil.newLinkedList();
 
     int i = -1;
     while ((i = fileName.indexOf('.', i + 1)) > 0) {
@@ -184,6 +184,12 @@ public class FileTypeChooser extends DialogWrapper {
       if (!StringUtil.isEmpty(extension)) {
         patterns.add(0, "*" + extension);
       }
+    }
+    if (FileTypeManager.getInstance().getFileTypeByFileName(fileName) == FileTypes.UNKNOWN) {
+      patterns.add(fileName);
+    }
+    else {
+      patterns.add(0, fileName);
     }
 
     return patterns;

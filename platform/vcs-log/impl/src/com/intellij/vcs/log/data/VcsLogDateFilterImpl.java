@@ -21,9 +21,7 @@ import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Date;
-import java.util.Set;
 
 public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
 

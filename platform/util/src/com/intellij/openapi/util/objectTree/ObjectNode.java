@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class ObjectNode<T> {
+final class ObjectNode<T extends Disposable> {
   private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");

@@ -25,9 +25,12 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
@@ -48,6 +51,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
@@ -699,9 +703,16 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.impl", "project.impl.main", "project.impl.test");
 
     assertModuleModuleDepScope("project.test", "project.main", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.test", EMPTY_STRING_ARRAY);
+
     assertModuleModuleDepScope("project.api.test", "project.api.main", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.api.test", EMPTY_STRING_ARRAY);
+
     assertModuleModuleDepScope("project.impl.test", "project.impl.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.impl.test", "project.api.test", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.impl.test", "project.api.test");
+
+    assertModuleModuleDeps("project.impl.main", EMPTY_STRING_ARRAY);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.api", "project.impl");
@@ -868,13 +879,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleModuleDeps("project.project1.main");
-    assertModuleLibDeps("project.project1.main");
+    assertModuleModuleDeps("project.project1.main", EMPTY_STRING_ARRAY);
+    assertModuleLibDeps("project.project1.main", EMPTY_STRING_ARRAY);
     assertModuleLibDepScope("project.project1.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project.project1.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
 
-    assertModuleModuleDeps("project.project2.main");
-    assertModuleLibDeps("project.project2.main");
+    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
+    assertModuleLibDeps("project.project2.main", EMPTY_STRING_ARRAY);
     assertModuleLibDepScope("project.project2.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project.project2.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
 
@@ -882,6 +893,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.project2.test", "project.project2.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.project2.test", "project.project1.test", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
   }
 
   @Test
@@ -962,8 +974,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleModuleDeps("project.project2.main");
+    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.project1", "project.project2");
@@ -1007,8 +1020,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project2", "project.project2.main", "project.project2.test");
 
     assertModuleModuleDeps("project.project2.main", "project.project1.main");
-    assertModuleModuleDeps("project.project2.test", "project.project2.main",
-                           "project.project1.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.main", EMPTY_STRING_ARRAY);
+    assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.project1", "project.project2");
@@ -1067,8 +1081,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleOutput("project.project2.main", getProjectPath() + "/project2/buildIdea/main", "");
     assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2/buildIdea/test");
 
-    assertModuleModuleDeps("project.project2.main");
+    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.project1", "project.project2");

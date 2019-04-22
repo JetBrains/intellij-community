@@ -288,6 +288,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     POPUP_NOT_SHOWN
   }
 
+  @Override
+  public boolean fixSilently(@NotNull Editor editor) {
+    return doFix(editor, false, false) == Result.CLASS_AUTO_IMPORTED;
+  }
+
   @NotNull
   public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef) {
     ApplicationManager.getApplication().assertIsDispatchThread();

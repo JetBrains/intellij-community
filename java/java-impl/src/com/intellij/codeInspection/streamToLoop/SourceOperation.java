@@ -83,7 +83,8 @@ abstract class SourceOperation extends Operation {
       return fn == null ? null : new IterateSource(args[0], fn);
     }
     if (name.equals("stream") && args.length == 0 &&
-        InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION) &&
+        ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()) != null) {
       return new ForEachSource(call.getMethodExpression().getQualifierExpression());
     }
     if (name.equals("stream") && args.length == 1 &&
@@ -148,7 +149,8 @@ abstract class SourceOperation extends Operation {
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       PsiExpression iterationParameter = myQualifier == null ? ExpressionUtils
-        .getQualifierOrThis(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
+        .getEffectiveQualifier(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
+      assert iterationParameter != null; // Checked at construction site that effective qualifier is available
       String iterationParameterText = iterationParameter.getText() + (myEntrySet ? ".entrySet()" : "");
       return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameterText + ") {" + code + "}\n";
     }

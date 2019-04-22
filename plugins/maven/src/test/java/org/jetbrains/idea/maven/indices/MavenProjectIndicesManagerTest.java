@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
-import org.jetbrains.idea.maven.onlinecompletion.LocalCompletionSearch;
-import org.jetbrains.idea.maven.onlinecompletion.central.MavenCentralOnlineSearch;
+import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
+import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
 
 import java.util.List;
 
@@ -45,6 +45,9 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
   }
 
   public void testAutomaticallyAddAndUpdateLocalRepository() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
     List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
 
     assertEquals(1, indices.size());
@@ -62,8 +65,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     DependencySearchService service = myIndicesFixture.getProjectIndicesManager().getSearchService();
     assertEquals(2, service.getProviders().size());
 
-    assertTrue(service.getProviders().get(0) instanceof LocalCompletionSearch);
-    assertTrue(service.getProviders().get(1) instanceof MavenCentralOnlineSearch);
+    assertTrue(service.getProviders().get(0) instanceof IndexBasedCompletionProvider);
+    assertTrue(service.getProviders().get(1) instanceof ProjectModulesCompletionProvider);
   }
-
 }

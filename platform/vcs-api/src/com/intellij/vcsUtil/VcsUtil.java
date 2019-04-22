@@ -571,4 +571,5 @@ public class VcsUtil {
       .map(IgnoredFileContentProvider::getFileName)
       .collect(Collectors.toSet());
   }
+
 }

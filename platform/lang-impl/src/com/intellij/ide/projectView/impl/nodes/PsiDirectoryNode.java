@@ -10,6 +10,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -96,7 +97,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       data.setPresentableText(directoryFile.getName());
       if (module != null) {
         if (!(parentValue instanceof Module)) {
-          if (!shouldShowModuleName()) {
+          if (ModuleType.isInternal(module) || !shouldShowModuleName()) {
             data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else if (moduleNameMatchesDirectoryName(module, directoryFile, fi)) {

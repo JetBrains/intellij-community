@@ -126,7 +126,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
         String pluginId = pluginDescriptor.getPluginId().getIdString();
         // https://github.com/mplushnikov/lombok-intellij-plugin/blob/master/src/main/resources/META-INF/plugin.xml (processor)
         //noinspection SpellCheckingInspection
-        registerInPicoContainer = SystemProperties.getBooleanProperty("idea.register.ep.in.pico.container", !pluginId.equals("com.intellij")) || pluginId.equals("Lombook Plugin");
+        registerInPicoContainer = SystemProperties.getBooleanProperty("idea.register.ep.in.pico.container", !pluginDescriptor.isBundled()) || pluginId.equals("Lombook Plugin");
       }
       else {
         registerInPicoContainer = Boolean.parseBoolean(registerInPicoContainerValue);

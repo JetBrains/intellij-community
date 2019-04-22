@@ -291,8 +291,8 @@ public class VfsUtilCore {
                                                                                                            VirtualFileVisitor.VisitorException {
     boolean pushed = false;
     try {
-      final boolean visited = visitor.allowVisitFile(file);
-      if (visited) {
+      final boolean allowVisitFile = visitor.allowVisitFile(file);
+      if (allowVisitFile) {
         VirtualFileVisitor.Result result = visitor.visitFileEx(file);
         if (result.skipChildren) return result;
       }
@@ -330,7 +330,7 @@ public class VfsUtilCore {
         }
       }
 
-      if (visited) {
+      if (allowVisitFile) {
         visitor.afterChildrenVisited(file);
       }
 

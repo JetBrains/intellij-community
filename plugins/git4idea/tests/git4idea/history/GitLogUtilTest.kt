@@ -1,14 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
-import com.intellij.openapi.vcs.Executor.echo
-import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
 import git4idea.config.GitVersion
+import git4idea.history.GitCommitRequirements.DiffRenameLimit
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.test.*
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
@@ -62,42 +64,68 @@ class GitLogUtilTest : GitSingleRepoTest() {
     git("mv fileToRename.txt renamedFile.txt")
     repo.addCommit("Rename fileToRename.txt")
 
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
-                               GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES),
-                               false)
+    GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
+                                                              GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)
     assertTrue(lastCommit!!.changes.all { !it.isRenamed })
   }
 
   @Throws(Exception::class)
-  fun `test readFullDetails without fullMergeDiff`() {
-    `run test for merge diff`(false)
+  fun `test readFullDetails without merge diff`() {
+    `run test for merge diff`(DiffInMergeCommits.NO_DIFF)
   }
 
   @Throws(Exception::class)
-  fun `test readFullDetails with fullMergeDiff`() {
-    `run test for merge diff`(true)
+  fun `test readFullDetails with combined merge diff`() {
+    `run test for merge diff`(DiffInMergeCommits.COMBINED_DIFF)
   }
 
-  private fun `run test for merge diff`(withMergeDiff: Boolean) {
+  @Throws(Exception::class)
+  fun `test readFullDetails with merge diff to parents`() {
+    `run test for merge diff`(DiffInMergeCommits.DIFF_TO_PARENTS)
+  }
+
+  private fun `run test for merge diff`(diffInMergeCommits: GitCommitRequirements.DiffInMergeCommits) {
+    val file1 = "fileToMerge1.txt"
+    val file2 = "fileToMerge2.txt"
+    val conflictedFile = "fileToMergeWithConflict.txt"
+
+    touch(conflictedFile, "content")
+    repo.addCommit("Add $conflictedFile")
     repo.checkoutNew("testBranch")
-    touch("fileToMerge1.txt", "content")
-    repo.addCommit("Add fileToMerge1.txt")
+    touch(file1, "content")
+    overwrite(conflictedFile, "content\nbranch1")
+    repo.addCommit("Add $file1 and change $conflictedFile")
+
     repo.checkout("master")
-    touch("fileToMerge2.txt", "content")
-    repo.addCommit("Add fileToMerge2.txt")
+    touch(file2, "content")
+    overwrite(conflictedFile, "branch2\ncontent")
+    repo.addCommit("Add $file2 and change $conflictedFile")
+
     val success = git.merge(repo, "testBranch", mutableListOf("--no-ff")).success()
-    if (!success) {
-      fail("Could not do a merge")
-    }
+    TestCase.assertFalse(success)
+    repo.add(conflictedFile)
+    repo.commit("merge")
 
     val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
-                               GitCommitRequirements(diffToParentsInMerges = withMergeDiff), false)
+    GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
+                                                              GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
 
     assertNotNull(lastCommit)
-    TestCase.assertEquals(withMergeDiff, !lastCommit!!.getChanges(0).isEmpty())
+
+    when (diffInMergeCommits) {
+      DiffInMergeCommits.NO_DIFF -> TestCase.assertTrue(lastCommit.changes.isEmpty())
+      DiffInMergeCommits.COMBINED_DIFF -> TestCase.assertEquals(listOf(conflictedFile),
+                                                                ChangesUtil.getPaths(lastCommit.changes).map { it.name })
+      DiffInMergeCommits.DIFF_TO_PARENTS -> {
+        TestCase.assertEquals(listOf(conflictedFile), ChangesUtil.getPaths(lastCommit.changes).map { it.name })
+        TestCase.assertEquals(setOf(file1, conflictedFile),
+                              ChangesUtil.getPaths(lastCommit.getChanges(0)).mapTo(mutableSetOf()) { it.name })
+        TestCase.assertEquals(setOf(file2, conflictedFile),
+                              ChangesUtil.getPaths(lastCommit.getChanges(1)).mapTo(mutableSetOf()) { it.name })
+      }
+    }
   }
 }

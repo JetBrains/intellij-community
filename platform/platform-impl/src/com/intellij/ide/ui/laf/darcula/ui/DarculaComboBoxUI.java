@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBInsets;
@@ -96,6 +97,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected ComboPopup createPopup() {
+    if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
+      return new DarculaJBPopupComboPopup<Object>(comboBox);
+    }
     return new CustomComboPopup(comboBox);
   }
 
@@ -279,11 +283,16 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     Rectangle r = new Rectangle(bounds);
 
+    Icon icon = null;
     Insets iPad = null;
     if (c instanceof SimpleColoredComponent) {
       SimpleColoredComponent scc = (SimpleColoredComponent)c;
       iPad = scc.getIpad();
       scc.setIpad(JBUI.emptyInsets());
+      icon = scc.getIcon();
+      if (!scc.isIconOnTheRight() && icon instanceof OffsetIcon) {
+        scc.setIcon(((OffsetIcon)icon).getIcon());
+      }
     }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
@@ -296,6 +305,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     if (c instanceof SimpleColoredComponent) {
       SimpleColoredComponent scc = (SimpleColoredComponent)c;
       scc.setIpad(iPad);
+      scc.setIcon(icon);
     }
   }
 
@@ -566,8 +576,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected Rectangle rectangleForCurrentValue() {
-    Rectangle rect = super.rectangleForCurrentValue();
+    Rectangle rect = new Rectangle(comboBox.getSize());
+    Insets i = getInsets();
+
+    JBInsets.removeFrom(rect, i);
+    rect.width -= arrowButton != null ? (arrowButton.getWidth() - i.left) : rect.height;
     JBInsets.removeFrom(rect, padding);
+
     rect.width += comboBox.isEditable() ? 0 : padding.right;
     return rect;
   }
@@ -647,7 +662,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     @SuppressWarnings("unchecked")
-    private void wrapRenderer() {
+    protected void wrapRenderer() {
       ListCellRenderer<Object> renderer = list.getCellRenderer();
       if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
         list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
@@ -655,15 +670,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
-  private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
-    private final ListCellRenderer<Object> myRenderer;
+  private static class ComboBoxRendererWrapper<T> implements ListCellRenderer<T> {
+    private final ListCellRenderer<T> myRenderer;
 
-    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+    ComboBoxRendererWrapper(@NotNull ListCellRenderer<T> renderer) {
       myRenderer = renderer;
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean isSelected, boolean cellHasFocus) {
       Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       return new NonOpaquePanel((JComponent)c) {
         @Override

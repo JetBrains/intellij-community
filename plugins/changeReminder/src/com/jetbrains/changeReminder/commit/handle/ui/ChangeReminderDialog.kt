@@ -19,7 +19,7 @@ import java.awt.BorderLayout
 import javax.swing.Action
 import javax.swing.JPanel
 
-class ChangeReminderDialog(private val project: Project, private val files: List<PredictedFile>) : DialogWrapper(project), DataProvider {
+internal class ChangeReminderDialog(private val project: Project, private val files: List<PredictedFile>) : DialogWrapper(project), DataProvider {
   init {
     init()
     title = "ChangeReminder Plugin"
@@ -35,6 +35,7 @@ class ChangeReminderDialog(private val project: Project, private val files: List
     val cancel = DialogWrapperExitAction("Cancel Commit", 1)
     cancel.putValue(DEFAULT_ACTION, 0)
     val commitAnyway = DialogWrapperExitAction("Commit Anyway", 0)
+    commitAnyway.putValue(FOCUSED_ACTION, 0)
     return arrayOf(cancel, commitAnyway)
   }
 

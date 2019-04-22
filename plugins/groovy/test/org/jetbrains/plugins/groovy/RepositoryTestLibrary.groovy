@@ -52,7 +52,7 @@ final class RepositoryTestLibrary implements TestLibrary {
     model.findLibraryOrderEntry(library).scope = myDependencyScope
   }
 
-  private static Collection<OrderRoot> loadRoots(Project project, String coordinates) {
+  static Collection<OrderRoot> loadRoots(Project project, String coordinates) {
     def libraryProperties = new RepositoryLibraryProperties(coordinates, true)
     def roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, remoteRepositoryDescriptions)
     assert !roots.isEmpty()

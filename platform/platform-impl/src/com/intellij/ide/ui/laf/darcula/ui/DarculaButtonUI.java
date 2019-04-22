@@ -46,7 +46,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   public static boolean isSquare(Component c) {
-    return c instanceof JButton && "square".equals(((JButton)c).getClientProperty("JButton.buttonType"));
+    return c instanceof AbstractButton && "square".equals(((AbstractButton)c).getClientProperty("JButton.buttonType"));
   }
 
   public static boolean isDefaultButton(JComponent c) {

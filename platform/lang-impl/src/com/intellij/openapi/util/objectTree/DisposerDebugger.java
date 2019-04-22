@@ -219,7 +219,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
       tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-      myTreeBuilder = new FilteringTreeBuilder(tree, DisposerTree.this, structure, AlphaComparator.INSTANCE) {
+      myTreeBuilder = new FilteringTreeBuilder(tree, this, structure, AlphaComparator.INSTANCE) {
         @Override
         public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
           return structure.getRootElement() == getOriginalNode(nodeDescriptor);
@@ -298,7 +298,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   }
 
 
-  private static final ObjectNode ROOT = new ObjectNode(Disposer.getTree(), null, new Object(), -1);
+  private static final ObjectNode<Disposable> ROOT = new ObjectNode<>(Disposer.getTree(), null, Disposer.newDisposable(), -1);
   private static class DisposerStructure extends AbstractTreeStructureBase {
     private final DisposerNode myRoot;
 
@@ -341,10 +341,10 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     public Collection<? extends AbstractTreeNode> getChildren() {
       final ObjectNode value = getValue();
       if (value != ROOT) {
-        final Collection subnodes = value.getChildren();
-        final ArrayList<DisposerNode> children = new ArrayList<>(subnodes.size());
-        for (Object subnode : subnodes) {
-          children.add(new DisposerNode(myTree, (ObjectNode)subnode));
+        Collection<ObjectNode> subnodes = value.getChildren();
+        List<DisposerNode> children = new ArrayList<>(subnodes.size());
+        for (ObjectNode subnode : subnodes) {
+          children.add(new DisposerNode(myTree, subnode));
         }
         return children;
       }

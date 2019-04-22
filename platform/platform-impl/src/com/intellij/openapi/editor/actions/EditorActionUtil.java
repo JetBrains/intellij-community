@@ -174,13 +174,7 @@ public class EditorActionUtil {
         document.replaceString(lineStart, spacesEnd, buf.toString());
       }
       else {
-        SelectionModel selectionModel = editor.getSelectionModel();
-        boolean extendSelection = selectionModel.hasSelection() &&
-                                  selectionModel.getSelectionStart() == lineStart &&
-                                  (selectionModel.getSelectionEnd() == document.getTextLength() ||
-                                   DocumentUtil.isAtLineEnd(selectionModel.getSelectionEnd(), document));
         document.insertString(lineStart, buf.toString());
-        if (extendSelection) selectionModel.setSelection(lineStart, selectionModel.getSelectionEnd());
       }
     }
     else {

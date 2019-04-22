@@ -83,6 +83,6 @@ public class AssociationsGroup extends ActionGroup {
 
     @Nullable
     static PsiFile getPsiFile(@Nullable AnActionEvent e) {
-        return e != null ? CommonDataKeys.PSI_FILE.getData(e.getDataContext()) : null;
+        return e != null ? e.getData(CommonDataKeys.PSI_FILE) : null;
     }
 }

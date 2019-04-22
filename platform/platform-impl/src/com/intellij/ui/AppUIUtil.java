@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
@@ -65,6 +66,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
+  private static List<Image> ourIcons = null;
   private static boolean ourMacDocIconSet = false;
 
   @NotNull
@@ -78,24 +80,31 @@ public class AppUIUtil {
       return;  // JDK will load icon from the exe resource
     }
 
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    List<Image> images = new ArrayList<>(3);
-    ScaleContext ctx = ScaleContext.create(window);
+    List<Image> images = ourIcons;
+    if (images == null) {
+      ourIcons = images = new ArrayList<>(3);
 
-    if (SystemInfo.isUnix) {
-      Image svgIcon = loadApplicationIcon(ctx, 128, appInfo.getBigIconUrl());
-      if (svgIcon != null) {
-        images.add(svgIcon);
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      String svgIconUrl = appInfo.getApplicationSvgIconUrl();
+      ScaleContext ctx = ScaleContext.create(window);
+
+      if (SystemInfo.isUnix) {
+        @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
+        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, fallback));
       }
-    }
 
-    images.add(loadApplicationIcon(ctx, 32, appInfo.getIconUrl()));
-    images.add(ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+      @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
+      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
 
-    for (int i = 0; i < images.size(); i++) {
-      Image image = images.get(i);
-      if (image instanceof JBHiDPIScaledImage) {
-        images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
+      if (SystemInfo.isWindows) {
+        ContainerUtil.addIfNotNull(images, ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+      }
+
+      for (int i = 0; i < images.size(); i++) {
+        Image image = images.get(i);
+        if (image instanceof JBHiDPIScaledImage) {
+          images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
+        }
       }
     }
 
@@ -110,34 +119,27 @@ public class AppUIUtil {
     }
   }
 
+  @Nullable
   public static Icon loadHiDPIApplicationIcon(@NotNull ScaleContext ctx, int size) {
-    Image image = loadApplicationIcon(ctx, size, null);
-    image = ImageUtil.ensureHiDPI(image, ctx);
-    if (image == null) return null;
-
-    return new JBImageIcon(image);
+    Image image = loadApplicationIcon(ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl(), ctx, size, null);
+    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
   }
 
   @Nullable
-  private static Image loadApplicationIcon(@NotNull ScaleContext ctx, int size, @Nullable String fallbackImageResourcePath) {
-    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
-    if (svgIconUrl != null) {
-      URL url = AppUIUtil.class.getResource(svgIconUrl);
-      try {
-        return
-          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), ctx, size, size);
+  private static Image loadApplicationIcon(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
+    if (svgPath != null) {
+      try (InputStream stream = AppUIUtil.class.getResourceAsStream(svgPath)) {
+        return SVGLoader.load(null, stream, ctx, size, size);
       }
       catch (IOException e) {
-        getLogger().info("Cannot load svg application icon from " + svgIconUrl, e);
+        getLogger().info("Cannot load SVG application icon from " + svgPath, e);
       }
     }
-    else if (fallbackImageResourcePath != null) {
-      Image image = ImageLoader.loadFromResource(fallbackImageResourcePath);
-      if (image instanceof JBHiDPIScaledImage) {
-        return ((JBHiDPIScaledImage)image).getDelegate();
-      }
-      return image;
+
+    if (fallbackPath != null) {
+      return ImageLoader.loadFromResource(fallbackPath);
     }
+
     return null;
   }
 
@@ -155,10 +157,9 @@ public class AppUIUtil {
     invokeOnEdt(runnable, null);
   }
 
-  public static void invokeOnEdt(Runnable runnable, @Nullable Condition expired) {
+  public static void invokeOnEdt(Runnable runnable, @Nullable Condition<?> expired) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      //noinspection unchecked
       if (expired == null || !expired.value(null)) {
         runnable.run();
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -16,7 +16,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -36,6 +39,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -157,7 +161,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(1, unsavedDocuments.length);
     assertSame(document, unsavedDocuments[0]);
-    assertEquals("test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testGetUnsavedDocuments_afterSaveAllDocuments() throws Exception {
@@ -210,7 +214,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
       assertEquals(1, unsavedDocuments.length);
       assertSame(document, unsavedDocuments[0]);
-      assertEquals("test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+      assertEquals("test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
     }
     finally {
       ApplicationManager.getApplication().runWriteAction(() -> myDocumentManager.dropAllUnsavedDocuments());
@@ -269,7 +273,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     myDocumentManager.saveDocument(document);
     assertTrue(stamp != file.getModificationStamp());
     assertEquals(document.getModificationStamp(), file.getModificationStamp());
-    assertEquals("xxx test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("xxx test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testSaveAllDocuments_DocumentWasChanged() throws Exception {
@@ -281,7 +285,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     myDocumentManager.saveAllDocuments();
     Assert.assertNotEquals(stamp, file.getModificationStamp());
-    assertEquals("xxx test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("xxx test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testGetFile() throws Exception {
@@ -305,7 +309,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "xxx "));
 
     myDocumentManager.saveAllDocuments();
-    assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testContentChanged_noDocument() throws Exception {
@@ -336,7 +340,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   public void testContentChanged_ignoreEventsFromSelf() throws Exception {
     final VirtualFile file = createFile("test.txt", "test\rtest");
     Document document = myDocumentManager.getDocument(file);
-    setBinaryContent(file, "xxx".getBytes(CharsetToolkit.UTF8_CHARSET), -1, -1, myDocumentManager);
+    setBinaryContent(file, "xxx".getBytes(StandardCharsets.UTF_8), -1, -1, myDocumentManager);
 
     assertNotNull(file.toString(), document);
     assertEquals("test\ntest", document.getText());
@@ -395,7 +399,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     myReloadFromDisk = Boolean.FALSE;
     long oldDocumentStamp = document.getModificationStamp();
 
-    setBinaryContent(file, "xxx".getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(file, "xxx".getBytes(StandardCharsets.UTF_8));
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals("old test", document.getText());
@@ -472,7 +476,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     assertEquals("old test", document.getText());
     assertEquals(file.getModificationStamp(), document.getModificationStamp());
-    assertEquals("old test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("old test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
     assertEquals(documentStamp, document.getModificationStamp());
   }
 

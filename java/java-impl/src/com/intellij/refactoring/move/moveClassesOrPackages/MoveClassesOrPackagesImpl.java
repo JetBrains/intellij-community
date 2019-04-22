@@ -41,7 +41,7 @@ public class MoveClassesOrPackagesImpl {
 
     String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, adjustedElements);
     PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, adjustedElements);
-    boolean searchTextOccurrences = Stream.of(adjustedElements).anyMatch(TextOccurrencesUtil::isSearchTextOccurencesEnabled);
+    boolean searchTextOccurrences = Stream.of(adjustedElements).anyMatch(TextOccurrencesUtil::isSearchTextOccurrencesEnabled);
     boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchForTextOccurrences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
     new MoveClassesOrPackagesDialog(

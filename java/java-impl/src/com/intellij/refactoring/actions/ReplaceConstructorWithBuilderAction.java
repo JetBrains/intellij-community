@@ -25,7 +25,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceConstructorWithBuilderAction extends BaseRefactoringAction{
+public class ReplaceConstructorWithBuilderAction extends BaseJavaRefactoringAction{
   @Override
   protected boolean isAvailableInEditorOnly() {
     return true;

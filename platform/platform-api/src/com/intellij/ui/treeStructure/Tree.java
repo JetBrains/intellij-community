@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
+import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
@@ -33,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
-                                           ComponentWithFileColors {
+                                           ComponentWithFileColors, TreePathBackgroundSupplier {
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -355,6 +356,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     config.restore();
+  }
+
+  @Override
+  @Nullable
+  public Color getPathBackground(@NotNull TreePath path, int row) {
+    return isFileColorsEnabled() ? getFileColorForPath(path) : null;
   }
 
   @Nullable
@@ -748,8 +755,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  @Deprecated
   public final void setLineStyleAngled() {
-    UIUtil.setLineStyleAngled(this);
   }
 
   @NotNull

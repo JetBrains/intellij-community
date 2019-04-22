@@ -166,6 +166,8 @@ class UISettingsState : BaseState() {
   var sortBookmarks by property(false)
   @get:OptionTag("PIN_FIND_IN_PATH_POPUP")
   var pinFindInPath by property(false)
+  @get:OptionTag("SHOW_INPLACE_COMMENTS")
+  var showInplaceComments by property(false)
 
   @Suppress("FunctionName")
   fun _incrementModificationCount() = incrementModificationCount()

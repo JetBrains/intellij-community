@@ -33,17 +33,21 @@ class CodeStyleCachingUtil {
     private @NotNull CodeStyleSettings myCachedSettings = CodeStyle.getDefaultSettings();
 
     private void compute(@NotNull PsiFile file) {
-      //noinspection deprecation
-      myCachedSettings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-      TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, myCachedSettings);
-      for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
-        if (modifier.modifySettings(modifiableSettings, file)) {
-          LOG.debug("Modifier: " + modifier.getClass().getName());
-          modifiableSettings.setModifier(modifier);
-          myCachedSettings = modifiableSettings;
-          break;
+      final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(file.getProject());
+      @SuppressWarnings("deprecation")
+      CodeStyleSettings currSettings = myCachedSettings = settingsManager.getCurrentSettings();
+      if (currSettings != settingsManager.getTemporarySettings()) {
+        TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
+        for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
+          if (modifier.modifySettings(modifiableSettings, file)) {
+            LOG.debug("Modifier: " + modifier.getClass().getName());
+            modifiableSettings.setModifier(modifier);
+            currSettings = modifiableSettings;
+            break;
+          }
         }
       }
+      myCachedSettings = currSettings;
     }
 
     @NotNull

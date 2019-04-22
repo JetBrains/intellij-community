@@ -9,9 +9,9 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.jetbrains.changeReminder.changedFilePaths
 import com.jetbrains.changeReminder.processCommitsFromHashes
 
-data class Commit(val id: Int, val time: Long, val files: Set<FilePath>)
+data class Commit(val id: Int, val time: Long, val author: String, val files: Set<FilePath>)
 
-class FilesHistoryProvider(private val project: Project, private val root: VirtualFile, private val dataGetter: IndexDataGetter) {
+internal class FilesHistoryProvider(private val project: Project, private val root: VirtualFile, private val dataGetter: IndexDataGetter) {
   private fun getCommitHashesWithFile(file: FilePath): Collection<Int> {
     val structureFilter = VcsLogFilterObject.fromPaths(setOf(file))
     return dataGetter.filter(listOf(structureFilter))
@@ -20,7 +20,8 @@ class FilesHistoryProvider(private val project: Project, private val root: Virtu
   private fun getCommitsData(commits: Collection<Int>): Map<Int, Commit> {
     val hashes = mutableMapOf<String, Int>()
     for (commit in commits) {
-      val hash = dataGetter.logStorage.getCommitId(commit)?.hash?.asString() ?: continue
+      val commitId = dataGetter.logStorage.getCommitId(commit) ?: continue
+      val hash = commitId.takeIf { commitId.root == root }?.hash?.asString() ?: continue
       hashes[hash] = commit
     }
 
@@ -31,19 +32,17 @@ class FilesHistoryProvider(private val project: Project, private val root: Virtu
         val id = hashes[commit.id.asString()] ?: return@consume
         val time = commit.commitTime
         val files = commit.changedFilePaths().toSet()
-        commitsData[id] = Commit(id, time, files)
+        val author = commit.author
+        commitsData[id] = Commit(id, time, author.name, files)
       }
     }
     return commitsData
   }
 
-  fun getFilesHistory(files: Collection<FilePath>): Map<FilePath, Set<Commit>> {
+  fun getFilesHistory(files: Collection<FilePath>): Collection<Commit> {
     val filesData = files.associateWith { getCommitHashesWithFile(it) }
     val commits = filesData.values.flatten().toSet()
-    val commitsData = getCommitsData(commits)
 
-    return filesData.mapValues { entry ->
-      entry.value.mapNotNull { commitsData[it] }.toSet()
-    }
+    return getCommitsData(commits).values
   }
 }

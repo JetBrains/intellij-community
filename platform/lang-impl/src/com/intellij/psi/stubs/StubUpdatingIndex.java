@@ -275,7 +275,6 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
       super(extension, storage, new SharedMapForwardIndex(extension,
                                                           null,
                                                           IndexInfrastructure.getInputIndexStorageFile(extension.getName()),
-                                                          false,
                                                           false),
             new StubUpdatingForwardIndexAccessor(),
             null);

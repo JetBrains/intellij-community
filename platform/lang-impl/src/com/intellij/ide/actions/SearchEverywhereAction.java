@@ -619,7 +619,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     SwingUtilities.invokeLater(() -> LookupManager.getInstance(project).hideActiveLookup());
 
     updateComponents();
-    myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+    myContextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (wnd == null && myContextComponent instanceof Window) {
@@ -1020,7 +1020,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         setIcon(myLocationIcon);
       }
     };
-    SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer(myList);
+    SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer();
     @SuppressWarnings("unchecked")
     ListCellRenderer myActionsRenderer = new GotoActionModel.GotoActionListCellRenderer(Function.TO_STRING);
 

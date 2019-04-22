@@ -245,24 +245,20 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (file == null || file instanceof PsiCompiledElement) return null;
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
-
     List<CustomLiveTemplate> customCandidates = ContainerUtil.findAll(CustomLiveTemplate.EP_NAME.getExtensions(), customLiveTemplate ->
       shortcutChar == customLiveTemplate.getShortcut() &&
-      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)));
+      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)) &&
+      isApplicable(customLiveTemplate, editor, file));
     if (!customCandidates.isEmpty()) {
       int caretOffset = editor.getCaretModel().getOffset();
-      PsiFile fileCopy = insertDummyIdentifierWithCache(file, caretOffset, caretOffset, "").getFile();
-      Document document = editor.getDocument();
-
-      for (final CustomLiveTemplate customLiveTemplate : customCandidates) {
-        if (isApplicable(customLiveTemplate, editor, fileCopy)) {
-          final String key = customLiveTemplate.computeTemplateKey(new CustomTemplateCallback(editor, fileCopy));
-          if (key != null) {
-            int offsetBeforeKey = caretOffset - key.length();
-            CharSequence text = document.getImmutableCharSequence();
-            if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-              return () -> customLiveTemplate.expand(key, new CustomTemplateCallback(editor, file));
-            }
+      CustomTemplateCallback templateCallback = new CustomTemplateCallback(editor, file);
+      for (CustomLiveTemplate customLiveTemplate : customCandidates) {
+        String key = customLiveTemplate.computeTemplateKey(templateCallback);
+        if (key != null) {
+          int offsetBeforeKey = caretOffset - key.length();
+          CharSequence text = editor.getDocument().getImmutableCharSequence();
+          if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
+            return () -> customLiveTemplate.expand(key, templateCallback);
           }
         }
       }

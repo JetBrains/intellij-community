@@ -16,6 +16,7 @@ public class ClassNewInstanceFixTest extends IGQuickFixesTestCase {
   public void testCreateCatchBlocks() { doTest(); }
   public void testSkipCatchBlocks() { doTest(); }
   public void testAddThrows() { doTest(); }
+  public void testBrokenCode() { doTest(); }
 
   @Override
   public void setUp() throws Exception {

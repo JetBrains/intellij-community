@@ -2,7 +2,9 @@
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
   <vendor>JetBrains</vendor>
-  <description>YAML support</description>
+  <description><![CDATA[
+  Adds support for the <a href="https://yaml.org/">YAML</a> language.
+  ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
 
@@ -31,8 +33,6 @@
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
     <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
     <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
-
-    <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 

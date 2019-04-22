@@ -11,8 +11,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.createDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType
 
-class PartialContext(private val types: Map<VariableDescriptor, PsiType>) : InferenceContext {
+class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : InferenceContext {
 
   private val myCache = THashMap<Any, Any>()
 
@@ -27,7 +28,7 @@ class PartialContext(private val types: Map<VariableDescriptor, PsiType>) : Infe
   override fun getVariableType(ref: GrReferenceExpression): PsiType? {
     val descriptor = ref.createDescriptor()
     if (types.containsKey(descriptor)) {
-      return types[descriptor]
+      return types[descriptor]?.resultType
     }
     else {
       return null

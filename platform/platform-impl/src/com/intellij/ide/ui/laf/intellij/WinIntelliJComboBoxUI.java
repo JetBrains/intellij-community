@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
@@ -23,7 +24,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Path2D;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
@@ -551,6 +551,15 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   protected ComboPopup createPopup() {
+    if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
+      return new DarculaJBPopupComboPopup<Object>(comboBox) {
+        @Override
+        protected void configureList(@NotNull JList<Object> list) {
+          super.configureList(list);
+          list.setBackground(UIManager.getColor("TextField.background"));
+        }
+      };
+    }
     return new CustomComboPopup(comboBox) {
       @Override
       protected void configurePopup() {
@@ -565,29 +574,16 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         putClientProperty("JComboBox.isCellEditor", DarculaUIUtil.isTableCellEditor(comboBox));
       }
 
+      @SuppressWarnings("unchecked")
       @Override
       protected void configureList() {
         super.configureList();
         list.setBackground(UIManager.getColor("TextField.background"));
-        wrapRenderer();
-      }
-
-      @Override
-      protected PropertyChangeListener createPropertyChangeListener() {
-        PropertyChangeListener listener = super.createPropertyChangeListener();
-        return new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            listener.propertyChange(evt);
-            if ("renderer".equals(evt.getPropertyName())) {
-              wrapRenderer();
-            }
-          }
-        };
       }
 
       @SuppressWarnings("unchecked")
-      private void wrapRenderer() {
+      @Override
+      protected void wrapRenderer() {
         ListCellRenderer renderer = list.getCellRenderer();
         if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
           list.setCellRenderer(new ComboBoxRendererWrapper(renderer));

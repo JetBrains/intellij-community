@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -97,8 +98,9 @@ public abstract class IdeFrameDecorator implements Disposable {
       if (myFrame == null) return ActionCallback.REJECTED;
 
       Rectangle bounds = myFrame.getBounds();
-      if (state && myFrame.getExtendedState() == Frame.NORMAL) {
-        myFrame.getRootPane().putClientProperty("normalBounds", bounds);
+      int extendedState = myFrame.getExtendedState();
+      if (state && extendedState == Frame.NORMAL) {
+        myFrame.getRootPane().putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
       }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) return ActionCallback.REJECTED;
@@ -113,7 +115,7 @@ public abstract class IdeFrameDecorator implements Disposable {
           myFrame.setBounds(defaultBounds);
         }
         else {
-          Object o = myFrame.getRootPane().getClientProperty("normalBounds");
+          Object o = myFrame.getRootPane().getClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS);
           if (o instanceof Rectangle) {
             myFrame.setBounds((Rectangle)o);
           }
@@ -121,6 +123,9 @@ public abstract class IdeFrameDecorator implements Disposable {
         myFrame.setVisible(true);
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
 
+        if (!state && (extendedState & Frame.MAXIMIZED_BOTH) != 0) {
+          myFrame.setExtendedState(extendedState);
+        }
         notifyFrameComponents(state);
       }
       return ActionCallback.DONE;
@@ -184,6 +189,10 @@ public abstract class IdeFrameDecorator implements Disposable {
   }
 
   public static boolean isCustomDecoration() {
-    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
+    return SystemInfo.isWindows && isCustomDecorationActive() && JdkEx.isCustomDecorationSupported();
+  }
+
+  public static boolean isCustomDecorationActive() {
+    return Registry.is("ide.win.frame.decoration") || (Registry.is("ide.win.frame.decoration.internal") && Boolean.getBoolean("idea.is.internal"));
   }
 }

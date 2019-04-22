@@ -48,6 +48,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
@@ -80,6 +81,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 
@@ -197,9 +199,9 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected static List<SourceFolder> doAssertContentFolders(@Nullable String rootUrl,
-                                                           ContentEntry[] contentRoots,
-                                                           @NotNull JpsModuleSourceRootType<?> rootType,
-                                                           String... expected) {
+                                                             ContentEntry[] contentRoots,
+                                                             @NotNull JpsModuleSourceRootType<?> rootType,
+                                                             String... expected) {
     List<SourceFolder> result = new ArrayList<>();
     List<String> actual = new ArrayList<>();
     for (ContentEntry contentRoot : contentRoots) {
@@ -351,6 +353,12 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertOrderedElementsAreEqual(collectModuleDepsNames(moduleName, clazz), expectedDeps);
   }
 
+  protected void assertProductionOnTestDependencies(String moduleName, String... expectedDeps) {
+    assertOrderedElementsAreEqual(collectModuleDepsNames(
+      moduleName, entry -> entry instanceof ModuleOrderEntryImpl && ((ModuleOrderEntryImpl)entry).isProductionOnTestDependency()
+    ), expectedDeps);
+  }
+
   protected void assertModuleModuleDepScope(String moduleName, String depName, DependencyScope... scopes) {
     List<ModuleOrderEntry> deps = getModuleModuleDeps(moduleName, depName);
     assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, entry -> entry.getScope()), scopes);
@@ -361,15 +369,19 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return getModuleDep(moduleName, depName, ModuleOrderEntry.class);
   }
 
-  private List<String> collectModuleDepsNames(String moduleName, Class clazz) {
+  private List<String> collectModuleDepsNames(String moduleName, Predicate<OrderEntry> predicate) {
     List<String> actual = new ArrayList<>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
-      if (clazz.isInstance(e)) {
+      if (predicate.test(e)) {
         actual.add(e.getPresentableName());
       }
     }
     return actual;
+  }
+
+  private List<String> collectModuleDepsNames(String moduleName, Class clazz) {
+    return collectModuleDepsNames(moduleName, entry -> clazz.isInstance(entry));
   }
 
   @NotNull
@@ -577,7 +589,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected static Collection<UsageInfo> findUsages(@NotNull PsiElement element) throws Exception {
-    return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(element.getProject(), "", false) {
+    return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(null, "", false) {
       @Override
       protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {
         return runInEdtAndGet(() -> {

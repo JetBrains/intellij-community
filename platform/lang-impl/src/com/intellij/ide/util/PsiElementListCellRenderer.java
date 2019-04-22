@@ -152,7 +152,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
-        String containerText = getContainerTextForLeftComponent(element, name + (myModuleName != null ? myModuleName + "        " : ""));
+        FontMetrics fm = list.getFontMetrics(list.getFont());
+        int maxWidth = list.getWidth() -
+                       fm.stringWidth(name) -
+                       (myModuleName != null ? fm.stringWidth(myModuleName + "        ") : 0) -
+                       16 - myRightComponentWidth - 20;
+        String containerText = getContainerTextForLeftComponent(element, name, maxWidth, fm);
         if (containerText != null) {
           appendLocationText(selected, bgColor, isProblemFile, containerText);
         }
@@ -272,7 +277,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   protected abstract String getContainerText(T element, final String name);
 
   @Nullable
-  protected String getContainerTextForLeftComponent(T element, final String name) {
+  protected String getContainerTextForLeftComponent(T element, String name, int maxWidth, FontMetrics fm) {
     return getContainerText(element, name);
   }
 

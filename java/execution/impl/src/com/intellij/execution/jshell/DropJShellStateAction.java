@@ -27,7 +27,7 @@ class DropJShellStateAction extends AnAction{
     if (project == null) {
       return;
     }
-    final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (vFile == null) {
       return;
     }

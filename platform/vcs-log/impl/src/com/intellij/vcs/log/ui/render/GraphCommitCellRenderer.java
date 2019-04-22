@@ -136,7 +136,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   private static class MyComponent extends SimpleColoredRenderer {
     private static final int DISPLAYED_MESSAGE_PART = 80;
-    @NotNull private final VcsLogData myLogData;
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
@@ -153,12 +152,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
                 @NotNull LabelIconCache iconCache,
                 boolean compact,
                 boolean showTags) {
-      myLogData = data;
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(myLogData, table, iconCache, compact, showTags);
-      myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
+      myReferencePainter = new LabelPainter(data, table, iconCache, compact, showTags);
+      myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
 
       myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();

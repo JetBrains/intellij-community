@@ -503,12 +503,12 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE))
   }
 
-  void testLoadForDefaultProject() throws Exception {
+  void testLoadForDefaultProject() {
     configureByFile()
     myFixture.testHighlighting(true, true, true)
   }
 
-  void testSkipForDefaultProject() throws Exception {
+  void testSkipForDefaultProject() {
     configureByFile()
     myFixture.testHighlighting(true, true, true)
   }
@@ -528,8 +528,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                     } """)
     myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase { }")
     myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
-    myFixture.addClass("package foo.bar; public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
-                       "  public boolean canBePerformed(com.intellij.openapi.actionSystem.DataContext context) {" +
+    myFixture.addClass("package foo.bar; import org.jetbrains.annotations.NotNull;" +
+                       "public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
+                       "    @Override " +
+                       "    public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) {" +
                        "    return true;" +
                        "  }" +
                        "}")
@@ -565,6 +567,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                             "../anotherModuleDir/MyLanguageExtension.java")
     def dependencyModuleLanguageExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtensionPoint.java",
                                                             "../anotherModuleDir/MyLanguageExtensionPoint.java")
+    def dependencyModuleFileTypeExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtension.java",
+                                                            "../anotherModuleDir/MyFileTypeExtension.java")
+    def dependencyModuleFileTypeExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtensionPoint.java",
+                                                            "../anotherModuleDir/MyFileTypeExtensionPoint.java")
     def dependencyModuleActionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleAction.java",
                                                             "../anotherModuleDir/DependencyModuleAction.java")
     def dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
@@ -581,6 +587,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionPointClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionPointClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleActionClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
@@ -630,7 +638,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testProductDescriptor() {
-    doHighlightingTest("productDescriptorInvalid.xml")
+    doHighlightingTest("productDescriptor.xml")
   }
 
   void testProductDescriptorInvalid() {

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.security.CompositeX509TrustManager;
+import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
@@ -38,8 +39,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
@@ -61,7 +60,7 @@ class ITNProxy {
   private static final NotNullLazyValue<Map<String, String>> TEMPLATE = AtomicNotNullLazyValue.createValue(() -> {
     Map<String, String> template = new LinkedHashMap<>();
 
-    template.put("protocol.version", "1");
+    template.put("protocol.version", "1.1");
     template.put("os.name", SystemInfo.OS_NAME);
     template.put("java.version", SystemInfo.JAVA_VERSION);
     template.put("java.vm.vendor", SystemInfo.JAVA_VENDOR);
@@ -254,6 +253,10 @@ class ITNProxy {
       if (messageObj.getAssigneeId() != null) {
         append(builder, "assignee.id", Integer.toString(messageObj.getAssigneeId()));
       }
+      append(builder, "assignee.list.visible", Boolean.toString(messageObj.isAssigneeVisible()));
+      if (messageObj.getDevelopersTimestamp() != null) {
+        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevelopersTimestamp()));
+      }
     }
 
     return builder.toString().getBytes(StandardCharsets.UTF_8);
@@ -329,7 +332,7 @@ class ITNProxy {
           Certificate ca = certificates[certificates.length - 1];
           if (ca instanceof X509Certificate) {
             String cn = CertificateUtil.getCommonName((X509Certificate)ca);
-            byte[] digest = MessageDigest.getInstance("SHA-1").digest(ca.getEncoded());
+            byte[] digest = DigestUtil.sha1().digest(ca.getEncoded());
             StringBuilder fp = new StringBuilder(2 * digest.length);
             for (byte b : digest) fp.append(Integer.toHexString(b & 0xFF));
             if (JB_CA_CN.equals(cn) && JB_CA_FP.equals(fp.toString())) {
@@ -338,7 +341,7 @@ class ITNProxy {
           }
         }
       }
-      catch (SSLPeerUnverifiedException | CertificateEncodingException | NoSuchAlgorithmException ignored) { }
+      catch (SSLPeerUnverifiedException | CertificateEncodingException ignored) { }
 
       return false;
     }

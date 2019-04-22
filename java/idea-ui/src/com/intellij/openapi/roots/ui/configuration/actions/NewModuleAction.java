@@ -83,7 +83,6 @@ public class NewModuleAction extends AnAction implements DumbAware, NewProjectOr
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     e.getPresentation().setEnabled(getEventProject(e) != null);
     NewProjectAction.updateActionText(this, e);
   }

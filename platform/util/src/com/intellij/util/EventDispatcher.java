@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.containers.ContainerUtil;
@@ -10,14 +11,12 @@ import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author max
@@ -167,5 +166,12 @@ public class EventDispatcher<T extends EventListener> {
   @NotNull
   public List<T> getListeners() {
     return myListeners;
+  }
+
+  @TestOnly
+  public void neuterMultiCasterWhilePerformanceTestIsRunningUntil(@NotNull Disposable disposable) {
+    T multicaster = myMulticaster;
+    myMulticaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(Collections.emptyList()));
+    Disposer.register(disposable, () -> myMulticaster = multicaster);
   }
 }

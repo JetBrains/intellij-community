@@ -279,7 +279,7 @@ public class JDOMUtil {
   /**
    * Internal use only.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   @NotNull
   public static Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)), factory);
@@ -293,7 +293,7 @@ public class JDOMUtil {
   @Deprecated
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    return loadDocumentUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
+    return loadDocumentUsingStaX(new InputStreamReader(stream, StandardCharsets.UTF_8));
   }
 
   @Contract("null -> null; !null -> !null")
@@ -309,10 +309,10 @@ public class JDOMUtil {
   /**
    * Internal use only.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   @NotNull
   public static Element load(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
-    return loadUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET), factory);
+    return loadUsingStaX(new InputStreamReader(stream, StandardCharsets.UTF_8), factory);
   }
 
   @NotNull
@@ -373,7 +373,7 @@ public class JDOMUtil {
 
   public static void write(@NotNull Element element, @NotNull File file, @Nullable String lineSeparator) throws IOException {
     FileUtil.createParentDirs(file);
-    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET))) {
+    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
       writeElement(element, writer, createOutputter(lineSeparator));
     }
   }
@@ -395,7 +395,7 @@ public class JDOMUtil {
   }
 
   public static void write(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
-    try (OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET)) {
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
       if (element instanceof Document) {
         writeDocument((Document)element, writer, lineSeparator);
       }

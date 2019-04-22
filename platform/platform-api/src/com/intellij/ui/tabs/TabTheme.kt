@@ -11,6 +11,7 @@ class TabTheme(
   val inactiveUnderlineColor: Color = JBUI.CurrentTheme.DefaultTabs.inactiveUnderlineColor(),
   val hoverMaskColor: Color = JBUI.CurrentTheme.DefaultTabs.hoverMaskColor(),
   val inactiveMaskColor: Color = JBUI.CurrentTheme.DefaultTabs.inactiveMaskColor(),
+  val uncoloredTabSelectedColor: Color = JBUI.CurrentTheme.DefaultTabs.uncoloredTabSelectedColor(),
   val underlineHeight: Int = JBUI.CurrentTheme.DefaultTabs.underlineHeight()
 ) {
   companion object {
@@ -21,6 +22,7 @@ class TabTheme(
                           JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
                           JBUI.CurrentTheme.EditorTabs.hoverMaskColor(),
                           JBUI.CurrentTheme.EditorTabs.inactiveMaskColor(),
+                          JBUI.CurrentTheme.EditorTabs.uncoloredTabSelectedColor(),
                           JBUI.CurrentTheme.EditorTabs.underlineHeight())
     @JvmField
     val TOOL_WINDOW = TabTheme(null,
@@ -29,6 +31,7 @@ class TabTheme(
                                JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
                                JBUI.CurrentTheme.EditorTabs.hoverMaskColor(),
                                JBUI.CurrentTheme.EditorTabs.inactiveMaskColor(),
+                               JBUI.CurrentTheme.EditorTabs.uncoloredTabSelectedColor(),
                                JBUI.CurrentTheme.ToolWindow.underlineHeight())
   }
 }

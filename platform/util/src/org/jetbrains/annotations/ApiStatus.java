@@ -23,6 +23,18 @@ public class ApiStatus {
   public @interface Experimental {}
 
   /**
+   * Indicates that the annotated element (class, method, field, etc) must not be considered as a public API. It's made visible to allow its
+   * usage from other parts of the sources codebase where it is declared, but it must not be used outside of that codebase. Such elements
+   * may be renamed, changed or removed in future versions.
+   */
+  @Documented
+  @Retention(RetentionPolicy.CLASS)
+  @Target({
+    ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE
+  })
+  public @interface Internal {}
+
+  /**
    * Indicates that a public API of the annotated element (class, method or field) is subject to removal in a future version. It's a stronger
    * variant of {@link Deprecated} annotation.
    * <br>

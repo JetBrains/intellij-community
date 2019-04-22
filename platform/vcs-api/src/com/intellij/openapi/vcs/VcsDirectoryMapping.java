@@ -20,6 +20,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author yole
  */
@@ -90,8 +92,8 @@ public class VcsDirectoryMapping {
     final VcsDirectoryMapping mapping = (VcsDirectoryMapping)o;
 
     if (!myDirectory.equals(mapping.myDirectory)) return false;
-    if (myVcs != null ? !myVcs.equals(mapping.myVcs) : mapping.myVcs != null) return false;
-    if (myRootSettings != null ? !myRootSettings.equals(mapping.myRootSettings) : mapping.myRootSettings != null) return false;
+    if (!Objects.equals(myVcs, mapping.myVcs)) return false;
+    if (!Objects.equals(myRootSettings, mapping.myRootSettings)) return false;
 
     return true;
   }

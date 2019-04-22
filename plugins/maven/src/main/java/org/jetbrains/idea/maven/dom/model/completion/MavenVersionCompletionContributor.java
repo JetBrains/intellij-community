@@ -34,11 +34,16 @@ import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesVersionConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -108,7 +113,18 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
                                                              String artifactId,
                                                              MavenDomArtifactCoordinates coordinates,
                                                              Project project) {
-    return MavenProjectIndicesManager.getInstance(project).getSearchService()
+
+    DependencySearchService searchService = MavenProjectIndicesManager.getInstance(project).getSearchService();
+    if (StringUtil.isEmptyOrSpaces(groupId)) {
+      if (!(coordinates instanceof MavenDomPlugin)) return Collections.emptyList();
+      List<MavenDependencyCompletionItem> result = new ArrayList<>();
+      for (int i = 0; i < MavenArtifactUtil.DEFAULT_GROUPS.length; i++) {
+        result
+          .addAll(searchService.findAllVersions(new MavenDependencyCompletionItem(MavenArtifactUtil.DEFAULT_GROUPS[i], artifactId, null)));
+      }
+      return result;
+    }
+    return searchService
       .findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null, null));
   }
 }

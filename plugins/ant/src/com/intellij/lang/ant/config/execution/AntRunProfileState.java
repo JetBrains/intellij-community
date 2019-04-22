@@ -23,11 +23,16 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.lang.ant.config.AntBuildListener;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class AntRunProfileState implements RunProfileState {
+  static final Key<AntBuildMessageView> MESSAGE_VIEW = Key.create("ANT_MESSAGE_VIEW");
   private final ExecutionEnvironment myEnvironment;
 
   public AntRunProfileState(ExecutionEnvironment environment) {
@@ -47,7 +52,23 @@ public class AntRunProfileState implements RunProfileState {
       if (processHandler == null) {
         return null;
       }
-      return new DefaultExecutionResult(null, processHandler);
+
+      return new DefaultExecutionResult(new ExecutionConsole() {
+        @Override
+        public JComponent getComponent() {
+          return processHandler.getUserData(MESSAGE_VIEW);
+        }
+
+        @Override
+        public JComponent getPreferredFocusableComponent() {
+          return processHandler.getUserData(MESSAGE_VIEW);
+        }
+
+        @Override
+        public void dispose() {
+          processHandler.putUserData(MESSAGE_VIEW, null);
+        }
+      }, processHandler);
     }
     return null;
   }

@@ -4,7 +4,7 @@
   <id>DevKit</id>
 
   <description>
-    IntelliJ Platform plugin development kit.
+    Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
   </description>
 
   <category>inspection</category>
@@ -118,10 +118,6 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspection"/>
-    <localInspection language="JAVA" shortName="GtkPreferredJComboBoxRenderer" displayName="Preferred JComboBox renderer"
-                     groupKey="inspections.group.name"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.GtkPreferredJComboBoxRendererInspection"/>
     <localInspection language="JAVA" shortName="UnsafeVfsRecursion" displayName="Unsafe VFS recursion"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
@@ -180,7 +176,7 @@
                      displayName="Using PsiElement string representation to generate new expression is incorrect"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
-    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for bean extension class"
+    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for extension class"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"/>

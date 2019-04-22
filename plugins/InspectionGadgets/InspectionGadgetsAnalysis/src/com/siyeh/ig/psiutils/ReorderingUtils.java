@@ -2,7 +2,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
@@ -19,10 +18,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -220,35 +216,8 @@ public class ReorderingUtils {
     }
     
     static NullDereferenceExceptionProblem from(PsiExpression expression) {
-      if (expression instanceof PsiLiteralExpression ||
-          expression instanceof PsiParenthesizedExpression ||
-          expression instanceof PsiTypeCastExpression ||
-          expression instanceof PsiConditionalExpression ||
-          NullabilityUtil.getExpressionNullability(expression) == Nullability.NOT_NULL) {
-        return null;
-      }
-      PsiExpression realExpression = expression;
-      while (realExpression.getParent() instanceof PsiParenthesizedExpression ||
-             realExpression.getParent() instanceof PsiTypeCastExpression ||
-             (realExpression.getParent() instanceof PsiConditionalExpression &&
-              realExpression != ((PsiConditionalExpression)realExpression.getParent()).getCondition())) {
-        realExpression = (PsiExpression)realExpression.getParent();
-      }
-      PsiElement parent = realExpression.getParent();
-      if (parent instanceof PsiReferenceExpression || parent instanceof PsiArrayAccessExpression) {
-        return new NullDereferenceExceptionProblem(expression);
-      }
-      if (parent instanceof PsiPolyadicExpression) {
-        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-        if (tokenType.equals(JavaTokenType.PLUS)) {
-          if (TypeUtils.isJavaLangString(((PsiPolyadicExpression)parent).getType())) {
-            return null;
-          }
-        }
-        return new NullDereferenceExceptionProblem(expression);
-      }
-      PsiParameter parameter = MethodCallUtils.getParameterForArgument(realExpression);
-      if (parameter != null && NullableNotNullManager.isNotNull(parameter)) {
+      NullabilityProblemKind.NullabilityProblem<?> problem = NullabilityProblemKind.fromContext(expression, Collections.emptyMap());
+      if (problem != null && problem.thrownException() != null) {
         return new NullDereferenceExceptionProblem(expression);
       }
       return null;

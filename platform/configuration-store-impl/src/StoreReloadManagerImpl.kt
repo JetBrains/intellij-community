@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
-import com.intellij.configurationStore.schemeManager.useSchemeLoader
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -30,19 +29,18 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileManagerListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.containers.MultiMap
 import gnu.trove.THashSet
 import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.LinkedHashSet
 
-private val CHANGED_FILES_KEY = Key<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
-private val CHANGED_SCHEMES_KEY = Key<MultiMap<SchemeChangeApplicator, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
+private val CHANGED_FILES_KEY = Key<LinkedHashMap<ComponentStoreImpl, LinkedHashSet<StateStorage>>>("CHANGED_FILES_KEY")
+private val CHANGED_SCHEMES_KEY = Key<LinkedHashMap<SchemeChangeApplicator, LinkedHashSet<SchemeChangeEvent>>>("CHANGED_SCHEMES_KEY")
 
 internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   private val reloadBlockCount = AtomicInteger()
@@ -58,30 +56,28 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     processOpenedProjects { project ->
       val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
-      if ((changedSchemes == null || changedSchemes.isEmpty) && (changedStorages == null || changedStorages.isEmpty)) {
+      if ((changedSchemes == null || changedSchemes.isEmpty()) && (changedStorages == null || changedStorages.isEmpty())) {
         return@processOpenedProjects
       }
 
       runBatchUpdate(project.messageBus) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
-          useSchemeLoader { schemeLoaderRef ->
-            for ((tracker, files) in changedSchemes.entrySet()) {
-              LOG.runAndLogException {
-                tracker.reload(files, schemeLoaderRef)
-              }
+          for ((tracker, files) in changedSchemes) {
+            LOG.runAndLogException {
+              tracker.reload(files)
             }
           }
         }
 
         if (changedStorages != null) {
-          for ((store, storages) in changedStorages.entrySet()) {
+          for ((store, storages) in changedStorages) {
             if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
               continue
             }
 
             @Suppress("UNCHECKED_CAST")
-            if (reloadStore(storages as Set<StateStorage>, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
+            if (reloadStore(storages, store) == ReloadComponentStoreStatus.RESTART_AGREED) {
               projectsToReload.add(project)
             }
           }
@@ -95,16 +91,6 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   }, delay = 300, parentDisposable = this)
 
   init {
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(STORAGE_TOPIC, object : StorageManagerListener {
-      override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
-        if (event.requestor is StoreReloadManager) {
-          return
-        }
-
-        registerChangedStorage(storage, componentManager)
-      }
-    })
-
     VirtualFileManager.getInstance().addVirtualFileManagerListener(object : VirtualFileManagerListener {
       override fun beforeRefreshStart(asynchronous: Boolean) {
         blockReloadingProjectOnExternalChanges()
@@ -126,7 +112,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     val storageManager = (project.stateStore as ComponentStoreImpl).storageManager as? StateStorageManagerImpl ?: return
     storageManager.getCachedFileStorages(listOf(storageManager.collapseMacros(file.path))).firstOrNull()?.let {
       // if empty, so, storage is not yet loaded, so, we don't have to reload
-      registerChangedStorage(it, project)
+      storageFilesChanged(mapOf(project to listOf(it)))
     }
   }
 
@@ -171,32 +157,40 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     doReloadProject(project)
   }
 
-  private fun registerChangedStorage(storage: StateStorage, componentManager: ComponentManager) {
+  override fun storageFilesChanged(componentManagerToStorages: Map<ComponentManager, Collection<StateStorage>>) {
+    if (componentManagerToStorages.isEmpty()) {
+      return
+    }
+
     if (LOG.isDebugEnabled) {
-      LOG.debug("[RELOAD] Registering project to reload: $storage", Exception())
+      LOG.debug("[RELOAD] registering to reload: ${componentManagerToStorages.map { "${it.key}: ${it.value.joinToString()}" }.joinToString("\n")}", Exception())
     }
 
-    val project: Project? = when (componentManager) {
-      is Project -> componentManager
-      is Module -> componentManager.project
-      else -> null
-    }
-
-    if (project == null) {
-      val changes = changedApplicationFiles
-      synchronized (changes) {
-        changes.add(storage)
+    for ((componentManager, storages) in componentManagerToStorages) {
+      val project: Project? = when (componentManager) {
+        is Project -> componentManager
+        is Module -> componentManager.project
+        else -> null
       }
-    }
-    else {
-      val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, MultiMap.createLinkedSet())
-      synchronized (changes) {
-        changes.putValue(componentManager.stateStore as ComponentStoreImpl, storage)
-      }
-    }
 
-    if (storage is StateStorageBase<*>) {
-      storage.disableSaving()
+      if (project == null) {
+        val changes = changedApplicationFiles
+        synchronized(changes) {
+          changes.addAll(storages)
+        }
+      }
+      else {
+        val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, linkedMapOf())
+        synchronized(changes) {
+          changes.getOrPut(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+        }
+      }
+
+      for (storage in storages) {
+        if (storage is StateStorageBase<*>) {
+          storage.disableSaving()
+        }
+      }
     }
 
     if (isReloadUnblocked()) {
@@ -206,12 +200,12 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   internal fun registerChangedSchemes(events: List<SchemeChangeEvent>, schemeFileTracker: SchemeChangeApplicator, project: Project) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("[RELOAD] Registering scheme to reload: $events", Exception())
+      LOG.debug("[RELOAD] Registering schemes to reload: $events", Exception())
     }
 
-    val changes = CHANGED_SCHEMES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_SCHEMES_KEY, MultiMap.createLinkedSet())
+    val changes = CHANGED_SCHEMES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_SCHEMES_KEY, linkedMapOf())
     synchronized(changes) {
-      changes.putValues(schemeFileTracker, events)
+      changes.getOrPut(schemeFileTracker) { LinkedHashSet() }.addAll(events)
     }
 
     if (isReloadUnblocked()) {

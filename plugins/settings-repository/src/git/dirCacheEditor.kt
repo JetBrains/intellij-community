@@ -15,7 +15,6 @@ import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.Repository
 import java.io.File
 import java.io.FileInputStream
-import java.nio.charset.StandardCharsets
 import java.text.MessageFormat
 import java.util.*
 
@@ -121,7 +120,7 @@ interface PathEdit {
 abstract class PathEditBase(final override val path: ByteArray) : PathEdit
 
 private fun encodePath(path: String): ByteArray {
-  val bytes = StandardCharsets.UTF_8.encode(path).toByteArray()
+  val bytes = Charsets.UTF_8.encode(path).toByteArray()
   if (SystemInfo.isWindows) {
     for (i in 0 until bytes.size) {
       if (bytes[i].toChar() == '\\') {

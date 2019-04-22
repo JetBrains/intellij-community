@@ -80,8 +80,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       PsiModifierListOwner psi = var.getPsiVariable();
       if (dfaSource instanceof DfaFactMapValue &&
-          var.getQualifier() != null &&
-          !Boolean.TRUE.equals(memState.getValueFact(var.getQualifier(), DfaFactType.LOCALITY))) {
+          ((psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) ||
+           (var.getQualifier() != null && !Boolean.TRUE.equals(memState.getValueFact(var.getQualifier(), DfaFactType.LOCALITY))))) {
         dfaSource = ((DfaFactMapValue)dfaSource).withFact(DfaFactType.LOCALITY, null);
       }
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {

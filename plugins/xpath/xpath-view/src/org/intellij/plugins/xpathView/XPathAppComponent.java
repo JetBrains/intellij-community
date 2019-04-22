@@ -124,7 +124,7 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-      final Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
+      final Editor editor = event.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         if (HighlighterUtil.hasHighlighters(editor)) {
           final int offset = editor.getCaretModel().getOffset();
@@ -176,7 +176,6 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
 
     @Override
     public void update(@NotNull AnActionEvent event) {
-      super.update(event);
       origAction.update(event);
     }
 

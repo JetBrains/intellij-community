@@ -163,6 +163,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
         final String testName = (String)declaration;
         if (testName.equals(name)) {
           hasConflict = true;
+          break;
         }
       }
     }

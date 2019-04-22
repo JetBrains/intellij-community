@@ -27,6 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class GradleRunTaskDialog extends DialogWrapper {
 
   private final Project myProject;

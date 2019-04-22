@@ -41,7 +41,6 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
   @BeforeClass
   public static void beforeClass() {
-    setRegistryProperty("ide.svg.icon", "true");
   }
 
   @Test

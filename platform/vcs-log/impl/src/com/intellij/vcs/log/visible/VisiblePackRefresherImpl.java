@@ -62,7 +62,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
-    }, true, this) {
+    }, this) {
       @NotNull
       @Override
       protected SingleTask startNewBackgroundTask() {
@@ -70,6 +70,12 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         MyTask task = new MyTask(project, "Applying filters...");
         Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, null);
         return new SingleTaskImpl(future, indicator);
+      }
+
+      @Override
+      protected boolean cancelRunningTasks(@NotNull Request[] requests) {
+        return ContainerUtil.findInstance(requests, IndexingFinishedRequest.class) != null ||
+               ContainerUtil.findInstance(requests, FilterRequest.class) != null;
       }
     };
 

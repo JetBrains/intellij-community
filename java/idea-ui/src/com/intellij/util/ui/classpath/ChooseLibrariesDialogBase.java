@@ -177,8 +177,6 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     myTree.setDragEnabled(false);
 
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
-
     myTree.setRootVisible(false);
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override

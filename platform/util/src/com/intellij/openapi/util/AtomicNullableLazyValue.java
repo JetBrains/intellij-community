@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("AtomicNullableLazyValue");
   private volatile T myValue;
   private volatile boolean myComputed;
 
@@ -39,7 +38,7 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
       computed = myComputed;
       value = myValue;
       if (!computed) {
-        RecursionGuard.StackStamp stamp = ourGuard.markStack();
+        RecursionGuard.StackStamp stamp = RecursionManager.markStack();
         value = compute();
         if (stamp.mayCacheNow()) {
           myValue = value;

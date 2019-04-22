@@ -33,8 +33,6 @@ import java.util.function.Supplier;
  * For thread-safe alternative please use {@link ConcurrentFactoryMap}
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("factoryMap");
-
   private Map<K, V> myMap;
 
   /**
@@ -58,7 +56,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     K k = notNull(key);
     V value = map.get(k);
     if (value == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = create((K)key);
       if (stamp.mayCacheNow()) {
         V v = notNull(value);

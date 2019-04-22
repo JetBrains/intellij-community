@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
@@ -39,13 +40,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.Disposable;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
@@ -218,7 +220,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public void initializeComponent(@NotNull Object component, boolean service) {
   }
 
-  protected void handleInitComponentError(Throwable ex, String componentClassName, PluginId pluginId) {
+  protected void handleInitComponentError(@NotNull Throwable ex, String componentClassName, PluginId pluginId) {
     LOG.error(ex);
   }
 
@@ -237,7 +239,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     picoContainer.registerComponent(new ComponentConfigComponentAdapter(componentKey, componentImplementation, null, false));
   }
 
-  @SuppressWarnings("unchecked")
   @TestOnly
   public synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
     MutablePicoContainer picoContainer = getPicoContainer();
@@ -247,6 +248,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     Object oldInstance = componentAdapter.myInitializedComponentInstance;
     // we don't update pluginId - method is test only
     componentAdapter.myInitializedComponentInstance = componentImplementation;
+    //noinspection unchecked
     return (T)oldInstance;
   }
 
@@ -349,12 +351,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myParentComponentManager;
   }
 
-  protected final int getComponentConfigCount() {
+  private int getComponentConfigCount() {
     return myComponentConfigCount;
   }
 
   @Nullable
-  public final PluginId getConfig(@NotNull ComponentAdapter adapter) {
+  static PluginId getConfig(@NotNull ComponentAdapter adapter) {
     return adapter instanceof ComponentConfigComponentAdapter ? ((ComponentConfigComponentAdapter)adapter).myPluginId : null;
   }
 
@@ -465,9 +467,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     @Override
-    public Object getComponentInstance(@NotNull PicoContainer picoContainer)
-      throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
-
+    public Object getComponentInstance(@NotNull PicoContainer picoContainer) {
       Object instance = myInitializedComponentInstance;
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       if (instance != null || myDisposed) {
@@ -482,7 +482,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          long startTime = StartUpMeasurer.getCurrentTime();
+          Activity activity = createMeasureActivity(picoContainer);
           instance = super.getComponentInstance(picoContainer);
 
           if (myInitializing) {
@@ -510,7 +510,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            ParallelActivity.COMPONENT.record(startTime, instance.getClass(), getActivityLevel(picoContainer));
+            if (activity != null) {
+              activity.end();
+            }
           }
           finally {
             myInitializing = false;
@@ -526,6 +528,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
 
       return instance;
+    }
+
+    @Nullable
+    private Activity createMeasureActivity(@NotNull PicoContainer picoContainer) {
+      Level level = DefaultPicoContainer.getActivityLevel(picoContainer);
+      if (level == Level.APPLICATION || (level == Level.PROJECT && activityNamePrefix() != null)) {
+        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level);
+      }
+      return null;
     }
 
     @Override

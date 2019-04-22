@@ -1,10 +1,10 @@
-// "Replace 'map()' with 'flatMap()'" "true"
+// "Remove folded 'ifPresent' call" "true"
 import java.util.*;
 
 class Test {
   native Optional<String> getOptional();
 
   void test(Optional<Test> opt) {
-    opt.flatMap(Test::getOptional).ifPresent(System.out::println);
+    opt.map(Test::getOptional).flatMap(Test::getOptional).ifPresent(System.out::println);
   }
 }

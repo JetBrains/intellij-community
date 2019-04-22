@@ -33,14 +33,16 @@ class EditorConfigConfigurable : CodeStyleSettingsProvider(), GeneralCodeStyleOp
       row {
         myEnabled = checkBox(EditorConfigBundle.message("config.enable"), comment = EditorConfigBundle.message("config.warning"))
 
-        button(EditorConfigBundle.message("config.export")) {
-          val parent = UIUtil.findUltimateParent(myEnabled)
+        if (EditorConfigExportProviderEP.shouldShowExportButton()) {
+          button(EditorConfigBundle.message("config.export")) {
+            val parent = UIUtil.findUltimateParent(myEnabled)
 
-          if (parent is IdeFrame) {
-            val project = (parent as IdeFrame).project
-            if (project != null) {
-              if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return@button
-              Utils.export(project)
+            if (parent is IdeFrame) {
+              val project = (parent as IdeFrame).project
+              if (project != null) {
+                if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return@button
+                Utils.export(project)
+              }
             }
           }
         }

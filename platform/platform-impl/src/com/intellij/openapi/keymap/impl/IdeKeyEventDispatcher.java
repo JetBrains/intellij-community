@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
@@ -75,6 +61,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
@@ -89,6 +76,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
+  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -175,6 +163,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
+      // remove AltGr modifier to show a shortcut without AltGr in Settings
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
       return false;
     }
     if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
@@ -420,8 +410,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if (IdeEventQueue.JAVA_11_OR_LATER && SystemInfo.isWindows && e.isAltGraphDown()) return false; // don't search for shortcuts
-
+    if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e)) {
+      myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
+      if (myFirstKeyStroke == null) return false;
+      setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
+      return true;
+    }
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
     if (isCandidateForAltGr) {
@@ -631,7 +625,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       final AnActionEvent actionEvent =
-        processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
+        processor.createEvent(e, myContext.getDataContext(), ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
 
       try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
         ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, true);
@@ -654,7 +648,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount(), this);
       }
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
-      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(actionEvent.getDataContext());
+      Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
         return true;
       }
@@ -975,6 +969,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return SwingUtilities.getRootPane(menu.getInvoker());
     }
     return SwingUtilities.getRootPane(component);
+  }
+
+  public static boolean removeAltGraph(InputEvent e) {
+    if (e.isAltGraphDown()) {
+      try {
+        Field field = InputEvent.class.getDeclaredField("modifiers");
+        field.setAccessible(true);
+        field.setInt(e, ~InputEvent.ALT_GRAPH_MASK & ~InputEvent.ALT_GRAPH_DOWN_MASK & field.getInt(e));
+        return true;
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return false;
   }
 
   public static boolean isAltGrLayout(Component component) {

@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -22,6 +23,7 @@ import com.jetbrains.jsonSchema.impl.adapters.JsonJsonPropertyAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -245,10 +247,10 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
                                 JsonObject.class, JsonArray.class);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public PsiElement getRoot(@NotNull PsiFile file) {
-    return file instanceof JsonFile ? ((JsonFile)file).getTopLevelValue() : null;
+  public Collection<PsiElement> getRoots(@NotNull PsiFile file) {
+    return file instanceof JsonFile ? ContainerUtil.createMaybeSingletonList(((JsonFile)file).getTopLevelValue()) : ContainerUtil.emptyList();
   }
 
   @Nullable

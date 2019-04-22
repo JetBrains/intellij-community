@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.google.common.collect.ImmutableMap;
@@ -199,7 +199,7 @@ public class PluginsAdvertiser implements StartupActivity {
 
   @Nullable
   static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
-    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+    final Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     for (Plugin plugin : plugins) {
       if (disabledPlugins.contains(plugin.myPluginId)) return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
     }
@@ -311,7 +311,7 @@ public class PluginsAdvertiser implements StartupActivity {
             }
           }
 
-          final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+          final Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
           //include disabled plugins
           for (String id : ids.keySet()) {
             Plugin plugin = ids.get(id);

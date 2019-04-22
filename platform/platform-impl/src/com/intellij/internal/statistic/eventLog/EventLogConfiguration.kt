@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.google.common.hash.Hashing
@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
-import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import java.util.*
 import java.util.prefs.Preferences
@@ -40,7 +39,7 @@ object EventLogConfiguration {
 
     val hasher = Hashing.sha256().newHasher()
     hasher.putBytes(salt)
-    hasher.putString(data, StandardCharsets.UTF_8)
+    hasher.putString(data, Charsets.UTF_8)
     val result = hasher.hash().toString()
     anonymizedCache[data] = result
     return result

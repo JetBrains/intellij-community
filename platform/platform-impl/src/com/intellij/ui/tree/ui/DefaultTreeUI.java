@@ -3,6 +3,8 @@ package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.tree.TreeNodeBackgroundSupplier;
+import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -19,13 +21,16 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
+import static com.intellij.ui.ExpandableItemsHandler.RENDERER_DISABLED;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
+import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
 
 @SuppressWarnings("unused")
 public final class DefaultTreeUI extends BasicTreeUI {
@@ -52,11 +57,22 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   @Nullable
-  private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, boolean selected) {
-    if (selected) return UIUtil.getTreeSelectionBackground(tree.hasFocus());
-    if (tree instanceof Tree) {
-      Tree custom = (Tree)tree;
-      if (custom.isFileColorsEnabled()) return custom.getFileColorForPath(path);
+  private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
+    if (selected) {
+      Object property = tree.getClientProperty(TREE_TABLE_TREE_KEY);
+      if (property instanceof JTable) return ((JTable)property).getSelectionBackground();
+      return UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(property));
+    }
+    Object node = TreeUtil.getLastUserObject(path);
+    if (node instanceof TreeNodeBackgroundSupplier) {
+      TreeNodeBackgroundSupplier supplier = (TreeNodeBackgroundSupplier)node;
+      Color background = supplier.getNodeBackground(row);
+      if (background != null) return background;
+    }
+    if (tree instanceof TreePathBackgroundSupplier) {
+      TreePathBackgroundSupplier supplier = (TreePathBackgroundSupplier)tree;
+      Color background = supplier.getPathBackground(path, row);
+      if (background != null) return background;
     }
     return null;
   }
@@ -71,6 +87,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
     else if (component.isOpaque()) {
       component.setBackground(tree.getBackground());
     }
+  }
+
+  private static boolean isRendererReducible(Component component) {
+    if (component instanceof DefaultTreeCellRenderer) return false;
+    return !UIUtil.isClientPropertyTrue(component, RENDERER_DISABLED);
   }
 
   private static boolean isSuspiciousRenderer(Component component) {
@@ -183,7 +204,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           boolean focused = tree.hasFocus();
           boolean lead = focused && row == getLeadSelectionRow();
 
-          Color background = getBackground(tree, path, selected);
+          Color background = getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
             g.fillRect(viewportX, bounds.y, viewportWidth, bounds.height);
@@ -193,13 +214,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
             int width = viewportX + viewportWidth - insets.left - offset - vsbWidth;
-            if (width < bounds.width && (hsbVisible || expandedRow == row)) {
-              width = bounds.width;
-            }
             if (width > 0) {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
+                if (width < bounds.width && (expandedRow == row || hsbVisible && !isRendererReducible(component))) {
+                  width = bounds.width; // disable shrinking a long nodes
+                }
                 setBackground(tree, component, background, false);
                 rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
               }
@@ -223,17 +244,19 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected void installDefaults() {
     super.installDefaults();
     JTree tree = getTree();
-    if (tree != null && tree.isForegroundSet()) {
-      tree.setForeground(null);
+    if (tree != null) {
+      if (tree.isForegroundSet()) tree.setForeground(null);
+      if (UIManager.get("Tree.showsRootHandles") == null) {
+        LookAndFeel.installProperty(tree, JTree.SHOWS_ROOT_HANDLES_PROPERTY, Boolean.TRUE);
+      }
     }
   }
 
   @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
-    ActionMap map = tree.getActionMap();
-    TreeAction.SELECT_CHILD.putInto(map);
-    TreeAction.SELECT_PARENT.putInto(map);
+    TreeAction.installTo(tree.getActionMap());
+    TreeAction.installTo(tree.getInputMap(JComponent.WHEN_FOCUSED));
   }
 
   @Override
@@ -288,7 +311,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
         if (size == null) return null;
 
-        int x = getPainter(tree).getRendererOffset(control, depth, leaf);
+        int x = getPainter(tree).getRendererOffset(control, depth + TreeUtil.getDepthOffset(tree), leaf);
         int height = getRowHeight();
         if (height <= 0) height = size.height;
         if (bounds == null) return new Rectangle(x, 0, size.width, height);

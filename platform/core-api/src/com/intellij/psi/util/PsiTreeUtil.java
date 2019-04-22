@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -394,6 +394,16 @@ public class PsiTreeUtil {
     final T child = getChildOfType(element, aClass);
     assert child != null : "Missing required child of type " + aClass.getName();
     return child;
+  }
+
+  public static int countChildrenOfType(@NotNull PsiElement element, @NotNull Class<? extends PsiElement> clazz) {
+    int result = 0;
+    for (PsiElement cur = element.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (clazz.isInstance(cur)) {
+        result++;
+      }
+    }
+    return result;
   }
 
   @Nullable

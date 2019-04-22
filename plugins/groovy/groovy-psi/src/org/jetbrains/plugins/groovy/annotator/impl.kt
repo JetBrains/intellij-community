@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiUtil.isInnerClass
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.GroovyBundle.message
+import org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory.shouldHighlight
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.generateAddImportActions
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.generateCreateClassActions
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement
@@ -21,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker.isInStaticCont
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope
 
 fun checkUnresolvedCodeReference(ref: GrCodeReferenceElement, annotationHolder: AnnotationHolder) {
+  if (!shouldHighlight(annotationHolder.currentAnnotationSession.file)) return
+
   if (ref.parentOfType<GroovyDocPsiElement>() != null) return
   if (ref.parent is GrPackageDefinition) return
 

@@ -1,7 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
@@ -16,6 +16,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -214,7 +215,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
     private final AtomicBoolean myConnectionApproved = new AtomicBoolean(false);
 
     public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) {
-      super(stream, CharsetToolkit.UTF8_CHARSET, debugger); //TODO: correct encoding?
+      super(stream, StandardCharsets.UTF_8, debugger); //TODO: correct encoding?
       start(getClass().getName());
     }
 

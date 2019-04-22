@@ -29,7 +29,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +208,7 @@ public abstract class FileBasedIndex {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
   }
 
-  // TODO: remove once changes becomes permanent
-  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping =
-    SystemProperties.getBooleanProperty("idea.enable.tracing.keyhash2virtualfile", true);
+  /** @deprecated inline true */
+  @Deprecated
+  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 }

@@ -1,66 +1,80 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.expression.expand;
 
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExpandBracketsIntention extends Intention {
+public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
+
+  private boolean myStartInWriteAction = false;
 
   private static final Pass<PsiParenthesizedExpression> EXPAND_CALLBACK = new Pass<PsiParenthesizedExpression>() {
     @Override
     public void pass(@NotNull PsiParenthesizedExpression expression) {
       WriteCommandAction.writeCommandAction(expression.getProject(), expression.getContainingFile())
+        .withName(getName())
         .run(() -> replaceExpression(expression));
     }
   };
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
-    processIntention(null, element);
+  public String getFamilyName() {
+    return getName();
+  }
+
+  @NotNull
+  @Override
+  public String getText() {
+    return getName();
+  }
+
+  private static String getName() {
+    return IntentionPowerPackBundle.defaultableMessage("expand.brackets.intention.name");
   }
 
   @Override
-  protected void processIntention(@Nullable Editor editor, @NotNull PsiElement element) {
+  public boolean startInWriteAction() {
+    return myStartInWriteAction;
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
+    if (possibleInnerExpressions == null || possibleInnerExpressions.isEmpty()) return false;
+    myStartInWriteAction = possibleInnerExpressions.size() == 1;
+    return true;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
     if (possibleInnerExpressions == null) return;
     processInnerExpression(editor, possibleInnerExpressions);
   }
 
-  @NotNull
-  @Override
-  protected PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(PsiElement element) {
-        List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
-        return possibleInnerExpressions != null && !possibleInnerExpressions.isEmpty();
-      }
-    };
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
   private static void processInnerExpression(@Nullable Editor editor, @NotNull List<PsiParenthesizedExpression> expressions) {
     if (expressions.size() == 1) {
-      EXPAND_CALLBACK.pass(expressions.get(0));
+      replaceExpression(expressions.get(0));
       return;
     }
     if (expressions.isEmpty() || editor == null) return;

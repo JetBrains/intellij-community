@@ -340,7 +340,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       errorMessage.setOpaque(false);
       errorPanel.add(errorMessage);
 
-      Ref<Boolean> enableAction = new Ref<>();
+      Ref<String> enableAction = new Ref<>();
       errorMessage.setText(PluginManagerConfigurableNew.getErrorMessage(myPluginsModel, myPlugin, enableAction));
 
       if (!enableAction.isNull()) {

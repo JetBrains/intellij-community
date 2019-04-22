@@ -278,7 +278,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
       if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
-      if (!(call instanceof PsiCallExpression)) return false;
+      if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);
       return result != null && result.cannotFailByContract((PsiCallExpression)call);
     }

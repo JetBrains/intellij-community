@@ -1,9 +1,9 @@
 <idea-plugin>
   <id>com.intellij.properties</id>
-  <name>Properties Support</name>
+  <name>Properties</name>
   <depends>com.intellij.modules.xml</depends>
   <description>
-    This plugin enables smart editing of properties files.
+    Enables smart editing of .properties files.
   </description>
   <vendor>JetBrains</vendor>
 
@@ -14,8 +14,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <typeIcon className="com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile" icon="AllIcons.Nodes.ResourceBundle"/>
-    <applicationService serviceInterface="com.intellij.lang.properties.LastSelectedPropertiesFileStore"
-                        serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
+    <applicationService serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
     <applicationService serviceInterface="com.intellij.lang.properties.PropertiesQuickFixFactory"
                         serviceImplementation="com.intellij.lang.properties.PropertiesQuickFixFactoryImpl"/>
     <applicationService
@@ -34,8 +33,7 @@
                              implementationClass="com.intellij.lang.properties.PropertyValueManipulator"/>
     <lang.elementManipulator forClass="com.intellij.lang.properties.psi.impl.PropertyImpl"
                              implementationClass="com.intellij.lang.properties.PropertyManipulator"/>
-    <projectService serviceInterface="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"
-                        serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
+    <projectService serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
     <projectService serviceImplementation="com.intellij.lang.properties.ResourceBundleManager"/>
     <codeInsight.wordCompletionFilter language="Properties"
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
@@ -124,8 +122,6 @@
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
-
-    <psi.treeChangePreprocessor implementation="com.intellij.lang.properties.psi.impl.PropertiesPsiTreeChangePreprocessor"/>
 
     <postStartupActivity implementation="com.intellij.lang.properties.Native2AsciiListenerStartupActivity"/>
   </extensions>

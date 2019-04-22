@@ -1,22 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
-import com.intellij.openapi.util.Condition
-
 import java.io.File
+import java.util.function.Predicate
 
 abstract class SchemeManager<T> {
   companion object {
-    const val EDITABLE_COPY_PREFIX: String = "_@user_"
+    const val EDITABLE_COPY_PREFIX = "_@user_"
 
     @JvmStatic
-    fun getDisplayName(scheme: Scheme): String {
-      val schemeName = scheme.name
-      return if (schemeName.startsWith(EDITABLE_COPY_PREFIX))
-        schemeName.substring(EDITABLE_COPY_PREFIX.length)
-      else
-        schemeName
-    }
+    fun getDisplayName(scheme: Scheme) = scheme.name.removePrefix(EDITABLE_COPY_PREFIX)
   }
 
   abstract val allSchemes: List<T>
@@ -25,9 +18,6 @@ abstract class SchemeManager<T> {
     get() = allSchemes.isEmpty()
 
   abstract val activeScheme: T?
-
-  @Deprecated(replaceWith = ReplaceWith("activeScheme"), message = "Use activeScheme")
-  open fun getCurrentScheme(): Scheme = activeScheme as Scheme
 
   /**
    * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
@@ -40,7 +30,7 @@ abstract class SchemeManager<T> {
 
   abstract fun loadSchemes(): Collection<T>
 
-  open fun reload() {}
+  abstract fun reload()
 
   @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
   fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
@@ -62,14 +52,7 @@ abstract class SchemeManager<T> {
 
   abstract fun removeScheme(scheme: T): Boolean
 
-  open fun removeScheme(name: String): T? {
-    val scheme = findSchemeByName(name)
-    if (scheme != null) {
-      removeScheme(scheme)
-      return scheme
-    }
-    return null
-  }
+  abstract fun removeScheme(name: String): T?
 
   /**
    * Must be called before [.loadSchemes].
@@ -79,15 +62,13 @@ abstract class SchemeManager<T> {
   open fun loadBundledScheme(resourceName: String, requestor: Any) {}
 
   @JvmOverloads
-  open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Condition<T>? = null) {
+  open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) {
   }
 
   /**
    * Bundled / read-only (or overriding) scheme cannot be renamed or deleted.
    */
-  open fun isMetadataEditable(scheme: T): Boolean {
-    return true
-  }
+  open fun isMetadataEditable(scheme: T): Boolean = true
 
   open fun save(errors: MutableList<Throwable>) {}
 }

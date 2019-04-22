@@ -42,7 +42,6 @@ public final class ZoomOutAction extends AnAction implements DumbAware {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         if (ImageEditorActionUtil.setEnabled(e)) {
             ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
             ImageZoomModel zoomModel = decorator.getZoomModel();

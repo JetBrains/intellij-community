@@ -19,10 +19,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -35,16 +34,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.SystemProperties;
-import java.util.HashMap;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -149,8 +149,13 @@ public class PySdkUtil {
           processInput.close();
         }
       }
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      return processHandler.runProcessWithProgressIndicator(indicator != null ? indicator : new EmptyProgressIndicator(), timeout);
+      if (SwingUtilities.isEventDispatchThread()) {
+        final ProgressManager progressManager = ProgressManager.getInstance();
+        assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "Background task can't be run under write action";
+        return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout), "Wait...", false, null);
+      } else {
+        return processHandler.runProcess();
+      }
     }
     catch (ExecutionException | IOException e) {
       return getOutputForException(e);

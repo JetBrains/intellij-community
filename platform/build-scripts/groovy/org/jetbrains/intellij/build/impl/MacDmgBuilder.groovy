@@ -100,17 +100,22 @@ class MacDmgBuilder {
     }
   }
 
+  private def getJavaExePath(String archivePath, boolean isModular) {
+    def topLevelDir = isModular && buildContext.bundledJreManager.hasJbrRootDir(new File(archivePath)) ? 'jbr' : 'jdk'
+    return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
+  }
+
   private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String secondJreArchive = null) {
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
-
+    def jreManager = buildContext.bundledJreManager
     String suffix = "-no-jdk", javaExePath = null
     if (secondJreArchive != null) {
-      suffix = "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}"
-      javaExePath = "../jdk/Contents/Home/bin/java"
+      suffix = "-jbr${jreManager.getSecondJreVersion()}"
+      javaExePath = getJavaExePath(secondJreArchive, jreManager.isSecondBundledJreModular())
     }
     else if (jreArchivePath != null) {
-      suffix = buildContext.bundledJreManager.jreSuffix()
-      javaExePath = "../jdk/Contents/Home/${buildContext.isBundledJreModular() ? '' : 'jre/'}bin/java"
+      suffix = jreManager.jreSuffix()
+      javaExePath = getJavaExePath(jreArchivePath, jreManager.isBundledJreModular())
     }
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)

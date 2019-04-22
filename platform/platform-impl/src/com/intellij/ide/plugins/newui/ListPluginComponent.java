@@ -119,6 +119,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
+  @Override
   public void showProgress() {
     showProgress(true);
   }
@@ -138,18 +139,20 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
+  @Override
   public void hideProgress(boolean success) {
     myIndicator = null;
     myEnableDisableButton.setEnabled(true);
 
     myBaselinePanel.removeProgressComponent();
     if (success) {
-      changeUpdateToRestart();
+      enableRestart();
     }
     fullRepaint();
   }
 
-  void clearProgress() {
+  @Override
+  public void clearProgress() {
     myIndicator = null;
   }
 
@@ -259,12 +262,13 @@ public class ListPluginComponent extends CellPluginComponent {
     myBaselinePanel.doLayout();
   }
 
-  void updateErrors() {
+  @Override
+  public void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
     if (errors) {
-      Ref<Boolean> enableAction = new Ref<>();
+      Ref<String> enableAction = new Ref<>();
       String message = PluginManagerConfigurableNew.getErrorMessage(myPluginModel, myPlugin, enableAction);
       myBaselinePanel.addErrorComponents(message, !enableAction.isNull(), () -> myPluginModel.enableRequiredPlugins(myPlugin));
     }
@@ -321,7 +325,8 @@ public class ListPluginComponent extends CellPluginComponent {
     return myPluginModel.isEnabled(myPlugin);
   }
 
-  void updateAfterUninstall() {
+  @Override
+  public void updateAfterUninstall() {
     myUninstalled = true;
     updateColors(mySelection);
 
@@ -329,10 +334,11 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setEnabled(false);
     myEnableDisableButton.setVisible(false);
 
-    changeUpdateToRestart();
+    enableRestart();
   }
 
-  void changeUpdateToRestart() {
+  @Override
+  public void enableRestart() {
     boolean layout = false;
 
     if (myUpdateButton != null) {
@@ -350,7 +356,8 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  void updateEnabledState() {
+  @Override
+  public void updateEnabledState() {
     if (!myUninstalled) {
       myEnableDisableButton.setSelected(isEnabledState());
     }
@@ -519,7 +526,12 @@ public class ListPluginComponent extends CellPluginComponent {
     myPluginModel.removeComponent(this);
   }
 
-  private static class ButtonAnAction extends DumbAwareAction {
+  @Override
+  public boolean isMarketplace() {
+    return false;
+  }
+
+  public static class ButtonAnAction extends DumbAwareAction {
     private final JButton[] myButtons;
 
     ButtonAnAction(@NotNull JButton... buttons) {
@@ -536,7 +548,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  private abstract static class MyAnAction extends DumbAwareAction {
+  public abstract static class MyAnAction extends DumbAwareAction {
     MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
       super(text);
       ShortcutSet shortcutSet = null;

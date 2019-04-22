@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
@@ -93,7 +92,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private boolean mySkipFocusGain = false;
-  private Editor myEditor;
   @Nullable
   private VirtualFile myVirtualFile;
   @NotNull private final DataContext myDataContext;
@@ -153,12 +151,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
           mySkipFocusGain = false;
           return;
         }
-        String text = RunAnythingUtil.getInitialTextForNavigation(myEditor);
-        text = text != null ? text.trim() : "";
-
-        mySearchField.setText(text);
         mySearchField.setForeground(UIUtil.getLabelForeground());
-        mySearchField.selectAll();
         mySearchField.setColumns(SEARCH_FIELD_COLUMNS);
         ApplicationManager.getApplication().invokeLater(() -> {
           final JComponent parent = (JComponent)mySearchField.getParent();
@@ -373,7 +366,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
         myIsItemSelected = true;
 
         if (isMoreItem(myResultsList.getSelectedIndex())) {
-          mySearchField.setText(myLastInputText != null ? myLastInputText : "");
+          if (myLastInputText != null) {
+            mySearchField.setText(myLastInputText);
+          }
           return;
         }
 
@@ -545,7 +540,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final JLabel myTitle = new JLabel();
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
       Component cmp = null;
       if (isMoreItem(index)) {
         cmp = RunAnythingMore.get(isSelected);
@@ -553,12 +548,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(isSelected);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
-          p.setBackground(UIUtil.getListBackground(isSelected));
+          p.setBackground(UIUtil.getListBackground(isSelected, true));
           p.add(cmp, BorderLayout.CENTER);
           cmp = p;
         }
@@ -602,7 +597,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
   private class CalcThread implements Runnable {
     @NotNull private final Project myProject;
     @NotNull private final String myPattern;
@@ -610,7 +604,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final ActionCallback myDone = new ActionCallback();
     @NotNull private final RunAnythingSearchListModel myListModel;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
+    private CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
       myProject = project;
       myPattern = pattern;
       RunAnythingSearchListModel model = getSearchingModel(myResultsList);
@@ -651,12 +645,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
         if (myPattern.trim().length() == 0) {
           buildGroups(true);
-          updatePopup();
           return;
         }
 
         if (isHelpMode(mySearchField.getText())) {
           buildHelpGroups(myListModel);
+          updatePopup();
           return;
         }
 
@@ -683,6 +677,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     private void buildGroups(boolean isRecent) {
       buildAllGroups(myPattern, () -> check(), isRecent);
+      updatePopup();
     }
 
     private void buildHelpGroups(@NotNull RunAnythingSearchListModel listModel) {
@@ -814,7 +809,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
         synchronized (lock) {
           myCurrentWorker = ActionCallback.DONE;
           myCalcThread = null;
-          myEditor = null;
           myVirtualFile = null;
           myProject = null;
           myModule = null;
@@ -830,10 +824,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myActionEvent = actionEvent;
 
     myCurrentWorker = ActionCallback.DONE;
-    myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myProject = ObjectUtils.notNull(CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext()));
+    myProject = ObjectUtils.notNull(myActionEvent.getData(CommonDataKeys.PROJECT));
     myDataContext = createDataContext(actionEvent);
     myModule = myActionEvent.getData(LangDataKeys.MODULE);
 
@@ -961,7 +954,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class RunAnythingShowFilterAction extends ShowFilterAction {
-    public RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
+    private RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
       super(parentDisposable, myProject);
     }
 

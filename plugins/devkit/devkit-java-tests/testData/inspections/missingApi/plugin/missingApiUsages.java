@@ -1,5 +1,6 @@
-package client;
+package plugin;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import library.RecentClass;
@@ -24,6 +25,22 @@ import static library.RecentClass.*;
 class A {
   public <error descr="'library.RecentClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentClass</error> r = null;
   public <error descr="'library.RecentKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinClass</error> r2 = null;
+
+  public void parameters(
+    <error descr="'library.RecentClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentClass</error> rc,
+    <error descr="'library.RecentKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinClass</error> rkc
+  ) {
+  }
+
+  public void array() {
+    <error descr="'library.RecentClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentClass</error>[] a1 = new <error descr="'library.RecentClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentClass</error>[0];
+    <error descr="'library.RecentKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinClass</error>[] a2 = new <error descr="'library.RecentKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinClass</error>[0];
+  }
+
+  public void classAccess() {
+    Class<<error descr="'library.RecentClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentClass</error>> o = <error descr="'library.RecentClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentClass</error>.class;
+    Class<<error descr="'library.RecentKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinClass</error>> o2 = <error descr="'library.RecentKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinClass</error>.class;
+  }
 
   public void m1(OldClass oc, OldKotlinClass okc) {
     String s = oc.<error descr="'recentField' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">recentField</error>;
@@ -66,14 +83,18 @@ class A {
       }
     });
   }
+
+  public void m8() {
+    Consumer<OldClass> methodReference = OldClass::<error descr="'recentMethod()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">recentMethod</error>;
+  }
 }
 
-class <error descr="Default constructor in 'library.OldClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">B</error> extends OldClass {
-  //implicit call to default "recent" constructor available in source code.
+class <error descr="'OldClass()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">B</error> extends OldClass {
+  //implicit call to empty "recent" constructor available in source code.
 }
 
-class <error descr="Default constructor in 'library.OldKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">BK</error> extends OldKotlinClass {
-  //implicit call to default "recent" constructor available in source code.
+class <error descr="'OldKotlinClass()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">BK</error> extends OldKotlinClass {
+  //implicit call to empty "recent" constructor available in source code.
 }
 
 class C extends OldClass {
@@ -104,7 +125,7 @@ class <error descr="Default constructor in 'library.OldClassWithDefaultConstruct
   //implicit call to default "recent" constructor that is NOT available in source code.
 }
 
-class <error descr="Default constructor in 'library.OldKotlinClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">DK</error> extends OldKotlinClassWithDefaultConstructor {
+class <error descr="'OldKotlinClassWithDefaultConstructor()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">DK</error> extends OldKotlinClassWithDefaultConstructor {
   //implicit call to default "recent" constructor that is NOT available in source code.
 }
 
@@ -112,16 +133,16 @@ class <error descr="Default constructor in 'library.OldKotlinClassWithDefaultCon
 class E extends OldClassWithDefaultConstructor {
   public <error descr="Default constructor in 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">E</error>() {}
 
-  public <error descr="Default constructor in 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">E</error>(int x) {
-    super();
+  public E(int x) {
+    <error descr="Default constructor in 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">super</error>();
   }
 }
 
 //Class with constructors delegating to default "recent" constructor.
 class EK extends OldKotlinClassWithDefaultConstructor {
-  public <error descr="Default constructor in 'library.OldKotlinClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">EK</error>() {}
+  public <error descr="'OldKotlinClassWithDefaultConstructor()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">EK</error>() {}
 
-  public <error descr="Default constructor in 'library.OldKotlinClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">EK</error>(int x) {
+  public EK(int x) {
     <error descr="'OldKotlinClassWithDefaultConstructor()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">super</error>();
   }
 }

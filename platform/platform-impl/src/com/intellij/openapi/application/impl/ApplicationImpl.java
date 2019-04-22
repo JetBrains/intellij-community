@@ -33,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
@@ -50,7 +49,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
@@ -75,10 +73,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -174,7 +170,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
         List<String> argsList = Arrays.asList(args);
         LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-        invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory));
+        if (argsList.isEmpty()) return;
+        ModalityState state = getDefaultModalityState();
+        for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
+          if (starter.canProcessExternalCommandLine() &&
+              argsList.get(0).equals(starter.getCommandName()) &&
+              starter.allowAnyModalityState()) {
+            state = getAnyModalityState();
+          }
+        }
+        invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory), state);
       };
     }
 
@@ -447,10 +452,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       });
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      ExtensionPointImpl<ApplicationInitializedListener> point = ((ExtensionsAreaImpl)Extensions.getArea(null)).getExtensionPoint("com.intellij.applicationInitializedListener");
-      Iterator<ApplicationInitializedListener> iterator = point.iterator();
-      while (iterator.hasNext()) {
-        ApplicationInitializedListener listener = iterator.next();
+      for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getArea(null)).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
         if (listener == null) {
           break;
         }
@@ -504,7 +506,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static void createLocatorFile() {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     try {
-      byte[] data = PathManager.getHomePath().getBytes(CharsetToolkit.UTF8_CHARSET);
+      byte[] data = PathManager.getHomePath().getBytes(StandardCharsets.UTF_8);
       FileUtil.writeToFile(locatorFile, data);
     }
     catch (IOException e) {
@@ -1474,19 +1476,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {
-    ApplicationListener multicaster = myDispatcher.getMulticaster();
-    setMulticaster(new ApplicationListener() {});
-    Disposer.register(disposable, () -> setMulticaster(multicaster));
-  }
-
-  private void setMulticaster(@NotNull ApplicationListener multicaster) {
-    try {
-      Field field = myDispatcher.getClass().getDeclaredField("myMulticaster");
-      field.setAccessible(true);
-      field.set(myDispatcher, multicaster);
-    }
-    catch (ReflectiveOperationException e) {
-      throw new Error(e);
-    }
+    myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
   }
 }

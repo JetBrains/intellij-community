@@ -24,24 +24,23 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
- * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by equal
- * {@code VirtualFile} instances for the entire lifetime of the IntelliJ IDEA process, unless the file
+ * Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
+ * {@code VirtualFile} instances for the entire lifetime of the IDE process, unless the file
  * is deleted, in which case {@link #isValid()} will return {@code false}.
  * <p/>
  * VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
- * All of them are equal, have the same hashCode and use shared storage for all related data, including user data (see {@link UserDataHolder}).
+ * All of them are equal, have the same {@code hashCode} and use shared storage for all related data, including user data (see {@link UserDataHolder}).
  * <p/>
  * If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile}
  * can be used.
  * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">IntelliJ IDEA Virtual File System</a>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a>
  * for high-level overview.
  *
  * @see VirtualFileSystem
  * @see VirtualFileManager
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
-  static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   /**
@@ -124,9 +123,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Gets the path of this file. Path is a string which uniquely identifies file within given
-   * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For {@code com.intellij.openapi.vfs.LocalFileSystem} it is an absolute file path with file separator characters
-   * (File.separatorChar) replaced to the forward slash ('/').
+   * {@link VirtualFileSystem}. Format of the path depends on the concrete file system.
+   * For {@link LocalFileSystem} it is an absolute file path with file separator characters
+   * ({@link File#separatorChar}) replaced to the forward slash ({@code '/'}).
    *
    * @return the path
    */
@@ -318,9 +317,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @return the {@link FileType} of this file.
-   *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeRegistry}),
-   *         it returns {@code com.intellij.openapi.fileTypes.FileTypes.UNKNOWN}.
+   * Returns the {@link FileType} of this file, or {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if a type cannot be determined
+   * (i.e. file type is not registered via {@link FileTypeRegistry}).
    */
   @NotNull
   public FileType getFileType() {
@@ -552,7 +550,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if {@code requestor} is {@code null}.
-   *                  See {@link VirtualFileEvent#getRequestor} and {@code com.intellij.openapi.vfs.SafeWriteRequestor}.
+   *                  See {@link VirtualFileEvent#getRequestor} and {@link SafeWriteRequestor}.
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
@@ -565,12 +563,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * after closing the stream.<p>
    * <p/>
    * Normally you should not use this method.
-   *
+   * <p>
    * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
    * @param requestor            any object to control who called this method. Note that
    *                             it is considered to be an external change if {@code requestor} is {@code null}.
-   *                             See {@link VirtualFileEvent#getRequestor} and {@code com.intellij.openapi.vfs.SafeWriteRequestor}.
+   *                             See {@link VirtualFileEvent#getRequestor} and {@link SafeWriteRequestor}.
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
    * @param newTimeStamp         new time stamp or -1 if no special value should be set
    * @return {@code OutputStream}
@@ -731,4 +729,27 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setPreloadedContentHint(byte[] preloadedContentHint) { }
+
+  /**
+   * @return true if this file is a symlink which is
+   * - recursive, i.e. points to this file' parent or
+   * - circular, i.e. has a loop. It means its path has a form of "/.../linkX/.../linkX"
+   */
+  public boolean isRecursiveOrCircularSymLink() {
+    if (!is(VFileProperty.SYMLINK)) return false;
+    VirtualFile resolved = getCanonicalFile();
+    // invalid symlink
+    if (resolved == null) return false;
+    // if it's recursive
+    if (VfsUtilCore.isAncestor(resolved, this, false)) return true;
+
+    // check if it's circular - any symlink above resolves to my target too
+    for (VirtualFile p = getParent(); p != null ; p = p.getParent()) {
+      if (p.is(VFileProperty.SYMLINK)) {
+        VirtualFile parentResolved = p.getCanonicalFile();
+        if (resolved.equals(parentResolved)) return true;
+      }
+    }
+    return false;
+  }
 }

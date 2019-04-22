@@ -81,7 +81,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
       val gitCommits = mutableListOf<GitCommit>()
       val requirements = GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.INFINITY,
                                                includeRootChanges = false)
-      GitLogUtil.readFullDetailsForHashes(project, repository.root, repository.vcs, commitHashes, requirements, false) {
+      GitLogUtil.readFullDetailsForHashes(project, repository.root, commitHashes, requirements) {
         gitCommits.add(it)
       }
 

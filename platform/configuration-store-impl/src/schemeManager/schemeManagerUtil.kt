@@ -2,19 +2,11 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.progress.ProcessCanceledException
 
-internal fun ExternalizableScheme.renameScheme(newName: String) {
-  if (newName != name) {
-    name = newName
-    LOG.assertTrue(newName == name)
-  }
-}
-
-internal inline fun catchAndLog(file: () -> String, runnable: () -> Unit) {
+internal inline fun <T> catchAndLog(file: () -> String, runnable: () -> T): T? {
   try {
-    runnable()
+    return runnable()
   }
   catch (e: ProcessCanceledException) {
     throw e
@@ -22,4 +14,9 @@ internal inline fun catchAndLog(file: () -> String, runnable: () -> Unit) {
   catch (e: Throwable) {
     LOG.error("Cannot read scheme ${file()}", e)
   }
+  return null
+}
+
+internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
+  return RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
 }

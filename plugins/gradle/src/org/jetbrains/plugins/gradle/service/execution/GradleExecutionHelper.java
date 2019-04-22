@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -44,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -135,8 +135,11 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
-        settings.withArgument("--info");
+      if (!settings.getArguments().contains("--quiet")) {
+        if (!settings.getArguments().contains("--debug")){
+          settings.withArgument("--info");
+        }
+        settings.withArgument("--stacktrace");
       }
     }
 
@@ -145,9 +148,16 @@ public class GradleExecutionHelper {
       String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
       LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
 
-      // filter nulls and empty strings
-      filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
-
+      // filter nulls, empty strings and '--args' arguments
+      for (Iterator<String> iterator = settings.getArguments().iterator(); iterator.hasNext(); ) {
+        String arg = iterator.next();
+        if(StringUtil.isEmpty(arg)) continue;
+        if("--args".equals(arg) && iterator.hasNext()) {
+          iterator.next();
+        } else {
+          filteredArgs.add(arg);
+        }
+      }
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
     }
@@ -418,7 +428,7 @@ public class GradleExecutionHelper {
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory, projectDir);
           }
           break;
       }
@@ -489,7 +499,7 @@ public class GradleExecutionHelper {
   }
 
   public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
-    byte[] contentBytes = content.getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
     int contentLength = contentBytes.length;
     return FileUtil.findSequentFile(new File(FileUtil.getTempDirectory()), filePrefix, GradleConstants.EXTENSION, file -> {
       try {
@@ -499,7 +509,7 @@ public class GradleExecutionHelper {
           return true;
         }
         if (contentLength != file.length()) return false;
-        return content.equals(FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET));
+        return content.equals(FileUtil.loadFile(file, StandardCharsets.UTF_8));
       }
       catch (IOException ignore) {
         // Skip file with access issues. Will attempt to check the next file

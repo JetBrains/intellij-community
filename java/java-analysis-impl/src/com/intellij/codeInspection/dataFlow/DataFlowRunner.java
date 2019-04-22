@@ -363,21 +363,22 @@ public class DataFlowRunner {
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
-  public RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, StandardInstructionVisitor visitor) {
+  public RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, StandardInstructionVisitor visitor, boolean ignoreAssertions) {
     Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
-    return analyzeBlockRecursively(block, states, visitor);
+    return analyzeBlockRecursively(block, states, visitor, ignoreAssertions);
   }
 
   public RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
                                               Collection<? extends DfaMemoryState> states,
-                                              StandardInstructionVisitor visitor) {
-    RunnerResult result = analyzeMethod(block, visitor, false, states);
+                                              StandardInstructionVisitor visitor, 
+                                              boolean ignoreAssertions) {
+    RunnerResult result = analyzeMethod(block, visitor, ignoreAssertions, states);
     if (result != RunnerResult.OK) return result;
 
     Ref<RunnerResult> ref = Ref.create(RunnerResult.OK);
     forNestedClosures((closure, nestedStates) -> {
-      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor);
+      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor, ignoreAssertions);
       if (res != RunnerResult.OK) {
         ref.set(res);
       }

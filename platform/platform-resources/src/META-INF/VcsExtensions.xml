@@ -6,16 +6,14 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
                         serviceImplementation="com.intellij.codeInsight.actions.VcsAwareFormatChangedTextUtil" overrides="true"/>
-    <applicationService serviceInterface="com.intellij.openapi.vcs.actions.AnnotationsSettings"
-                        serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
+    <applicationService serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
     <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
                         serviceImplementation="com.intellij.vfs.AsyncVfsEventsPostProcessorImpl"/>
     <applicationService serviceImplementation="com.intellij.lifecycle.PeriodicalTasksCloser"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.IssueNavigationConfiguration"
-                    serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
                     serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.VcsConfiguration"/>
@@ -35,12 +33,12 @@
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.PatternCache"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.IgnorePatternsMatchedFilesCache"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"
-                    serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
 
@@ -101,6 +99,7 @@
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
+    <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.shelf.ShelfFileWritingAccessProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
     <customFileDropHandler implementation="com.intellij.openapi.vcs.changes.patch.PatchFileDropHandler"/>
 

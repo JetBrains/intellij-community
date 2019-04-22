@@ -9,6 +9,7 @@ import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
+import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManager;
@@ -94,6 +95,11 @@ public class StartupUtil {
 
     // not called in EDT
     default void importFinished(@NotNull Path newConfigDir) {}
+
+    // called in EDT
+    default int customizeIdeWizardDialog(@NotNull List<AbstractCustomizeWizardStep> steps) {
+      return -1;
+    }
   }
 
   private static void runPreAppClass(Logger log) {
@@ -162,6 +168,11 @@ public class StartupUtil {
 
     addInitUiTasks(futures, executorService, log, initLafTask);
 
+    if (!newConfigFolder) {
+      installPluginUpdates();
+      runPreAppClass(log);
+    }
+
     if (isParallelExecution) {
       executorService.submit(() -> loadSystemLibraries(log));  /* no need to wait */
 
@@ -171,19 +182,14 @@ public class StartupUtil {
       futures.clear();
     }
 
-    runPreAppClass(log);
-
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
       Path newConfigDir = Paths.get(PathManager.getConfigPath());
-      SwingUtilities.invokeAndWait(() -> {
+      EventQueue.invokeAndWait(() -> {
         PluginManager.installExceptionHandler();
         ConfigImportHelper.importConfigsTo(newConfigDir, log);
       });
       appStarter.importFinished(newConfigDir);
-    }
-    else {
-      installPluginUpdates();
     }
 
     if (!Main.isHeadless()) {
@@ -192,7 +198,7 @@ public class StartupUtil {
 
     if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
       // exception handler is already set by ConfigImportHelper
-      SwingUtilities.invokeAndWait(() -> runStartupWizard(appStarter));
+      EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
     }
 
     appStarter.start();
@@ -563,7 +569,7 @@ public class StartupUtil {
       }
 
       appStarter.beforeStartupWizard();
-      new CustomizeIDEWizardDialog(provider).show();
+      new CustomizeIDEWizardDialog(provider, appStarter).show();
       PluginManagerCore.invalidatePlugins();
       appStarter.startupWizardFinished();
     }

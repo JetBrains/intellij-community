@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -92,19 +91,28 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
     return findExtension(this, instanceOf, areaInstance, true);
   }
 
-
   /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
    * events will be fired during iteration and probably it will be not expected.
-   * <p>
+   *
    * Use only for interface extension points, not for bean.
-   * <p>
+   *
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
    * so, `next` may return `null` (in this case stop iteration).
+   *
+   * Possible use cases:
+   * 1. Conditional iteration (no need to create all extensions if iteration will be stopped due to some condition).
+   * 2. Iterated only once per application (no need to cache extension list internally).
    */
   @NotNull
   @ApiStatus.Experimental
-  public Iterator<T> iterator(@Nullable AreaInstance areaInstance) {
-    return ((ExtensionPointImpl<T>)getPoint(areaInstance)).iterator();
+  public Iterable<T> getIterable(@Nullable AreaInstance areaInstance) {
+    return ((ExtensionPointImpl<T>)getPoint(areaInstance));
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public Iterable<T> getIterable() {
+    return getIterable(null);
   }
 }

@@ -914,7 +914,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public void caretPositionChanged(@NotNull CaretEvent e) {
       Caret caret = e.getCaret();
-      if (caret == null) {
+      if (caret != myEditor.getCaretModel().getPrimaryCaret()) {
         return;
       }
       int dot = caret.getOffset();

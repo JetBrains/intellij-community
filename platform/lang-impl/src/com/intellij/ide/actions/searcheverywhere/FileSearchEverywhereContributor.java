@@ -69,8 +69,8 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
 
   @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
-    return new SERenderer(list){
+  public ListCellRenderer<Object> getElementsRenderer() {
+    return new SERenderer() {
       @NotNull
       @Override
       protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
@@ -79,7 +79,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
           return defaultMatchers;
         }
 
-        return GotoFileModel.convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, myModelForRenderer);
+        return GotoFileModel.convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem)value, myModelForRenderer);
       }
     };
   }
@@ -123,16 +123,16 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     return super.getDataForItem(element, dataId);
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<FileType> {
+  public static class Factory implements SearchEverywhereContributorFactory<Object, FileType> {
     @NotNull
     @Override
-    public SearchEverywhereContributor<FileType> createContributor(AnActionEvent initEvent) {
+    public SearchEverywhereContributor<Object, FileType> createContributor(@NotNull AnActionEvent initEvent) {
       return new FileSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<FileType> createFilter(AnActionEvent initEvent) {
+    public SearchEverywhereContributorFilter<FileType> createFilter(@NotNull AnActionEvent initEvent) {
       Project project = initEvent.getProject();
       if (project == null) {
         return null;

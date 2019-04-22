@@ -11,6 +11,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jdom.Document;
 import org.jdom.JDOMException;
+import org.jdom.adapters.JAXPDOMAdapter;
 import org.jdom.output.DOMOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Element;
@@ -23,6 +24,10 @@ public class LoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
+
+  private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
+  @SuppressWarnings("SpellCheckingInspection")
+  private static final String DOCUMENT_BUILDER_FACTORY_IMPL = "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl";
 
   LoggerFactory() {
     try {
@@ -52,10 +57,27 @@ public class LoggerFactory implements Logger.Factory {
       System.err.println("Cannot create log directory: " + file);
     }
 
+    // Jdom is used instead of XML DOM because of https://youtrack.jetbrains.com/issue/IDEA-173468
     // DOMConfigurator really wants Document
     @SuppressWarnings("deprecation")
     Document document = JDOMUtil.loadDocument(new CharSequenceReader(text));
-    Element element = new DOMOutputter().output(document).getDocumentElement();
+    Element element = new DOMOutputter(new JAXPDOMAdapter() {
+      @Override
+      public org.w3c.dom.Document createDocument() throws JDOMException {
+        String property = System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, DOCUMENT_BUILDER_FACTORY_IMPL);
+        try {
+          return super.createDocument();
+        }
+        finally {
+          if (property == null) {
+            System.clearProperty(DOCUMENT_BUILDER_FACTORY_KEY);
+          }
+          else {
+            System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, property);
+          }
+        }
+      }
+    }, null, null).output(document).getDocumentElement();
     new DOMConfigurator().doConfigure(element, LogManager.getLoggerRepository());
   }
 }

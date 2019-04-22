@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +17,10 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushParams;
-import git4idea.rebase.*;
+import git4idea.rebase.GitHandlerRebaseEditorManager;
+import git4idea.rebase.GitInteractiveRebaseEditorHandler;
+import git4idea.rebase.GitRebaseEditorHandler;
+import git4idea.rebase.GitRebaseResumeMode;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
@@ -91,11 +95,14 @@ public class GitImpl extends GitImplBase {
   }
 
   @NotNull
-  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root, @Nullable String output, @NotNull String fileStatusPrefix) {
+  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root,
+                                             @Nullable String output,
+                                             @NotNull String fileStatusPrefix) {
     if (StringUtil.isEmptyOrSpaces(output)) return emptySet();
 
     final Set<VirtualFile> files = new HashSet<>();
     for (String relPath : output.split("\u0000")) {
+      ProgressManager.checkCanceled();
       if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
 
       String relativePath = relPath.substring(fileStatusPrefix.length());

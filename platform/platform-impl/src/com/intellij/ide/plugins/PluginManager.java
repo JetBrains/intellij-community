@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
@@ -29,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,7 +50,7 @@ public class PluginManager extends PluginManagerCore {
    * Called via reflection
    */
   @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
-  protected static void start(final String mainClass, final String methodName, final String[] args) {
+  protected static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args) {
     startupStart = StartUpMeasurer.start(Phases.PREPARE_TO_INIT_APP);
 
     Main.setFlags(args);
@@ -92,7 +91,7 @@ public class PluginManager extends PluginManagerCore {
     return onceInstalledFile.isFile() ? onceInstalledFile : null;
   }
 
-  public static void processException(Throwable t) {
+  public static void processException(@NotNull Throwable t) {
     if (!IdeaApplication.isLoaded()) {
       EssentialPluginMissingException pluginMissingException = findCause(t, EssentialPluginMissingException.class);
       if (pluginMissingException != null && pluginMissingException.pluginIds != null) {
@@ -175,40 +174,38 @@ public class PluginManager extends PluginManagerCore {
   public static void reportPluginError() {
     if (myPluginError != null) {
       String title = IdeBundle.message("title.plugin.error");
-      Notifications.Bus.notify(new Notification(title, title, myPluginError, NotificationType.ERROR, new NotificationListener() {
-        @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          notification.expire();
+      Notifications.Bus.notify(new Notification(title, title, myPluginError, NotificationType.ERROR, (notification, event) -> {
+        notification.expire();
 
-          String description = event.getDescription();
-          if (EDIT.equals(description)) {
-            IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-            PluginManagerConfigurableProxy.showPluginConfigurable((JFrame)ideFrame, null);
-            return;
-          }
+        String description = event.getDescription();
+        if (EDIT.equals(description)) {
+          IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+          PluginManagerConfigurableProxy.showPluginConfigurable((JFrame)ideFrame, null);
+          return;
+        }
 
-          List<String> disabledPlugins = getDisabledPlugins();
-          if (myPlugins2Disable != null && DISABLE.equals(description)) {
-            for (String pluginId : myPlugins2Disable) {
-              if (!disabledPlugins.contains(pluginId)) {
-                disabledPlugins.add(pluginId);
-              }
+        List<String> disabledPlugins = getDisabledPlugins();
+        Set<String> disabledPluginSet = getDisabledPluginSet();
+        if (myPlugins2Disable != null && DISABLE.equals(description)) {
+          for (String pluginId : myPlugins2Disable) {
+            if (disabledPluginSet.add(pluginId)) {
+              disabledPlugins.add(pluginId);
             }
           }
-          else if (myPlugins2Enable != null && ENABLE.equals(description)) {
-            disabledPlugins.removeAll(myPlugins2Enable);
-            PluginManagerMain.notifyPluginsUpdated(null);
-          }
-
-          try {
-            saveDisabledPlugins(disabledPlugins, false);
-          }
-          catch (IOException ignore) { }
-
-          myPlugins2Enable = null;
-          myPlugins2Disable = null;
         }
+        else if (myPlugins2Enable != null && ENABLE.equals(description)) {
+          disabledPluginSet.removeAll(myPlugins2Enable);
+          disabledPlugins.removeAll(myPlugins2Enable);
+          PluginManagerMain.notifyPluginsUpdated(null);
+        }
+
+        try {
+          saveDisabledPlugins(disabledPlugins, false);
+        }
+        catch (IOException ignore) { }
+
+        myPlugins2Enable = null;
+        myPlugins2Disable = null;
       }));
       myPluginError = null;
     }
@@ -229,7 +226,7 @@ public class PluginManager extends PluginManagerCore {
     return null;
   }
 
-  public static void handleComponentError(Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
+  public static void handleComponentError(@NotNull Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
     Application app = ApplicationManager.getApplication();
     if (app != null && app.isUnitTestMode()) {
       ExceptionUtil.rethrow(t);
@@ -278,6 +275,7 @@ public class PluginManager extends PluginManagerCore {
       return exitCode;
     }
 
+    @NotNull
     public StartupAbortedException exitCode(int exitCode) {
       this.exitCode = exitCode;
       return this;

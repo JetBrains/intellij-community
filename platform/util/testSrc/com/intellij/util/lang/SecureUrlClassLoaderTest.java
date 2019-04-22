@@ -4,6 +4,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -14,7 +15,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
@@ -264,9 +264,9 @@ public class SecureUrlClassLoaderTest {
     }
   }
 
-  private static void hackManifest(Manifest manifest, String pathInJar, ByteArrayOutputStream hackedClassBytes) throws Exception {
+  private static void hackManifest(Manifest manifest, String pathInJar, ByteArrayOutputStream hackedClassBytes) {
     Attributes newAttributes = new Attributes();
-    byte[] digest = MessageDigest.getInstance("SHA-256").digest(hackedClassBytes.toByteArray());
+    byte[] digest = DigestUtil.sha256().digest(hackedClassBytes.toByteArray());
     newAttributes.putValue("SHA-256-Digest", Base64.getEncoder().encodeToString(digest));
     Assume.assumeTrue(manifest.getEntries().containsKey(pathInJar));
     manifest.getEntries().put(pathInJar, newAttributes);

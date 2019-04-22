@@ -336,6 +336,15 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.consoleCommandHistoryLimit = value
     }
 
+  var showInplaceComments: Boolean
+    get() = state.showInplaceComments
+    set(value) {
+      state.showInplaceComments = value
+    }
+
+  val showInplaceCommentsInternal: Boolean
+    get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
+
   companion object {
     init {
       verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)

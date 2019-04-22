@@ -434,5 +434,10 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.collections.ReplaceWithMutableCollectionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
   </extensions>
 </idea-plugin>

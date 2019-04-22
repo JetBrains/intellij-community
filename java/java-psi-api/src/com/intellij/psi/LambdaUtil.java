@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * @author anna
  */
 public class LambdaUtil {
-  public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
+  public static final RecursionGuard<PsiParameter> ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
   public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance(LambdaUtil.class);
 

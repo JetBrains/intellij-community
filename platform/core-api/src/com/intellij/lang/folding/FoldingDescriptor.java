@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -279,7 +279,7 @@ public class FoldingDescriptor {
   }
 
   /**
-   * See javadoc for {@code com.intellij.openapi.editor.FoldRegion.setGutterMarkEnabledForSingleLine(boolean)}.
+   * See javadoc for {@link com.intellij.openapi.editor.FoldRegion#setGutterMarkEnabledForSingleLine(boolean)}.
    *
    * @see #isGutterMarkEnabledForSingleLine()
    */

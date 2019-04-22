@@ -32,7 +32,7 @@ class ConfigureAssociationsAction extends AnAction {
         final Project project = e.getProject();
         if (project == null) return;
 
-        final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+        final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
         FileAssociationsConfigurable.editAssociations(project, file);
     }
 }

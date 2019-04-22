@@ -55,7 +55,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   protected final InspectionToolWrapper myToolWrapper;
 
   protected static InspectionResultsView getInvoker(@NotNull AnActionEvent e) {
-    return InspectionResultsView.DATA_KEY.getData(e.getDataContext());
+    return e.getData(InspectionResultsView.DATA_KEY);
   }
 
   protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {
@@ -78,8 +78,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       return;
     }
 
-    e.getPresentation().setVisible(false);
-    e.getPresentation().setEnabled(false);
+    e.getPresentation().setEnabledAndVisible(false);
 
     final InspectionTree tree = view.getTree();
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(true);
@@ -89,8 +88,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
     if (!isProblemDescriptorsAcceptable() && tree.getSelectedElements().length > 0 ||
         isProblemDescriptorsAcceptable() && tree.getSelectedDescriptors().length > 0) {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(true);
+      e.getPresentation().setEnabledAndVisible(true);
     }
   }
 

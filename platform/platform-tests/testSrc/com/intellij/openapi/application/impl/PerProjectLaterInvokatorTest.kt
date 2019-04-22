@@ -51,8 +51,6 @@ class RunnableActionsTest : PlatformTestCase() {
 
     LaterInvocator.addModalityStateListener(modalityStateListener, testRootDisposable)
 
-    val removeModalityListener = { LaterInvocator.removeModalityStateListener(modalityStateListener) }
-
     val project = getProject()
     Testable()
       .suspendEDT()
@@ -75,7 +73,6 @@ class RunnableActionsTest : PlatformTestCase() {
       .execute { leaveModal(myApplicationModalDialog) }
       .flushEDT()
       .continueEDT()
-      .execute(removeModalityListener)
       .ifExceptions { exception -> TestCase.fail(exception.toString()) }
   }
 }

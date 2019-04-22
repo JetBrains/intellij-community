@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.updater;
 
 import com.intellij.application.Topics;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
@@ -15,7 +16,6 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -37,7 +37,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class StatisticsJobsScheduler implements BaseComponent {
+public class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 20;
 
@@ -49,7 +49,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
   private static final Map<Project, Future> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
 
   @Override
-  public void initComponent() {
+  public void componentsInitialized() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     if (StatisticsUploadAssistant.isShouldShowNotification()) {

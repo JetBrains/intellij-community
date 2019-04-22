@@ -216,7 +216,8 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setConsole(myConsoleMode)
       .setCygwin(cygwin)
       .setLogFile(getPtyLogFile())
-      .setRedirectErrorStream(isRedirectErrorStream());
+      .setRedirectErrorStream(isRedirectErrorStream())
+      .setWindowsAnsiColorEnabled(!"true".equals(System.getProperty("pty4j.win.disable.ansi.in.console.mode")));
     return builder.start();
   }
 }

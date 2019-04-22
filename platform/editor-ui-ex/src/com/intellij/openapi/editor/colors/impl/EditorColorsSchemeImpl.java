@@ -30,7 +30,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
@@ -134,7 +133,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   private boolean compareAttributes(@NotNull AbstractColorsScheme otherScheme,
-                                    @NotNull Collection<Function<TextAttributesKey, Boolean>> filters) {
+                                    @NotNull Collection<Predicate<? super TextAttributesKey>> filters) {
     for (String keyName : myAttributesMap.keySet()) {
       TextAttributesKey key = TextAttributesKey.find(keyName);
       if (!isTextAttributeKeyIgnored(filters, key) && !getAttributes(key).equals(otherScheme.getAttributes(key))) {
@@ -149,10 +148,10 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return true;
   }
 
-  private static boolean isTextAttributeKeyIgnored(@NotNull Collection<? extends Function<TextAttributesKey, Boolean>> filters,
+  private static boolean isTextAttributeKeyIgnored(@NotNull Collection<? extends Predicate<? super TextAttributesKey>> filters,
                                                    TextAttributesKey key) {
-    for (Function<TextAttributesKey, Boolean> filter : filters) {
-      if (filter.apply(key)) return true;
+    for (Predicate<? super TextAttributesKey> filter : filters) {
+      if (filter.test(key)) return true;
     }
     return false;
   }

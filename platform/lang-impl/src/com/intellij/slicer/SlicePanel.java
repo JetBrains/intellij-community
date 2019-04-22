@@ -216,7 +216,6 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
     tree.setToggleClickCount(-1);
     tree.setCellRenderer(new MultiLanguageTreeCellRenderer(myProvider.getRenderer()));
-    UIUtil.setLineStyleAngled(tree);
     tree.setRootVisible(false);
 
     tree.setShowsRootHandles(true);

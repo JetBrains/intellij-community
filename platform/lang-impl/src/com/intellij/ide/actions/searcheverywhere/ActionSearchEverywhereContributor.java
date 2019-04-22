@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -17,9 +18,9 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +28,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
-public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<Void> {
+public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<GotoActionModel.MatchedValue, Void> {
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
   private final Project myProject;
@@ -77,8 +77,11 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Void> filter,
-                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
+  public void fetchElements(@NotNull String pattern,
+                            boolean everywhere,
+                            @Nullable SearchEverywhereContributorFilter<Void> filter,
+                            @NotNull ProgressIndicator progressIndicator,
+                            @NotNull Processor<? super GotoActionModel.MatchedValue> consumer) {
     if (StringUtil.isEmptyOrSpaces(pattern)) {
       return;
     }
@@ -86,7 +89,9 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     myProvider.filterElements(pattern, element -> {
       if (progressIndicator.isCanceled()) return false;
 
-      if (!everywhere && element.value instanceof GotoActionModel.ActionWrapper && !((GotoActionModel.ActionWrapper) element.value).isAvailable()) {
+      if (!everywhere &&
+          element.value instanceof GotoActionModel.ActionWrapper &&
+          !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
         return true;
       }
 
@@ -95,14 +100,13 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
         return true;
       }
 
-      return consumer.apply(element);
+      return consumer.process(element);
     });
-
   }
 
   @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+  public ListCellRenderer<? super GotoActionModel.MatchedValue> getElementsRenderer() {
     return new GotoActionModel.GotoActionListCellRenderer(myModel::getGroupName, true);
   }
 
@@ -118,16 +122,16 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
+  public Object getDataForItem(@NotNull GotoActionModel.MatchedValue element, @NotNull String dataId) {
     if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
-      return getAction((GotoActionModel.MatchedValue)element);
+      return getAction(element);
     }
 
     if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)) {
-      AnAction action = getAction((GotoActionModel.MatchedValue)element);
+      AnAction action = getAction(element);
       if (action != null) {
         String description = action.getTemplatePresentation().getDescription();
-        if (Registry.is("show.configurables.ids.in.settings.always")) {
+        if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
           String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
           return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
         }
@@ -139,23 +143,23 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
+  public boolean processSelectedItem(@NotNull GotoActionModel.MatchedValue item, int modifiers, @NotNull String text) {
     if (modifiers == InputEvent.ALT_MASK) {
-      showAssignShortcutDialog((GotoActionModel.MatchedValue) selected);
+      showAssignShortcutDialog(item);
       return true;
     }
 
-    selected = ((GotoActionModel.MatchedValue) selected).value;
+    Object selected = item.value;
 
     if (selected instanceof BooleanOptionDescription) {
-      final BooleanOptionDescription option = (BooleanOptionDescription) selected;
+      final BooleanOptionDescription option = (BooleanOptionDescription)selected;
       option.setOptionState(!option.isOptionEnabled());
       return false;
     }
 
     GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent);
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
-                            && ((GotoActionModel.ActionWrapper) selected).getAction() instanceof ToggleAction;
+                            && ((GotoActionModel.ActionWrapper)selected).getAction() instanceof ToggleAction;
     return !inplaceChange;
   }
 
@@ -165,7 +169,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     if (value instanceof GotoActionModel.ActionWrapper) {
       value = ((GotoActionModel.ActionWrapper)value).getAction();
     }
-    return value instanceof AnAction ? (AnAction) value : null;
+    return value instanceof AnAction ? (AnAction)value : null;
   }
 
   private void showAssignShortcutDialog(@NotNull GotoActionModel.MatchedValue value) {
@@ -189,10 +193,10 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     });
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Void> {
+  public static class Factory implements SearchEverywhereContributorFactory<GotoActionModel.MatchedValue, Void> {
     @NotNull
     @Override
-    public SearchEverywhereContributor<Void> createContributor(AnActionEvent initEvent) {
+    public SearchEverywhereContributor<GotoActionModel.MatchedValue, Void> createContributor(@NotNull AnActionEvent initEvent) {
       return new ActionSearchEverywhereContributor(
         initEvent.getProject(),
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
@@ -201,7 +205,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Void> createFilter(AnActionEvent initEvent) {
+    public SearchEverywhereContributorFilter<Void> createFilter(@NotNull AnActionEvent initEvent) {
       return null;
     }
   }

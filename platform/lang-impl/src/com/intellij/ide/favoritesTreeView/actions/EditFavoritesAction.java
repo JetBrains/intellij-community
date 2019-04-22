@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.favoritesTreeView.FavoritesListProvider;
@@ -32,8 +18,8 @@ public class EditFavoritesAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    FavoritesViewTreeBuilder treeBuilder = FavoritesTreeViewPanel.FAVORITES_TREE_BUILDER_KEY.getData(e.getDataContext());
-    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(e.getDataContext());
+    FavoritesViewTreeBuilder treeBuilder = e.getData(FavoritesTreeViewPanel.FAVORITES_TREE_BUILDER_KEY);
+    String listName = e.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY);
     if (project == null || treeBuilder == null || listName == null) {
       return;
     }
@@ -53,8 +39,8 @@ public class EditFavoritesAction extends AnAction implements DumbAware {
     e.getPresentation().setIcon(CommonActionsPanel.Buttons.EDIT.getIcon());
     e.getPresentation().setEnabled(true);
     Project project = e.getProject();
-    FavoritesViewTreeBuilder treeBuilder = FavoritesTreeViewPanel.FAVORITES_TREE_BUILDER_KEY.getData(e.getDataContext());
-    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(e.getDataContext());
+    FavoritesViewTreeBuilder treeBuilder = e.getData(FavoritesTreeViewPanel.FAVORITES_TREE_BUILDER_KEY);
+    String listName = e.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY);
     if (project == null || treeBuilder == null || listName == null) {
       e.getPresentation().setEnabled(false);
       return;

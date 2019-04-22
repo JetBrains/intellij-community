@@ -205,7 +205,7 @@ public class URLUtil {
           for (int j = 0; j < bytes.size(); j++) {
             bytesArray[j] = (byte)bytes.getQuick(j);
           }
-          decoded.append(new String(bytesArray, CharsetToolkit.UTF8_CHARSET));
+          decoded.append(new String(bytesArray, StandardCharsets.UTF_8));
           continue;
         }
       }

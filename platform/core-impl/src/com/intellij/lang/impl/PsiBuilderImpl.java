@@ -683,7 +683,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     if (myCachedTokenType != null) return myCachedTokenType;
     if (myRemapper != null) {
       remapCurrentToken(myRemapper.filter(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme],
-                                          myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence()));
+                                          myLexStarts[myCurrentLexeme + 1], myText));
     }
     return myLexTypes[myCurrentLexeme];
   }

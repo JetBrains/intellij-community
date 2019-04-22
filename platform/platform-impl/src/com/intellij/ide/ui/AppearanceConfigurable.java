@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -547,34 +546,36 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
   }
 
-  private static class AAListCellRenderer extends ListCellRendererWrapper<AntialiasingType> {
+  private static class AAListCellRenderer extends JLabel implements ListCellRenderer<AntialiasingType> {
     private static final Object SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
     private static final Object GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-    private final boolean useEditorAASettings;
+    private final boolean myUseEditorFont;
 
-    AAListCellRenderer(boolean useEditorAASettings) {
-      this.useEditorAASettings = useEditorAASettings;
+    AAListCellRenderer(boolean useEditorFont) {
+      myUseEditorFont = useEditorFont;
     }
 
     @Override
-    public void customize(JList list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
+    public Component getListCellRendererComponent(JList<? extends AntialiasingType> list, AntialiasingType value, int i, boolean s, boolean f) {
       if (value == AntialiasingType.SUBPIXEL) {
-        GraphicsUtil.generatePropertiesForAntialiasing(SUBPIXEL_HINT, this::setClientProperty);
+        GraphicsUtil.setAntialiasingType(this, SUBPIXEL_HINT);
       }
       else if (value == AntialiasingType.GREYSCALE) {
-        GraphicsUtil.generatePropertiesForAntialiasing(GREYSCALE_HINT, this::setClientProperty);
+        GraphicsUtil.setAntialiasingType(this, GREYSCALE_HINT);
       }
       else if (value == AntialiasingType.OFF) {
-        GraphicsUtil.generatePropertiesForAntialiasing(null, this::setClientProperty);
+        GraphicsUtil.setAntialiasingType(this, null);
       }
 
-      if (useEditorAASettings) {
+      if (myUseEditorFont) {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         setFont(new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize()));
       }
 
       setText(String.valueOf(value));
+
+      return this;
     }
   }
 }

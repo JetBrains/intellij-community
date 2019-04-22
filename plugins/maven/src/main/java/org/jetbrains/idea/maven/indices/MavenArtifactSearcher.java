@@ -12,7 +12,6 @@ import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import java.util.*;
 
 import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.ALL_VERSIONS;
-import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.FULL_RESOLVE;
 
 public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResult> {
 
@@ -24,14 +23,17 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     }
     DependencySearchService service = MavenProjectIndicesManager.getInstance(project).getSearchService();
     List<MavenDependencyCompletionItem> searchResults =
-      service.findByTemplate(pattern, new SearchParameters(1000, 5000, EnumSet.of(FULL_RESOLVE, ALL_VERSIONS)));
+      service.findByTemplate(pattern, new SearchParameters(1000, 5000, EnumSet.of(ALL_VERSIONS)));
     return processResults(searchResults, pattern);
   }
 
   private static List<MavenArtifactSearchResult> processResults(List<MavenDependencyCompletionItem> searchResults, String pattern) {
     Map<String, List<MavenDependencyCompletionItem>> results = new HashMap<>();
     for (MavenDependencyCompletionItem item : searchResults) {
-      if (item.getGroupId() == null || item.getArtifactId() == null || item.getVersion() == null || item.getType() == MavenDependencyCompletionItem.Type.CACHED_ERROR) {
+      if (item.getGroupId() == null ||
+          item.getArtifactId() == null ||
+          item.getVersion() == null ||
+          item.getType() == MavenDependencyCompletionItem.Type.CACHED_ERROR) {
         continue;
       }
       String key = item.getGroupId() + ":" + item.getArtifactId();

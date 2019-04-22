@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisUIOptions;
-import com.intellij.find.impl.FindDialog;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -38,7 +37,7 @@ class FileFilterPanel {
   private JPanel myPanel;
 
   void init(AnalysisUIOptions options) {
-    FindDialog.initFileFilter(myFileMask, myUseFileMask);
+    FindInProjectUtil.initFileFilter(myFileMask, myUseFileMask);
     myUseFileMask.setSelected(StringUtil.isNotEmpty(options.FILE_MASK));
     myFileMask.setEnabled(StringUtil.isNotEmpty(options.FILE_MASK));
     myFileMask.setSelectedItem(options.FILE_MASK);

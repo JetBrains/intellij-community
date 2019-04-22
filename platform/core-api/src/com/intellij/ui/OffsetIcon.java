@@ -6,15 +6,17 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
-import java.awt.Component;
-import java.awt.Graphics;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Objects;
 
 import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
 public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
+
+  public static final int REGULAR_OFFSET = 20;
+
   private int myWidth;
   private int myHeight;
 
@@ -29,7 +31,7 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
   }
 
   public OffsetIcon(@NotNull Icon icon) {
-    this(20, icon);
+    this(REGULAR_OFFSET, icon);
   }
 
   public OffsetIcon(int offset, @NotNull Icon icon) {

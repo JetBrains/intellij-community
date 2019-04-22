@@ -340,6 +340,7 @@ public class InlineUtil {
           if (blockParent instanceof PsiMethod || blockParent instanceof PsiLambdaExpression) return TailCallType.Simple;
           if (!(blockParent instanceof PsiBlockStatement)) return TailCallType.None;
           parent = blockParent.getParent();
+          if (parent instanceof PsiLoopStatement) return TailCallType.Continue;
         }
         if (!(parent instanceof PsiLabeledStatement) && !(parent instanceof PsiIfStatement)) return TailCallType.None;
         curElement = (PsiStatement)parent;
@@ -512,6 +513,6 @@ public class InlineUtil {
   }
 
   public enum TailCallType {
-    None, Simple, Return
+    None, Simple, Continue, Return
   }
 }

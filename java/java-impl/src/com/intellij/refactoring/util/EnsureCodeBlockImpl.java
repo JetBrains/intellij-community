@@ -214,25 +214,31 @@ class EnsureCodeBlockImpl {
         statement = (PsiStatement)assignment.getParent();
       }
     }
+    CommentTracker ct = new CommentTracker();
     PsiIfStatement ifStatement =
-      (PsiIfStatement)factory.createStatementFromText("if(" + ternary.getCondition().getText() + ") {} else {}", statement);
+      (PsiIfStatement)factory.createStatementFromText("if(" + ct.text(ternary.getCondition()) + ") {} else {}", statement);
     Object mark = new Object();
     PsiTreeUtil.mark(ternary, mark);
+    for (PsiElement child : statement.getChildren()) {
+      if (child instanceof PsiComment) {
+        ct.delete(child);
+      }
+    }
     PsiStatement thenStatement = (PsiStatement)statement.copy();
     PsiConditionalExpression thenTernary = Objects.requireNonNull((PsiConditionalExpression)PsiTreeUtil.releaseMark(thenStatement, mark));
-    PsiExpression branch1 = ternary.getThenExpression();
-    if (branch1 != null) {
-      thenTernary.replace(branch1);
+    PsiExpression thenBranch = ternary.getThenExpression();
+    if (thenBranch != null) {
+      thenTernary.replace(ct.markUnchanged(thenBranch));
     }
     PsiStatement elseStatement = (PsiStatement)statement.copy();
     PsiConditionalExpression elseTernary = Objects.requireNonNull((PsiConditionalExpression)PsiTreeUtil.releaseMark(elseStatement, mark));
-    PsiExpression branch = ternary.getElseExpression();
-    if (branch != null) {
-      elseTernary.replace(branch);
+    PsiExpression elseBranch = ternary.getElseExpression();
+    if (elseBranch != null) {
+      elseTernary.replace(ct.markUnchanged(elseBranch));
     }
     ((PsiBlockStatement)Objects.requireNonNull(ifStatement.getThenBranch())).getCodeBlock().add(thenStatement);
     ((PsiBlockStatement)Objects.requireNonNull(ifStatement.getElseBranch())).getCodeBlock().add(elseStatement);
-    return statement.replace(ifStatement);
+    return ct.replaceAndRestoreComments(statement, ifStatement);
   }
 
   private static PsiElement splitIf(PsiIfStatement outerIf, PsiPolyadicExpression andChain, PsiExpression operand) {

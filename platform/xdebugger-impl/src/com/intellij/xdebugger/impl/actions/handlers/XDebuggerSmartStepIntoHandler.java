@@ -10,9 +10,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
@@ -39,6 +40,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +51,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -161,7 +164,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     DebuggerUIUtil.registerExtraHandleShortcuts(popup, SHOW_AD, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
     UIUtil.maybeInstall(popup.getList().getInputMap(JComponent.WHEN_FOCUSED),
-                        "selectNextRow",
+                        ListActions.Down.ID,
                         KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
 
     popup.addListSelectionListener(new ListSelectionListener() {
@@ -188,13 +191,12 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                       List<V> variants,
                                                                       XDebugSession session,
                                                                       Editor editor) {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager highlightManager = HighlightManager.getInstance(session.getProject());
 
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
     editor.putUserData(SMART_STEP_INPLACE_DATA, data);
 
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
     for (SmartStepData.VariantInfo info : data.myVariants) {
       TextRange range = info.myVariant.getHighlightRange();
@@ -202,7 +204,9 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
         highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes,
                                                 HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters, null);
-        hyperlinkSupport.createHyperlink(highlighters.get(0), project -> data.stepInto(info));
+        RangeHighlighter highlighter = highlighters.get(0);
+        hyperlinkSupport.createHyperlink(highlighter, project -> data.stepInto(info));
+        data.myHighlighters.add(highlighter);
       }
     }
 
@@ -258,7 +262,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     private final XDebugSession mySession;
     private final Editor myEditor;
     private VariantInfo myCurrentVariant;
-    private RangeHighlighter myCurrentVariantHl;
+    private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
     SmartStepData(final XSmartStepIntoHandler<V> handler, List<V> variants, final XDebugSession session, Editor editor) {
       myHandler = handler;
@@ -316,21 +320,17 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     void select(VariantInfo variant) {
-      HighlightManager highlightManager = HighlightManager.getInstance(mySession.getProject());
+      setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
       myCurrentVariant = variant;
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      attributes = attributes.clone();
-      attributes.setEffectType(EffectType.ROUNDED_BOX);
-      attributes.setEffectColor(Color.RED);
-      if (myCurrentVariantHl != null) {
-        highlightManager.removeSegmentHighlighter(myEditor, myCurrentVariantHl);
+      setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_SELECTION);
+    }
+
+    private void setCurrentVariantHighlighterAttributes(TextAttributesKey attributes) {
+      int index = myVariants.indexOf(myCurrentVariant);
+      if (index != -1) {
+        ((RangeHighlighterEx)myHighlighters.get(index))
+          .setTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributes));
       }
-      List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
-      TextRange range = variant.myVariant.getHighlightRange();
-      highlightManager.addOccurrenceHighlight(myEditor, range.getStartOffset(), range.getEndOffset(), attributes,
-                                              HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters, null);
-      myCurrentVariantHl = ContainerUtil.getFirstItem(highlighters);
     }
 
     void stepInto(VariantInfo variant) {

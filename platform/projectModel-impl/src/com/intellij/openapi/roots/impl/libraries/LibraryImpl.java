@@ -83,8 +83,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
     if (from.myKind != null && from.myProperties != null) {
       myProperties = myKind.createDefaultProperties();
-      //noinspection unchecked
-      myProperties.loadState(from.myProperties.getState());
+      Object state = from.myProperties.getState();
+      if (state != null) {
+        //noinspection unchecked
+        myProperties.loadState(state);
+      }
     }
     for (OrderRootType rootType : getAllRootTypes()) {
       final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);

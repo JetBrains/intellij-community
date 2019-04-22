@@ -15,39 +15,21 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRebaseUtils;
-import git4idea.rebase.GitSelectRootDialog;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static git4idea.GitUtil.getRepositoryManager;
-import static git4idea.GitUtil.hasGitRepositories;
 
-public abstract class GitAbstractRebaseAction extends DumbAwareAction {
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-    Project project = e.getProject();
-    if (project == null || !hasGitRepositories(project)) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      e.getPresentation().setEnabledAndVisible(hasRebaseInProgress(project));
-    }
+public abstract class GitAbstractRebaseAction extends GitOperationActionBase {
+  protected GitAbstractRebaseAction() {
+    super(Repository.State.REBASING);
   }
 
   @Override
@@ -62,13 +44,11 @@ public abstract class GitAbstractRebaseAction extends DumbAwareAction {
       });
     }
     else {
-      final GitRepository repositoryToOperate = chooseRepository(project, GitRebaseUtils.getRebasingRepositories(project));
-      if (repositoryToOperate != null) {
-        performInBackground(repositoryToOperate);
-      }
+      super.actionPerformed(e);
     }
   }
 
+  @Override
   public void performInBackground(@NotNull GitRepository repositoryToOperate) {
     ProgressManager.getInstance().run(new Task.Backgroundable(repositoryToOperate.getProject(), getProgressTitle()) {
       @Override
@@ -79,6 +59,12 @@ public abstract class GitAbstractRebaseAction extends DumbAwareAction {
   }
 
   @NotNull
+  @Override
+  protected String getOperationName() {
+    return "rebase";
+  }
+
+  @NotNull
   protected abstract String getProgressTitle();
 
   protected abstract void performActionForProject(@NotNull Project project, @NotNull ProgressIndicator indicator);
@@ -86,20 +72,4 @@ public abstract class GitAbstractRebaseAction extends DumbAwareAction {
   protected abstract void performActionForRepository(@NotNull Project project,
                                                      @NotNull GitRepository repository,
                                                      @NotNull ProgressIndicator indicator);
-
-  private static boolean hasRebaseInProgress(@NotNull Project project) {
-    return !GitRebaseUtils.getRebasingRepositories(project).isEmpty();
-  }
-
-  @Nullable
-  private GitRepository chooseRepository(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
-    GitRepository firstRepo = assertNotNull(ContainerUtil.getFirstItem(repositories));
-    if (repositories.size() == 1) return firstRepo;
-    return new GitSelectRootDialog(project,
-                                   assertNotNull(getTemplatePresentation().getText()),
-                                   GitBundle.message("rebase.action.message"),
-                                   repositories,
-                                   null)
-      .selectRoot();
-  }
 }

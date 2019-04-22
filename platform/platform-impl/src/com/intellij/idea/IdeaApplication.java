@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,17 +41,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.*;
-
-import static com.intellij.openapi.application.JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY;
 
 public class IdeaApplication {
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
-  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {REQUIRED_PLUGINS_KEY};
+  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY};
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
@@ -244,9 +243,7 @@ public class IdeaApplication {
 
   @Nullable
   public static ApplicationStarter findStarter(@Nullable String key) {
-    Iterator<ApplicationStarter> iterator = ((ExtensionPointImpl<ApplicationStarter>)ApplicationStarter.EP_NAME.getPoint(null)).iterator();
-    while (iterator.hasNext()) {
-      ApplicationStarter starter = iterator.next();
+    for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getIterable(null)) {
       if (starter == null) {
         break;
       }

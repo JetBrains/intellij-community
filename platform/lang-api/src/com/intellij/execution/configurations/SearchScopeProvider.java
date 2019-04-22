@@ -18,31 +18,31 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  * @author Vojtech Krasa
+ * @deprecated Use {@link GlobalSearchScopes}
  */
+@Deprecated
 public class SearchScopeProvider {
 
+  /** @deprecated Use {@link GlobalSearchScopes#executionScope(Collection)}*/
+  @Deprecated
   @NotNull
   public static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
-    if (runProfile instanceof SearchScopeProvidingRunProfile) {
-      GlobalSearchScope scope = ((SearchScopeProvidingRunProfile)runProfile).getSearchScope();
-      if (scope != null) return scope;
-    }
-    return GlobalSearchScope.allScope(project);
+    return GlobalSearchScopes.executionScope(project, runProfile);
   }
 
+  /** @deprecated Use {@link GlobalSearchScopes#executionScope(Collection)}*/
+  @Deprecated
   @Nullable
   public static GlobalSearchScope createSearchScope(@NotNull Module[] modules) {
-    if (modules.length == 0) {
-      return null;
-    }
-    GlobalSearchScope[] scopes =
-      ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleRuntimeScope(module, true));
-    return GlobalSearchScope.union(scopes);
+    return GlobalSearchScopes.executionScope(Arrays.asList(modules));
   }
 }

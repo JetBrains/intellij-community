@@ -43,6 +43,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     super(highlighter, scheme);
   }
 
+  @NotNull
   @Override
   protected SegmentArrayWithData createSegments() {
     return new MappingSegments();
@@ -61,6 +62,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @NotNull
   @Override
   public MappingSegments getSegments() {
     return (MappingSegments)super.getSegments();
@@ -123,6 +125,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @NotNull
   @Override
   protected TokenProcessor createTokenProcessor(final int startIndex) {
     return new TokenProcessor() {
@@ -132,7 +135,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       });
 
       @Override
-      public void addToken(final int i, final int startOffset, final int endOffset, final int data, final IElementType tokenType) {
+      public void addToken(final int i, final int startOffset, final int endOffset, final int data, @NotNull final IElementType tokenType) {
         getSegments().setElementLight(i, startOffset, endOffset, data);
         final Mapper mapper = getMappingDocument(tokenType);
         if (mapper != null) {
@@ -229,11 +232,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
         myRanges[i] = null;
       }
-      for (final Mapper mapper : maxs.keySet()) {
-        mapper.doc.deleteString(mins.get(mapper).intValue(), maxs.get(mapper).intValue());
+      for (final Map.Entry<Mapper, Integer> entry : maxs.entrySet()) {
+        Mapper mapper = entry.getKey();
+        mapper.doc.deleteString(mins.get(mapper).intValue(), entry.getValue().intValue());
       }
 
-      myRanges = remove(myRanges, startIndex, endIndex);
+      removeRange(myRanges, startIndex, endIndex);
       super.remove(startIndex, endIndex);
     }
 
@@ -246,8 +250,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     @NotNull
-    private <T> T[] insert(@NotNull T[] array, @NotNull T[] insertArray, int startIndex, int insertLength) {
-      T[] newArray = LayeredLexerEditorHighlighter.reallocateArray(array, mySegmentCount + insertLength);
+    private MappedRange[] insert(@NotNull MappedRange[] array, @NotNull MappedRange[] insertArray, int startIndex, int insertLength) {
+      MappedRange[] newArray = LayeredLexerEditorHighlighter.reallocateArray(array, mySegmentCount + insertLength);
       if (startIndex < mySegmentCount) {
         System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
       }
@@ -255,13 +259,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return newArray;
     }
 
-    @NotNull
-    private <T> T[] remove(@NotNull T[] array, int startIndex, int endIndex) {
+    private <T> void removeRange(@NotNull T[] array, int startIndex, int endIndex) {
       if (endIndex < mySegmentCount) {
         System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
       }
       Arrays.fill(array, mySegmentCount - (endIndex - startIndex), mySegmentCount, null);
-      return array;
     }
 
     @Override
@@ -365,12 +367,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return LayeredLexerEditorHighlighter.this.getDocument();
     }
 
-    public void resetCachedTextAttributes() {
+    void resetCachedTextAttributes() {
       // after color scheme was changed we need to reset cached attributes
       myAttributesMap.clear();
     }
 
-    public void updateMapping(final int tokenIndex, final MappedRange oldMapping) {
+    void updateMapping(final int tokenIndex, final MappedRange oldMapping) {
       CharSequence tokenText = getTokenText(tokenIndex);
 
       final int start = oldMapping.range.getStartOffset();
@@ -585,13 +587,9 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   @NotNull
-  private static <T> T[] reallocateArray(@NotNull T[] array, int index) {
+  private static MappedRange[] reallocateArray(@NotNull MappedRange[] array, int index) {
     if (index < array.length) return array;
-
-    T[] newArray = ArrayUtil.newArray(ArrayUtil.getComponentType(array), SegmentArray.calcCapacity(array.length, index));
-
-    System.arraycopy(array, 0, newArray, 0, array.length);
-    return newArray;
+    return ArrayUtil.realloc(array, SegmentArray.calcCapacity(array.length, index), MappedRange[]::new);
   }
 
   @Override

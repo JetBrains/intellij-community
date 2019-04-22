@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -95,8 +94,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
 
-    JsonSchemaEnabler[] enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions();
-    if (Arrays.stream(enablers).noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
+    List<JsonSchemaEnabler> enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList();
+    if (enablers.stream().noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
       return WidgetState.HIDDEN;
     }
 
@@ -108,8 +107,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return WidgetState.getDumbModeState("JSON schema service", isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES);
     }
 
-    JsonWidgetSuppressor[] suppressors = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensions();
-    if (Arrays.stream(suppressors).anyMatch(s -> s.suppressSwitcherWidget(file, myProject))) {
+    List<JsonWidgetSuppressor> suppressors = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList();
+    if (suppressors.stream().anyMatch(s -> s.suppressSwitcherWidget(file, myProject))) {
       return WidgetState.HIDDEN;
     }
 

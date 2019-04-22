@@ -6,7 +6,6 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,7 +50,7 @@ import java.util.function.Function;
 /**
  * @author max
  */
-public class PersistentFSImpl extends PersistentFS implements BaseComponent, Disposable {
+public class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
@@ -69,20 +69,13 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
     myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-  }
 
-  @Override
-  public void initComponent() {
     FSRecords.connect();
   }
 
   @Override
-  public void disposeComponent() {
-    performShutdown();
-  }
-
-  @Override
   public void dispose() {
+    performShutdown();
   }
 
   private void performShutdown() {
@@ -158,13 +151,13 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       return current;
     }
 
-    Set<String> toAdd = ContainerUtil.newHashSet(delegateNames);
+    Set<String> toAdd = new THashSet<>(Arrays.asList(delegateNames));
     for (FSRecords.NameId nameId : current) {
       toAdd.remove(nameId.name.toString());
     }
 
     final TIntArrayList childrenIds = new TIntArrayList(current.length + toAdd.size());
-    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithCapacity(current.length + toAdd.size());
+    final List<FSRecords.NameId> nameIds = new ArrayList<>(current.length + toAdd.size());
     for (FSRecords.NameId nameId : current) {
       childrenIds.add(nameId.id);
       nameIds.add(nameId);
@@ -455,7 +448,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     if (child == null) {
       throw new IOException("Cannot create child file '" + file + "' at " + parent.getPath());
     }
-    if (child.getCharset().equals(CharsetToolkit.UTF8_CHARSET)) {
+    if (child.getCharset().equals(StandardCharsets.UTF_8)) {
       Project project = ProjectLocator.getInstance().guessProjectForFile(child);
       EncodingManager encodingManager = project == null ? EncodingManager.getInstance() : EncodingProjectManager.getInstance(project);
       if (encodingManager.shouldAddBOMForNewUtf8File()) {
@@ -965,7 +958,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     final NewVirtualFileSystem delegate = replaceWithNativeFS(getDelegate(parent));
     TIntHashSet parentChildrenIds = new TIntHashSet(createEvents.size());
 
-    List<ChildInfo> childrenAdded = getOrCreateChildInfos(parent, createEvents, VFileCreateEvent::getChildName, (createEvent, childId) -> {
+    List<ChildInfo> childrenAdded = getOrCreateChildInfos(parent, createEvents, VFileCreateEvent::getChildName, parentChildrenIds, delegate,
+                                                          (createEvent, childId) -> {
       createEvent.resetCache();
       String name = createEvent.getChildName();
       Pair<FileAttributes, String> childData =
@@ -973,7 +967,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       if (childData == null) return null;
       childId = makeChildRecord(parentId, name, childData, delegate);
       return new ChildInfo(childId, name, childData.first, createEvent.getChildren(), createEvent.getSymlinkTarget());
-    }, parentChildrenIds, delegate);
+    });
     FSRecords.updateList(parentId, parentChildrenIds.toArray());
     parent.createAndAddChildren(childrenAdded, false, (__,___)->{});
 
@@ -995,7 +989,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
           VirtualDirectoryImpl directory = queued.first;
           TIntHashSet childIds = new TIntHashSet();
           List<ChildInfo> scannedChildren = Arrays.asList(queued.second);
-          List<ChildInfo> added = getOrCreateChildInfos(directory, scannedChildren, childInfo -> childInfo.name, (childInfo, childId) -> {
+          List<ChildInfo> added = getOrCreateChildInfos(directory, scannedChildren, childInfo -> childInfo.name, childIds, delegate,
+                                                        (childInfo, childId) -> {
             // passed children have no ChildInfo.id, have to create new ones
             if (childId < 0) {
               Pair<FileAttributes, String> childData = getChildData(delegate, directory, childInfo.name, childInfo.attributes, childInfo.symLinkTarget);
@@ -1003,7 +998,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
               childId = makeChildRecord(directory.getId(), childInfo.name, childData, delegate);
             }
             return new ChildInfo(childId, childInfo.name, childInfo.attributes, childInfo.children, childInfo.symLinkTarget);
-          }, childIds, delegate);
+          });
 
           FSRecords.updateList(directory.getId(), childIds.toArray());
           setChildrenCached(directory.getId());
@@ -1026,9 +1021,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   private static <T> List<ChildInfo> getOrCreateChildInfos(@NotNull VirtualDirectoryImpl parent,
                                                            @NotNull Collection<? extends T> createEvents,
                                                            @NotNull Function<? super T, String> nameExtractor,
-                                                           @NotNull PairFunction<? super T, ? super Integer, ? extends ChildInfo> convertor,
                                                            @NotNull TIntHashSet parentChildrenIds,
-                                                           @NotNull NewVirtualFileSystem delegate) {
+                                                           @NotNull NewVirtualFileSystem delegate,
+                                                           @NotNull PairFunction<? super T, ? super Integer, ? extends ChildInfo> convertor) {
     int parentId = parent.getId();
     FSRecords.NameId[] oldNameIds = FSRecords.listAll(parentId);
     int[] oldIds = new int[oldNameIds.length];
@@ -1183,7 +1178,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   @NotNull
   public VirtualFile[] getLocalRoots() {
-    List<VirtualFile> roots = ContainerUtil.newSmartList();
+    List<VirtualFile> roots = new SmartList<>();
 
     for (NewVirtualFile root : myRoots.values()) {
       if (root.isInLocalFileSystem() && !(root.getFileSystem() instanceof TempFileSystem)) {

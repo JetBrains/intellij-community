@@ -42,14 +42,6 @@ import java.util.List;
  * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
  * and provide your own. It's easier to debug, but harder to write.<p>
  *
- * Q: What does the {@link CompletionParameters#getPosition()} return?<br>
- * A: When completion is invoked, the file being edited is first copied (the original file can be accessed from {@link com.intellij.psi.PsiFile#getOriginalFile()}
- * and {@link CompletionParameters#getOriginalFile()}. Then a special 'dummy identifier' string is inserted to the copied file at caret offset (removing the selection).
- * Most often this string is an identifier (see {@link CompletionInitializationContext#DUMMY_IDENTIFIER}).
- * This is usually done to guarantee that there'll always be some non-empty element there, which will be easy to describe via {@link ElementPattern}s.
- * Also a reference can suddenly appear in that position, which will certainly help invoking its {@link PsiReference#getVariants()}.
- * Dummy identifier string can be easily changed in {@link #beforeCompletion(CompletionInitializationContext)} method.<p>
- *
  * Q: How do I get automatic lookup element filtering by prefix?<br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
  * automatically, with prefix taken as the reference text from its start ({@link PsiReference#getRangeInElement()}) to
@@ -150,7 +142,7 @@ public abstract class CompletionContributor {
    * If you want to implement this functionality directly by overriding this method, the following is for you.
    * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
    * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
-   * ensure you call {@link com.intellij.openapi.progress.ProgressManager#checkCanceled()} often enough so that the completion process
+   * ensure you call {@link ProgressManager#checkCanceled()} often enough so that the completion process
    * can be cancelled smoothly when the user begins to type in the editor.
    */
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -201,7 +193,7 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to autoinsert some item (typically - the only one).
+   * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to auto-insert some item (typically - the only one).
    */
   @Nullable
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {

@@ -32,11 +32,8 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
-/**
- * @author AKireyev
- */
 @SuppressWarnings({"SynchronizeOnThis", "NonPrivateFieldAccessedInSynchronizedContext"})
-public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
+public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
   // test-only
@@ -261,9 +258,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
    * so, `next` may return `null` (in this case stop iteration).
    */
+  @Override
   @ApiStatus.Experimental
   @NotNull
-  public Iterator<T> iterator() {
+  public final Iterator<T> iterator() {
     List<T> result = myExtensionsCache;
     if (result == null) {
       synchronized (this) {

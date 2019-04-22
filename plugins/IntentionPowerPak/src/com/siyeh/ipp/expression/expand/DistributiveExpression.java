@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Contract;
@@ -140,6 +141,13 @@ class DistributiveExpression extends ExpandableExpression {
 
   @Nullable
   static DistributiveExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
-    return ExpandUtils.createExpression(parenthesized, (outer, operand) -> new DistributiveExpression(outer, operand), OUTER_OPERATORS);
+    DistributiveExpression expression = ExpandUtils.createExpression(parenthesized, DistributiveExpression::new, OUTER_OPERATORS);
+    if (expression == null) return null;
+    PsiPolyadicExpression polyadicExpression = expression.getExpression();
+    if (polyadicExpression == null || !JavaTokenType.DIV.equals(polyadicExpression.getOperationTokenType())) return expression;
+    PsiExpression operand = expression.getOperand();
+    if (polyadicExpression.getTokenBeforeOperand(operand) != null) return null;
+    if (TypeConversionUtil.isIntegralNumberType(polyadicExpression.getType())) return null;
+    return expression;
   }
 }

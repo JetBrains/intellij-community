@@ -54,11 +54,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private boolean myInitialized;
   private CustomDomChildrenDescriptionImpl myCustomDescription;
 
-  public StaticGenericInfo(Class clazz) {
+  StaticGenericInfo(Class clazz) {
     myClass = clazz;
   }
 
-  public final synchronized boolean buildMethodMaps() {
+  final synchronized boolean buildMethodMaps() {
     if (!myInitialized) {
       final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myClass);
       final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
@@ -118,8 +118,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     return buildMethodMaps();
   }
 
-  @Override
-  public final Invocation createInvocation(final JavaMethod method) {
+  Invocation createInvocation(JavaMethod method) {
     buildMethodMaps();
 
     final JavaMethodSignature signature = method.getSignature();
@@ -142,13 +141,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     if (myCustomDescription != null && method.equals(myCustomDescription.getGetterMethod())) {
-      return new Invocation() {
-        @NotNull
-        @Override
-        public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) {
-          return myCustomDescription.getValues(handler);
-        }
-      };
+      return (handler, args) -> myCustomDescription.getValues(handler);
     }
 
     final Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>> pair = myCompositeCollectionAdditionMethods.get(signature);

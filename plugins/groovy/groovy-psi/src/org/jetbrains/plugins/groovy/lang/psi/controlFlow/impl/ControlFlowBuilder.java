@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -786,9 +786,18 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void processForLoopInitializer(@Nullable GrForClause clause) {
-    GroovyPsiElement initializer = clause instanceof GrTraditionalForClause ? ((GrTraditionalForClause)clause).getInitialization() :
-                                   clause instanceof GrForInClause ? ((GrForInClause)clause).getIteratedExpression() : null;
-    acceptNullable(initializer);
+    if (clause instanceof GrTraditionalForClause) {
+      acceptNullable(((GrTraditionalForClause)clause).getInitialization());
+    }
+    else if (clause instanceof GrForInClause) {
+      GrForInClause forInClause = (GrForInClause)clause;
+      acceptNullable(forInClause.getIteratedExpression());
+      addNodeAndCheckPending(new ReadWriteVariableInstruction(
+        new LoopIteratorVariableDescriptor(forInClause),
+        forInClause,
+        ReadWriteVariableInstruction.WRITE
+      ));
+    }
   }
 
   private void addForLoopBreakingEdge(GrForStatement forStatement, @Nullable GrForClause clause) {
@@ -813,6 +822,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (clause instanceof GrForInClause) {
       GrVariable variable = ((GrForInClause)clause).getDeclaredVariable();
       if (variable != null && myPolicy.isVariableInitialized(variable)) {
+        addNodeAndCheckPending(new ReadWriteVariableInstruction(new LoopIteratorVariableDescriptor((GrForInClause)clause), variable, ReadWriteVariableInstruction.READ));
         addNodeAndCheckPending(new ReadWriteVariableInstruction(createDescriptor(variable), variable, ReadWriteVariableInstruction.WRITE));
       }
     }

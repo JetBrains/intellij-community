@@ -15,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import java.io.*
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 
 object ExecUtil {
   private val hasGkSudo = PathExecLazyValue("gksudo")
@@ -47,7 +46,7 @@ object ExecUtil {
   fun loadTemplate(loader: ClassLoader, templateName: String, variables: Map<String, String>?): String {
     val stream = loader.getResourceAsStream(templateName) ?: throw IOException("Template '$templateName' not found by $loader")
 
-    val template = FileUtil.loadTextAndClose(InputStreamReader(stream, StandardCharsets.UTF_8))
+    val template = FileUtil.loadTextAndClose(InputStreamReader(stream, Charsets.UTF_8))
     if (variables == null || variables.isEmpty()) {
       return template
     }
@@ -67,7 +66,7 @@ object ExecUtil {
   fun createTempExecutableScript(prefix: String, suffix: String, content: String): File {
     val tempDir = File(PathManager.getTempPath())
     val tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true)
-    FileUtil.writeToFile(tempFile, content.toByteArray(StandardCharsets.UTF_8))
+    FileUtil.writeToFile(tempFile, content.toByteArray(Charsets.UTF_8))
     if (!tempFile.setExecutable(true, true)) {
       throw ExecutionException("Failed to make temp file executable: $tempFile")
     }

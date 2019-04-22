@@ -77,7 +77,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return getTestName(true) + ".png";
   }
 
-  protected static void setUniformEditorHighlighter(TextAttributes attributes) {
+  protected static void setUniformEditorHighlighter(@NotNull TextAttributes attributes) {
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }
 
@@ -321,10 +321,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   private static class UniformHighlighter implements EditorHighlighter {
+    @NotNull
     private final TextAttributes myAttributes;
     private Document myDocument;
 
-    private UniformHighlighter(TextAttributes attributes) {
+    private UniformHighlighter(@NotNull TextAttributes attributes) {
       myAttributes = attributes;
     }
 
@@ -381,6 +382,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         return myOffset == myDocument.getTextLength();
       }
 
+      @NotNull
       @Override
       public Document getDocument() {
         return myDocument;

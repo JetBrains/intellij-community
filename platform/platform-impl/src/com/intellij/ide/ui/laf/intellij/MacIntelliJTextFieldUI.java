@@ -38,7 +38,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   @Override
   protected Insets getDefaultMargins() {
     Component c = getComponent();
-    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(1, 5);
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(1, 6);
   }
 
   @Override

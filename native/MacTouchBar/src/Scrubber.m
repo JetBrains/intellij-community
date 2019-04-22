@@ -101,7 +101,9 @@ static const int g_interItemSpacings = 5;
 
 @end
 
-static int _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, void* items, int byteCount) {
+static void _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, void* items, int byteCount) {
+    if (cache == NULL || visibleItems == NULL || items == NULL || byteCount <= 0)
+        return;
     const int prevCacheSize = cache.count;
     const int prevVisibleSize = visibleItems.count;
     const char * p = items;
@@ -188,6 +190,9 @@ void appendScrubberItems(id scrubObj, void* packedItems, int byteCount) {
 
 // NOTE: called from EDT (when update UI)
 void enableScrubberItems(id scrubObj, void* itemIndices, int count, bool enabled) {
+    if (itemIndices == NULL || count <= 0)
+        return;
+
     NSScrubberContainer *container = scrubObj;
     NSScrubber *scrubber = container.view;
     const int sizeInBytes = sizeof(int)*count;
@@ -220,6 +225,9 @@ void enableScrubberItems(id scrubObj, void* itemIndices, int count, bool enabled
 
 // NOTE: called from EDT (when update UI)
 void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show) {
+    if (itemIndices == NULL || count <= 0)
+        return;
+
     NSScrubberContainer * container = scrubObj;
     NSScrubber *scrubber = container.view;
 

@@ -118,8 +118,10 @@ public final class DocumentUtil {
 
   public static boolean isSurrogatePair(@NotNull Document document, int offset) {
     CharSequence text = document.getImmutableCharSequence();
-    if (offset < 0 || (offset + 1) >= text.length()) return false;
-    return Character.isSurrogatePair(text.charAt(offset), text.charAt(offset + 1));
+    return offset >= 0 &&
+           offset + 1 < text.length() &&
+           Character.isHighSurrogate(text.charAt(offset)) &&
+           Character.isLowSurrogate(text.charAt(offset + 1));
   }
 
   public static boolean isInsideSurrogatePair(@NotNull Document document, int offset) {

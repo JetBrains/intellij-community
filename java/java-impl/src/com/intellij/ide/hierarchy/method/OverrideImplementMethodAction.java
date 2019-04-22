@@ -78,14 +78,12 @@ abstract class OverrideImplementMethodAction extends AnAction {
 
     final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)MethodHierarchyBrowserBase.DATA_KEY.getData(dataContext);
     if (methodHierarchyBrowser == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
@@ -97,8 +95,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
       if (canImplementOverride((MethodHierarchyNodeDescriptor)descriptor, methodHierarchyBrowser, true)) {
         if (toOverride > 0) {
           // no mixed actions allowed
-          presentation.setEnabled(false);
-          presentation.setVisible(false);
+          presentation.setEnabledAndVisible(false);
           return;
         }
         toImplement++;
@@ -106,16 +103,14 @@ abstract class OverrideImplementMethodAction extends AnAction {
       else if (canImplementOverride((MethodHierarchyNodeDescriptor)descriptor, methodHierarchyBrowser, false)) {
         if (toImplement > 0) {
           // no mixed actions allowed
-          presentation.setEnabled(false);
-          presentation.setVisible(false);
+          presentation.setEnabledAndVisible(false);
           return;
         }
         toOverride++;
       }
       else {
         // no action is applicable to this node
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
+        presentation.setEnabledAndVisible(false);
         return;
       }
     }

@@ -44,6 +44,8 @@ Var productDir
 Var silentMode
 Var pathEnvVar
 Var requiredDiskSpace
+Var bundledJavaPath
+Var regenerationSharedArchive
 
 ; position of controls for Uninstall Old Installations dialog
 Var control_fields
@@ -326,7 +328,7 @@ Function OnDirectoryPageLeave
   StrCmp $9 "not empty" abort skip_abort
 abort:
   ${LogText} "ERROR: installation dir is not empty: $INSTDIR"
-  MessageBox MB_OK|MB_ICONEXCLAMATION "$(empty_or_upgrade_folder)"
+  MessageBox MB_OK|MB_ICONEXCLAMATION "$INSTDIR is not empty.$\n$(empty_or_upgrade_folder)"
   Abort
 skip_abort:
 FunctionEnd
@@ -658,10 +660,17 @@ update_context_menu:
 download_jre32:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
-  IfErrors associations
+  IfErrors regeneration_shared_archive
   ${LogText} "  download jre32: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
+
+regeneration_shared_archive:
+  ClearErrors
+  ${ConfigRead} "$R1" "regenerationSharedArchive=" $R3
+  IfErrors associations
+  ${LogText} "  regenerationSharedArchive: $R3"
+  StrCpy $regenerationSharedArchive $R3
 
 associations:
   ClearErrors
@@ -1225,8 +1234,8 @@ shortcuts:
   ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
-  StrCmp $R2 1 "" add_to_path
 shortcut_for_exe_64:
+  StrCmp $R2 1 "" add_to_path
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
   ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
@@ -1350,14 +1359,21 @@ skip_ipr:
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "NoRepair" 1
 
-  ; Regenerating the Shared Archives for java x64 and x86 bit.
-  ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
-  IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
+  ; Regenerating the Shared Archive
+  ; https://docs.oracle.com/en/java/javase/11/vm/class-data-sharing.html
+  IfSilent 0 regeneration_shared_archive
+  StrCmp $regenerationSharedArchive "1" 0 skip_regeneration_shared_archive
+regeneration_shared_archive:
+  StrCpy $bundledJavaPath "$INSTDIR\jbr\bin\javaw.exe"
+  IfFileExists $bundledJavaPath do_regeneration_shared_archive 0
+  StrCpy $bundledJavaPath "$INSTDIR\jre64\bin\javaw.exe"
+  IfFileExists $bundledJavaPath 0 skip_regeneration_shared_archive
+do_regeneration_shared_archive:
   ${LogText} ""
-  ${LogText} "Regenerating the Shared Archives for java 64"
-  ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre64\bin\javaw.exe" -Xshare:dump'
+  ${LogText} "Regenerating the Shared Archive using $bundledJavaPath"
+  ExecDos::exec /NOUNLOAD /ASYNC '"$bundledJavaPath" -Xshare:dump'
 
-skip_regeneration_shared_archive_for_java_64:
+skip_regeneration_shared_archive:
   SetOutPath $INSTDIR\bin
 ; set the current time for installation files under $INSTDIR\bin
   ExecDos::exec 'copy "$INSTDIR\bin\*.*s" +,,'
@@ -1498,7 +1514,7 @@ HKLM:
 
 cant_find_installation:
 ; compare installdir with default user location
-  ${UnStrStr} $R0 $INSTDIR $LOCALAPPDATA\${MANUFACTURER}
+  ${UnStrStr} $R0 $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}"
   StrCmp $R0 $INSTDIR HKCU 0
 
 ; compare installdir with default admin location
@@ -1663,17 +1679,23 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
-  ;do not show feedback web page checkbox for EAP builds.
-  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page
+
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
+  StrCmp $R0 "${MUI_PRODUCT}" build_tools 0
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" ""
+  Goto feedback_web_page
+build_tools:
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" "$(confirm_delete_rider_buildtools)"
+  ; do not show feedback web page checkbox for EAP builds.
 feedback_web_page:
+  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page_exists
+feedback_web_page_exists:
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" hide_feedback_checkbox done
 hide_feedback_checkbox:
-    ; do not show feedback web page checkbox through products uninstall.
-    push $R1
-    !insertmacro INSTALLOPTIONS_READ $R1 "DeleteSettings.ini" "Settings" "NumFields"
-    IntOp $R1 $R1 - 1
-    !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Settings" "NumFields" "$R1"
-    pop $R1
+  ; do not show feedback web page checkbox through products uninstall.
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "Text" ""
 done:
   !insertmacro INSTALLOPTIONS_DISPLAY "DeleteSettings.ini"
 FunctionEnd
@@ -1848,17 +1870,28 @@ skip_delete_caches:
     StrCmp $2 "" skip_delete_settings
     StrCpy $config_path $2
     RmDir /r "$config_path"
-;    RmDir /r $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\config
     Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
     Delete "$INSTDIR\bin\idea.properties"
     StrCmp $R2 1 "" skip_delete_settings
     RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
-;    RmDir $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}
 
 skip_delete_settings:
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
+  StrCmp $R0 "${MUI_PRODUCT}" 0 skip_delete_tools
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
+  StrCmp $R3 1 "" skip_delete_tools
+    SetShellVarContext current
+    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 continue_uninstall
+    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
+
+continue_uninstall:
+  StrCmp $baseRegKey "HKLM" 0 skip_delete_tools
+  SetShellVarContext all
+skip_delete_tools:
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
+  Delete "$INSTDIR\jbr\bin\server\classes.jsa"
 
   Push "Complete"
   Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"

@@ -5,8 +5,7 @@ import com.intellij.openapi.util.registry.Registry
 
 class GitCommitRequirements(val includeRootChanges: Boolean = true,
                             val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GIT_CONFIG,
-                            val diffToParentsInMerges: Boolean = false,
-                            val preserveOrder: Boolean = true) {
+                            val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
 
   fun configParameters(): List<String> {
     val result = mutableListOf<String>()
@@ -29,8 +28,11 @@ class GitCommitRequirements(val includeRootChanges: Boolean = true,
     if (diffRenameLimit != DiffRenameLimit.NO_RENAMES) {
       result.add("-M")
     }
-    if (diffToParentsInMerges) {
-      result.add("-m")
+    when (diffInMergeCommits) {
+      DiffInMergeCommits.DIFF_TO_PARENTS -> result.add("-m")
+      DiffInMergeCommits.COMBINED_DIFF -> result.add("-c")
+      DiffInMergeCommits.NO_DIFF -> {
+      }
     }
     return result
   }
@@ -56,6 +58,21 @@ class GitCommitRequirements(val includeRootChanges: Boolean = true,
      * Disable renames detection
      */
     NO_RENAMES
+  }
+
+  enum class DiffInMergeCommits {
+    /**
+     * Do not report changes for merge commits
+     */
+    NO_DIFF,
+    /**
+     * Report combined changes (same as `git log -c`)
+     */
+    COMBINED_DIFF,
+    /**
+     * Report changes to all of the parents (same as `git log -m`)
+     */
+    DIFF_TO_PARENTS
   }
 
   companion object {

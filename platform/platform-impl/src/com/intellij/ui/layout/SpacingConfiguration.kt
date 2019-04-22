@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -24,6 +24,7 @@ fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val dialogLeftRight = JBUI.scale(12)
 
     override val commentVerticalTopGap = JBUI.scale(6)
+    override val indentLevel: Int get() = horizontalGap * 3
   }
 }
 
@@ -72,4 +73,10 @@ interface SpacingConfiguration {
 
   val dialogTopBottom: Int
   val dialogLeftRight: Int
+
+  /**
+   * The size of one indent level (when not overridden by specific control type, e.g. indent of checkbox comment row
+   * is defined by checkbox icon size)
+   */
+  val indentLevel: Int
 }

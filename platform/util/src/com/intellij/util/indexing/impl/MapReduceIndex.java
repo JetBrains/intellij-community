@@ -25,6 +25,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IntForwardIndex;
+import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.ApiStatus;
@@ -57,6 +59,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final ForwardIndexAccessor<Key, Value, ?, Input> myForwardIndexAccessor;
 
   private final ReentrantReadWriteLock myLock = createLock();
+  private final boolean myUseIntForwardIndex;
   private volatile boolean myDisposed;
 
   private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
@@ -92,6 +95,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myForwardIndexMap = forwardIndexMap;
     myForwardIndexAccessor = forwardIndexAccessor;
     myForwardIndex = forwardIndex;
+    myUseIntForwardIndex = forwardIndex instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -276,8 +280,12 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   protected void updateForwardIndex(int inputId, @NotNull Map<Key, Value> data, @Nullable Object forwardIndexData) throws IOException {
     if (myForwardIndex != null) myForwardIndex.putInputData(inputId, data);
     if (myForwardIndexMap != null) {
-      //noinspection unchecked
-      myForwardIndexMap.put(inputId, ((ForwardIndexAccessor)myForwardIndexAccessor).serializeIndexedData(forwardIndexData));
+      if (myUseIntForwardIndex) {
+        ((IntForwardIndex)myForwardIndex).putInt(inputId, (Integer)forwardIndexData);
+      } else {
+        //noinspection unchecked
+        myForwardIndexMap.put(inputId, ((ForwardIndexAccessor)myForwardIndexAccessor).serializeIndexedData(forwardIndexData));
+      }
     }
   }
 
@@ -287,7 +295,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       return myForwardIndex.getDiffBuilder(inputId);
     }
     if (myForwardIndexMap != null) {
-      return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndexMap.get(inputId));
+      if (myUseIntForwardIndex) {
+        return ((IntForwardIndexAccessor)myForwardIndexAccessor).getDiffBuilderFromInt(inputId, ((IntForwardIndex)myForwardIndexMap).getInt(inputId));
+      } else {
+        return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndexMap.get(inputId));
+      }
     }
     return new EmptyInputDataDiffBuilder<>(inputId);
   }

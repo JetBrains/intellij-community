@@ -154,8 +154,11 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
-    return "get".equals(methodExpression.getReferenceName()) &&
-           areElementsEquivalent(ExpressionUtils.getQualifierOrThis(methodExpression), optionalRef);
+    if ("get".equals(methodExpression.getReferenceName())) {
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
+      return qualifier != null && areElementsEquivalent(qualifier, optionalRef);
+    }
+    return false;
   }
 
   @NotNull

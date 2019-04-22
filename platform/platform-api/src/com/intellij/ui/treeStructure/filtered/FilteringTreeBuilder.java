@@ -221,10 +221,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   }
 
   public static void revalidateTree(Tree tree) {
-    tree.invalidate();
-    tree.setRowHeight(tree.getRowHeight() == -1 ? -2 : -1);
-    tree.revalidate();
-    tree.repaint();
+    TreeUtil.invalidateCacheAndRepaint(tree.getUI());
   }
 
 

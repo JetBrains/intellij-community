@@ -12,6 +12,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -219,6 +220,18 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testCaseLabel() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
+  public void testCaseLabelSingle() {
+    doTest(new IntroduceVariableHandler());
+  }
+
+  public void testCaseLabelRuleSingle() {
+    doTest(new IntroduceVariableHandler());
+  }
+
+  public void testCaseLabelRuleExpression() {
+    doTest(new IntroduceVariableHandler());
   }
 
   public void testCaseLabelEnum() {

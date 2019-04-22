@@ -29,7 +29,7 @@ import java.util.Arrays;
 public class JarArtifactFromModulesDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private TextFieldWithBrowseButton myMainClassField;
-  private JComboBox myModuleComboBox;
+  private JComboBox<Module> myModuleComboBox;
   private JLabel myMainClassLabel;
   private TextFieldWithBrowseButton myManifestDirField;
   private JLabel myManifestDirLabel;
@@ -78,7 +78,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     for (Module module : modules) {
       myModuleComboBox.addItem(module);
     }
-    myModuleComboBox.setRenderer(new ModuleListRenderer(myModuleComboBox));
+    myModuleComboBox.setRenderer(new ModuleListRenderer());
     new ComboboxSpeedSearch(myModuleComboBox) {
       @Override
       protected String getElementText(Object element) {
@@ -145,10 +145,6 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   }
 
   private static class ModuleListRenderer extends ListCellRendererWrapper<Module> {
-    ModuleListRenderer(JComboBox comboBox) {
-      super();
-    }
-
     @Override
     public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {
       if (value != null) {

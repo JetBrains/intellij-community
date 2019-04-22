@@ -309,6 +309,7 @@ fun processExtension(processor: PsiScopeProcessor,
                      extension: GradleExtension): Boolean {
   val classHint = processor.getHint(ElementClassHint.KEY)
   val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
+  val shouldProcessProperties = ResolveUtil.shouldProcessProperties(classHint)
   val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
   val placeText = place.text
   val psiElement = psiElement()
@@ -325,7 +326,7 @@ fun processExtension(processor: PsiScopeProcessor,
         if (!processor.execute(methodBuilder, state)) return false
       }
     }
-    if (place.parent is GrReferenceExpression || psiElement.withTreeParent(extensionClosure).accepts(place)) {
+    if (shouldProcessProperties && (place.parent is GrReferenceExpression || psiElement.withTreeParent(extensionClosure).accepts(place))) {
       val variable = GrLightVariable(place.manager, placeText, objectTypeFqn, place)
       place.putUserData(RESOLVED_CODE, true)
       if (!processor.execute(variable, state)) return false

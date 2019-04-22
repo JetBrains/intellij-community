@@ -26,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
-import static com.siyeh.ig.psiutils.ParenthesesUtils.*;
+import static com.siyeh.ig.psiutils.ParenthesesUtils.getParentSkipParentheses;
+import static com.siyeh.ig.psiutils.ParenthesesUtils.stripParentheses;
 
 public class ForCanBeForeachInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -237,8 +238,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
     if (!HardcodedMethodConstants.ITERATOR.equals(initialCallName) && !"listIterator".equals(initialCallName)) {
       return null;
     }
-    final PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(initialMethodExpression);
-    if (qualifier instanceof PsiSuperExpression) {
+    final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(initialMethodExpression);
+    if (qualifier == null || qualifier instanceof PsiSuperExpression) {
       return null;
     }
     final PsiType qualifierType = qualifier.getType();
@@ -609,7 +610,13 @@ public class ForCanBeForeachInspection extends BaseInspection {
       qualifier = ((PsiReferenceExpression)qualifier).getQualifierExpression();
     }
     final PsiVariable target = resolveHelper.resolveReferencedVariable(text, context);
-    return variable != target ? ExpressionUtils.getQualifierOrThis(reference).getText() + "." + text : text;
+    if (variable != target) {
+      PsiExpression effectiveQualifier = ExpressionUtils.getEffectiveQualifier(reference);
+      if (effectiveQualifier != null) {
+        return effectiveQualifier.getText() + "." + text;
+      }
+    }
+    return text;
   }
 
   private static class IteratorNextVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -931,7 +938,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         return;
       }
       final PsiReferenceExpression listLengthExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier = stripParentheses(ExpressionUtils.getQualifierOrThis(listLengthExpression));
+      final PsiExpression qualifier = stripParentheses(ExpressionUtils.getEffectiveQualifier(listLengthExpression));
       if (qualifier == null) {
         return;
       }
@@ -1071,7 +1078,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         return;
       }
       final PsiReferenceExpression methodExpression = initializer.getMethodExpression();
-      final PsiExpression collection = stripParentheses(ExpressionUtils.getQualifierOrThis(methodExpression));
+      final PsiExpression collection = stripParentheses(ExpressionUtils.getEffectiveQualifier(methodExpression));
       if (collection == null) {
         return;
       }

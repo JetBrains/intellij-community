@@ -248,12 +248,12 @@ public class EnvironmentUtil {
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
-      int rv = waitAndTerminateAfter(process);
+      int exitCode = waitAndTerminateAfter(process);
       gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
-      if (rv != 0 || lines.isEmpty()) {
-        throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
+      if (exitCode != 0 || lines.isEmpty()) {
+        throw new Exception("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
       return Pair.create(gobbler.getText(), parseEnv(lines));
     }

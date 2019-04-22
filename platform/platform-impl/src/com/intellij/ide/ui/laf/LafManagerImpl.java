@@ -5,10 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UIThemeProvider;
+import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -63,7 +60,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, BaseComponent {
@@ -106,19 +102,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * Invoked via reflection.
    */
   LafManagerImpl() {
-    List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
-
     ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
+
+    List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
     if (SystemInfo.isMac) {
       lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
     }
     else {
-      if (isIntelliJLafEnabled()) {
-        lafList.add(new IntelliJLookAndFeelInfo());
-      }
-      else {
-        lafList.add(new IdeaLookAndFeelInfo());
-      }
+      lafList.add(new IntelliJLookAndFeelInfo());
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
         if (!"Metal".equalsIgnoreCase(name)
@@ -135,11 +126,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     lafList.add(new DarculaLookAndFeelInfo());
 
 
-    lafList.addAll(UIThemeProvider.EP_NAME.getExtensionList().stream()
-                         .map(UIThemeProvider::createTheme)
-                         .filter(x -> x != null)
-                         .map(UIThemeBasedLookAndFeelInfo::new)
-                         .collect(Collectors.toList()));
+    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getExtensionList()) {
+      UITheme x = provider.createTheme();
+      if (x != null) {
+        lafList.add(new UIThemeBasedLookAndFeelInfo(x));
+      }
+    }
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
     if (!SystemInfo.isMac) {
@@ -154,10 +146,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     myCurrentLaf = getDefaultLaf();
-  }
-
-  private static boolean isIntelliJLafEnabled() {
-    return !Registry.is("idea.4.5.laf.enabled");
   }
 
   @Override
@@ -294,7 +282,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find app L&F: " + appLafName);
     }
 
-    String defaultLafName = isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME;
+    String defaultLafName = IntelliJLaf.class.getName();
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) return laf;
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
@@ -482,14 +470,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     uiDefaults.put("Balloon.error.textInsets", new JBInsets(3, 8, 3, 8).asUIResource());
-    if (Registry.is("ide.tree.ui.experimental")) {
-      uiDefaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
-      uiDefaults.put("Tree.repaintWholeRow", true);
-    }
 
     patchFileChooserStrings(uiDefaults);
 
     patchLafFonts(uiDefaults);
+
+    patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
 
@@ -548,6 +534,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
+  private static void patchTreeUI(UIDefaults defaults) {
+    if (Registry.is("ide.tree.ui.experimental")) {
+      defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
+      defaults.put("Tree.repaintWholeRow", true);
+    }
+    Icon collapsedIcon = defaults.getIcon("Tree.collapsedIcon");
+    if (collapsedIcon == null || collapsedIcon instanceof UIResource) {
+      defaults.put("Tree.collapsedIcon", LafIconLookup.getIcon("treeCollapsed"));
+      defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"));
+    }
+    Icon expandedIcon = defaults.getIcon("Tree.expandedIcon");
+    if (expandedIcon == null || collapsedIcon instanceof UIResource) {
+      defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
+      defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
+    }
+  }
+
   private static void patchHiDPI(UIDefaults defaults) {
     Object prevScaleVal = defaults.get("hidpi.scaleFactor");
     // used to normalize previously patched values
@@ -558,6 +561,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
                                            "Tree.rowHeight",
+                                           "SettingsTree.rowHeight",
                                            "Table.rowHeight",
                                            "List.rowHeight");
 

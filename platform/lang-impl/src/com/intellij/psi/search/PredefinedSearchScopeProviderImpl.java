@@ -11,7 +11,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -33,6 +38,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +49,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
   @NotNull
   @Override
-  public List<SearchScope> getPredefinedScopes(@NotNull final Project project,
-                                               @Nullable final DataContext dataContext,
+  public List<SearchScope> getPredefinedScopes(@NotNull Project project,
+                                               @Nullable DataContext dataContext,
                                                boolean suggestSearchInLibs,
                                                boolean prevSearchFiles,
                                                boolean currentSelection,
@@ -68,15 +74,20 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     result.add(ScratchesSearchScope.getScratchesScope(project));
 
-    final GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
-    if (openFilesScope != GlobalSearchScope.EMPTY_SCOPE) {
-      result.add(openFilesScope);
-    }
-    else if (showEmptyScopes) {
-      result.add(new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.open.files")));
-    }
+    GlobalSearchScope recentFilesScope = recentFilesScope(project, false);
+    ContainerUtil.addIfNotNull(
+      result, recentFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentFilesScope :
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.recent.files")) : null);
+    GlobalSearchScope recentModFilesScope = recentFilesScope(project, true);
+    ContainerUtil.addIfNotNull(
+      result, recentModFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentModFilesScope :
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.recent.modified.files")) : null);
+    GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
+    ContainerUtil.addIfNotNull(
+      result, openFilesScope != GlobalSearchScope.EMPTY_SCOPE ? openFilesScope :
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.open.files")) : null);
 
-    final Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
+    Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
                                       ? FileEditorManager.getInstance(project).getSelectedTextEditor()
                                       : null;
     PsiFile psiFile = selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
@@ -98,7 +109,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
           if (module == null) {
             module = LangDataKeys.MODULE.getData(dataContext);
           }
-          if (module != null && !(ModuleType.get(module) instanceof InternalModuleType)) {
+          if (module != null && !ModuleType.isInternal(module)) {
             result.add(module.getModuleScope());
           }
         }
@@ -227,6 +238,16 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     if (elements.length > 0) {
       result.add(new LocalSearchScope(elements, "Hierarchy '" + name + "' (visible nodes only)"));
     }
+  }
+
+  @NotNull
+  public static GlobalSearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
+    String name = changedOnly ? IdeBundle.message("scope.recent.modified.files") : IdeBundle.message("scope.recent.files");
+    List<VirtualFile> files = changedOnly ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles()) :
+                              JBIterable.from(EditorHistoryManager.getInstance(project).getFileList())
+                                .append(FileEditorManager.getInstance(project).getOpenFiles()).unique().toList();
+
+    return files.isEmpty() ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.filesScope(project, files, name);
   }
 
   @Nullable

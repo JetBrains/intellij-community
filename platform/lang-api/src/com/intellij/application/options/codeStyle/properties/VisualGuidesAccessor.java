@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.*;
+
 public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer>> {
   private final CodeStyleSettings mySettings;
   @Nullable private final Language myLanguage;
@@ -44,10 +46,16 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
 
   @Override
   protected List<Integer> parseString(@NotNull String string) {
-    return ValueListPropertyAccessor.getValueList(string).stream()
+    return getValueList(string).stream()
       .map(s -> safeToInt(s))
       .filter(integer -> integer >= 0)
       .collect(Collectors.toList());
+  }
+
+  @Nullable
+  @Override
+  protected String valueToString(@NotNull List<Integer> value) {
+    return toCommaSeparatedString(value);
   }
 
   private static int safeToInt(@NotNull String s) {

@@ -26,7 +26,7 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
   }
 
   @Override
-  protected void handleInitComponentError(Throwable t, String componentClassName, PluginId pluginId) {
+  protected void handleInitComponentError(@NotNull Throwable t, String componentClassName, PluginId pluginId) {
     if (!myHandlingInitComponentError) {
       myHandlingInitComponentError = true;
       try {

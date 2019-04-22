@@ -1,11 +1,9 @@
 <idea-plugin>
   <project-components>
     <component>
-      <interface-class>com.intellij.debugger.ui.DebuggerPanelsManager</interface-class>
       <implementation-class>com.intellij.debugger.ui.DebuggerPanelsManager</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.debugger.impl.HotSwapManager</interface-class>
       <implementation-class>com.intellij.debugger.impl.HotSwapManager</implementation-class>
     </component>
     <component>

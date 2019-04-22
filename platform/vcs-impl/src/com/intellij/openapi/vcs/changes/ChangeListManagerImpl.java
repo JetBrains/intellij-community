@@ -70,7 +70,6 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
@@ -344,6 +343,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+
+  /**
+   * @deprecated will be removed with idea-level ignores. Excludes will be added to ignore file in {@link VcsIgnoreFilesChecker}
+   */
+  @Deprecated
   void convertExcludedToIgnored() {
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       for (String url : policy.getExcludeUrlsForProject()) {
@@ -492,58 +496,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUpdater.schedule();
   }
 
-  private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
-    final Set<VirtualFile> refreshFiles = new HashSet<>();
-    try {
-      ReadAction.run(() -> {
-        synchronized (myDataLock) {
-          final IgnoredFilesCompositeHolder fileHolder = myComposite.getIgnoredFileHolder();
-
-          for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
-            final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope)iterator.next();
-            final VcsDirtyScopeModifier modifier = scope.getModifier();
-            if (modifier == null) continue;
-
-            fileHolder.notifyVcsStarted(scope.getVcs());
-
-            filterOutIgnoredFiles(modifier.getDirtyFilesIterator(), fileHolder, refreshFiles);
-            filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(), fileHolder, refreshFiles);
-
-            modifier.recheckDirtyKeys();
-
-            if (scope.isEmpty()) {
-              iterator.remove();
-            }
-          }
-        }
-      });
-    }
-    catch (ProcessCanceledException ignore) {
-    }
-    catch (Exception | AssertionError ex) {
-      LOG.error(ex);
-    }
-    for (VirtualFile file : refreshFiles) {
-      myFileStatusManager.fileStatusChanged(file);
-    }
-  }
-
-  private void filterOutIgnoredFiles(Iterator<? extends FilePath> iterator,
-                                     IgnoredFilesCompositeHolder fileHolder,
-                                     Set<? super VirtualFile> refreshFiles) {
-    while (iterator.hasNext()) {
-      VirtualFile file = iterator.next().getVirtualFile();
-      if (file != null && isPotentiallyIgnoredFile(file)) {
-        AbstractVcs vcs = VcsUtil.getVcsFor(myProject, file);
-        if (vcs != null) {
-          iterator.remove();
-          fileHolder.addFile(vcs, file);
-          refreshFiles.add(file);
-        }
-      }
-    }
-  }
-
   private void updateImmediately() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (!vcsManager.hasActiveVcss()) return;
@@ -597,10 +549,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         boolean takeChanges;
         synchronized (myDataLock) {
           takeChanges = myUpdateException == null;
-        }
-        if (takeChanges) {
-          // update vcs ignored files
-          updateIgnoredFiles(dataHolder.getComposite());
         }
 
         // for the case of project being closed we need a read action here -> to be more consistent
@@ -664,13 +612,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }, indicator);
   }
 
-  private boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
+  private static boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
     if (invalidated == null) return true;
     if (invalidated.isEverythingDirty()) return false;
     if (invalidated.isEmpty()) return true;
 
-    filterOutIgnoredFiles(invalidated.getScopes());
-    return invalidated.isEmpty();
+    return false;
   }
 
   private void iterateScopes(DataHolder dataHolder,
@@ -1413,60 +1360,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     scheduleUnversionedUpdate();
   }
 
-  private void updateIgnoredFiles(FileHolderComposite composite) {
-    final VirtualFileHolder vfHolder = composite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-    final List<VirtualFile> unversionedFiles = vfHolder.getFiles();
-    exchangeWithIgnored(composite, vfHolder, unversionedFiles);
-
-    final VirtualFileHolder vfModifiedHolder = composite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING);
-    final List<VirtualFile> modifiedFiles = vfModifiedHolder.getFiles();
-    exchangeWithIgnored(composite, vfModifiedHolder, modifiedFiles);
-  }
-
-  private void exchangeWithIgnored(FileHolderComposite composite, VirtualFileHolder vfHolder, List<? extends VirtualFile> unversionedFiles) {
-    for (VirtualFile file : unversionedFiles) {
-      if (isPotentiallyIgnoredFile(file)) {
-        AbstractVcs vcs = VcsUtil.getVcsFor(myProject, file);
-        if (vcs != null) {
-          vfHolder.removeFile(file);
-          composite.getIgnoredFileHolder().addFile(vcs, file);
-        }
-      }
-    }
-  }
-
   @NotNull
   @Override
   public IgnoredFileBean[] getFilesToIgnore() {
     return myIgnoredIdeaLevel.getFilesToIgnore();
   }
 
-  @NotNull
-  @Override
-  public Set<IgnoredFileDescriptor> getPotentiallyIgnoredFiles() {
-    return ContainerUtil.unmodifiableOrEmptySet(
-      IgnoredFileProvider.IGNORE_FILE.extensions()
-        .flatMap(provider -> provider.getIgnoredFiles(myProject).stream())
-        .collect(Collectors.toSet())
-    );
-  }
-
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
-    return isPotentiallyIgnoredFile(file);
-  }
-
-  @Override
-  public boolean isPotentiallyIgnoredFile(@NotNull VirtualFile file) {
-    FilePath filePath = VcsUtil.getFilePath(file);
-    return ContainerUtil.exists(IgnoredFileProvider.IGNORE_FILE.getExtensions(), it -> it.isIgnoredFile(myProject, filePath));
-  }
-
-  @Override
-  public boolean isVcsIgnoredFile(@NotNull VirtualFile file) {
-    synchronized (myDataLock) {
-      return myComposite.getIgnoredFileHolder().containsFile(file);
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getIgnoredFileHolder().containsFile(file);
+      }
+    });
   }
 
   public static class DefaultIgnoredFileProvider implements IgnoredFileProvider {

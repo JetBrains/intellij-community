@@ -158,9 +158,9 @@ public class LookupManagerImpl extends LookupManager {
       }
     });
 
-    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     if (items.length > 0) {
-      for (final LookupElement item : items) {
+      CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
+      for (LookupElement item : items) {
         myActiveLookup.addItem(item, matcher);
       }
       myActiveLookup.refreshUi(true, true);

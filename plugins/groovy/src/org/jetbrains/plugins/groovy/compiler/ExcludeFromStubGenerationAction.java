@@ -41,8 +41,7 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
     Presentation presentation = e.getPresentation();
 
     boolean enabled = isEnabled(e);
-    presentation.setEnabled(enabled);
-    presentation.setVisible(enabled);
+    presentation.setEnabledAndVisible(enabled);
   }
 
   private static boolean isEnabled(AnActionEvent e) {

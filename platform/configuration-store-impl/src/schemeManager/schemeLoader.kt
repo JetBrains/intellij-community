@@ -2,11 +2,10 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ConcurrentList
@@ -30,7 +29,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
                                                          private val oldSchemes: ConcurrentList<T>,
                                                          private val preScheduledFilesToDelete: MutableSet<String>,
                                                          private val isDuringLoad: Boolean) {
-  private val filesToDelete = THashSet<String>()
+  private val filesToDelete: MutableSet<String> = THashSet<String>()
 
   private val schemes = oldSchemes.toMutableList()
   private var newSchemesOffset = schemes.size
@@ -56,10 +55,11 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
    */
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
-    schemeManager.filesToDelete.addAll(filesToDelete)
-    schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
-
-
+    if (!filesToDelete.isEmpty() || !preScheduledFilesToDelete.isEmpty()) {
+      LOG.debug { "Schedule to delete: ${filesToDelete.joinToString()} (and preScheduledFilesToDelete: ${preScheduledFilesToDelete.joinToString()})" }
+      schemeManager.filesToDelete.addAll(filesToDelete)
+      schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
+    }
 
     schemeManager.schemeToInfo.putAll(schemeToInfo)
 
@@ -108,7 +108,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
       // is from file with old extension
       if (existingInfo != null && schemeManager.schemeExtension != existingInfo.fileExtension) {
         schemeToInfo.remove(existingScheme)
-        filesToDelete.add(existingInfo.fileName)
+        existingInfo.scheduleDelete(filesToDelete, "from file with old extension")
 
         schemes.removeAt(existingSchemeIndex)
         if (existingSchemeIndex < newSchemesOffset) {
@@ -123,6 +123,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
 
     if (schemeManager.schemeExtension != extension && isFromFileWithNewExtension(existingScheme, fileNameWithoutExtension)) {
       // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
+      LOG.debug { "Schedule to delete: $fileName (reason: extension mismatch)" }
       filesToDelete.add(fileName)
     }
     else {
@@ -146,9 +147,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
       if (element != null) {
-        val digest = getDigest()
-        serializeElementToBinary(element, DigestOutputStream(digest))
-        info.digest = digest.digest()
+        info.digest = element.digest(getDigest())
       }
       info.schemeKey = schemeName
       return info
@@ -206,15 +205,13 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     filesToDelete.remove(fileName)
     preScheduledFilesToDelete.remove(fileName)
   }
-}
 
-internal inline fun useSchemeLoader(executor: (Ref<SchemeLoader<Any, Any>>) -> Unit) {
-  val schemeLoaderRef = Ref<SchemeLoader<Any, Any>>()
-  executor(schemeLoaderRef)
-  val schemeLoader = schemeLoaderRef.get()
-  if (schemeLoader != null) {
-    schemeLoaderRef.set(null)
-    schemeLoader.apply()
+  fun removeUpdatedScheme(changedScheme: MUTABLE_SCHEME) {
+    val index = ContainerUtil.indexOfIdentity(schemes, changedScheme)
+    if (LOG.assertTrue(index >= 0)) {
+      schemes.removeAt(index)
+      schemeToInfo.remove(changedScheme)
+    }
   }
 }
 
@@ -286,18 +283,19 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
 
   fun isDigestEquals(newDigest: ByteArray) = Arrays.equals(digest, newDigest)
 
-  fun scheduleDelete(filesToDelete: MutableSet<String>) {
+  fun scheduleDelete(filesToDelete: MutableSet<String>, reason: String) {
+    LOG.debug { "Schedule to delete: $fileName (reason: $reason)" }
     filesToDelete.add(fileName)
   }
 
   override fun toString() = fileName
 }
 
-internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: Any): VirtualFile {
-  return findChild(fileName) ?: runUndoTransparentWriteAction { createChildData(requestor, fileName) }
+internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageManagerFileWriteRequestor): VirtualFile {
+  return findChild(fileName) ?: runAsWriteActionIfNeeded { createChildData(requestor, fileName) }
 }
 
-internal fun createDir(ioDir: Path, requestor: Any): VirtualFile {
+internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   ioDir.createDirectories()
   val parentFile = ioDir.parent
   val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath))

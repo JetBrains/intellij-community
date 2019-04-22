@@ -4,12 +4,11 @@ public class NotRaw<T> {
 
 class Raw extends NotRaw {
     void foo() {
-        Object result;
+        Object o;
         Object tt = null;
         if ( null == null) {
-            result = null;
+            o = null;
         }           else
-            result = null;
-        Object o = result;
+            o = null;
     }
 }

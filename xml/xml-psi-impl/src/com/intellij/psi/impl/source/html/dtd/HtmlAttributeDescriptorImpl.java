@@ -20,6 +20,9 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author Maxim.Mossienko
@@ -78,6 +81,12 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   @Override
   public PsiElement getDeclaration() {
     return delegate.getDeclaration();
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiElement> getDeclarations() {
+    return delegate.getDeclarations();
   }
 
   @Override

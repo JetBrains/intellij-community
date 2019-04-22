@@ -141,7 +141,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SMART_END_ACTION = true;
   public boolean JAVADOC_GENERATE_CLOSING_TAG = true;
 
-  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED;
+  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED = true;
 
   public boolean AUTOINSERT_PAIR_BRACKET = true;
   public boolean AUTOINSERT_PAIR_QUOTE = true;
@@ -179,7 +179,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
 
-  public boolean TAB_EXITS_BRACKETS_AND_QUOTES;
+  public boolean TAB_EXITS_BRACKETS_AND_QUOTES = true;
 
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings

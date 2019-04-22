@@ -25,7 +25,10 @@ public class PluginManagerConfigurableProxy
   private final SearchableConfigurable myConfigurable;
 
   public PluginManagerConfigurableProxy() {
-    if (Registry.is("show.new.plugin.page", false)) {
+    if (Registry.is("show.new.layout.plugin.page", false)) {
+      myConfigurable = new PluginManagerConfigurableNewLayout();
+    }
+    else if (Registry.is("show.new.plugin.page", false)) {
       myConfigurable = new PluginManagerConfigurableNew();
     }
     else {
@@ -130,8 +133,8 @@ public class PluginManagerConfigurableProxy
   }
 
   public void select(@NotNull IdeaPluginDescriptor... descriptors) {
-    if (myConfigurable instanceof PluginManagerConfigurableNew) {
-      ((PluginManagerConfigurableNew)myConfigurable).select(descriptors);
+    if (myConfigurable instanceof PluginManagerConfigurableInfo) {
+      ((PluginManagerConfigurableInfo)myConfigurable).select(descriptors);
     }
     else {
       ((PluginManagerConfigurable)myConfigurable).select(descriptors);
@@ -139,8 +142,8 @@ public class PluginManagerConfigurableProxy
   }
 
   public void enable(@NotNull IdeaPluginDescriptor... descriptors) {
-    if (myConfigurable instanceof PluginManagerConfigurableNew) {
-      ((PluginManagerConfigurableNew)myConfigurable).getPluginsModel().changeEnableDisable(descriptors, true);
+    if (myConfigurable instanceof PluginManagerConfigurableInfo) {
+      ((PluginManagerConfigurableInfo)myConfigurable).getPluginModel().changeEnableDisable(descriptors, true);
     }
     else {
       ((InstalledPluginsTableModel)((PluginManagerConfigurable)myConfigurable).getOrCreatePanel().getPluginsModel())

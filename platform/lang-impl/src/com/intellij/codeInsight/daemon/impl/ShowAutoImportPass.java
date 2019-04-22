@@ -26,9 +26,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
@@ -86,7 +88,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return;
 
-    Document document = getDocument();
+    Document document = myEditor.getDocument();
     final List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
       if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.getFixTextRange().containsOffset(caretOffset)) {
@@ -97,7 +99,13 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     List<ReferenceImporter> importers = ReferenceImporter.EP_NAME.getExtensionList();
     for (HighlightInfo info : infos) {
+      for (HintAction action : extractHints(info)) {
+        if (action.isAvailable(myProject, myEditor, myFile) && action.fixSilently(myEditor)) {
+          break;
+        }
+      }
       for(ReferenceImporter importer: importers) {
+        //noinspection deprecation
         if (importer.autoImportReferenceAt(myEditor, myFile, info.getActualStartOffset())) break;
       }
     }
@@ -124,15 +132,29 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     PsiElement element = myFile.findElementAt(info.startOffset);
     if (element == null || !element.isValid()) return false;
 
-    final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
-    for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {
-      final IntentionAction action = pair.getFirst().getAction();
-      if (action instanceof HintAction && action.isAvailable(myProject, myEditor, myFile)) {
-        return ((HintAction)action).showHint(myEditor);
+    for (HintAction action : extractHints(info)) {
+      if (action.isAvailable(myProject, myEditor, myFile) && action.showHint(myEditor)) {
+        return true;
       }
     }
     return false;
   }
+
+  @NotNull
+  private static List<HintAction> extractHints(@NotNull HighlightInfo info) {
+    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
+    if (list == null) return Collections.emptyList();
+
+    List<HintAction> hintActions = new SmartList<>();
+    for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {
+      IntentionAction action = pair.getFirst().getAction();
+      if (action instanceof HintAction) {
+        hintActions.add((HintAction)action);
+      }
+    }
+    return hintActions;
+  }
+
 
   @NotNull
   public static String getMessage(final boolean multiple, @NotNull String name) {
