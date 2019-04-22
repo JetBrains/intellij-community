@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.icons.AllIcons
@@ -22,16 +22,17 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import java.awt.BorderLayout
 import javax.swing.border.Border
 import javax.swing.tree.DefaultTreeModel
 import kotlin.properties.Delegates
 
-internal class GithubPullRequestChangesComponent(project: Project,
-                                                 projectUiSettings: GithubPullRequestsProjectUISettings
-) : GithubDataLoadingComponent<List<GitCommit>>(), Disposable {
+internal class GithubPullRequestChangesComponent(private val project: Project,
+                                                 private val projectUiSettings: GithubPullRequestsProjectUISettings)
+  : GithubDataLoadingComponent<List<GitCommit>>(), Disposable {
 
-  private val changesBrowser = PullRequestChangesBrowserWithError(project, projectUiSettings)
+  private val changesBrowser = PullRequestChangesBrowserWithError()
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val backgroundLoadingPanel = ProgressStripe(loadingPanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
@@ -43,6 +44,8 @@ internal class GithubPullRequestChangesComponent(project: Project,
     setContent(loadingPanel)
     Disposer.register(this, changesBrowser)
   }
+
+  override fun extractRequest(provider: GithubPullRequestDataProvider) = provider.logCommitsRequest
 
   override fun resetUI() {
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
@@ -79,9 +82,8 @@ internal class GithubPullRequestChangesComponent(project: Project,
 
   override fun dispose() {}
 
-  internal class PullRequestChangesBrowserWithError(project: Project,
-                                                    private val projectUiSettings: GithubPullRequestsProjectUISettings
-  ) : ChangesBrowserBase(project, false, false), ComponentWithEmptyText, Disposable {
+  internal inner class PullRequestChangesBrowserWithError
+    : ChangesBrowserBase(project, false, false), ComponentWithEmptyText, Disposable {
 
     var commits: List<GitCommit> by Delegates.observable(listOf()) { _, _, _ ->
       myViewer.rebuildTree()

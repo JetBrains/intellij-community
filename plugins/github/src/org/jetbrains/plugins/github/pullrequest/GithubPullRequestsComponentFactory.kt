@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeInsight.AutoPopupController
@@ -101,14 +101,13 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       isFocusCycleRoot = true
 
       listSelectionHolder.addSelectionChangeListener(preview) {
-        val dataProvider = listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
-        preview.setPreviewDataProvider(dataProvider)
+        preview.dataProvider = listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
       }
 
       dataLoader.addInvalidationListener(preview) {
         val selection = listSelectionHolder.selectionNumber
         if (selection != null && selection == it) {
-          preview.setPreviewDataProvider(dataLoader.getDataProvider(it))
+          preview.dataProvider = dataLoader.getDataProvider(selection)
         }
       }
     }
