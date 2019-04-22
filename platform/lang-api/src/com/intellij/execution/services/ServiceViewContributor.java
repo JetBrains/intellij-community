@@ -17,4 +17,8 @@ public interface ServiceViewContributor<T> {
 
   @NotNull
   ServiceViewDescriptor getServiceDescriptor(@NotNull T service);
+
+  default boolean alwaysEnabled() {
+    return false;
+  }
 }
