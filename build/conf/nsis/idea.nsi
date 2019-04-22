@@ -1865,8 +1865,11 @@ skip_delete_settings:
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
   StrCmp $R3 1 "" skip_delete_tools
     SetShellVarContext current
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 continue_uninstall
+    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 delete_downloaded_jdk8
     RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
+delete_downloaded_jdk8:
+    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 continue_uninstall
+    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
 
 continue_uninstall:
   StrCmp $baseRegKey "HKLM" 0 skip_delete_tools
