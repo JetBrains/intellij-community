@@ -111,8 +111,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                boolean searchForTextOccurrences,
                                boolean isDeleteTheDeclaration) {
     super(project);
-    myMethod = method;
-    myTransformerChooser = InlineTransformer.getSuitableTransformer(myMethod);
+    myMethod = InlineMethodSpecialization.specialize(method, reference);
+    myTransformerSelector = InlineTransformerSelector.forMethod(myMethod);
     myReference = reference;
     myEditor = editor;
     myInlineThisOnly = isInlineThisOnly;
@@ -773,7 +773,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private PsiSubstitutor getCallSubstitutor(PsiMethodCallExpression methodCall) {
     JavaResolveResult resolveResult = methodCall.getMethodExpression().advancedResolve(false);
-    LOG.assertTrue(myManager.areElementsEquivalent(resolveResult.getElement(), myMethod));
+    if (myMethod.isPhysical()) {
+      // Could be specialized
+      LOG.assertTrue(myManager.areElementsEquivalent(resolveResult.getElement(), myMethod));
+    } 
     if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
       Iterator<PsiTypeParameter> oldTypeParameters = PsiUtil.typeParametersIterator(myMethod);
       Iterator<PsiTypeParameter> newTypeParameters = PsiUtil.typeParametersIterator(myMethodCopy);
