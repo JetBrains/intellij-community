@@ -19,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyBundle.message;
 
@@ -35,6 +37,9 @@ public class AssignTargetAnnotator extends PyAnnotator {
     for (PyExpression expression : node.getRawTargets()) {
       expression.accept(new ExprVisitor(Operation.Assign));
     }
+
+    errorOnUnparenthesizedAssignmentExpression(node.getAssignedValue(),
+                                               "at the top level of the right hand side of an assignment statement");
   }
 
   @Override
@@ -71,6 +76,37 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression target = node.getTarget();
     if (target != null) {
       target.accept(new ExprVisitor(Operation.With));
+    }
+  }
+
+  @Override
+  public void visitPyExpressionStatement(PyExpressionStatement node) {
+    errorOnUnparenthesizedAssignmentExpression(node.getExpression(), "at the top level of an expression statement");
+  }
+
+  @Override
+  public void visitPyNamedParameter(PyNamedParameter node) {
+    errorOnUnparenthesizedAssignmentExpression(node.getDefaultValue(), "at the top level of a function default value");
+  }
+
+  @Override
+  public void visitPyKeywordArgument(PyKeywordArgument node) {
+    errorOnUnparenthesizedAssignmentExpression(node.getValueExpression(), "for the value of a keyword argument in a call");
+  }
+
+  @Override
+  public void visitPyLambdaExpression(PyLambdaExpression node) {
+    errorOnUnparenthesizedAssignmentExpression(node.getBody(), "at the top level of a lambda function");
+  }
+
+  @Override
+  public void visitPyAnnotation(PyAnnotation node) {
+    errorOnUnparenthesizedAssignmentExpression(node.getValue(), "as annotations for arguments, return values and assignments");
+  }
+
+  private void errorOnUnparenthesizedAssignmentExpression(@Nullable PyExpression expression, @NotNull String suffix) {
+    if (expression instanceof PyAssignmentExpression) {
+      getHolder().createErrorAnnotation(expression, "Unparenthesized assignment expressions are prohibited " + suffix);
     }
   }
 

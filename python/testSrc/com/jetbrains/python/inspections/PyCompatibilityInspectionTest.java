@@ -235,6 +235,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-33886
+  public void testAssignmentExpressions() {
+    doTest(LanguageLevel.PYTHON38);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }
