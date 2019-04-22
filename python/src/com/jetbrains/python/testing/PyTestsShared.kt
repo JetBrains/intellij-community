@@ -790,18 +790,18 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     return true
   }
 
-  override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration, context: ConfigurationContext?): Boolean {
-    if (context != null && PyTestConfigurationSelector.EP.extensionList.find { it.isFromContext(configuration, context) } != null) {
+  override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration, context: ConfigurationContext): Boolean {
+    if (PyTestConfigurationSelector.EP.extensionList.find { it.isFromContext(configuration, context) } != null) {
       return true
     }
 
-    val location = context?.location
+    val location = context.location
     if (location is PyTargetBasedPsiLocation) {
       // With derived classes several configurations for same element may exist
       return configuration.isSameAsLocation(location.target, location.metainfo)
     }
 
-    val psiElement = context?.psiLocation ?: return false
+    val psiElement = context.psiLocation ?: return false
     val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration, psiElement) ?: return false
     if (configuration.target != targetForConfig.first) {
       return false

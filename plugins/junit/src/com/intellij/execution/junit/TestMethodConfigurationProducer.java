@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -27,7 +27,7 @@ public class TestMethodConfigurationProducer extends AbstractInClassConfiguratio
 
   @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @Override
-  public boolean isConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull JUnitConfiguration configuration, @NotNull ConfigurationContext context) {
     return super.isConfigurationFromContext(configuration, context);
   }
 }

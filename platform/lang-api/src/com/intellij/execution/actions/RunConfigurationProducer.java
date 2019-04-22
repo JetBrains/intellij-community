@@ -122,11 +122,12 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
 
   /**
    * Checks if the specified configuration was created from the specified context.
+   *
    * @param configuration a configuration instance.
    * @param context       contains the information about a location in the source code.
    * @return true if this configuration was created from the specified context, false otherwise.
    */
-  public abstract boolean isConfigurationFromContext(T configuration, ConfigurationContext context);
+  public abstract boolean isConfigurationFromContext(@NotNull T configuration, @NotNull ConfigurationContext context);
 
   /**
    * When two configurations are created from the same context by two different producers, checks if the configuration created by
