@@ -453,7 +453,7 @@ class EditorModel {
       int targetCaretOffsetInDocument =
         getSymbolOffsetToStartOfPage(indexOfPage, pagesInDocument) + targetCaretPosition.symbolOffsetInPage;
 
-      if (targetCaretOffsetInDocument >= 0 && targetCaretOffsetInDocument < document.getTextLength()) {
+      if (targetCaretOffsetInDocument >= 0 && targetCaretOffsetInDocument <= document.getTextLength()) {
         return targetCaretOffsetInDocument;
       }
       else {
