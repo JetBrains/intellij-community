@@ -281,12 +281,7 @@ class EditorModel {
     update();
   }
 
-  public void setAbsoluteEditorPosition(AbsoluteEditorPosition newAbsoluteEditorPosition) {
-    targetVisiblePosition.copyFrom(newAbsoluteEditorPosition);
-    update();
-  }
-
-  void requestUpdate() {
+  private void requestUpdate() {
     // elimination of duplicates of update() tasks in EDT queue
     if (isUpdateRequested.compareAndSet(false, true)) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -297,7 +292,7 @@ class EditorModel {
   }
 
   @CalledInAwt
-  void update() {
+  private void update() {
     // TODO: 2019-04-05 encapsulate document+pagesInDocumentList ?
 
     if (isNeedToShowCaret) {
@@ -311,7 +306,7 @@ class EditorModel {
       long pageNumber = targetVisiblePosition.pageNumber == 0 ? 0 : targetVisiblePosition.pageNumber - 1;
       Page page = tryGetPageFromCash(pageNumber);
       if (page != null) {
-        setFirstPageIntoEmptyDocument(page);
+        setNextPageIntoDocument(page);
       }
       else {
         requestReadPage(pageNumber);
@@ -659,18 +654,8 @@ class EditorModel {
     }
   }
 
-
-  private Page tryGetNeededPageFromList(long neededPageNumber, List<Page> list) {
-    for (Page page : list) {
-      if (page.getPageNumber() == neededPageNumber) {
-        return page;
-      }
-    }
-    return null;
-  }
-
   // TODO: 2019-04-08 optimize by special data structure
-  private int tryGetIndexOfNeededPageInList(long needPageNumber, List<Page> list) {
+  private static int tryGetIndexOfNeededPageInList(long needPageNumber, List<Page> list) {
     for (int i = 0; i < list.size(); i++) {
       if (list.get(i).getPageNumber() == needPageNumber) {
         return i;
@@ -684,7 +669,7 @@ class EditorModel {
   }
 
   // TODO: 2019-04-08 optimize by special data structure
-  private int getSymbolOffsetToStartOfPage(long indexOfPage, List<Page> list) {
+  private static int getSymbolOffsetToStartOfPage(long indexOfPage, List<Page> list) {
     int offsetToStartSymbolOfPage = 0;
     for (int i = 0; i < indexOfPage; i++) {
       offsetToStartSymbolOfPage += list.get(i).getText().length();
@@ -710,13 +695,6 @@ class EditorModel {
       numbersOfRequestedForReadingPages.remove(pageNumber);
       requestUpdate();
     });
-  }
-
-  private void setFirstPageIntoEmptyDocument(Page page) {
-    pagesInDocument.add(page);
-    runCaretListeningTransparentCommand(
-      () -> WriteCommandAction.runWriteCommandAction(dataProvider.getProject(),
-                                                     () -> document.setText(page.getText())));
   }
 
   private void setNextPageIntoDocument(Page page) {
@@ -794,30 +772,6 @@ class EditorModel {
 
     long numberOfPage2 = pagesInDocument.get(2).getPageNumber();
     return numberOfPage2 == targetVisiblePosition.pageNumber;
-  }
-
-
-  private void normalizePagesInDocumentList_() {
-    int relativeNumberOfVisiblePageInPagesInDocumentList = -1;
-    for (int i = 0; i < pagesInDocument.size(); i++) {
-      if (pagesInDocument.get(i).getPageNumber() == targetVisiblePosition.pageNumber) {
-        relativeNumberOfVisiblePageInPagesInDocumentList = i;
-        break;
-      }
-    }
-
-    if (relativeNumberOfVisiblePageInPagesInDocumentList == -1) {
-      if (!isOkBeginningOfPagesInDocumentList()) {
-        pagesInDocument.clear();
-      }
-      return;
-    }
-
-    // relativeNumberOfVisiblePageInPagesInDocumentList >= 0
-    if (relativeNumberOfVisiblePageInPagesInDocumentList > 2) { //i.e. we have more then 2 invisible pages before visible one
-      int amountOfPagesToRemoveFromBeginningOfDocument = relativeNumberOfVisiblePageInPagesInDocumentList - 2;
-      // TODO: 2019-04-04 DELETE 2 pages from beginning of list
-    }
   }
 
   void resetCaretAndSelection() {
@@ -986,7 +940,7 @@ class EditorModel {
     editor.getComponent().requestFocus();
   }
 
-  public void fireLocalScrollBarValueChanged(int delta) {
+  public void fireLocalScrollBarValueChanged() {
     if (isLocalScrollBarStabilized) {
       reflectLocalScrollBarStateToTargetPosition();
     }

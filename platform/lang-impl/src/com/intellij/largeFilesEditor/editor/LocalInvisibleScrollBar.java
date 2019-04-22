@@ -45,7 +45,7 @@ public class LocalInvisibleScrollBar extends JBScrollBar {
       int oldValue = getValue();
       super.setRangeProperties(newValue, newExtent, newMin, newMax, adjusting);
       int delta = newValue - oldValue;
-      myEditorModel.fireLocalScrollBarValueChanged(delta);
+      myEditorModel.fireLocalScrollBarValueChanged();
     }
   }
 }
