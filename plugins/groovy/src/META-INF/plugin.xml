@@ -49,9 +49,6 @@
     <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="callExpressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
-    <!--suppress DeprecatedClassUsageInspection -->
-    <extensionPoint name="expressionTypeCalculator"
-                    interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator"/>
     <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator"/>
     </extensionPoint>
@@ -175,8 +172,6 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
-    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" order="last"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
