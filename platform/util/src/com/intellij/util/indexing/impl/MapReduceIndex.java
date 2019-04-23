@@ -95,7 +95,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myForwardIndexMap = forwardIndexMap;
     myForwardIndexAccessor = forwardIndexAccessor;
     myForwardIndex = forwardIndex;
-    myUseIntForwardIndex = forwardIndex instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
+    myUseIntForwardIndex = forwardIndexMap instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
+    LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex == forwardIndexAccessor instanceof IntForwardIndexAccessor, "Invalid index configuration");
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -281,7 +282,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     if (myForwardIndex != null) myForwardIndex.putInputData(inputId, data);
     if (myForwardIndexMap != null) {
       if (myUseIntForwardIndex) {
-        ((IntForwardIndex)myForwardIndex).putInt(inputId, (Integer)forwardIndexData);
+        ((IntForwardIndex)myForwardIndexMap).putInt(inputId, (Integer)forwardIndexData);
       } else {
         //noinspection unchecked
         myForwardIndexMap.put(inputId, ((ForwardIndexAccessor)myForwardIndexAccessor).serializeIndexedData(forwardIndexData));
