@@ -125,7 +125,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
       bounds
     }
     else {
-      val expandControlRange = TreeUtil.getExpandControlRange(this, path)
+      val expandControlRange = GuiTestUtilKt.computeOnEdt { TreeUtil.getExpandControlRange(this, path) }
       val mouseZone = JBUI.scale(Registry.intValue("ide.splitter.mouseZone"))
       val isSecond = isTreeSecondComponentInParentSplitter(this)
       val x = expandControlRange?.from ?: x

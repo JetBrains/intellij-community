@@ -38,8 +38,13 @@ class ExtendedButtonFixture(robot: Robot, button: JButton) : JButtonFixture(robo
 
   fun clickUntil(timeout: Timeout = Timeouts.defaultTimeout, isClickSuccessful: ()->Boolean){
     waitUntil("repeat click until it is successful", timeout = timeout){
-      super.click()
-      isClickSuccessful()
+      try {
+        super.click()
+        isClickSuccessful()
+      }
+      catch (ignore: IllegalStateException){
+        true
+      }
     }
   }
 
