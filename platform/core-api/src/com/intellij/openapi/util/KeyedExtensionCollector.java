@@ -153,7 +153,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
       List<T> list = myExplicitExtensions.get(stringKey);
-      return ContainerUtil.notNullize(buildExtensionsFromExtensionPoint(list == null ? null : new ArrayList<>(list), bean -> stringKey.equals(bean.getKey()), extensions));
+      return ContainerUtil.notNullize(buildExtensionsFromExtensionPoint(ContainerUtil.copyList(list), bean -> stringKey.equals(bean.getKey()), extensions));
     }
   }
 
@@ -164,27 +164,32 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     return point == null ? Collections.emptyList() : point.getExtensionList();
   }
 
+  @Nullable
   protected final List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean, @NotNull List<KeyedLazyInstance<T>> extensions) {
     for (KeyedLazyInstance<T> bean : extensions) {
-      if (isMyBean.test(bean)) {
-        final T instance;
-        try {
-          instance = bean.getInstance();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (ExtensionNotApplicableException ignore) {
-          continue;
-        }
-        catch (Exception | LinkageError e) {
-          LOG.error(e);
-          continue;
-        }
-
-        if (result == null) result = new SmartList<>();
-        result.add(instance);
+      if (!isMyBean.test(bean)) {
+        continue;
       }
+
+      final T instance;
+      try {
+        instance = bean.getInstance();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (ExtensionNotApplicableException ignore) {
+        continue;
+      }
+      catch (Exception | LinkageError e) {
+        LOG.error(e);
+        continue;
+      }
+
+      if (result == null) {
+        result = new SmartList<>();
+      }
+      result.add(instance);
     }
     return result;
   }
@@ -247,5 +252,4 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       }
     }
   }
-
 }
