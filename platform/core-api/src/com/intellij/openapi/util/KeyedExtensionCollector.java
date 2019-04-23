@@ -1,8 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -24,9 +20,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
 public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
+  private static final Logger LOG = Logger.getInstance(KeyedExtensionCollector.class);
 
-  private final Map<String, List<T>> myExplicitExtensions = new THashMap<>(); // guarded by lock
+  // guarded by lock
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private Map<String, List<T>> myExplicitExtensions = Collections.emptyMap();
   private final ConcurrentMap<String, List<T>> myCache = ContainerUtil.newConcurrentMap();
 
   @NonNls protected final String lock;
@@ -94,10 +92,13 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   public void addExplicitExtension(@NotNull KeyT key, @NotNull T t) {
     synchronized (lock) {
-      final String skey = keyToString(key);
-      List<T> list = myExplicitExtensions.computeIfAbsent(skey, __ -> new SmartList<>());
+      final String stringKey = keyToString(key);
+      if (myExplicitExtensions == Collections.<String, List<T>>emptyMap()) {
+        myExplicitExtensions = new THashMap<>();
+      }
+      List<T> list = myExplicitExtensions.computeIfAbsent(stringKey, __ -> new SmartList<>());
       list.add(t);
-      myCache.remove(skey);
+      myCache.remove(stringKey);
       myTracker.incModificationCount();
     }
   }
