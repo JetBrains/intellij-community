@@ -24,4 +24,8 @@ class NullArgumentMapping(parameter: PsiParameter) : ArgumentMapping {
     private val singleNullArgument = JustTypeArgument(PsiType.NULL)
     private val singleNullArgumentList = listOf(singleNullArgument)
   }
+
+  override fun highlightApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
+    return expectedTypes.associate { (type, argument) -> argument to ApplicabilityData(type, Applicability.applicable)}
+  }
 }

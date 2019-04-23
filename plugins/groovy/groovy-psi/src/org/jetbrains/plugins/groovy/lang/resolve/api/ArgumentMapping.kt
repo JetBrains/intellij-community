@@ -18,4 +18,6 @@ interface ArgumentMapping {
   val expectedTypes: Iterable<Pair<PsiType, Argument>>
 
   fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability
+
+  fun highlightApplicabilities(substitutor: PsiSubstitutor): Applicabilities
 }
