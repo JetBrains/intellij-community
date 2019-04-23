@@ -263,7 +263,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return filters;
   }
 
-  public static void writeFilters(Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
+  public static void writeFilters(@NotNull Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
     for (ClassFilter filter : filters) {
       Element element = new Element(tagName);
       parentNode.addContent(element);
