@@ -96,7 +96,7 @@ class EditorModel {
     ((EditorEx)editor).getScrollPane().setVerticalScrollBar(myLocalInvisibleScrollBar);
     ((EditorEx)editor).getScrollPane().getVerticalScrollBar().setOpaque(true);
 
-    panelMain = new MyJPanel();
+    panelMain = new JPanel();
     panelMain.setLayout(new BorderLayout());
     panelMain.add(editor.getComponent(), BorderLayout.CENTER);
     panelMain.add(myGlobalScrollBar, BorderLayout.EAST);
@@ -1114,13 +1114,5 @@ class EditorModel {
     void cancelSaving();
 
     void onUndoRedoActionInvoked(boolean isUndo);
-  }
-
-  private class MyJPanel extends JPanel {
-
-    @Override
-    protected void paintChildren(Graphics g) {
-      super.paintChildren(g);
-    }
   }
 }
