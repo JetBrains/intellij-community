@@ -45,6 +45,11 @@ class ExtendedButtonFixture(robot: Robot, button: JButton) : JButtonFixture(robo
       catch (ignore: IllegalStateException){
         true
       }
+      catch (ignore: NullPointerException) {
+        // if button disappears at once after getting the NPE from fest might occur
+        // but it's ok - nothing to wait anymore
+        true
+      }
     }
   }
 
