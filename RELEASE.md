@@ -87,24 +87,14 @@ betas.)
     remove it and then leave the .idea/compiler.xml file in an edited state
     for all developers who open the project.)
 
-    Edit .idea/kotlinc.xml and make sure null assertions are disabled by
-    adding the following lines:
+    Edit .idea/kotlinc.xml and disable assertions in the "additionalArguments"
+    option in "KotlinCompilerSettings":
 
     ```diff
-    diff --git a/.idea/kotlinc.xml b/.idea/kotlinc.xml
-    index 894c2d2f197..8f910907aee 100644
-    --- a/.idea/kotlinc.xml
-    +++ b/.idea/kotlinc.xml
-    @@ -7,8 +7,11 @@
-       <component name="Kotlin2JvmCompilerArguments">
-         <option name="jvmTarget" value="1.8" />
-       </component>
-    +  <component name="KotlinCompilerSettings">
+       <component name="KotlinCompilerSettings">
+    -    <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions" />
     +    <option name="additionalArguments" value="-version -Xno-param-assertions -Xno-call-assertions -Xno-receiver-assertions" />
-    +  </component>
-       <component name="KotlinCommonCompilerArguments">
-         <option name="apiVersion" value="1.1"/>
-         <option name="languageVersion" value="1.1"/>
+       </component>
     ```
 
  8. Turn off CLASS retention in
