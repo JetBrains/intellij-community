@@ -137,11 +137,14 @@ public class PluginManagerConfigurableNewLayout
       storeSelectionTab(index);
     });
 
+    myUpdateAll.setVisible(false);
+
     myTabHeaderComponent.addTab("Marketplace");
     myTabHeaderComponent.addTab(myInstalledTabName = new PluginManagerConfigurableNew.CountTabName(myTabHeaderComponent, "Installed") {
       @Override
       public void setCount(int count) {
         super.setCount(count);
+        myUpdateAll.setEnabled(true);
         myUpdateAll.setVisible(count > 0);
         myUpdateCounter.setText(String.valueOf(count));
         myUpdateCounter.setVisible(count > 0);
@@ -408,7 +411,7 @@ public class PluginManagerConfigurableNewLayout
       @Override
       protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
                                                     @NotNull PluginSearchTextField searchTextField) {
-        SearchPopupController trendingController = new SearchPopupController(searchTextField) {
+        SearchPopupController trendingController = new SearchPopupController(searchTextField, false) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
@@ -444,14 +447,7 @@ public class PluginManagerConfigurableNewLayout
                 return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
-                  Set<String> vendors = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
-                    String vendor = StringUtil.trim(descriptor.getVendor());
-                    if (!StringUtil.isEmptyOrSpaces(vendor)) {
-                      vendors.add(vendor);
-                    }
-                  }
-                  myVendorsSorted = ContainerUtil.sorted(vendors, String::compareToIgnoreCase);
+                  myVendorsSorted = MyPluginModel.getVendors(getPluginRepositories());
                 }
                 return myVendorsSorted;
               case "/repository:":
@@ -598,7 +594,7 @@ public class PluginManagerConfigurableNewLayout
                 // TODO: parser.vendors on server
                 if (!parser.vendors.isEmpty()) {
                   for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
-                    if (parser.vendors.contains(StringUtil.trim(descriptor.getVendor()))) {
+                    if (MyPluginModel.isVendor(descriptor, parser.vendors)) {
                       result.descriptors.add(descriptor);
                     }
                   }
@@ -757,6 +753,8 @@ public class PluginManagerConfigurableNewLayout
           myUpdateAll.setListener(new LinkListener<Object>() {
             @Override
             public void linkSelected(LinkLabel aSource, Object aLinkData) {
+              myUpdateAll.setEnabled(false);
+
               for (CellPluginComponent plugin : downloaded.ui.plugins) {
                 ((NewListPluginComponent)plugin).updatePlugin();
               }
@@ -826,7 +824,7 @@ public class PluginManagerConfigurableNewLayout
       @Override
       protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
                                                     @NotNull PluginSearchTextField searchTextField) {
-        SearchPopupController installedController = new SearchPopupController(searchTextField) {
+        SearchPopupController installedController = new SearchPopupController(searchTextField, false) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
@@ -958,7 +956,7 @@ public class PluginManagerConfigurableNewLayout
             else {
               for (UIPluginGroup uiGroup : myInstalledPanel.getGroups()) {
                 for (CellPluginComponent plugin : uiGroup.plugins) {
-                  if (parser.vendors.contains(StringUtil.trim(plugin.myPlugin.getVendor()))) {
+                  if (MyPluginModel.isVendor(plugin.myPlugin, parser.vendors)) {
                     result.descriptors.add(plugin.myPlugin);
                   }
                 }
@@ -1138,7 +1136,7 @@ public class PluginManagerConfigurableNewLayout
       IdeaPluginDescriptor[] descriptors;
       PluginsGroup group = myPluginModel.getDownloadedGroup();
 
-      if (group == null) {
+      if (group == null || group.ui == null) {
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
         List<IdeaPluginDescriptor> descriptorList = new ArrayList<>();
 

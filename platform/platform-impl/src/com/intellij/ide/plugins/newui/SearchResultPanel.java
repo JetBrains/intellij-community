@@ -67,7 +67,7 @@ public abstract class SearchResultPanel {
   }
 
   private void setEmptyText() {
-    myPanel.getEmptyText().setText("Nothing to show");
+    myPanel.getEmptyText().setText("Nothing found");
   }
 
   public boolean isEmpty() {
