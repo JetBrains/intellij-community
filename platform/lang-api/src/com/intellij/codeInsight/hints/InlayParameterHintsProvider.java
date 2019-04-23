@@ -26,7 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated because it relies on global state and can't specify presentation other than text. Use NewParameterHintsProvider instead.
+ */
+@Deprecated
 public interface InlayParameterHintsProvider {
 
   /**
@@ -95,4 +98,9 @@ public interface InlayParameterHintsProvider {
    * (EditorSettingsExternalizable.isShowParameterNameHints()).
    */
   default boolean canShowHintsWhenDisabled() { return false; }
+
+  /**
+   * @return text of preview, will be used in settings
+   */
+  default String getSettingsPreview() { return null; }
 }

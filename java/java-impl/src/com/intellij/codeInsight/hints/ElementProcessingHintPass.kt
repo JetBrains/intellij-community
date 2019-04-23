@@ -33,15 +33,15 @@ abstract class ElementProcessingHintPass(
 
     if (isAvailable(virtualFile)) {
       val traverser = SyntaxTraverser.psiTraverser(rootElement)
-      traverser.forEach { collectElementHints(it,
-                                              { offset, hint ->
-                                                var hintList = hints.get(offset)
-                                                if (hintList == null) {
-                                                  hintList = SmartList()
-                                                  hints.put(offset, hintList)
-                                                }
-                                                hintList.add(hint)
-                                              })
+      traverser.forEach { collectElementHints(it
+      ) { offset, hint ->
+        var hintList = hints.get(offset)
+        if (hintList == null) {
+          hintList = SmartList()
+          hints.put(offset, hintList)
+        }
+        hintList.add(hint)
+      }
       }
     }
   }

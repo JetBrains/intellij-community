@@ -15,14 +15,14 @@
  */
 package com.intellij.java.codeInsight.daemon.inlays
 
-import com.intellij.codeInsight.daemon.impl.HintRenderer
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 
 class MethodChainHintsTest: LightCodeInsightFixtureTestCase() {
   fun check(@Language("Java") text: String) {
     myFixture.configureByText("A.java", text)
-    myFixture.testInlays({ (it.renderer as HintRenderer).text }, { it.renderer is HintRenderer })
+    myFixture.testInlays({ (it.renderer as PresentationRenderer).presentation.toString() }, { it.renderer is PresentationRenderer })
   }
 
   fun `test plain builder`() {
