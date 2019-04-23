@@ -128,9 +128,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     super.bootstrapPicoContainer(name);
     final MutablePicoContainer picoContainer = getPicoContainer();
 
-    final ProjectStoreClassProvider projectStoreClassProvider =
-      (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
-
     picoContainer.registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
     picoContainer.registerComponent(new ComponentAdapter() {
       private ComponentAdapter myDelegate;
@@ -138,7 +135,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       @NotNull
       private ComponentAdapter getDelegate() {
         if (myDelegate == null) {
-          Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
+          ProjectStoreClassProvider projectStoreClassProvider = ServiceManager.getService(ProjectStoreClassProvider.class);
+          Class<?> storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
           myDelegate = new CachingConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
         }
         return myDelegate;
@@ -155,7 +153,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       }
 
       @Override
-      public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+      public Object getComponentInstance(final PicoContainer container) {
         return getDelegate().getComponentInstance(container);
       }
 
