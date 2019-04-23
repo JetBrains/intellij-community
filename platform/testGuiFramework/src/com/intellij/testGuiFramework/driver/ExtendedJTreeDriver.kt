@@ -6,9 +6,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.cellReader.ProjectTreeCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.*
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.JBUI
@@ -210,7 +212,24 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     step("if path is not expanded"){
       if (tree.isExpanded(treePath).not())
         step("... then expand it") {
-          tree.toggleCell(info.expandPoint, info.toggleClickCount)
+          GuiTestUtilKt.computeOnEdt {
+            TreeUtil.promiseExpand(tree) { path ->
+              val pathAsList = path.path.asList()
+              val pathMatches = (0..pathAsList.lastIndex)
+                .mapNotNull { pathAsList.subList(it, pathAsList.size) }
+                .any { subPath: List<Any> ->
+                  subPath.zip(treePath.path).all {
+                    it.first.toString().contains(it.second.toString(), true)
+                  }
+                }
+              if (!pathMatches) {
+                TreeVisitor.Action.SKIP_CHILDREN
+              }
+              else {
+                TreeVisitor.Action.CONTINUE
+              }
+            }.blockingGet(Timeouts.minutes01.duration().toInt())
+          }
         }
     }
   }
@@ -263,8 +282,8 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     stringPath
       .list2tree()
       .forEach {
-        path = ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(predicate, it)
-        expandPath(tree, path)
+        path = step("Find partial path for partial list $it") { ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(predicate, it) }
+        step("Expand partial path ${path.path.toList()}") { expandPath(tree, path) }
       }
     return path
   }
