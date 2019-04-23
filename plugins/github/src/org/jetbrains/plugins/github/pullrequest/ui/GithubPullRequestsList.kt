@@ -76,7 +76,9 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
     private val stateIcon = JLabel()
     private val title = JLabel()
     private val info = JLabel()
-    private val labels = JPanel(FlowLayout(FlowLayout.LEFT, 4, 0))
+    private val labels = JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.X_AXIS)
+    }
     private val assignees = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.X_AXIS)
     }
@@ -130,7 +132,10 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
       }
       labels.apply {
         removeAll()
-        for (label in value.labels.orEmpty()) add(GithubUIUtil.createIssueLabelLabel(label))
+        for (label in value.labels.orEmpty()) {
+          add(GithubUIUtil.createIssueLabelLabel(label))
+          add(Box.createRigidArea(JBDimension(4, 0)))
+        }
       }
       assignees.apply {
         removeAll()
