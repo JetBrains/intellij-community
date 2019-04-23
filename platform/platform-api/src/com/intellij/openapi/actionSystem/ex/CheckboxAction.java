@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,8 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    JCheckBox checkBox = new JCheckBox();
+    JBCheckBox checkBox = new JBCheckBox();
+    checkBox.setFocusable(false);
     updateCustomComponent(checkBox, presentation);
     return createCheckboxComponent(checkBox, this, place);
   }
