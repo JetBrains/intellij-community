@@ -14,7 +14,6 @@
     <lang.commenter language="Bash" implementationClass="com.intellij.bash.BashCommenter"/>
     <lang.quoteHandler language="Bash" implementationClass="com.intellij.bash.BashQuoteHandler"/>
     <backspaceHandlerDelegate implementation="com.intellij.bash.BashBackspaceHandler"/>
-    <lineIndentProvider implementation="com.intellij.bash.BashLineIndentProvider"/>
     <editor.backspaceModeOverride language="Bash" implementationClass="com.intellij.bash.BashBackspaceModeOverride"/>
 
     <lang.psiStructureViewFactory language="Bash" implementationClass="com.intellij.bash.BashStructureViewFactory"/>
@@ -46,6 +45,9 @@
 
     <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.BashTemplateProvider"/>
     <liveTemplateContext implementation="com.intellij.bash.template.BashContextType"/>
+    <lineIndentProvider implementation="com.intellij.bash.formatter.BashLineIndentProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.bash.formatter.BashLanguageCodeStyleSettingsProvider"/>
+
     <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
     <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.bash.BashErrorFilter"/>
