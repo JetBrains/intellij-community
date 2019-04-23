@@ -40,8 +40,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val serverPath: GithubServerPath,
                                                  private val username: String,
                                                  private val repositoryName: String,
-                                                 override val number: Long)
-  : GithubPullRequestDataProvider, Disposable {
+                                                 override val number: Long) : GithubPullRequestDataProvider {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
 
@@ -142,14 +141,6 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     commentsRequestValue.drop()
     filesCommentsRequestValue.drop()
     requestsChangesEventDispatcher.multicaster.commentsRequestChanged()
-  }
-
-  @CalledInAwt
-  override fun dispose() {
-    detailsRequestValue.drop()
-    branchFetchRequestValue.drop()
-    apiCommitsRequestValue.drop()
-    logCommitsRequestValue.drop()
   }
 
   @Throws(ProcessCanceledException::class)
