@@ -18,6 +18,7 @@ import javax.swing.DefaultComboBoxModel
 internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigurable(message("ignored.file.tab.title"),
                                                                                       "project.propVCSSupport.Ignored.Files"), SearchableConfigurable {
   internal var selectedManageIgnoreOption = getIgnoredOption()
+  internal var selectedMarkExcludedAsIgnored = VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED
 
   override fun apply() {
     val modified = isModified
@@ -25,6 +26,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
 
     if (modified) {
       updateIgnoredOption(selectedManageIgnoreOption)
+      VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED = selectedMarkExcludedAsIgnored
     }
   }
 
@@ -43,6 +45,13 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
               ::selectedManageIgnoreOption,
               GrowPolicy.MEDIUM_TEXT
             )
+          }
+        }
+      }
+      titledRow("Excluded directory management policy") {
+        row {
+          cell {
+            checkBox("Add excluded directories to ignore file", ::selectedMarkExcludedAsIgnored)
           }
         }
       }
