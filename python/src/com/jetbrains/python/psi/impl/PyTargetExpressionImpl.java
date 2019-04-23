@@ -22,8 +22,8 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -64,7 +64,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   public PyTargetExpressionImpl(final PyTargetExpressionStub stub) {
-    super(stub, PyElementTypes.TARGET_EXPRESSION);
+    super(stub, PyStubElementTypes.TARGET_EXPRESSION);
   }
 
   public PyTargetExpressionImpl(final PyTargetExpressionStub stub, IStubElementType nodeType) {
@@ -192,6 +192,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
       if (parent instanceof PyWithItem) {
         return getWithItemVariableType((PyWithItem)parent, context);
+      }
+      if (parent instanceof PyAssignmentExpression) {
+        final PyExpression assignedValue = ((PyAssignmentExpression)parent).getAssignedValue();
+        return assignedValue == null ? null : context.getType(assignedValue);
       }
       PyType iterType = getTypeFromIteration(context);
       if (iterType != null) {
@@ -558,6 +562,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     final PyImportElement importElement = PsiTreeUtil.getParentOfType(this, PyImportElement.class);
     if (importElement != null) {
       return importElement.getImportReferenceExpression();
+    }
+    final PyAssignmentExpression assignmentExpression = as(getParent(), PyAssignmentExpression.class);
+    if (assignmentExpression != null) {
+      return assignmentExpression.getAssignedValue();
     }
     return null;
   }

@@ -7,6 +7,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -3369,6 +3370,22 @@ public class PyTypeTest extends PyTestCase {
                    "def main() -> None:\n" +
                    "    assert isinstance(g_b, B)\n" +
                    "    expr = g_b")
+    );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressions() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> {
+        doTest("int", "[expr := 1]");
+        doTest("int", "[expr := (1)]");
+        doTest("int", "expr = (e := 1)");
+        doTest("int", "foo(expr := 1)");
+        doMultiFileTest("Type[A]", "from a import member\nexpr = member");
+
+        assertNull(((PyTargetExpression)parseExpr("(nums := [0 for expr in range(10)])")).findAssignedValue());
+      }
     );
   }
 
