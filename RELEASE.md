@@ -1,11 +1,8 @@
 # Android Studio Release Process
 
-These changes (except for step 1) are typically only done in a
-*release* branch (e.g. studio-1.4-release), and only for release
-candidate and stable builds (not the release branch for milestones and
-betas.)
-
- 1. Make sure the version number is correct in
+ 1. For every build to be released (canary, beta, rc, or final),
+    on the release branch (e.g. studio-1.4-release),
+    make sure the version number is correct in
     ../adt/idea/adt-branding/src/idea/AndroidStudioApplicationInfo.xml
 
     Example:
