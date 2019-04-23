@@ -62,7 +62,7 @@ open class GitDefaultMergeDialogCustomizer(
         }
         if (singleCherryPick != null) {
           append("made by ${XmlStringUtil.escapeString(singleCherryPick.authorName)}<br/>")
-          append("<code>${XmlStringUtil.escapeString(singleCherryPick.commitMessage)}</code>")
+          append("<code>\"${XmlStringUtil.escapeString(singleCherryPick.commitMessage)}\"</code>")
         }
       }
     }
