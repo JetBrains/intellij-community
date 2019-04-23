@@ -118,7 +118,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName) +
-                      " -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine"
+                      " -Dawt.useSystemAAFontSettings=lcd" +
+                      " -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine" +
+                      " -Dsun.tools.attach.tmp.only=true"
       new File(unixDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }
   }
