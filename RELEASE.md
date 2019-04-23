@@ -40,22 +40,6 @@ betas.)
     !define VERSION_MINOR 2
     ```
 
- 5. *If necessary*, update the "selector name"; this is the name used
-    in settings directories (such as ~/.AndroidStudioPreview1.6 on
-    Linux, or ~/Library/Preferences/AndroidStudioPreview1.6 on OSX,
-    etc.
-
-    This directory name used to be hardcoded, but is now derived from
-    the version numbers specified in the branding files. If you want
-    to tweak it, edit
-    build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
-    and tweak the string returned by the getSystemSelector() method.
-
-    The convention we have been using is the following for previews:
-        `AndroidStudioPreviewX.Y`
-    and for release builds:
-        `AndroidStudioX.Y`.
-
  6. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
 
     This is controlled by `platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/VmOptionsGenerator.groovy`:
