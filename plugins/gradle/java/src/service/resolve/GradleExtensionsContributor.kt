@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_TYPE_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 import org.jetbrains.plugins.groovy.lang.resolve.getName
@@ -46,35 +46,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
  * @author Vladislav.Soroka
  */
 class GradleExtensionsContributor : GradleMethodContextContributor {
-
-  override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
-    val extensionsData = getExtensionsFor(closure) ?: return null
-    for (extension in extensionsData.extensions.values) {
-      val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
-      if (extensionClosure.accepts(closure)) {
-        return DelegatesToInfo(TypesUtil.createType(extension.rootTypeFqn, closure), Closure.DELEGATE_FIRST)
-      }
-      val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null } ?: continue
-      val objectType = TypesUtil.createType(objectTypeFqn, closure)
-      val objectClosure = groovyClosure().withAncestor(2, extensionClosure)
-      if (objectClosure.accepts(closure)) {
-        return DelegatesToInfo(objectType, Closure.DELEGATE_FIRST)
-      }
-
-      val objectReference = object : ElementPattern<PsiElement> {
-        override fun getCondition() = null
-        override fun accepts(o: Any?) = false
-        override fun accepts(o: Any?, context: ProcessingContext): Boolean {
-          return o is GrExpression && o.type?.isAssignableFrom(objectType) ?: false
-        }
-      }
-      if (psiElement().withParent(
-        psiElement().withFirstChild(objectReference)).accepts(closure)) {
-        return DelegatesToInfo(objectType, Closure.DELEGATE_FIRST)
-      }
-    }
-    return null
-  }
 
   override fun process(methodCallInfo: MutableList<String>,
                        processor: PsiScopeProcessor,
@@ -109,15 +80,6 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       }
     }
 
-    extensionsData.extensions[name]?.let {
-      if (!processExtensionMethodProperty(processor, state, place, it)) return false
-    }
-
-    for (extension in extensionsData.extensions.values) {
-      if (!processExtension(processor, state, place, extension)) return false
-      if (name == extension.name) break
-    }
-
     if (place.getUserData(RESOLVED_CODE).let { it == null || !it }) {
       if (psiElement().withAncestor(2, groovyClosure().with(object : PatternCondition<GrClosableBlock?>("withDelegatesToInfo") {
         override fun accepts(t: GrClosableBlock, context: ProcessingContext?): Boolean {
@@ -144,7 +106,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
               addOptionalParameter("args", JAVA_UTIL_MAP)
             }
             val closureParam = addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
-            closureParam.putUserData(DELEGATES_TO_KEY, it.typeFqn)
+            closureParam.putUserData(DELEGATES_TO_TYPE_KEY, it.typeFqn)
             closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST)
           }
           if (!processor.execute(methodBuilder, state)) return false
@@ -266,41 +228,6 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       return buffer.toString()
     }
   }
-}
-
-private fun processExtensionMethodProperty(processor: PsiScopeProcessor,
-                                           state: ResolveState,
-                                           place: PsiElement,
-                                           extension: GradleExtension): Boolean {
-  val processMethods = processor.shouldProcessMethods()
-  val processProperties = processor.shouldProcessProperties()
-  if (!processMethods && !processProperties) {
-    return true
-  }
-
-  place.putUserData(RESOLVED_CODE, true)
-
-  val resolveScope = place.resolveScope
-  val javaPsiFacade = JavaPsiFacade.getInstance(place.project)
-  val type = javaPsiFacade.elementFactory.createTypeByFQClassName(extension.rootTypeFqn, resolveScope)
-
-  if (processMethods) {
-    val extensionMethod = GrLightMethodBuilder(place.manager, extension.name).apply {
-      containingClass = javaPsiFacade.findClass(GRADLE_API_PROJECT, resolveScope)
-      returnType = type
-      addParameter("configuration", GROOVY_LANG_CLOSURE)
-    }
-    if (!processor.execute(extensionMethod, state)) {
-      return false
-    }
-  }
-  if (processProperties) {
-    val extensionProperty = GradleExtensionProperty(extension.name, type, place)
-    if (!processor.execute(extensionProperty, state)) {
-      return false
-    }
-  }
-  return true
 }
 
 fun processExtension(processor: PsiScopeProcessor,

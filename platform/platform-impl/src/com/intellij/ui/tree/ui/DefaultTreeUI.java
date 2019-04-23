@@ -210,7 +210,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             g.fillRect(viewportX, bounds.y, viewportWidth, bounds.height);
           }
           int offset = painter.getRendererOffset(control, depth, leaf);
-          painter.paint(g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
+          painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
             int width = viewportX + viewportWidth - insets.left - offset - vsbWidth;

@@ -16,6 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -35,12 +36,13 @@ public abstract class IdFilter {
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
   private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
 
-  public static IdFilter getProjectIdFilter(final Project project, final boolean includeNonProjectItems) {
+  @NotNull
+  public static IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
     Key<CachedValue<IdFilter>> key = includeNonProjectItems ? OUTSIDE_PROJECT : INSIDE_PROJECT;
+    CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilter(project, includeNonProjectItems),
+              ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
     return CachedValuesManager.getManager(project).getCachedValue(project, key,
-                                                                  () -> CachedValueProvider.Result
-                                                                    .create(buildProjectIdFilter(project, includeNonProjectItems),
-                                                                            ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS), false);
+                                                                  provider, false);
   }
 
   @NotNull
@@ -56,8 +58,9 @@ public abstract class IdFilter {
 
     if (!includeNonProjectItems) {
       ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
-    } else {
-      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, null);
+    }
+    else {
+      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
     }
 
     if (LOG.isDebugEnabled()) {

@@ -40,6 +40,10 @@ public class SoftWrapTest extends AbstractEditorTest {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>\nvery long <wrap>text");
   }
 
+  public void testNoWrapInsideFoldRegion() {
+    doTestSoftWraps(10, "start<fold text='.....'>text with space</fold><wrap>end");
+  }
+
   private static final String TAGS_PATTERN = "(<fold(\\stext=\'([^\']*)\')?>)|(</fold>)|<wrap>";
 
   private void doTestSoftWraps(int wrapWidth, String text) {

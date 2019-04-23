@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
 class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
 
-  LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   void 'test clone() return type'() {
     doExpressionTypeTest '''\

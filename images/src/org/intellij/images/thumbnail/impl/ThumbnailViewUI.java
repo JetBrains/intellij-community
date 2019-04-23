@@ -68,7 +68,6 @@ import java.util.List;
 import java.util.*;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
-    private final VirtualFileListener vfsListener = new VFSListener();
     private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
     private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
@@ -107,7 +106,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             cellRenderer = new ThumbnailListCellRenderer();
             ImageComponent imageComponent = cellRenderer.getImageComponent();
 
-            VirtualFileManager.getInstance().addVirtualFileListener(vfsListener);
+            VirtualFileManager.getInstance().addVirtualFileListener(new VFSListener(), this);
 
             Options options = OptionsManager.getInstance().getOptions();
             EditorOptions editorOptions = options.getEditorOptions();
@@ -623,8 +622,6 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
         Options options = OptionsManager.getInstance().getOptions();
         options.removePropertyChangeListener(optionsListener);
-
-        VirtualFileManager.getInstance().removeVirtualFileListener(vfsListener);
 
         list = null;
         cellRenderer = null;

@@ -1139,6 +1139,31 @@ public class JBUI {
                        : UIUtil.getPanelBackground();
       }
     }
+
+    public static class NewClassDialog {
+      @NotNull
+      public static Color searchFieldBackground() {
+        return JBColor.namedColor("NewClass.SearchField.background", 0xffffff);
+      }
+
+      @NotNull
+      public static Color panelBackground() {
+        return JBColor.namedColor("NewClass.Panel.background", 0xf2f2f2);
+      }
+
+      @NotNull
+      public static Color bordersColor() {
+        return JBColor.namedColor(
+          "TextField.borderColor",
+          JBColor.namedColor("Component.borderColor", new JBColor(0xbdbdbd, 0x646464))
+        );
+      }
+
+      @NotNull
+      public static int fieldsSeparatorWidth() {
+        return getInt("NewClass.separatorWidth", JBUI.scale(10));
+      }
+    }
   }
 
 

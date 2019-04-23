@@ -22,8 +22,14 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
   @Override
   Object buildAll(String modelName, Project project) {
     def defaultTestsModel = new DefaultExternalTestsModel()
-    defaultTestsModel.sourceTestMappings = getMapping(project)
+    if (javaPluginIsApplied(project)) {
+      defaultTestsModel.sourceTestMappings = getMapping(project)
+    }
     return defaultTestsModel
+  }
+
+  private static boolean javaPluginIsApplied(Project project) {
+    return project.pluginManager.findPlugin('java-base') != null
   }
 
   private static List<ExternalTestSourceMapping> getMapping(Project project) {

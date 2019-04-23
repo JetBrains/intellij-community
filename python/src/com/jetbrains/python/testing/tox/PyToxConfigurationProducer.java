@@ -57,7 +57,7 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
     final String envName = PyToxTestLocator.getEnvNameFromElement(file);
     if (envName != null) {
       configuration.setRunOnlyEnvs(envName);
-      configuration.setName(String.format("Tox: run on %s", envName));
+      configuration.setName(String.format("tox: run on %s", envName));
       return true;
     }
 
@@ -68,7 +68,7 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
     }
     configuration.setWorkingDirectory(directory.getVirtualFile().getCanonicalPath());
     if (TOX_FILE_NAME.equals(file.getName())) {
-      configuration.setName("Tox");
+      configuration.setName("tox");
       return true;
     }
     return false;

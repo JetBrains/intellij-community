@@ -108,7 +108,7 @@ public class PluginManagerConfigurableNewLayout
   private LinkComponent myMarketplaceSortByAction;
 
   private DefaultActionGroup myInstalledSearchGroup;
-  private Runnable myInstalledSearchCallback;
+  private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
 
   @NotNull
@@ -344,10 +344,10 @@ public class PluginManagerConfigurableNewLayout
             Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
             try {
-              addGroup(groups, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
-              addGroup(groups, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
-              addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
-              addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
+              addGroup(groups, allRepositoriesMap, "Featured", "is_featured_search=true", "/sortBy:featured");
+              addGroup(groups, allRepositoriesMap, "New and Updated", "orderBy=update+date", "/sortBy:updated");
+              addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "/sortBy:downloads");
+              addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "/sortBy:rating");
             }
             catch (IOException e) {
               PluginManagerMain.LOG
@@ -548,8 +548,8 @@ public class PluginManagerConfigurableNewLayout
           List<String> queries = new ArrayList<>();
           new SearchQueryParser.Marketplace(searchTextField.getText()) {
             @Override
-            protected void setSearchQuery(@NotNull String query) {
-              super.setSearchQuery(query);
+            protected void addToSearchQuery(@NotNull String query) {
+              super.addToSearchQuery(query);
               queries.add(query);
             }
 
@@ -858,56 +858,38 @@ public class PluginManagerConfigurableNewLayout
 
         PluginsGroupComponent panel = new PluginsGroupComponent(new PluginListLayout(), new MultiSelectionEventHandler(), myNameListener,
                                                                 PluginManagerConfigurableNewLayout.this.mySearchListener,
-                                                                descriptor -> new NewListPluginComponent(myPluginModel, descriptor,
-                                                                                                         false));
+                                                                descriptor -> new NewListPluginComponent(myPluginModel, descriptor, false));
 
         panel.setSelectionListener(selectionListener);
         PluginManagerConfigurableNew.registerCopyProvider(panel);
 
-        myInstalledSearchCallback = () -> {
-          StringBuilder queryBuilder = new StringBuilder();
-
-          for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
-            InstalledSearchOptionAction optionAction = (InstalledSearchOptionAction)action;
-
-            if (optionAction.myState) {
-              if (queryBuilder.length() > 0) {
-                queryBuilder.append(" ");
-              }
-
-              switch (optionAction.myOption) {
-                case Enabled:
-                  queryBuilder.append("/enabled");
-                  break;
-                case Disabled:
-                  queryBuilder.append("/disabled");
-                  break;
-                case Custom:
-                  queryBuilder.append("/custom");
-                  break;
-                case Bundled:
-                  queryBuilder.append("/bundled");
-                  break;
-                case Invalid:
-                  queryBuilder.append("/invalid");
-                  break;
-                case NeedUpdate:
-                  queryBuilder.append("/outdated");
-                  break;
-                case Deleted:
-                  queryBuilder.append("/uninstalled");
-                  break;
-                case NeedRestart:
-                  queryBuilder.append("/inactive");
-                  break;
-              }
+        myInstalledSearchCallback = updateAction -> {
+          List<String> queries = new ArrayList<>();
+          new SearchQueryParser.InstalledWithVendor(searchTextField.getText()) {
+            @Override
+            protected void addToSearchQuery(@NotNull String query) {
+              super.addToSearchQuery(query);
+              queries.add(query);
             }
+
+            @Override
+            protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
+              super.handleAttribute(name, value, invert);
+              queries.add("/" + name + (value.isEmpty() ? "" : ":" + value));
+            }
+          };
+
+          if (updateAction.myState) {
+            queries.add(updateAction.getQuery());
+          }
+          else {
+            queries.remove(updateAction.getQuery());
           }
 
           try {
             myInstalledSearchSetState = false;
 
-            String query = queryBuilder.toString();
+            String query = StringUtil.join(queries, " ");
             searchTextField.setTextIgnoreEvents(query);
             if (query.isEmpty()) {
               myInstalledTab.hideSearchPanel();
@@ -1079,7 +1061,7 @@ public class PluginManagerConfigurableNewLayout
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myState = state;
-      myInstalledSearchCallback.run();
+      myInstalledSearchCallback.accept(this);
     }
 
     public void setState(@Nullable SearchQueryParser.Installed parser) {
@@ -1113,6 +1095,29 @@ public class PluginManagerConfigurableNewLayout
         case NeedRestart:
           myState = parser.needRestart != null && parser.needRestart;
           break;
+      }
+    }
+
+    @NotNull
+    public String getQuery() {
+      switch (myOption) {
+        case Enabled:
+          return "/enabled";
+        case Disabled:
+          return "/disabled";
+        case Custom:
+          return "/custom";
+        case Bundled:
+          return "/bundled";
+        case Invalid:
+          return "/invalid";
+        case NeedUpdate:
+          return "/outdated";
+        case Deleted:
+          return "/uninstalled";
+        case NeedRestart:
+        default:
+          return "/inactive";
       }
     }
   }

@@ -591,12 +591,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
-      int caretLine = convertor.execute(myEditor.getCaretModel().getLogicalPosition().line);
+      int caretLogicalLine = myEditor.getCaretModel().getLogicalPosition().line;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
         if (!visLinesIterator.startsWithSoftWrap()) {
-          int logLine = convertor.execute(visLinesIterator.getStartLogicalLine());
-          if (logLine >= 0) {
+          int logicalLine = visLinesIterator.getStartLogicalLine();
+          int lineToDisplay = convertor.execute(logicalLine);
+          if (lineToDisplay >= 0) {
             int startY = visLinesIterator.getY();
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
@@ -605,11 +606,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               g.setColor(color);
             }
 
-            if (colorUnderCaretRow != null && caretLine == logLine) {
+            if (colorUnderCaretRow != null && caretLogicalLine == logicalLine) {
               g.setColor(colorUnderCaretRow);
             }
 
-            String s = String.valueOf(logLine + 1);
+            String s = String.valueOf(lineToDisplay + 1);
             int textOffset = isMirrored() ?
                              offset - getLineNumberAreaWidth() - 1 :
                              offset - g.getFontMetrics().stringWidth(s);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Computable;
@@ -8,7 +8,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver;
 import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -19,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 
 /**
  * @author peter

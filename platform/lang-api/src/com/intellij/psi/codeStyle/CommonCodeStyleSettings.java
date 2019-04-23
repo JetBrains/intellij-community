@@ -331,6 +331,7 @@ public class CommonCodeStyleSettings {
   public static final int NEXT_LINE_IF_WRAPPED = 5;
 
   @MagicConstant(intValues = {END_OF_LINE, NEXT_LINE, NEXT_LINE_SHIFTED, NEXT_LINE_SHIFTED2, NEXT_LINE_IF_WRAPPED})
+  @Retention(RetentionPolicy.RUNTIME)
   public @interface BraceStyleConstant {}
 
   @BraceStyleConstant public int BRACE_STYLE = END_OF_LINE;

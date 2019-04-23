@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
@@ -98,7 +99,7 @@ public class JavaCompletionUtil {
     JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, camelHumpMatcher, varType, varKind, true, false);
   }
 
-  public static void putAllMethods(LookupElement item, List<PsiMethod> methods) {
+  public static void putAllMethods(LookupElement item, List<? extends PsiMethod> methods) {
     item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method)));
   }
 
@@ -827,7 +828,15 @@ public class JavaCompletionUtil {
 
       }
     }
-    toInsert.processTail(context.getEditor(), context.getTailOffset());
+    Editor editor = context.getEditor();
+    int tailOffset = context.getTailOffset();
+    int afterTailOffset = toInsert.processTail(editor, tailOffset);
+    int caretOffset = editor.getCaretModel().getOffset();
+    if (afterTailOffset > tailOffset &&
+        tailOffset > caretOffset &&
+        TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caretOffset) > 0) {
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, caretOffset, afterTailOffset - caretOffset);
+    }
     return true;
   }
 

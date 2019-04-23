@@ -94,7 +94,7 @@ public abstract class SearchQueryParser {
       return;
     }
     if (size == 1) {
-      setSearchQuery(words.get(0));
+      addToSearchQuery(words.get(0));
       return;
     }
 
@@ -108,22 +108,23 @@ public abstract class SearchQueryParser {
           handleAttribute(name, words.get(index++), invert);
         }
         else {
-          searchQuery = query;
+          addToSearchQuery(query);
           return;
         }
       }
-      else if (searchQuery == null) {
-        setSearchQuery(name);
-      }
       else {
-        setSearchQuery(query);
-        return;
+        addToSearchQuery(name);
       }
     }
   }
 
-  protected void setSearchQuery(@NotNull String query) {
-    searchQuery = query;
+  protected void addToSearchQuery(@NotNull String query) {
+    if (searchQuery == null) {
+      searchQuery = query;
+    }
+    else {
+      searchQuery += " " + query;
+    }
   }
 
   protected abstract void handleAttribute(@NotNull String name, @NotNull String value, boolean invert);
@@ -244,12 +245,8 @@ public abstract class SearchQueryParser {
         else if (word.startsWith("-#")) {
           handleAttribute(word.substring(2), "", true);
         }
-        else if (searchQuery == null) {
-          searchQuery = word;
-        }
         else {
-          searchQuery = query;
-          break;
+          addToSearchQuery(word);
         }
       }
       parseEnd();
@@ -319,7 +316,7 @@ public abstract class SearchQueryParser {
               vendors.add(words.get(index++));
             }
             else {
-              searchQuery = query;
+              addToSearchQuery(query);
               break;
             }
           }
@@ -327,12 +324,8 @@ public abstract class SearchQueryParser {
             handleAttribute(name.substring(1), "", false);
           }
         }
-        else if (searchQuery == null) {
-          searchQuery = name;
-        }
         else {
-          searchQuery = query;
-          break;
+          addToSearchQuery(name);
         }
       }
 

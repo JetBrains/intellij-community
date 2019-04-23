@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.awt.Component;
 import java.awt.Graphics;
 import javax.swing.Icon;
 
@@ -180,7 +181,7 @@ public class TreeControlPainterTest {
     }
 
     @Override
-    public void paint(@NotNull Graphics g, int x, int y, int width, int height, boolean expanded, boolean selected) {
+    public void paint(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height, boolean expanded, boolean selected) {
     }
   }
 }

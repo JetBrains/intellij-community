@@ -106,6 +106,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         JavaPsiClassReferenceElement item = AllClassesGetter.createLookupItem(anno, JAVA_CLASS_INSERT_HANDLER);
         item.addLookupStrings(getClassNameWithContainers(anno));
         consumer.consume(item);
+        return true;
       });
       for (String name : CompletionUtil.sortMatching(matcher, annoMap.keySet())) {
         if (!ContainerUtil.process(annoMap.get(name), processor)) break;

@@ -282,7 +282,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
 
   private static void waitForTasks(TestTask... tasks) throws InterruptedException {
     for (TestTask task : tasks) {
-      task.waitFor(1, TimeUnit.SECONDS);
+      task.waitFor(1, TimeUnit.MINUTES);
     }
   }
 

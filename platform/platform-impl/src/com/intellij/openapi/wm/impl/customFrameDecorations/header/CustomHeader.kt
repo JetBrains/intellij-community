@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
@@ -97,7 +98,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
                 onClose()
             }
 
-            override fun windowStateChanged(e: java.awt.event.WindowEvent?) {
+            override fun windowStateChanged(e: WindowEvent?) {
                 windowStateChanged()
             }
         }
@@ -216,8 +217,11 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
         val thickness = 1
         private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
+        private val affectsBorders: Boolean = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
         private val activeColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color? ?:
          Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color? ?: menuBarBorderColor
+
+        private val windowsVersion = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
 
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
@@ -227,7 +231,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded() && myActive) {
+            if (isTopNeeded() && myActive && isAffectsBorder()) {
                 g.color = activeColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
@@ -239,9 +243,16 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
+      private fun isAffectsBorder(): Boolean {
+        if(windowsVersion.isNullOrEmpty()) return true
+
+        val winVersion =  windowsVersion.toIntOrNull() ?: return affectsBorders
+        return if(winVersion >= 1809) affectsBorders else true
+      }
+
         override fun getBorderInsets(c: Component): Insets {
             val scale = JBUI.scale(thickness)
-            return Insets(if (isTopNeeded()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
+            return Insets(if (isTopNeeded() && isAffectsBorder()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
         }
 
         override fun isBorderOpaque(): Boolean {

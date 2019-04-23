@@ -539,16 +539,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
       defaults.put("Tree.repaintWholeRow", true);
     }
-    Icon collapsedIcon = defaults.getIcon("Tree.collapsedIcon");
-    if (collapsedIcon == null || collapsedIcon instanceof UIResource) {
+    if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
       defaults.put("Tree.collapsedIcon", LafIconLookup.getIcon("treeCollapsed"));
       defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"));
     }
-    Icon expandedIcon = defaults.getIcon("Tree.expandedIcon");
-    if (expandedIcon == null || collapsedIcon instanceof UIResource) {
+    if (isUnsupported(defaults.getIcon("Tree.expandedIcon"))) {
       defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
       defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
     }
+  }
+
+  /**
+   * @param icon an icon retrieved from L&F
+   * @return {@code true} if an icon is not specified or if it is declared in some Swing L&F
+   * (such icons do not have a variant to paint in selected row)
+   */
+  private static boolean isUnsupported(@Nullable Icon icon) {
+    String name = icon == null ? null : icon.getClass().getName();
+    return name == null || name.startsWith("javax.swing.plaf.") || name.startsWith("com.sun.java.swing.plaf.");
   }
 
   private static void patchHiDPI(UIDefaults defaults) {

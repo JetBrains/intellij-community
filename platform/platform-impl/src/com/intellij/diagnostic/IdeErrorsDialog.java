@@ -271,7 +271,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     if (myAssigneeVisible) {
       myAssigneeCombo = new ComboBox<>();
-      myAssigneeCombo.setRenderer((list, value, i, selected, focused) -> new JBLabel(value == null ? "<none>" : value.getDisplayText()));
+      myAssigneeCombo.setRenderer(SimpleListCellRenderer.create("<none>", Developer::getDisplayText));
       myAssigneeCombo.setPrototypeDisplayValue(new Developer(0, StringUtil.repeatSymbol('-', 30)));
       myAssigneeCombo.addItemListener(e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {

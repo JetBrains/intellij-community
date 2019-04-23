@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.mergeTool;
 
-import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -14,17 +13,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectOpenProcessor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
 @Deprecated
 public interface MergeVersion {
@@ -88,41 +82,11 @@ public interface MergeVersion {
       setDocumentText(myDocument, text, DiffBundle.message("save.merge.result.command.name"), project);
 
       FileDocumentManager.getInstance().saveDocument(myDocument);
-      reportProjectFileChangeIfNeeded(project, getFile());
-    }
-
-    public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
-      if (project != null && file != null && !file.isDirectory() && (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file))) {
-        StoreReloadManager.getInstance().saveChangedProjectFile(file, project);
-      }
-    }
-
-    @Nullable
-    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<? extends VirtualFile> files) {
-      final Set<VirtualFile> vfs = new THashSet<>();
-      for (VirtualFile file : files) {
-        if (file != null && !file.isDirectory()) {
-          if (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
-            vfs.add(file);
-          }
-        }
-      }
-      return vfs.isEmpty() ? null : () -> {
-        StoreReloadManager storeReloadManager = StoreReloadManager.getInstance();
-        for (VirtualFile vf : vfs) {
-          storeReloadManager.saveChangedProjectFile(vf, project);
-        }
-      };
     }
 
     @Override
     public void restoreOriginalContent(final Project project) {
       ApplicationManager.getApplication().runWriteAction(() -> doRestoreOriginalContent(project));
-    }
-
-    public static boolean isProjectFile(VirtualFile file) {
-      final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
-      return importProvider != null && importProvider.lookForProjectsInDirectory();
     }
 
     protected void doRestoreOriginalContent(@Nullable Project project) {

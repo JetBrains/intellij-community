@@ -152,6 +152,7 @@ public class PluginClassLoader extends UrlClassLoader {
 
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
     "kotlin.sequences.Sequence",
+    "kotlin.Lazy",
     "kotlin.Unit",
     "kotlin.Pair",
     "kotlin.Triple",

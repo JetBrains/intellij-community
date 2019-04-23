@@ -227,7 +227,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
 
     @Override
-    public Object getBuildId() {
+    public Object getParentEventId() {
       throw new UnsupportedOperationException();
     }
 

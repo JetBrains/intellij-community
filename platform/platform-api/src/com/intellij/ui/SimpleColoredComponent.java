@@ -109,6 +109,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return new MyIterator();
   }
 
+  @NotNull
+  public ColoredIterator iterator(int fromIndex) {
+    MyIterator iterator = new MyIterator();
+    iterator.myIndex = fromIndex - 1;
+    return iterator;
+  }
+
   @SuppressWarnings("unused")
   public boolean isIconOnTheRight() {
     return myIconOnTheRight;
@@ -859,7 +866,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         else if (attributes.isClickable()) {
           fgColor = ObjectUtils.notNull(attributes.getFgColor(), UIUtil.getLabelForeground());
           Color bg = ObjectUtils.notNull(attributes.getBgColor(), UIUtil.getLabelBackground());
-          drawClickableFrag(g, x1, x2, height, bg);
+          drawClickableFrag(g, x1, x2, height, bg, attributes.isHovered());
         }
         else {
           continue;
@@ -885,15 +892,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     g.fillRect(x, y, width, height);
   }
 
-  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, Color bg) {
+  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, Color bg, boolean hovered) {
     boolean darcula = UIUtil.isUnderDarcula();
     Color c1 = darcula ? bg.brighter() : bg;
     Color c2 = darcula ? bg : bg.darker();
     GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-    g.setPaint(UIUtil.getGradientPaint(x1 + 1, 2, c1, x1 + 1, height - 5, c2));
     RoundRectangle2D.Float shape = new RoundRectangle2D.Float(x1 + 1, 2, x2 - x1 - 2, height - 4, 4, 4);
-    g.fill(shape);
+    if (hovered) {
+      g.setPaint(UIUtil.getGradientPaint(x1 + 1, 2, c1, x1 + 1, height - 5, c2));
+      g.fill(shape);
+    }
     g.setColor(new JBColor(Gray.xCC, new Color(0x757b80)));
     g.draw(shape);
     c.restore();

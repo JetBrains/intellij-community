@@ -144,6 +144,7 @@ public class RefreshWorker {
                               @NotNull TObjectHashingStrategy<String> strategy,
                               @NotNull VirtualDirectoryImpl dir) {
     while (true) {
+      checkCancelled(dir);
       // obtaining directory snapshot
       Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
       if (result == null) return;
@@ -189,6 +190,7 @@ public class RefreshWorker {
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
+        checkCancelled(dir);
         if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
           if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
@@ -206,6 +208,7 @@ public class RefreshWorker {
         }
 
         for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
+          checkCancelled(dir);
           VirtualFile child = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
@@ -229,6 +232,7 @@ public class RefreshWorker {
                                  @NotNull TObjectHashingStrategy<String> strategy,
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
+      checkCancelled(dir);
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
         ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
@@ -263,6 +267,7 @@ public class RefreshWorker {
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
+        checkCancelled(dir);
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
           if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;

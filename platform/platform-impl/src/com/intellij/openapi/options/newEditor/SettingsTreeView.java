@@ -212,7 +212,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (expanded != null) control.paint(g, x, y, getIconWidth(), getIconHeight(), expanded, false);
+        if (expanded != null) control.paint(c, g, x, y, getIconWidth(), getIconHeight(), expanded, false);
       }
     }
   }

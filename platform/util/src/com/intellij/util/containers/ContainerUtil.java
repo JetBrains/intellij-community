@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.IntFunction;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class ContainerUtil extends ContainerUtilRt {
@@ -553,6 +554,27 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure = true)
   public static <T> T getOrElse(@NotNull List<? extends T> elements, int i, T defaultValue) {
     return elements.size() > i ? elements.get(i) : defaultValue;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <U> Iterator<U> mapIterator(@NotNull TIntIterator iterator, @NotNull IntFunction<? extends U> mapper) {
+    return new Iterator<U>() {
+      @Override
+      public boolean hasNext() {
+        return iterator.hasNext();
+      }
+
+      @Override
+      public U next() {
+        return mapper.apply(iterator.next());
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+    };
   }
 
   public static class ImmutableMapBuilder<K, V> {

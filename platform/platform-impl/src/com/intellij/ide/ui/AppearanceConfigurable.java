@@ -546,7 +546,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
   }
 
-  private static class AAListCellRenderer extends JLabel implements ListCellRenderer<AntialiasingType> {
+  private static class AAListCellRenderer extends SimpleListCellRenderer<AntialiasingType> {
     private static final Object SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
     private static final Object GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
@@ -557,7 +557,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends AntialiasingType> list, AntialiasingType value, int i, boolean s, boolean f) {
+    public void customize(JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
       if (value == AntialiasingType.SUBPIXEL) {
         GraphicsUtil.setAntialiasingType(this, SUBPIXEL_HINT);
       }
@@ -574,8 +574,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       }
 
       setText(String.valueOf(value));
-
-      return this;
     }
   }
 }

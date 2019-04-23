@@ -12,7 +12,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 /**
  * @author ven
@@ -131,7 +131,7 @@ public class GroovyPsiManager {
     PsiType type = map.get(key);
     if (type == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-      type = calculator.fun(key);
+      type = calculator.apply(key);
       if (type == null) {
         type = UNKNOWN_TYPE;
       }

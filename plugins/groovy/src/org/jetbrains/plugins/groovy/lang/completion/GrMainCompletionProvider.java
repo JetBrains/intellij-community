@@ -356,7 +356,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
 
       @Override
-      protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
+      protected LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads,
                                                   @NotNull PsiClass containingClass,
                                                   boolean shouldImport) {
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);

@@ -43,7 +43,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author yole
  */
-public class PyBlock implements ASTBlock {
+public class PyBlock implements ASTBlock, ReadOnlyBlockContainer {
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
                                                                       PyElementTypes.DICT_LITERAL_EXPRESSION,
