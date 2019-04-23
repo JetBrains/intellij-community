@@ -105,7 +105,9 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     }
     val clazz = parent.resolveClassFqn(facade, scope)
     if (clazz != null) {
-      return facade.findPackage(qname) ?: PsiPackageImpl(manager, qname)
+      return facade.findPackage(qname) ?: object : PsiPackageImpl(manager, qname) {
+        override fun isValid(): Boolean = !manager.isDisposed
+      }
     }
   }
 
