@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,13 +49,15 @@ public class LightProjectDescriptor {
   public static final String TEST_MODULE_NAME = "light_idea_test_case";
 
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
-    Module module = createMainModule(project);
-    handler.moduleCreated(module);
-    VirtualFile sourceRoot = WriteAction.compute((ThrowableComputable<VirtualFile, Exception>)() -> createSourcesRoot(module));
-    if (sourceRoot != null) {
-      handler.sourceRootCreated(sourceRoot);
-      createContentEntry(module, sourceRoot);
-    }
+    WriteAction.run(() -> {
+      Module module = createMainModule(project);
+      handler.moduleCreated(module);
+      VirtualFile sourceRoot = createSourcesRoot(module);
+      if (sourceRoot != null) {
+        handler.sourceRootCreated(sourceRoot);
+        createContentEntry(module, sourceRoot);
+      }
+    });
   }
 
   @NotNull
