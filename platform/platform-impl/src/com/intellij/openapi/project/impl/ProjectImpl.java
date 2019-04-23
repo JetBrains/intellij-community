@@ -42,9 +42,11 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.*;
-import org.picocontainer.*;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoVisitor;
 
 import javax.swing.*;
 import java.util.List;
@@ -129,17 +131,21 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     final MutablePicoContainer picoContainer = getPicoContainer();
 
     picoContainer.registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
-    picoContainer.registerComponent(new ComponentAdapter() {
-      private ComponentAdapter myDelegate;
+    picoContainer.registerComponent(new AssignableToComponentAdapter() {
+      @Override
+      public String getAssignableToClassName() {
+        return IComponentStore.class.getName();
+      }
+
+      private IComponentStore myResult;
 
       @NotNull
-      private ComponentAdapter getDelegate() {
-        if (myDelegate == null) {
+      private synchronized IComponentStore getDelegate() {
+        if (myResult == null) {
           ProjectStoreClassProvider projectStoreClassProvider = ServiceManager.getService(ProjectStoreClassProvider.class);
-          Class<?> storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new CachingConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
+          myResult = projectStoreClassProvider.createStore(ProjectImpl.this);
         }
-        return myDelegate;
+        return myResult;
       }
 
       @Override
@@ -149,23 +155,20 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
       @Override
       public Class getComponentImplementation() {
-        return getDelegate().getComponentImplementation();
+        return getDelegate().getClass();
       }
 
       @Override
-      public Object getComponentInstance(final PicoContainer container) {
-        return getDelegate().getComponentInstance(container);
+      public Object getComponentInstance(PicoContainer container) {
+        return getDelegate();
       }
 
       @Override
-      public void verify(final PicoContainer container) throws PicoIntrospectionException {
-        getDelegate().verify(container);
+      public void verify(final PicoContainer container) {
       }
 
       @Override
-      public void accept(final PicoVisitor visitor) {
-        visitor.visitComponentAdapter(this);
-        getDelegate().accept(visitor);
+      public void accept(@NotNull PicoVisitor visitor) {
       }
     });
   }
