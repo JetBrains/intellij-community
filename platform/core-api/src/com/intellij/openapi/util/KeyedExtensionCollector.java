@@ -105,15 +105,15 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   public void removeExplicitExtension(@NotNull KeyT key, @NotNull T t) {
     synchronized (lock) {
-      final String skey = keyToString(key);
-      List<T> list = myExplicitExtensions.get(skey);
+      final String stringKey = keyToString(key);
+      List<T> list = myExplicitExtensions.get(stringKey);
       if (list != null) {
         list.remove(t);
         if (list.isEmpty()) {
-          myExplicitExtensions.remove(skey);
+          myExplicitExtensions.remove(stringKey);
         }
       }
-      myCache.remove(skey);
+      myCache.remove(stringKey);
       myTracker.incModificationCount();
     }
   }
@@ -200,10 +200,10 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @Nullable
-  protected List<T> buildExtensionsFromExplicitRegistration(@Nullable List<T> result, Condition<String> isMyBean) {
+  protected List<T> buildExtensionsFromExplicitRegistration(@Nullable List<T> result, @NotNull Predicate<String> isMyBean) {
     for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
       String key = entry.getKey();
-      if (isMyBean.value(key)) {
+      if (isMyBean.test(key)) {
         List<T> list = entry.getValue();
         if (result == null) {
           result = new ArrayList<>(list);
