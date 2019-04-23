@@ -1,0 +1,8 @@
+#!/bin/bash
+
+function sayBye() {
+  echo "Bye"
+}
+
+sayBye
+sayBye

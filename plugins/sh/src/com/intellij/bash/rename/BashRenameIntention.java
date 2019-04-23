@@ -1,11 +1,15 @@
 package com.intellij.bash.rename;
 
+import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -35,52 +39,48 @@ public class BashRenameIntention extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return editor.getProject() != null
+        && editor.getCaretModel().supportsMultipleCarets()
+        && !IncrementalFindAction.SEARCH_DISABLED.get(editor, false);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     List<Caret> carets = editor.getCaretModel().getAllCarets();
     if (carets.size() != 1) return;
-    int offset = carets.get(0).getOffset();
-    TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(),
-        editor.getSelectionModel().getSelectionEnd());
-    TextRange textRange = selectionRange;
-    CharSequence documentText = editor.getDocument().getImmutableCharSequence();
-    if (textRange.isEmpty()) {
-      PsiElement element = file.findElementAt(offset);
-      if (element == null) return;
-      textRange = refineRange(documentText, element.getTextRange());
+    Caret caret = carets.get(0);
+    int offset = caret.getOffset();
+    TextRange textRange;
+    if (caret.hasSelection()) {
+      textRange = new TextRange(editor.getSelectionModel().getSelectionStart(),
+                                editor.getSelectionModel().getSelectionEnd());
+    }
+    else {
+      textRange = SelectWordUtil.getWordSelectionRange(editor.getDocument().getCharsSequence(),
+          caret.getOffset(),
+          ch -> "/\\$ \t\r\n".indexOf(ch) == -1
+      );
       if (textRange == null) return;
     }
+    CharSequence documentText = editor.getDocument().getImmutableCharSequence();
     CharSequence text = textRange.subSequence(documentText);
     List<Integer> startOffsets = findStartOffsets(documentText, text);
+    int ind = startOffsets.indexOf(textRange.getStartOffset());
+    assert ind >= 0;
+    startOffsets.remove(ind);
+    startOffsets.add(textRange.getStartOffset());
 
     List<CaretState> caretStates = new ArrayList<>();
     for (Integer startOffset : startOffsets) {
       int caretOffset = startOffset + offset - textRange.getStartOffset();
-      LogicalPosition selectionStart = null, selectionEnd = null;
-//      if (!selectionRange.isEmpty()) {
-        selectionStart = editor.offsetToLogicalPosition(startOffset);
-        selectionEnd = editor.offsetToLogicalPosition(startOffset + text.length());
-//      }
+      LogicalPosition selectionStart = editor.offsetToLogicalPosition(startOffset);
+      LogicalPosition selectionEnd = editor.offsetToLogicalPosition(startOffset + text.length());
       CaretState caretState = new CaretState(editor.offsetToLogicalPosition(caretOffset), selectionStart, selectionEnd);
       caretStates.add(caretState);
     }
     editor.getCaretModel().setCaretsAndSelections(caretStates);
-  }
-
-  private TextRange refineRange(CharSequence documentText, TextRange textRange) {
-    int start = textRange.getStartOffset();
-    int end = textRange.getEndOffset();
-    String skipChars = "/\\$ \t\r\n";
-    while (start < end && StringUtil.containsChar(skipChars, documentText.charAt(start))) {
-      start++;
-    }
-    while (end > start && StringUtil.containsChar(skipChars, documentText.charAt(end - 1))) {
-      end--;
-    }
-    return start < end ? new TextRange(start, end) : null;
+    int primaryOffset = editor.getCaretModel().getPrimaryCaret().getOffset();
+    System.out.println(primaryOffset + " on " + editor.getDocument().getLineNumber(primaryOffset));
   }
 
   @NotNull

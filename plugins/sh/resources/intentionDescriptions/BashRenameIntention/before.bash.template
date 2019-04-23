@@ -1,0 +1,8 @@
+#!/bin/bash
+
+function sayHello() {
+  echo "Hello"
+}
+
+sayHello
+sayHello
