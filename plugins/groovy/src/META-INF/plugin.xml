@@ -1733,8 +1733,8 @@
 
     <action id="DumpGroovyControlFlowAction"
             class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
-            text="dump groovy control flow"
-            description="" internal="true">
+            text="Dump Groovy Control Flow"
+            internal="true">
       <add-to-group group-id="Internal"/>
     </action>
 
