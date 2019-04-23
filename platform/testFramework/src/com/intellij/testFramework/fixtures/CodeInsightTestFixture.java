@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -36,6 +36,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -205,17 +206,24 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                          @TestDataFile @NotNull String expectedFile,
                          boolean ignoreTrailingWhitespaces);
 
+  void enableInspections(@NotNull Class<? extends LocalInspectionTool>... inspections);
+
+  void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections);
+
+  void enableInspections(@NotNull InspectionProfileEntry... inspections);
+
+  void enableInspections(@NotNull Disposable parent, @NotNull Class<? extends LocalInspectionTool>... inspections);
+
+  void enableInspections(@NotNull Disposable parent, @NotNull Collection<Class<? extends LocalInspectionTool>> inspections);
+
   /**
    * Enables inspections for highlighting tests.
    *
    * @param inspections inspections to be enabled in highlighting tests.
+   * @param parent      disposable to revert state when disposed
    * @see #enableInspections(InspectionToolProvider...)
    */
-  void enableInspections(@NotNull InspectionProfileEntry... inspections);
-
-  void enableInspections(@NotNull Class<? extends LocalInspectionTool>... inspections);
-
-  void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections);
+  void enableInspections(@NotNull Disposable parent, @NotNull InspectionProfileEntry... inspections);
 
   void disableInspections(@NotNull InspectionProfileEntry... inspections);
 
