@@ -69,6 +69,9 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
                      notification: Notification?,
                      mock_init: String?,
                      vararg vcs_roots: String) {
+    for (vcsRoot in vcsRoots) {
+      assertTrue(File(vcsRoot.path!!.path, DOT_MOCK).mkdirs())
+    }
 
     val vcsRootsList = mutableListOf(*vcs_roots)
     //default
@@ -93,7 +96,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
 
   private fun assertVcsRoots(expectedVcsRoots: Collection<String>) {
     val actualRoots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcsWithoutFiltering(vcs)
-    VcsTestUtil.assertEqualCollections(expectedVcsRoots, actualRoots.map { it.path })
+    VcsTestUtil.assertEqualCollections(actualRoots.map { it.path }, expectedVcsRoots)
   }
 
   private fun given(vararg roots: String): Collection<VcsRoot> {
