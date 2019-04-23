@@ -99,6 +99,12 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           }
         }
 
+        if (expression instanceof PyNumericLiteralExpression &&
+            ((PyNumericLiteralExpression)expression).isIntegerLiteral() &&
+            node.getParent() instanceof PyReferenceExpression) {
+          return;
+        }
+
         if (node.getParent() instanceof PyPrintStatement) {
           return;
         }
