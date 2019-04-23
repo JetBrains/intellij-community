@@ -1139,13 +1139,17 @@ public class PyUtil {
    * @return lookup element
    */
   @NotNull
-  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor) {
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor, boolean addSuffix) {
     final String suffix;
-    if (CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
-      suffix = " = ";
-    }
-    else {
-      suffix = "=";
+    if (addSuffix) {
+      if (CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
+        suffix = " = ";
+      }
+      else {
+        suffix = "=";
+      }
+    } else {
+      suffix = "";
     }
     LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(PlatformIcons.PARAMETER_ICON);
     lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);

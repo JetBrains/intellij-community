@@ -24,7 +24,7 @@ import java.util.Set;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class KeywordArgumentCompletionUtil {
-  public static void collectFunctionArgNames(PyElement element, List<? super LookupElement> ret, @NotNull final TypeEvalContext context) {
+  public static void collectFunctionArgNames(PyElement element, List<? super LookupElement> ret, @NotNull final TypeEvalContext context, final boolean addSuffix) {
     PyCallExpression callExpr = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpr != null) {
       PyExpression callee = callExpr.getCallee();
@@ -39,7 +39,7 @@ public class KeywordArgumentCompletionUtil {
         final List<LookupElement> extra = PyTypeUtil.toStream(calleeType)
           .select(PyCallableType.class)
           .flatMap(type -> collectParameterNamesFromType(type, callExpr, context).stream())
-          .map(name -> PyUtil.createNamedParameterLookup(name, element.getContainingFile()))
+          .map(name -> PyUtil.createNamedParameterLookup(name, element.getContainingFile(), addSuffix))
           .toList();
 
         ret.addAll(extra);
