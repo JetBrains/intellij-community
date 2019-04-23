@@ -309,10 +309,10 @@ public class PyExecuteSelectionAction extends AnAction {
     runner.run(false);
   }
 
-  public static boolean canFindConsole(@Nullable Project project, @Nullable String sdkHome) {
+  public static boolean canFindConsole(@Nullable Project project, @Nullable String sdkHomePath) {
     if (project != null) {
       Collection<RunContentDescriptor> descriptors = getConsoles(project);
-      if (sdkHome == null) {
+      if (sdkHomePath == null) {
         return descriptors.size() > 0;
       }
       else {
@@ -320,7 +320,7 @@ public class PyExecuteSelectionAction extends AnAction {
           final ExecutionConsole console = descriptor.getExecutionConsole();
           if (console instanceof PythonConsoleView) {
             final PythonConsoleView pythonConsole = (PythonConsoleView)console;
-            if (pythonConsole.getText().startsWith(sdkHome)) {
+            if (sdkHomePath.equals(pythonConsole.getSdkHomePath())) {
               return true;
             }
           }
