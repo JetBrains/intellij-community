@@ -611,7 +611,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   public void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
-    InlineUtil.TailCallType tailCall = InlineUtil.getTailCallType(ref);
     ChangeContextUtil.encodeContextInfo(myMethod, false);
     myMethodCopy = (PsiMethod)myMethod.copy();
     ChangeContextUtil.clearContextInfo(myMethod);
@@ -667,11 +666,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (firstBodyElement != null && firstBodyElement != blockData.block.getRBrace()) {
       int last = statements.length - 1;
 
-      if (last > 0 && statements[last] instanceof PsiReturnStatement &&
-          tailCall != InlineUtil.TailCallType.Return) {
-        last--;
-      }
-
       final PsiElement rBraceOrReturnStatement =
         last >= 0 ? PsiTreeUtil.skipWhitespacesAndCommentsForward(statements[last]) : blockData.block.getLastBodyElement();
       LOG.assertTrue(rBraceOrReturnStatement != null);
@@ -703,18 +697,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
       }
-
-      if (statements.length > 0) {
-        final PsiStatement lastStatement = statements[statements.length - 1];
-        if (lastStatement instanceof PsiReturnStatement && tailCall != InlineUtil.TailCallType.Return) {
-          final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
-          if (returnValue != null && PsiUtil.isStatement(returnValue)) {
-            PsiExpressionStatement exprStatement = (PsiExpressionStatement)myFactory.createStatementFromText("a;", null);
-            exprStatement.getExpression().replace(returnValue);
-            anchorParent.addBefore(exprStatement, anchor);
-          }
-        }
-      }
     }
 
 
@@ -733,25 +715,20 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);
 
-    PsiElement callParent = methodCall.getParent();
     PsiReferenceExpression resultUsage = null;
-    if (callParent instanceof PsiLambdaExpression) {
-      methodCall.delete();
-    }
-    else if (callParent instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
-      CommentTracker tracker = new CommentTracker();
-      tracker.delete(callParent);
-      if (firstAdded != null) {
-        tracker.insertCommentsBefore(firstAdded);
-      }
+    if (blockData.resultVar != null) {
+      PsiExpression expr = myFactory.createExpressionFromText(Objects.requireNonNull(blockData.resultVar.getName()), null);
+      resultUsage = (PsiReferenceExpression)new CommentTracker().replaceAndRestoreComments(methodCall, expr);
     }
     else {
-      if (blockData.resultVar != null) {
-        PsiExpression expr = myFactory.createExpressionFromText(Objects.requireNonNull(blockData.resultVar.getName()), null);
-        resultUsage = (PsiReferenceExpression)new CommentTracker().replaceAndRestoreComments(methodCall, expr);
-      }
-      else {
-        //??
+      // If return var is not specified, we trust that InlineTransformer fully processed the original anchor statement,
+      // and we can delete it.
+      CommentTracker tracker = new CommentTracker();
+      if (firstAdded != null) {
+        tracker.delete(anchor);
+        tracker.insertCommentsBefore(firstAdded);
+      } else {
+        tracker.deleteAndRestoreComments(anchor);
       }
     }
 

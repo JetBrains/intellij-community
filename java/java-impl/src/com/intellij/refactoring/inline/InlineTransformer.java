@@ -44,8 +44,8 @@ public interface InlineTransformer {
 
     @Override
     public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
-      if (returnType == null || PsiType.VOID.equals(returnType)) return null;
-      if (callSite.getParent() instanceof PsiMethodCallExpression && ExpressionUtils.isVoidContext((PsiExpression)callSite.getParent())) {
+      if (returnType == null || PsiType.VOID.equals(returnType) ||
+          callSite.getParent() instanceof PsiMethodCallExpression && ExpressionUtils.isVoidContext((PsiExpression)callSite.getParent())) {
         InlineUtil.extractReturnValues(methodCopy, false);
         return null;
       }
@@ -101,7 +101,7 @@ public interface InlineTransformer {
   @NotNull
   static Function<PsiReference, InlineTransformer> getSuitableTransformer(PsiMethod method) {
     PsiReturnStatement[] returns = PsiUtil.findReturnStatements(method);
-    PsiCodeBlock body = method.getBody();
+    PsiCodeBlock body = Objects.requireNonNull(method.getBody());
     if (!InlineMethodProcessor.checkBadReturns(returns, body)) {
       return ref -> {
         InlineUtil.TailCallType type = InlineUtil.getTailCallType(ref);
@@ -116,13 +116,23 @@ public interface InlineTransformer {
       // Introducing a label is ugly, so let's move to fallback transformer 
       return PsiTreeUtil.getParentOfType(statement, PsiLoopStatement.class, true, PsiMethod.class) == null;
     });
+    BooleanReturnModel model = BooleanReturnModel.from(body, returns);
     return ref -> {
       InlineUtil.TailCallType type = InlineUtil.getTailCallType(ref);
       if (type == InlineUtil.TailCallType.Continue && !canUseContinue) {
         type = InlineUtil.TailCallType.None;
       }
       InlineTransformer fromTailCall = type.getTransformer();
-      return fromTailCall != null ? fromTailCall : new ConvertToSingleReturnTransformer();
+      if (fromTailCall != null) {
+        return fromTailCall;
+      }
+      if (model != null) {
+        InlineTransformer fromBooleanModel = model.getTransformer(ref);
+        if (fromBooleanModel != null) {
+          return fromBooleanModel;
+        }
+      }
+      return new ConvertToSingleReturnTransformer();
     };
   }
 }
