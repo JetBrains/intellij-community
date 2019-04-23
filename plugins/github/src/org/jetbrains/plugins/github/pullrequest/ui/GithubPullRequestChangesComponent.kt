@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -21,6 +22,9 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
+import org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestDiffCommentsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestFilesDiffCommentsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GithubPullRequestEditorCommentsThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import java.awt.BorderLayout
@@ -29,7 +33,8 @@ import javax.swing.tree.DefaultTreeModel
 import kotlin.properties.Delegates
 
 internal class GithubPullRequestChangesComponent(private val project: Project,
-                                                 private val projectUiSettings: GithubPullRequestsProjectUISettings)
+                                                 private val projectUiSettings: GithubPullRequestsProjectUISettings,
+                                                 private val diffCommentComponentFactory: GithubPullRequestEditorCommentsThreadComponentFactory)
   : GithubDataLoadingComponent<List<GitCommit>>(), Disposable {
 
   private val changesBrowser = PullRequestChangesBrowserWithError()
@@ -94,6 +99,17 @@ internal class GithubPullRequestChangesComponent(private val project: Project,
         myViewer.rebuildTree()
       }
       init()
+    }
+
+    override fun updateDiffContext(chain: DiffRequestChain) {
+      super.updateDiffContext(chain)
+      if (projectUiSettings.zipChanges) {
+        chain.putUserData(GithubPullRequestDiffCommentsProvider.KEY,
+                          GithubPullRequestFilesDiffCommentsProvider(dataProvider!!, diffCommentComponentFactory))
+      }
+      else {
+        //TODO: commits comments provider
+      }
     }
 
     override fun getEmptyText() = myViewer.emptyText

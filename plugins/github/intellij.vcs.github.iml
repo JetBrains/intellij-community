@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.editor" />
   </component>
 </module>
