@@ -223,7 +223,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   @Nullable
   private ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
-    return Extensions.getRootArea().hasExtensionPoint(myEpName) ? Extensions.getRootArea().getExtensionPoint(myEpName) : null;
+    return Extensions.getRootArea().getExtensionPointIfRegistered(myEpName);
   }
 
   public boolean hasAnyExtensions() {
