@@ -248,7 +248,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     def root = "$buildContext.paths.communityHome/../.."
 
-    bundleGradleAndOfflineRepo(buildContext, root, targetDirectory)
+    if (buildContext.options.bundleGradleAndOfflineRepo) {
+      bundleGradleAndOfflineRepo(buildContext, root, targetDirectory)
+    }
 
     buildContext.ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
 

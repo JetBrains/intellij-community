@@ -97,7 +97,7 @@ echo "## BAZEL_BIN: $BAZEL_BIN"
 
 readonly BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BUILD_NUMBER" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" -Dbundle.gradle.release.plugin=true build
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BUILD_NUMBER" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" build
 
 $ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
 

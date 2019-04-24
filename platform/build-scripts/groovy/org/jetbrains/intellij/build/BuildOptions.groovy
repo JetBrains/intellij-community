@@ -65,6 +65,11 @@ class BuildOptions {
    */
   boolean includeUiTests = SystemProperties.getBooleanProperty("bundle.ui.tests", false)
   /**
+   * Android Studio: If 'true', the Android Gradle Plugin and m2 offline repo will be bundled
+   * TODO(qumeric): currently whole m2 repo and Gradle are bundled if the flag is enabled (to avoid accidental breakage). Only AGP should be packaged instead.
+   */
+  boolean bundleGradleAndOfflineRepo = SystemProperties.getBooleanProperty("bundle.gradle.release.plugin", false)
+  /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
