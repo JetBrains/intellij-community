@@ -271,6 +271,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     Map<String, Hash> result = newHashMap();
 
     if (!supportsIncomingOutgoing()) return result;
+    if (authenticationMode == NONE) {
+      myErrorMap.putValue(repository, remote);
+      return result;
+    }
 
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = newArrayList("--heads", remote.getName());
