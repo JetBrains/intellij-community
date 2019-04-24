@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,5 +180,14 @@ public abstract class ActionPlaces {
   @NotNull
   public static String getActionGroupPopupPlace(@Nullable String actionId) {
     return actionId == null ? POPUP : POPUP_PREFIX + actionId;
+  }
+
+  /**
+   * Returns true if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
+   * (Used to avoid duplicate processing of the same action.)
+   */
+  @ApiStatus.Internal
+  public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
+    return SystemInfo.isMacSystemMenu && isMainMenuOrShortcut(e.getPlace());
   }
 }
