@@ -5,6 +5,7 @@ import com.intellij.util.concurrency.FixedFuture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public class CliResult {
@@ -37,5 +38,15 @@ public class CliResult {
   @NotNull
   public static Future<CliResult> ok() {
     return OK_FUTURE;
+  }
+
+  @NotNull
+  public static CliResult getOrWrapFailure(@NotNull Future<? extends CliResult> future, int timeoutCode) {
+    try {
+      return future.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      return new CliResult(timeoutCode, e.getMessage());
+    }
   }
 }

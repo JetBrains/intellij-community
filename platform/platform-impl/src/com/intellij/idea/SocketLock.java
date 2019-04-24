@@ -59,6 +59,7 @@ public final class SocketLock {
 
   private static final int WRONG_TOKEN_CODE = 239;
   private static final int LISTENER_NOT_INITIALIZED = 240;
+  private static final int RESPONSE_TIMEOUT = 241;
 
   private final String myConfigPath;
   private final String mySystemPath;
@@ -352,7 +353,7 @@ public final class SocketLock {
               else {
                 CliRequestProcessor listener = myActivateListener.get();
                 if (listener != null) {
-                  result = listener.process(args.subList(1, args.size())).get();
+                  result = CliResult.getOrWrapFailure(listener.process(args.subList(1, args.size())), RESPONSE_TIMEOUT);
                 }
                 else {
                   result = new CliResult(LISTENER_NOT_INITIALIZED, "IDE has not been initialized yet");
