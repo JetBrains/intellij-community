@@ -10,7 +10,7 @@ object EditorConfigRegistry {
   const val EDITORCONFIG_CSHARP_SUPPORT_KEY = "editor.config.csharp.support"
 
   @JvmStatic
-  fun shouldStopAtProjectRoot() = Registry.`is`(EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY, true)
+  fun shouldStopAtProjectRoot() = Registry.`is`(EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY, false)
 
   @JvmStatic
   fun shouldSupportBreadCrumbs() = Registry.`is`(EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY, false)
