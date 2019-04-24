@@ -27,7 +27,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -80,15 +79,14 @@ public class ScopePanel extends JPanel {
 
     myScopeDetailsPanel.setBorder(JBUI.Borders.emptyBottom(UIUtil.isUnderDefaultMacTheme() ? 0 : 3));
     boolean fullVersion = !PlatformUtils.isDataGrip();
-    AnAction[] actions =
+    DefaultActionGroup scopeActionGroup =
       fullVersion
-      ? ContainerUtil.ar(new ScopeToggleAction(FindBundle.message("find.popup.scope.project"), Scopes.Type.PROJECT),
-                         new ScopeToggleAction(FindBundle.message("find.popup.scope.module"), Scopes.Type.MODULE),
-                         new ScopeToggleAction(FindBundle.message("find.popup.scope.directory"), Scopes.Type.DIRECTORY),
-                         new ScopeToggleAction(FindBundle.message("find.popup.scope.scope"), Scopes.Type.NAMED))
-      : ContainerUtil.ar(new ScopeToggleAction(FindBundle.message("find.popup.scope.scope"), Scopes.Type.NAMED),
-                         new ScopeToggleAction(FindBundle.message("find.popup.scope.directory"), Scopes.Type.DIRECTORY));
-    DefaultActionGroup scopeActionGroup = new DefaultActionGroup(actions);
+      ? new DefaultActionGroup(new ScopeToggleAction(FindBundle.message("find.popup.scope.project"), Scopes.Type.PROJECT),
+                               new ScopeToggleAction(FindBundle.message("find.popup.scope.module"), Scopes.Type.MODULE),
+                               new ScopeToggleAction(FindBundle.message("find.popup.scope.directory"), Scopes.Type.DIRECTORY),
+                               new ScopeToggleAction(FindBundle.message("find.popup.scope.scope"), Scopes.Type.NAMED))
+      : new DefaultActionGroup(new ScopeToggleAction(FindBundle.message("find.popup.scope.scope"), Scopes.Type.NAMED),
+                               new ScopeToggleAction(FindBundle.message("find.popup.scope.directory"), Scopes.Type.DIRECTORY));
     myToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ScopePanel", scopeActionGroup, true);
     myToolbar.setForceMinimumSize(true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -139,7 +137,8 @@ public class ScopePanel extends JPanel {
       myDirectoryComboBox.setRecursive(directoryScope.isWithSubdirectories());
     }
     else if (selectedScope != null && selectedScope != GlobalSearchScope.projectScope(myProject)) {
-      myScopesComboBox.selectItem(selectedScope);
+      myScopesComboBox.selectItem(selectedScope.getDisplayName());
+      myScope = myScopesComboBox.getSelectedScope(); // refresh scope, otherwise scope can be for example stale "Current File"
     }
     myToolbar.updateActionsImmediately();
     ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
