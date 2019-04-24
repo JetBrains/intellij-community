@@ -21,6 +21,8 @@ betas.)
       <version major="1" minor="4" micro="0" patch="7" full="{0}.{1} RC 1" eap="false" />
                                                                            ~~~~~~~~~~~
     ```
+    Among other things, in `VmOptionsGenerator.groovy` this causes the `isEAP`
+    conditional to disable assertions.
 
  3. Make sure the major/minor version is correctly encoded in the build number
     listed in build.txt file. It is the second number from the end. If major
@@ -39,22 +41,6 @@ betas.)
     !define VERSION_MAJOR 3
     !define VERSION_MINOR 2
     ```
-
- 6. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
-
-    This is controlled by `platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/VmOptionsGenerator.groovy`:
-
-    ```
-    if (isEAP) {
-      options += "... -XX:-OmitStackTraceInFastThrow -ea"
-    } else {
-      options += " -da"
-    }
-                 ~~~~~~
-    ```
-
-    This should be set to -da in production builds. (You normally do not have
-    to touch anything since this is already controlled by an EAP flag.)
 
  7. Turn off null checking.
 
