@@ -35,3 +35,31 @@ def test_sample(first, second):
 
 def test_type(first, second:set):
     second.updat<caret>#
+
+
+class TestFoo1:
+    @pytest.fixture
+    def my_fixture(self):
+        return 42
+
+    @pytest.fixture
+    def another_fix(): pass
+
+class TestFoo2:
+    @pytest.fixture
+    def my_fixture(self):
+        return {"D": 42 }
+
+    @pytest.fixture
+    def class_only_fixture(): return 1
+
+    def test_bar(self, my_fix<caret>, ha<caret>, class_only_f<caret>):
+        pass
+
+    # No completion for another: different class
+    def test_foo(self, my_fixture, another_fix<caret>):
+        assert my_fixture.ke<caret>
+
+# No completion, declated in class
+def test_bar(class_only_fix<caret>):
+        pass
