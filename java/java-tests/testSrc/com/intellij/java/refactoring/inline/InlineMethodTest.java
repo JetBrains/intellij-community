@@ -514,6 +514,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testBooleanModelFinalCondition() {
     doTestAssertBadReturn();
   }
+  
+  public void testInvertMethod() {
+    doTest();
+  }
 
   @Override
   protected Sdk getProjectJDK() {
