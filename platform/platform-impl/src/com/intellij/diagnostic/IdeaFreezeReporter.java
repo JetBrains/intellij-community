@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -10,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,10 +19,7 @@ public class IdeaFreezeReporter {
 
   public IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isEAP() ||
-        app.isUnitTestMode() ||
-        PluginManagerCore.isRunningFromSources() ||
-        ManagementFactory.getRuntimeMXBean().getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"))) {
+    if (!app.isEAP() || app.isUnitTestMode() || PluginManagerCore.isRunningFromSources()) {
       return;
     }
 
@@ -49,7 +46,8 @@ public class IdeaFreezeReporter {
         if (Registry.is("performance.watcher.freeze.report") &&
             lengthInSeconds > FREEZE_THRESHOLD &&
             !ContainerUtil.isEmpty(myCurrentDumps) &&
-            !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+            !ContainerUtil.isEmpty(myStacktraceCommonPart) &&
+            !DebugAttachDetector.isAttached()) {
           int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
           Attachment[] attachments = new Attachment[size];
           for (int i = 0; i < size; i++) {
