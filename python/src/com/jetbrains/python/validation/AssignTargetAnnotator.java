@@ -16,7 +16,10 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +105,14 @@ public class AssignTargetAnnotator extends PyAnnotator {
   @Override
   public void visitPyAnnotation(PyAnnotation node) {
     errorOnUnparenthesizedAssignmentExpression(node.getValue(), "as annotations for arguments, return values and assignments");
+  }
+
+  @Override
+  public void visitPyAssignmentExpression(PyAssignmentExpression node) {
+    final PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
+    if (ScopeUtil.getScopeOwner(comprehensionElement) instanceof PyClass) {
+      getHolder().createErrorAnnotation(node, "Assignment expressions within a comprehension cannot be used in a class body");
+    }
   }
 
   private void errorOnUnparenthesizedAssignmentExpression(@Nullable PyExpression expression, @NotNull String suffix) {
