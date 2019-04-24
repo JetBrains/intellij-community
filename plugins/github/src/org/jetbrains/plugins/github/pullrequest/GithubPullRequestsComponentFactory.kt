@@ -90,7 +90,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     private val list = GithubPullRequestsListWithSearchPanel(project, copyPasteManager, actionManager, autoPopupController,
                                                              avatarIconsProviderFactory,
-                                                             listLoader, listLoader, listLoader, listSelectionHolder)
+                                                             listLoader, dataLoader, listLoader, listLoader, listSelectionHolder)
 
     private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,
                                                             account.server, repoDetails, accountDetails, repository, remote)
