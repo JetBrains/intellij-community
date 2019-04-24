@@ -6,11 +6,14 @@ import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,11 +58,23 @@ public class IdeaFreezeReporter {
             attachment.setIncluded(true);
             attachments[i] = attachment;
           }
-          MessagePool.getInstance().addIdeFatalMessage(LogMessage.createEvent(new Freeze(myStacktraceCommonPart),
-                                                                              "Freeze for " + lengthInSeconds + " seconds", attachments));
+          MessagePool.getInstance().addIdeFatalMessage(createEvent(lengthInSeconds, attachments));
         }
         myCurrentDumps.clear();
         myStacktraceCommonPart = null;
+      }
+
+      @NotNull
+      private IdeaLoggingEvent createEvent(int lengthInSeconds, Attachment[] attachments) {
+        boolean allInEdt = StreamEx.of(myCurrentDumps)
+          .flatArray(ThreadDump::getThreadInfos)
+          .filter(ThreadDumper::isEDT)
+          .map(ThreadInfo::getThreadState)
+          .allMatch(Thread.State.RUNNABLE::equals);
+        String edtNote = allInEdt ? "in EDT " : "";
+        return LogMessage.createEvent(new Freeze(myStacktraceCommonPart),
+                                      "Freeze " + edtNote + "for " + lengthInSeconds + " seconds",
+                                      attachments);
       }
     });
   }
