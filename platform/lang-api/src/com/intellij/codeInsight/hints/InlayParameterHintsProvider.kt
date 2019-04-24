@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import org.jetbrains.annotations.NonNls
 
 
 object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
@@ -99,7 +100,7 @@ sealed class HintInfo {
 
 }
 
-data class Option(val id: String,
+data class Option(@NonNls val id: String,
                   val name: String,
                   val defaultValue: Boolean) {
 
