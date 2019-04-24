@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
@@ -15,38 +14,39 @@ import javax.swing.event.DocumentListener
 
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink) =
-    object: FactoryInlayHintsCollector<Settings>(editor, ourKey) {
+    object : FactoryInlayHintsCollector<Settings>(editor, ourKey) {
       override fun collect(element: PsiElement, editor: Editor, settings: Settings, isEnabled: Boolean, sink: InlayHintsSink) {
         if (file.project.service<DumbService>().isDumb) return
-          val call = element as? PsiMethodCallExpression ?: return
-          if (!isFirstCall(call, editor)) return
-          val next = call.nextSibling
-          if (!(next is PsiWhiteSpace && next.textContains('\n'))) return
-          val chain = collectChain(call)
-            .filter {
-              val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return@filter false
-              nextSibling.textContains('\n')
-            }
-          if (chain.isEmpty()) return
-          val types = chain.mapNotNull { it.type }
-          if (types.size != chain.size) return // some type unknown
+        val call = element as? PsiMethodCallExpression ?: return
+        if (!isFirstCall(call, editor)) return
+        val next = call.nextSibling
+        if (!(next is PsiWhiteSpace && next.textContains('\n'))) return
+        val chain = collectChain(call)
+          .filter {
+            val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return@filter false
+            nextSibling.textContains('\n')
+          }
+        if (chain.isEmpty()) return
+        val types = chain.mapNotNull { it.type }
+        if (types.size != chain.size) return // some type unknown
 
-          val uniqueTypes = mutableSetOf<PsiType>()
-          for (i in (0 until types.size - 1)) { // Except last to avoid builder.build() which has obvious type
-            uniqueTypes.add(types[i])
-          }
-          if (uniqueTypes.size < settings.uniqueTypeCount) return // to hide hints for builders, where type is obvious
-          for ((index, currentCall) in chain.withIndex()) {
-            val type = types[index]
-            val presentation = JavaTypeHintsPresentationFactory.presentation(type, factory)
-//            val presentation = factory.roundedText(types[index].presentableText)
-//            val project = file.project
-//            val finalPresentation = MenuOnClickPresentation(presentation, project) {
-//              val provider = this@MethodChainsInlayProvider
-//              listOf(InlayProviderDisablingAction(provider.name, file.language, project, provider.key))
-//            }
-            sink.addInlay(currentCall.textRange.endOffset, presentation)
-          }
+        val uniqueTypes = mutableSetOf<PsiType>()
+        for (i in (0 until types.size - 1)) { // Except last to avoid builder.build() which has obvious type
+          uniqueTypes.add(types[i])
+        }
+        if (uniqueTypes.size < settings.uniqueTypeCount) return // to hide hints for builders, where type is obvious
+        val javaFactory = JavaTypeHintsPresentationFactory(factory, 5)
+        for ((index, currentCall) in chain.withIndex()) {
+          val type = types[index]
+          val presentation = javaFactory.typeHint(type)
+          //            val presentation = factory.roundedText(types[index].presentableText)
+          //            val project = file.project
+          //            val finalPresentation = MenuOnClickPresentation(presentation, project) {
+          //              val provider = this@MethodChainsInlayProvider
+          //              listOf(InlayProviderDisablingAction(provider.name, file.language, project, provider.key))
+          //            }
+          sink.addInlay(currentCall.textRange.endOffset, presentation)
+        }
       }
     }
 
@@ -60,7 +60,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
 
     override fun createComponent(listener: ChangeListener): JPanel {
       field.value = settings.uniqueTypeCount
-      field.document.addDocumentListener(object: DocumentListener {
+      field.document.addDocumentListener(object : DocumentListener {
         override fun changedUpdate(e: DocumentEvent?) = handleChange(listener)
         override fun insertUpdate(e: DocumentEvent?) = handleChange(listener)
         override fun removeUpdate(e: DocumentEvent?) = handleChange(listener)
