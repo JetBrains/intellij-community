@@ -444,7 +444,7 @@ public class PluginManagerConfigurableNewLayout
                 }
                 return myTagsSorted;
               case "/sortBy:":
-                return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
+                return ContainerUtil.list("downloads", "name", "rating", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
                   myVendorsSorted = MyPluginModel.getVendors(getPluginRepositories());
@@ -538,6 +538,19 @@ public class PluginManagerConfigurableNewLayout
             addAction = updateAction;
           }
           else {
+            if (updateAction.myOption == SortBySearchOption.Relevance) {
+              updateAction.myState = true;
+              return;
+            }
+
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+              MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
+              if (sortByAction.myOption == SortBySearchOption.Relevance) {
+                sortByAction.myState = true;
+                break;
+              }
+            }
+
             removeAction = updateAction;
           }
 
@@ -556,10 +569,16 @@ public class PluginManagerConfigurableNewLayout
             }
           };
           if (removeAction != null) {
-            queries.remove(removeAction.getQuery());
+            String query = removeAction.getQuery();
+            if (query != null) {
+              queries.remove(query);
+            }
           }
           if (addAction != null) {
-            queries.add(addAction.getQuery());
+            String query = addAction.getQuery();
+            if (query != null) {
+              queries.add(query);
+            }
           }
 
           String query = StringUtil.join(queries, " ");
@@ -828,8 +847,7 @@ public class PluginManagerConfigurableNewLayout
           @NotNull
           @Override
           protected List<String> getAttributes() {
-            return ContainerUtil
-              .list("/disabled", "/enabled", "/bundled", "/custom", "/inactive", "/invalid", "/outdated", "/uninstalled", "/vendor:");
+            return ContainerUtil.list("/downloaded", "/outdated", "/enabled", "/disabled", "/invalid", "/bundled", "/vendor:");
           }
 
           @Nullable
@@ -873,11 +891,19 @@ public class PluginManagerConfigurableNewLayout
             @Override
             protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
               super.handleAttribute(name, value, invert);
-              queries.add("/" + name + (value.isEmpty() ? "" : ":" + value));
+              if (!updateAction.myState) {
+                queries.add("/" + name + (value.isEmpty() ? "" : ":" + value));
+              }
             }
           };
 
           if (updateAction.myState) {
+            for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+              if (action != updateAction) {
+                ((InstalledSearchOptionAction)action).myState = false;
+              }
+            }
+
             queries.add(updateAction.getQuery());
           }
           else {
@@ -917,33 +943,23 @@ public class PluginManagerConfigurableNewLayout
               for (UIPluginGroup uiGroup : myInstalledPanel.getGroups()) {
                 for (CellPluginComponent plugin : uiGroup.plugins) {
                   if (parser.attributes) {
-                    if (parser.enabled != null && parser.enabled != myPluginModel.isEnabled(plugin.myPlugin)) {
+                    if (parser.enabled && !myPluginModel.isEnabled(plugin.myPlugin)) {
                       continue;
                     }
-                    if (parser.bundled != null && parser.bundled != plugin.myPlugin.isBundled()) {
+                    if (parser.disabled && myPluginModel.isEnabled(plugin.myPlugin)) {
                       continue;
                     }
-                    if (parser.invalid != null && parser.invalid != myPluginModel.hasErrors(plugin.myPlugin)) {
+                    if (parser.bundled && !plugin.myPlugin.isBundled()) {
                       continue;
                     }
-                    if (parser.deleted != null) {
-                      if (plugin.myPlugin instanceof IdeaPluginDescriptorImpl) {
-                        if (parser.deleted != ((IdeaPluginDescriptorImpl)plugin.myPlugin).isDeleted()) {
-                          continue;
-                        }
-                      }
-                      else if (parser.deleted) {
-                        continue;
-                      }
-                    }
-                    PluginId pluginId = plugin.myPlugin.getPluginId();
-                    if (parser.needUpdate != null && parser.needUpdate != state.hasNewerVersion(pluginId)) {
+                    if (parser.downloaded && plugin.myPlugin.isBundled()) {
                       continue;
                     }
-                    if (parser.needRestart != null) {
-                      if (parser.needRestart != (state.wasInstalled(pluginId) || state.wasUpdated(pluginId))) {
-                        continue;
-                      }
+                    if (parser.invalid && !myPluginModel.hasErrors(plugin.myPlugin)) {
+                      continue;
+                    }
+                    if (parser.needUpdate && !state.hasNewerVersion(plugin.myPlugin.getPluginId())) {
+                      continue;
                     }
                   }
                   if (parser.searchQuery != null && !StringUtil.containsIgnoreCase(plugin.myPlugin.getName(), parser.searchQuery)) {
@@ -995,18 +1011,16 @@ public class PluginManagerConfigurableNewLayout
     }
 
     public void setState(@NotNull SearchQueryParser.Marketplace parser) {
-      if (parser.sortBy == null) {
-        myState = myOption == SortBySearchOption.Relevance;
-      }
-      else if (myOption == SortBySearchOption.Relevance) {
-        myState = "featured".equals(parser.sortBy);
+      if (myOption == SortBySearchOption.Relevance) {
+        myState = parser.sortBy == null;
+        getTemplatePresentation().setVisible(parser.sortBy == null || !parser.tags.isEmpty() || parser.searchQuery != null);
       }
       else {
-        myState = myOption.name().equalsIgnoreCase(parser.sortBy);
+        myState = parser.sortBy != null && myOption.name().equalsIgnoreCase(parser.sortBy);
       }
     }
 
-    @NotNull
+    @Nullable
     public String getQuery() {
       switch (myOption) {
         case Downloads:
@@ -1019,13 +1033,13 @@ public class PluginManagerConfigurableNewLayout
           return "/sortBy:updated";
         case Relevance:
         default:
-          return "/sortBy:featured";
+          return null;
       }
     }
   }
 
   private enum InstalledSearchOption {
-    Enabled, Disabled, Custom, Bundled, Invalid, NeedUpdate, Deleted, NeedRestart
+    Downloaded, NeedUpdate, Enabled, Disabled, Invalid, Bundled
   }
 
   private class InstalledSearchOptionAction extends ToggleAction {
@@ -1033,22 +1047,8 @@ public class PluginManagerConfigurableNewLayout
     private boolean myState;
 
     private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
+      super(option == InstalledSearchOption.NeedUpdate ? "Update available" : option.name());
       myOption = option;
-
-      String text;
-      if (option == InstalledSearchOption.Custom) {
-        text = "Downloaded";
-      }
-      else if (option == InstalledSearchOption.NeedUpdate) {
-        text = "Update available";
-      }
-      else if (option == InstalledSearchOption.NeedRestart) {
-        text = "Installed or Updated";
-      }
-      else {
-        text = option.name();
-      }
-      getTemplatePresentation().setText(text);
     }
 
     @Override
@@ -1062,7 +1062,7 @@ public class PluginManagerConfigurableNewLayout
       myInstalledSearchCallback.accept(this);
     }
 
-    public void setState(@Nullable SearchQueryParser.Installed parser) {
+    public void setState(@Nullable SearchQueryParser.InstalledWithVendor parser) {
       if (parser == null) {
         myState = false;
         return;
@@ -1070,53 +1070,29 @@ public class PluginManagerConfigurableNewLayout
 
       switch (myOption) {
         case Enabled:
-          myState = parser.enabled != null && parser.enabled;
+          myState = parser.enabled;
           break;
         case Disabled:
-          myState = parser.enabled != null && !parser.enabled;
+          myState = parser.disabled;
           break;
-        case Custom:
-          myState = parser.bundled != null && !parser.bundled;
+        case Downloaded:
+          myState = parser.downloaded;
           break;
         case Bundled:
-          myState = parser.bundled != null && parser.bundled;
+          myState = parser.bundled;
           break;
         case Invalid:
-          myState = parser.invalid != null && parser.invalid;
+          myState = parser.invalid;
           break;
         case NeedUpdate:
-          myState = parser.needUpdate != null && parser.needUpdate;
-          break;
-        case Deleted:
-          myState = parser.deleted != null && parser.deleted;
-          break;
-        case NeedRestart:
-          myState = parser.needRestart != null && parser.needRestart;
+          myState = parser.needUpdate;
           break;
       }
     }
 
     @NotNull
     public String getQuery() {
-      switch (myOption) {
-        case Enabled:
-          return "/enabled";
-        case Disabled:
-          return "/disabled";
-        case Custom:
-          return "/custom";
-        case Bundled:
-          return "/bundled";
-        case Invalid:
-          return "/invalid";
-        case NeedUpdate:
-          return "/outdated";
-        case Deleted:
-          return "/uninstalled";
-        case NeedRestart:
-        default:
-          return "/inactive";
-      }
+      return myOption == InstalledSearchOption.NeedUpdate ? "/outdated" : "/" + StringUtil.decapitalize(myOption.name());
     }
   }
 
