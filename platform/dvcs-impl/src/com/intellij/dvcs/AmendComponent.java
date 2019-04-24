@@ -22,15 +22,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Provides a checkbox to amend current commit to the previous commit.
- * Selecting a checkbox loads the previous commit message from the provider, and substitutes current message in the editor,
+ * Enabling amend mode loads the previous commit message from the provider, and substitutes current message in the editor,
  * unless it was already modified by user.
  */
 public abstract class AmendComponent {
@@ -39,7 +36,7 @@ public abstract class AmendComponent {
 
   @NotNull private final RepositoryManager<? extends Repository> myRepoManager;
   @NotNull private final CheckinProjectPanel myCheckinPanel;
-  @NotNull protected final JCheckBox myAmend;
+  @NotNull private final JCheckBox myAmend;
 
   @Nullable private Map<VirtualFile, String> myMessagesForRoots;
   @Nullable private String myAmendedMessage;
@@ -57,30 +54,32 @@ public abstract class AmendComponent {
     myAmend = new NonFocusableCheckBox(title);
     myAmend.setMnemonic('m');
     myAmend.setToolTipText(DvcsBundle.message("commit.amend.tooltip"));
+    myAmend.addActionListener(e -> amendModeToggled());
+  }
 
-    myAmend.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myAmend.isSelected()) {
-          if (myCheckinPanel.getCommitMessage().equals(myPreviousMessage)) { // if user has already typed something, don't revert it
-            if (myMessagesForRoots == null) {
-              loadMessagesInModalTask(myRepoManager.getVcs().getProject()); // load all commit messages for all repositories
-            }
-            String message = constructAmendedMessage();
-            if (!StringUtil.isEmptyOrSpaces(message)) {
-              myAmendedMessage = message;
-              substituteCommitMessage(myAmendedMessage);
-            }
-          }
+  protected void amendModeToggled() {
+    updateCommitMessage();
+  }
+
+  private void updateCommitMessage() {
+    if (isAmendMode()) {
+      if (myCheckinPanel.getCommitMessage().equals(myPreviousMessage)) { // if user has already typed something, don't revert it
+        if (myMessagesForRoots == null) {
+          loadMessagesInModalTask(myRepoManager.getVcs().getProject()); // load all commit messages for all repositories
         }
-        else {
-          // there was the amended message, but user has changed it => not reverting
-          if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
-            myCheckinPanel.setCommitMessage(myPreviousMessage);
-          }
+        String message = constructAmendedMessage();
+        if (!StringUtil.isEmptyOrSpaces(message)) {
+          myAmendedMessage = message;
+          substituteCommitMessage(myAmendedMessage);
         }
       }
-    });
+    }
+    else {
+      // there was the amended message, but user has changed it => not reverting
+      if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
+        myCheckinPanel.setCommitMessage(myPreviousMessage);
+      }
+    }
   }
 
   @Nullable
@@ -108,11 +107,6 @@ public abstract class AmendComponent {
     return myAmend;
   }
 
-  @NotNull
-  public JCheckBox getCheckBox() {
-    return myAmend;
-  }
-
   private void loadMessagesInModalTask(@NotNull Project project) {
     try {
       myMessagesForRoots = ProgressManager.getInstance().runProcessWithProgressSynchronously(this::getLastCommitMessages,
@@ -132,7 +126,7 @@ public abstract class AmendComponent {
     }
   }
 
-  @Nullable
+  @NotNull
   private Map<VirtualFile, String> getLastCommitMessages() throws VcsException {
     Map<VirtualFile, String> messagesForRoots = new HashMap<>();
     // load all vcs roots visible in the commit dialog (not only selected ones), to avoid another loading task if selection changes
@@ -163,7 +157,15 @@ public abstract class AmendComponent {
   @Nullable
   protected abstract String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException;
 
-  public boolean isAmend() {
+  public boolean isAmendMode() {
     return myAmend.isSelected();
+  }
+
+  public void setAmendMode(boolean value) {
+    myAmend.setSelected(value);
+  }
+
+  public void setAmendModeTogglingEnabled(boolean value) {
+    myAmend.setEnabled(value);
   }
 }

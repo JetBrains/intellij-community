@@ -49,8 +49,6 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
@@ -302,14 +300,14 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
    */
   public class HgCommitAdditionalComponent implements RefreshableOnComponent {
     @NotNull private final JPanel myPanel;
-    @NotNull private final AmendComponent myAmend;
+    @NotNull private final MyAmendComponent myAmend;
     @NotNull private final JCheckBox myCommitSubrepos;
 
     HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
 
       myAmend = new MyAmendComponent(getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
-      myAmend.getComponent().setEnabled(vcs.getVersion().isAmendSupported());
+      myAmend.setAmendModeTogglingEnabled(vcs.getVersion().isAmendSupported());
 
       myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
       myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(
@@ -318,9 +316,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       myCommitSubrepos.setMnemonic('s');
       Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), panel.getRoots());
       myCommitSubrepos.setVisible(ContainerUtil.exists(repos, HgRepository::hasSubrepos));
-
-      myCommitSubrepos.addActionListener(new MySelectionListener(myAmend.getCheckBox()));
-      myAmend.getCheckBox().addActionListener(new MySelectionListener(myCommitSubrepos));
+      myCommitSubrepos.addActionListener(e -> myAmend.updateAmendState(!myCommitSubrepos.isSelected()));
 
       GridBag gb = new GridBag().
         setDefaultInsets(JBUI.insets(2)).
@@ -356,12 +352,30 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     }
 
     public boolean isAmend() {
-      return myAmend.isAmend();
+      return myAmend.isAmendMode();
     }
 
     private class MyAmendComponent extends AmendComponent {
       MyAmendComponent(@NotNull HgRepositoryManager repoManager, @NotNull CheckinProjectPanel panel, @NotNull String title) {
         super(repoManager, panel, title);
+      }
+
+      @Override
+      protected void amendModeToggled() {
+        updateCommitSubreposState();
+        super.amendModeToggled();
+      }
+
+      private void updateAmendState(boolean enable) {
+        setAmendModeTogglingEnabled(enable);
+        if (!enable) setAmendMode(false);
+      }
+
+      private void updateCommitSubreposState() {
+        boolean isAmendMode = isAmendMode();
+
+        myCommitSubrepos.setEnabled(!isAmendMode);
+        if (isAmendMode) myCommitSubrepos.setSelected(false);
       }
 
       @NotNull
@@ -381,26 +395,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         args.add("{desc}");
         HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args);
         return result == null ? "" : result.getRawOutput();
-      }
-    }
-
-    private class MySelectionListener implements ActionListener {
-      private final JCheckBox myUnselectedComponent;
-
-      MySelectionListener(JCheckBox unselectedComponent) {
-        myUnselectedComponent = unselectedComponent;
-      }
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JCheckBox source = (JCheckBox)e.getSource();
-        if (source.isSelected()) {
-          myUnselectedComponent.setSelected(false);
-          myUnselectedComponent.setEnabled(false);
-        }
-        else {
-          myUnselectedComponent.setEnabled(true);
-        }
       }
     }
   }

@@ -1177,7 +1177,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     public boolean isAmend() {
-      return myAmendComponent.isAmend();
+      return myAmendComponent.isAmendMode();
     }
 
     @Nullable
@@ -1231,12 +1231,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     private class MyAmendComponent extends AmendComponent {
       MyAmendComponent(@NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
         super(manager, panel);
-        myAmend.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            updateRenamesCheckboxState();
-          }
-        });
+      }
+
+      @Override
+      protected void amendModeToggled() {
+        updateRenamesCheckboxState();
+        super.amendModeToggled();
       }
 
       @NotNull
@@ -1278,7 +1278,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       else {
         myCommitRenamesSeparatelyCheckbox.setVisible(true);
-        myCommitRenamesSeparatelyCheckbox.setEnabled(!myAmendComponent.isAmend());
+        myCommitRenamesSeparatelyCheckbox.setEnabled(!myAmendComponent.isAmendMode());
       }
     }
 
