@@ -315,12 +315,8 @@ public class DateFormatUtil {
     long kCFDateFormatterShortStyle = 1;
     long kCFDateFormatterMediumStyle = 2;
 
+    @Structure.FieldOrder({"location", "length"})
     class CFRange extends Structure implements Structure.ByValue {
-      @Override
-      protected List<String> getFieldOrder() {
-        return Arrays.asList("location", "length");
-      }
-
       public long location;
       public long length;
 
@@ -339,7 +335,7 @@ public class DateFormatUtil {
 
   // platform-specific patterns: http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
   private static DateFormat[] getMacFormats() {
-    CF cf = Native.loadLibrary("CoreFoundation", CF.class);
+    CF cf = Native.load("CoreFoundation", CF.class);
     return new DateFormat[]{
       getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
       getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
@@ -402,7 +398,7 @@ public class DateFormatUtil {
   }
 
   private static DateFormat[] getWindowsFormats() {
-    Kernel32 kernel32 = Native.loadLibrary("Kernel32", Kernel32.class);
+    Kernel32 kernel32 = Native.load("Kernel32", Kernel32.class);
     int bufferSize = 128, rv;
     char[] buffer = new char[bufferSize];
 

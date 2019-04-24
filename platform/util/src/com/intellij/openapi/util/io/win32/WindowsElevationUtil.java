@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,13 +9,10 @@ import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public class WindowsElevationUtil {
   private static final Logger LOG = Logger.getInstance(WindowsElevationUtil.class);
 
-  private WindowsElevationUtil() {
-  }
+  private WindowsElevationUtil() { }
 
   /**
    * returns true if current user is having administrator privileges AND this code is running under elevation
@@ -71,14 +69,6 @@ public class WindowsElevationUtil {
   };
 
   public static class TOKEN_ELEVATION extends Structure {
-    @SuppressWarnings("WeakerAccess")
     public WinDef.DWORD TokenIsElevated = new WinDef.DWORD(0);
-
-    @Override
-    protected List<String> getFieldOrder() {
-      return FIELDS;
-    }
-
-    private static final List<String> FIELDS = createFieldsOrder("TokenIsElevated");
   }
 }
