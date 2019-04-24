@@ -23,6 +23,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
@@ -494,7 +495,9 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
             verbose("oldDefFontScale=%.2f", oldDefFontScale)
           }
         }
-        if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)
+        if (readScale != defFontScale && readScale != oldDefFontScale) {
+          size = ((readSize / readScale) * defFontScale).roundToInt()
+        }
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
