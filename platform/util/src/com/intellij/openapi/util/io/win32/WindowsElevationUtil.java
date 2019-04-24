@@ -68,6 +68,7 @@ public class WindowsElevationUtil {
     }
   };
 
+  @Structure.FieldOrder("TokenIsElevated")
   public static class TOKEN_ELEVATION extends Structure {
     public WinDef.DWORD TokenIsElevated = new WinDef.DWORD(0);
   }
