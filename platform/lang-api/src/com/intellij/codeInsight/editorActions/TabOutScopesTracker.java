@@ -28,15 +28,15 @@ public interface TabOutScopesTracker {
    * just inserted pair of quotes/brackets.
    */
   default void registerEmptyScope(@NotNull Editor editor, int offset) {
-    registerEmptyScope(editor, offset, 1);
+    registerEmptyScope(editor, offset, offset + 1);
   }
 
   /**
    * Same as {@link #registerEmptyScope(Editor, int)} but allows to set custom caret shift on exiting the scope. This is for the cases when scope suffix contains more than one character (e.g. a closing parenthesis and a semicolon).
    *
-   * @param caretShift a positive value, representing desired caret offset shift when Tab is used to exit the scope
+   * @param tabOutOffset position where caret should be moved when Tab is used to exit the scope (should be larger than {@code offset})
    */
-  void registerEmptyScope(@NotNull Editor editor, int offset, int caretShift);
+  void registerEmptyScope(@NotNull Editor editor, int offset, int tabOutOffset);
 
   /**
    * Checks whether given offset is at the end of tracked scope (so if caret is located at that offset, Tab key can be used to move out of
@@ -47,7 +47,7 @@ public interface TabOutScopesTracker {
   /**
    * Removes a tracked scope (if any) ending at the given offset.
    *
-   * @return a positive value indicating required caret shift, if there was a scope ending at given offset, and zero otherwise
+   * @return target caret position where caret should be moved, if there was a scope ending at given offset, and -1 otherwise
    *
    * @see #hasScopeEndingAt(Editor, int)
    * @see #registerEmptyScope(Editor, int, int)
