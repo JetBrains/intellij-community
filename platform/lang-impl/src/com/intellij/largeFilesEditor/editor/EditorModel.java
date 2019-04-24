@@ -51,12 +51,13 @@ public class EditorModel {
   ArrayList<Page> pagesInDocument = new ArrayList<>();
   List<Page> pagesCash = new LinkedList<>();
   List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
-  final AbsoluteEditorPosition targetVisiblePosition = new AbsoluteEditorPosition(0, 0);
-  private boolean isLocalScrollBarStabilized = false;
   AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
 
+  private final AbsoluteEditorPosition targetVisiblePosition = new AbsoluteEditorPosition(0, 0);
+  private boolean isLocalScrollBarStabilized = false;
+
+  private final AbsoluteCaretPostioin targetCaretPosition = new AbsoluteCaretPostioin(0, 0);
   private boolean isRealCaretCanAffectOnTarget = true;
-  private AbsoluteCaretPostioin targetCaretPosition = new AbsoluteCaretPostioin(0, 0);
   private boolean isNeedToShowCaret = false;
 
   private final JPanel panelMain;
