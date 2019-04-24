@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class EditorModel {
+public class EditorModel {
   private static final Logger LOG = Logger.getInstance(EditorModel.class);
 
   private static final int EDITOR_LINE_BEGINNING_INDENT = 5;
@@ -655,6 +655,27 @@ class EditorModel {
         isLocalScrollBarStabilized = true;
       }
     }
+  }
+
+  public void setCaretToFileEndAndShow() {
+    long pagesAmount;
+    try {
+      pagesAmount = dataProvider.getPagesAmount();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return;
+    }
+
+    targetCaretPosition.set(pagesAmount, 0);
+    isNeedToShowCaret = true;
+    requestUpdate();
+  }
+
+  public void setCaretToFileStartAndShow() {
+    targetCaretPosition.set(0,0);
+    isNeedToShowCaret = true;
+    requestUpdate();
   }
 
   // TODO: 2019-04-08 optimize by special data structure

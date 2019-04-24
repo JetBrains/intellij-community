@@ -472,6 +472,12 @@ public class EditorManagerImpl extends UserDataHolderBase
     return fileManager.getFileDataProviderForSearch();
   }
 
+  @NotNull
+  @Override
+  public EditorModel getEditorModel() {
+    return editorModel;
+  }
+
   @Override
   public void tellSavingFileWasCorrupted(String messageToUser) {
     ApplicationManager.getApplication().invokeLater(() -> {

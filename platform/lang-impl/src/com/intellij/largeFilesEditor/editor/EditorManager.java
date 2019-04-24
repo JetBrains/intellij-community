@@ -53,4 +53,7 @@ public interface EditorManager extends FileEditor {
   EditorManagerAccess createAccessForEncodingWidget();
 
   FileDataProviderForSearch getFileDataProviderForSearch();
+
+  @NotNull
+  EditorModel getEditorModel();
 }

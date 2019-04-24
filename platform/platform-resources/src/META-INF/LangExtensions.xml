@@ -810,6 +810,11 @@
     <typedHandler implementation="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
 
     <!-- LargeFileEditor -->
+`   <editorActionHandler action="EditorTextStart" implementationClass="com.intellij.largeFilesEditor.editor.actions.LfeEditorActionTextStartHandler"
+                         id="lfe.editorTextStart" order="first"/>
+    <editorActionHandler action="EditorTextEnd" implementationClass="com.intellij.largeFilesEditor.editor.actions.LfeEditorActionTextEndHandler"
+                         id="lfe.editorTextEnd" order="first"/>
+
     <editorActionHandler action="Find" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerFind"
                          id="lfe.find" order="first"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerEscape"

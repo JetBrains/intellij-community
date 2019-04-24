@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LfeBaseEditorActionHandler extends EditorActionHandler {
   private final EditorActionHandler originalHandler;
 
-  LfeBaseEditorActionHandler(EditorActionHandler originalHandler) {
+  public LfeBaseEditorActionHandler(EditorActionHandler originalHandler) {
     this.originalHandler = originalHandler;
   }
 
