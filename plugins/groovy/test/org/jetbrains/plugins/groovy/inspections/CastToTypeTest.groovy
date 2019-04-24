@@ -17,14 +17,19 @@ package org.jetbrains.plugins.groovy.inspections
 
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Maxim.Medvedev
  */
-class CastToTypeTest extends LightCodeInsightFixtureTestCase {
+class CastToTypeTest extends LightGroovyTestCase {
+
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+
   @Override
   protected String getBasePath() {
     return TestUtils.testDataPath + 'groovy/inspections/castToType'
@@ -42,4 +47,6 @@ class CastToTypeTest extends LightCodeInsightFixtureTestCase {
   void testSimple() {doTest('Cast to List<? extends Abc>')}
   void testInReturnType() {doTest('Cast to int')}
   void testInForCycle() {doTest('Cast to List<Integer>')}
+
+  void testInBinaryExpression() {doTest('Cast operand to String')}
 }

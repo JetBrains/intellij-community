@@ -7,4 +7,4 @@ typealias Arguments = List<Argument>
 
 typealias Applicabilities = Map<Argument, ApplicabilityData>
 
-data class ApplicabilityData(val psiType: PsiType?, val applicability: Applicability)
+data class ApplicabilityData(val type: PsiType?, val applicability: Applicability)
