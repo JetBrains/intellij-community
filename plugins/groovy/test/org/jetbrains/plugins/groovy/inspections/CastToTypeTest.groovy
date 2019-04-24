@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class CastToTypeTest extends LightGroovyTestCase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   @Override
   protected String getBasePath() {
