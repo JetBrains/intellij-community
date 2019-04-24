@@ -183,6 +183,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private static boolean isInnerComprehension(PsiElement referenceElement, PsiElement definition) {
+    if (definition != null && definition.getParent() instanceof PyAssignmentExpression) return false;
+
     final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
     if (definitionComprehension != null && PyUtil.isOwnScopeComprehension(definitionComprehension)) {
       final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(referenceElement, PyComprehensionElement.class);
