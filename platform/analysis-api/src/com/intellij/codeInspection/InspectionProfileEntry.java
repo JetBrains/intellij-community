@@ -19,7 +19,6 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
@@ -37,16 +36,12 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author anna
- */
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
+  private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
-  private static final SerializationFilter DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
   private static Set<String> ourBlackList;
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer;
@@ -234,7 +229,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#key
    * @see InspectionEP#bundle
    */
-  @Nls
   @NotNull
   public String getDisplayName() {
     if (myNameProvider != null) {
@@ -330,7 +324,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    */
   public void writeSettings(@NotNull Element node) {
     if (useNewSerializer()) {
-      //noinspection deprecation
       XmlSerializer.serializeObjectInto(this, node, getSerializationFilter());
     }
     else {
@@ -387,7 +380,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Nullable
   @Deprecated
   protected SerializationFilter getSerializationFilter() {
-    return DEFAULT_FILTER;
+    return XmlSerializer.getDefaultSerializationFilter();
   }
 
   /**
