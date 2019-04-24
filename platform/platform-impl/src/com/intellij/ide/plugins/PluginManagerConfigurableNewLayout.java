@@ -411,7 +411,7 @@ public class PluginManagerConfigurableNewLayout
       @Override
       protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
                                                     @NotNull PluginSearchTextField searchTextField) {
-        SearchPopupController trendingController = new SearchPopupController(searchTextField, false) {
+        SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(searchTextField) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
@@ -591,8 +591,11 @@ public class PluginManagerConfigurableNewLayout
           }
         };
 
+        MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
+        marketplaceController.setEventHandler(eventHandler);
+
         PluginsGroupComponentWithProgress panel =
-          new PluginsGroupComponentWithProgress(new PluginListLayout(), new MultiSelectionEventHandler(), myNameListener,
+          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
                                                 PluginManagerConfigurableNewLayout.this.mySearchListener,
                                                 descriptor -> new NewListPluginComponent(myPluginModel, descriptor, true));
 
@@ -600,7 +603,7 @@ public class PluginManagerConfigurableNewLayout
         PluginManagerConfigurableNew.registerCopyProvider(panel);
 
         myMarketplaceSearchPanel =
-          new SearchResultPanel(trendingController, panel, 0, 0) {
+          new SearchResultPanel(marketplaceController, panel, 0, 0) {
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
@@ -843,7 +846,7 @@ public class PluginManagerConfigurableNewLayout
       @Override
       protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
                                                     @NotNull PluginSearchTextField searchTextField) {
-        SearchPopupController installedController = new SearchPopupController(searchTextField, false) {
+        SearchUpDownPopupController installedController = new SearchUpDownPopupController(searchTextField) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
@@ -872,7 +875,10 @@ public class PluginManagerConfigurableNewLayout
           }
         };
 
-        PluginsGroupComponent panel = new PluginsGroupComponent(new PluginListLayout(), new MultiSelectionEventHandler(), myNameListener,
+        MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
+        installedController.setEventHandler(eventHandler);
+
+        PluginsGroupComponent panel = new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
                                                                 PluginManagerConfigurableNewLayout.this.mySearchListener,
                                                                 descriptor -> new NewListPluginComponent(myPluginModel, descriptor, false));
 

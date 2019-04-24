@@ -21,7 +21,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class SearchPopupController {
-  private final PluginSearchTextField myTextField;
+  protected final PluginSearchTextField myTextField;
   private final boolean myHandleSpace;
   protected SearchPopup myPopup;
   private final JBPopupListener mySearchPopupListener = new JBPopupAdapter() {

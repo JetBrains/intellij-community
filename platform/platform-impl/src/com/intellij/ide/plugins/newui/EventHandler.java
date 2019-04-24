@@ -75,6 +75,9 @@ public abstract class EventHandler {
   public void setSelectionListener(@Nullable Consumer<PluginsGroupComponent> listener) {
   }
 
+  public void handleUpDown(@NotNull KeyEvent event) {
+  }
+
   public enum SelectionType {
     SELECTION, HOVER, NONE
   }
