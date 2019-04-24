@@ -137,7 +137,7 @@ public class TestClassesFilterTest {
   }
 
   private static InputStreamReader getReader(String filterText) {
-    return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes(StandardCharsets.UTF_8)));
+    return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
   }
 
   private static void checkForAllExcludedDefinedGroup(TestClassesFilter classesFilter) {

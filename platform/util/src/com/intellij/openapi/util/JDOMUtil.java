@@ -263,7 +263,7 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(@NotNull File file) throws JDOMException, IOException {
-    return loadDocumentUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file))));
+    return loadDocumentUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)));
   }
 
   @NotNull

@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -209,8 +210,8 @@ public class UnixProcessManager {
   }
 
   private static void processCommandOutput(Process process, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
-    try (BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-      try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+    try (BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+      try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
         if (skipFirstLine) {
           stdOutput.readLine(); //ps output header
         }

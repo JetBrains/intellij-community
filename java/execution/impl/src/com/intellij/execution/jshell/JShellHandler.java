@@ -14,7 +14,10 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,7 +84,7 @@ public class JShellHandler {
     myProcess = handler;
 
     final PipedInputStream is = new PipedInputStream();
-    final OutputStreamWriter readerSink = new OutputStreamWriter(new PipedOutputStream(is));
+    final OutputStreamWriter readerSink = new OutputStreamWriter(new PipedOutputStream(is), StandardCharsets.UTF_8);
     myMessageReader = new MessageReader<>(is, Response.class);
     myMessageWriter = new MessageWriter<>(handler.getProcessInput());
 
