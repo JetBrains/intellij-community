@@ -47,6 +47,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class IdeaApplication {
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY};
@@ -132,29 +133,37 @@ public final class IdeaApplication {
   }
 
   private static void addActivateAndWindowsCliListeners(@NotNull ApplicationImpl app) {
-    StartupUtil.addExternalInstanceListener(args -> app.invokeLater(() -> {
-      LOG.info("ApplicationImpl.externalInstanceListener invocation");
-      String currentDirectory = args.isEmpty() ? null : args.get(0);
-      List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
-      Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-      JFrame frame = project == null
-                     ? WindowManager.getInstance().findVisibleFrame() :
-                     (JFrame)WindowManager.getInstance().getIdeFrame(project);
-      if (frame != null) {
-        if (frame instanceof IdeFrame) {
-          AppIcon.getInstance().requestFocus((IdeFrame)frame);
+    StartupUtil.addExternalInstanceListener(args -> {
+      AtomicReference<Future<? extends CliResult>> ref = new AtomicReference<>();
+
+      app.invokeAndWait(() -> {
+        LOG.info("ApplicationImpl.externalInstanceListener invocation");
+        String currentDirectory = args.isEmpty() ? null : args.get(0);
+        List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
+        final Pair<Project, Future<? extends CliResult>> projectAndFuture =
+          CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
+
+        ref.set(projectAndFuture.getSecond());
+        final Project project = projectAndFuture.getFirst();
+        JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
+                       (JFrame)WindowManager.getInstance().getIdeFrame(project);
+        if (frame != null) {
+          if (frame instanceof IdeFrame) {
+            AppIcon.getInstance().requestFocus((IdeFrame)frame);
+          } else {
+            frame.toFront();
+            DialogEarthquakeShaker.shake(frame);
+          }
         }
-        else {
-          frame.toFront();
-          DialogEarthquakeShaker.shake(frame);
-        }
-      }
-    }));
+      });
+
+      return ref.get();
+    });
 
     MainRunner.LISTENER = (currentDirectory, args) -> {
       List<String> argsList = Arrays.asList(args);
       LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-      if (argsList.isEmpty()) return;
+      if (argsList.isEmpty()) return 0;
       ModalityState state = app.getDefaultModalityState();
       for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
         if (starter.canProcessExternalCommandLine() &&
@@ -163,7 +172,10 @@ public final class IdeaApplication {
           state = app.getAnyModalityState();
         }
       }
-      app.invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory), state);
+      AtomicReference<Future<? extends CliResult>> ref = new AtomicReference<>();
+      app.invokeAndWait(() -> ref.set(CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory).getSecond()), state);
+      final CliResult result = CliResult.getOrWrapFailure(ref.get(), 1);
+      return result.getReturnCode();
     };
   }
 
@@ -330,7 +342,7 @@ public final class IdeaApplication {
       Project project = null;
       if (!commandLineArgs.isEmpty() && commandLineArgs.get(0) != null) {
         LOG.info("IdeaApplication.loadProject");
-        project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, null).getProject();
+        project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, null).getFirst();
       }
       return project;
     }

@@ -57,10 +57,6 @@ public final class SocketLock {
   private static final String PATHS_EOT_RESPONSE = "---";
   private static final String OK_RESPONSE = "ok";
 
-  private static final int WRONG_TOKEN_CODE = 239;
-  private static final int LISTENER_NOT_INITIALIZED = 240;
-  private static final int RESPONSE_TIMEOUT = 241;
-
   private final String myConfigPath;
   private final String mySystemPath;
   private final AtomicReference<CliRequestProcessor> myActivateListener = new AtomicReference<>();
@@ -348,15 +344,15 @@ public final class SocketLock {
                   IdeBundle.message("activation.auth.title"),
                   IdeBundle.message("activation.auth.message"),
                   NotificationType.WARNING));
-                result = new CliResult(WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
+                result = new CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
               }
               else {
                 CliRequestProcessor listener = myActivateListener.get();
                 if (listener != null) {
-                  result = CliResult.getOrWrapFailure(listener.process(args.subList(1, args.size())), RESPONSE_TIMEOUT);
+                  result = CliResult.getOrWrapFailure(listener.process(args.subList(1, args.size())), Main.ACTIVATE_RESPONSE_TIMEOUT);
                 }
                 else {
-                  result = new CliResult(LISTENER_NOT_INITIALIZED, "IDE has not been initialized yet");
+                  result = new CliResult(Main.ACTIVATE_LISTENER_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"));
                 }
               }
 
@@ -373,11 +369,11 @@ public final class SocketLock {
     }
   }
 
-  private static void sendStringSequence(ChannelHandlerContext context, List<String> lockedPaths) throws IOException {
+  private static void sendStringSequence(ChannelHandlerContext context, List<String> strings) throws IOException {
     ByteBuf buffer = context.alloc().ioBuffer(1024);
     boolean success = false;
     try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
-      for (String path : lockedPaths) out.writeUTF(path);
+      for (String s : strings) out.writeUTF(s);
       out.writeUTF(PATHS_EOT_RESPONSE);
       success = true;
     }
@@ -409,6 +405,7 @@ public final class SocketLock {
     return result;
   }
 
+  @NotNull
   private static CliResult mapResponseToCliResult(@NotNull List<String> responseParts) throws IllegalArgumentException {
     if (responseParts.size() > 3 || responseParts.size() < 2) {
       throw new IllegalArgumentException("bad response: " + StringUtil.join(responseParts, ";"));

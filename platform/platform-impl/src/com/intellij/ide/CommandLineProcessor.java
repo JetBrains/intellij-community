@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -44,7 +45,7 @@ public class CommandLineProcessor {
   private CommandLineProcessor() { }
 
   @NotNull
-  private static FutureAndProject doOpenFileOrProject(VirtualFile file, boolean shouldWait) {
+  private static Pair<Project, Future<? extends CliResult>> doOpenFileOrProject(VirtualFile file, boolean shouldWait) {
     String path = file.getPath();
     if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
@@ -63,7 +64,7 @@ public class CommandLineProcessor {
   }
 
   @NotNull
-  private static FutureAndProject doOpenFile(VirtualFile file, int line, boolean tempProject, boolean shouldWait) {
+  private static Pair<Project, Future<? extends CliResult>> doOpenFile(VirtualFile file, int line, boolean tempProject, boolean shouldWait) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
@@ -106,8 +107,8 @@ public class CommandLineProcessor {
   }
 
   @NotNull
-  public static FutureAndProject processExternalCommandLine(@NotNull List<String> args,
-                                                            @Nullable String currentDirectory) {
+  public static Pair<Project, Future<? extends CliResult>> processExternalCommandLine(@NotNull List<String> args,
+                                                                                      @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
@@ -141,7 +142,7 @@ public class CommandLineProcessor {
     }
 
     final boolean shouldWait = args.contains(WAIT_KEY);
-    FutureAndProject projectAndCallback = null;
+    Pair<Project, Future<? extends CliResult>> projectAndCallback = null;
     int line = -1;
     boolean tempProject = false;
 
@@ -217,35 +218,13 @@ public class CommandLineProcessor {
   }
 
   @NotNull
-  public static FutureAndProject of(@Nullable Project project, @NotNull Future<? extends CliResult> future) {
-    return new FutureAndProject(project, future);
+  public static Pair<Project, Future<? extends CliResult>> of(@Nullable Project project, @NotNull Future<? extends CliResult> future) {
+    return Pair.create(project, future);
   }
 
   @NotNull
-  public static FutureAndProject of(@NotNull Future<? extends CliResult> future) {
-    return new FutureAndProject(null, future);
+  public static Pair<Project, Future<? extends CliResult>> of(@NotNull Future<? extends CliResult> future) {
+    return Pair.create(null, future);
   }
 
-  public static class FutureAndProject {
-    @Nullable
-    private final Project myProject;
-
-    @NotNull
-    private final Future<? extends CliResult> myFuture;
-
-    public FutureAndProject(@Nullable Project project, @NotNull Future<? extends CliResult> future) {
-      myProject = project;
-      myFuture = future;
-    }
-
-    @Nullable
-    public Project getProject() {
-      return myProject;
-    }
-
-    @NotNull
-    public Future<? extends CliResult> getFuture() {
-      return myFuture;
-    }
-  }
 }

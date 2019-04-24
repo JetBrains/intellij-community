@@ -227,7 +227,7 @@ public class StartupUtil {
 
     SocketLock.ActivateStatusAndResponse result = lockSystemFolders(args);
     if (result.getActivateStatus() == SocketLock.ActivateStatus.ACTIVATED) {
-      final CliResult cliOutput = Objects.requireNonNull(result.getResponse());
+      final CliResult cliOutput = Objects.requireNonNull(result.getResponse(), "guaranteed by SocketLock.mapResponseToCliResult");
       if (cliOutput.getMessage() != null) {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println(cliOutput.getMessage());

@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -67,7 +66,7 @@ public final class CommandLineWaitingManager {
 
   @NotNull
   public Future<CliResult> addHookForProject(@NotNull Project project) {
-    return addHookAndNotify(project, "Command line is waiting until the project '" + project.getName() + "' is closed");
+    return addHookAndNotify(project, IdeBundle.message("activation.project.is.waiting.notification", project.getName()));
   }
   
   @NotNull
@@ -100,8 +99,6 @@ public final class CommandLineWaitingManager {
   public static class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> {
     private static final Key<EditorNotificationPanel> KEY = Key.create("CommandLineWaitingNotification");
 
-    private static final NotNullLazyValue<CommandLineWaitingManager> MANAGER = NotNullLazyValue.createValue(() -> getInstance());
-
     @NotNull
     @Override
     public Key<EditorNotificationPanel> getKey() {
@@ -110,8 +107,8 @@ public final class CommandLineWaitingManager {
 
     @Nullable
     @Override
-    public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
-      if (MANAGER.getValue().myFileOrProjectToCallback.containsKey(file)
+    public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+      if (getInstance().myFileOrProjectToCallback.containsKey(file)
           && !PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)
           && !getInstance().myDismissedObjects.contains(file)) {
         return new MyNotificationPanel(file);
