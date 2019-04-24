@@ -34,7 +34,8 @@ import java.util.List;
 
 public class PyExecuteSelectionAction extends AnAction {
 
-  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute Selection in Console";
+  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute Selection in Python Console";
+  public static final String EXECUTE_LINE_IN_CONSOLE = "Execute Line in Python Console";
 
   public PyExecuteSelectionAction() {
     super(EXECUTE_SELECTION_IN_CONSOLE);
@@ -155,7 +156,7 @@ public class PyExecuteSelectionAction extends AnAction {
       else {
         text = getLineUnderCaret(editor);
         if (text != null) {
-          presentation.setText("Execute Line in Console");
+          presentation.setText(EXECUTE_LINE_IN_CONSOLE);
         }
       }
 
