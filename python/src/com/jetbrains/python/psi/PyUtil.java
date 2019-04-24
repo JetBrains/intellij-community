@@ -1156,6 +1156,10 @@ public class PyUtil {
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor) {
+    return createNamedParameterLookup(name, settingsAnchor, true);
+  }
+
   /**
    * Peels argument expression of parentheses and of keyword argument wrapper
    *
