@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -158,8 +157,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       child = createChild(nameId, id, delegate, attributes, isEmptyDirectory);
 
       addChild(child);
-
-      ((PersistentFSImpl)ourPersistence).incStructuralModificationCount();
     }
 
     if (!child.isDirectory()) {
