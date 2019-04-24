@@ -50,14 +50,18 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
     if (level > 0) {
       presentations.add(factory.seq(factory.text("<"), factory.folding(factory.text("..."), object: PresentationSupplier {
-        override fun getPresentation(): InlayPresentation = SequencePresentation(classType.parameters.map { hint(it, level + 1) })
+        override fun getPresentation(): InlayPresentation = parametersHint(classType, level)
       }), factory.text(">")))
     } else {
       presentations.add(factory.text("<"))
-      classType.parameters.mapTo(presentations) { hint(it, level + 1) }
+      presentations.add(parametersHint(classType, level))
       presentations.add(factory.text(">"))
     }
     return SequencePresentation(presentations)
+  }
+
+  private fun parametersHint(classType: PsiClassType, level: Int): InlayPresentation {
+    return join(classType.parameters.map { hint(it, level + 1) }, ", ")
   }
 
   private fun classHint(aClass: PsiClass, level: Int): InlayPresentation {
@@ -116,9 +120,9 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     for (presentation in presentations) {
       if (!first) {
         seq.add(factory.text(text))
-        first = false
       }
       seq.add(presentation)
+      first = false
     }
     return SequencePresentation(seq)
   }
