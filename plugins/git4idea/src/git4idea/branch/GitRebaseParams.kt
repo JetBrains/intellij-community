@@ -8,12 +8,20 @@ class GitRebaseParams private constructor(branch: String?,
                                           val upstream: String,
                                           val interactive: Boolean,
                                           private val preserveMerges: Boolean,
+                                          private val autoSquash: AutoSquashOption,
                                           val editorHandler: GitRebaseEditorHandler? = null) {
   companion object {
     fun editCommits(base: String,
                     editorHandler: GitRebaseEditorHandler?,
-                    preserveMerges: Boolean): GitRebaseParams =
-      GitRebaseParams(null, null, base, true, preserveMerges, editorHandler)
+                    preserveMerges: Boolean,
+                    autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT): GitRebaseParams =
+      GitRebaseParams(null, null, base, true, preserveMerges, autoSquash, editorHandler)
+  }
+
+  enum class AutoSquashOption {
+    DEFAULT,
+    ENABLE,
+    DISABLE
   }
 
   val branch: String? = branch?.takeIf { it.isNotBlank() }
@@ -25,7 +33,7 @@ class GitRebaseParams private constructor(branch: String?,
               newBase: String?,
               upstream: String,
               interactive: Boolean,
-              preserveMerges: Boolean) : this(branch, newBase, upstream, interactive, preserveMerges, null)
+              preserveMerges: Boolean) : this(branch, newBase, upstream, interactive, preserveMerges, AutoSquashOption.DEFAULT)
 
   fun asCommandLineArguments(): List<String> = mutableListOf<String>().apply {
     if (interactive) {
@@ -33,6 +41,12 @@ class GitRebaseParams private constructor(branch: String?,
     }
     if (preserveMerges) {
       add("--preserve-merges")
+    }
+    when (autoSquash) {
+      AutoSquashOption.DEFAULT -> {
+      }
+      AutoSquashOption.ENABLE -> add("--autosquash")
+      AutoSquashOption.DISABLE -> add("--no-autosquash")
     }
     if (newBase != null) {
       addAll(listOf("--onto", newBase))
