@@ -1654,7 +1654,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (id == null) id = clazz2;
       final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, id, handler))) {
+        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, clazz2, handler))) {
           handler.addResult(id, 0, -1, myMatchingVisitor.getMatchContext());
         }
       }
