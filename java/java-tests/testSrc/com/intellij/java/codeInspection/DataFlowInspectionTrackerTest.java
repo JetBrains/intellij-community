@@ -114,4 +114,7 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testBooleanUnderNegation() { doTest(); }
   public void testArrayLength() { doTest(); }
   public void testArrayLengthCollectionSize() { doTest(); }
+  public void testInstanceOfNull() { doTest(); }
+  public void testInstanceOfConflict() { doTest(); }
+  public void testInstanceOfRedundant() { doTest(); }
 }

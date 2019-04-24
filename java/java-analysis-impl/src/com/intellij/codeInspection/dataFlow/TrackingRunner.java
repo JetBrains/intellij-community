@@ -7,11 +7,8 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateCh
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
@@ -270,7 +267,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
           return new CauseItem[]{item};
         }
-        else if (expectedValue instanceof Boolean && varSourceExpression != null) {
+        else if (varSourceExpression != null) {
           return new CauseItem[]{new CauseItem("'" + value + " == "+expectedValue+"' was established from condition", varSourceExpression)};
         }
       }
@@ -320,7 +317,57 @@ public class TrackingRunner extends StandardDataFlowRunner {
         }
       }
     }
+    if (expression instanceof PsiInstanceOfExpression) {
+      PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
+      PsiExpression operand = instanceOfExpression.getOperand();
+      MemoryStateChange operandHistory = history.findExpressionPush(operand);
+      if (operandHistory != null) {
+        DfaValue operandValue = operandHistory.myTopOfStack;
+        if (!value) {
+          Pair<MemoryStateChange, DfaNullability> nullability = operandHistory.findFact(operandValue, DfaFactType.NULLABILITY);
+          if (nullability.second == DfaNullability.NULL) {
+            CauseItem causeItem = new CauseItem("Value '" + operand.getText() + "' is always 'null'", operand);
+            causeItem.addChildren(findConstantValueCause(operand, operandHistory, null));
+            return new CauseItem[]{causeItem};
+          }
+        }
+        PsiTypeElement typeElement = instanceOfExpression.getCheckType();
+        if (typeElement != null) {
+          PsiType type = typeElement.getType();
+          CauseItem[] causeItem = findTypeCause(operandHistory, type, value);
+          if (causeItem != null) return causeItem;
+        }
+      }
+    }
     return new CauseItem[0];
+  }
+
+  @Nullable
+  private static CauseItem[] findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
+    PsiExpression operand = Objects.requireNonNull(operandHistory.getExpression());
+    DfaValue operandValue = operandHistory.myTopOfStack;
+    DfaPsiType wanted = operandValue.getFactory().createDfaType(type);
+
+    Pair<MemoryStateChange, TypeConstraint> fact = operandHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
+    TypeConstraint constraint = fact.second == null ? TypeConstraint.empty() : fact.second;
+    boolean stillSatisfied = (isInstance ? constraint.withNotInstanceofValue(wanted) : constraint.withInstanceofValue(wanted)) == null;
+    while (stillSatisfied) {
+      MemoryStateChange causeLocation = fact.first;
+      if (causeLocation == null) break;
+      MemoryStateChange prevHistory = causeLocation.myPrevious;
+      if (prevHistory == null) break;
+      fact = prevHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
+      TypeConstraint prevConstraint = fact.second == null ? TypeConstraint.empty() : fact.second;
+      stillSatisfied = (isInstance ? prevConstraint.withNotInstanceofValue(wanted) : prevConstraint.withInstanceofValue(wanted)) == null;
+      if (!stillSatisfied) {
+        CauseItem causeItem =
+          new CauseItem("Type of '" + operand.getText() + "' is " + constraint.getPresentationText(operand.getType()), operand);
+        causeItem.addChildren(new CauseItem("Type of '" + operand.getText() + "' is known from #ref", causeLocation));
+        return new CauseItem[]{causeItem};
+      }
+      constraint = prevConstraint;
+    }
+    return null;
   }
 
   @NotNull
