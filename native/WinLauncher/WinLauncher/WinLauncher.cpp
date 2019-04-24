@@ -29,6 +29,7 @@ JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
+volatile int hookExitCode = 0;
 
 //tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
 bool toolsArchiveExists = true;
@@ -519,6 +520,13 @@ void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
   }
 }
 
+/* 
+This hook is passed to JNI in the LoadVMOptions method to catch exit code of java program
+*/
+void (JNICALL jniExitHook)(jint code) {
+  hookExitCode = code;
+}
+
 bool LoadVMOptions()
 {
   TCHAR buffer[_MAX_PATH];
@@ -570,12 +578,15 @@ bool LoadVMOptions()
   vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
 
-  vmOptionCount = vmOptionLines.size();
+  vmOptionCount = vmOptionLines.size() + 1;
   vmOptions = (JavaVMOption*)malloc(vmOptionCount * sizeof(JavaVMOption));
+
+  vmOptions[0].optionString = "exit";
+  vmOptions[0].extraInfo = jniExitHook; // It's our method defined above this one
   for (int i = 0; i < vmOptionLines.size(); i++)
   {
-    vmOptions[i].optionString = _strdup(vmOptionLines[i].c_str());
-    vmOptions[i].extraInfo = 0;
+    vmOptions[i + 1].optionString = _strdup(vmOptionLines[i].c_str());
+    vmOptions[i + 1].extraInfo = 0;
   }
 
   return true;
@@ -675,7 +686,7 @@ bool CreateJVM()
 
   int result = pCreateJavaVM(&jvm, &env, &initArgs);
 
-  for (int i = 0; i < vmOptionCount; i++)
+  for (int i = 1; i < vmOptionCount; i++)
   {
     free(vmOptions[i].optionString);
   }
@@ -1194,5 +1205,5 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   CloseHandle(hEvent);
   CloseHandle(hFileMapping);
 
-  return 0;
+  return hookExitCode;
 }
