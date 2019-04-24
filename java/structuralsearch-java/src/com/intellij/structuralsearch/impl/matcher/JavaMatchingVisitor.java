@@ -555,15 +555,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
         if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(reference, other, handler))) {
-          handler.addResult(other, 0, -1, myMatchingVisitor.getMatchContext());
+          handler.addResult(other, myMatchingVisitor.getMatchContext());
         }
       }
       else {
         final PsiElement deparenthesized = other instanceof PsiExpression && context.getOptions().isLooseMatching() ?
                                            PsiUtil.skipParenthesizedExprDown((PsiExpression)other) : other;
-        myMatchingVisitor.setResult(handler.validate(deparenthesized, 0, -1, context));
+        myMatchingVisitor.setResult(handler.validate(deparenthesized, context));
         if (myMatchingVisitor.getResult()) {
-          handler.addResult(other, 0, -1, context);
+          handler.addResult(other, context);
         }
       }
       return;
@@ -823,8 +823,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       try {
         final boolean result = (handler.isSubtype() || handler.isStrictSubtype())
                                ? checkMatchWithinHierarchy(patternElement, matchedElement, handler)
-                               : handler.validate(matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
-        if (result) handler.addResult(fullTypeResult ? matchedType : matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
+                               : handler.validate(matchedElement, myMatchingVisitor.getMatchContext());
+        if (result) handler.addResult(fullTypeResult ? matchedType : matchedElement, myMatchingVisitor.getMatchContext());
         return result;
       }
       finally {
@@ -907,7 +907,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     final boolean negated = handler.getPredicate() instanceof NotPredicate;
-    while (nodes.hasNext() && negated == handler.validate(nodes.current(), 0, -1, myMatchingVisitor.getMatchContext())) {
+    while (nodes.hasNext() && negated == handler.validate(nodes.current(), myMatchingVisitor.getMatchContext())) {
       nodes.advance();
     }
     return negated != nodes.hasNext();
@@ -1655,7 +1655,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
       if (handler.isSubtype() || handler.isStrictSubtype()) {
         if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, clazz2, handler))) {
-          handler.addResult(id, 0, -1, myMatchingVisitor.getMatchContext());
+          handler.addResult(id, myMatchingVisitor.getMatchContext());
         }
       }
       else {
