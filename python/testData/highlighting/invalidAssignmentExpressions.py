@@ -21,3 +21,6 @@ def foo(answer: (p := 42) = 5):  # Valid, but probably never useful
 lambda: (x := 1) # Valid, but unlikely to be useful
 (x := lambda: 1) # Valid
 lambda line: (m := re.match(pattern, line)) and m.group(1) # Valid
+
+class A:
+    [<error descr="Assignment expressions within a comprehension cannot be used in a class body">y := i</error> for i in range(2)]
