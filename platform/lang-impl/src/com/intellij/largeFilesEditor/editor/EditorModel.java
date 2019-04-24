@@ -241,15 +241,13 @@ public class EditorModel {
 
   private void fireRealCaretPositionChanged() {
     if (isRealCaretCanAffectOnTarget) {
-      if (tryGetTargetCaretOffsetInDocumentWithMargin() != -1) {
-        reflectRealToTargetCaretPostion();
-        isNeedToShowCaret = true;
-      }
+      reflectRealToTargetCaretPosition();
+      isNeedToShowCaret = true;
       requestUpdate();
     }
   }
 
-  private void reflectRealToTargetCaretPostion() {
+  private void reflectRealToTargetCaretPosition() {
     int caretOffset = editor.getCaretModel().getPrimaryCaret().getOffset();
 
     for (int i = pagesInDocument.size() - 1; i >= 0; i--) {
@@ -297,7 +295,7 @@ public class EditorModel {
 
     if (isNeedToShowCaret) {
       targetVisiblePosition.set(targetCaretPosition.pageNumber,
-                                targetVisiblePosition.verticalScrollOffset);
+                                targetVisiblePosition.verticalScrollOffset);  // we can't count the necessary offset at this stage
     }
 
     normalizePagesInDocumentListBeginning();
@@ -311,7 +309,6 @@ public class EditorModel {
       else {
         requestReadPage(pageNumber);
         return;
-        // UPDATE CHAIN EXIT POINT
       }
     }
 
@@ -349,8 +346,8 @@ public class EditorModel {
 
     if (isNeedToShowCaret) {
       if (tryGetTargetCaretOffsetInDocumentWithMargin() != -1) {
-        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        isNeedToShowCaret = false;
+        // TODO: 2019-04-24 Think about the situation, when target and real carets are not synchronized...
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
       else {
         LOG.warn("[Large File Editor Subsystem] EditorMode.update(): can't show caret. "
@@ -359,6 +356,7 @@ public class EditorModel {
                  + " targetVisiblePosition.pageNumber=" + targetVisiblePosition.pageNumber
                  + " targetVisiblePosition.verticalScrollOffset=" + targetVisiblePosition.verticalScrollOffset);
       }
+      isNeedToShowCaret = false;
     }
     else {
       if (!isRealCaretMathesTarget()) {
@@ -371,7 +369,7 @@ public class EditorModel {
     int offset = tryGetConvenientOffsetForCaret();
     if (offset != -1) {
       editor.getCaretModel().moveToOffset(offset);
-      reflectRealToTargetCaretPostion();
+      reflectRealToTargetCaretPosition();
     }
     else {
       LOG.info("[Large File Editor Subsystem] EditorModel.setCaretToConvenientPosition(): " +
@@ -430,7 +428,7 @@ public class EditorModel {
       LOG.warn(e);
     }
 
-    if (offset >= startOfAllowedRange && offset < endOfAllowedRange) {  // ">=" bacause for page number 0 startOfAllowedRange will be 0
+    if (offset >= startOfAllowedRange && offset <= endOfAllowedRange) {
       return offset;
     }
     else {
@@ -454,21 +452,31 @@ public class EditorModel {
 
   private int tryGetTargetCaretOffsetInDocument() {
     int indexOfPage = tryGetIndexOfNeededPageInList(targetCaretPosition.pageNumber, pagesInDocument);
-    if (indexOfPage != -1) {
-      int targetCaretOffsetInDocument =
-        getSymbolOffsetToStartOfPage(indexOfPage, pagesInDocument) + targetCaretPosition.symbolOffsetInPage;
 
-      if (targetCaretOffsetInDocument >= 0 && targetCaretOffsetInDocument <= document.getTextLength()) {
-        return targetCaretOffsetInDocument;
-      }
-      else {
-        LOG.warn("[Large File Editor Subsystem] EditorModel.tryGetTargetCaretOffsetInDocument():"
-                 + " Invalid targetCaretPosition state."
-                 + " targetCaretPosition.pageNumber=" + targetCaretPosition.pageNumber
-                 + " targetCaretPosition.symbolOffsetInPage=" + targetCaretPosition.symbolOffsetInPage
-                 + " targetCaretOffsetInDocument=" + targetCaretOffsetInDocument
-                 + " document.getTextLength()=" + document.getTextLength());
-      }
+    int targetCaretOffsetInDocument;
+
+    if (indexOfPage != -1) {
+      targetCaretOffsetInDocument = getSymbolOffsetToStartOfPage(indexOfPage, pagesInDocument)
+                                    + targetCaretPosition.symbolOffsetInPage;
+    }
+    else if (targetCaretPosition.symbolOffsetInPage == 0 &&
+             targetCaretPosition.pageNumber == pagesInDocument.get(pagesInDocument.size() - 1).getPageNumber() + 1) {
+      targetCaretOffsetInDocument = getSymbolOffsetToStartOfPage(pagesInDocument.size(), pagesInDocument);
+    }
+    else {
+      return -1;
+    }
+
+    if (targetCaretOffsetInDocument >= 0 && targetCaretOffsetInDocument <= document.getTextLength()) {
+      return targetCaretOffsetInDocument;
+    }
+    else {
+      LOG.warn("[Large File Editor Subsystem] EditorModel.tryGetTargetCaretOffsetInDocument():"
+               + " Invalid targetCaretPosition state."
+               + " targetCaretPosition.pageNumber=" + targetCaretPosition.pageNumber
+               + " targetCaretPosition.symbolOffsetInPage=" + targetCaretPosition.symbolOffsetInPage
+               + " targetCaretOffsetInDocument=" + targetCaretOffsetInDocument
+               + " document.getTextLength()=" + document.getTextLength());
     }
     return -1;
   }
