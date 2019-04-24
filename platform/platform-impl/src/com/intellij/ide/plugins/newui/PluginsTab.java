@@ -105,9 +105,9 @@ public abstract class PluginsTab {
     splitter.setSecondComponent(myDetailsPage = createDetailsPanel(mySearchListener));
     splitter.setProportion(0.45f);
 
-    myCardPanel.select(0, true);
-
     mySearchPanel = createSearchPanel(mySelectionListener, mySearchTextField);
+
+    myCardPanel.select(0, true);
 
     return splitter;
   }

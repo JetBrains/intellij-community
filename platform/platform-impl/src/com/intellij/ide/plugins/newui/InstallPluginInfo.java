@@ -32,7 +32,8 @@ public class InstallPluginInfo {
     myPluginModel = null;
     indicator.removeStateDelegate(null);
     if (statusBar != null) {
-      statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task());
+      String title = (install ? "Installing plugin " : "Update plugin ") + myDescriptor.getName();
+      statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task(title));
     }
   }
 
