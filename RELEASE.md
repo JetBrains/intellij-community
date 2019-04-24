@@ -13,6 +13,7 @@
     ```
 
  2. Also make sure that the `eap=` flag in the same file is correct.
+    It should be `true` for canary and beta builds, `false` for rc and final:
 
     ```
       <version major="1" minor="4" micro="0" patch="7" full="{0}.{1} RC 1" eap="false" />
@@ -21,7 +22,10 @@
     Among other things, in `VmOptionsGenerator.groovy` this causes the `isEAP`
     conditional to disable assertions.
 
- 3. Make sure the major/minor version is correctly encoded in the build number
+--------------------------------------------------------------------------------
+When a new dev branch (like studio-3.1-dev) is created, update studio-master-dev:
+
+ 1. Make sure the major/minor version is correctly encoded in the build number
     listed in build.txt file. It is the second number from the end. If major
     version is X and minor version is Y, the number is simply XY. For example,
     31, 32, 33 for 3.1, 3.2, 3.3 respectively.
@@ -39,7 +43,10 @@
     !define VERSION_MINOR 2
     ```
 
- 7. Turn off null checking.
+--------------------------------------------------------------------------------
+Before the first release candidate, update the dev branch (like studio-1.4-dev):
+
+ 1. Turn off null checking.
 
     Edit .idea/compiler.xml and make sure null assertions are disabled by
     adding the following line:
