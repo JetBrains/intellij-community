@@ -185,13 +185,14 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void close() {
+    if (myDisposed) return;
     if (myOnCloseHandler != null && !myOnCloseHandler.get()) return;
 
     // if you remove this line problems will start happen on Mac OS X
     // 2 projects opened, call Cmd+D on the second opened project and then Esc.
     // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
     // App is unusable until Cmd+Tab, Cmd+tab
-    FrameWrapper.this.myFrame.setVisible(false);
+    myFrame.setVisible(false);
     Disposer.dispose(this);
   }
 
