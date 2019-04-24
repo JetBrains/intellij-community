@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.PresentationSupplier
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.psi.*
 
@@ -48,9 +49,9 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     }
     val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
     if (level > 0) {
-      presentations.add(factory.seq(factory.text("<"), factory.folding(factory.text("...")) {
-        SequencePresentation(classType.parameters.map { hint(it, level + 1) })
-      }, factory.text(">")))
+      presentations.add(factory.seq(factory.text("<"), factory.folding(factory.text("..."), object: PresentationSupplier {
+        override fun getPresentation(): InlayPresentation = SequencePresentation(classType.parameters.map { hint(it, level + 1) })
+      }), factory.text(">")))
     } else {
       presentations.add(factory.text("<"))
       classType.parameters.mapTo(presentations) { hint(it, level + 1) }
