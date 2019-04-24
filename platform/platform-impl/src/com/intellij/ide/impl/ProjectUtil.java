@@ -167,7 +167,7 @@ public class ProjectUtil {
       int exitCode = confirmOpenNewProject(false);
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         final Project toClose = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
-        if (!ProjectManagerEx.getInstanceEx().closeAndDispose(toClose)) return null;
+        if (!closeAndDispose(toClose)) return null;
       }
       else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
         return null;

@@ -3,10 +3,9 @@ package org.jetbrains.idea.maven.importing.output;
 
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,7 +16,7 @@ public class MavenImportOutputParserProvider implements ExternalSystemOutputPars
   }
 
   @Override
-  public List<BuildOutputParser> getBuildOutputParsers(@NotNull ExternalSystemTaskId taskId) {
+  public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTask task) {
     return ContainerUtil.list(new MavenImportOutputParser());
   }
 }

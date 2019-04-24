@@ -6,7 +6,6 @@ import org.intellij.lang.annotations.Language;
 import javax.tools.*;
 import java.io.*;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -32,7 +31,7 @@ public class JavaInMemoryCompiler {
     final Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new JavaSourceFromString(className, code));
     final Iterable<String> options = Arrays.asList("-g"); // generate debugging info.
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final OutputStreamWriter out = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
+    final OutputStreamWriter out = new OutputStreamWriter(System.err);
     final Boolean success = myCompiler.getTask(out, myFileManager, diagnostics, options, null, compilationUnits).call();
 
     if (!success.booleanValue()) {

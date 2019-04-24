@@ -3,9 +3,9 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -17,49 +17,48 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
-final class TestDataHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+public class TestDataHighlightingPassFactory implements ProjectComponent, TextEditorHighlightingPassFactory {
   public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(StdFileTypes.JAVA.getDefaultExtension());
   public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES =
     ContainerUtil.immutableList("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj");
   private static final int MAX_HOPES = 3;
   private static final String TEST_DATA = "testdata";
+  private final Project myProject;
 
-  @Override
-  public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, null, null, true, -1);
+
+  public TestDataHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
+    myProject = project;
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, null, true, -1);
   }
 
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
-      Project project = file.getProject();
-      if (isSupported(virtualFile, project)) {
-        return new TestDataHighlightingPass(project, PsiDocumentManager.getInstance(project).getDocument(file));
-      }
+    if (virtualFile != null && isSupported(virtualFile)) {
+      return new TestDataHighlightingPass(myProject, PsiDocumentManager.getInstance(myProject).getDocument(file));
     }
     return null;
   }
 
-  private static boolean isSupported(@NotNull VirtualFile file, @NotNull Project project) {
+  public boolean isSupported(@NotNull VirtualFile file) {
     if (ScratchUtil.isScratch(file)) {
       return false;
     }
     final String ext = file.getExtension();
     if (SUPPORTED_FILE_TYPES.contains(ext)) {
-      return ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(file) == null;
+      return ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(file) == null;
     }
 
     if (SUPPORTED_IN_TEST_DATA_FILE_TYPES.contains(ext)) {
       int i = 0;
       VirtualFile parent = file.getParent();
       while (parent != null && i < MAX_HOPES) {
-        if (parent.getName().toLowerCase(Locale.ENGLISH).contains(TEST_DATA)) {
+        if (parent.getName().toLowerCase().contains(TEST_DATA)) {
           return true;
         }
         i++;

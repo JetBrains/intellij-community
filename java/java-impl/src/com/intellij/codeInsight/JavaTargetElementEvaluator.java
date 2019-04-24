@@ -15,6 +15,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +203,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     PsiElement parent = reference.getElement().getParent();
     if (parent instanceof PsiMethodCallExpression ||
-        parent instanceof PsiNewExpression && !((PsiNewExpression)parent).isArrayCreation()) {
+        parent instanceof PsiNewExpression && !ExpressionUtils.isArrayCreationExpression((PsiNewExpression)parent)) {
       PsiCallExpression callExpr = (PsiCallExpression)parent;
       boolean allowStatics = false;
       PsiExpression qualifier = callExpr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpr).getMethodExpression().getQualifierExpression()

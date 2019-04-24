@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +32,7 @@ public class JavaTryUnwrapper extends JavaUnwrapper {
 
   @Override
   protected void doUnwrap(final PsiElement element, final Context context) throws IncorrectOperationException {
-    PsiTryStatement trySt = (PsiTryStatement)element;
+    final PsiTryStatement trySt = (PsiTryStatement)element;
 
     PsiResourceList resourceList = trySt.getResourceList();
     if (resourceList != null) {
@@ -43,17 +41,14 @@ public class JavaTryUnwrapper extends JavaUnwrapper {
           context.extractElement(listElement, trySt);
           if (context.isEffective()) {
             PsiStatement emptyStatement = JavaPsiFacade.getElementFactory(resourceList.getProject()).createStatementFromText(";", trySt);
-            BlockUtils.addBefore(trySt, emptyStatement);
+            trySt.getParent().addBefore(emptyStatement, trySt);
           }
         }
       }
     }
-    if (RefactoringUtil.isLoopOrIf(trySt.getParent())) {
-      trySt = BlockUtils.expandSingleStatementToBlockStatement(trySt);
-    }
-
     context.extractFromCodeBlock(trySt.getTryBlock(), trySt);
     context.extractFromCodeBlock(trySt.getFinallyBlock(), trySt);
+
     context.delete(trySt);
   }
 }

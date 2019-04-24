@@ -92,8 +92,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
       final String runFileText = buildScriptWithConsoleRun();
       final boolean useExistingConsole = PyConsoleOptions.getInstance(project).isUseExistingConsole();
-      final Sdk sdk = myConfig.getSdk();
-      if (useExistingConsole && sdk != null && PyExecuteSelectionAction.canFindConsole(project, sdk.getHomePath())) {
+      if (useExistingConsole && PyExecuteSelectionAction.canFindConsole(project, myConfig.getSdkHome())) {
         // there are existing consoles, don't care about Rerun action
         PyExecuteSelectionAction.selectConsoleAndExecuteCode(project, runFileText);
       }

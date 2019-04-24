@@ -65,7 +65,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   @Override
-  protected boolean doMatchInAnyOrder(@NotNull NodeIterator elements, @NotNull NodeIterator elements2) {
+  protected boolean doMatchInAnyOrder(NodeIterator elements, NodeIterator elements2) {
     return matchContext.getPattern().getHandler(elements.current()).matchInAnyOrder(
       elements,
       elements2,
@@ -172,7 +172,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @return if they are equal and false otherwise
    */
   @Override
-  public boolean matchSequentially(@NotNull NodeIterator patternNodes, @NotNull NodeIterator matchNodes) {
+  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
     if (!patternNodes.hasNext()) {
       while (matchNodes.current() instanceof PsiComment) matchNodes.advance();
       return !matchNodes.hasNext();
@@ -186,7 +186,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    *
    * @param elements the element for which the sons are looked for match
    */
-  public void matchContext(@NotNull NodeIterator elements) {
+  public void matchContext(final NodeIterator elements) {
     if (matchContext == null) {
       return;
     }

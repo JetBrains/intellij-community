@@ -10,6 +10,7 @@ class Test {
     int l = /*1*/a /*2*/* -b / (c <caret>* d);
     int m = a/*1*/ - b / (c *<caret> -d);
     int n = a /*1*// (b *<caret> /*2*/-c / d) /*3*// a;
+    int o = (b /*1*/*<caret> c) /*2*// a;
     int p = a - (-b <caret>- c);
     int q = a - (b +<caret> -c);
     int r = a /*1*/- (b -/*2*/ c <caret>+/*3*/ d);
@@ -23,6 +24,7 @@ class Test {
     int z = a / (-/*1*/b <caret>* c / d);
     int aa = a / (b * <caret>-/*1*/c / d);
     int bb = a / (b * <caret>c / -/*1*/d);
-    int cc = /*1*/a / /*2*/(b */*3*/ <caret>-c) / -/*4*/d;
+    int cc = a - b / (c * <caret>-/*1*/d);
+    int dd = /*1*/a / /*2*/(b */*3*/ <caret>-c) / -/*4*/d;
   }
 }

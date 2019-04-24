@@ -79,17 +79,10 @@ class ExpandUtils {
                                                           @NotNull Map<IElementType, IElementType[]> outerOperators) {
     PsiPolyadicExpression expression = ObjectUtils.tryCast(operand.getParent(), PsiPolyadicExpression.class);
     if (expression == null) return null;
-    IElementType innerOperator = innerExpression.getOperationTokenType();
-    IElementType[] operators = outerOperators.get(innerOperator);
+    IElementType[] operators = outerOperators.get(innerExpression.getOperationTokenType());
     if (operators == null) return null;
-    IElementType outerOperator = expression.getOperationTokenType();
-    if (!ArrayUtil.contains(outerOperator, operators) || expression.getOperands().length < 2) return null;
-    if (isSamePrecedence(innerOperator, outerOperator) && expression.getTokenBeforeOperand(operand) == null) return null;
+    if (!ArrayUtil.contains(expression.getOperationTokenType(), operators) || expression.getOperands().length < 2) return null;
     return expression;
-  }
-
-  private static boolean isSamePrecedence(@NotNull IElementType innerOperator, @NotNull IElementType outerOperator) {
-    return PsiPrecedenceUtil.getPrecedenceForOperator(outerOperator) == PsiPrecedenceUtil.getPrecedenceForOperator(innerOperator);
   }
 
   @Nullable
@@ -183,7 +176,9 @@ class ExpandUtils {
     if (operandToken == null) return outerTokenType;
     IElementType innerTokenType = operandToken.getTokenType();
     if (outerTokenType == null) return innerTokenType;
-    if (!isSamePrecedence(innerTokenType, outerTokenType)) return innerTokenType;
+    if (PsiPrecedenceUtil.getPrecedenceForOperator(innerTokenType) != PsiPrecedenceUtil.getPrecedenceForOperator(outerTokenType)) {
+      return innerTokenType;
+    }
     if (isInversion(outerTokenType)) return invert(innerTokenType);
     return innerTokenType;
   }

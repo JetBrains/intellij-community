@@ -106,11 +106,11 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE).getPropertyMapper(settings);
     setSimple(mapper, "align_group_field_declarations", "true");
     setSimple(mapper, "blank_lines_after_class_header", "1");
-    setSimple(mapper, "block_brace_style", "next_line");
+    setSimple(mapper, "brace_style", "next_line");
     setSimple(mapper, "indent_size", "2");
     setSimple(mapper, "doc_align_param_comments", "true");
     setList(mapper, "imports_layout",
-            Arrays.asList("com.jetbrains.*", "|", "org.eclipse.bar", "$**", "$org.eclipse.foo.**"));
+            Arrays.asList("com.jetbrains.*", "blank_line", "org.eclipse.bar", "static  **", "static org.eclipse.foo.**"));
     mapper.getAccessor("repeat_annotations").setFromString(" com.jetbrains.First,  com.jetbrains.Second");
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);

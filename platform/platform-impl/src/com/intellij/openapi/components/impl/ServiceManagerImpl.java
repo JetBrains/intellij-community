@@ -30,15 +30,14 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -67,7 +66,7 @@ public final class ServiceManagerImpl implements Disposable {
     }
   }
 
-  @ApiStatus.Internal
+  @TestOnly
   public static void processAllDescriptors(@NotNull Consumer<? super ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
@@ -82,15 +81,8 @@ public final class ServiceManagerImpl implements Disposable {
         serviceDescriptors = pluginDescriptor.getModuleServices();
       }
 
-      serviceDescriptors.forEach(consumer);
-    }
-  }
-
-  @ApiStatus.Internal
-  public static void processProjectDescriptors(@NotNull BiConsumer<? super ServiceDescriptor, PluginDescriptor> consumer) {
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
-      for (ServiceDescriptor serviceDescriptor : ((IdeaPluginDescriptorImpl)plugin).getProjectServices()) {
-        consumer.accept(serviceDescriptor, plugin);
+      for (ServiceDescriptor serviceDescriptor : serviceDescriptors) {
+        consumer.accept(serviceDescriptor);
       }
     }
   }
@@ -98,6 +90,7 @@ public final class ServiceManagerImpl implements Disposable {
   @NotNull
   public static List<String> getImplementationClassNames(@NotNull ComponentManager componentManager, @NotNull String prefix) {
     List<String> result = new ArrayList<>();
+    //noinspection TestOnlyProblems
     processAllDescriptors(serviceDescriptor -> {
       String implementation = serviceDescriptor.getImplementation();
       if (!StringUtil.isEmpty(implementation) && implementation.startsWith(prefix)) {

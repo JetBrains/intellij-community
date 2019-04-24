@@ -18,7 +18,6 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoader
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
@@ -35,7 +34,6 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
                                                      autoPopupController: AutoPopupController,
                                                      avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                                      private val loader: GithubPullRequestsListLoader,
-                                                     private val dataLoader: GithubPullRequestsDataLoader,
                                                      private val listModel: ListModel<GithubSearchedIssue>,
                                                      private val searchQueryHolder: GithubPullRequestSearchQueryHolder,
                                                      private val listSelectionHolder: GithubPullRequestsListSelectionHolder)
@@ -170,14 +168,9 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
     }
     else if (loader.outdated) {
       infoPanel.setInfo("<html><body>The list is outdated. <a href=''>Refresh</a></body></html>",
-                        HtmlInfoPanel.Severity.INFO) { reset() }
+                        HtmlInfoPanel.Severity.INFO) { loader.reset() }
     }
     else infoPanel.setInfo(null)
-  }
-
-  private fun reset() {
-    loader.reset()
-    dataLoader.invalidateAllData()
   }
 
   private fun getErrorPrefix() = if (listModel.size == 0) "Can't load pull requests." else "Can't load full pull requests list."

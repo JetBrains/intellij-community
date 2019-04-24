@@ -407,8 +407,8 @@ private class FileNamesDataBuilder(private val path: FilePath) {
 
   fun build(): FileNamesData {
     return object : FileNamesData(path) {
-      override fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>? {
-        return renamesMap[Couple(parent, child)].find { FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.second else it.first, path) }
+      override fun findRename(parent: Int, child: Int, accept: (Couple<FilePath>) -> Boolean): Couple<FilePath>? {
+        return renamesMap[Couple(parent, child)].find { accept(it) }
       }
 
       override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {

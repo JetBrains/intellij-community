@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +88,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
    */
-  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text){
+  public AnAction(@Nullable String text){
     this(text, null, null);
   }
 
@@ -104,9 +103,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                  @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                  @Nullable Icon icon) {
+  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
     presentation.setDescription(description);
@@ -353,7 +350,6 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @return action presentable text without private user data
    */
   @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
   public String getTemplateText() {
     return getTemplatePresentation().getText();
   }

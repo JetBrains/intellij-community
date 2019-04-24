@@ -184,6 +184,11 @@
       <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
 
+    <reference ref="Compile">
+      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
+    </reference>
+
+
     <group id="EditorTabCompileGroup">
       <reference ref="Compile"/>
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="before" relative-to-action="RunContextPopupGroup"/>

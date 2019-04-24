@@ -372,7 +372,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       return;
     }
 
-    button.addActionListener(e -> myPluginsModel.installOrUpdatePlugin(myPlugin, install ? null : myPlugin));
+    button.addActionListener(e -> myPluginsModel.installOrUpdatePlugin(myPlugin, install));
 
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
       showProgress(false);

@@ -167,7 +167,9 @@ public class MavenIndicesManager implements Disposable {
     MavenIndices indicesObjectCache = getIndicesObject();
 
     try {
-      return indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
+      MavenIndex localIndex = indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
+      scheduleUpdate(project, Collections.singletonList(localIndex));
+      return localIndex;
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
@@ -234,7 +236,7 @@ public class MavenIndicesManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           indicator.setIndeterminate(false);
-          doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator,null));
+          doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator));
         }
         catch (MavenProcessCanceledException ignore) {
         }

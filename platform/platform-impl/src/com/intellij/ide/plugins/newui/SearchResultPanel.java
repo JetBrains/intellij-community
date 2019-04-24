@@ -27,8 +27,6 @@ public abstract class SearchResultPanel {
   private AtomicBoolean myRunQuery;
   private boolean myEmpty = true;
 
-  protected Runnable myPostFillGroupCallback;
-
   public SearchResultPanel(@Nullable SearchPopupController controller,
                            @NotNull PluginsGroupComponent panel,
                            int tabIndex,
@@ -69,7 +67,7 @@ public abstract class SearchResultPanel {
   }
 
   private void setEmptyText() {
-    myPanel.getEmptyText().setText("Nothing found");
+    myPanel.getEmptyText().setText("Nothing to show");
   }
 
   public boolean isEmpty() {
@@ -134,7 +132,6 @@ public abstract class SearchResultPanel {
           }
 
           myPanel.initialSelection(false);
-          runPostFillGroupCallback();
           fullRepaint();
         }, ModalityState.any());
       });
@@ -148,19 +145,11 @@ public abstract class SearchResultPanel {
         myPanel.initialSelection(false);
       }
 
-      runPostFillGroupCallback();
       fullRepaint();
     }
   }
 
   protected abstract void handleQuery(@NotNull String query, @NotNull PluginsGroup result);
-
-  private void runPostFillGroupCallback() {
-    if (myPostFillGroupCallback != null) {
-      myPostFillGroupCallback.run();
-      myPostFillGroupCallback = null;
-    }
-  }
 
   private void loading(boolean start) {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;

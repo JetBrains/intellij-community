@@ -318,6 +318,6 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   @Override
   public String toString() {
-    return "Layered icon "+getIconWidth()+"x"+getIconHeight()+". myIcons=" + Arrays.asList(myIcons);
+    return "Layered icon. myIcons=" + Arrays.asList(myIcons);
   }
 }

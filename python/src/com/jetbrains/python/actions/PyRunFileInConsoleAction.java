@@ -19,12 +19,11 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfigurationParams;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
   public PyRunFileInConsoleAction() {
-    super("Run File in Python Console", "Run Current File in Python Console", PythonIcons.Python.Python);
+    super("Run File in Console");
   }
 
   @Override

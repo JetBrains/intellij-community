@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,15 +103,7 @@ public class GrClosureSignatureUtil {
 
   @NotNull
   public static GrSignature createSignature(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean eraseParameterTypes) {
-    return createSignature(method, substitutor, eraseParameterTypes, method);
-  }
-
-  @NotNull
-  public static GrSignature createSignature(@NotNull PsiMethod method,
-                                            @NotNull PsiSubstitutor substitutor,
-                                            boolean types,
-                                            @NotNull PsiElement place) {
-    return new GrMethodSignatureImpl(method, substitutor, types, place);
+    return new GrMethodSignatureImpl(method, substitutor, eraseParameterTypes);
   }
 
   @NotNull

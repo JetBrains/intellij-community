@@ -620,16 +620,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
 
     @Override
-    public void startTask(String text) throws RemoteException {
-      myProcess.startTask(text);
-    }
-
-    @Override
-    public void completeTask(String text, String errorMessage) throws RemoteException {
-      myProcess.completeTask(text, errorMessage);
-    }
-
-    @Override
     public boolean isCanceled() {
       return myProcess.isCanceled();
     }

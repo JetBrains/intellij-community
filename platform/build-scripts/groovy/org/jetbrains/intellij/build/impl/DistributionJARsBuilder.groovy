@@ -198,9 +198,7 @@ class DistributionJARsBuilder {
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
-    if ("false" != System.getenv("BUILD_THIRD_PARTY_LIB_LIST")) {
-      buildThirdPartyLibrariesList()
-    }
+    buildThirdPartyLibrariesList()
 
     def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
     if (loadingOrderFilePath != null) {
@@ -796,11 +794,11 @@ class DistributionJARsBuilder {
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
     def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>",
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", 
                                                         "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt button1\"/>")
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>",
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", 
                                                         "<mouse-shortcut keystroke=\"alt shift button1\"/>")
     def patchedKeyMapDir = new File(buildContext.paths.temp, "patched-keymap")
     def targetFile = new File(patchedKeyMapDir, "keymaps/\$default.xml")

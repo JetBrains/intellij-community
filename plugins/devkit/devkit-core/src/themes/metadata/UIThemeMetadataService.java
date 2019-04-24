@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class UIThemeMetadataService {
 
-  public static final ExtensionPointName<UIThemeMetadataProvider> EP_NAME =
+  private static final ExtensionPointName<UIThemeMetadataProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.themeMetadataProvider");
 
   private final Map<UIThemeMetadata, Map<String, UIThemeMetadata.UIKeyMetadata>> myCache = new HashMap<>();

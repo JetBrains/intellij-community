@@ -13,7 +13,6 @@ import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.timing.Timeout
 import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
 import org.junit.rules.ErrorCollector
@@ -120,10 +119,10 @@ fun GuiTestCase.waitAMoment() {
  * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
  * @param predicate - searcher rule, how to compare an item and name. By default they are compared by equality
  * */
-fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout) {
+fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
-    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate, timeout = timeout) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
   }
 }
 
@@ -211,6 +210,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
                 fixtureByTextAnyState.isEnabled
               }
               catch (e: Exception) {
+                logInfo("waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
                 false
               }
               logInfo("'$text' button is ${if(isReimportButtonEnabled) "enabled" else "disabled"}")

@@ -738,7 +738,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     closeProjectAndWaitWelcomeFrame(true);
   }
 
-  public void closeProjectAndWaitWelcomeFrame(boolean waitWelcomeFrame) {
+  public void closeProjectAndWaitWelcomeFrame(Boolean waitWelcomeFrame) {
     closeProject();
     if (!waitWelcomeFrame) return;
     pause(new Condition("Waiting for 'Welcome' page to show up") {
@@ -751,7 +751,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         }
         return false;
       }
-    }, Timeouts.INSTANCE.getMinutes01());
+    });
   }
 
   public void closeProject() {

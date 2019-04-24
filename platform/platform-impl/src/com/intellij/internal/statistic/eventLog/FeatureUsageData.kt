@@ -36,10 +36,6 @@ import java.util.*
  */
 class FeatureUsageData {
   private var data: MutableMap<String, Any> = ContainerUtil.newHashMap<String, Any>()
-  companion object {
-    val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
-                                                              "lang", "current_file", "input_event", "place")
-  }
 
   fun addFeatureContext(context: FUSUsageContext?): FeatureUsageData {
     if (context != null) {
@@ -164,7 +160,7 @@ class FeatureUsageData {
   }
 
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
-    if (!platformDataKeys.contains(key))  data[key] = value
+    data[key] = value
     return this
   }
 

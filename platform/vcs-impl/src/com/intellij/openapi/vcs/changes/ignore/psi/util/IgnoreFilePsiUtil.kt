@@ -134,7 +134,7 @@ private fun PsiFile.findOrCreateIgnoreBlockDescriptionPsi(ignoredGroupDescriptio
 }
 
 private fun PsiFile.createIgnoreBlock(ignoredGroupDescription: String, psiParserFacade: PsiParserFacade): PsiElement {
-  if (!lastChild.isNewLine()) {
+  if (!prevSibling?.text.isNullOrBlank() && !prevSibling.isNewLine()) {
     add(createNewline())
   }
   return add(psiParserFacade.createLineOrBlockCommentFromText(language, ignoredGroupDescription))
