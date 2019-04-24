@@ -479,7 +479,12 @@ object UpdateChecker {
   private fun prepareUpdateCheckArgs(url: Url): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
-    addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    // Android Studio only modification: add Chrome OS support
+    if (SystemInfo.isChromeOS) {
+      addUpdateRequestParameter("os", "chromium"+ ' ' + File("/dev/.cros_milestone").readText())
+    } else {
+      addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    }
     if (ExternalUpdateManager.ACTUAL != null) {
       addUpdateRequestParameter("manager", ExternalUpdateManager.ACTUAL.toolName)
     }
