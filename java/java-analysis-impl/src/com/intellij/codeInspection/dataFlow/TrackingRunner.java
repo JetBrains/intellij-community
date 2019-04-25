@@ -10,11 +10,13 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -219,7 +221,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
   TODO: 2. Describe causes in more cases:
             Warning caused by contract
             Warning caused by CustomMethodHandler
-            Warning caused by mismatched type constraints
   TODO: 3. Check how it works with 
             Inliners (notably: Stream API)
             Ternary operators
@@ -254,7 +255,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (value instanceof DfaVariableValue) {
       MemoryStateChange change = history.findRelation(
         (DfaVariableValue)value, rel -> rel.myRelationType == RelationType.EQ && rel.myCounterpart instanceof DfaConstValue &&
-            Objects.equals(expectedValue, ((DfaConstValue)rel.myCounterpart).getValue()));
+            Objects.equals(expectedValue, ((DfaConstValue)rel.myCounterpart).getValue()), false);
       if (change != null) {
         PsiExpression varSourceExpression = change.getExpression();
         Instruction instruction = change.myInstruction;
@@ -297,8 +298,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
         if (!value) {
           relationType = relationType.getNegated();
         }
-        PsiExpression leftOperand = binOp.getLOperand();
-        PsiExpression rightOperand = binOp.getROperand();
+        PsiExpression leftOperand = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+        PsiExpression rightOperand = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
         MemoryStateChange leftChange = history.findExpressionPush(leftOperand);
         MemoryStateChange rightChange = history.findExpressionPush(rightOperand);
         if (leftChange != null && rightChange != null) {
@@ -372,6 +373,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   private static CauseItem[] findRelationCause(RelationType relationType,
                                                MemoryStateChange leftChange,
                                                MemoryStateChange rightChange) {
+    ProgressManager.checkCanceled();
     DfaValue leftValue = leftChange.myTopOfStack;
     DfaValue rightValue = rightChange.myTopOfStack;
     if (leftValue instanceof DfaVariableValue) {
@@ -443,7 +445,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
     if (instruction instanceof AssignInstruction) {
       DfaValue target = change.myTopOfStack;
-      PsiExpression rValue = ((AssignInstruction)instruction).getRExpression();
+      PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(((AssignInstruction)instruction).getRExpression());
       if (target == value) {
         CauseItem item = new CauseItem("'" + target + "' was assigned", rValue);
         MemoryStateChange rValuePush = change.findExpressionPush(rValue);
@@ -482,9 +484,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (factDef != null && expression != null) {
       PsiExpression defExpression = factDef.getExpression();
       if (defExpression != null) {
-        return new CauseItem(
-          new CustomDfaProblemType(expression.getText() + " is known to be '" + nullability.getPresentationName() + "' from #ref"),
-          defExpression);
+        return new CauseItem(expression.getText() + " is known to be '" + nullability.getPresentationName() + "' from #ref", defExpression);
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
@@ -502,6 +502,12 @@ public class TrackingRunner extends StandardDataFlowRunner {
       }
       if (variable != null) {
         return fromMemberNullability(nullability, variable, "Variable", ((PsiReferenceExpression)expression).getReferenceNameElement());
+      }
+    }
+    if (nullability == DfaNullability.NOT_NULL) {
+      String explanation = getObviouslyNonNullExplanation(expression);
+      if (explanation != null) {
+        return new CauseItem("Expression cannot be null as it's " + explanation, expression);
       }
     }
     return null;
@@ -630,12 +636,38 @@ public class TrackingRunner extends StandardDataFlowRunner {
     String rangeText = range.getPresentationText(expression != null ? expression.getType() : null);
     CauseItem item = new CauseItem(String.format(template, rangeText), factUse);
     if (factDef != null) {
+      if (factDef.myInstruction instanceof AssignInstruction && factDef.myTopOfStack == value) {
+        PsiExpression rExpression = PsiUtil.skipParenthesizedExprDown(((AssignInstruction)factDef.myInstruction).getRExpression());
+        if (rExpression != null) {
+          MemoryStateChange rValuePush = factDef.findExpressionPush(rExpression);
+          if (rValuePush != null) {
+            CauseItem assignmentItem = new CauseItem("'" + value + "' was assigned", rExpression);
+            Pair<MemoryStateChange, LongRangeSet> rValueFact = rValuePush.findFact(rValuePush.myTopOfStack, DfaFactType.RANGE);
+            assignmentItem.addChildren(findRangeCause(rValuePush, rValueFact.first, range, "Value is %s"));
+            item.addChildren(assignmentItem);
+            return item;
+          }
+        }
+      }
       PsiExpression defExpression = factDef.getExpression();
       if (defExpression != null) {
         item.addChildren(new CauseItem("Range is known from #ref", defExpression));
       }
     }
     return item;
+  }
+
+  @Nullable
+  public static String getObviouslyNonNullExplanation(PsiExpression arg) {
+    if (arg == null || ExpressionUtils.isNullLiteral(arg)) return null;
+    if (arg instanceof PsiNewExpression) return "newly created object";
+    if (arg instanceof PsiLiteralExpression) return "literal";
+    if (arg.getType() instanceof PsiPrimitiveType) return "a value of primitive type '" + arg.getType().getCanonicalText() + "'";
+    if (arg instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)arg).getOperationTokenType() == JavaTokenType.PLUS) {
+      return "concatenation";
+    }
+    if (arg instanceof PsiThisExpression) return "'this' object";
+    return null;
   }
 
   private static MemoryStateChange findRelationAddedChange(MemoryStateChange history, DfaVariableValue var, Relation relation) {
@@ -656,6 +688,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
       default:
         subRelations = Collections.singletonList(relation);
     }
-    return history.findRelation(var, subRelations::contains);
+    return history.findRelation(var, subRelations::contains, true);
   }
 }

@@ -121,4 +121,7 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testInstanceOfChain2() { doTest(); }
   public void testNotInstanceOf() { doTest(); }
   public void testInstanceOfPreviousCast() { doTest(); }
+  public void testNotNullObvious() { doTest(); }
+  public void testNotNullAssignmentInside() { doTest(); }
+  public void testIndexOfPlusOne() { doTest(); }
 }
