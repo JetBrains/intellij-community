@@ -72,10 +72,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private final WindowManagerEx myWindowManager;
   private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
+  private ActionCallback myTypeAheadCallback;
 
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
+    myTypeAheadCallback = myWrapper.isTypeAheadEnabled() ? new ActionCallback() : null;
     myWindowManager = getWindowManager();
 
     Window window = null;
@@ -116,7 +118,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       owner = null;
     }
 
-    myDialog = createDialog(headless, owner, wrapper, myProject, ideModalityType);
+    myDialog = createDialog(headless, owner, wrapper, myProject, myTypeAheadCallback, ideModalityType);
     myCanBeParent = headless || canBeParent;
   }
 
@@ -145,7 +147,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
     myWindowManager = getWindowManager();
-    myDialog = createDialog(headless, OwnerOptional.fromComponent(parent).get(), wrapper, null, DialogWrapper.IdeModalityType.IDE);
+    myDialog = createDialog(headless, OwnerOptional.fromComponent(parent).get(), wrapper, null, null, DialogWrapper.IdeModalityType.IDE);
     myCanBeParent = headless || canBeParent;
   }
 
@@ -153,7 +155,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
     myWindowManager = getWindowManager();
-    myDialog = createDialog(headless, owner, wrapper, null, DialogWrapper.IdeModalityType.IDE);
+    myDialog = createDialog(headless, owner, wrapper, null, null, DialogWrapper.IdeModalityType.IDE);
     myCanBeParent = headless || canBeParent;
 
     if (!headless) {
@@ -178,13 +180,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                                              Window owner,
                                              DialogWrapper wrapper,
                                              Project project,
+                                             ActionCallback typeAhead,
                                              DialogWrapper.IdeModalityType ideModalityType) {
     if (headless) {
       return new HeadlessDialog(wrapper);
     }
     else {
       ActionCallback focused = new ActionCallback("DialogFocusedCallback");
-      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project, focused);
+      ActionCallback typeAheadDone = new ActionCallback("DialogTypeAheadDone");
+      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project, focused, typeAheadDone, typeAhead);
       dialog.setModalityType(ideModalityType.toAwtModality());
       return dialog;
     }
@@ -380,6 +384,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public ActionCallback show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
+    if (myTypeAheadCallback != null) {
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(myTypeAheadCallback);
+    }                         LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
     final ActionCallback result = new ActionCallback();
 
     final AnCancelAction anCancelAction = new AnCancelAction();
@@ -420,7 +427,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    myDialog.getWindow().setAutoRequestFocus(!Registry.is("suppress.focus.stealing"));
+    myDialog.getWindow().setAutoRequestFocus(true);
 
     final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
     if (tb != null)
@@ -516,11 +523,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     private final WeakReference<Project> myProject;
     private final ActionCallback myFocusedCallback;
+    private final ActionCallback myTypeAheadDone;
+    private final ActionCallback myTypeAheadCallback;
 
     MyDialog(Window owner,
                     DialogWrapper dialogWrapper,
                     Project project,
-                    @NotNull ActionCallback focused) {
+                    @NotNull ActionCallback focused,
+                    @NotNull ActionCallback typeAheadDone,
+                    ActionCallback typeAheadCallback) {
       super(owner);
       UIUtil.markAsTypeAheadAware(this);
       myDialogWrapper = new WeakReference<>(dialogWrapper);
@@ -535,25 +546,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       });
 
       myFocusedCallback = focused;
+      myTypeAheadDone = typeAheadDone;
+      myTypeAheadCallback = typeAheadCallback;
 
       final long typeAhead = getDialogWrapper().getTypeAheadTimeoutMs();
+      if (typeAhead <= 0) {
+        myTypeAheadDone.setDone();
+      }
 
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      UIUtil.setAutoRequestFocus(this, !Registry.is("suppress.focus.stealing"));
+      UIUtil.setAutoRequestFocus(this, true);
     }
-
-    @Deprecated
-    MyDialog(Window owner,
-             DialogWrapper dialogWrapper,
-             Project project,
-             @NotNull ActionCallback focused,
-             @NotNull ActionCallback typeAheadDone,
-             ActionCallback typeAheadCallback) {
-      this(owner, dialogWrapper, project, focused);
-    }
-
 
     @Override
     public JDialog getWindow() {
@@ -818,6 +823,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           }
           if (activeWrapper == null) {
             myFocusedCallback.setRejected();
+            myTypeAheadDone.setRejected();
           }
         });
       }
@@ -827,6 +833,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           final DialogWrapper wrapper = getActiveWrapper();
           if (wrapper == null && !myFocusedCallback.isProcessed()) {
             myFocusedCallback.setRejected();
+            myTypeAheadDone.setRejected();
             return;
           }
 
@@ -846,7 +853,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
           if (toFocus != null) {
             if (isShowing()) {
-              toFocus.requestFocusInWindow();
+             toFocus.requestFocus();
               notifyFocused(wrapper);
             }
           } else {
@@ -854,10 +861,22 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
               notifyFocused(wrapper);
             }
           }
+          if (myTypeAheadCallback != null) {
+            myTypeAheadCallback.setDone();
+          }
       }
 
       private void notifyFocused(DialogWrapper wrapper) {
         myFocusedCallback.setDone();
+        final long timeout = wrapper.getTypeAheadTimeoutMs();
+        if (timeout > 0) {
+          SimpleTimer.getInstance().setUp(new EdtRunnable() {
+            @Override
+            public void runEdt() {
+              myTypeAheadDone.setDone();
+            }
+          }, timeout);
+        }
       }
 
       private DialogWrapper getActiveWrapper() {
