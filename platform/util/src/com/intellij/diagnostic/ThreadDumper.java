@@ -12,12 +12,19 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class ThreadDumper {
+  private static final Comparator<ThreadInfo> THREAD_INFO_COMPARATOR =
+    Comparator.comparing((ThreadInfo o1) -> isEDT(o1.getThreadName()))
+      .thenComparing(o -> o.getThreadState() == Thread.State.RUNNABLE)
+      .thenComparingInt(o -> o.getStackTrace().length)
+      .reversed();
+
   private ThreadDumper() {
   }
 
@@ -87,18 +94,7 @@ public class ThreadDumper {
 
   @NotNull
   private static ThreadInfo[] sort(@NotNull ThreadInfo[] threads) {
-    Arrays.sort(threads, (o1, o2) -> {
-      boolean awt1 = isEDT(o1.getThreadName());
-      boolean awt2 = isEDT(o2.getThreadName());
-      if (awt1 && !awt2) return -1;
-      if (awt2 && !awt1) return 1;
-      boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
-      boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
-      if (r1 && !r2) return -1;
-      if (r2 && !r1) return 1;
-      return 0;
-    });
-
+    Arrays.sort(threads, THREAD_INFO_COMPARATOR);
     return threads;
   }
 
