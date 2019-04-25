@@ -149,7 +149,7 @@ public class PropertyAccessor implements MutableAccessor {
 
   @Override
   public boolean isWritable() {
-    return myWriteMethod != null;
+    return myWriteMethod != null && myWriteMethod.isAccessible();
   }
 
   @NonNls

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
 class FieldAccessor implements MutableAccessor {
@@ -121,7 +120,7 @@ class FieldAccessor implements MutableAccessor {
 
   @Override
   public boolean isWritable() {
-    return !Modifier.isFinal(myField.getModifiers());
+    return myField.isAccessible();
   }
 
   @NonNls
