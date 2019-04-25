@@ -111,7 +111,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
   }
 
   public static GroovyMethodCallPattern methodCall(final ElementPattern<String> names, final String className) {
-    return new GroovyMethodCallPattern().withMethodName(names).withMethod(
+    return GroovyMethodCallPattern.INSTANCE.withMethodName(names).withMethod(
       psiMethod().with(new PatternCondition<PsiMethod>("psiMethodClassNameCondition") {
         @Override
         public boolean accepts(@NotNull PsiMethod psiMethod, ProcessingContext context) {
@@ -128,7 +128,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
   }
 
   public static GroovyMethodCallPattern methodCall() {
-    return new GroovyMethodCallPattern();
+    return GroovyMethodCallPattern.INSTANCE;
   }
 
   public static PsiFilePattern.Capture<GroovyFile> groovyScript() {
