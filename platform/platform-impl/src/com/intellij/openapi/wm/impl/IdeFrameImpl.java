@@ -351,7 +351,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
       }
-      else if (!SystemInfo.isMac || builder.isEmpty()) {
+      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       builder.append(getSuperUserSuffix(), " ");
