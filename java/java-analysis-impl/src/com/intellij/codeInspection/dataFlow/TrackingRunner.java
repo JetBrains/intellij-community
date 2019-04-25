@@ -524,7 +524,26 @@ public class TrackingRunner extends StandardDataFlowRunner {
           message = memberName + " '" + name + "' is externally annotated as '" + nullability.getPresentationName() + "'";
         }
         else if (info.isContainer()) {
-          message = memberName + " '" + name + "' inherits container annotation, thus '" + nullability.getPresentationName() + "'";
+          PsiAnnotationOwner annoOwner = info.getAnnotation().getOwner();
+          String details = "container annotation";
+          if (annoOwner instanceof PsiModifierList) {
+            PsiElement parent = ((PsiModifierList)annoOwner).getParent();
+            if (parent instanceof PsiClass) {
+              PsiClass aClass = (PsiClass)parent;
+              details = "annotation from class " + aClass.getName();
+              if ("package-info".equals(aClass.getName())) {
+                PsiFile file = aClass.getContainingFile();
+                if (file instanceof PsiJavaFile) {
+                  details = "annotation from package " + ((PsiJavaFile)file).getPackageName();
+                }
+              }
+            }
+          }
+          if (annoOwner instanceof PsiNamedElement) {
+            details = " from " + ((PsiNamedElement)annoOwner).getName();
+          }
+          message =
+            memberName + " '" + name + "' inherits " + details + ", thus '" + nullability.getPresentationName() + "'";
         }
         else {
           message = memberName + " '" + name + "' is annotated as '" + nullability.getPresentationName() + "'";
