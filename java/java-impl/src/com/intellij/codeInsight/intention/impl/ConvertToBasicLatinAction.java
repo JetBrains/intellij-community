@@ -160,7 +160,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
     @Override
     protected PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText) {
-      return factory.createDocCommentFromText(newText);
+      return factory.createCommentFromText(newText, element.getParent());
     }
 
     private static void loadEntities(Project project) {
@@ -204,11 +204,6 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     @Override
     PsiElement findApplicable(PsiElement element) {
       return element instanceof PsiComment ? element : null;
-    }
-
-    @Override
-    protected PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText) {
-      return factory.createCommentFromText(newText, element.getParent());
     }
   }
 }

@@ -19,6 +19,9 @@ public class ConvertToBasicLatinTest extends LightCodeInsightFixtureTestCase {
   public void testPlainComment() { doTest(); }
   public void testDocComment() { doTest(); }
   public void testDocTag() { doTest(); }
+  public void testUnclosedStringLiteral() { doTest(); }
+  public void testUnclosedPlainComment() { doTest(); }
+  public void testUnclosedDocComment() { doTest(); }
 
   private void doTest() {
     doEncodingTest(getProject(), "UTF-8", null, () -> {
