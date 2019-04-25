@@ -31,6 +31,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -389,6 +390,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       return files;
+    }
+  }
+
+  @TestOnly
+  void doClearAdoptedNames() {
+    synchronized (myData) {
+      myData.clearAdoptedNames();
     }
   }
 
