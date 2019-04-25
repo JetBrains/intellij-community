@@ -2,11 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui.model
 
 import com.intellij.ui.CollectionListModel
+import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
+import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import kotlin.properties.Delegates.observable
 
 class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileComment>)
   : CollectionListModel<GithubPullRequestFileComment>(comments) {
+
+  private val collapseStateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   init {
     if (comments.isEmpty()) throw IllegalArgumentException("Thread cannot be empty")
@@ -14,6 +19,10 @@ class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileCo
 
   val firstCommentId = items.first().id
   val firstCommentCreated = items.first().dateCreated
+
+  var fold by observable(true) { _, _, _ ->
+    collapseStateEventDispatcher.multicaster.eventOccurred()
+  }
 
   // New comments can only appear at the end of the list and cannot change order
   fun update(comments: List<GithubPullRequestCommentWithHtml>) {
@@ -40,6 +49,14 @@ class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileCo
     if (size == comments.size) return
     val newComments = comments.subList(size, comments.size)
     add(newComments.map { GithubPullRequestFileComment.convert(it) })
+  }
+
+  fun addFoldStateChangeListener(listener: () -> Unit) {
+    collapseStateEventDispatcher.addListener(object : SimpleEventListener {
+      override fun eventOccurred() {
+        listener()
+      }
+    })
   }
 
   override fun equals(other: Any?): Boolean {

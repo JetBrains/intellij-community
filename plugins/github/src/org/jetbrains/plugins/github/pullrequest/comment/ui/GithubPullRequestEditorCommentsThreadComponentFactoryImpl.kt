@@ -2,20 +2,22 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.ui.ClickListener
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.HtmlPanel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
+import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GithubPullRequestFileComment
 import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GithubPullRequestFileCommentsThread
-import java.awt.Font
+import java.awt.*
+import java.awt.event.MouseEvent
+import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -31,35 +33,79 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
       isOpaque = false
       border = JBUI.Borders.empty()
     }
-    val avatarsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("GitHub.Avatar.Size", 20), threadPanel)
-    for (comment in thread.items) {
-      threadPanel.add(createComponent(avatarsProvider, comment))
-    }
-    thread.addListDataListener(object : ListDataListener {
-      override fun intervalRemoved(e: ListDataEvent) {
-        for (i in e.index0..e.index1)
-          threadPanel.remove(i)
-      }
-
-      override fun intervalAdded(e: ListDataEvent) {
-        for (i in e.index0..e.index1)
-          threadPanel.add(createComponent(avatarsProvider, thread.getElementAt(i)), i)
-      }
-
-      override fun contentsChanged(e: ListDataEvent) {
-        for (i in e.index0..e.index1) {
-          threadPanel.remove(i)
-          threadPanel.add(createComponent(avatarsProvider, thread.getElementAt(i)), i)
-        }
-      }
-    })
+    ThreadPanelController(thread, threadPanel)
     return threadPanel
+  }
+
+  private inner class ThreadPanelController(private val thread: GithubPullRequestFileCommentsThread, private val panel: JPanel) {
+    private val avatarsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("GitHub.Avatar.Size", 20), panel)
+
+    private val collapseThreshold = 2
+    private val unfoldButtonPanel = BorderLayoutPanel().apply {
+      isOpaque = false
+      border = JBUI.Borders.emptyLeft(30)
+
+      addToLeft(createUnfoldButton().apply {
+        object : ClickListener() {
+          override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+            thread.fold = !thread.fold
+            return true
+          }
+        }.installOn(this)
+      })
+    }
+
+    init {
+      panel.add(createComponent(avatarsProvider, thread.items.first()))
+      panel.add(unfoldButtonPanel)
+
+      for (i in 1 until thread.items.size) {
+        panel.add(createComponent(avatarsProvider, thread.getElementAt(i)))
+      }
+      updateFolding()
+
+      thread.addListDataListener(object : ListDataListener {
+        override fun intervalRemoved(e: ListDataEvent) {
+          for (i in e.index0..e.index1) {
+            panel.remove(i + 1)
+          }
+          updateFolding()
+        }
+
+        override fun intervalAdded(e: ListDataEvent) {
+          for (i in e.index0..e.index1) {
+            panel.add(createComponent(avatarsProvider, thread.getElementAt(i)), i + 1)
+          }
+          updateFolding()
+        }
+
+        override fun contentsChanged(e: ListDataEvent) {
+          for (i in e.index0..e.index1) {
+            val idx = if (i == 0) i else i + 1
+            panel.remove(idx)
+            panel.add(createComponent(avatarsProvider, thread.getElementAt(i)), idx)
+          }
+        }
+      })
+      thread.addFoldStateChangeListener { updateFolding() }
+    }
+
+    private fun updateFolding() {
+      val shouldFold = thread.fold && thread.size > collapseThreshold
+      unfoldButtonPanel.isVisible = shouldFold
+      for (i in 2 until panel.componentCount - 1) {
+        panel.getComponent(i).isVisible = !shouldFold
+      }
+      if (shouldFold) {
+        panel.getComponent(panel.componentCount - 1).isVisible = true
+      }
+    }
   }
 
   private fun createComponent(avatarsProvider: CachingGithubAvatarIconsProvider, comment: GithubPullRequestFileComment): JComponent {
     return JPanel().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, 0)
+      border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
 
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
@@ -99,6 +145,36 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
       }
 
       add(textPane, CC().spanX(3).growX().minWidth("0").minHeight("0"))
+    }
+  }
+
+  private fun createUnfoldButton(): JComponent {
+    return object : JComponent() {
+      init {
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        preferredSize = JBDimension(30, UIUtil.getLabelFont().size, true)
+      }
+
+      override fun paintComponent(g: Graphics) {
+        val rect = Rectangle(size)
+        JBInsets.removeFrom(rect, insets)
+
+        val g2 = g as Graphics2D
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                            if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+
+        val arc = DarculaUIUtil.BUTTON_ARC.float
+        g2.color = UIUtil.getPanelBackground()
+        g2.fill(RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), arc, arc))
+
+        g2.color = UIUtil.getLabelForeground()
+        g2.font = UIUtil.getLabelFont()
+        val lineBounds = g2.fontMetrics.getStringBounds("...", g2)
+        val x = (rect.width - lineBounds.width) / 2
+        val y = (rect.height + lineBounds.y) / 2 - lineBounds.y / 2
+        g2.drawString("...", x.toFloat(), y.toFloat())
+      }
     }
   }
 }
