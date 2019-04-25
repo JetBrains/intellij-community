@@ -54,4 +54,13 @@ object GroovyMethodCallPattern : GroovyExpressionPattern<GrCallExpression, Groov
       }
     })
   }
+
+  fun resolvesTo(methodPattern: ElementPattern<out PsiMethod>): GroovyMethodCallPattern {
+    return with(object : PatternCondition<GrCallExpression>("resolvesTo") {
+      override fun accepts(t: GrCallExpression, context: ProcessingContext?): Boolean {
+        val result = t.advancedResolve().element as? PsiMethod ?: return false
+        return methodPattern.accepts(result, context)
+      }
+    })
+  }
 }
