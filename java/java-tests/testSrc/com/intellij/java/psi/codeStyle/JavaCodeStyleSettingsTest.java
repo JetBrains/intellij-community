@@ -110,7 +110,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     setSimple(mapper, "indent_size", "2");
     setSimple(mapper, "doc_align_param_comments", "true");
     setList(mapper, "imports_layout",
-            Arrays.asList("com.jetbrains.*", "blank_line", "org.eclipse.bar", "static  **", "static org.eclipse.foo.**"));
+            Arrays.asList("com.jetbrains.*", "|", "org.eclipse.bar", "$**", "$org.eclipse.foo.**"));
     mapper.getAccessor("repeat_annotations").setFromString(" com.jetbrains.First,  com.jetbrains.Second");
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
