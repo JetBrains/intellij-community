@@ -4,11 +4,9 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OffsetIcon;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.*;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -614,7 +612,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     protected void configurePopup() {
       super.configurePopup();
       Border border = UIManager.getBorder("ComboPopup.border");
-      setBorder(border != null ? border : JBUI.Borders.empty());
+      setBorder(border != null ? border :
+                SystemInfo.isMac ? JBUI.Borders.empty() :
+                IdeBorderFactory.createBorder());
       putClientProperty("JComboBox.isCellEditor", DarculaUIUtil.isTableCellEditor(comboBox));
     }
 
