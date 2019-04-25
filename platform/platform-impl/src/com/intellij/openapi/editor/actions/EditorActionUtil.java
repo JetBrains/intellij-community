@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.actions;
 
@@ -26,7 +26,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -313,8 +312,8 @@ public class EditorActionUtil {
                                            @Nullable HighlighterIterator tokenIterator, boolean anyTokenBoundary) {
     int newOffset = offset + 1;
     for (; newOffset < maxOffset; newOffset++) {
-      final boolean isLexemeBoundary = advanceTokenOnBoundary(tokenIterator, newOffset, anyTokenBoundary);
-      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
+      final boolean isTokenBoundary = advanceTokenOnBoundary(tokenIterator, newOffset, anyTokenBoundary);
+      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary && !isBetweenWhitespaces(text, newOffset))) break;
     }
     return newOffset;
   }
@@ -324,8 +323,8 @@ public class EditorActionUtil {
                                                @Nullable HighlighterIterator tokenIterator, boolean anyTokenBoundary) {
     int newOffset = offset - 1;
     for (; newOffset > minOffset; newOffset--) {
-      final boolean isLexemeBoundary = retreatTokenOnBoundary(tokenIterator, newOffset, anyTokenBoundary);
-      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
+      final boolean isTokenBoundary = retreatTokenOnBoundary(tokenIterator, newOffset, anyTokenBoundary);
+      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary && !isBetweenWhitespaces(text, newOffset))) break;
     }
 
     return newOffset;
@@ -470,10 +469,10 @@ public class EditorActionUtil {
   public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
     if (!(editor instanceof EditorEx) ||
         offset <= 0 || offset >= editor.getDocument().getTextLength() ||
-        DocumentUtil.isInsideSurrogatePair(editor.getDocument(), offset)) {
+        DocumentUtil.isInsideSurrogatePair(editor.getDocument(), offset) ||
+        isBetweenWhitespaces(editor.getDocument().getCharsSequence(), offset)) {
       return false;
     }
-    if (CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(), offset - 1, offset + 1)) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
     return retreatTokenOnBoundary(it, offset, false);
@@ -1025,6 +1024,12 @@ public class EditorActionUtil {
       }
       e.consume();
     }
+  }
+
+  private static boolean isBetweenWhitespaces(@NotNull CharSequence text, int offset) {
+    return 0 < offset && offset < text.length() &&
+           isWhitespace(text.charAt(offset - 1)) &&
+           isWhitespace(text.charAt(offset));
   }
 
   public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {
