@@ -26,7 +26,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.win32.WindowsElevationUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -40,6 +39,7 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -81,7 +81,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private final ComponentListener resizedListener;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
-    super(ApplicationNamesInfo.getInstance().getFullProductName());
+    super();
+    updateTitle();
 
     myRootPane = createRootPane(actionManager, dataManager);
     setRootPane(myRootPane);
@@ -328,8 +329,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     updateTitle(this, myTitle, myFileTitle, myCurrentFile);
   }
 
-  public static String getElevationSuffix() {
-    return WindowsElevationUtil.isUnderElevation() ? " (Administrator)" : "";
+  public static @Nullable String getSuperUserSuffix() {
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(ADMINISTRATOR)" : "(ROOT)";
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
@@ -348,11 +349,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
       }
       else if (!SystemInfo.isMac || builder.isEmpty()) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
+      builder.append(getSuperUserSuffix(), " ");
       frame.setTitle(builder.toString());
     }
     finally {
@@ -374,15 +376,19 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private static final class Builder {
     private final StringBuilder sb = new StringBuilder();
 
-    public Builder append(@Nullable String s) {
+    Builder append(@Nullable String s) {
+      return append(s, " - ");
+    }
+
+    Builder append(@Nullable String s, String separator) {
       if (!StringUtil.isEmptyOrSpaces(s)) {
-        if (sb.length() > 0) sb.append(" - ");
+        if (sb.length() > 0) sb.append(separator);
         sb.append(s);
       }
       return this;
     }
 
-    public boolean isEmpty() {
+    boolean isEmpty() {
       return sb.length() == 0;
     }
 
