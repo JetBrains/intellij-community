@@ -695,7 +695,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         Component component = comboBox.getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (component instanceof JComponent) {
           customizeListRendererComponent((JComponent)component);
-          component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
         }
         return component;
       }
