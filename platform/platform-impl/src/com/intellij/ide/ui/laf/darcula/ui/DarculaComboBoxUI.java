@@ -284,13 +284,25 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     Icon icon = null;
     Insets iPad = null;
+    Border border = null;
     if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent scc = (SimpleColoredComponent)c;
-      iPad = scc.getIpad();
-      scc.setIpad(JBUI.emptyInsets());
-      icon = scc.getIcon();
-      if (!scc.isIconOnTheRight() && icon instanceof OffsetIcon) {
-        scc.setIcon(((OffsetIcon)icon).getIcon());
+      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+      iPad = cc.getIpad();
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
+      cc.setIpad(JBUI.emptyInsets());
+      icon = cc.getIcon();
+      if (!cc.isIconOnTheRight() && icon instanceof OffsetIcon) {
+        cc.setIcon(((OffsetIcon)icon).getIcon());
+      }
+    }
+    else if (c instanceof JLabel) {
+      JLabel cc = (JLabel)c;
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
+      icon = cc.getIcon();
+      if (icon instanceof OffsetIcon) {
+        cc.setIcon(((OffsetIcon)icon).getIcon());
       }
     }
 
@@ -302,9 +314,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent scc = (SimpleColoredComponent)c;
-      scc.setIpad(iPad);
-      scc.setIcon(icon);
+      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+      cc.setIpad(iPad);
+      cc.setIcon(icon);
+      cc.setBorder(border);
+    }
+    else if (c instanceof JLabel) {
+      JLabel cc = (JLabel)c;
+      cc.setBorder(border);
+      cc.setIcon(icon);
     }
   }
 
