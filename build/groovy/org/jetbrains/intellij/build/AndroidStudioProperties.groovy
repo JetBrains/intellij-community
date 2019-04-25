@@ -204,7 +204,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
-      withModule("intellij.android.kotlin.extensions.jps", "jps/android-jps-plugin.jar")
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
