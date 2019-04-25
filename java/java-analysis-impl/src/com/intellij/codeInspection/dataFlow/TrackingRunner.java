@@ -349,23 +349,21 @@ public class TrackingRunner extends StandardDataFlowRunner {
     DfaPsiType wanted = operandValue.getFactory().createDfaType(type);
 
     Pair<MemoryStateChange, TypeConstraint> fact = operandHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
-    TypeConstraint constraint = fact.second == null ? TypeConstraint.empty() : fact.second;
-    boolean stillSatisfied = (isInstance ? constraint.withNotInstanceofValue(wanted) : constraint.withInstanceofValue(wanted)) == null;
-    while (stillSatisfied) {
+    String explanation = fact.second == null ? null : fact.second.getAssignabilityExplanation(wanted, isInstance);
+    while (explanation != null) {
       MemoryStateChange causeLocation = fact.first;
       if (causeLocation == null) break;
       MemoryStateChange prevHistory = causeLocation.myPrevious;
       if (prevHistory == null) break;
       fact = prevHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
       TypeConstraint prevConstraint = fact.second == null ? TypeConstraint.empty() : fact.second;
-      stillSatisfied = (isInstance ? prevConstraint.withNotInstanceofValue(wanted) : prevConstraint.withInstanceofValue(wanted)) == null;
-      if (!stillSatisfied) {
-        CauseItem causeItem =
-          new CauseItem("Type of '" + operand.getText() + "' is " + constraint.getPresentationText(operand.getType()), operand);
+      String prevExplanation = prevConstraint.getAssignabilityExplanation(wanted, isInstance);
+      if (prevExplanation == null) {
+        CauseItem causeItem = new CauseItem(explanation, operand);
         causeItem.addChildren(new CauseItem("Type of '" + operand.getText() + "' is known from #ref", causeLocation));
         return new CauseItem[]{causeItem};
       }
-      constraint = prevConstraint;
+      explanation = prevExplanation;
     }
     return null;
   }

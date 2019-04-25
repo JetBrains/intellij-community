@@ -69,6 +69,7 @@ public abstract class TypeConstraint {
 
   public abstract boolean isExact(String typeName);
 
+  public abstract String getAssignabilityExplanation(DfaPsiType otherType, boolean expectedAssignable);
 
   static final class Exact extends TypeConstraint {
     final @NotNull DfaPsiType myType;
@@ -93,6 +94,21 @@ public abstract class TypeConstraint {
     @Override
     public TypeConstraint withNotInstanceofValue(DfaPsiType type) {
       return type.isAssignableFrom(myType) ? null : this;
+    }
+
+    @Override
+    public String getAssignabilityExplanation(DfaPsiType otherType, boolean expectedAssignable) {
+      boolean actual = otherType.isAssignableFrom(myType);
+      if (actual != expectedAssignable) return null;
+      if (expectedAssignable) {
+        if (myType == otherType) {
+          return "An object is already known to be " + myType;
+        }
+        return "An object type is exactly " + myType + " which is a subtype of " + otherType;
+      }
+      else {
+        return "An object type is exactly " + myType + " which is not a subtype of " + otherType;
+      }
     }
 
     @NotNull
@@ -409,6 +425,31 @@ public abstract class TypeConstraint {
     @Override
     public boolean isExact(String typeName) {
       return false;
+    }
+
+    @Override
+    public String getAssignabilityExplanation(DfaPsiType otherType, boolean expectedAssignable) {
+      if (expectedAssignable) {
+        for (DfaPsiType dfaTypeValue : myInstanceofValues) {
+          if (otherType.isAssignableFrom(dfaTypeValue)) {
+            return "An object is already known to be " + dfaTypeValue +
+                   (otherType == dfaTypeValue ? "" : " which is a subtype of " + otherType);       
+          }
+        }
+      } else {
+        for (DfaPsiType dfaTypeValue : myNotInstanceofValues) {
+          if (dfaTypeValue.isAssignableFrom(otherType)) {
+            return "An object is known to be not " + dfaTypeValue +
+                   (otherType == dfaTypeValue ? "" : " which is a supertype of " + otherType);
+          }
+        }
+        for (DfaPsiType dfaTypeValue : myInstanceofValues) {
+          if (!otherType.isConvertibleFrom(dfaTypeValue)) {
+            return "An object is known to be " + dfaTypeValue + " which is definitely incompatible with " + otherType;
+          }
+        }
+      }
+      return null;
     }
 
     @Override
