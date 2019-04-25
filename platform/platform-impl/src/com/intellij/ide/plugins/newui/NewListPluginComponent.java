@@ -249,9 +249,8 @@ public class NewListPluginComponent extends CellPluginComponent {
 
       Ref<String> enableAction = new Ref<>();
       String message = PluginManagerConfigurableNew.getErrorMessage(myPluginModel, myPlugin, enableAction);
-      myErrorComponent = ErrorComponent
-        .show(myCenterPanel, true, VerticalLayout.FILL_HORIZONTAL, myErrorComponent, message, enableAction.get(),
-              enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
+      myErrorComponent = ErrorComponent.show(myCenterPanel, VerticalLayout.FILL_HORIZONTAL, myErrorComponent, message, enableAction.get(),
+                                             enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
 
       if (addListeners) {
         myEventHandler.add(myErrorComponent);
