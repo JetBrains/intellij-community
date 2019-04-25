@@ -106,6 +106,10 @@ public interface RegExpLanguageHost {
     return EMPTY_COMPLETION_ITEMS_ARRAY; 
   }
 
+  default boolean supportsPropertySyntax(@NotNull PsiElement context) {
+    return true;
+  }
+
   enum Lookbehind {
     /** Lookbehind not supported. */
     NOT_SUPPORTED,

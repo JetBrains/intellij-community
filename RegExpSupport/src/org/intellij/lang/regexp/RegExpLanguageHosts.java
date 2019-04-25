@@ -94,6 +94,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null && host.supportsLiteralBackspace(regExpChar);
   }
 
+  public boolean supportsPropertySyntax(@NotNull PsiElement context) {
+    RegExpLanguageHost host = findRegExpHost(context);
+    return host != null && host.supportsPropertySyntax(context);
+  }
+
   public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
     return host != null && host.supportsNamedGroupSyntax(group);
