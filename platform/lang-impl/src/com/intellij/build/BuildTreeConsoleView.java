@@ -41,9 +41,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ScrollUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import java.util.ArrayDeque;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -456,47 +456,99 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   // Android Studio: temporary fix for b/129727063
   // We don't want to upstream this as this is a temporary fix until
   // Jetbrains comes with their new UI expected in 2019.2.
+
+  /**
+   * The goal of the method is to select and expand the most meaningful error for
+   * the user.
+   *
+   * <p>
+   * If at least one error is parsed by one of the parsers, the first one will be selected
+   * and the "run" node will be collapsed.
+   * otherwise all the error nodes will be expanded and the root will be selected because it
+   * has a good chance to contain the most useful message.
+   */
   private void expandFirstError(@NotNull ExecutionNode rootElement) {
     ExecutionNode current = rootElement;
-    ExecutionNode lastExpanded = current;
-    while (current != null) {
-      current.setAutoExpandNode(true);
-      lastExpanded = current;
-      SimpleNode[] children = current.getChildren();
-      ExecutionNode next = null;
-      for (SimpleNode node : children) {
-        ExecutionNode child = (ExecutionNode)node;
-        String name = child.getName();
-        if ("Run build".equalsIgnoreCase(name) && children.length > 1) {
-          child.setAutoExpandNode(false);
-          continue;
-        }
+    ExecutionNode nodeToSelect = current;
 
-        EventResult result = child.getResult();
-        if (result instanceof MessageEventResult) {
-          MessageEvent.Kind kind = ((MessageEventResult)result).getKind();
-          if (kind == MessageEvent.Kind.ERROR) {
-            next = child;
-            break;
-          }
-        }
-
-        if (result instanceof FailureResult) {
-          next = child;
+    // If there is more than one error node attached to the root,
+    // this means that an error has been parsed.
+    int errorCount = 0;
+    int firstParsedError = -1;
+    SimpleNode[] children = rootElement.getChildren();
+    for (int i = 0; i < children.length; i++) {
+      if (isFailureNode((ExecutionNode)children[i])) {
+        errorCount++;
+        if (errorCount > 1) {
+          firstParsedError = i;
           break;
         }
       }
-      current = next;
     }
 
-    while (lastExpanded.getChildren().length > 0) {
-      lastExpanded = (ExecutionNode)lastExpanded.getChildAt(0);
-      lastExpanded.setAutoExpandNode(true);
+    // If there is a parsed error, expand and select it
+    if (firstParsedError != -1) {
+      for (int i = 0; i < children.length; i++) {
+        // Only expand the first error and collapse the others
+        ((ExecutionNode)children[i]).setAutoExpandNode(i == firstParsedError);
+      }
+
+      // And recursively expand and select the first leaf of the error node
+      current = (ExecutionNode)children[firstParsedError];
+      while (current != null) {
+        current.setAutoExpandNode(true);
+        nodeToSelect = current;
+        if (current.getChildCount() > 0) {
+          current = (ExecutionNode)current.getChildAt(0);
+        }
+        else {
+          current = null;
+        }
+      }
     }
-    myTreeModel.select(lastExpanded, myTree, p -> {
+    else {
+      // Otherwise, expand all the error nodes and select the root node
+      ArrayDeque<ExecutionNode> nextNodesToVisit = new ArrayDeque<>(5);
+      while (current != null) {
+        current.setAutoExpandNode(true);
+        children = current.getChildren();
+
+        // Try to find the first child that has an error
+        // set it as the next root for the next step of the DFS.
+        for (SimpleNode node : children) {
+          ExecutionNode child = (ExecutionNode)node;
+          if (isFailureNode(child)) {
+            nextNodesToVisit.addLast(child);
+          }
+          else {
+            child.setAutoExpandNode(false);
+          }
+        }
+        current = nextNodesToVisit.pollFirst();
+      }
+      nodeToSelect = rootElement;
+    }
+
+    myTreeModel.select(nodeToSelect, myTree, p -> {
     });
     ApplicationManager.getApplication().invokeLater(() -> TreeUtil.collapseAll(myTree, 0));
   }
+
+  private static boolean isFailureNode(ExecutionNode node) {
+    EventResult result = node.getResult();
+    if (result instanceof MessageEventResult) {
+      MessageEvent.Kind kind = ((MessageEventResult)result).getKind();
+      if (kind == MessageEvent.Kind.ERROR) {
+        return true;
+      }
+    }
+
+    if (result instanceof FailureResult) {
+      return true;
+    }
+    return false;
+  }
+  // Android Studio: end of temporary fix for b/129727063
 
   protected void expand(TreeTableTree tree) {
     TreeUtil.expand(tree,
