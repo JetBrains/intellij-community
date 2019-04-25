@@ -11,7 +11,6 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
-import com.intellij.uast.UastVisitorAdapter
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
@@ -72,11 +71,8 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     if (targetedSinceUntilRanges.isEmpty()) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
-    return UastVisitorAdapter(
-      ApiUsageUastVisitor(
-        MissingRecentApiUsageProcessor(holder, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, targetedSinceUntilRanges)
-      ),
-      true
+    return ApiUsageUastVisitor.createPsiElementVisitor(
+      MissingRecentApiUsageProcessor(holder, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, targetedSinceUntilRanges)
     )
   }
 

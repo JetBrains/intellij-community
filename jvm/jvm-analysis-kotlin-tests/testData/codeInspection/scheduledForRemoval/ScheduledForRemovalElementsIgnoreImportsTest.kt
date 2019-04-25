@@ -35,7 +35,7 @@ class ScheduledForRemovalElementsIgnoreImportsTest {
 
     s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
     <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticAnnotatedMethodInAnnotatedClass</warning>()
-    val annotatedClassInstanceViaAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> = <warning descr="'AnnotatedClass(java.lang.String)' is scheduled for removal in 123.456">AnnotatedClass</warning>("")
+    val annotatedClassInstanceViaAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> = <warning descr="'AnnotatedClass(java.lang.String)' is scheduled for removal in 123.456"><warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning></warning>("")
     s = annotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedFieldInAnnotatedClass' is scheduled for removal in 123.456">annotatedFieldInAnnotatedClass</warning>
     annotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">annotatedMethodInAnnotatedClass</warning>()
     s = <warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>

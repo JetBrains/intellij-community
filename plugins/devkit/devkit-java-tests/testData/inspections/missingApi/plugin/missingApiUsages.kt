@@ -67,9 +67,9 @@ class A {
   }
 
   fun anonymousClasses() {
-    object : <error descr="'OldClass()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">OldClass()</error>, <error descr="'library.RecentInterface' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentInterface</error> {
+    object : <error descr="'OldClass()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">OldClass</error>(), <error descr="'library.RecentInterface' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentInterface</error> {
     }
-    object : <error descr="'OldKotlinClass()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">OldKotlinClass()</error>, <error descr="'library.RecentKotlinInterface' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinInterface</error> {
+    object : <error descr="'OldKotlinClass()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">OldKotlinClass</error>(), <error descr="'library.RecentKotlinInterface' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">RecentKotlinInterface</error> {
     }
   }
 
