@@ -44,7 +44,6 @@ import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastLiteralUtils;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;

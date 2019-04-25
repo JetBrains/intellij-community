@@ -11,11 +11,10 @@ import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.serialization.*;
-import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
