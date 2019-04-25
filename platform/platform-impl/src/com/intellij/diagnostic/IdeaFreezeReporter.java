@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.management.ThreadInfo;
@@ -58,19 +59,55 @@ public class IdeaFreezeReporter {
             attachment.setIncluded(true);
             attachments[i] = attachment;
           }
-          MessagePool.getInstance().addIdeFatalMessage(createEvent(lengthInSeconds, attachments));
+          IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments);
+          if (event != null) {
+            MessagePool.getInstance().addIdeFatalMessage(event);
+          }
         }
         myCurrentDumps.clear();
         myStacktraceCommonPart = null;
       }
 
-      @NotNull
+      @Nullable
       private IdeaLoggingEvent createEvent(int lengthInSeconds, Attachment[] attachments) {
         boolean allInEdt = StreamEx.of(myCurrentDumps)
           .flatArray(ThreadDump::getThreadInfos)
           .filter(ThreadDumper::isEDT)
           .map(ThreadInfo::getThreadState)
           .allMatch(Thread.State.RUNNABLE::equals);
+        if (!allInEdt) {
+          long causeThreadId = -1;
+          for (ThreadDump dump : myCurrentDumps) {
+            if (causeThreadId == -1) {
+              // find probable cause thread
+              ThreadInfo[] threadInfos = dump.getThreadInfos();
+              ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
+              if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
+                String lockName = edt.getLockName();
+                if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
+                  for (ThreadInfo info : threadInfos) {
+                    if (info.getThreadState() == Thread.State.RUNNABLE &&
+                        ContainerUtil.find(info.getStackTrace(), s -> "runReadAction".equals(s.getMethodName())) != null) {
+                      causeThreadId = info.getThreadId();
+                      myStacktraceCommonPart = ContainerUtil.newArrayList(info.getStackTrace());
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            else {
+              long finalCauseThreadId = causeThreadId;
+              ThreadInfo causeThread = ContainerUtil.find(dump.getThreadInfos(), i -> i.getThreadId() == finalCauseThreadId);
+              if (causeThread != null) {
+                myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, causeThread.getStackTrace());
+              }
+            }
+          }
+        }
+        if (ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+          return null;
+        }
         String edtNote = allInEdt ? "in EDT " : "";
         return LogMessage.createEvent(new Freeze(myStacktraceCommonPart),
                                       "Freeze " + edtNote + "for " + lengthInSeconds + " seconds",
