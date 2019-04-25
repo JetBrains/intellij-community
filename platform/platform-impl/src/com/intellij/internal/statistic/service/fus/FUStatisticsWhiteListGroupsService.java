@@ -3,6 +3,8 @@ package com.intellij.internal.statistic.service.fus;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.GsonBuilder;
+import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
@@ -12,13 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
  * <ol>
@@ -50,22 +49,35 @@ public class FUStatisticsWhiteListGroupsService {
    */
   @Nullable
   public static FUSWhitelist getApprovedGroups(@NotNull String serviceUrl, @NotNull BuildNumber current) {
-    String content = null;
-    try {
-      content = HttpRequests.request(serviceUrl)
-                            .productNameAsUserAgent()
-                            .readString(null);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
+    String content = getFUSWhiteListContent(serviceUrl);
 
     return content != null ? parseApprovedGroups(content, current) : null;
   }
 
-  @VisibleForTesting
-  @NotNull
-  public static FUSWhitelist parseApprovedGroups(String content, @NotNull BuildNumber build) {
+  @Nullable
+  public static String getFUSWhiteListContent() {
+    return getFUSWhiteListContent(EventLogExternalSettingsService.getFeatureUsageSettings().getWhiteListProductUrl());
+  }
+
+  @Nullable
+  private static String getFUSWhiteListContent(@Nullable String serviceUrl) {
+    if (StringUtil.isEmptyOrSpaces(serviceUrl)) return null;
+
+    String content = null;
+    try {
+      content = HttpRequests.request(serviceUrl)
+        .productNameAsUserAgent()
+        .readString(null);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return content;
+  }
+
+  @Nullable
+  public static WLGroups parseWhiteListContent(@Nullable String content) {
+    if (StringUtil.isEmptyOrSpaces(content)) return null;
     WLGroups groups = null;
     try {
       groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
@@ -73,6 +85,13 @@ public class FUStatisticsWhiteListGroupsService {
     catch (Exception e) {
       LOG.info(e);
     }
+    return groups;
+  }
+
+  @VisibleForTesting
+  @NotNull
+  public static FUSWhitelist parseApprovedGroups(String content, @NotNull BuildNumber build) {
+    WLGroups groups = parseWhiteListContent(content);
 
     if (groups == null) {
       return FUSWhitelist.empty();
@@ -89,22 +108,22 @@ public class FUStatisticsWhiteListGroupsService {
     return versions == null || versions.isEmpty() ? emptyList() : map(versions, version -> VersionRange.create(version.from, version.to));
   }
 
-  private static class WLGroups {
+  public static class WLGroups {
     @NotNull
     public final ArrayList<WLGroup> groups = new ArrayList<>();
+    @Nullable public Map<String, Set<String>> globalEnums;
+    @Nullable public WLRule rules;
   }
 
-  private static class WLGroup {
+  public static class WLGroup {
     @Nullable
-    public final String id;
+    public String id;
     @Nullable
     public final ArrayList<WLBuild> builds = new ArrayList<>();
     @Nullable
     public final ArrayList<WLVersion> versions = new ArrayList<>();
-
-    WLGroup(@Nullable String id) {
-      this.id = id;
-    }
+    @Nullable
+    public WLRule rules;
 
     public boolean accepts(BuildNumber current) {
       if (!isValid()) {
@@ -131,14 +150,16 @@ public class FUStatisticsWhiteListGroupsService {
     }
   }
 
-  private static class WLBuild {
-    public final String from;
-    public final String to;
+  public static class WLRule {
+    @Nullable public Set<String> event_id;
+    @Nullable public Map<String, Set<String>> event_data;
+    @Nullable public Map<String, Set<String>> enums;
+    @Nullable public Map<String, String> regexps;
+  }
 
-    private WLBuild(String from, String to) {
-      this.from = from;
-      this.to = to;
-    }
+  private static class WLBuild {
+    public String from;
+    public String to;
 
     public boolean contains(BuildNumber build) {
       return (StringUtil.isEmpty(to) || BuildNumber.fromString(to).compareTo(build) > 0) &&

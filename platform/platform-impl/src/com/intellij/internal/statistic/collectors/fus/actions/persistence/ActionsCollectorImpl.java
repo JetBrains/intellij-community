@@ -35,7 +35,7 @@ import java.util.Set;
 )
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String GROUP = "actions";
-  private static final String DEFAULT_ID = "third.party";
+  public static final String DEFAULT_ID = "third.party";
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
     "tooltip.actions.execute", "tooltip.actions.show.all", "tooltip.actions.show.description.gear",
