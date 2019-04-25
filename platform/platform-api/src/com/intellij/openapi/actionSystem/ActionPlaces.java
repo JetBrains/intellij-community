@@ -133,6 +133,8 @@ public abstract class ActionPlaces {
 
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
+  public static final String REFACTORING_QUICKLIST = "RefactoringQuickList";
+
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
            KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
