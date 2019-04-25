@@ -106,7 +106,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE).getPropertyMapper(settings);
     setSimple(mapper, "align_group_field_declarations", "true");
     setSimple(mapper, "blank_lines_after_class_header", "1");
-    setSimple(mapper, "brace_style", "next_line");
+    setSimple(mapper, "block_brace_style", "next_line");
     setSimple(mapper, "indent_size", "2");
     setSimple(mapper, "doc_align_param_comments", "true");
     setList(mapper, "imports_layout",

@@ -122,8 +122,6 @@ class ExitContext {
         // Keep final when possible to respect code style setting "generate local variables as 'final'"
         requireNonNull(var.getModifierList()).setModifierProperty(PsiModifier.FINAL, false);
       }
-      PsiJavaToken end = requireNonNull(myBlock.getRBrace());
-      myBlock.addBefore(myFactory.createStatementFromText("return " + myReturnVariable + ";", myBlock), end);
       return var;
     }
     return null;

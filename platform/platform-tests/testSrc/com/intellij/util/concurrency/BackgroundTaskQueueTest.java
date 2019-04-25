@@ -24,6 +24,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -357,7 +358,10 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     }
 
     public void waitFor(int timeout, TimeUnit timeUnit) throws InterruptedException {
-      assertTrue(mySemaphore.tryAcquire(1, timeout, timeUnit));
+      boolean acquired = mySemaphore.tryAcquire(1, timeout, timeUnit);
+      if (!acquired) {
+        fail("Failed to acquire for "+timeout +" "+ timeUnit+"\n"+ExceptionUtil.currentStackTrace());
+      }
       mySemaphore.release();
     }
 

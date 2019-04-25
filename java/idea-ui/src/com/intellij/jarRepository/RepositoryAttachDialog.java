@@ -392,20 +392,26 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return text.split(":").length == 3;
   }
 
-  public String getCoordinateText() {
+  private String getCoordinateText() {
     String text = getFullCoordinateText();
     List<String> parts = StringUtil.split(text, ":");
     return parts.size() == 4 ? parts.get(0) + ":" + parts.get(1) + ":" + parts.get(3) : text;
   }
 
-  @Nullable
-  public String getPackaging() {
+  @NotNull
+  private String getPackaging() {
     List<String> parts = StringUtil.split(getFullCoordinateText(), ":");
-    return parts.size() == 4 ? parts.get(2) : null;
+    return parts.size() == 4 ? parts.get(2) : JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING;
   }
 
   private String getFullCoordinateText() {
     return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText();
+  }
+
+  @NotNull
+  public JpsMavenRepositoryLibraryDescriptor getSelectedLibraryDescriptor() {
+    return new JpsMavenRepositoryLibraryDescriptor(getCoordinateText(), getPackaging(),
+                                                   getIncludeTransitiveDependencies(), Collections.emptyList());
   }
 
   private void createUIComponents() {

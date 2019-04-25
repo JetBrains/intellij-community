@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -137,18 +138,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return myInstallingWithUpdatesPlugins.contains(descriptor);
   }
 
-  void installOrUpdatePlugin(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
+  void installOrUpdatePlugin(@NotNull IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Collections.singletonList(descriptor))) {
       return;
     }
 
+    IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
     PluginNode pluginNode;
-    if (descriptor instanceof PluginNode) {
-      pluginNode = (PluginNode)descriptor;
+    if (actionDescriptor instanceof PluginNode) {
+      pluginNode = (PluginNode)actionDescriptor;
     }
     else {
-      pluginNode = new PluginNode(descriptor.getPluginId(), descriptor.getName(), "-1");
-      pluginNode.setDepends(Arrays.asList(descriptor.getDependentPluginIds()), descriptor.getOptionalDependentPluginIds());
+      pluginNode = new PluginNode(actionDescriptor.getPluginId(), actionDescriptor.getName(), "-1");
+      pluginNode.setDepends(Arrays.asList(actionDescriptor.getDependentPluginIds()), actionDescriptor.getOptionalDependentPluginIds());
       pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
     }
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
@@ -156,7 +158,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
     needRestart = true;
 
-    installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, install));
+    installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, updateDescriptor));
   }
 
   private static void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
@@ -191,8 +193,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  private InstallPluginInfo prepareToInstall(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
-    InstallPluginInfo info = new InstallPluginInfo(descriptor, this, install);
+  private InstallPluginInfo prepareToInstall(@NotNull IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
+    boolean install = updateDescriptor == null;
+    InstallPluginInfo info = new InstallPluginInfo(descriptor, updateDescriptor, this, install);
     myInstallingInfos.put(descriptor, info);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
@@ -262,9 +265,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (detailPanel != null && detailPanel.myPlugin == descriptor) {
       detailPanel.hideProgress(success);
     }
-    for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
-      if (detailPanel.myPlugin == descriptor) {
-        detailPanel.hideProgress(success);
+    for (PluginDetailsPageComponent panel : myDetailPanels) {
+      if (panel.myPlugin == descriptor) {
+        panel.hideProgress(success);
       }
     }
 
@@ -295,7 +298,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (myUpdates != null) {
         myUpdates.titleWithCount();
       }
-      myPluginUpdatesService.finishUpdate(descriptor);
+      myPluginUpdatesService.finishUpdate(info.updateDescriptor);
     }
 
     info.indicator.cancel();
@@ -419,18 +422,55 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   @NotNull
   public List<String> getVendors() {
     if (ContainerUtil.isEmpty(myVendorsSorted)) {
-      assert myDownloaded != null;
+      assert myDownloadedPanel != null;
 
-      Set<String> vendors = new HashSet<>();
-      for (IdeaPluginDescriptor descriptor : myDownloaded.descriptors) {
-        String vendor = StringUtil.trim(descriptor.getVendor());
-        if (!StringUtil.isEmptyOrSpaces(vendor)) {
-          vendors.add(vendor);
-        }
-      }
-      myVendorsSorted = ContainerUtil.sorted(vendors, String::compareToIgnoreCase);
+      List<IdeaPluginDescriptor> descriptors =
+        myDownloadedPanel.getGroups().stream().flatMap(group -> group.plugins.stream()).map(plugin -> plugin.myPlugin)
+          .collect(Collectors.toList());
+
+      myVendorsSorted = getVendors(descriptors);
     }
     return myVendorsSorted;
+  }
+
+  @NotNull
+  public static List<String> getVendors(@NotNull List<IdeaPluginDescriptor> descriptors) {
+    Map<String, Integer> vendors = new HashMap<>();
+
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      String vendor = StringUtil.trim(descriptor.getVendor());
+      if (!StringUtil.isEmptyOrSpaces(vendor)) {
+        Integer count = vendors.get(vendor);
+        if (count == null) {
+          vendors.put(vendor, 1);
+        }
+        else {
+          vendors.put(vendor, count + 1);
+        }
+      }
+    }
+
+    vendors.put("JetBrains", Integer.MAX_VALUE);
+
+    return ContainerUtil.sorted(vendors.keySet(), (v1, v2) -> {
+      int result = vendors.get(v2) - vendors.get(v1);
+      return result == 0 ? v2.compareToIgnoreCase(v1) : result;
+    });
+  }
+
+  public static boolean isVendor(@NotNull IdeaPluginDescriptor descriptor, @NotNull Set<String> vendors) {
+    String vendor = StringUtil.trim(descriptor.getVendor());
+    if (StringUtil.isEmpty(vendor)) {
+      return false;
+    }
+
+    for (String vendorToFind : vendors) {
+      if (vendor.equalsIgnoreCase(vendorToFind) || StringUtil.containsIgnoreCase(vendor, vendorToFind)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {
