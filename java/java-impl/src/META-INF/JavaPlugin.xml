@@ -40,10 +40,6 @@
 
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.vfs.jrt.JrtFileSystem</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
@@ -308,6 +304,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>

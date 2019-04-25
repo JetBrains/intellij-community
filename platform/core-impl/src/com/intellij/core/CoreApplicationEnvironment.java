@@ -56,6 +56,7 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -96,9 +97,9 @@ public class CoreApplicationEnvironment {
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
       charSequence -> new DocumentImpl(charSequence), null));
 
-    VirtualFileSystem[] fs = myJrtFileSystem != null
-                             ? new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem, myJrtFileSystem}
-                             : new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem};
+    List<VirtualFileSystem> fs = myJrtFileSystem != null
+                             ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)
+                             : Arrays.asList(myLocalFileSystem, myJarFileSystem);
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs);
     registerApplicationComponent(VirtualFileManager.class, virtualFileManager);
 

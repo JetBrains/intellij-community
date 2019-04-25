@@ -20,6 +20,10 @@
       </description>
     </experimentalFeature>
 
+    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
+    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
+    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
+
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreClassProvider"
                         serviceImplementation="com.intellij.configurationStore.PlatformProjectStoreClassProvider"/>
 

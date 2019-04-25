@@ -11,6 +11,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,7 +223,8 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @Nullable
-  private ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
+  @ApiStatus.Internal
+  public ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
     return Extensions.getRootArea().getExtensionPointIfRegistered(myEpName);
   }
 

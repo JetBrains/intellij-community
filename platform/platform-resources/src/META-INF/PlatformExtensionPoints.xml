@@ -56,8 +56,7 @@
       <with attribute="implementationClass" implements="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor"/>
     </extensionPoint>
 
-    <extensionPoint name="virtualFileSystem"
-                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+    <extensionPoint name="virtualFileSystem" beanClass="com.intellij.openapi.vfs.impl.VirtualFileManagerImpl$VirtualFileSystemBean">
       <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
     </extensionPoint>
 
