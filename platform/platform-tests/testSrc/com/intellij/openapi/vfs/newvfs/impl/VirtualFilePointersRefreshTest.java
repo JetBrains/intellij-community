@@ -13,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class VirtualFilePointersRefreshTest extends LightPlatformTestCase {
-  public void testFindChildMustIncreaseModificationCountIfFoundNewFile() throws IOException, InterruptedException {
+  public void testFindChildMustIncreaseModificationCountIfFoundNewFile() throws IOException {
     String myTempDir = FileUtil.toSystemIndependentName(FileUtil.getTempDirectory());
     new File(myTempDir).mkdirs();
     File dir = new File(myTempDir, "x/dir");
@@ -34,6 +34,9 @@ public class VirtualFilePointersRefreshTest extends LightPlatformTestCase {
     assertNotNull(vXTxt);
 
     assertTrue(vXTxt.isValid());
+
+    // even when child "x.txt" found and created without any events,
+    // virtual pointer manager needs to be able to tell some pointers've changed
     assertTrue(pointerX.isValid());
   }
 }
