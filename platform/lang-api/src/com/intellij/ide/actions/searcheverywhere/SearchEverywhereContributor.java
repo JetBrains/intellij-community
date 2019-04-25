@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -53,8 +52,7 @@ public interface SearchEverywhereContributor<Item> {
   default String getAdvertisement() { return null; }
 
   @NotNull
-  default List<AnAction> getActions(@NotNull Disposable uiDisposable,
-                                    @NotNull Runnable rebuildRunnable) {
+  default List<AnAction> getActions(@NotNull Runnable onChanged) {
     return Collections.emptyList();
   }
 
