@@ -86,4 +86,11 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    */
   @Nullable
   PsiType getOwner(@NotNull PsiAnnotation annotation);
+
+  /**
+   * @return true if it's an array creation in form of {@code new T[0]} or {@code new T[] {...}}
+   */
+  default boolean isArrayCreation() {
+     return getArrayDimensions().length != 0 || getArrayInitializer() != null;
+  }
 }
