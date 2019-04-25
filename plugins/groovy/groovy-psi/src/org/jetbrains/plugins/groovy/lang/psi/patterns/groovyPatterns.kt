@@ -43,7 +43,7 @@ fun PsiMethodPattern.withKind(kind: Any): PsiMethodPattern {
 }
 
 fun groovyClosure(): GroovyClosurePattern = GroovyClosurePattern()
-val groovyMethodCall: GroovyMethodCallPattern = GroovyMethodCallPattern()
+
 val groovyAnnotationArgumentValue: GroovyElementPattern.Capture<GrAnnotationMemberValue> = groovyElement()
 val groovyAnnotationArgument: GroovyAnnotationArgumentPattern.Capture = GroovyAnnotationArgumentPattern.Capture()
 val groovyAnnotationArgumentList: GroovyElementPattern.Capture<GrAnnotationArgumentList> = groovyElement()
