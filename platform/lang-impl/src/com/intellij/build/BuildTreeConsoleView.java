@@ -2,6 +2,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -391,6 +392,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
       currentNode.setResult(((FinishEvent)event).getResult());
+      SkippedResult skippedResult = new SkippedResultImpl();
+      finishChildren(currentNode, skippedResult);
       final String text = "__" + currentNode.getDuration();
       ApplicationManager.getApplication().invokeLater(() -> {
         int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
@@ -430,6 +433,24 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     }
     scheduleUpdate(currentNode);
+  }
+
+  private static void finishChildren(@NotNull ExecutionNode node, @NotNull EventResult result) {
+    for (SimpleNode child : node.getChildren()) {
+      if (child instanceof ExecutionNode) {
+        ExecutionNode executionChild = (ExecutionNode)child;
+        if (!executionChild.isRunning()) {
+          continue;
+        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          // Need to check again since node could have finished on a later event.
+          if (executionChild.isRunning()) {
+            finishChildren(executionChild, result);
+            executionChild.setResult(result);
+          }
+        });
+      }
+    }
   }
 
   // Android Studio: temporary fix for b/129727063
