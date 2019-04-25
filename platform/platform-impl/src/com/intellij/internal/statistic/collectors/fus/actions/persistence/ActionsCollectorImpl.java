@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.Set;
 
 /**
@@ -50,6 +51,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     final FeatureUsageData data = new FeatureUsageData().addOS();
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
+    }
+    else if (event instanceof MouseEvent) {
+      data.addInputEvent((MouseEvent)event);
     }
     FUCounterUsageLogger.getInstance().logEvent(GROUP, recorded, data);
   }
