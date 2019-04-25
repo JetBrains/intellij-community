@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -1043,14 +1044,20 @@ public class XmlUtil {
     final Map<String, List<String>> tags = new LinkedHashMap<>();
     final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<>();
 
-    final XmlTag rootTag = doc.getRootTag();
-    computeTag(rootTag, tags, attributes, full);
+    try {
+      XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, true);
+      final XmlTag rootTag = doc.getRootTag();
+      computeTag(rootTag, tags, attributes, full);
 
-    // For supporting not well-formed XML
-    for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
-      if (element instanceof XmlTag) {
-        computeTag((XmlTag)element, tags, attributes, full);
+      // For supporting not well-formed XML
+      for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
+        if (element instanceof XmlTag) {
+          computeTag((XmlTag)element, tags, attributes, full);
+        }
       }
+    }
+    finally {
+      XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, false);
     }
 
     final StringBuilder buffer = new StringBuilder();

@@ -15,15 +15,10 @@ public class InstallPluginInfo {
   private final IdeaPluginDescriptor myDescriptor;
   private MyPluginModel myPluginModel;
   public final boolean install;
-  public final IdeaPluginDescriptor updateDescriptor;
   private TaskInfo myStatusBarTaskInfo;
 
-  public InstallPluginInfo(@NotNull IdeaPluginDescriptor descriptor,
-                           IdeaPluginDescriptor updateDescriptor,
-                           @NotNull MyPluginModel pluginModel,
-                           boolean install) {
+  public InstallPluginInfo(@NotNull IdeaPluginDescriptor descriptor, @NotNull MyPluginModel pluginModel, boolean install) {
     myDescriptor = descriptor;
-    this.updateDescriptor = updateDescriptor;
     myPluginModel = pluginModel;
     this.install = install;
   }

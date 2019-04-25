@@ -21,8 +21,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class SearchPopupController {
-  protected final PluginSearchTextField myTextField;
-  private final boolean myHandleSpace;
+  private final PluginSearchTextField myTextField;
   protected SearchPopup myPopup;
   private final JBPopupListener mySearchPopupListener = new JBPopupAdapter() {
     @Override
@@ -32,12 +31,7 @@ public abstract class SearchPopupController {
   };
 
   public SearchPopupController(@NotNull PluginSearchTextField searchTextField) {
-    this(searchTextField, true);
-  }
-
-  public SearchPopupController(@NotNull PluginSearchTextField searchTextField, boolean handleSpace) {
     myTextField = searchTextField;
-    myHandleSpace = handleSpace;
   }
 
   public void handleShowPopup() {
@@ -48,9 +42,7 @@ public abstract class SearchPopupController {
     if (position < length) {
       if (query.charAt(position) == ' ') {
         if (position == 0 || query.charAt(position - 1) == ' ') {
-          if (myHandleSpace) {
-            showAttributesPopup(null, position);
-          }
+          showAttributesPopup(null, position);
           return;
         }
       }
@@ -61,9 +53,7 @@ public abstract class SearchPopupController {
       }
     }
     else if (query.charAt(position - 1) == ' ') {
-      if (myHandleSpace) {
-        showAttributesPopup(null, position);
-      }
+      showAttributesPopup(null, position);
       return;
     }
 

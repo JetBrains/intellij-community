@@ -42,22 +42,23 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
   /**
    * Returns the name attribute for resolving.
    *
+   * @param extension Extension.
    * @return {@link Extension#getId()} by default.
    * @see #getAttribute(Extension, String)
    */
-  protected GenericAttributeValue<?> getNameElement(Extension extension) {
+  protected GenericAttributeValue<String> getNameElement(Extension extension) {
     return extension.getId();
   }
 
   @Nullable
   @Override
   public PsiElement resolve() {
-    final String id = getValue();
+    final String myId = getValue();
     final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindProcessor<Extension>() {
       @Override
       protected boolean accept(Extension extension) {
-        final GenericAttributeValue<?> nameElement = getNameElement(extension);
-        return nameElement != null && id.equals(nameElement.getStringValue());
+        final GenericAttributeValue<String> nameElement = getNameElement(extension);
+        return nameElement != null && myId.equals(nameElement.getStringValue());
       }
     };
     processCandidates(resolveProcessor);
@@ -71,7 +72,7 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
   }
 
   @Nullable
-  protected static GenericAttributeValue<?> getAttribute(Extension extension, String attributeName) {
+  protected static GenericAttributeValue getAttribute(Extension extension, String attributeName) {
     final DomAttributeChildDescription attributeDescription = extension.getGenericInfo().getAttributeChildDescription(attributeName);
     if (attributeDescription == null) {
       return null;

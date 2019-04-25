@@ -334,7 +334,6 @@ public class CommonCodeStyleSettings {
   @Retention(RetentionPolicy.RUNTIME)
   public @interface BraceStyleConstant {}
 
-  @Property(externalName = "block_brace_style")
   @BraceStyleConstant public int BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int CLASS_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;

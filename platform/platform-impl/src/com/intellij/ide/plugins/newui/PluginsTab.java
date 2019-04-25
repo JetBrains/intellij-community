@@ -62,8 +62,7 @@ public abstract class PluginsTab {
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
     List<CellPluginComponent> selection = panel.getSelection();
-    int size = selection.size();
-    myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
+    myDetailsPage.showPlugin(selection.size() == 1 ? selection.get(0) : null);
   };
 
   @NotNull
@@ -231,7 +230,7 @@ public abstract class PluginsTab {
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {
       myCardPanel.select(1, true);
-      myDetailsPage.showPlugin(null, false);
+      myDetailsPage.showPlugin(null);
     }
     mySearchPanel.setQuery(query);
   }

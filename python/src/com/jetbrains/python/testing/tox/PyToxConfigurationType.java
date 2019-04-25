@@ -34,7 +34,7 @@ public final class PyToxConfigurationType implements ConfigurationType {
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "tox runner";
+    return "Tox runner";
   }
 
   @Override

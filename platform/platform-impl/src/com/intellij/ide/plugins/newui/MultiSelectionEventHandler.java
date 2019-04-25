@@ -197,24 +197,6 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void handleUpDown(@NotNull KeyEvent event) {
-    if (myComponents.isEmpty()) {
-      return;
-    }
-
-    try {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      CellPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
-
-      myKeyListener.keyPressed(event);
-    }
-    finally {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      CellPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
-    }
-  }
-
-  @Override
   public void connect(@NotNull PluginsGroupComponent container) {
     myContainer = container;
     myLayout = (PagePluginLayout)container.getLayout();

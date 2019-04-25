@@ -92,9 +92,7 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
       }
       if (highlightType == ProblemHighlightType.INFORMATION
           || InspectionProjectProfileManager.isInformationLevel(getShortName(), statement)) {
-        if (isOnTheFly()) {
-          registerError(statement, highlightType);
-        }
+        registerError(statement, highlightType);
       }
       else {
         final PsiElement nameIdentifier = ((PsiVariable)declaredElements[0]).getNameIdentifier();

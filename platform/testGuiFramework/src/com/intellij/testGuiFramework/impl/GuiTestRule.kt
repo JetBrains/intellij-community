@@ -68,7 +68,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
-class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
+class GuiTestRule : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
@@ -88,12 +88,6 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
     .aroundIfNotNull(createScreenRecordingRuleIfNeeded())
-    .let {
-      if (enableScreenshotsDuringTest)
-        it.around(ScreenshotsDuringTest(500))
-      else
-        it
-    }
 
   private val timeoutRule = Timeout(20, TimeUnit.MINUTES)
 
