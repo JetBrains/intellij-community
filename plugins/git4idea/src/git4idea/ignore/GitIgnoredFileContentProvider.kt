@@ -19,8 +19,8 @@ import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.commands.Git
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
+import git4idea.repo.GitRepositoryManager
 import java.io.File
 import java.lang.System.lineSeparator
 
@@ -63,14 +63,17 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     return content.toString()
   }
 
-  private fun getUntrackedFiles(ignoreFileRoot: VirtualFile): Set<VirtualFile> =
+  private fun getUntrackedFiles(ignoreFileRoot: VirtualFile): Set<VirtualFile> {
     try {
-      Git.getInstance().untrackedFiles(project, ignoreFileRoot, null)
+      val vcsRoot = VcsUtil.getVcsRootFor(project, ignoreFileRoot) ?: return emptySet()
+      val repo = GitRepositoryManager.getInstance(project).getRepositoryForRoot(vcsRoot) ?: return emptySet()
+      return repo.untrackedFilesHolder.retrieveUntrackedFiles().toSet()
     }
     catch (e: VcsException) {
       LOG.warn("Cannot get untracked files: ", e)
-      emptySet()
+      return emptySet()
     }
+  }
 
   private fun Iterable<IgnoredFileDescriptor>.ignoreBeansToRelativePaths(ignoreFileRoot: VirtualFile, untrackedFiles: Set<VirtualFile>): List<String> {
     val vcsRoot= VcsUtil.getVcsRootFor(project, ignoreFileRoot)
