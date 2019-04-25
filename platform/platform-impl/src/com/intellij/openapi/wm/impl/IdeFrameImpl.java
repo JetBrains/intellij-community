@@ -2,13 +2,11 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,7 +22,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -35,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.ui.AppUIUtil;
@@ -44,7 +40,6 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -343,7 +338,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     try {
       ourUpdatingTitle = true;
 
-      if(IdeFrameDecorator.isCustomDecoration()) {
+      if (IdeFrameDecorator.isCustomDecoration()) {
         frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
       }
 
@@ -498,7 +493,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
       widgetIDs.clear();
 
-      ((StatusBarEx)statusBar).removeCustomIndicationComponents();
+      if (statusBar instanceof IdeStatusBarImpl) {
+        ((IdeStatusBarImpl)statusBar).removeCustomIndicationComponents();
+      }
     });
   }
 
@@ -551,15 +548,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       doLayout();
     }
   }
-
-  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
-                                                                          AllIcons.Ide.Shadow.TopRight,
-                                                                          AllIcons.Ide.Shadow.Right,
-                                                                          AllIcons.Ide.Shadow.BottomRight,
-                                                                          AllIcons.Ide.Shadow.Bottom,
-                                                                          AllIcons.Ide.Shadow.BottomLeft,
-                                                                          AllIcons.Ide.Shadow.Left,
-                                                                          AllIcons.Ide.Shadow.TopLeft);
 
   @Override
   public void paint(@NotNull Graphics g) {
