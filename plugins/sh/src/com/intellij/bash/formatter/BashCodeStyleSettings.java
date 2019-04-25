@@ -12,6 +12,6 @@ public class BashCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean MINIFY_PROGRAM = false;
 
   public BashCodeStyleSettings(CodeStyleSettings container) {
-    super("BashCodeStyleSettings", container);
+    super("Bash", container);
   }
 }

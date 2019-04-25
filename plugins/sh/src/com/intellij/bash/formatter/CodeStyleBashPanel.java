@@ -101,7 +101,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(BashLanguage.INSTANCE);
     indentOptions.INDENT_SIZE = myIndentField.getValue();
     indentOptions.USE_TAB_CHARACTER = myTabCharacter.isSelected();
 
@@ -116,7 +116,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(BashLanguage.INSTANCE);
     BashCodeStyleSettings bashSettings = settings.getCustomSettings(BashCodeStyleSettings.class);
 
     return isFieldModified(myBinaryOpsStartLine, bashSettings.BINARY_OPS_START_LINE)
@@ -137,7 +137,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(BashLanguage.INSTANCE);
     myIndentField.setValue(indentOptions.INDENT_SIZE);
     myTabCharacter.setSelected(indentOptions.USE_TAB_CHARACTER);
 
