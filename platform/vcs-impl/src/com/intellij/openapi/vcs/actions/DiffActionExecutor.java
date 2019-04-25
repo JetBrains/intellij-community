@@ -59,15 +59,15 @@ public abstract class DiffActionExecutor {
   }
 
   @Nullable
-  private Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
+  private static Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
     Editor editor = null;
     if (contextEditor != null) {
       VirtualFile contextFile = FileDocumentManager.getInstance().getFile(contextEditor.getDocument());
-      if (Comparing.equal(contextFile, mySelectedFile)) editor = contextEditor;
+      if (Comparing.equal(contextFile, file)) editor = contextEditor;
     }
 
     if (editor == null) {
-      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(mySelectedFile);
+      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
       if (fileEditor instanceof TextEditor) editor = ((TextEditor)fileEditor).getEditor();
     }
 
