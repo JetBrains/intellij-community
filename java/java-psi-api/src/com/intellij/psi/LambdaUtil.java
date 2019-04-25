@@ -601,7 +601,9 @@ public class LambdaUtil {
     return body instanceof PsiAssignmentExpression ||
            PsiUtil.isIncrementDecrementOperation(body) ||
            body instanceof PsiMethodCallExpression || //method invocation
-           body instanceof PsiNewExpression && ((PsiNewExpression)body).getArrayInitializer() == null || //class instance creation
+           body instanceof PsiNewExpression && 
+             ((PsiNewExpression)body).getArrayDimensions().length == 0 && 
+             ((PsiNewExpression)body).getArrayInitializer() == null || //class instance creation
            body instanceof PsiReferenceExpression && !body.isPhysical();
   }
 
