@@ -104,6 +104,11 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
+  public void addExplicitExtension(@NotNull KeyT key, @NotNull T t, @NotNull Disposable parentDisposable) {
+    addExplicitExtension(key, t);
+    Disposer.register(parentDisposable, () -> removeExplicitExtension(key, t));
+  }
+
   public void removeExplicitExtension(@NotNull KeyT key, @NotNull T t) {
     synchronized (lock) {
       final String stringKey = keyToString(key);
