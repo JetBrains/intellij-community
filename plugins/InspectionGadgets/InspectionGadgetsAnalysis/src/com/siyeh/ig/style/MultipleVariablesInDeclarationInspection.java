@@ -139,7 +139,14 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
       else {
         highlightType = ProblemHighlightType.WARNING;
       }
-      registerError(informationLevel || highlightType == ProblemHighlightType.INFORMATION ? field : field.getNameIdentifier(), highlightType);
+      if (informationLevel || highlightType == ProblemHighlightType.INFORMATION) {
+        if (isOnTheFly()) {
+          registerError(field, highlightType);
+        }
+      }
+      else {
+        registerError(field.getNameIdentifier(), highlightType);
+      }
     }
   }
 }
