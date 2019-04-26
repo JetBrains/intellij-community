@@ -1,7 +1,6 @@
 package com.intellij.bash.oldParser;
 
 import com.intellij.bash.parser.BashParserDefinition;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ParsingTestCase;
 
 public class BashOldParserTest extends ParsingTestCase {
