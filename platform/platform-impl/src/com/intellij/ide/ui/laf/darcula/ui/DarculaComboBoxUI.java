@@ -290,8 +290,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       cc.setBorder(JBUI.Borders.empty());
       cc.setIpad(JBUI.emptyInsets());
       icon = cc.getIcon();
-      if (!cc.isIconOnTheRight() && icon instanceof OffsetIcon) {
-        cc.setIcon(((OffsetIcon)icon).getIcon());
+      if (!cc.isIconOnTheRight()) {
+        cc.setIcon(OffsetIcon.getOriginalIcon(icon));
       }
     }
     else if (c instanceof JLabel) {
@@ -299,9 +299,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       border = cc.getBorder();
       cc.setBorder(JBUI.Borders.empty());
       icon = cc.getIcon();
-      if (icon instanceof OffsetIcon) {
-        cc.setIcon(((OffsetIcon)icon).getIcon());
-      }
+      cc.setIcon(OffsetIcon.getOriginalIcon(icon));
     }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);

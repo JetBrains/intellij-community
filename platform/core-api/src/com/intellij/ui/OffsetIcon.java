@@ -4,6 +4,7 @@ package com.intellij.ui;
 
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +29,11 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
   {
     getScaleContext().addUpdateListener(this::updateSize);
     setAutoUpdateScaleContext(false);
+  }
+
+  @Contract("null->null;!null->!null")
+  public static Icon getOriginalIcon(Icon icon) {
+    return icon instanceof OffsetIcon ? ((OffsetIcon)icon).myIcon : icon;
   }
 
   public OffsetIcon(@NotNull Icon icon) {
