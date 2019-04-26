@@ -10,14 +10,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BashStringUtil {
-  private static char[] ORIGIN_CHARS = new char[]{
+  private static final char[] ORIGIN_CHARS = new char[]{
       ' ', '!', '"', '#', '$', '&', '\'', '(', ')', '*', ',', ';', '<', '>', '=', '?', '[', '\\', ']', '^', '`', '{', '|', '}'
   };
-  public static Set<Character> ORIGINS_SET = IntStream.range(0, ORIGIN_CHARS.length)
+  public static final Set<Character> ORIGINS_SET = IntStream.range(0, ORIGIN_CHARS.length)
       .mapToObj(i -> ORIGIN_CHARS[i])
       .collect(Collectors.toSet());
-  public static List<String> ENCODED = toStr(ORIGIN_CHARS, '\\');
-  public static List<String> ORIGINS = toStr(ORIGIN_CHARS, null);
+  private static final List<String> ENCODED = toStr(ORIGIN_CHARS, '\\');
+  private static final List<String> ORIGINS = toStr(ORIGIN_CHARS, null);
 
   private static List<String> toStr(char[] arr, Character prefix) {
     return IntStream.range(0, arr.length)
