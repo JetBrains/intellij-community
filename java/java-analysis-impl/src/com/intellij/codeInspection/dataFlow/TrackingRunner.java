@@ -75,14 +75,17 @@ public class TrackingRunner extends StandardDataFlowRunner {
     StandardInstructionVisitor visitor = new StandardInstructionVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(body, visitor, ignoreAssertions);
     if (result != RunnerResult.OK) return Collections.emptyList();
-    List<CauseItem> results = new ArrayList<>();
+    CauseItem cause = null;
     for (MemoryStateChange history : runner.myHistoryForContext) {
       CauseItem root = findCauseChain(expression, history, type);
-      if (!results.contains(root)) {
-        results.add(root);
+      if (cause == null) {
+        cause = root;
+      } else {
+        cause = cause.merge(root);
+        if (cause == null) return Collections.emptyList();
       }
     }
-    return results;
+    return Collections.singletonList(cause);
   }
 
   public abstract static class DfaProblemType {
@@ -182,7 +185,59 @@ public class TrackingRunner extends StandardDataFlowRunner {
     public String toString() {
       return myProblem.toString().replaceFirst("#ref$", "here");
     }
+
+    public CauseItem merge(CauseItem other) {
+      if (this.equals(other)) return this;
+      if (Objects.equals(this.myTarget, other.myTarget) && this.myProblem.toString().equals(other.myProblem.toString())) {
+        if(tryMergeChildren(other.myChildren)) return this;
+        if(other.tryMergeChildren(this.myChildren)) return other;
+      }
+      return null;
+    }
+
+    private boolean tryMergeChildren(List<CauseItem> children) {
+      if (myChildren.isEmpty()) return false;
+      if (myChildren.size() != 1 || !(myChildren.get(0).myProblem instanceof PossibleExecutionDfaProblemType)) {
+        if (children.size() == myChildren.size()) {
+          List<CauseItem> merged = StreamEx.zip(myChildren, children, CauseItem::merge).toList();
+          if (!merged.contains(null)) {
+            myChildren.clear();
+            myChildren.addAll(merged);
+            return true;
+          }
+        }
+        insertIntoHierarchy(new CauseItem(new PossibleExecutionDfaProblemType(), (PsiElement)null));
+      }
+      CauseItem mergePoint = myChildren.get(0);
+      if (children.isEmpty()) {
+        ((PossibleExecutionDfaProblemType)mergePoint.myProblem).myComplete = false;
+      }
+      mergePoint.myChildren.addAll(children);
+      return true;
+    }
+
+    private void insertIntoHierarchy(CauseItem intermediate) {
+      intermediate.myChildren.addAll(myChildren);
+      myChildren.clear();
+      myChildren.add(intermediate);
+    }
   }
+  
+  public static class CastDfaProblemType extends DfaProblemType {
+    public String toString() {
+      return "Cast may fail";
+    }
+  }
+
+  static class PossibleExecutionDfaProblemType extends DfaProblemType {
+    boolean myComplete = true;
+
+    @Override
+    public String toString() {
+      return myComplete ? "One of the following happens:" : "An execution might exist where...";
+    }
+  }
+  
 
   public static class ValueDfaProblemType extends DfaProblemType {
     final Object myValue;
@@ -215,7 +270,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
             Cause for possible NPE
             Cause for AIOOBE
             Cause for "Contract always fails"
-            Cause for possible CCE
             Cause for "modifying an immutable collection"
             Cause for "Collection is always empty" (separate inspection now)
   TODO: 2. Describe causes in more cases:
@@ -235,6 +289,13 @@ public class TrackingRunner extends StandardDataFlowRunner {
       Object expectedValue = ((ValueDfaProblemType)type).myValue;
       CauseItem[] causes = findConstantValueCause(expression, history, expectedValue);
       root.addChildren(causes);
+    }
+    if (type instanceof CastDfaProblemType && expression instanceof PsiTypeCastExpression) {
+      PsiType expressionType = expression.getType();
+      MemoryStateChange operandPush = history.findExpressionPush(((PsiTypeCastExpression)expression).getOperand());
+      if (operandPush != null) {
+        root.addChildren(findTypeCause(operandPush, expressionType, false));
+      }
     }
     return root;
   }
@@ -335,8 +396,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
         PsiTypeElement typeElement = instanceOfExpression.getCheckType();
         if (typeElement != null) {
           PsiType type = typeElement.getType();
-          CauseItem[] causeItem = findTypeCause(operandHistory, type, value);
-          if (causeItem != null) return causeItem;
+          CauseItem causeItem = findTypeCause(operandHistory, type, value);
+          if (causeItem != null) return new CauseItem[]{causeItem};
         }
       }
     }
@@ -344,7 +405,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Nullable
-  private static CauseItem[] findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
+  private static CauseItem findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
     PsiExpression operand = Objects.requireNonNull(operandHistory.getExpression());
     DfaValue operandValue = operandHistory.myTopOfStack;
     DfaPsiType wanted = operandValue.getFactory().createDfaType(type);
@@ -362,7 +423,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
       if (prevExplanation == null) {
         CauseItem causeItem = new CauseItem(explanation, operand);
         causeItem.addChildren(new CauseItem("Type of '" + operand.getText() + "' is known from #ref", causeLocation));
-        return new CauseItem[]{causeItem};
+        return causeItem;
       }
       explanation = prevExplanation;
     }

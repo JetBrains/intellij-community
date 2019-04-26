@@ -54,13 +54,8 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
     assertNotNull("Failed to find element at selection: " + selectedText, element);
     assertTrue("Selected element is not an expression: " + selectedText, element instanceof PsiExpression);
     PsiExpression expression = (PsiExpression)element;
-    CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
-    assertNotNull("No common dataflow result for expression: " + selectedText, result);
-    Set<Object> values = result.getExpressionValues(expression);
-    assertEquals("No single value for expression: "+selectedText, 1, values.size());
-    Object singleValue = values.iterator().next();
-    List<TrackingRunner.CauseItem> items = TrackingRunner.findProblemCause(
-      true, false, expression, new TrackingRunner.ValueDfaProblemType(singleValue));
+    TrackingRunner.DfaProblemType problemType = getProblemType(selectedText, expression);
+    List<TrackingRunner.CauseItem> items = TrackingRunner.findProblemCause(true, false, expression, problemType);
     String dump = StreamEx.of(items).map(item -> item.dump(getEditor().getDocument())).joining("\n----\n");
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);
     if (firstComment == null) {
@@ -94,6 +89,19 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
     assertEquals(text, actual);
   }
 
+  @NotNull
+  private static TrackingRunner.DfaProblemType getProblemType(String selectedText, PsiExpression expression) {
+    if (expression instanceof PsiTypeCastExpression) {
+      return new TrackingRunner.CastDfaProblemType();
+    }
+    CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
+    assertNotNull("No common dataflow result for expression: " + selectedText, result);
+    Set<Object> values = result.getExpressionValues(expression);
+    assertEquals("No single value for expression: "+selectedText, 1, values.size());
+    Object singleValue = values.iterator().next();
+    return new TrackingRunner.ValueDfaProblemType(singleValue);
+  }
+
   public void testDitto() { doTest(); }
   public void testConstants() { doTest(); }
   public void testSimpleDeref() { doTest(); }
@@ -124,4 +132,9 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testNotNullObvious() { doTest(); }
   public void testNotNullAssignmentInside() { doTest(); }
   public void testIndexOfPlusOne() { doTest(); }
+  public void testWrongCastSimple() { doTest(); }
+  public void testWrongCastTwoStates() { doTest(); }
+  public void testWrongCastThreeStates() { doTest(); }
+  public void testIfBothNotNull() { doTest(); }
+  public void testIfBothNotNullReassign() { doTest(); }
 }
