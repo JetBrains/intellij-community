@@ -23,15 +23,17 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
+import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.toUElement
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerReferenceProvider(UastPatternAdapter(pattern, provider.supportedUElementTypes),
+  this.registerReferenceProvider(adaptPattern(pattern, provider.supportedUElementTypes),
                                  UastReferenceProviderAdapter(provider),
                                  priority)
 }
@@ -39,7 +41,7 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerReferenceProvider(UastPatternAdapter(pattern::accepts, provider.supportedUElementTypes),
+  this.registerReferenceProvider(adaptPattern(pattern::accepts, provider.supportedUElementTypes),
                                  UastReferenceProviderAdapter(provider), priority)
 }
 
@@ -79,6 +81,21 @@ private fun getOrCreateCachedElement(element: PsiElement,
   element as? UElement ?: context?.get(cachedUElement) ?: supportedUElementTypes.asSequence().mapNotNull {
     element.toUElement(it)
   }.firstOrNull()?.also { context?.put(cachedUElement, it) }
+
+
+private fun adaptPattern(
+  predicate: (UElement, ProcessingContext) -> Boolean,
+  supportedUElementTypes: List<Class<out UElement>>
+): ElementPattern<out PsiElement> {
+  val uastPatternAdapter = UastPatternAdapter(predicate, supportedUElementTypes)
+
+  // optimisation until IDEA-211738 is implemented
+  if (supportedUElementTypes == listOf(UInjectionHost::class.java)) {
+    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastPatternAdapter)
+  }
+
+  return uastPatternAdapter
+}
 
 private class UastPatternAdapter(
   val predicate: (UElement, ProcessingContext) -> Boolean,
