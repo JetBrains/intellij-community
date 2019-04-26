@@ -8,6 +8,6 @@ public class BashFileTypeFactory extends FileTypeFactory {
   @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(BashFileType.INSTANCE);
-    consumer.consume(BashFileType.INSTANCE, "bash");
+    consumer.consume(BashFileType.INSTANCE, "bash;zsh;fish");
   }
 }
