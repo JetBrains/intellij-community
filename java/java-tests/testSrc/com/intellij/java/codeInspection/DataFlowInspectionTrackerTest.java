@@ -137,4 +137,8 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testWrongCastThreeStates() { doTest(); }
   public void testIfBothNotNull() { doTest(); }
   public void testIfBothNotNullReassign() { doTest(); }
+  public void testAssignTrue() { doTest(); }
+  public void testAndChainCause() { doTest(); }
+  public void testAndChainDependentCause() { doTest(); }
+  public void testOrChainCause() { doTest(); }
 }

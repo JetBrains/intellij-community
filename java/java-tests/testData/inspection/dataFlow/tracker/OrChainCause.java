@@ -1,0 +1,24 @@
+/*
+Value is always true (x || (a+b)+(c+d)==10)
+  One of the following happens:
+    Operand #1 of ||-chain is true (x)
+    Operand #2 of ||-chain is true ((a+b)+(c+d)==10)
+      Result of '+' is 10 ((a+b)+(c+d))
+        Result of '+' is 3 (a+b)
+          Left operand is 1 (a)
+            'a' was assigned (1)
+          Right operand is 2 (b)
+            'b' was assigned (2)
+        Result of '+' is 7 (c+d)
+          Left operand is 3 (c)
+            'c' was assigned (3)
+          Right operand is 4 (d)
+            'd' was assigned (4)
+ */
+
+class Test {
+  void test(boolean x) {
+    int a = 1, b = 2, c = 3, d = 4;
+    if(<selection>x || (a+b)+(c+d)==10</selection>) {}
+  }
+}

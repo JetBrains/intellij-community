@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -212,7 +213,11 @@ public class TrackingRunner extends StandardDataFlowRunner {
       if (children.isEmpty()) {
         ((PossibleExecutionDfaProblemType)mergePoint.myProblem).myComplete = false;
       }
-      mergePoint.myChildren.addAll(children);
+      for (CauseItem child : children) {
+        if (!mergePoint.myChildren.contains(child)) {
+          mergePoint.myChildren.add(child);
+        }
+      }
       return true;
     }
 
@@ -275,6 +280,9 @@ public class TrackingRunner extends StandardDataFlowRunner {
   TODO: 2. Describe causes in more cases:
             Warning caused by contract
             Warning caused by CustomMethodHandler
+            Warning caused by polyadic math
+            Warning caused by narrowing conversion
+            Warning caused by unary minus
   TODO: 3. Check how it works with 
             Inliners (notably: Stream API)
             Ternary operators
@@ -302,6 +310,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
   @NotNull
   private static CauseItem[] findConstantValueCause(PsiExpression expression, MemoryStateChange history, Object expectedValue) {
+    if (expression instanceof PsiLiteralExpression) return new CauseItem[0];
     Object constantExpressionValue = ExpressionUtils.computeConstantExpression(expression);
     DfaValue value = history.myTopOfStack;
     if (constantExpressionValue != null && constantExpressionValue.equals(expectedValue)) {
@@ -351,6 +360,27 @@ public class TrackingRunner extends StandardDataFlowRunner {
         }
       }
     }
+    if (expression instanceof PsiPolyadicExpression) {
+      IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
+      boolean and = tokenType.equals(JavaTokenType.ANDAND);
+      if ((and || tokenType.equals(JavaTokenType.OROR)) && value != and) {
+        PsiExpression[] operands = ((PsiPolyadicExpression)expression).getOperands();
+        for (int i = 0; i < operands.length; i++) {
+          PsiExpression operand = operands[i];
+          operand = PsiUtil.skipParenthesizedExprDown(operand);
+          MemoryStateChange push = history.findExpressionPush(operand);
+          if (push != null &&
+              ((push.myInstruction instanceof ConditionalGotoInstruction &&
+                ((ConditionalGotoInstruction)push.myInstruction).isTarget(value, history.myInstruction)) ||
+               (push.myTopOfStack instanceof DfaConstValue &&
+                Boolean.valueOf(value).equals(((DfaConstValue)push.myTopOfStack).getValue())))) {
+            CauseItem cause = new CauseItem("Operand #" + (i + 1) + " of " + (and ? "&&" : "||") + "-chain is " + value, operand);
+            cause.addChildren(findBooleanResultCauses(operand, push, value));
+            return new CauseItem[]{cause};
+          }
+        }
+      }
+    }
     if (expression instanceof PsiBinaryExpression) {
       PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
       RelationType relationType =
@@ -366,6 +396,10 @@ public class TrackingRunner extends StandardDataFlowRunner {
         if (leftChange != null && rightChange != null) {
           DfaValue leftValue = leftChange.myTopOfStack;
           DfaValue rightValue = rightChange.myTopOfStack;
+          CauseItem[] causes = findRelationCause(relationType, leftChange, rightChange);
+          if (causes.length > 0) {
+            return causes;
+          }
           if (leftValue == rightValue &&
               (leftValue instanceof DfaVariableValue || leftValue instanceof DfaConstValue)) {
             return new CauseItem[]{new CauseItem("Comparison arguments are the same", binOp.getOperationSign())};
@@ -375,7 +409,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
             return new CauseItem[]{
               new CauseItem("Comparison arguments are different constants", binOp.getOperationSign())};
           }
-          return findRelationCause(relationType, leftChange, rightChange);
         }
       }
     }
@@ -661,8 +694,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
           (PsiType.LONG.equals(expression.getType()) || PsiType.INT.equals(expression.getType()))) {
         boolean isLong = PsiType.LONG.equals(expression.getType());
         PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
-        PsiExpression left = binOp.getLOperand();
-        PsiExpression right = binOp.getROperand();
+        PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+        PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
         MemoryStateChange leftPush = factUse.findExpressionPush(left);
         MemoryStateChange rightPush = factUse.findExpressionPush(right);
         if (leftPush != null && rightPush != null) {
