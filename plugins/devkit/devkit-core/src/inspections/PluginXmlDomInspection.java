@@ -478,7 +478,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     GenericAttributeValue<String> sinceBuild = ideaVersion.getSinceBuild();
     GenericAttributeValue<String> untilBuild = ideaVersion.getUntilBuild();
-    if (!DomUtil.hasXml(sinceBuild) ||
+    if (!DomUtil.hasXml(sinceBuild) &&
         !DomUtil.hasXml(untilBuild)) {
       return;
     }
@@ -500,7 +500,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return BuildNumber.fromString(build.getStringValue());
     }
     catch (RuntimeException e) {
-      holder.createProblem(build, DevKitBundle.message("inspections.plugin.xml.until.since.build.invalid"));
+      holder.createProblem(build, DevKitBundle.message("inspections.plugin.xml.until.since.build.invalid", build.getStringValue()));
       return null;
     }
   }
