@@ -17,6 +17,8 @@ package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

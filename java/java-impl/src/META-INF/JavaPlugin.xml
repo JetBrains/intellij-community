@@ -1906,6 +1906,9 @@
     <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
     <java.externalAnnotation.locationProvider
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
+
+    <statistics.counterUsagesCollector groupId="new.project.wizard.attempt" version="1"/>
+    <statistics.counterUsagesCollector groupId="new.project.wizard.finish" version="1"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
