@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.CommonBundle;
@@ -24,7 +22,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.*;
@@ -76,7 +73,7 @@ public class HotSwapUIImpl extends HotSwapUI {
       }
     });
   }
-  
+
   @Override
   public void addListener(HotSwapVetoableListener listener) {
     myListeners.add(listener);
@@ -168,7 +165,7 @@ public class HotSwapUIImpl extends HotSwapUI {
           modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
         }
         if (!toScan.isEmpty()) {
-          modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress));
+          modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, Objects.requireNonNull(findClassesProgress)));
         }
       }
 
@@ -224,7 +221,6 @@ public class HotSwapUIImpl extends HotSwapUI {
         if (!modifiedClasses.isEmpty()) {
           final HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
           if (modifiedClasses.keySet().size() == 1) {
-            //noinspection ConstantConditions
             progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
           }
           progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
@@ -249,18 +245,17 @@ public class HotSwapUIImpl extends HotSwapUI {
     });
   }
 
-  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(final List<DebuggerSession> sessions,
-                                                                                                   final HotSwapProgressImpl progress) {
-    final Ref<Map<DebuggerSession, Map<String, HotSwapFile>>> result = Ref.create(null);
-    ProgressManager.getInstance().runProcess(() -> {
+  @NotNull
+  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(@NotNull List<DebuggerSession> sessions,
+                                                                                                   @NotNull HotSwapProgressImpl progress) {
+    return ProgressManager.getInstance().runProcess(() -> {
       try {
-        result.set(HotSwapManager.scanForModifiedClasses(sessions, progress));
+        return HotSwapManager.scanForModifiedClasses(sessions, progress);
       }
       finally {
         progress.finished();
       }
     }, progress.getProgressIndicator());
-    return result.get();
   }
 
   private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
