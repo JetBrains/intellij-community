@@ -566,8 +566,8 @@ bool LoadVMOptions()
 
   if (!AddClassPathOptions(vmOptionLines)) return false;
   std::string dllName(jvmPath);
-  std::string binDir = dllName + "\\bin";
-  vmOptionLines.push_back(std::string("-Djava.library.path=") + binDir);
+  std::string binDirs = dllName + "\\bin;" + dllName + "\\bin\\server";
+  vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
 
   vmOptionCount = vmOptionLines.size();
