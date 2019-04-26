@@ -34,7 +34,7 @@ class BinaryExpressionHighlighter(val expression: GrBinaryExpression,
     if (argument !is ExpressionArgument || applicabilityData.applicability != Applicability.inapplicable) return null
     val arguments = reference.arguments ?: return null
     if (argument !in arguments) return null
-    val type = applicabilityData.type ?: return null
+    val type = applicabilityData.expectedType ?: return null
 
     val name = "Cast operand to " + type.presentableText
     return GrCastFix(type, argument.expression, true, name)

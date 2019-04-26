@@ -101,7 +101,7 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
 
   fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
     return results.flatMap { result ->
-      val applicabilities = result.candidate?.argumentMapping?.highlightApplicabilities(result.substitutor) ?: return emptyArray()
+      val applicabilities = result.candidate?.argumentMapping?.highlightingApplicabilities(result.substitutor) ?: return emptyArray()
       applicabilities.entries.mapNotNull { (argument, applicabilities) -> buildFix(argument, applicabilities) }
     }.toTypedArray()
   }

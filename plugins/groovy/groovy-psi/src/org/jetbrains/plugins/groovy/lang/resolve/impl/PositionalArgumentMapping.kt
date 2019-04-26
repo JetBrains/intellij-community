@@ -44,7 +44,7 @@ class PositionalArgumentMapping(
       return positionalParametersDistance(map, context)
     }
 
-  override fun highlightApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
     val map = argumentToParameter ?: return emptyMap()
     return highlightApplicabilities(map, substitutor, context)
   }

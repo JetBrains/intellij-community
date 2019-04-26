@@ -38,7 +38,7 @@ abstract class ConstructorCallHighlighter(reference: GroovyCallReference,
     val arguments = reference.arguments ?: return null
     val list = getArgumentList() ?: return null
     if (argument !in arguments) return null
-    val type = applicabilityData.type ?: return null
+    val type = applicabilityData.expectedType ?: return null
 
     val position = list.getExpressionArgumentIndex(argument.expression)
     return ParameterCastFix(position, type)

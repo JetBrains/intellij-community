@@ -88,7 +88,7 @@ class VarargArgumentMapping(
     return Applicability.applicable
   }
 
-  override fun highlightApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
     val (positional, varargs) = mapping ?: return emptyMap()
 
     val positionalApplicabilities = highlightApplicabilities(positional, substitutor,  context)

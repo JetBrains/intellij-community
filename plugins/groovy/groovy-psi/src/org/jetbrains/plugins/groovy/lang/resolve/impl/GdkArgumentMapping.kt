@@ -30,7 +30,7 @@ class GdkArgumentMapping(
 
   override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability = original.applicability(substitutor, erase)
 
-  override fun highlightApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
-    return original.highlightApplicabilities(substitutor)
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
+    return original.highlightingApplicabilities(substitutor)
   }
 }

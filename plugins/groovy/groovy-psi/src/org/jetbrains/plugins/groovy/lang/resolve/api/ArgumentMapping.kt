@@ -19,5 +19,5 @@ interface ArgumentMapping {
 
   fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability
 
-  fun highlightApplicabilities(substitutor: PsiSubstitutor): Applicabilities
+  fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities
 }
