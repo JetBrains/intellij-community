@@ -26,7 +26,6 @@ import com.intellij.patterns.InitialPatternCondition
 import com.intellij.util.ProcessingContext
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.toUElement
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
@@ -52,22 +51,6 @@ abstract class UastReferenceProvider(open val supportedUElementTypes: List<Class
 
   open fun acceptsTarget(target: PsiElement): Boolean = true
 }
-
-/**
- * NOTE: Consider using [uastInjectionHostReferenceProvider] instead.
- * @see org.jetbrains.uast.sourceInjectionHost
- * @see UastLiteralReferenceProvider
- */
-fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastLiteralReferenceProvider =
-  object : UastLiteralReferenceProvider() {
-
-    override fun getReferencesByULiteral(uLiteral: ULiteralExpression,
-                                         host: PsiLanguageInjectionHost,
-                                         context: ProcessingContext): Array<PsiReference> = provider(uLiteral, host)
-
-    override fun toString(): String = "uastLiteralReferenceProvider(${provider.javaClass})"
-
-  }
 
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
   object : UastInjectionHostReferenceProvider() {

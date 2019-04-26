@@ -21,7 +21,6 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
-import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
@@ -261,7 +260,7 @@ internal object JavaConverter {
         is PsiParenthesizedExpression -> expr<UParenthesizedExpression>(build(::JavaUParenthesizedExpression))
         is PsiPrefixExpression -> expr<UPrefixExpression>(build(::JavaUPrefixExpression))
         is PsiPostfixExpression -> expr<UPostfixExpression>(build(::JavaUPostfixExpression))
-        is PsiLiteralExpressionImpl -> expr<ULiteralExpression>(build(::JavaULiteralExpression))
+        is PsiLiteralExpressionImpl -> expr<JavaULiteralExpression>(build(::JavaULiteralExpression))
         is PsiMethodReferenceExpression -> expr<UCallableReferenceExpression>(build(::JavaUCallableReferenceExpression))
         is PsiReferenceExpression -> convertReference(el, givenParent, requiredType)
         is PsiThisExpression -> expr<UThisExpression>(build(::JavaUThisExpression))
