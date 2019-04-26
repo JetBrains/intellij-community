@@ -4,13 +4,11 @@ package com.intellij.openapi.editor.actions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Action.DELETE
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Action.MOVE
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.BACKWARD
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.FORWARD
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Comparing
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
@@ -224,12 +222,8 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
     val (str, caretOffsets: List<CaretOffset>) = stringWithCaretStops.extractCaretOffsets()
 
     myFixture.configureByText("a.java", str)
-    val editor = myFixture.editor.apply {
-      putUserData(EditorImpl.DISABLE_CARET_POSITION_KEEPING, true)
-    }
-    val document = editor.document.apply {
-      putUserData(UndoConstants.DONT_RECORD_UNDO, true)
-    }
+    val editor = myFixture.editor
+    val document = editor.document
 
     str.offsets(direction).forEach { i ->
       val expectedCaretOffset = caretOffsets.nextTo(i, direction)
