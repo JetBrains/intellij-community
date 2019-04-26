@@ -271,6 +271,7 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   public void testOverriddenMethodWithOtherRawSignature() { doTest(false);}
 
   public void testMoreSpecificForRawSignatureOnStaticProblem() { doTest(false);}
+  public void testSkipStaticInterfaceMethodCalledOnInheritorForMethodRefConflictResolving() { doTest(false);}
 
   public void testUnqualifiedStaticInterfaceMethodCallsOnInnerClasses() { doTest(false);}
 
