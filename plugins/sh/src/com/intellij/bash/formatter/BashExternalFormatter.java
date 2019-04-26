@@ -1,6 +1,7 @@
 package com.intellij.bash.formatter;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.bash.codeStyle.BashCodeStyleSettings;
 import com.intellij.bash.psi.BashFile;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;

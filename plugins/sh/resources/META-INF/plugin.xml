@@ -34,7 +34,7 @@
     <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.BashTemplateProvider"/>
     <liveTemplateContext implementation="com.intellij.bash.template.BashContextType"/>
     <lineIndentProvider implementation="com.intellij.bash.formatter.BashLineIndentProvider"/>
-    <langCodeStyleSettingsProvider implementation="com.intellij.bash.formatter.BashLanguageCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.bash.codeStyle.BashLanguageCodeStyleSettingsProvider"/>
 
     <externalFormatProcessor implementation="com.intellij.bash.formatter.BashExternalFormatter"/>
     <lang.formatter language="Bash" implementationClass="com.intellij.bash.formatter.BashFormatterModelBuilder"/>

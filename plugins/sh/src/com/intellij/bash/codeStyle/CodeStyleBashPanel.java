@@ -1,9 +1,10 @@
-package com.intellij.bash.formatter;
+package com.intellij.bash.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.bash.BashFileType;
 import com.intellij.bash.BashLanguage;
 import com.intellij.bash.BashSyntaxHighlighter;
+import com.intellij.bash.formatter.BashShfmtFormatterUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.AnAction;

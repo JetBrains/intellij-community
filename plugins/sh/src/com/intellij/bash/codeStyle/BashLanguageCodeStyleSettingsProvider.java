@@ -1,4 +1,4 @@
-package com.intellij.bash.formatter;
+package com.intellij.bash.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
