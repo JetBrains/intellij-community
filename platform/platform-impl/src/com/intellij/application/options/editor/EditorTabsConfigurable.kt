@@ -83,6 +83,13 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
           }
         }.enableIf((myEditorTabPlacement.selectedValueMatches { it != UISettings.TABS_NONE }))
       }
+      titledRow(message("group.tab.order")) {
+        row { checkBox(message("checkbox.sort.tabs.alphabetically"), uiSettings::sortTabsAlphabetically) }
+          .enableIf(myScrollTabLayoutInEditorCheckBox.selected or
+                      myEditorTabPlacement.selectedValueIs(SwingConstants.LEFT) or
+                      myEditorTabPlacement.selectedValueIs(SwingConstants.RIGHT))
+        row { checkBox(message("checkbox.open.new.tabs.at.the.end"), uiSettings::openTabsAtTheEnd) }
+      }
       titledRow(message("group.tab.closing.policy")) {
         row {
           cell {

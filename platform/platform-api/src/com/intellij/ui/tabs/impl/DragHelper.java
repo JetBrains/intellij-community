@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.InplaceButton;
@@ -241,7 +242,7 @@ class DragHelper extends MouseDragHelper {
                                                        "Off", "On",
                                                        Messages.getQuestionIcon());
         if (answer == Messages.OK) {
-          JBEditorTabs.setEditorTabsAlphabeticalMode(false);
+          UISettings.getInstance().setSortTabsAlphabetically(false);
           myTabs.relayout(true, false);
           myTabs.revalidate();
         }

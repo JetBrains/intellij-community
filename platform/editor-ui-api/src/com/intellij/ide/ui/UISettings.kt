@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
@@ -337,6 +338,18 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.consoleCommandHistoryLimit = value
     }
 
+  var sortTabsAlphabetically: Boolean
+    get() = state.sortTabsAlphabetically
+    set(value) {
+      state.sortTabsAlphabetically = value
+    }
+
+  var openTabsAtTheEnd: Boolean
+    get() = state.openTabsAtTheEnd
+    set(value) {
+      state.openTabsAtTheEnd = value
+    }
+
   var showInplaceComments: Boolean
     get() = state.showInplaceComments
     set(value) {
@@ -345,6 +358,15 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
 
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
+
+  init {
+    if (Registry.`is`("tabs.alphabetical")) {
+      sortTabsAlphabetically = true
+    }
+    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
+      openTabsAtTheEnd = true
+    }
+  }
 
   companion object {
     init {
