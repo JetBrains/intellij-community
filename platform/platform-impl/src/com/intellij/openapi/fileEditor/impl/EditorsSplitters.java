@@ -24,8 +24,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
@@ -57,8 +55,6 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
-
-import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
@@ -880,15 +876,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           EditorWithProviderComposite editor = window.findFileComposite(finalFocusedFile);
           if (editor != null) {
             window.setEditor(editor, true, true);
-          }
-        });
-      }
-      else {
-        ToolWindowManager manager = ToolWindowManager.getInstance(getManager().getProject());
-        manager.invokeLater(() -> {
-          if (null == manager.getActiveToolWindowId()) {
-            ToolWindow toolWindow = manager.getToolWindow(PROJECT_VIEW);
-            if (toolWindow != null) toolWindow.activate(null);
           }
         });
       }

@@ -31,7 +31,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Borders.customLine;
 import static com.intellij.util.ui.JBUI.asUIResource;
@@ -72,11 +71,6 @@ public class UITheme {
   }
 
   public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IOException {
-    return loadFromJson(stream, themeId, provider, s -> s);
-  }
-
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider,
-                                     @NotNull Function<String, String> iconsMapper) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
     if (provider != null) {
@@ -93,13 +87,13 @@ public class UITheme {
             if (icons instanceof Map) {
               Object pluginIconPath = ((Map)icons).get(path);
               if (pluginIconPath instanceof String) {
-                return iconsMapper.apply((String)pluginIconPath);
+                return (String)pluginIconPath;
               }
             }
           }
 
           Object value = theme.icons.get(path);
-          return value instanceof String ? iconsMapper.apply((String)value) : null;
+          return value instanceof String ? (String)value : null;
         }
 
         @Nullable

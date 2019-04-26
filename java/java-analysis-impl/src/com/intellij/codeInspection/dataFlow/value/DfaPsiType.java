@@ -19,7 +19,6 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +95,13 @@ public class DfaPsiType {
   @NotNull
   public static PsiType normalizeType(@NotNull PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
-      return PsiTypesUtil.createArrayType(normalizeType(psiType.getDeepComponentType()), psiType.getArrayDimensions());
+      int dimensions = psiType.getArrayDimensions();
+      psiType = psiType.getDeepComponentType();
+      psiType = normalizeType(psiType);
+      while (dimensions-- > 0) {
+        psiType = psiType.createArrayType();
+      }
+      return psiType;
     }
     if (psiType instanceof PsiWildcardType) {
       return normalizeType(((PsiWildcardType)psiType).getExtendsBound());

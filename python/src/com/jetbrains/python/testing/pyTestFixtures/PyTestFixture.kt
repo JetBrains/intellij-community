@@ -6,7 +6,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
@@ -18,9 +17,6 @@ import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.testing.isTestElement
 
 private val decoratorNames = arrayOf("pytest.fixture", "fixture")
-
-private val PyFunction.asFixture: PyTestFixture?
-  get() = decoratorList?.decorators?.firstOrNull { it.name in decoratorNames }?.let { createFixture(it) }
 
 private fun PyDecoratorList.hasDecorator(vararg names: String) = names.any { findDecorator(it) != null }
 
@@ -46,9 +42,9 @@ internal fun PyFunction.isFixture() = decoratorList?.hasDecorator(*decoratorName
 
 
 /**
- * [function] PyFunction fixture function
- * [resolveTarget] PyElement where this fixture is resolved
- * [name] String fixture name
+ * @property function PyFunction fixture function
+ * @property resolveTarget PyElement where this fixture is resolved
+ * @property name String fixture name
  */
 data class PyTestFixture(val function: PyFunction? = null, val resolveTarget: PyElement? = function, val name: String)
 
@@ -80,38 +76,26 @@ private val pyTestName = PyTestFrameworkService.getSdkReadableNameByFramework(Py
 /**
  * Gets list of fixtures suitable for certain function.
  *
- * [forWhat] function that you want to use fixtures with. Could be test or fixture itself.
+ * @param forWhat function that you want to use fixtures with. Could be test or fixture itself.
  *
- * @return all pytest fixtures in project that could be used by [forWhat]
+ * @return List<PyFunction> all pytest fixtures in project
  */
 internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: TypeEvalContext): List<PyTestFixture> {
   // Fixtures could be used only by test functions or other fixtures.
   val fixture = forWhat.isFixture()
   val pyTestEnabled = isPyTestEnabled(module)
-  val topLevelixtures = if (
+  return if (
     fixture ||
     (pyTestEnabled && isTestElement(forWhat, ThreeState.NO, typeEvalContext)) ||
     forWhat.isSubjectForFixture()
   ) {
     //Fixtures
     (findDecoratorsByName(module, *decoratorNames)
-       .filter { it.target?.containingClass == null } //We need only top-level functions, class-based fixtures processed above
        .mapNotNull { createFixture(it) }
      + getCustomFixtures(typeEvalContext, forWhat))
       .filterNot { fixture && it.name == forWhat.name }.toList()  // Do not suggest fixture for itself
   }
   else emptyList()
-  val forWhatClass = forWhat.containingClass
-  if (forWhatClass == null) {
-    return topLevelixtures // Class fixtures can't be used for top level functions
-  }
-
-  val classBasedFixtures = mutableListOf<PyTestFixture>()
-  forWhatClass.visitMethods(Processor { func ->
-    func.asFixture?.let { classBasedFixtures.add(it) }
-    true
-  }, true, typeEvalContext)
-  return classBasedFixtures + topLevelixtures
 }
 
 internal fun isPyTestEnabled(module: Module) =

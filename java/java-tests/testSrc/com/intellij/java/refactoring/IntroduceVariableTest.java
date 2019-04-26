@@ -670,10 +670,6 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testCapturedWildcardUpperBoundSuggestedAsType() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I"));
   }
-  
-  public void testArrayOfCapturedWildcardUpperBoundSuggestedAsType() {
-    doTest(new MockIntroduceVariableHandler("m", false, false, false, "I[]"));
-  }
 
   public void testReturnNonExportedArray() {
     doTest(new MockIntroduceVariableHandler("i", false, false, false, "java.io.File[]") {

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -25,6 +24,8 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -132,7 +133,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     getPatterns().clear();
     for (Element pattern : element.getChildren("pattern")) {
       final ClassPattern classPattern = new ClassPattern();
-      XmlSerializer.deserializeInto(pattern, classPattern);
+      XmlSerializer.deserializeInto(classPattern, pattern);
       getPatterns().add(classPattern);
     }
 
@@ -153,8 +154,9 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     Element element = new Element("state");
     writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
     if (!getPatterns().isEmpty()) {
+      SkipDefaultsSerializationFilter filter = new SkipDefaultsSerializationFilter();
       for (ClassPattern pattern : getPatterns()) {
-        element.addContent(XmlSerializer.serialize(pattern));
+        element.addContent(XmlSerializer.serialize(pattern, filter));
       }
     }
 

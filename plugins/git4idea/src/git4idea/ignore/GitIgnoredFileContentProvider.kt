@@ -19,8 +19,8 @@ import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.commands.Git
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
-import git4idea.repo.GitRepositoryManager
 import java.io.File
 import java.lang.System.lineSeparator
 
@@ -36,19 +36,20 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
 
   override fun buildIgnoreFileContent(ignoreFileRoot: VirtualFile, ignoredFileProviders: Array<IgnoredFileProvider>): String {
     if (!GitUtil.isUnderGit(ignoreFileRoot)) return ""  //if ignore file root not under git --> return (e.g. in case if .git folder was deleted externally)
-    val ignoreFileVcsRoot = VcsUtil.getVcsRootFor(project, ignoreFileRoot) ?: return ""
 
     val content = StringBuilder()
     val lineSeparator = lineSeparator()
-    val untrackedFiles = getUntrackedFiles(ignoreFileVcsRoot)
+    val untrackedFiles = getUntrackedFiles(ignoreFileRoot)
 
     if (untrackedFiles.isEmpty()) return "" //if there is no untracked files this mean nothing to ignore
 
-    for (provider in ignoredFileProviders) {
-      val ignoredFiles = provider.getIgnoredFiles(project).ignoreBeansToRelativePaths(ignoreFileVcsRoot, ignoreFileRoot, untrackedFiles)
+    for (i in ignoredFileProviders.indices) {
+      val provider = ignoredFileProviders[i]
+      val ignoredFiles = provider.getIgnoredFiles(project).ignoreBeansToRelativePaths(ignoreFileRoot, untrackedFiles)
+
       if (ignoredFiles.isEmpty()) continue
 
-      if (content.isNotEmpty()) {
+      if (!content.isEmpty()) {
         content.append(lineSeparator).append(lineSeparator)
       }
 
@@ -62,23 +63,22 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     return content.toString()
   }
 
-  private fun getUntrackedFiles(ignoreFileVcsRoot: VirtualFile): Set<VirtualFile> {
+  private fun getUntrackedFiles(ignoreFileRoot: VirtualFile): Set<VirtualFile> =
     try {
-      val repo = GitRepositoryManager.getInstance(project).getRepositoryForRoot(ignoreFileVcsRoot) ?: return emptySet()
-      return repo.untrackedFilesHolder.retrieveUntrackedFiles().toSet()
+      Git.getInstance().untrackedFiles(project, ignoreFileRoot, null)
     }
     catch (e: VcsException) {
       LOG.warn("Cannot get untracked files: ", e)
-      return emptySet()
+      emptySet()
     }
-  }
 
-  private fun Iterable<IgnoredFileDescriptor>.ignoreBeansToRelativePaths(ignoreFileVcsRoot: VirtualFile, ignoreFileRoot: VirtualFile, untrackedFiles: Set<VirtualFile>): List<String> {
+  private fun Iterable<IgnoredFileDescriptor>.ignoreBeansToRelativePaths(ignoreFileRoot: VirtualFile, untrackedFiles: Set<VirtualFile>): List<String> {
+    val vcsRoot= VcsUtil.getVcsRootFor(project, ignoreFileRoot)
     val vcsContextFactory = VcsContextFactory.SERVICE.getInstance()
     return filter { ignoredBean ->
       when (ignoredBean.type) {
-        UNDER_DIR -> shouldIgnoreUnderDir(ignoredBean, untrackedFiles, ignoreFileRoot, ignoreFileVcsRoot, vcsContextFactory)
-        FILE -> shouldIgnoreFile(ignoredBean, untrackedFiles, ignoreFileRoot, ignoreFileVcsRoot, vcsContextFactory)
+        UNDER_DIR -> shouldIgnoreUnderDir(ignoredBean, untrackedFiles, ignoreFileRoot, vcsRoot, vcsContextFactory)
+        FILE -> shouldIgnoreFile(ignoredBean, untrackedFiles, ignoreFileRoot, vcsRoot, vcsContextFactory)
         MASK -> shouldIgnoreByMask(ignoredBean, untrackedFiles)
       }
     }.map { ignoredBean ->
@@ -93,24 +93,24 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
   private fun shouldIgnoreUnderDir(ignoredBean: IgnoredFileDescriptor,
                                    untrackedFiles: Set<VirtualFile>,
                                    ignoreFileRoot: VirtualFile,
-                                   ignoreFileVcsRoot: VirtualFile,
+                                   vcsRoot: VirtualFile?,
                                    vcsContextFactory: VcsContextFactory) =
     FileUtil.exists(ignoredBean.path)
     && untrackedFiles.any { FileUtil.isAncestor(ignoredBean.path!!, it.path, true) }
     && FileUtil.isAncestor(ignoreFileRoot.path, ignoredBean.path!!, false)
-    && Comparing.equal(ignoreFileVcsRoot, VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(ignoredBean.path!!, true)))
-    && gitIgnoreChecker.isIgnored(ignoreFileVcsRoot, File(ignoredBean.path!!)) is NotIgnored
+    && Comparing.equal(vcsRoot, VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(ignoredBean.path!!, true)))
+    && gitIgnoreChecker.isIgnored(vcsRoot!!, File(ignoredBean.path!!)) is NotIgnored
     && shouldNotConsiderInternalIgnoreFile(ignoredBean, ignoreFileRoot)
 
   private fun shouldIgnoreFile(ignoredBean: IgnoredFileDescriptor,
                                untrackedFiles: Set<VirtualFile>,
                                ignoreFileRoot: VirtualFile,
-                               ignoreFileVcsRoot: VirtualFile,
+                               vcsRoot: VirtualFile?,
                                vcsContextFactory: VcsContextFactory) =
     FileUtil.exists(ignoredBean.path)
     && untrackedFiles.any { ignoredBean.matchesFile(it) }
     && FileUtil.isAncestor(ignoreFileRoot.path, ignoredBean.path!!, false)
-    && Comparing.equal(ignoreFileVcsRoot, VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(ignoredBean.path!!, false)))
+    && Comparing.equal(vcsRoot, VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(ignoredBean.path!!, false)))
     && shouldNotConsiderInternalIgnoreFile(ignoredBean, ignoreFileRoot)
 
   private fun shouldIgnoreByMask(ignoredBean: IgnoredFileDescriptor, untrackedFiles: Set<VirtualFile>) =

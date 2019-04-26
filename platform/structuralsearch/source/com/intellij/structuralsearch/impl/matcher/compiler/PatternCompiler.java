@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -8,13 +8,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -119,16 +121,16 @@ public class PatternCompiler {
 
     final OptimizingSearchHelper searchHelper = context.getSearchHelper();
     if (searchHelper.doOptimizing() && searchHelper.isScannedSomething()) {
-      final Set<VirtualFile> filesToScan = searchHelper.getFilesSetToScan();
+      final List<PsiFile> filesToScan = new SmartList<>();
+      final SearchScope scope = options.getScope();
+      for (final PsiFile file : searchHelper.getFilesSetToScan()) {
+        if (scope.contains(file.getVirtualFile())) filesToScan.add(file);
+      }
 
-      final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
-      assert scope != null;
       if (filesToScan.isEmpty()) {
         throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
       }
-      result.setScope(scope.isSearchInLibraries()
-                      ? GlobalSearchScope.filesWithLibrariesScope(context.getProject(), filesToScan)
-                      : GlobalSearchScope.filesWithoutLibrariesScope(context.getProject(), filesToScan));
+      result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourLastSearchPlan = ((TestModeOptimizingSearchHelper)searchHelper).getSearchPlan();

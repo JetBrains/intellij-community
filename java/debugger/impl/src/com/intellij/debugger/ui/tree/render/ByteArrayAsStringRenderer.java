@@ -7,8 +7,6 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.Value;
 
-import java.nio.charset.StandardCharsets;
-
 /**
  * @author egor
  */
@@ -26,7 +24,7 @@ final class ByteArrayAsStringRenderer extends CompoundReferenceRenderer {
             // TODO: read charset from the target vm
             byte[] bytes = DebuggerUtilsImpl.readBytesArray(value);
             if (bytes != null) {
-              return new String(bytes, StandardCharsets.UTF_8);
+              return new String(bytes);
             }
           }
         }

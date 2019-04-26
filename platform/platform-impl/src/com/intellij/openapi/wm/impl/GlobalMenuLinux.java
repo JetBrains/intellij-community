@@ -706,7 +706,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     try {
       NativeLibraryLoader.loadPlatformLibrary("dbm");
 
-      return Native.load("dbm", GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
+      return Native.loadLibrary("dbm", GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
     }
     catch (UnsatisfiedLinkError ule) {
       LOG.info("disable global-menu integration because some of shared libraries isn't installed: " + ule);

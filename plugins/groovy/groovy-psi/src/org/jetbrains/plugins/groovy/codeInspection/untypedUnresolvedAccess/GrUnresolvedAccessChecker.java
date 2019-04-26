@@ -33,8 +33,6 @@ import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
-
 public class GrUnresolvedAccessChecker {
   public static final Logger LOG = Logger.getInstance(GrUnresolvedAccessChecker.class);
 
@@ -202,7 +200,6 @@ public class GrUnresolvedAccessChecker {
       return false;
     }
 
-    if (isFake(referenceExpression)) return false;
     if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
 
     CollectConsumer<PomTarget> consumer = new CollectConsumer<>();

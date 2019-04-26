@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import javafx.application.Application;
@@ -22,7 +21,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -498,7 +496,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
             StringBuilder text = new StringBuilder();
             int len;
             while ((len = zip.read(buffer)) > 0) {
-              String str = new String(buffer, 0, len, StandardCharsets.UTF_8);
+              String str = new String(buffer, 0, len);
               text.append(str);
             }
             String[] lines = text.toString().split("\n");

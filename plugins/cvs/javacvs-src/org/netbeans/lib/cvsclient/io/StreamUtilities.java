@@ -15,7 +15,6 @@ package org.netbeans.lib.cvsclient.io;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 /**
  * @author Thomas Singer
@@ -32,7 +31,7 @@ public final class StreamUtilities {
     if (myCharset != null) {
       return new String(readLineBytes(reader), myCharset);
     } else {
-      return new String(readLineBytes(reader), StandardCharsets.UTF_8);
+      return new String(readLineBytes(reader));
     }
   }
 

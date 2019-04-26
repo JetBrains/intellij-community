@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @Deprecated
 public interface MergeVersion {
@@ -103,7 +102,7 @@ public interface MergeVersion {
     @Override
     public byte[] getBytes() throws IOException {
       VirtualFile file = getFile();
-      return file != null ? file.contentsToByteArray() : myDocument.getText().getBytes(StandardCharsets.UTF_8);
+      return file != null ? file.contentsToByteArray() : myDocument.getText().getBytes();
     }
 
     @Override

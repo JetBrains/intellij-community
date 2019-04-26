@@ -669,7 +669,7 @@ public class EditorWindow {
         if (initialIndex != null) {
           indexToInsert = initialIndex;
         }
-        else if (UISettings.getInstance().getOpenTabsAtTheEnd()) {
+        else if (Registry.is("ide.editor.tabs.open.at.the.end")) {
           indexToInsert = myTabbedPane.getTabCount();
         }
         else {

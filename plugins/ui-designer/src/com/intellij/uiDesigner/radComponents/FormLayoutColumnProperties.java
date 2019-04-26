@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.MappingListCellRenderer;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.*;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -15,15 +16,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
  */
 public class FormLayoutColumnProperties implements CustomPropertiesPanel {
-  private static final Map<String, String> UNITS_MAP;
+  private static final Map<Object, String> UNITS_MAP;
+
   static {
-    UNITS_MAP = new LinkedHashMap<>();
+    UNITS_MAP = new HashMap<>();
     UNITS_MAP.put("px", UIDesignerBundle.message("unit.pixels"));
     UNITS_MAP.put("dlu", UIDesignerBundle.message("unit.dialog.units"));
     UNITS_MAP.put("pt", UIDesignerBundle.message("unit.points"));
@@ -37,12 +41,12 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private JRadioButton myPreferredRadioButton;
   private JRadioButton myMinimumRadioButton;
   private JRadioButton myConstantRadioButton;
-  private JComboBox<String> myConstantSizeUnitsCombo;
+  private JComboBox myConstantSizeUnitsCombo;
   private JCheckBox myMinimumCheckBox;
   private JCheckBox myMaximumCheckBox;
   private JSpinner myMaxSizeSpinner;
-  private JComboBox<String> myMinSizeUnitsCombo;
-  private JComboBox<String> myMaxSizeUnitsCombo;
+  private JComboBox myMinSizeUnitsCombo;
+  private JComboBox myMaxSizeUnitsCombo;
   private JSpinner myConstantSizeSpinner;
   private JSpinner myMinSizeSpinner;
   private JCheckBox myGrowCheckBox;
@@ -62,13 +66,13 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private boolean mySaving = false;
 
   public FormLayoutColumnProperties() {
-    String[] unitNames = ArrayUtil.toStringArray(UNITS_MAP.keySet());
-    myConstantSizeUnitsCombo.setModel(new DefaultComboBoxModel<>(unitNames));
-    myConstantSizeUnitsCombo.setRenderer(new UnitListCellRenderer());
-    myMinSizeUnitsCombo.setModel(new DefaultComboBoxModel<>(unitNames));
-    myMinSizeUnitsCombo.setRenderer(new UnitListCellRenderer());
-    myMaxSizeUnitsCombo.setModel(new DefaultComboBoxModel<>(unitNames));
-    myMaxSizeUnitsCombo.setRenderer(new UnitListCellRenderer());
+    @NonNls String[] unitNames = new String[]{"px", "dlu", "pt", "in", "cm", "mm"};
+    myConstantSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
+    myMinSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
+    myMaxSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
+    myConstantSizeUnitsCombo.setRenderer(new MappingListCellRenderer(UNITS_MAP));
+    myMinSizeUnitsCombo.setRenderer(new MappingListCellRenderer(UNITS_MAP));
+    myMaxSizeUnitsCombo.setRenderer(new MappingListCellRenderer(UNITS_MAP));
     final MyRadioListener listener = new MyRadioListener();
     myDefaultRadioButton.addActionListener(listener);
     myPreferredRadioButton.addActionListener(listener);
@@ -211,7 +215,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       showConstantSize((ConstantSize)size, myConstantSizeUnitsCombo, myConstantSizeSpinner);
     }
     else {
-      String s = size.toString();
+      @NonNls String s = size.toString();
       if (s.startsWith("m")) {
         myMinimumRadioButton.setSelected(true);
       }
@@ -346,14 +350,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   }
 
   private ConstantSize getConstantSize(final JComboBox unitsCombo, final JSpinner spinner) {
-    return Sizes.constant(spinner.getValue().toString() + Objects.requireNonNull(unitsCombo.getSelectedItem()).toString(), myIsRow);
-  }
-
-  private static class UnitListCellRenderer extends SimpleListCellRenderer<String> {
-    @Override
-    public void customize(JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
-      setText(UNITS_MAP.getOrDefault(value, ""));
-    }
+    return Sizes.constant(spinner.getValue().toString() + unitsCombo.getSelectedItem().toString(), myIsRow);
   }
 
   private class MyRadioListener implements ActionListener {

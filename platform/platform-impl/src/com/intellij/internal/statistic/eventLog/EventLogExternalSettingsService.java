@@ -123,16 +123,12 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
 
   @Nullable
   protected FUSWhitelist getWhitelistedGroups() {
-    final String productUrl = getWhiteListProductUrl();
-    if (productUrl == null) return null;
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getCurrentBuild());
-  }
-
-  @Nullable
-  public String getWhiteListProductUrl() {
     final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
-    if (approvedGroupsServiceUrl == null) return null;
-    return approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    if (approvedGroupsServiceUrl == null) {
+      return null;
+    }
+    final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getCurrentBuild());
   }
 
   @NotNull

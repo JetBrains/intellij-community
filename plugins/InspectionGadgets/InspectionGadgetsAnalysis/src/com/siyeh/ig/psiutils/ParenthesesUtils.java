@@ -178,9 +178,10 @@ public class ParenthesesUtils {
   private static void removeParensFromParenthesizedExpression(@NotNull PsiParenthesizedExpression parenthesizedExpression,
                                                               boolean ignoreClarifyingParentheses) {
     final PsiExpression body = parenthesizedExpression.getExpression();
-    // Do not remove empty parentheses, as incorrect Java expression could become incorrect PSI
-    // E.g. ()+=foo is correct PSI, but removing () will yield an assignment without LExpression which is invalid.
-    if (body == null) return;
+    if (body == null) {
+      new CommentTracker().deleteAndRestoreComments(parenthesizedExpression);
+      return;
+    }
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
       PsiExpression newExpression = ExpressionUtils.replacePolyadicWithParent(parenthesizedExpression, body);
@@ -219,7 +220,6 @@ public class ParenthesesUtils {
   private static void removeParensFromPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression,
                                                          boolean ignoreClarifyingParentheses) {
     for (PsiExpression operand : polyadicExpression.getOperands()) {
-      if (!operand.isValid()) break;
       removeParentheses(operand, ignoreClarifyingParentheses);
     }
   }

@@ -95,8 +95,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myForwardIndexMap = forwardIndexMap;
     myForwardIndexAccessor = forwardIndexAccessor;
     myForwardIndex = forwardIndex;
-    myUseIntForwardIndex = forwardIndexMap instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
-    LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex == forwardIndexAccessor instanceof IntForwardIndexAccessor, "Invalid index configuration");
+    myUseIntForwardIndex = forwardIndex instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -255,7 +254,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         updateWithMap(inputId, updateData);
       }
       catch (StorageException | ProcessCanceledException ex) {
-        LOG.info("An exception during updateWithMap(). Index will be rebuilt.", ex);
+        LOG.info("Exception during updateWithMap:" + ex);
         requestRebuild(ex);
         return Boolean.FALSE;
       }
@@ -282,7 +281,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     if (myForwardIndex != null) myForwardIndex.putInputData(inputId, data);
     if (myForwardIndexMap != null) {
       if (myUseIntForwardIndex) {
-        ((IntForwardIndex)myForwardIndexMap).putInt(inputId, (Integer)forwardIndexData);
+        ((IntForwardIndex)myForwardIndex).putInt(inputId, (Integer)forwardIndexData);
       } else {
         //noinspection unchecked
         myForwardIndexMap.put(inputId, ((ForwardIndexAccessor)myForwardIndexAccessor).serializeIndexedData(forwardIndexData));

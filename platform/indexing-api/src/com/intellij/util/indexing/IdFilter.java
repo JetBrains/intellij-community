@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 
 public abstract class IdFilter {
-  private static final Logger LOG = Logger.getInstance(IdFilter.class);
+  public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
   private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
 
@@ -64,9 +64,7 @@ public abstract class IdFilter {
     }
 
     if (LOG.isDebugEnabled()) {
-      long elapsed = System.currentTimeMillis() - started;
-      LOG.debug("Done filter (includeNonProjectItems=" + includeNonProjectItems+") "+
-                "in " + elapsed + "ms. Total files in set: " + idSet.cardinality());
+      LOG.debug("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
     }
     return new IdFilter() {
       @Override

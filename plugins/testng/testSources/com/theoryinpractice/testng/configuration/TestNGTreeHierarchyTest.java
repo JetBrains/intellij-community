@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,13 +30,12 @@ import org.testng.xml.XmlTest;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class TestNGTreeHierarchyTest {
-
+ 
   @Test
   public void testOneTestMethod() {
     final XmlSuite suite = new XmlSuite();
@@ -31,7 +44,7 @@ public class TestNGTreeHierarchyTest {
     xmlClass.getIncludedMethods().add(new XmlInclude("test1"));
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
-
+    
     doTest(suite,"##teamcity[enteredTheMatrix]\n" +
                  "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
@@ -263,7 +276,7 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
                                           "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
-
+  
   @Test
   public void testAfterMethodWithInjectedTestResult() {
     final StringBuffer buf = new StringBuffer();
@@ -371,7 +384,7 @@ public class TestNGTreeHierarchyTest {
     return new IDEATestNGRemoteListener(new PrintStream(new OutputStream() {
         @Override
         public void write(int b) {
-          buf.append(new String(new byte[]{(byte)b}, StandardCharsets.UTF_8));
+          buf.append(new String(new byte[]{(byte)b}));
         }
       })) {
       @Override

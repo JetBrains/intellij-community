@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -59,12 +59,11 @@ public class SessionDialog extends DialogWrapper {
   }
 
   @Nullable
-  public static JComponent createConfigurationUI(@NotNull CommitSession session, @NotNull List<? extends Change> changes, @NotNull String commitMessage) {
+  public static JComponent createConfigurationUI(final CommitSession session, final List<? extends Change> changes, final String commitMessage) {
     try {
-      //noinspection unchecked
       return session.getAdditionalConfigurationUI((Collection<Change>)changes, commitMessage);
     }
-    catch (AbstractMethodError e) {
+    catch(AbstractMethodError e) {
       return session.getAdditionalConfigurationUI();
     }
   }
@@ -89,7 +88,6 @@ public class SessionDialog extends DialogWrapper {
   }
 
   private void updateButtons() {
-    //noinspection unchecked
     setOKActionEnabled(mySession.canExecute((Collection<Change>)myChanges, myCommitMessage));
   }
 

@@ -13,8 +13,8 @@ import static com.intellij.application.options.codeStyle.properties.CodeStylePro
 
 public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<PackageEntryTable> {
 
-  public static final char BLANK_LINE_CHAR = '|';
-  public static final String STATIC_PREFIX = "$";
+  public static final String BLANK_LINE_ENTRY = "blank_line";
+  public static final String STATIC_PREFIX = "static";
 
   public JavaPackageEntryTableAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
@@ -26,12 +26,8 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     PackageEntryTable entryTable = new PackageEntryTable();
     for (String strValue : strList) {
       String parseStr = strValue.trim();
-      if (parseStr.length() > 0 && parseStr.charAt(0) == BLANK_LINE_CHAR) {
-        for (int i = 0; i < parseStr.length(); i ++) {
-          if (parseStr.charAt(i) == BLANK_LINE_CHAR) {
-            entryTable.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-          }
-        }
+      if (BLANK_LINE_ENTRY.equals(parseStr)) {
+        entryTable.addEntry(PackageEntry.BLANK_LINE_ENTRY);
       }
       else {
         boolean isStatic = false;
@@ -62,12 +58,12 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     List<String> externalList = ContainerUtil.newArrayList();
     for (PackageEntry entry : value.getEntries()) {
       if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-        externalList.add(String.valueOf(BLANK_LINE_CHAR));
+        externalList.add(BLANK_LINE_ENTRY);
       }
       else {
         StringBuilder entryBuilder = new StringBuilder();
         if (entry.isStatic()) {
-          entryBuilder.append("$");
+          entryBuilder.append(STATIC_PREFIX + " ");
         }
         if (entry.isSpecial()) {
           entryBuilder.append("*");

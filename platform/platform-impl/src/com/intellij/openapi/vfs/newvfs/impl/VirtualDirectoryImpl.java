@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -31,7 +32,6 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -158,6 +158,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       child = createChild(nameId, id, delegate, attributes, isEmptyDirectory);
 
       addChild(child);
+
+      ((PersistentFSImpl)ourPersistence).incStructuralModificationCount();
     }
 
     if (!child.isDirectory()) {
@@ -390,13 +392,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       return files;
-    }
-  }
-
-  @TestOnly
-  void doClearAdoptedNames() {
-    synchronized (myData) {
-      myData.clearAdoptedNames();
     }
   }
 

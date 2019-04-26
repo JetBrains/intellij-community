@@ -11,21 +11,18 @@ class TeamcityReport(base.BaseFormatter):
     name = 'teamcity-messages'
     version = __version__
 
-    @staticmethod
-    def _add_option(parser, name, *args, **kwargs):
-        if all(option.long_option_name != name for option in parser.options):
-            parser.add_option(name, *args, **kwargs)
+    options_added = False
 
     @classmethod
     def add_options(cls, parser):
-        cls._add_option(parser,
-                        '--teamcity',
-                        default=is_running_under_teamcity(),
-                        help="Force output of JetBrains TeamCity service messages")
-        cls._add_option(parser,
-                        '--no-teamcity',
-                        default=False,
-                        help="Disable output of JetBrains TeamCity service messages (even under TeamCity build)")
+        if not cls.options_added:
+            parser.add_option('--teamcity',
+                              default=is_running_under_teamcity(),
+                              help="Force output of JetBrains TeamCity service messages")
+            parser.add_option('--no-teamcity',
+                              default=False,
+                              help="Disable output of JetBrains TeamCity service messages (even under TeamCity build)")
+            cls.options_added = True
 
     @classmethod
     def parse_options(cls, options):

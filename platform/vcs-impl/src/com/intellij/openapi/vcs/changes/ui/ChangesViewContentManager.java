@@ -27,7 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class ChangesViewContentManager implements ChangesViewContentI, Disposable {
+public class ChangesViewContentManager implements ChangesViewContentI {
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
 
@@ -47,17 +47,18 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
-    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-    myProject.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
+    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
   }
 
   @Override
   public void setUp(ToolWindow toolWindow) {
+
     final ContentManager contentManager = toolWindow.getContentManager();
     myContentManagerListener = new MyContentManagerListener();
     contentManager.addContentManagerListener(myContentManagerListener);
 
-    Disposer.register(this, new Disposable() {
+    Disposer.register(myProject, new Disposable(){
       @Override
       public void dispose() {
         contentManager.removeContentManagerListener(myContentManagerListener);
@@ -141,8 +142,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     return mappings.stream().anyMatch(mapping -> !StringUtil.isEmpty(mapping.getVcs()));
   }
 
-  @Override
-  public void dispose() {
+  public void projectClosed() {
     for (Content content : myAddedContents) {
       Disposer.dispose(content);
     }

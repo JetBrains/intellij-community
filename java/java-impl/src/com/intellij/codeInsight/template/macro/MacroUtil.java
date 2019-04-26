@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -74,11 +73,7 @@ public class MacroUtil {
     String text = result.toString();
     if (text == null) return null;
     PsiManager manager = PsiManager.getInstance(project);
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    Editor editor = context.getEditor();
-    if(editor == null) return null;
-    psiDocumentManager.commitDocument(editor.getDocument());
-    PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     //-1: Hack to deal with resolve algorithm
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;
     if (place != null) {

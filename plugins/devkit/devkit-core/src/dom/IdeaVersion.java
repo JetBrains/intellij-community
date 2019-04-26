@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,15 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
-import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
 public interface IdeaVersion extends DomElement {
 
   @NotNull
   @Required
-  @Stubbed
   GenericAttributeValue<String> getSinceBuild();
 
   @NotNull
-  @Stubbed
   GenericAttributeValue<String> getUntilBuild();
 
 
