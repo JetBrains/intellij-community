@@ -8,7 +8,6 @@ import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -538,7 +537,7 @@ public class StartupUtil {
   }
 
   private static void installPluginUpdates() {
-    if (!Main.isCommandLine() && !ClassUtilCore.isLoadingOfExternalPluginsDisabled()) {
+    if (!Main.isCommandLine()) {
       try {
         StartupActionScriptManager.executeActionScript();
       }
