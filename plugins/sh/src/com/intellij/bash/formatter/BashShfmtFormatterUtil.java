@@ -9,6 +9,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -28,13 +29,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class BashShfmtFormatterUtil {
-
   private static final Logger LOG = Logger.getInstance(BashShfmtFormatterUtil.class);
   private static final String APP_NAME = "shfmt";
   private static final String APP_VERSION = "v2.6.4";
-  private static final String APP_PATH = System.getProperty("idea.system.path") +
-                                         File.separator + "plugins" +
-                                         File.separator + BashLanguage.INSTANCE.getID();
+  private static final String APP_PATH = PathManager.getPluginsPath() + File.separator + BashLanguage.INSTANCE.getID();
 
   private static final String ARCH_i386 = "_386";
   private static final String ARCH_x86_64 = "_amd64";
@@ -43,9 +41,9 @@ public class BashShfmtFormatterUtil {
   private static final String LINUX = "_linux";
   private static final String FREE_BSD = "_freebsd";
 
-  public static boolean download(@Nullable Project project, @NotNull CodeStyleSettings settings, @Nullable JComponent parent) {
+  public static void download(@Nullable Project project, @NotNull CodeStyleSettings settings, @Nullable JComponent parent) {
     File directory = new File(APP_PATH);
-    if (!directory.exists()){
+    if (!directory.exists()) {
       directory.mkdirs();
     }
 
@@ -56,16 +54,17 @@ public class BashShfmtFormatterUtil {
         String formatterPath = formatter.getCanonicalPath();
         if (bashSettings.SHFMT_PATH.equals(formatterPath)) {
           LOG.debug("Shfmt formatter already downloaded");
-        } else {
+        }
+        else {
           bashSettings.SHFMT_PATH = formatterPath;
           showInfoNotification();
         }
-        return true;
+        return;
       }
       catch (IOException e) {
         LOG.debug("Can't evaluate formatter path", e);
         showErrorNotification();
-        return false;
+        return;
       }
     }
 
@@ -83,12 +82,10 @@ public class BashShfmtFormatterUtil {
           showInfoNotification();
         }
       }
-      return true;
     }
     catch (IOException e) {
       LOG.warn("Can't download shfmt formatter", e);
       showErrorNotification();
-      return false;
     }
   }
 
