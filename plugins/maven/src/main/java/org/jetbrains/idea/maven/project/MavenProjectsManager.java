@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
@@ -106,6 +107,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
+  private MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
 
@@ -284,6 +286,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
+  public synchronized MavenSyncConsole getSyncConsole() {
+    if (mySyncConsole == null) {
+      mySyncConsole = new MavenSyncConsole(myProject);
+    }
+    return mySyncConsole;
+  }
+
   private void initProjectsTree(boolean tryToLoadExisting) {
     if (tryToLoadExisting) {
       Path file = getProjectsTreeFile();
@@ -359,7 +368,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
     myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
-    myImportingQueue.setPassThrough(false);
+    myImportingQueue.setPassThrough(ApplicationManager.getApplication().isUnitTestMode());
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
@@ -833,9 +842,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
    * if project is closed)
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
+    getSyncConsole().startImport();
     AsyncPromise<List<Module>> promise = scheduleResolve();// scheduleImport will be called after the scheduleResolve process has finished
     fireImportAndResolveScheduled();
-    return promise;
+    return promise
+      .onError(t -> getSyncConsole().addRootError(t))
+      .onProcessed(modules -> getSyncConsole().finishImport());
   }
 
   private AsyncPromise<List<Module>> scheduleResolve() {
