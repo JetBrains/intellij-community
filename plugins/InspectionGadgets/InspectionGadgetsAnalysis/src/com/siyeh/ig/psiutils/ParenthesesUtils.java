@@ -219,6 +219,7 @@ public class ParenthesesUtils {
   private static void removeParensFromPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression,
                                                          boolean ignoreClarifyingParentheses) {
     for (PsiExpression operand : polyadicExpression.getOperands()) {
+      if (!operand.isValid()) break;
       removeParentheses(operand, ignoreClarifyingParentheses);
     }
   }
