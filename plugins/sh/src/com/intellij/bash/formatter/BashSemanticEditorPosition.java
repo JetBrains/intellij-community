@@ -6,24 +6,15 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 class BashSemanticEditorPosition {
-
   private final HighlighterIterator myIterator;
-  private final CharSequence myChars;
 
   private BashSemanticEditorPosition(@NotNull EditorEx editor, int offset) {
     myIterator = editor.getHighlighter().createIterator(offset);
-    myChars = editor.getDocument().getCharsSequence();
   }
 
   void moveBefore() {
     if (!myIterator.atEnd()) {
       myIterator.retreat();
-    }
-  }
-
-  void moveAfter() {
-    if (!myIterator.atEnd()) {
-      myIterator.advance();
     }
   }
 
@@ -33,7 +24,7 @@ class BashSemanticEditorPosition {
     }
   }
 
-  void moveAfterOptionalMix(@NotNull IElementType... elements)  {
+  void moveAfterOptionalMix(@NotNull IElementType... elements) {
     while (isAtAnyOf(elements)) {
       myIterator.advance();
     }

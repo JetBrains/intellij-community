@@ -17,9 +17,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 public class BashLineIndentProvider implements LineIndentProvider {
-
   @Nullable
   @Override
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
@@ -29,9 +27,11 @@ public class BashLineIndentProvider implements LineIndentProvider {
         moveAtEndOfPreviousLine(position);
         if (position.isAtAnyOf(BashTypes.DO, BashTypes.LEFT_CURLY, BashTypes.ELSE, BashTypes.THEN)) {
           return getIndentString(editor, position.getStartOffset(), true);
-        } else if (position.isAt(BashTypes.CASE_END)) {
+        }
+        else if (position.isAt(BashTypes.CASE_END)) {
           return getIndentString(editor, position.getStartOffset(), false);
-        } else if (isInCasePattern(editor, position)) {
+        }
+        else if (isInCasePattern(editor, position)) {
           return getIndentString(editor, position.getStartOffset(), true);
         }
       }
