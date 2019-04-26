@@ -20,6 +20,16 @@ class ConfigurationFileTest {
   }
 
   @Test
+  fun `file name`() {
+    assertThat(isConfigurationFile("foo")).isFalse()
+    assertThat(isConfigurationFile("foo.yaml")).isFalse()
+    assertThat(isConfigurationFile("foo.yml")).isFalse()
+    assertThat(isConfigurationFile("intellij.yml")).isTrue()
+    assertThat(isConfigurationFile("intellij.yaml")).isTrue()
+    assertThat(isConfigurationFile("intellij.json")).isTrue()
+  }
+
+  @Test
   fun schema() {
     // check that parseable
     val schema = generateConfigurationSchema()
