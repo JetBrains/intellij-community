@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.highlighter
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
@@ -8,6 +8,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isReassigned
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.*
@@ -25,9 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isScriptField
 
-class GroovyDeclarationHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar) : TextEditorHighlightingPassFactory {
-  init {
-    registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
+internal class GroovyDeclarationHighlightingPassFactory : TextEditorHighlightingPassFactory, StartupActivity, DumbAware {
+  override fun runActivity(project: Project) {
+    TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? = file.getGroovyFile()?.let {

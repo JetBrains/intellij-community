@@ -5,6 +5,9 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -13,9 +16,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-public class GrReferenceHighlighterFactory implements TextEditorHighlightingPassFactory {
-  public GrReferenceHighlighterFactory(TextEditorHighlightingPassRegistrar registrar) {
-    registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
+final class GrReferenceHighlighterFactory implements TextEditorHighlightingPassFactory, StartupActivity, DumbAware {
+  @Override
+  public void runActivity(@NotNull Project project) {
+    TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, null, null, false, -1);
   }
 
   @Override
