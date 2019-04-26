@@ -31,6 +31,11 @@
     <lang.documentationProvider language="Bash" implementationClass="com.intellij.bash.BashDocumentationProvider"/>
     <runLineMarkerContributor language="Bash" implementationClass="com.intellij.bash.run.BashRunLineMarkerContributor"/>
 
+    <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.BashTemplateProvider"/>
+    <liveTemplateContext implementation="com.intellij.bash.template.BashContextType"/>
+    <lineIndentProvider implementation="com.intellij.bash.formatter.BashLineIndentProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.bash.formatter.BashLanguageCodeStyleSettingsProvider"/>
+
     <externalFormatProcessor implementation="com.intellij.bash.formatter.BashExternalFormatter"/>
     <lang.formatter language="Bash" implementationClass="com.intellij.bash.formatter.BashFormatterModelBuilder"/>
     <postFormatProcessor implementation="com.intellij.bash.formatter.BashPostFormatProcessor"/>
@@ -42,11 +47,6 @@
                      enabledByDefault="true" level="ERROR" unfair="true"
                      implementationClass="com.intellij.bash.shellcheck.BashShellcheckInspection"
                      displayName="ShellCheck" groupName="Bash"/>
-
-    <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.BashTemplateProvider"/>
-    <liveTemplateContext implementation="com.intellij.bash.template.BashContextType"/>
-    <lineIndentProvider implementation="com.intellij.bash.formatter.BashLineIndentProvider"/>
-    <langCodeStyleSettingsProvider implementation="com.intellij.bash.formatter.BashLanguageCodeStyleSettingsProvider"/>
 
     <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
     <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>

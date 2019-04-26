@@ -35,6 +35,8 @@ import java.util.List;
 public class BashExternalFormatter implements ExternalFormatProcessor {
   private final static Logger LOG = Logger.getInstance(BashExternalFormatter.class);
 
+  private static final String BASH_SHFMT_PATH_KEY = "bash.shfmt.path";
+
   @Override
   public boolean activeForFile(@NotNull PsiFile file) {
     return file instanceof BashFile;
@@ -49,7 +51,7 @@ public class BashExternalFormatter implements ExternalFormatProcessor {
 
   private void doFormat(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null || !file.exists()) return;
-    String shFmtExecutable = Registry.stringValue("bash.shfmt.path");
+    String shFmtExecutable = Registry.stringValue(BASH_SHFMT_PATH_KEY);
     if (StringUtil.isEmpty(shFmtExecutable)) return;
     String filePath = file.getPath();
     String realPath = FileUtil.toSystemDependentName(filePath);
@@ -69,6 +71,23 @@ public class BashExternalFormatter implements ExternalFormatProcessor {
       if (!settings.useTabCharacter(file.getFileType())) {
         int tabSize = settings.getIndentSize(file.getFileType());
         params.add("-i=" + tabSize);
+      }
+
+      BashCodeStyleSettings bashSettings = settings.getCustomSettings(BashCodeStyleSettings.class);
+      if (bashSettings.BINARY_OPS_START_LINE) {
+        params.add("-bn");
+      }
+      if (bashSettings.SWITCH_CASES_INDENTED) {
+        params.add("-ci");
+      }
+      if (bashSettings.REDIRECT_FOLLOWED_BY_SPACE) {
+        params.add("-sr");
+      }
+      if (bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING) {
+        params.add("-kp");
+      }
+      if (bashSettings.MINIFY_PROGRAM) {
+        params.add("-mn");
       }
     }
     params.add(realPath);
