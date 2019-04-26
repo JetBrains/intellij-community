@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
 import com.intellij.configurationStore.properties.*
@@ -86,8 +86,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  protected inline fun <reified T : Enum<*>> enum(defaultValue: T? = null): StoredPropertyBase<T?> {
-    return doEnum(defaultValue, T::class.java)
+  protected inline fun <reified T : Enum<*>> enum(defaultValue: T): StoredPropertyBase<T> {
+    @Suppress("UNCHECKED_CAST")
+    return doEnum(defaultValue, T::class.java) as StoredPropertyBase<T>
+  }
+
+  protected inline fun <reified T : Enum<*>> enum(): StoredPropertyBase<T?> {
+    return doEnum(null, T::class.java)
   }
 
   @PublishedApi
