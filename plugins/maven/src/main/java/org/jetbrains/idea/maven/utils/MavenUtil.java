@@ -193,7 +193,7 @@ public class MavenUtil {
     }
   }
 
-  public static void runWhenInitialized(final Project project, final Runnable r) {
+  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable r) {
     if (project.isDisposed()) return;
 
     if (isNoBackgroundMode()) {
