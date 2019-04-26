@@ -44,5 +44,5 @@ abstract class ConstructorCallHighlighter(reference: GroovyCallReference,
     return ParameterCastFix(position, type)
   }
 
-  fun highlight(): Boolean = highlightMethod()
+  fun highlight(): Boolean = highlightMethodApplicability()
 }

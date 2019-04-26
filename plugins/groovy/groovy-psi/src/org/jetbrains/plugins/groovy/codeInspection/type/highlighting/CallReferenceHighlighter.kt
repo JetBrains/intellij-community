@@ -10,7 +10,11 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityData
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 
 abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val sink: HighlightSink) {
 
@@ -36,7 +40,8 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
     sink.registerError(getHighlightElement(), ambiguousMethodMessage)
   }
 
-  fun highlightInapplicableMethod(result: GroovyMethodResult, arguments: Arguments) {
+  fun highlightInapplicableMethod(results: Set<GroovyMethodResult>, arguments: Arguments) {
+    val result = results.firstOrNull() ?: return
     val method = result.element
     val containingClass = if (method is GrGdkMethod) method.staticMethod.containingClass else method.containingClass
 
@@ -50,56 +55,54 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
     val factory = JavaPsiFacade.getElementFactory(method.project)
     val containingType = factory.createType(containingClass, result.substitutor)
 
-    val fixes = generateFixes(result)
+    val fixes = generateFixes(results)
     val message = getInapplicableMethodMessage(result, containingType, arguments)
     sink.registerProblem(highlightElement, ProblemHighlightType.GENERIC_ERROR, message, *fixes)
   }
 
-  fun highlightMethod(): Boolean {
+  fun highlightMethodApplicability(): Boolean {
     val userArguments = reference.arguments ?: run {
       highlightUnknownArgs()
       return true
     }
 
-    val results = reference.resolve(false)
-    var hasUnknownResults = false
-    for (result in results) {
-      if (result !is GroovyMethodResult) continue
-      val candidate = result.candidate ?: continue
-      val mapping = candidate.argumentMapping
-      if (mapping == null) {
-        highlightInapplicableMethod(result, userArguments)
-        return true
-      }
-      val applicability = mapping.applicability(result.substitutor, false)
-      when (applicability) {
-        Applicability.inapplicable -> {
-          highlightInapplicableMethod(result, userArguments)
-          return true
-        }
-        Applicability.canBeApplicable -> hasUnknownResults = true
-        else -> Unit
+    val results = reference.resolve(false).filterIsInstance(GroovyMethodResult::class.java).associate {
+      it to (it.candidate?.argumentMapping?.applicability(it.substitutor, false) ?: inapplicable)
+    }
+
+    val totalApplicability = results.entries.fold(applicable) { status, (_, applicability) ->
+      when {
+        status == inapplicable -> inapplicable
+        applicability == inapplicable -> inapplicable
+        else -> applicability
       }
     }
 
-    if (results.size > 1) {
-      if (hasUnknownResults) {
-        highlightUnknownArgs()
+    when (totalApplicability) {
+      inapplicable -> {
+        highlightInapplicableMethod(results.filter { it.value == inapplicable }.keys, userArguments)
         return true
       }
-      else {
-        highlightAmbiguousMethod()
-        return true
+      canBeApplicable -> {
+        if (results.size > 1) {
+          highlightUnknownArgs()
+          return true
+        }
+      }
+      applicable -> {
+        if (results.size > 1) {
+          highlightAmbiguousMethod()
+          return true
+        }
       }
     }
     return false
   }
 
-  fun generateFixes(result: GroovyMethodResult): Array<LocalQuickFix> {
-    val applicabilities = result.candidate?.argumentMapping?.highlightApplicabilities(result.substitutor)
-                          ?: return emptyArray()
-    return applicabilities.entries
-      .mapNotNull { (argument, applicabilities) -> buildFix(argument, applicabilities) }
-      .toTypedArray()
+  fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
+    return results.flatMap { result ->
+      val applicabilities = result.candidate?.argumentMapping?.highlightApplicabilities(result.substitutor) ?: return emptyArray()
+      applicabilities.entries.mapNotNull { (argument, applicabilities) -> buildFix(argument, applicabilities) }
+    }.toTypedArray()
   }
 }

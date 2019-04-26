@@ -49,6 +49,6 @@ class BinaryExpressionHighlighter(val expression: GrBinaryExpression,
 
     if (isOperatorWithSimpleTypes(expression, resolveResult)) return
 
-    highlightMethod()
+    highlightMethodApplicability()
   }
 }
