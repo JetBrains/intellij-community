@@ -5,6 +5,8 @@
   <depends config-file="anotherPlugin.xml" optional="true">anotherPlugin</depends>
   <module value="myModule"/>
 
+  <idea-version since-build="sinceBuildValue" until-build="untilBuildValue"/>
+
   <extensionPoints>
     <extensionPoint name="myEP" interface="SomeInterface">
       <with attribute="attributeName" implements="SomeImplements"/>
