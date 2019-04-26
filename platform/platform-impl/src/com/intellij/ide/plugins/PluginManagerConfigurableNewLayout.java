@@ -340,6 +340,7 @@ public class PluginManagerConfigurableNewLayout
         myMarketplacePanel.setSelectionListener(selectionListener);
         PluginManagerConfigurableNew.registerCopyProvider(myMarketplacePanel);
 
+        //noinspection ConstantConditions
         ((SearchUpDownPopupController)myMarketplaceSearchPanel.controller).setEventHandler(eventHandler);
 
         Runnable runnable = () -> {
@@ -742,6 +743,7 @@ public class PluginManagerConfigurableNewLayout
         myInstalledPanel.setSelectionListener(selectionListener);
         PluginManagerConfigurableNew.registerCopyProvider(myInstalledPanel);
 
+        //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
 
         PluginLogo.startBatchMode();
@@ -822,16 +824,7 @@ public class PluginManagerConfigurableNewLayout
             }
           }
           else {
-            for (PluginDownloader downloader : updates) {
-              IdeaPluginDescriptor descriptor = downloader.getDescriptor();
-              for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-                CellPluginComponent component = group.findComponent(descriptor);
-                if (component != null) {
-                  ((NewListPluginComponent)component).setUpdateDescriptor(descriptor);
-                  break;
-                }
-              }
-            }
+            applyUpdates(myInstalledPanel, updates);
           }
           selectionListener.accept(myInstalledPanel);
         });
@@ -950,7 +943,6 @@ public class PluginManagerConfigurableNewLayout
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
-            InstalledPluginsState state = InstalledPluginsState.getInstance();
             SearchQueryParser.InstalledWithVendor parser = new SearchQueryParser.InstalledWithVendor(query);
 
             if (myInstalledSearchSetState) {
@@ -978,7 +970,7 @@ public class PluginManagerConfigurableNewLayout
                     if (parser.invalid && !myPluginModel.hasErrors(plugin.myPlugin)) {
                       continue;
                     }
-                    if (parser.needUpdate && !state.hasNewerVersion(plugin.myPlugin.getPluginId())) {
+                    if (parser.needUpdate && !PluginUpdatesService.isNeedUpdate(plugin.myPlugin)) {
                       continue;
                     }
                   }
@@ -986,6 +978,16 @@ public class PluginManagerConfigurableNewLayout
                     continue;
                   }
                   result.descriptors.add(plugin.myPlugin);
+                }
+              }
+
+              if (!result.descriptors.isEmpty() && parser.needUpdate) {
+                Collection<PluginDownloader> updates = PluginUpdatesService.getUpdates();
+                if (!ContainerUtil.isEmpty(updates)) {
+                  myPostFillGroupCallback = () -> {
+                    applyUpdates(myPanel, updates);
+                    selectionListener.accept(myInstalledPanel);
+                  };
                 }
               }
             }
@@ -1004,6 +1006,19 @@ public class PluginManagerConfigurableNewLayout
         return myInstalledSearchPanel;
       }
     };
+  }
+
+  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginDownloader> updates) {
+    for (PluginDownloader downloader : updates) {
+      IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+      for (UIPluginGroup group : panel.getGroups()) {
+        CellPluginComponent component = group.findComponent(descriptor);
+        if (component != null) {
+          ((NewListPluginComponent)component).setUpdateDescriptor(descriptor);
+          break;
+        }
+      }
+    }
   }
 
   private enum SortBySearchOption {
