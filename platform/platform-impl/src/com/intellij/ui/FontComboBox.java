@@ -73,7 +73,6 @@ public final class FontComboBox extends ComboBox {
         }
       }
     });
-    new ComboboxSpeedSearch(this);
   }
 
   @Override
