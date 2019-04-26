@@ -86,6 +86,7 @@
     <extensionPoint name="expectedPackageNameProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProvider"/>
     <extensionPoint name="delegatesToProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider"/>
     <extensionPoint name="expressionFilter" interface="org.jetbrains.plugins.groovy.lang.GroovyExpressionFilter"/>
+    <extensionPoint name="inlayHintFilter" interface="org.jetbrains.plugins.groovy.editor.GroovyInlayHintFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
