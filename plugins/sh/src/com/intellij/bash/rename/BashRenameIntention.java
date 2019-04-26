@@ -68,7 +68,7 @@ public class BashRenameIntention extends BaseIntentionAction {
     int ind = startOffsets.indexOf(textRange.getStartOffset());
     assert ind >= 0;
     startOffsets.remove(ind);
-    startOffsets.add(textRange.getStartOffset());
+    startOffsets.add(0, textRange.getStartOffset());
 
     List<CaretState> caretStates = new ArrayList<>();
     for (Integer startOffset : startOffsets) {
@@ -79,8 +79,6 @@ public class BashRenameIntention extends BaseIntentionAction {
       caretStates.add(caretState);
     }
     editor.getCaretModel().setCaretsAndSelections(caretStates);
-    int primaryOffset = editor.getCaretModel().getPrimaryCaret().getOffset();
-    System.out.println(primaryOffset + " on " + editor.getDocument().getLineNumber(primaryOffset));
   }
 
   @NotNull
