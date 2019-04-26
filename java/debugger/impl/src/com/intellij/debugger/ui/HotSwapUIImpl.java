@@ -13,7 +13,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -310,7 +310,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
     private MyCompilationStatusListener() {
       myOutputRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-      for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+      for (final String path : CompilerPaths.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
         myOutputRoots.add(new File(path));
       }
     }
