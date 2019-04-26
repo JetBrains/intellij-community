@@ -1,87 +1,28 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package git4idea.push;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.push
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.BaseState
 
-/**
- */
-public final class GitPushTagMode {
+class GitPushTagMode : BaseState {
+  var title by string()
+  var argument by string()
 
-  public static final GitPushTagMode ALL = new GitPushTagMode("All", "--tags");
-  public static final GitPushTagMode FOLLOW = new GitPushTagMode("Current Branch", "--follow-tags");
+  @Suppress("unused")
+  constructor() : this(ALL.title!!, ALL.argument!!)
 
-  @NotNull private String myTitle;
-  @NotNull private String myArgument;
-
-  // for deserialization
-  @SuppressWarnings("UnusedDeclaration")
-  public GitPushTagMode() {
-    this(ALL.getTitle(), ALL.getArgument());
+  constructor(title: String, argument: String) : super() {
+    // must be in constructor, not as default value for field
+    this.title = title
+    this.argument = argument
   }
 
-  private GitPushTagMode(@NotNull String title, @NotNull String argument) {
-    myTitle = title;
-    myArgument = argument;
-  }
+  companion object {
+    @JvmField
+    val ALL = GitPushTagMode("All", "--tags")
+    @JvmField
+    val FOLLOW = GitPushTagMode("Current Branch", "--follow-tags")
 
-  @NotNull
-  public static GitPushTagMode[] getValues() {
-    return new GitPushTagMode[] { ALL, FOLLOW };
-  }
-
-  @NotNull
-  public String getTitle() {
-    return myTitle;
-  }
-
-  @NotNull
-  public String getArgument() {
-    return myArgument;
-  }
-
-  // for deserialization
-  @SuppressWarnings("UnusedDeclaration")
-  public void setTitle(@NotNull String title) {
-    myTitle = title;
-  }
-
-  // for deserialization
-  @SuppressWarnings("UnusedDeclaration")
-  public void setArgument(@NotNull String argument) {
-    myArgument = argument;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    GitPushTagMode mode = (GitPushTagMode)o;
-
-    if (!myArgument.equals(mode.myArgument)) return false;
-    if (!myTitle.equals(mode.myTitle)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myTitle.hashCode();
-    result = 31 * result + myArgument.hashCode();
-    return result;
+    @JvmStatic
+    val values = arrayOf(ALL, FOLLOW)
   }
 }

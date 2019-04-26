@@ -7,29 +7,30 @@ import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.push.GitPushTagMode;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Git VCS settings
  */
-@State(name = "Git.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncSettings, DvcsCompareSettings {
-
+@State(name = "Git.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, DvcsSyncSettings, DvcsCompareSettings, ModificationTracker {
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
   private final GitVcsApplicationSettings myAppSettings;
-  private State myState = new State();
+  private GitVcsOptions myState = new GitVcsOptions();
 
   /**
    * The way the local changes are saved before update if user has selected auto-stash
@@ -37,39 +38,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   public enum UpdateChangesPolicy {
     STASH,
     SHELVE,
-  }
-
-  public static class State {
-    public String PATH_TO_GIT = null;
-
-    // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
-    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<>();
-    // The policy that specifies how files are saved before update or rebase
-    public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
-    public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
-    public boolean PUSH_AUTO_UPDATE = false;
-    public boolean PUSH_UPDATE_ALL_ROOTS = true;
-    public Value ROOT_SYNC = Value.NOT_DECIDED;
-    public String RECENT_GIT_ROOT_PATH = null;
-    public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<>();
-    public String RECENT_COMMON_BRANCH = null;
-    public boolean AUTO_COMMIT_ON_REVERT = false;
-    public boolean WARN_ABOUT_CRLF = true;
-    public boolean WARN_ABOUT_DETACHED_HEAD = true;
-    public GitResetMode RESET_MODE = null;
-    public GitPushTagMode PUSH_TAGS = null;
-    public boolean SIGN_OFF_COMMIT = false;
-    public boolean SET_USER_NAME_GLOBALLY = true;
-    public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
-    public boolean UPDATE_BRANCHES_INFO = true;
-    public int BRANCH_INFO_UPDATE_TIME = 10;
-    public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
-    public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
-    public boolean COMMIT_RENAMES_SEPARATELY = true;
-    public boolean ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS = true;
-
-    @Property(surroundWithTag = false, flat = true)
-    public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -86,20 +54,20 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   @NotNull
   public UpdateMethod getUpdateType() {
-    return ObjectUtils.notNull(myState.UPDATE_TYPE, UpdateMethod.BRANCH_DEFAULT);
+    return ObjectUtils.notNull(myState.getUpdateType(), UpdateMethod.BRANCH_DEFAULT);
   }
 
   public void setUpdateType(UpdateMethod updateType) {
-    myState.UPDATE_TYPE = updateType;
+    myState.setUpdateType(updateType);
   }
 
   @NotNull
   public UpdateChangesPolicy updateChangesPolicy() {
-    return myState.UPDATE_CHANGES_POLICY;
+    return myState.getUpdateChangesPolicy();
   }
 
   public void setUpdateChangesPolicy(UpdateChangesPolicy value) {
-    myState.UPDATE_CHANGES_POLICY = value;
+    myState.setUpdateChangesPolicy(value);
   }
 
   /**
@@ -108,209 +76,215 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    * @param author an author to save
    */
   public void saveCommitAuthor(String author) {
-    myState.PREVIOUS_COMMIT_AUTHORS.remove(author);
-    while (myState.PREVIOUS_COMMIT_AUTHORS.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
-      myState.PREVIOUS_COMMIT_AUTHORS.remove(myState.PREVIOUS_COMMIT_AUTHORS.size() - 1);
+    List<String> previousCommitAuthors = myState.getPreviousCommitAuthors();
+    previousCommitAuthors.remove(author);
+    while (previousCommitAuthors.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
+      previousCommitAuthors.remove(previousCommitAuthors.size() - 1);
     }
-    myState.PREVIOUS_COMMIT_AUTHORS.add(0, author);
+    previousCommitAuthors.add(0, author);
   }
 
   public String[] getCommitAuthors() {
-    return ArrayUtil.toStringArray(myState.PREVIOUS_COMMIT_AUTHORS);
+    return ArrayUtil.toStringArray(myState.getPreviousCommitAuthors());
   }
 
   @Override
-  public State getState() {
+  public long getModificationCount() {
+    return myState.getModificationCount();
+  }
+
+  @Override
+  public GitVcsOptions getState() {
     return myState;
   }
 
   @Override
-  public void loadState(@NotNull State state) {
+  public void loadState(@NotNull GitVcsOptions state) {
     myState = state;
   }
 
   @Nullable
   public String getPathToGit() {
-    return myState.PATH_TO_GIT;
+    return myState.getPathToGit();
   }
 
-  public void setPathToGit(@Nullable String pathToGit) {
-    myState.PATH_TO_GIT = pathToGit;
+  public void setPathToGit(@Nullable String value) {
+    myState.setPathToGit(value);
   }
 
   public boolean autoUpdateIfPushRejected() {
-    return myState.PUSH_AUTO_UPDATE;
+    return myState.isPushAutoUpdate();
   }
 
-  public void setAutoUpdateIfPushRejected(boolean autoUpdate) {
-    myState.PUSH_AUTO_UPDATE = autoUpdate;
+  public void setAutoUpdateIfPushRejected(boolean value) {
+    myState.setPushAutoUpdate(value);
   }
 
   public boolean shouldUpdateAllRootsIfPushRejected() {
-    return myState.PUSH_UPDATE_ALL_ROOTS;
+    return myState.isPushUpdateAllRoots();
   }
 
-  public void setUpdateAllRootsIfPushRejected(boolean updateAllRoots) {
-    myState.PUSH_UPDATE_ALL_ROOTS = updateAllRoots;
+  public void setUpdateAllRootsIfPushRejected(boolean value) {
+    myState.setPushUpdateAllRoots(value);
   }
 
   @Override
   @NotNull
   public Value getSyncSetting() {
-    return myState.ROOT_SYNC;
+    return myState.getRootSync();
   }
 
   @Override
-  public void setSyncSetting(@NotNull Value syncSetting) {
-    myState.ROOT_SYNC = syncSetting;
+  public void setSyncSetting(@NotNull Value value) {
+    myState.setRootSync(value);
   }
 
   @Nullable
   public String getRecentRootPath() {
-    return myState.RECENT_GIT_ROOT_PATH;
+    return myState.getRecentGitRootPath();
   }
 
-  public void setRecentRoot(@NotNull String recentGitRootPath) {
-    myState.RECENT_GIT_ROOT_PATH = recentGitRootPath;
+  public void setRecentRoot(@NotNull String value) {
+    myState.setRecentGitRootPath(value);
   }
 
   @NotNull
   public Map<String, String> getRecentBranchesByRepository() {
-    return myState.RECENT_BRANCH_BY_REPOSITORY;
+    return myState.getRecentBranchByRepository();
   }
 
   public void setRecentBranchOfRepository(@NotNull String repositoryPath, @NotNull String branch) {
-    myState.RECENT_BRANCH_BY_REPOSITORY.put(repositoryPath, branch);
+    myState.getRecentBranchByRepository().put(repositoryPath, branch);
   }
 
   @Nullable
   public String getRecentCommonBranch() {
-    return myState.RECENT_COMMON_BRANCH;
+    return myState.getRecentCommonBranch();
   }
 
-  public void setRecentCommonBranch(@NotNull String branch) {
-    myState.RECENT_COMMON_BRANCH = branch;
+  public void setRecentCommonBranch(@NotNull String value) {
+    myState.setRecentCommonBranch(value);
   }
 
-  public void setAutoCommitOnRevert(boolean autoCommit) {
-    myState.AUTO_COMMIT_ON_REVERT = autoCommit;
+  public void setAutoCommitOnRevert(boolean value) {
+    myState.setAutoCommitOnRevert(value);
   }
 
   public boolean isAutoCommitOnRevert() {
-    return myState.AUTO_COMMIT_ON_REVERT;
+    return myState.isAutoCommitOnRevert();
   }
 
   public boolean warnAboutCrlf() {
-    return myState.WARN_ABOUT_CRLF;
+    return myState.getWarnAboutCrlf();
   }
 
-  public void setWarnAboutCrlf(boolean warn) {
-    myState.WARN_ABOUT_CRLF = warn;
+  public void setWarnAboutCrlf(boolean value) {
+    myState.setWarnAboutCrlf(value);
   }
 
   public boolean warnAboutDetachedHead() {
-    return myState.WARN_ABOUT_DETACHED_HEAD;
+    return myState.isWarnAboutDetachedHead();
   }
 
-  public void setWarnAboutDetachedHead(boolean warn) {
-    myState.WARN_ABOUT_DETACHED_HEAD = warn;
+  public void setWarnAboutDetachedHead(boolean value) {
+    myState.setWarnAboutDetachedHead(value);
   }
 
   @Nullable
   public GitResetMode getResetMode() {
-    return myState.RESET_MODE;
+    return myState.getResetMode();
   }
 
   public void setResetMode(@NotNull GitResetMode mode) {
-    myState.RESET_MODE = mode;
+    myState.setResetMode(mode);
   }
 
   @Nullable
   public GitPushTagMode getPushTagMode() {
-    return myState.PUSH_TAGS;
+    return myState.getPushTags();
   }
 
-  public void setPushTagMode(@Nullable GitPushTagMode mode) {
-    myState.PUSH_TAGS = mode;
+  public void setPushTagMode(@Nullable GitPushTagMode value) {
+    myState.setPushTags(value);
   }
 
   public boolean shouldSignOffCommit() {
-    return myState.SIGN_OFF_COMMIT;
+    return myState.isSignOffCommit();
   }
 
-  public void setSignOffCommit(boolean state) {
-    myState.SIGN_OFF_COMMIT = state;
+  public void setSignOffCommit(boolean value) {
+    myState.setSignOffCommit(value);
   }
 
   public boolean shouldUpdateBranchInfo() {
-    return Registry.is("git.update.incoming.outgoing.info") && myState.UPDATE_BRANCHES_INFO;
+    return Registry.is("git.update.incoming.outgoing.info") && myState.isUpdateBranchesInfo();
   }
 
-  public void setUpdateBranchInfo(boolean state) {
-    myState.UPDATE_BRANCHES_INFO = state;
+  public void setUpdateBranchInfo(boolean value) {
+    myState.setUpdateBranchesInfo(value);
   }
 
   public int getBranchInfoUpdateTime() {
-    return myState.BRANCH_INFO_UPDATE_TIME;
+    return myState.getBranchInfoUpdateTime();
   }
 
-  public void setBranchInfoUpdateTime(int time) {
-    myState.BRANCH_INFO_UPDATE_TIME = time;
+  public void setBranchInfoUpdateTime(int value) {
+    myState.setBranchInfoUpdateTime(value);
   }
 
   public boolean shouldPreviewPushOnCommitAndPush() {
-    return myState.PREVIEW_PUSH_ON_COMMIT_AND_PUSH;
+    return myState.isPreviewPushOnCommitAndPush();
   }
 
-  public void setPreviewPushOnCommitAndPush(boolean state) {
-    myState.PREVIEW_PUSH_ON_COMMIT_AND_PUSH = state;
+  public void setPreviewPushOnCommitAndPush(boolean value) {
+    myState.setPreviewPushOnCommitAndPush(value);
   }
 
   public boolean isPreviewPushProtectedOnly() {
-    return myState.PREVIEW_PUSH_PROTECTED_ONLY;
+    return myState.isPreviewPushProtectedOnly();
   }
 
-  public void setPreviewPushProtectedOnly(boolean state) {
-    myState.PREVIEW_PUSH_PROTECTED_ONLY = state;
+  public void setPreviewPushProtectedOnly(boolean value) {
+    myState.setPreviewPushOnCommitAndPush(value);
   }
 
   public boolean isCommitRenamesSeparately() {
-    return myState.COMMIT_RENAMES_SEPARATELY;
+    return myState.isCommitRenamesSeparately();
   }
 
-  public void setCommitRenamesSeparately(boolean state) {
-    myState.COMMIT_RENAMES_SEPARATELY = state;
+  public void setCommitRenamesSeparately(boolean value) {
+    myState.setCommitRenamesSeparately(value);
   }
 
   @NotNull
   public DvcsBranchSettings getFavoriteBranchSettings() {
-    return myState.FAVORITE_BRANCH_SETTINGS;
+    return myState.getFavoriteBranchSettings();
   }
 
   public boolean shouldSetUserNameGlobally() {
-    return myState.SET_USER_NAME_GLOBALLY;
+    return myState.isSetUserNameGlobally();
   }
 
   public void setUserNameGlobally(boolean value) {
-    myState.SET_USER_NAME_GLOBALLY = value;
+    myState.setSetUserNameGlobally(value);
   }
 
   @Override
   public boolean shouldSwapSidesInCompareBranches() {
-    return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
+    return myState.isSwapSidesInCompareBranches();
   }
 
   @Override
   public void setSwapSidesInCompareBranches(boolean value) {
-    myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
+    myState.setSwapSidesInCompareBranches(value);
   }
 
   public boolean shouldAddSuffixToCherryPicksOfPublishedCommits() {
-    return myState.ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS;
+    return myState.isAddSuffixToCherryPicksOfPublishedCommits();
   }
 
   public void setAddSuffixToCherryPicks(boolean value) {
-    myState.ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS = value;
+    myState.setAddSuffixToCherryPicksOfPublishedCommits(value);
   }
 
   @Tag("push-target-info")

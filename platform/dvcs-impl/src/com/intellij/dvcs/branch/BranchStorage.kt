@@ -1,66 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.dvcs.branch;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.dvcs.branch
 
-import com.intellij.dvcs.repo.Repository;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
-
-import static com.intellij.dvcs.branch.DvcsBranchUtil.find;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.components.BaseState
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
 
 @Tag("branch-storage")
-public class BranchStorage {
+class BranchStorage : BaseState() {
+  @get:Property(surroundWithTag = false)
+  @get:MapAnnotation(keyAttributeName = "type")
+  val branches by map<String, MutableList<DvcsBranchInfo>>()
 
-  @Property(surroundWithTag = false)
-  @MapAnnotation(keyAttributeName = "type")
-  @NotNull public Map<String, List<DvcsBranchInfo>> myBranches = ContainerUtil.newHashMap();
-
-  public BranchStorage() {
+  fun contains(typeName: String, repository: Repository?, branchName: String): Boolean {
+    val branches = branches[typeName] ?: return false
+    return DvcsBranchUtil.find<DvcsBranchInfo>(branches, repository, branchName) != null
   }
 
-  public boolean contains(@NotNull String typeName, @Nullable Repository repository, @NotNull String branchName) {
-    List<DvcsBranchInfo> branches = myBranches.get(typeName);
-    return branches != null && find(branches, repository, branchName) != null;
+  fun add(typeName: String, repository: Repository?, branchName: String) {
+    if (contains(typeName, repository, branchName)) {
+      return
+    }
+
+    branches.computeIfAbsent(typeName) { mutableListOf() }.add(DvcsBranchInfo(DvcsBranchUtil.getPathFor(repository), branchName))
   }
 
-  public void add(@NotNull String typeName, @Nullable Repository repository,
-                  @NotNull String branchName) {
-    if (contains(typeName, repository, branchName)) return;
-    List<DvcsBranchInfo> branchInfos = myBranches.computeIfAbsent(typeName, name -> newArrayList());
-    branchInfos.add(new DvcsBranchInfo(DvcsBranchUtil.getPathFor(repository), branchName));
-  }
-
-  public void remove(@NotNull String typeName, @Nullable Repository repository,
-                     @NotNull String branchName) {
-
-    List<DvcsBranchInfo> branches = myBranches.get(typeName);
-    DvcsBranchInfo toDelete = find(branches, repository, branchName);
-    if (toDelete != null) {
-      branches.remove(toDelete);
-      if (branches.isEmpty()) {
-        myBranches.remove(typeName);
-      }
+  fun remove(typeName: String, repository: Repository?, branchName: String) {
+    val branches = branches[typeName] ?: return
+    val toDelete = DvcsBranchUtil.find<DvcsBranchInfo>(branches, repository, branchName) ?: return
+    branches.remove(toDelete)
+    if (branches.isEmpty()) {
+      this.branches.remove(typeName)
     }
   }
 }
