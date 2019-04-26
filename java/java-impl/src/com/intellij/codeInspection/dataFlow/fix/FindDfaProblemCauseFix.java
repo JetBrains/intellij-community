@@ -30,7 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,22 +95,25 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
     class CauseWithDepth {
       final int myDepth;
       final TrackingRunner.CauseItem myCauseItem;
+      final CauseWithDepth myParent;
 
-      CauseWithDepth(int depth, TrackingRunner.CauseItem item) {
-        myDepth = depth;
+      CauseWithDepth(CauseWithDepth parent, TrackingRunner.CauseItem item) {
+        myParent = parent;
+        myDepth = parent == null ? 0 : parent.myDepth + 1;
         myCauseItem = item;
       }
 
       @Override
       public String toString() {
-        return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(document);
+        return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(document, myParent == null ? null : myParent.myCauseItem);
       }
     }
     List<CauseWithDepth> causes;
     if (root == null) {
       causes = Collections.emptyList();
     } else {
-      causes = EntryStream.ofTree(root, (depth, c) -> c.children()).skip(1).mapKeyValue((d, i) -> new CauseWithDepth(d, i)).toList();
+      causes = StreamEx.ofTree(new CauseWithDepth(null, root), cwd -> cwd.myCauseItem.children()
+        .map(child -> new CauseWithDepth(cwd, child))).skip(1).toList();
     }
     if (causes.isEmpty()) {
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();

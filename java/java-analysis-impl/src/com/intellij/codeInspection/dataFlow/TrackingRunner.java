@@ -131,20 +131,24 @@ public class TrackingRunner extends StandardDataFlowRunner {
       if (o == null || getClass() != o.getClass()) return false;
       CauseItem item = (CauseItem)o;
       return myChildren.equals(item.myChildren) &&
-             myProblem.toString().equals(item.myProblem.toString()) &&
+             getProblemName().equals(item.getProblemName()) &&
              Objects.equals(myTarget, item.myTarget);
+    }
+
+    private String getProblemName() {
+      return myProblem.toString();
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myChildren, myProblem, myTarget);
+      return Objects.hash(myChildren, getProblemName(), myTarget);
     }
 
     public String dump(Document doc) {
-      return dump(doc, 0);
+      return dump(doc, 0, null);
     }
 
-    private String dump(Document doc, int indent) {
+    private String dump(Document doc, int indent, CauseItem parent) {
       String text = null;
       if (myTarget != null) {
         Segment range = myTarget.getRange();
@@ -152,8 +156,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
           text = doc.getText(TextRange.create(range));
         }
       }
-      return StringUtil.repeat("  ", indent) + render(doc) + (text == null ? "" : " (" + text + ")") + "\n" +
-             StreamEx.of(myChildren).map(child -> child.dump(doc, indent + 1)).joining();
+      return StringUtil.repeat("  ", indent) + render(doc, parent) + (text == null ? "" : " (" + text + ")") + "\n" +
+             StreamEx.of(myChildren).map(child -> child.dump(doc, indent + 1, this)).joining();
     }
 
     public Stream<CauseItem> children() {
@@ -169,27 +173,37 @@ public class TrackingRunner extends StandardDataFlowRunner {
       return myTarget == null ? null : myTarget.getRange();
     }
 
-    public String render(Document doc) {
+    public String render(Document doc, CauseItem parent) {
+      String title = null;
       Segment range = getTargetSegment();
       if (range != null) {
-        String cause = myProblem.toString();
+        String cause = getProblemName();
         if (cause.endsWith("#ref")) {
           int offset = range.getStartOffset();
           int number = doc.getLineNumber(offset);
-          return cause.replaceFirst("#ref$", "line #" + (number + 1));
+          title = cause.replaceFirst("#ref$", "line #" + (number + 1));
         }
       }
-      return toString();
+      if (title == null) {
+        title = toString();
+      }
+      int childIndex = parent == null ? 0 : parent.myChildren.indexOf(this);
+      if (childIndex > 0) {
+        title = (parent.myProblem instanceof PossibleExecutionDfaProblemType ? "or " : "and ") + title; 
+      } else {
+        title = StringUtil.capitalize(title);
+      }
+      return title;
     }
 
     @Override
     public String toString() {
-      return myProblem.toString().replaceFirst("#ref$", "here");
+      return getProblemName().replaceFirst("#ref$", "here");
     }
 
     public CauseItem merge(CauseItem other) {
       if (this.equals(other)) return this;
-      if (Objects.equals(this.myTarget, other.myTarget) && this.myProblem.toString().equals(other.myProblem.toString())) {
+      if (Objects.equals(this.myTarget, other.myTarget) && getProblemName().equals(other.getProblemName())) {
         if(tryMergeChildren(other.myChildren)) return this;
         if(other.tryMergeChildren(this.myChildren)) return other;
       }
@@ -230,7 +244,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   
   public static class CastDfaProblemType extends DfaProblemType {
     public String toString() {
-      return "Cast may fail";
+      return "cast may fail";
     }
   }
 
@@ -239,7 +253,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
     @Override
     public String toString() {
-      return myComplete ? "One of the following happens:" : "An execution might exist where...";
+      return myComplete ? "one of the following happens:" : "an execution might exist where:";
     }
   }
   
@@ -253,7 +267,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
     @Override
     public String toString() {
-      return "Value is always " + myValue;
+      return "value is always " + myValue;
     }
   }
 
@@ -314,7 +328,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     Object constantExpressionValue = ExpressionUtils.computeConstantExpression(expression);
     DfaValue value = history.myTopOfStack;
     if (constantExpressionValue != null && constantExpressionValue.equals(expectedValue)) {
-      return new CauseItem[]{new CauseItem("It's compile-time constant which evaluates to '" + value + "'", expression)};
+      return new CauseItem[]{new CauseItem("it's compile-time constant which evaluates to '" + value + "'", expression)};
     }
     if (value instanceof DfaConstValue) {
       Object constValue = ((DfaConstValue)value).getValue();
@@ -354,7 +368,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
       if (negated != null) {
         MemoryStateChange negatedPush = history.findExpressionPush(negated);
         if (negatedPush != null) {
-          CauseItem cause = new CauseItem("Value '" + negated.getText() + "' is always '" + !value + "'", negated);
+          CauseItem cause = new CauseItem("value '" + negated.getText() + "' is always '" + !value + "'", negated);
           cause.addChildren(findConstantValueCause(negated, negatedPush, !value));
           return new CauseItem[]{cause};
         }
@@ -374,7 +388,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
                 ((ConditionalGotoInstruction)push.myInstruction).isTarget(value, history.myInstruction)) ||
                (push.myTopOfStack instanceof DfaConstValue &&
                 Boolean.valueOf(value).equals(((DfaConstValue)push.myTopOfStack).getValue())))) {
-            CauseItem cause = new CauseItem("Operand #" + (i + 1) + " of " + (and ? "&&" : "||") + "-chain is " + value, operand);
+            CauseItem cause = new CauseItem("operand #" + (i + 1) + " of " + (and ? "&&" : "||") + "-chain is " + value, operand);
             cause.addChildren(findBooleanResultCauses(operand, push, value));
             return new CauseItem[]{cause};
           }
@@ -402,12 +416,12 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
           if (leftValue == rightValue &&
               (leftValue instanceof DfaVariableValue || leftValue instanceof DfaConstValue)) {
-            return new CauseItem[]{new CauseItem("Comparison arguments are the same", binOp.getOperationSign())};
+            return new CauseItem[]{new CauseItem("comparison arguments are the same", binOp.getOperationSign())};
           }
           if (leftValue != rightValue && relationType.isInequality() &&
               leftValue instanceof DfaConstValue && rightValue instanceof DfaConstValue) {
             return new CauseItem[]{
-              new CauseItem("Comparison arguments are different constants", binOp.getOperationSign())};
+              new CauseItem("comparison arguments are different constants", binOp.getOperationSign())};
           }
         }
       }
@@ -421,7 +435,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
         if (!value) {
           Pair<MemoryStateChange, DfaNullability> nullability = operandHistory.findFact(operandValue, DfaFactType.NULLABILITY);
           if (nullability.second == DfaNullability.NULL) {
-            CauseItem causeItem = new CauseItem("Value '" + operand.getText() + "' is always 'null'", operand);
+            CauseItem causeItem = new CauseItem("value '" + operand.getText() + "' is always 'null'", operand);
             causeItem.addChildren(findConstantValueCause(operand, operandHistory, null));
             return new CauseItem[]{causeItem};
           }
@@ -455,7 +469,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
       String prevExplanation = prevConstraint.getAssignabilityExplanation(wanted, isInstance);
       if (prevExplanation == null) {
         CauseItem causeItem = new CauseItem(explanation, operand);
-        causeItem.addChildren(new CauseItem("Type of '" + operand.getText() + "' is known from #ref", causeLocation));
+        causeItem.addChildren(new CauseItem("type of '" + operand.getText() + "' is known from #ref", causeLocation));
         return causeItem;
       }
       explanation = prevExplanation;
@@ -513,8 +527,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
       LongRangeSet fromRelation = rightRange.second.fromRelation(relationType.getNegated());
       if (fromRelation != null && !fromRelation.intersects(leftRange.second)) {
         return new CauseItem[]{
-          findRangeCause(leftChange, leftRange.first, leftRange.second, "Left operand is %s"),
-          findRangeCause(rightChange, rightRange.first, rightRange.second, "Right operand is %s")};
+          findRangeCause(leftChange, leftRange.first, leftRange.second, "left operand is %s"),
+          findRangeCause(rightChange, rightRange.first, rightRange.second, "right operand is %s")};
       }
     }
     return new CauseItem[0];
@@ -534,7 +548,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
       }
       if (instruction instanceof InstanceofInstruction) {
         PsiExpression expression = ((InstanceofInstruction)instruction).getExpression();
-        return new CauseItem("The 'instanceof' check implies non-nullity", expression);
+        return new CauseItem("the 'instanceof' check implies non-nullity", expression);
       }
     }
     if (instruction instanceof AssignInstruction) {
@@ -564,11 +578,11 @@ public class TrackingRunner extends StandardDataFlowRunner {
           DfaValue rightValue = rightPos.myTopOfStack;
           if (leftValue == value && rightValue == relation.myCounterpart ||
               rightValue == value && leftValue == relation.myCounterpart) {
-            return new CauseItem(new CustomDfaProblemType(condition + " was checked before"), expression);
+            return new CauseItem(new CustomDfaProblemType("condition '" + condition + "' was checked before"), expression);
           }
         }
       }
-      return new CauseItem(new CustomDfaProblemType(condition + " is known from #ref"), expression);
+      return new CauseItem(new CustomDfaProblemType("result of '" + condition + "' is known from #ref"), expression);
     }
     return null;
   }
@@ -584,24 +598,24 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       PsiMethod method = call.resolveMethod();
-      return fromMemberNullability(nullability, method, "Method", call.getMethodExpression().getReferenceNameElement());
+      return fromMemberNullability(nullability, method, "method", call.getMethodExpression().getReferenceNameElement());
     }
     if (expression instanceof PsiReferenceExpression) {
       PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
       if (variable instanceof PsiField) {
-        return fromMemberNullability(nullability, variable, "Field", ((PsiReferenceExpression)expression).getReferenceNameElement());
+        return fromMemberNullability(nullability, variable, "field", ((PsiReferenceExpression)expression).getReferenceNameElement());
       }
       if (variable instanceof PsiParameter) {
-        return fromMemberNullability(nullability, variable, "Parameter", ((PsiReferenceExpression)expression).getReferenceNameElement());
+        return fromMemberNullability(nullability, variable, "parameter", ((PsiReferenceExpression)expression).getReferenceNameElement());
       }
       if (variable != null) {
-        return fromMemberNullability(nullability, variable, "Variable", ((PsiReferenceExpression)expression).getReferenceNameElement());
+        return fromMemberNullability(nullability, variable, "variable", ((PsiReferenceExpression)expression).getReferenceNameElement());
       }
     }
     if (nullability == DfaNullability.NOT_NULL) {
       String explanation = getObviouslyNonNullExplanation(expression);
       if (explanation != null) {
-        return new CauseItem("Expression cannot be null as it's " + explanation, expression);
+        return new CauseItem("expression cannot be null as it's " + explanation, expression);
       }
     }
     return null;
@@ -665,11 +679,11 @@ public class TrackingRunner extends StandardDataFlowRunner {
       if (descriptor instanceof SpecialField && range.equals(LongRangeSet.indexRange())) {
         switch (((SpecialField)descriptor)) {
           case ARRAY_LENGTH:
-            return new CauseItem("Array length is always non-negative", factUse);
+            return new CauseItem("array length is always non-negative", factUse);
           case STRING_LENGTH:
-            return new CauseItem("String length is always non-negative", factUse);
+            return new CauseItem("string length is always non-negative", factUse);
           case COLLECTION_SIZE:
-            return new CauseItem("Collection size is always non-negative", factUse);
+            return new CauseItem("collection size is always non-negative", factUse);
           default:
         }
       }
@@ -685,7 +699,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
         if (method != null) {
           LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(method);
           if (fromAnnotation.equals(range)) {
-            return new CauseItem("The range of '" + method.getName() + "' is specified by annotation as " + range,
+            return new CauseItem("the range of '" + method.getName() + "' is specified by annotation as " + range,
                                  call.getMethodExpression().getReferenceNameElement());
           }
         }
@@ -712,14 +726,14 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
           LongRangeSet result = leftSet.second.binOpFromToken(binOp.getOperationTokenType(), rightSet.second, isLong);
           if (range.equals(result)) {
-            CauseItem cause = new CauseItem("Result of '" + binOp.getOperationSign().getText() + 
+            CauseItem cause = new CauseItem("result of '" + binOp.getOperationSign().getText() +
                                             "' is " + range.getPresentationText(expression.getType()), factUse);
             CauseItem leftCause = null, rightCause = null;
             if (!leftSet.second.equals(fromType)) {
-              leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "Left operand is %s");
+              leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "left operand is %s");
             }
             if (!rightSet.second.equals(fromType)) {
-              rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "Right operand is %s");
+              rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "right operand is %s");
             }
             cause.addChildren(leftCause, rightCause);
             return cause;
@@ -745,7 +759,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
       }
       PsiExpression defExpression = factDef.getExpression();
       if (defExpression != null) {
-        item.addChildren(new CauseItem("Range is known from #ref", defExpression));
+        item.addChildren(new CauseItem("range is known from #ref", defExpression));
       }
     }
     return item;

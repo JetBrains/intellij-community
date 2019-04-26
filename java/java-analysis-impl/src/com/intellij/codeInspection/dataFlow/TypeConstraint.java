@@ -102,12 +102,12 @@ public abstract class TypeConstraint {
       if (actual != expectedAssignable) return null;
       if (expectedAssignable) {
         if (myType == otherType) {
-          return "An object is already known to be " + myType;
+          return "an object is already known to be " + myType;
         }
-        return "An object type is exactly " + myType + " which is a subtype of " + otherType;
+        return "an object type is exactly " + myType + " which is a subtype of " + otherType;
       }
       else {
-        return "An object type is exactly " + myType + " which is not a subtype of " + otherType;
+        return "an object type is exactly " + myType + " which is not a subtype of " + otherType;
       }
     }
 
@@ -432,20 +432,20 @@ public abstract class TypeConstraint {
       if (expectedAssignable) {
         for (DfaPsiType dfaTypeValue : myInstanceofValues) {
           if (otherType.isAssignableFrom(dfaTypeValue)) {
-            return "An object is already known to be " + dfaTypeValue +
+            return "an object is already known to be " + dfaTypeValue +
                    (otherType == dfaTypeValue ? "" : " which is a subtype of " + otherType);       
           }
         }
       } else {
         for (DfaPsiType dfaTypeValue : myNotInstanceofValues) {
           if (dfaTypeValue.isAssignableFrom(otherType)) {
-            return "An object is known to be not " + dfaTypeValue +
+            return "an object is known to be not " + dfaTypeValue +
                    (otherType == dfaTypeValue ? "" : " which is a supertype of " + otherType);
           }
         }
         for (DfaPsiType dfaTypeValue : myInstanceofValues) {
           if (!otherType.isConvertibleFrom(dfaTypeValue)) {
-            return "An object is known to be " + dfaTypeValue + " which is definitely incompatible with " + otherType;
+            return "an object is known to be " + dfaTypeValue + " which is definitely incompatible with " + otherType;
           }
         }
       }

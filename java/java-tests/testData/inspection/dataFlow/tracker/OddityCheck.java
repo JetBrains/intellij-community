@@ -1,7 +1,7 @@
 /*
 Value is always false (x * 2 == y * 2 + 1)
   Result of '*' is even (x * 2)
-  Result of '+' is odd (y * 2 + 1)
+  and result of '+' is odd (y * 2 + 1)
     Result of '*' is even (y * 2)
  */
 class Test {
