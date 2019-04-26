@@ -39,7 +39,6 @@
     <externalFormatProcessor implementation="com.intellij.bash.formatter.BashExternalFormatter"/>
     <lang.formatter language="Bash" implementationClass="com.intellij.bash.formatter.BashFormatterModelBuilder"/>
     <postFormatProcessor implementation="com.intellij.bash.formatter.BashPostFormatProcessor"/>
-    <registryKey key="bash.shfmt.path"/>
 
     <externalAnnotator language="Bash" implementationClass="com.intellij.bash.shellcheck.BashShellcheckExternalAnnotator"/>
     <registryKey key="bash.shellcheck.path"/>

@@ -10,6 +10,7 @@ public class BashCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean REDIRECT_FOLLOWED_BY_SPACE = false;
   public boolean KEEP_COLUMN_ALIGNMENT_PADDING = false;
   public boolean MINIFY_PROGRAM = false;
+  public String SHFMT_PATH = "";
 
   public BashCodeStyleSettings(CodeStyleSettings container) {
     super("Bash", container);

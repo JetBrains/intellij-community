@@ -4,9 +4,11 @@ import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.bash.BashFileType;
 import com.intellij.bash.BashLanguage;
 import com.intellij.bash.BashSyntaxHighlighter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -14,7 +16,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -27,16 +28,19 @@ import javax.swing.*;
 
 public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
 
-  private static final String BASH_SHFMT_PATH_KEY = "bash.shfmt.path";
+  private final static Logger LOG = Logger.getInstance(CodeStyleBashPanel.class);
+
   private static final String BROWSE_FOLDER_TITLE = "Choose path to the shfmt formatter:";
   private static final String LINK_TITLE = "Download shfmt formatter";
 
   private JPanel myPanel;
   private JPanel myRightPanel;
+  private JPanel myWarningPanel;
 
   private JCheckBox myTabCharacter;
   private IntegerField myIndentField;
   private JLabel myIndentLabel;
+  private JLabel myWarningLabel;
 
   private JCheckBox myBinaryOpsStartLine;
   private JCheckBox mySwitchCasesIndented;
@@ -53,7 +57,8 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
     myShfmtPathSelector.addBrowseFolderListener(BROWSE_FOLDER_TITLE, "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
-    myTabCharacter.addChangeListener(e -> {
+    myShfmtPathSelector.setEditable(false);
+    myTabCharacter.addChangeListener(listener -> {
       if (myTabCharacter.isSelected()) {
         myIndentField.setEnabled(false);
         myIndentLabel.setEnabled(false);
@@ -63,6 +68,8 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
         myIndentLabel.setEnabled(true);
       }
     });
+    myWarningLabel.setIcon(AllIcons.General.BalloonWarning);
+
     addPanelToWatch(myPanel);
   }
 
@@ -70,8 +77,12 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
     myIndentField = new IntegerField(null, CodeStyleConstraints.MIN_INDENT_SIZE, CodeStyleConstraints.MAX_INDENT_SIZE);
     myShfmtDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
       @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        System.out.println("Clicked");
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        CodeStyleSettings settings = getSettings();
+        BashShfmtFormatterUtil.download(event.getProject(), settings, getPanel());
+
+        BashCodeStyleSettings bashSettings = settings.getCustomSettings(BashCodeStyleSettings.class);
+        myShfmtPathSelector.setText(bashSettings.SHFMT_PATH);
       }
     });
   }
@@ -111,7 +122,8 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
     bashSettings.REDIRECT_FOLLOWED_BY_SPACE = myRedirectFollowedBySpace.isSelected();
     bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
     bashSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
-    Registry.get(BASH_SHFMT_PATH_KEY).setValue(myShfmtPathSelector.getText());
+    bashSettings.SHFMT_PATH = myShfmtPathSelector.getText();
+    myWarningPanel.setVisible(!BashShfmtFormatterUtil.isValidatePath(myShfmtPathSelector.getText()));
   }
 
   @Override
@@ -126,7 +138,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
         || isFieldModified(myMinifyProgram, bashSettings.MINIFY_PROGRAM)
         || isFieldModified(myTabCharacter, indentOptions.USE_TAB_CHARACTER)
         || isFieldModified(myIndentField, indentOptions.INDENT_SIZE)
-        || isFieldModified(myShfmtPathSelector, Registry.stringValue(BASH_SHFMT_PATH_KEY));
+        || isFieldModified(myShfmtPathSelector, bashSettings.SHFMT_PATH);
   }
 
   @Nullable
@@ -147,7 +159,8 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
     myRedirectFollowedBySpace.setSelected(bashSettings.REDIRECT_FOLLOWED_BY_SPACE);
     myKeepColumnAlignmentPadding.setSelected(bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
     myMinifyProgram.setSelected(bashSettings.MINIFY_PROGRAM);
-    myShfmtPathSelector.setText(Registry.stringValue(BASH_SHFMT_PATH_KEY));
+    myShfmtPathSelector.setText(bashSettings.SHFMT_PATH);
+    myWarningPanel.setVisible(!BashShfmtFormatterUtil.isValidatePath(bashSettings.SHFMT_PATH));
   }
 
   private boolean isFieldModified(JCheckBox checkBox, boolean value) {
