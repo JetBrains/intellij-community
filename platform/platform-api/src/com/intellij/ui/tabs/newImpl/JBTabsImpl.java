@@ -303,8 +303,7 @@ public class JBTabsImpl extends JComponent
               @Override
               public void run() {
                 if (!myMouseInsideTabsArea) {
-                  mySingleRowLayout.scrollSelectionInView();
-                  doLayout();
+                  doLayoutTwice();
                 }
               }
             }, 500);
@@ -880,6 +879,16 @@ public class JBTabsImpl extends JComponent
     return info;
   }
 
+  // Looks hacky but makes selected tab scrolled to visible area precisely
+  private void doLayoutTwice() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      doLayout();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        doLayout();
+      });
+    });
+  }
+
   protected TabLabel createTabLabel(TabInfo info) {
     return new TabLabel(this, info);
   }
@@ -1154,6 +1163,7 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
+      doLayoutTwice();
     }
     else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
       updateColor(tabInfo);
@@ -1562,6 +1572,7 @@ public class JBTabsImpl extends JComponent
       }
 
       if (isSingleRow()) {
+        mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
         OnePixelDivider divider = mySplitter.getDivider();
