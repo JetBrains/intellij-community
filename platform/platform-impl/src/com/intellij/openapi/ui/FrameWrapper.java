@@ -55,7 +55,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   private final ProjectManagerListener myProjectListener = new MyProjectManagerListener();
   private FocusWatcher myFocusWatcher;
 
-  private ActionCallback myFocusedCallback;
   private boolean myDisposing;
   private boolean myDisposed;
 
@@ -104,11 +103,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void show(boolean restoreBounds) {
-    myFocusedCallback = new ActionCallback();
-
-    if (myProject != null) {
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(myFocusedCallback);
-    }
 
     final Window frame = getFrame();
 
@@ -141,9 +135,7 @@ public class FrameWrapper implements Disposable, DataProvider {
         }
 
         if (toFocus != null) {
-          fm.requestFocus(toFocus, true).notify(myFocusedCallback);
-        } else {
-          myFocusedCallback.setRejected();
+          fm.requestFocus(toFocus, true);
         }
       }
     };
@@ -216,7 +208,6 @@ public class FrameWrapper implements Disposable, DataProvider {
       myFocusWatcher.deinstall(myComponent);
     }
     myFocusWatcher = null;
-    myFocusedCallback = null;
 
     myComponent = null;
     myImages = null;
