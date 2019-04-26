@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi;
 
-import javax.swing.CellRendererPane;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.ui.UIUtil;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
@@ -25,18 +28,19 @@ import java.awt.event.ContainerListener;
  */
 final class MnemonicContainerListener implements ContainerListener {
   void addTo(Component component) {
-    if (component == null || component instanceof CellRendererPane) {
-      return;
+    JBTreeTraverser<Component> traverser = UIUtil.uiTraverser(component)
+      .expandAndFilter(o -> !(o instanceof CellRendererPane));
+    for (Component c : traverser) {
+      if (c instanceof Container) ((Container)c).addContainerListener(this);
+      MnemonicWrapper.getWrapper(component);
     }
-    if (component instanceof Container) {
-      addTo((Container)component);
-    }
-    MnemonicWrapper.getWrapper(component);
   }
 
   void removeFrom(Component component) {
-    if (component instanceof Container) {
-      removeFrom((Container)component);
+    JBTreeTraverser<Component> traverser = UIUtil.uiTraverser(component)
+      .expandAndFilter(o -> !(o instanceof CellRendererPane));
+    for (Container c : traverser.traverse().filter(Container.class)) {
+      c.removeContainerListener(this);
     }
   }
 
@@ -48,32 +52,5 @@ final class MnemonicContainerListener implements ContainerListener {
   @Override
   public void componentRemoved(ContainerEvent event) {
     removeFrom(event.getChild());
-  }
-
-  private void addTo(Container container) {
-    if (!isAddedTo(container)) {
-      container.addContainerListener(this);
-      for (Component component : container.getComponents()) {
-        addTo(component);
-      }
-    }
-  }
-
-  private void removeFrom(Container container) {
-    if (isAddedTo(container)) {
-      container.removeContainerListener(this);
-      for (Component component : container.getComponents()) {
-        removeFrom(component);
-      }
-    }
-  }
-
-  private boolean isAddedTo(Container container) {
-    for (ContainerListener listener : container.getContainerListeners()) {
-      if (listener == this) {
-        return true;
-      }
-    }
-    return false;
   }
 }

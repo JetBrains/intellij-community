@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -62,6 +63,10 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     }
   };
   @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
+
+  public static int getFocusAcceleratorKeyMask() {
+    return SystemInfo.isMac ? ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK : ActionEvent.ALT_MASK;
+  }
 
   /**
    * @see #init(Component)
