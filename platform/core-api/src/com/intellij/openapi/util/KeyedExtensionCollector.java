@@ -153,7 +153,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
       List<T> list = myExplicitExtensions.get(stringKey);
-      return ContainerUtil.notNullize(buildExtensionsFromExtensionPoint(ContainerUtil.copyList(list), bean -> stringKey.equals(bean.getKey()), extensions));
+      return ContainerUtil.notNullize(buildExtensionsFromExtensionPoint(list == null ? null : new ArrayList<>(list) /* mutable list expected here */, bean -> stringKey.equals(bean.getKey()), extensions));
     }
   }
 
