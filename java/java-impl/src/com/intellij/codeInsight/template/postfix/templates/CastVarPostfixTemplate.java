@@ -76,11 +76,6 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
       public Result calculateQuickResult(ExpressionContext context) {
         return null;
       }
-
-      @Override
-      public boolean requiresCommittedPSI() {
-        return false;
-      }
     };
 
     template.addVariable(TYPE_VAR, expr, expr, true);

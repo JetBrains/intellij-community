@@ -93,11 +93,6 @@ public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
       public Result calculateQuickResult(ExpressionContext context) {
         return null;
       }
-
-      @Override
-      public boolean requiresCommittedPSI() {
-        return false;
-      }
     };
     template.addTextSegment("((");
     template.addVariable(TYPE_TEMPLATE_VARIABLE, expr, expr, true);

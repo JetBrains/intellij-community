@@ -10,6 +10,5 @@ class EditorConfigTemplateConstantExpression(source: Iterable<String>) : Express
   private val elements = source.map(LookupElementBuilder::create).toTypedArray()
   override fun calculateResult(context: ExpressionContext): Result? = null
   override fun calculateQuickResult(context: ExpressionContext): Result? = null
-  override fun requiresCommittedPSI(): Boolean = false
   override fun calculateLookupItems(context: ExpressionContext) = elements
 }

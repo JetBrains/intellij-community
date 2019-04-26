@@ -9,6 +9,5 @@ import com.intellij.codeInsight.template.TextResult
 class EditorConfigTemplateSingletonExpression(private val source: String) : Expression() {
   override fun calculateResult(context: ExpressionContext) = TextResult(source)
   override fun calculateQuickResult(context: ExpressionContext) = TextResult(source)
-  override fun requiresCommittedPSI(): Boolean = false
   override fun calculateLookupItems(context: ExpressionContext) = arrayOf(LookupElementBuilder.create(source))
 }
