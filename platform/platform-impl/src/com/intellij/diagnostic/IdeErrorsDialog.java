@@ -545,7 +545,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePanel(MessageCluster cluster) {
-    if (cluster.submitter instanceof ITNReporter) {
+    if (cluster.submitter instanceof ITNReporter && !(cluster.first.getThrowable() instanceof Freeze)) {
       myAssigneePanel.setVisible(true);
       myAssigneeCombo.setEnabled(cluster.isUnsent());
       Integer assignee = cluster.first.getAssigneeId();
