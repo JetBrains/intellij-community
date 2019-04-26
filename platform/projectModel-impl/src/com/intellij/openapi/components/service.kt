@@ -17,7 +17,7 @@ inline fun <reified T : Any> Project.service(): T = ServiceManager.getService(th
 val ComponentManager.stateStore: IComponentStore
   get() {
     return when {
-      this is Project -> (this as ProjectStoreOwner).getComponentStore()
+      this is ProjectStoreOwner -> (this as ProjectStoreOwner).getComponentStore()
       else -> {
         // module or application service
         picoContainer.getComponentInstance(IComponentStore::class.java.name) as IComponentStore
