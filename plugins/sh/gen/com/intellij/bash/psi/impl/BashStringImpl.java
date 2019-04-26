@@ -56,6 +56,7 @@ public class BashStringImpl extends BashLiteralImpl implements BashString {
     return findChildByType(RAW_STRING);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return BashPsiImplUtil.getReferences(this);

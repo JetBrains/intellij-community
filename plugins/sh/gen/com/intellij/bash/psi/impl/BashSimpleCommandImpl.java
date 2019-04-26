@@ -38,6 +38,7 @@ public class BashSimpleCommandImpl extends BashCommandImpl implements BashSimple
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashSimpleCommandElement.class);
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return BashPsiImplUtil.getReferences(this);
