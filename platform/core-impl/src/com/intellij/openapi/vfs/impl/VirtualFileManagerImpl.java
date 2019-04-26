@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
@@ -57,11 +57,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
   public VirtualFileManagerImpl(@NotNull List<VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
     List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(fileSystems);
-    for (KeyedLazyInstance<VirtualFileSystem> bean : Objects.requireNonNull(myCollector.getPoint()).getExtensionList()) {
-      if (((VirtualFileSystemBean)bean).physical) {
-        physicalFileSystems.add(bean.getInstance());
+
+    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
+        if (((VirtualFileSystemBean)bean).physical) {
+          physicalFileSystems.add(bean.getInstance());
+        }
       }
     }
+
     myPhysicalFileSystems = physicalFileSystems.toArray(new VirtualFileSystem[0]);
 
     for (VirtualFileSystem fileSystem : fileSystems) {
