@@ -3,7 +3,6 @@ package com.intellij.debugger.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -27,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
@@ -47,16 +45,16 @@ public class HotSwapUIImpl extends HotSwapUI {
   private final Project myProject;
   private boolean myPerformHotswapAfterThisCompilation = true;
 
-  public HotSwapUIImpl(final Project project, final MessageBus bus, DebuggerManager debugManager) {
+  public HotSwapUIImpl(@NotNull Project project) {
     myProject = project;
 
-    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerListener() {
+    DebuggerManagerEx.getInstanceEx(project).addDebuggerManagerListener(new DebuggerManagerListener() {
       private MessageBusConnection myConn = null;
 
       @Override
       public void sessionAttached(DebuggerSession session) {
         if (myConn == null) {
-          myConn = bus.connect();
+          myConn = project.getMessageBus().connect();
           myConn.subscribe(ProjectTaskListener.TOPIC, new MyCompilationStatusListener());
         }
       }
