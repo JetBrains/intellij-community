@@ -697,6 +697,14 @@ public class RedundantCastUtil {
             addToResults(typeCast);
           }
         }
+        else if (parent instanceof PsiBinaryExpression) {
+          PsiExpression lOperand = ((PsiBinaryExpression)parent).getLOperand();
+          PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
+          PsiType oppositeType = lOperand == typeCast ? rOperand != null ? rOperand.getType() : null : lOperand.getType();
+          if (oppositeType != null && TypeConversionUtil.areTypesConvertible(opType, oppositeType)) {
+            addToResults(typeCast);
+          }
+        }
         else if (TypeConversionUtil.isAssignable(castTo, opType, false) &&
                  (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
           addToResults(typeCast);
