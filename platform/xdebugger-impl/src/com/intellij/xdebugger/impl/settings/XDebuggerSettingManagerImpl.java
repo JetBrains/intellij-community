@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -43,12 +41,11 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implem
 
     initSettings();
     if (!mySettingsById.isEmpty()) {
-      SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
       for (XDebuggerSettings<?> settings : mySettingsById.values()) {
         Object subState = settings.getState();
         if (subState != null) {
-          Element serializedState = XmlSerializer.serializeIfNotDefault(subState, filter);
-          if (!JDOMUtil.isEmpty(serializedState)) {
+          Element serializedState = XmlSerializer.serialize(subState);
+          if (serializedState != null) {
             SpecificSettingsState state = new SpecificSettingsState();
             state.id = settings.getId();
             state.configuration = serializedState;

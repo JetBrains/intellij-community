@@ -52,7 +52,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   private MockChangeListManager myMockChangeListManager;
   private MockCodeStyleManager myMockCodeStyleManager;
-  private MockPlainTextFormattingModelBuilder myMockPlainTextFormattingModelBuilder;
   private MockPlainTextImportOptimizer myMockPlainTextImportOptimizer;
 
   private ChangeListManager myRealChangeListManager;
@@ -95,11 +94,11 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     myRealVcsContextFactory = ServiceManager.getService(VcsContextFactory.class);
     registerVcsContextFactory(new MockVcsContextFactory(getSourceRoot().getFileSystem()));
 
-    myMockPlainTextFormattingModelBuilder = new MockPlainTextFormattingModelBuilder();
-    LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+    LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new MockPlainTextFormattingModelBuilder(),
+                                                     getTestRootDisposable());
     
     myMockPlainTextImportOptimizer = new MockPlainTextImportOptimizer();
-    LanguageImportStatements.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer);
+    LanguageImportStatements.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer, getTestRootDisposable());
   }
 
   @Override
@@ -108,8 +107,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
       registerChangeListManager(myRealChangeListManager);
       registerCodeStyleManager(myRealCodeStyleManger);
       registerVcsContextFactory(myRealVcsContextFactory);
-      LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
-      LanguageImportStatements.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer);
 
       TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     }
@@ -122,7 +119,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
       myRealVcsContextFactory = null;
       myMockChangeListManager = null;
       myMockCodeStyleManager = null;
-      myMockPlainTextFormattingModelBuilder = null;
       myMockPlainTextImportOptimizer = null;
       super.tearDown();
     }

@@ -94,11 +94,11 @@
       "if_brace_force": "never",
       "imports_layout": [
         "*",
-        "blank_line",
+        "|",
         "javax.**",
         "java.**",
-        "blank_line",
-        "static *"
+        "|",
+        "$*"
       ],
       "indent_case_from_switch": true,
       "indent_size": 4,

@@ -65,7 +65,8 @@ public abstract class IdFilter {
 
     if (LOG.isDebugEnabled()) {
       long elapsed = System.currentTimeMillis() - started;
-      LOG.debug("Done filter in " + elapsed + "ms. Total files in set: " + idSet.cardinality());
+      LOG.debug("Done filter (includeNonProjectItems=" + includeNonProjectItems+") "+
+                "in " + elapsed + "ms. Total files in set: " + idSet.cardinality());
     }
     return new IdFilter() {
       @Override

@@ -44,6 +44,9 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Attribute:optional:true\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
+                  "    Element:idea-version\n" +
+                  "      Attribute:since-build:sinceBuildValue\n" +
+                  "      Attribute:until-build:untilBuildValue\n" +
                   "    Element:extensionPoints\n" +
                   "      Element:extensionPoint\n" +
                   "        Attribute:name:myEP\n" +

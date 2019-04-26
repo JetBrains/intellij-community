@@ -92,7 +92,7 @@ public class NST {
   static NSTLibrary loadLibrary() {
     NativeLibraryLoader.loadPlatformLibrary("nst");
 
-    return ourNSTLibrary = Native.loadLibrary("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    return ourNSTLibrary = Native.load("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }

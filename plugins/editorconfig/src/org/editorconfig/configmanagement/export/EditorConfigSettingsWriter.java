@@ -170,10 +170,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   }
 
   private static boolean isValueAllowed(@Nullable String value) {
-    if (value == null || value.trim().isEmpty()) return false;
-    // TODO<rv> REMOVE THE HACK
-    //  EditorConfig implementation doesn't allow dots. We need to skip such values till the parser issue is fixed.
-    return !value.contains(".");
+    return value != null && !value.trim().isEmpty();
   }
 
   private void writeProperties(@NotNull List<OutPair> outPairs) throws IOException {

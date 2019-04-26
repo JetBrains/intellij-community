@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
@@ -149,7 +150,7 @@ public class CommonCodeStyleSettings {
     return LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(myLanguage);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     DefaultJDOMExternalizer.readExternal(this, element);
     if (myIndentOptions != null) {
       Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
@@ -164,7 +165,7 @@ public class CommonCodeStyleSettings {
     mySoftMargins.deserializeFrom(element);
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     CommonCodeStyleSettings defaultSettings = getDefaultSettings();
     Set<String> supportedFields = getSupportedFields();
     if (supportedFields != null) {
@@ -1007,24 +1008,29 @@ public class CommonCodeStyleSettings {
     private boolean myOverrideLanguageOptions;
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
       deserialize(element);
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       serialize(element, DEFAULT_INDENT_OPTIONS);
     }
 
     public void serialize(@NotNull Element indentOptionsElement, @Nullable IndentOptions defaultOptions) {
-      XmlSerializer.serializeObjectInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
-        @Override
-        protected void configure(@NotNull Object o) {
-          if (o instanceof IndentOptions && defaultOptions != null) {
-            ((IndentOptions)o).copyFrom(defaultOptions);
+      SerializationFilter filter = null;
+      if (defaultOptions != null) {
+        //noinspection deprecation
+        filter = new SkipDefaultValuesSerializationFilters() {
+          @Override
+          protected void configure(@NotNull Object o) {
+            if (o instanceof IndentOptions) {
+              ((IndentOptions)o).copyFrom(defaultOptions);
+            }
           }
-        }
-      });
+        };
+      }
+      XmlSerializer.serializeObjectInto(this, indentOptionsElement, filter);
     }
 
     public void deserialize(Element indentOptionsElement) {

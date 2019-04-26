@@ -24,7 +24,7 @@ private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 
 
 internal class KeyChainCredentialStore : CredentialStore {
   companion object {
-    private val library = Native.loadLibrary("Security", MacOsKeychainLibrary::class.java)
+    private val library = Native.load("Security", MacOsKeychainLibrary::class.java)
 
     private fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentials? {
       val accountNameBytes = accountName?.toByteArray()
@@ -183,15 +183,11 @@ private interface MacOsKeychainLibrary : Library {
 }
 
 // must be not private
+@Structure.FieldOrder("count", "tag", "format")
 internal class SecKeychainAttributeInfo : Structure() {
-  @JvmField
-  var count: Int = 0
-  @JvmField
-  var tag: Pointer? = null
-  @JvmField
-  var format: Pointer? = null
-
-  override fun getFieldOrder() = listOf("count", "tag", "format")
+  @JvmField var count: Int = 0
+  @JvmField var tag: Pointer? = null
+  @JvmField var format: Pointer? = null
 }
 
 @Suppress("FunctionName")
@@ -214,33 +210,24 @@ private fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo 
 }
 
 // must be not private
+@Structure.FieldOrder("count", "attr")
 internal class SecKeychainAttributeList : Structure {
-  @JvmField
-  var count = 0
-  @JvmField
-  var attr: Pointer? = null
+  @JvmField var count = 0
+  @JvmField var attr: Pointer? = null
 
   constructor(p: Pointer) : super(p)
-
   constructor() : super()
-
-  override fun getFieldOrder() = listOf("count", "attr")
 }
 
 // must be not private
+@Structure.FieldOrder("tag", "length", "data")
 internal class SecKeychainAttribute : Structure, Structure.ByReference {
-  @JvmField
-  var tag = 0
-  @JvmField
-  var length = 0
-  @JvmField
-  var data: Pointer? = null
+  @JvmField var tag = 0
+  @JvmField var length = 0
+  @JvmField var data: Pointer? = null
 
   internal constructor(p: Pointer) : super(p)
-
   internal constructor() : super()
-
-  override fun getFieldOrder() = listOf("tag", "length", "data")
 }
 
 private fun readAttributes(list: SecKeychainAttributeList): TIntObjectHashMap<String> {

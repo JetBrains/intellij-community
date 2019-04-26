@@ -524,7 +524,7 @@
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
-    <extensionPoint name="statistician" beanClass="com.intellij.psi.statistics.StatisticsExtensionPoint">
+    <extensionPoint name="statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP">
       <with attribute="implementationClass" implements="com.intellij.psi.statistics.Statistician"/>
     </extensionPoint>
 

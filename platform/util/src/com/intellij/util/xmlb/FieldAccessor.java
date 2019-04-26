@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NonNls;
@@ -9,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
 class FieldAccessor implements MutableAccessor {
@@ -122,8 +119,8 @@ class FieldAccessor implements MutableAccessor {
   }
 
   @Override
-  public boolean isFinal() {
-    return Modifier.isFinal(myField.getModifiers());
+  public boolean isWritable() {
+    return myField.isAccessible();
   }
 
   @NonNls

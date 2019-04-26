@@ -10,6 +10,7 @@ import java.awt.event.KeyEvent;
  */
 public abstract class SearchUpDownPopupController extends SearchPopupController {
   private EventHandler myEventHandler;
+  private EventHandler mySearchResultEventHandler;
 
   public SearchUpDownPopupController(@NotNull PluginSearchTextField searchTextField) {
     super(searchTextField, false);
@@ -19,13 +20,22 @@ public abstract class SearchUpDownPopupController extends SearchPopupController 
     myEventHandler = eventHandler;
   }
 
+  public void setSearchResultEventHandler(@NotNull EventHandler eventHandler) {
+    mySearchResultEventHandler = eventHandler;
+  }
+
   @Override
   public boolean handleUpDown(@NotNull KeyEvent event) {
     if (myPopup != null && myPopup.list != null) {
       return super.handleUpDown(event);
     }
-    if (!myTextField.getText().isEmpty() && myEventHandler != null) {
-      myEventHandler.handleUpDown(event);
+    if (myTextField.getText().isEmpty()) {
+      if (myEventHandler != null) {
+        myEventHandler.handleUpDown(event);
+      }
+    }
+    else if (mySearchResultEventHandler != null) {
+      mySearchResultEventHandler.handleUpDown(event);
     }
     return false;
   }

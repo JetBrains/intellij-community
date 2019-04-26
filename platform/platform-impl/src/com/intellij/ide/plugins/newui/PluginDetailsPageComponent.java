@@ -47,7 +47,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private OpaquePanel myPanel;
   private JLabel myIconLabel;
-  private final JLabel myNameComponent = new JLabel();
+  private final JEditorPane myNameComponent = createNameComponent();
   private final BaselinePanel myNameAndButtons = new BaselinePanel();
   private JButton myRestartButton;
   private JButton myInstallButton;
@@ -125,21 +125,43 @@ public class PluginDetailsPageComponent extends MultiPanel {
     int offset = PluginManagerConfigurableNew.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
 
-    myNameComponent.setOpaque(false);
-    Font font = myNameComponent.getFont();
-    if (font != null) {
-      myNameComponent.setFont(font.deriveFont(Font.BOLD, 25));
-    }
-
     myNameAndButtons.add(myNameComponent);
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
     if (!myMarketplace) {
-      myErrorComponent = ErrorComponent.create(centerPanel, false, VerticalLayout.FILL_HORIZONTAL);
+      myErrorComponent = ErrorComponent.create(centerPanel, VerticalLayout.FILL_HORIZONTAL);
     }
     createMetricsPanel(centerPanel);
 
     return centerPanel;
+  }
+
+  @NotNull
+  private static JEditorPane createNameComponent() {
+    JEditorPane editorPane = new JEditorPane() {
+      JLabel myBaselineComponent;
+
+      @Override
+      public int getBaseline(int width, int height) {
+        if (myBaselineComponent == null) {
+          myBaselineComponent = new JLabel();
+          myBaselineComponent.setFont(getFont());
+        }
+        myBaselineComponent.setText(getText());
+        Dimension size = myBaselineComponent.getPreferredSize();
+        return myBaselineComponent.getBaseline(size.width, size.height);
+      }
+    };
+
+    ErrorComponent.convertToLabel(editorPane);
+    editorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+
+    Font font = editorPane.getFont();
+    if (font != null) {
+      editorPane.setFont(font.deriveFont(Font.BOLD, 25));
+    }
+
+    return editorPane;
   }
 
   private void createButtons() {
@@ -289,7 +311,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showPlugin() {
-    myNameComponent.setText(myPlugin.getName());
+    myNameComponent.setText("<html><span>" + myPlugin.getName() + "</span></html>");
     updateIcon();
 
     if (myMarketplace) {
@@ -424,7 +446,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void showProgress() {
-    myIndicator = new OneLineProgressIndicator();
+    myIndicator = new OneLineProgressIndicator(false);
     myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
     myNameAndButtons.setProgressComponent(null, myIndicator.createBaselineWrapper());
 

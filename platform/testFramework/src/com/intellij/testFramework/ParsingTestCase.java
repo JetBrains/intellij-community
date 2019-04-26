@@ -136,8 +136,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected <T> void addExplicitExtension(LanguageExtension<T> instance, Language language, T object) {
-    instance.addExplicitExtension(language, object);
-    Disposer.register(getTestRootDisposable(), () -> instance.removeExplicitExtension(language, object));
+    instance.addExplicitExtension(language, object, myProject);
   }
 
   @Override

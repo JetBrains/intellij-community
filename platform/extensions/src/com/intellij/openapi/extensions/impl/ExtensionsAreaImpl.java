@@ -336,6 +336,13 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return extensionPoint;
   }
 
+  @Nullable
+  @Override
+  public <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
+    //noinspection unchecked
+    return myExtensionPoints.get(extensionPointName);
+  }
+
   @NotNull
   @Override
   public <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName) {

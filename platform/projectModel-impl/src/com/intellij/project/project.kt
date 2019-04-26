@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.project
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -14,7 +14,11 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 
 val Project.stateStore: IProjectStore
-  get() = picoContainer.getComponentInstance(IComponentStore::class.java) as IProjectStore
+  get() = (this as ProjectStoreOwner).getComponentStore() as IProjectStore
+
+interface ProjectStoreOwner {
+  fun getComponentStore(): IComponentStore
+}
 
 val Project.isDirectoryBased: Boolean
   get() = !isDefault && StorageScheme.DIRECTORY_BASED == stateStore.storageScheme

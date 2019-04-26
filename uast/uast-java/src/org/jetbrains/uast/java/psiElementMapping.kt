@@ -4,7 +4,9 @@ package org.jetbrains.uast.java
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import com.intellij.psi.javadoc.PsiDocToken
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.internal.ClassSet
 import org.jetbrains.uast.internal.UElementToPsiElementMapping
 
@@ -17,7 +19,7 @@ internal fun canConvert(psiCls: Class<out PsiElement>, targets: Array<out Class<
     // checking the most popular cases before looking up in hashtable
     when (targets.single()) {
       UElement::class.java -> uElementClassSet.contains(psiCls)
-      ULiteralExpression::class.java -> uLiteralClassSet.contains(psiCls)
+      UInjectionHost::class.java -> uInjectionHostClassSet.contains(psiCls)
       UCallExpression::class.java -> uCallClassSet.contains(psiCls)
     }
   }
@@ -42,7 +44,8 @@ private val conversionMapping = UElementToPsiElementMapping(
   UImportStatement::class.java to ClassSet(PsiImportStatementBase::class.java),
   USimpleNameReferenceExpression::class.java to ClassSet(PsiIdentifier::class.java,
                                                          PsiReferenceExpression::class.java,
-                                                         PsiJavaCodeReferenceElement::class.java),
+                                                         PsiJavaCodeReferenceElement::class.java,
+                                                         PsiDocToken::class.java),
   UIdentifier::class.java to ClassSet(PsiIdentifier::class.java),
   UNamedExpression::class.java to ClassSet(PsiNameValuePair::class.java),
   UCallExpression::class.java to ClassSet(
@@ -69,6 +72,7 @@ private val conversionMapping = UElementToPsiElementMapping(
   UPrefixExpression::class.java to ClassSet(PsiPrefixExpression::class.java),
   UPostfixExpression::class.java to ClassSet(PsiPostfixExpression::class.java),
   ULiteralExpression::class.java to ClassSet(PsiLiteralExpressionImpl::class.java),
+  UInjectionHost::class.java to ClassSet(PsiLiteralExpressionImpl::class.java),
   UCallableReferenceExpression::class.java to ClassSet(PsiMethodReferenceExpression::class.java),
   UThisExpression::class.java to ClassSet(PsiThisExpression::class.java),
   USuperExpression::class.java to ClassSet(PsiSuperExpression::class.java),
@@ -96,11 +100,13 @@ private val conversionMapping = UElementToPsiElementMapping(
   UExpressionList::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java),
 
   UExpression::class.java to ClassSet(PsiExpressionStatement::class.java),
-  USwitchClauseExpression::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java)
+  USwitchClauseExpression::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java),
+  UComment::class.java to ClassSet(PsiComment::class.java)
 )
 
 val uElementClassSet = ClassSet(*conversionMapping.baseMapping.flatMap { it.value.initialClasses.asIterable() }.toTypedArray())
 
 val uLiteralClassSet: ClassSet = conversionMapping[ULiteralExpression::class.java]
+val uInjectionHostClassSet: ClassSet = conversionMapping[UInjectionHost::class.java]
 
 val uCallClassSet: ClassSet = conversionMapping[UCallExpression::class.java]

@@ -410,6 +410,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return file;
   }
 
+  @Override
+  public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
+    assertInitialized();
+    InspectionsKt.enableInspectionTools(getProject(), myProjectFixture.getTestRootDisposable(), inspections);
+  }
+
   @SafeVarargs
   @Override
   public final void enableInspections(@NotNull Class<? extends LocalInspectionTool>... inspections) {
@@ -417,31 +423,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public final void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections) {
-    enableInspections(myProjectFixture.getTestRootDisposable(), inspections);
-  }
-
-  @Override
-  public final void enableInspections(@NotNull InspectionProfileEntry... inspections) {
-    enableInspections(myProjectFixture.getTestRootDisposable(), inspections);
-  }
-
-  @SafeVarargs
-  @Override
-  public final void enableInspections(@NotNull Disposable parent, @NotNull Class<? extends LocalInspectionTool>... inspections) {
-    enableInspections(parent, Arrays.asList(inspections));
-  }
-
-  @Override
-  public final void enableInspections(@NotNull Disposable parent, @NotNull Collection<Class<? extends LocalInspectionTool>> inspections) {
+  public void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections) {
     List<InspectionProfileEntry> tools = InspectionTestUtil.instantiateTools(inspections);
-    enableInspections(parent, tools.toArray(new InspectionProfileEntry[0]));
-  }
-
-  @Override
-  public final void enableInspections(@NotNull Disposable parent, @NotNull InspectionProfileEntry... inspections) {
-    assertInitialized();
-    InspectionsKt.enableInspectionTools(getProject(), parent, inspections);
+    enableInspections(tools.toArray(new InspectionProfileEntry[0]));
   }
 
   @Override

@@ -82,6 +82,7 @@ public class StartupUtil {
 
   @FunctionalInterface
   public interface AppStarter {
+    // called in Idea Main thread
     void start();
 
     // not called in EDT

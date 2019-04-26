@@ -24,6 +24,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
@@ -138,6 +139,7 @@ public class PluginManagerConfigurableNewLayout
     });
 
     myUpdateAll.setVisible(false);
+    myUpdateCounter.setVisible(false);
 
     myTabHeaderComponent.addTab("Marketplace");
     myTabHeaderComponent.addTab(myInstalledTabName = new PluginManagerConfigurableNew.CountTabName(myTabHeaderComponent, "Installed") {
@@ -214,8 +216,8 @@ public class PluginManagerConfigurableNewLayout
 
           boolean select = myInstalledPanel == null;
 
-          if (myTabHeaderComponent.getSelectionTab() != 1) {
-            myTabHeaderComponent.setSelectionWithEvents(1);
+          if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
+            myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
           }
 
           myInstalledTab.clearSearchPanel("");
@@ -330,13 +332,15 @@ public class PluginManagerConfigurableNewLayout
       @NotNull
       @Override
       protected JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
-        myMarketplacePanel = new PluginsGroupComponentWithProgress(new PluginListLayout(), new MultiSelectionEventHandler(), myNameListener,
+        MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
+        myMarketplacePanel = new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
                                                                    PluginManagerConfigurableNewLayout.this.mySearchListener,
-                                                                   descriptor -> new NewListPluginComponent(myPluginModel, descriptor,
-                                                                                                            true));
+                                                                   d -> new NewListPluginComponent(myPluginModel, d, true));
 
         myMarketplacePanel.setSelectionListener(selectionListener);
         PluginManagerConfigurableNew.registerCopyProvider(myMarketplacePanel);
+
+        ((SearchUpDownPopupController)myMarketplaceSearchPanel.controller).setEventHandler(eventHandler);
 
         Runnable runnable = () -> {
           List<PluginsGroup> groups = new ArrayList<>();
@@ -592,7 +596,7 @@ public class PluginManagerConfigurableNewLayout
         };
 
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        marketplaceController.setEventHandler(eventHandler);
+        marketplaceController.setSearchResultEventHandler(eventHandler);
 
         PluginsGroupComponentWithProgress panel =
           new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
@@ -730,12 +734,15 @@ public class PluginManagerConfigurableNewLayout
       @NotNull
       @Override
       protected JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
-        myInstalledPanel = new PluginsGroupComponent(new PluginListLayout(), new MultiSelectionEventHandler(), myNameListener,
+        MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
+        myInstalledPanel = new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
                                                      PluginManagerConfigurableNewLayout.this.mySearchListener,
                                                      descriptor -> new NewListPluginComponent(myPluginModel, descriptor, false));
 
         myInstalledPanel.setSelectionListener(selectionListener);
         PluginManagerConfigurableNew.registerCopyProvider(myInstalledPanel);
+
+        ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
 
         PluginLogo.startBatchMode();
 
@@ -748,15 +755,22 @@ public class PluginManagerConfigurableNewLayout
         }
 
         PluginsGroup downloaded = new PluginsGroup("Downloaded");
+        downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
+
         PluginsGroup bundled = new PluginsGroup("Bundled");
 
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
         int bundledEnabled = 0;
         int downloadedEnabled = 0;
 
+        boolean hideImplDetails = !Registry.is("plugins.show.implementation.details");
+
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
             if (descriptor.isBundled()) {
+              if (hideImplDetails && descriptor.isImplementationDetail()) {
+                continue;
+              }
               bundled.descriptors.add(descriptor);
               if (descriptor.isEnabled()) {
                 bundledEnabled++;
@@ -876,7 +890,7 @@ public class PluginManagerConfigurableNewLayout
         };
 
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        installedController.setEventHandler(eventHandler);
+        installedController.setSearchResultEventHandler(eventHandler);
 
         PluginsGroupComponent panel = new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
                                                                 PluginManagerConfigurableNewLayout.this.mySearchListener,
@@ -1319,7 +1333,8 @@ public class PluginManagerConfigurableNewLayout
       for (PluginId dependId : entry.getValue()) {
         if (!PluginManagerCore.isModuleDependency(dependId)) {
           IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
-          if (!(descriptor instanceof IdeaPluginDescriptorImpl) || !((IdeaPluginDescriptorImpl)descriptor).isDeleted()) {
+          if (!(descriptor instanceof IdeaPluginDescriptorImpl) ||
+              !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
             dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");
           }
           break;

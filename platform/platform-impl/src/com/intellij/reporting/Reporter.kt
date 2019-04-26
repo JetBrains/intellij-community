@@ -60,10 +60,12 @@ object StatsSender {
   }
 }
 
-private fun compressBase64Gzip(text: String): ByteArray {
+private fun compressBase64Gzip(text: String) = compressBase64Gzip(text.toByteArray())
+
+fun compressBase64Gzip(data: ByteArray): ByteArray {
   val outputStream = ByteArrayOutputStream()
   GZIPOutputStream(outputStream).use {
-    it.write(text.toByteArray())
+    it.write(data)
   }
   return Base64.getEncoder().encode(outputStream.toByteArray())
 }
