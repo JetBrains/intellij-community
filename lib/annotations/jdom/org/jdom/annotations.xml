@@ -54,6 +54,9 @@
   <item name='org.jdom.Element org.jdom.Attribute getAttribute(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.jdom.Element org.jdom.Element addContent(org.jdom.Element) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.jdom.Element org.jdom.Element getChild(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>

@@ -213,12 +213,6 @@ public abstract class SearchQueryParser {
         super.handleAttribute(name.substring(1), value, invert);
       }
     }
-
-    @NotNull
-    @Override
-    public String getUrlQuery() {
-      return super.getUrlQuery();    // TODO: Auto-generated method stub
-    }
   }
 
   public static class Installed extends SearchQueryParser {
@@ -234,9 +228,6 @@ public abstract class SearchQueryParser {
       localParse(query);
     }
 
-    protected Installed() {
-    }
-
     private void localParse(@NotNull String query) {
       for (String word : splitQuery(query)) {
         if (word.startsWith("#")) {
@@ -249,10 +240,7 @@ public abstract class SearchQueryParser {
           addToSearchQuery(word);
         }
       }
-      parseEnd();
-    }
 
-    protected void parseEnd() {
       attributes = enabled != null || bundled != null || invalid != null || needUpdate != null || deleted != null || needRestart != null;
     }
 
@@ -292,8 +280,15 @@ public abstract class SearchQueryParser {
     }
   }
 
-  public static class InstalledWithVendor extends Installed {
+  public static class InstalledWithVendor extends SearchQueryParser {
     public final Set<String> vendors = new HashSet<>();
+    public boolean enabled;
+    public boolean disabled;
+    public boolean bundled;
+    public boolean downloaded;
+    public boolean invalid;
+    public boolean needUpdate;
+    public boolean attributes;
 
     public InstalledWithVendor(@NotNull String query) {
       localParse(query);
@@ -329,7 +324,34 @@ public abstract class SearchQueryParser {
         }
       }
 
-      parseEnd();
+      attributes = enabled || disabled || bundled || downloaded || invalid || needUpdate;
+    }
+
+    @Override
+    protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
+      switch (name) {
+        case "enabled":
+          enabled = true;
+          break;
+        case "disabled":
+          disabled = true;
+          break;
+
+        case "bundled":
+          bundled = true;
+          break;
+        case "downloaded":
+          downloaded = true;
+          break;
+
+        case "invalid":
+          invalid = true;
+          break;
+
+        case "outdated":
+          needUpdate = true;
+          break;
+      }
     }
   }
 }

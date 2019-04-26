@@ -90,14 +90,6 @@ public class FSOperations {
     }
   }
 
-  /**
-   * @deprecated use markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file)
-   */
-  @Deprecated
-  public static void markDirtyIfNotDeleted(CompileContext context, final File file) throws IOException {
-    markDirtyIfNotDeleted(context, CompilationRound.NEXT, file);
-  }
-
   public static void markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
@@ -114,14 +106,6 @@ public class FSOperations {
     }
   }
 
-  /**
-   * @deprecated use markDirty(CompileContext context, final CompilationRound round, final ModuleChunk chunk, @Nullable FileFilter filter)
-   */
-  @Deprecated
-  public static void markDirty(CompileContext context, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
-    markDirty(context, CompilationRound.NEXT, chunk, filter);
-  }
-
   public static void markDirty(CompileContext context, final CompilationRound round, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       markDirty(context, round, target, filter);
@@ -131,14 +115,6 @@ public class FSOperations {
   public static void markDirty(CompileContext context, final CompilationRound round, final ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     markDirtyFiles(context, target, round, pd.timestamps.getStorage(), true, null, filter);
-  }
-
-  /**
-   * @deprecated use markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk, FileFilter filter)
-   */
-  @Deprecated
-  public static void markDirtyRecursively(CompileContext context, ModuleChunk chunk) throws IOException {
-    markDirtyRecursively(context, CompilationRound.NEXT, chunk);
   }
 
   public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk) throws IOException {

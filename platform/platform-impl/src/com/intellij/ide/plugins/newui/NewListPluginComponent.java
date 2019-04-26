@@ -31,7 +31,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   private final MyPluginModel myPluginModel;
   private final boolean myMarketplace;
   private boolean myUninstalled;
-  private IdeaPluginDescriptor myUpdateDescriptor;
+  public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
@@ -94,7 +94,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       else {
         myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(false));
 
-        myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, true));
+        myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
         myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
         ColorButton.setWidth72(myInstallButton);
       }
@@ -155,15 +155,10 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
     }
 
-    String vendor = myPlugin.isBundled() ? null : myPlugin.getVendor();
+    String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
     if (!StringUtil.isEmptyOrSpaces(vendor)) {
       myVendor = GridCellPluginComponent.createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
     }
-  }
-
-  @Nullable
-  public IdeaPluginDescriptor getUpdateDescriptor() {
-    return myUpdateDescriptor;
   }
 
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
@@ -187,7 +182,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
       if (myUpdateButton == null) {
         myNameAndButtons.addButtonAsFirstComponent(myUpdateButton = new UpdateButton());
-        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
       }
       else {
         myUpdateButton.setVisible(true);

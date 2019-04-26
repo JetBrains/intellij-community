@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -75,11 +76,16 @@ public class SuggestVariableNameMacro extends Macro {
   private static String[] getNames (final ExpressionContext context) {
     String[] names = ExpressionUtil.getNames(context);
     if (names == null || names.length == 0) return names;
-    PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
-    PsiElement e = file.findElementAt(context.getStartOffset());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(context.getProject());
+    Editor editor = context.getEditor();
+    if(editor == null) return null;
+    documentManager.commitDocument(editor.getDocument());
+    PsiFile file = documentManager.getPsiFile(editor.getDocument());
+    PsiElement e = file != null ? file.findElementAt(context.getStartOffset()) : null;
     PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(e, "");
     LinkedList<String> namesList = new LinkedList<>(Arrays.asList(names));
     for (PsiVariable var : vars) {
+      //noinspection ConstantConditions
       if (e.equals(var.getNameIdentifier())) continue;
       namesList.remove(var.getName());
     }
@@ -90,6 +96,7 @@ public class SuggestVariableNameMacro extends Macro {
       for (int j = 1; ; j++) {
         String name1 = name + j;
         for (PsiVariable var : vars) {
+          //noinspection ConstantConditions
           if (name1.equals(var.getName()) && !var.getNameIdentifier().equals(e)) continue index;
         }
         return new String[]{name1};
