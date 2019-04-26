@@ -621,7 +621,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   }
 
   @Nullable
-  private static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
+  static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
     final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
     if (attributeDescription == null) {
       return null;
