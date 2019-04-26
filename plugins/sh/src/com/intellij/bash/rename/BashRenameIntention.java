@@ -58,7 +58,7 @@ public class BashRenameIntention extends BaseIntentionAction {
     else {
       textRange = SelectWordUtil.getWordSelectionRange(editor.getDocument().getCharsSequence(),
           caret.getOffset(),
-          ch -> "/\\$ \t\r\n".indexOf(ch) == -1
+          ch -> "/\\$ \t\r\n\"';".indexOf(ch) == -1
       );
       if (textRange == null) return;
     }
