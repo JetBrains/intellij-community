@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -28,10 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
-
-  private final static Logger LOG = Logger.getInstance(CodeStyleBashPanel.class);
-
-  private static final String BROWSE_FOLDER_TITLE = "Choose path to the shfmt formatter:";
+  private static final String BROWSE_FOLDER_TITLE = "Choose Path to the Shfmt Formatter:";
   private static final String LINK_TITLE = "Download shfmt formatter";
 
   private JPanel myPanel;
@@ -49,6 +45,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
   private JCheckBox myKeepColumnAlignmentPadding;
   private JCheckBox myMinifyProgram;
 
+  @SuppressWarnings("unused")
   private ActionLink myShfmtDownloadLink;
   private TextFieldWithBrowseButton myShfmtPathSelector;
 
@@ -124,7 +121,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
     bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
     bashSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
     bashSettings.SHFMT_PATH = myShfmtPathSelector.getText();
-    myWarningPanel.setVisible(!BashShfmtFormatterUtil.isValidatePath(myShfmtPathSelector.getText()));
+    myWarningPanel.setVisible(!BashShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
   }
 
   @Override
@@ -161,7 +158,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
     myKeepColumnAlignmentPadding.setSelected(bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
     myMinifyProgram.setSelected(bashSettings.MINIFY_PROGRAM);
     myShfmtPathSelector.setText(bashSettings.SHFMT_PATH);
-    myWarningPanel.setVisible(!BashShfmtFormatterUtil.isValidatePath(bashSettings.SHFMT_PATH));
+    myWarningPanel.setVisible(!BashShfmtFormatterUtil.isValidPath(bashSettings.SHFMT_PATH));
   }
 
   private boolean isFieldModified(JCheckBox checkBox, boolean value) {

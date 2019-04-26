@@ -89,10 +89,8 @@ public class BashShfmtFormatterUtil {
     }
   }
 
-  public static boolean isValidatePath(@NotNull String path) {
-    if (!new File(path).exists()) {
-      return false;
-    }
+  public static boolean isValidPath(@NotNull String path) {
+    if (!new File(path).exists()) return false;
 
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("-version");
