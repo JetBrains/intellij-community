@@ -40,6 +40,12 @@
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
 
+    <group id="ShowIntentionsGroup" compact="true">
+      <reference ref="ShowIntentionActions"/>
+      <separator/>
+      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </group>
+
     <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
     <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Find"/>
 
