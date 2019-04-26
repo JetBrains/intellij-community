@@ -11,7 +11,7 @@ import com.intellij.psi.*
  * @param foldingLevel level at which generics will be shown as placeholders, so they require click to expand it.
  */
 class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory, private val foldingLevel: Int) {
-  fun typeHint(type: PsiType): InlayPresentation = hint(type, 0)
+  fun typeHint(type: PsiType): InlayPresentation = factory.roundWithBackground(hint(type, 0))
 
   private fun hint(type: PsiType, level: Int): InlayPresentation = when (type) {
     is PsiArrayType -> factory.seq(hint(type.componentType, level), factory.text("[]"))
