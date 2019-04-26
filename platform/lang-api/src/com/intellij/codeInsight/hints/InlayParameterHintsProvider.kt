@@ -19,6 +19,8 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import org.jetbrains.annotations.NonNls
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
 
 
 object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
@@ -98,6 +100,12 @@ sealed class HintInfo {
 
   }
 
+  open fun isOwnedByPsiElement(elem: PsiElement, editor: Editor): Boolean {
+    val textRange = elem.textRange
+    if (textRange == null) return false
+    val start = if (textRange.isEmpty) textRange.startOffset else textRange.startOffset + 1
+    return editor.inlayModel.hasInlineElementsInRange(start, textRange.endOffset)
+  }
 }
 
 data class Option(@NonNls val id: String,
