@@ -198,8 +198,7 @@ shell_command ::=   for_command
                   | if_command
                   | subshell_command
                   | block
-//                  | function_definition
-                  | &(function | word '(') function_definition
+                  | function_definition
 
 private any_block ::= block | do_block
 do_block ::= do  block_compound_list done {pin(".*")=1 extends=block}
@@ -230,8 +229,9 @@ private in_clause ::= "in" word_list list_terminator newlines
 list_terminator ::= '\n' | ';' {recoverWhile = any_block_recover}
 private any_block_recover ::= !(do | '{' | '\n')
 
-function_definition ::=           word argument_list  newlines block
-                       | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
+function_definition ::= &(function | word '(') function_definition_inner {extends=command}
+private function_definition_inner ::=           word argument_list  newlines block
+                                     | function word argument_list? newlines block {pin(".*")="function|argument_list"}
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
 private argument_list_recover ::= !('\n'| '{')
 
