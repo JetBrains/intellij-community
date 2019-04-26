@@ -50,8 +50,15 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected fun getCommitMessage() = ui.commitMessageUi.text
   protected fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
+  protected val commitContext get() = workflow.commitContext
   protected val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
+
+  override var isAmendCommitMode: Boolean
+    get() = commitContext.isAmendCommitMode
+    set(value) {
+      commitContext.isAmendCommitMode = value
+    }
 
   protected fun createDataProvider() = DataProvider { dataId ->
     when {
@@ -61,10 +68,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
   }
 
-  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
+  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(commitPanel, commitContext))
 
   protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
-    if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, workflow.commitContext) else emptyMap(),
+    if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
     getBeforeOptions(workflow.commitHandlers),
     getAfterOptions(workflow.commitHandlers, this)
   )
@@ -107,7 +114,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     if (!saveCommitOptions()) return
     saveCommitMessage(true)
 
-    (session as? CommitSessionContextAware)?.setContext(workflow.commitContext)
+    (session as? CommitSessionContextAware)?.setContext(commitContext)
     refreshChanges {
       updateWorkflow()
       doExecuteCustom(executor, session)

@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.changes
 
 interface CommitWorkflowHandler {
+  var isAmendCommitMode: Boolean
+
   fun getExecutor(executorId: String): CommitExecutor?
   fun isExecutorEnabled(executor: CommitExecutor): Boolean
   fun execute(executor: CommitExecutor)

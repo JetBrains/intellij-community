@@ -58,7 +58,12 @@ public abstract class AmendComponent {
   }
 
   protected void amendModeToggled() {
+    updateCommitWorkflow();
     updateCommitMessage();
+  }
+
+  private void updateCommitWorkflow() {
+    myCheckinPanel.getCommitWorkflowHandler().setAmendCommitMode(isAmendMode());
   }
 
   private void updateCommitMessage() {
@@ -100,6 +105,7 @@ public abstract class AmendComponent {
   public void refresh() {
     myPreviousMessage = myCheckinPanel.getCommitMessage();
     myAmend.setSelected(false);
+    updateCommitWorkflow();
   }
 
   @NotNull

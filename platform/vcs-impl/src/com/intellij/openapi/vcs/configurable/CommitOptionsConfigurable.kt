@@ -8,8 +8,10 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.ui.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.changes.ui.CommitOptionsPanel.Companion.verticalPanel
+import com.intellij.openapi.vcs.changes.ui.NullCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.ui.getDefaultCommitActionName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel
@@ -40,6 +42,7 @@ class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsCon
     override fun getComponent() = null
     override fun getPreferredFocusedComponent() = null
 
+    override fun getCommitWorkflowHandler(): CommitWorkflowHandler = NullCommitWorkflowHandler
     override fun getProject() = project
 
     override fun vcsIsAffected(name: String) = false

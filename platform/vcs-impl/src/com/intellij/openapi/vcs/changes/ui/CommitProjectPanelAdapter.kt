@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
+import com.intellij.openapi.vcs.changes.CommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -28,6 +29,7 @@ internal open class CommitProjectPanelAdapter(private val handler: AbstractCommi
   private fun getDisplayedPaths() = getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles().map { getFilePath(it) }
   private fun getIncludedPaths() = getIncludedChanges().map { getFilePath(it) } + getIncludedUnversionedFiles().map { getFilePath(it) }
 
+  override fun getCommitWorkflowHandler(): CommitWorkflowHandler = handler
   override fun getProject(): Project = workflow.project
 
   // NOTE: Seems it is better to remove getComponent()/getPreferredFocusedComponent() usages. And provide more specific methods instead.

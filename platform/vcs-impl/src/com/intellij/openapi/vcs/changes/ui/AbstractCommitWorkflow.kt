@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -28,6 +29,13 @@ private val LOG = logger<AbstractCommitWorkflow>()
 internal fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 internal fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
 internal fun CommitOptions.refresh() = allOptions.forEach { it.refresh() }
+
+private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
+var CommitContext.isAmendCommitMode: Boolean
+  get() = getUserData(IS_AMEND_COMMIT_MODE_KEY) == true
+  set(value) {
+    putUserData(IS_AMEND_COMMIT_MODE_KEY, value)
+  }
 
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged()
