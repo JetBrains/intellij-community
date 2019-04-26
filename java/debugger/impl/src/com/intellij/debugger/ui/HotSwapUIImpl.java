@@ -47,8 +47,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
   public HotSwapUIImpl(@NotNull Project project) {
     myProject = project;
-
-    DebuggerManagerEx.getInstanceEx(project).addDebuggerManagerListener(new DebuggerManagerListener() {
+    project.getMessageBus().connect().subscribe(DebuggerManagerListener.TOPIC, new DebuggerManagerListener() {
       private MessageBusConnection myConn = null;
 
       @Override

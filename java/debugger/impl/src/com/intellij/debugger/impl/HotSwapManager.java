@@ -2,7 +2,6 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.ide.actions.ActionsCollector;
@@ -25,9 +24,9 @@ public class HotSwapManager {
   private static final String CLASS_EXTENSION = ".class";
   private final Project myProject;
 
-  public HotSwapManager(Project project, DebuggerManagerEx manager) {
+  public HotSwapManager(@NotNull Project project) {
     myProject = project;
-    manager.addDebuggerManagerListener(new DebuggerManagerListener() {
+    project.getMessageBus().connect().subscribe(DebuggerManagerListener.TOPIC, new DebuggerManagerListener() {
       @Override
       public void sessionCreated(DebuggerSession session) {
         myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));

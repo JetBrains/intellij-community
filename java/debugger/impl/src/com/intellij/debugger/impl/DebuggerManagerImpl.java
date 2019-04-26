@@ -57,7 +57,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   private final DebuggerContextListener mySessionListener = new DebuggerContextListener() {
     @Override
     public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
-
       final DebuggerSession session = newContext.getDebuggerSession();
       if (event == DebuggerSession.Event.PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
         // if paused in non-active session; switch current session
@@ -69,10 +68,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         myDebuggerStateManager.fireStateChanged(newContext, event);
       }
       if (event == DebuggerSession.Event.ATTACHED) {
-        myDispatcher.getMulticaster().sessionAttached(session);
+        getEventPublisher().sessionAttached(session);
       }
       else if (event == DebuggerSession.Event.DETACHED) {
-        myDispatcher.getMulticaster().sessionDetached(session);
+        getEventPublisher().sessionDetached(session);
       }
       else if (event == DebuggerSession.Event.DISPOSE) {
         dispose(session);
@@ -83,6 +82,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       }
     }
   };
+
+  @NotNull
+  private DebuggerManagerListener getEventPublisher() {
+    return myProject.getMessageBus().syncPublisher(DebuggerManagerListener.TOPIC);
+  }
 
   @Override
   public void addClassNameMapper(final NameMapper mapper) {
@@ -106,12 +110,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   @Override
-  public void addDebuggerManagerListener(DebuggerManagerListener listener) {
+  public void addDebuggerManagerListener(@NotNull DebuggerManagerListener listener) {
     myDispatcher.addListener(listener);
   }
 
   @Override
-  public void removeDebuggerManagerListener(DebuggerManagerListener listener) {
+  public void removeDebuggerManagerListener(@NotNull DebuggerManagerListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -126,6 +130,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
           getBreakpointManager().updateBreakpointsUI();
         }
       });
+
+      busConnection.subscribe(DebuggerManagerListener.TOPIC, myDispatcher.getMulticaster());
     }
     myBreakpointManager.addListeners(busConnection);
   }
@@ -225,7 +231,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         }
       });
     }
-    myDispatcher.getMulticaster().sessionCreated(session);
+    getEventPublisher().sessionCreated(session);
 
     if (debugProcess.isDetached() || debugProcess.isDetaching()) {
       session.dispose();
@@ -386,7 +392,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     synchronized (mySessions) {
       DebuggerSession removed = mySessions.remove(processHandler);
       LOG.assertTrue(removed != null);
-      myDispatcher.getMulticaster().sessionRemoved(session);
+      getEventPublisher().sessionRemoved(session);
     }
   }
 }
