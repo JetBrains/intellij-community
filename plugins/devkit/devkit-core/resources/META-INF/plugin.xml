@@ -290,7 +290,6 @@
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
   </extensions>
 
-
   <extensionPoints >
     <extensionPoint name="lang.goodCodeRedVisitor"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -303,7 +302,6 @@
       <implementation-class>org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory</implementation-class>
     </component>
   </project-components>
-
 
   <actions>
     <group id="PluginDeployActions">
