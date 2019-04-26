@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.ide.ui.UIThemeProvider;
-import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -14,12 +13,13 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-public class ThemePathReferenceContributor extends PsiReferenceContributor {
+public class ThemeEPPathReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(getPattern(), new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("path"), new PsiReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -31,15 +31,15 @@ public class ThemePathReferenceContributor extends PsiReferenceContributor {
 
         ExtensionPoint extensionPoint = ((Extension)domElement).getExtensionPoint();
         if (extensionPoint == null) return PsiReference.EMPTY_ARRAY;
-        if (!UIThemeProvider.EP_NAME.getName().equals(extensionPoint.getEffectiveQualifiedName())) return PsiReference.EMPTY_ARRAY;
+
+        final String extensionPointQualifiedName = extensionPoint.getEffectiveQualifiedName();
+        if (!UIThemeProvider.EP_NAME.getName().equals(extensionPointQualifiedName) &&
+            !UIThemeMetadataService.EP_NAME.getName().equals(extensionPointQualifiedName)) {
+          return PsiReference.EMPTY_ARRAY;
+        }
 
         return new FileReferenceSet(element).getAllReferences();
       }
     });
-  }
-
-
-  private static XmlAttributeValuePattern getPattern() {
-    return XmlPatterns.xmlAttributeValue().withLocalName("path");
   }
 }

@@ -199,7 +199,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
-    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemePathReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemeEPPathReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
