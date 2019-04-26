@@ -31,66 +31,66 @@ class MoveToCaretStopTest : LightPlatformCodeInsightFixtureTestCase() {
   fun `test Move to Next Word on Unix`() {
     setupTestCaretStops(CaretStopOptionsTransposed.DEFAULT_UNIX)
 
-    doTest(MOVE, FORWARD, """doTest┃(┃"┃test┃"┃,┃ Direction┃.┃FORWARD┃)┃""")
+    doTest(MOVE, FORWARD, """doTest^(^"^test^"^,^ Direction^.^FORWARD^)^""")
     doTest(MOVE, FORWARD, """
-      assert┃(┃i┃ <┃ expectedCaretOffset┃)┃ {┃ "┃Duplicate┃ carets┃:┃ '┃${'$'}stringWithCaretStops┃'"┃ }┃
+      assert^(^i^ <^ expectedCaretOffset^)^ {^ "^Duplicate^ carets^:^ '^${'$'}stringWithCaretStops^'"^ }^
 """)
 
     doTest(MOVE, FORWARD, """
-  private┃ fun┃ doTest┃(┃stringWithCaretStops┃:┃ String┃,┃
-                     direction┃:┃ Direction┃,┃
-                     isDelete┃:┃ Boolean┃ =┃ false┃)┃ {┃
+  private^ fun^ doTest^(^stringWithCaretStops^:^ String^,^
+                     direction^:^ Direction^,^
+                     isDelete^:^ Boolean^ =^ false^)^ {^
 """)
 
     doTest(MOVE, FORWARD, """
-data┃ class┃ CaretStopOptions┃(┃@┃OptionTag┃(┃"┃BACKWARD┃"┃)┃ val┃ backwardPolicy┃:┃ CaretStopPolicy┃,┃
-                            @┃OptionTag┃(┃"┃FORWARD┃"┃)┃ val┃ forwardPolicy┃:┃ CaretStopPolicy┃)┃ {┃
+data^ class^ CaretStopOptions^(^@^OptionTag^(^"^BACKWARD^"^)^ val^ backwardPolicy^:^ CaretStopPolicy^,^
+                            @^OptionTag^(^"^FORWARD^"^)^ val^ forwardPolicy^:^ CaretStopPolicy^)^ {^
 """)
 
     doTest(MOVE, FORWARD, """
-  public┃ void┃ setCaretStopOptions┃(┃@┃NotNull┃ CaretStopOptions┃ options┃)┃ {┃
-    myOsSpecificState┃.┃CARET_STOP_OPTIONS┃ =┃ options┃;┃
-  }┃
+  public^ void^ setCaretStopOptions^(^@^NotNull^ CaretStopOptions^ options^)^ {^
+    myOsSpecificState^.^CARET_STOP_OPTIONS^ =^ options^;^
+  }^
 """)
 
     doTest(MOVE, FORWARD, """
-my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
-           "┃four┃"┃,┃ "┃five┃"┃,┃
-           "┃six┃"┃.┃six┃,┃ "┃seven┃"┃seven┃,┃
-           eight┃"┃eight┃"┃,┃ nine┃/┃"┃nine┃"┃]┃
+my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
+           "^four^"^,^ "^five^"^,^
+           "^six^"^.^six^,^ "^seven^"^seven^,^
+           eight^"^eight^"^,^ nine^/^"^nine^"^]^
 """)
   }
 
   fun `test Move to Previous Word on Unix`() {
     setupTestCaretStops(CaretStopOptionsTransposed.DEFAULT_UNIX)
 
-    doTest(MOVE, BACKWARD, """┃doTest┃(┃"┃test┃"┃, ┃Direction┃.┃FORWARD┃)""")
+    doTest(MOVE, BACKWARD, """^doTest^(^"^test^"^, ^Direction^.^FORWARD^)""")
     doTest(MOVE, BACKWARD, """
-      ┃assert┃(┃i ┃< ┃expectedCaretOffset┃) ┃{ ┃"┃Duplicate ┃carets┃: ┃'┃${'$'}stringWithCaretStops┃'" ┃}
+      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'" ^}
 """)
 
     doTest(MOVE, BACKWARD, """
-  ┃private ┃fun ┃doTest┃(┃stringWithCaretStops┃: ┃String┃,
-                     ┃direction┃: ┃Direction┃,
-                     ┃isDelete┃: ┃Boolean ┃= ┃false┃) ┃{
+  ^private ^fun ^doTest^(^stringWithCaretStops^: ^String^,
+                     ^direction^: ^Direction^,
+                     ^isDelete^: ^Boolean ^= ^false^) ^{
 """)
 
     doTest(MOVE, BACKWARD, """
-┃data ┃class ┃CaretStopOptions┃(┃@┃OptionTag┃(┃"┃BACKWARD┃"┃) ┃val ┃backwardPolicy┃: ┃CaretStopPolicy┃,
-                            ┃@┃OptionTag┃(┃"┃FORWARD┃"┃) ┃val ┃forwardPolicy┃: ┃CaretStopPolicy┃) ┃{
+^data ^class ^CaretStopOptions^(^@^OptionTag^(^"^BACKWARD^"^) ^val ^backwardPolicy^: ^CaretStopPolicy^,
+                            ^@^OptionTag^(^"^FORWARD^"^) ^val ^forwardPolicy^: ^CaretStopPolicy^) ^{
 """)
 
     doTest(MOVE, BACKWARD, """
-  ┃public ┃void ┃setCaretStopOptions┃(┃@┃NotNull ┃CaretStopOptions ┃options┃) ┃{
-    ┃myOsSpecificState┃.┃CARET_STOP_OPTIONS ┃= ┃options┃;
-  ┃}
+  ^public ^void ^setCaretStopOptions^(^@^NotNull ^CaretStopOptions ^options^) ^{
+    ^myOsSpecificState^.^CARET_STOP_OPTIONS ^= ^options^;
+  ^}
 """)
 
     doTest(MOVE, BACKWARD, """
-┃my_list ┃= ┃[┃"┃one┃"┃, ┃"┃two┃"┃, ┃"┃three┃"┃,
-           ┃"┃four┃"┃, ┃"┃five┃"┃,
-           ┃"┃six┃"┃.┃six┃, ┃"┃seven┃"┃seven┃,
-           ┃eight┃"┃eight┃"┃, ┃nine┃/┃"┃nine┃"┃]
+^my_list ^= ^[^"^one^"^, ^"^two^"^, ^"^three^"^,
+           ^"^four^"^, ^"^five^"^,
+           ^"^six^"^.^six^, ^"^seven^"^seven^,
+           ^eight^"^eight^"^, ^nine^/^"^nine^"^]
 """)
   }
 
@@ -105,33 +105,33 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
   }
 
   private fun `do test Move to Neighbor Word on Windows`(direction: Direction) {
-    doTest(MOVE, direction, """doTest┃(┃"┃test┃"┃, ┃Direction┃.┃FORWARD┃)""")
+    doTest(MOVE, direction, """doTest^(^"^test^"^, ^Direction^.^FORWARD^)""")
     doTest(MOVE, direction, """
-┃      ┃assert┃(┃i ┃< ┃expectedCaretOffset┃) ┃{ ┃"┃Duplicate ┃carets┃: ┃'┃${'$'}stringWithCaretStops┃'" ┃}┃
+^      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'" ^}^
 """)
 
     doTest(MOVE, direction, """
-┃  ┃private ┃fun ┃doTest┃(┃stringWithCaretStops┃: ┃String┃,┃
-┃                     ┃direction┃: ┃Direction┃,┃
-┃                     ┃isDelete┃: ┃Boolean ┃= ┃false┃) ┃{┃
+^  ^private ^fun ^doTest^(^stringWithCaretStops^: ^String^,^
+^                     ^direction^: ^Direction^,^
+^                     ^isDelete^: ^Boolean ^= ^false^) ^{^
 """)
 
     doTest(MOVE, direction, """
-┃data ┃class ┃CaretStopOptions┃(┃@┃OptionTag┃(┃"┃BACKWARD┃"┃) ┃val ┃backwardPolicy┃: ┃CaretStopPolicy┃,┃
-┃                            ┃@┃OptionTag┃(┃"┃FORWARD┃"┃) ┃val ┃forwardPolicy┃: ┃CaretStopPolicy┃) ┃{┃
+^data ^class ^CaretStopOptions^(^@^OptionTag^(^"^BACKWARD^"^) ^val ^backwardPolicy^: ^CaretStopPolicy^,^
+^                            ^@^OptionTag^(^"^FORWARD^"^) ^val ^forwardPolicy^: ^CaretStopPolicy^) ^{^
 """)
 
     doTest(MOVE, direction, """
-┃  ┃public ┃void ┃setCaretStopOptions┃(┃@┃NotNull ┃CaretStopOptions ┃options┃) ┃{┃
-┃    ┃myOsSpecificState┃.┃CARET_STOP_OPTIONS ┃= ┃options┃;┃
-┃  ┃}┃
+^  ^public ^void ^setCaretStopOptions^(^@^NotNull ^CaretStopOptions ^options^) ^{^
+^    ^myOsSpecificState^.^CARET_STOP_OPTIONS ^= ^options^;^
+^  ^}^
 """)
 
     doTest(MOVE, direction, """
-┃my_list ┃= ┃[┃"┃one┃"┃, ┃"┃two┃"┃, ┃"┃three┃"┃,┃
-┃           ┃"┃four┃"┃, ┃"┃five┃"┃,┃
-┃           ┃"┃six┃"┃.┃six┃, ┃"┃seven┃"┃seven┃,┃
-┃           ┃eight┃"┃eight┃"┃, ┃nine┃/┃"┃nine┃"┃]┃
+^my_list ^= ^[^"^one^"^, ^"^two^"^, ^"^three^"^,^
+^           ^"^four^"^, ^"^five^"^,^
+^           ^"^six^"^.^six^, ^"^seven^"^seven^,^
+^           ^eight^"^eight^"^, ^nine^/^"^nine^"^]^
 """)
   }
 
@@ -146,33 +146,33 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
   }
 
   private fun `do test Delete to Word End`() {
-    doTest(DELETE, FORWARD, """doTest┃(┃"║test║"┃,┃ Direction┃.┃FORWARD┃)┃""")
+    doTest(DELETE, FORWARD, """doTest^(^"`test`"^,^ Direction^.^FORWARD^)^""")
     doTest(DELETE, FORWARD, """
-┃      assert┃(┃i┃ <┃ expectedCaretOffset┃)┃ {┃ "┃Duplicate┃ carets┃:┃ '┃${'$'}stringWithCaretStops┃'"┃ }┃
+^      assert^(^i^ <^ expectedCaretOffset^)^ {^ "^Duplicate^ carets^:^ '^${'$'}stringWithCaretStops^'"^ }^
 """)
 
     doTest(DELETE, FORWARD, """
-┃  private┃ fun┃ doTest┃(┃stringWithCaretStops┃:┃ String┃,┃
-┃                     direction┃:┃ Direction┃,┃
-┃                     isDelete┃:┃ Boolean┃ =┃ false┃)┃ {┃
+^  private^ fun^ doTest^(^stringWithCaretStops^:^ String^,^
+^                     direction^:^ Direction^,^
+^                     isDelete^:^ Boolean^ =^ false^)^ {^
 """)
 
     doTest(DELETE, FORWARD, """
-┃data┃ class┃ CaretStopOptions┃(┃@┃OptionTag┃(┃"║BACKWARD║"┃)┃ val┃ backwardPolicy┃:┃ CaretStopPolicy┃,┃
-┃                            @┃OptionTag┃(┃"║FORWARD║"┃)┃ val┃ forwardPolicy┃:┃ CaretStopPolicy┃)┃ {┃
+^data^ class^ CaretStopOptions^(^@^OptionTag^(^"`BACKWARD`"^)^ val^ backwardPolicy^:^ CaretStopPolicy^,^
+^                            @^OptionTag^(^"`FORWARD`"^)^ val^ forwardPolicy^:^ CaretStopPolicy^)^ {^
 """)
 
     doTest(DELETE, FORWARD, """
-┃  public┃ void┃ setCaretStopOptions┃(┃@┃NotNull┃ CaretStopOptions┃ options┃)┃ {┃
-┃    myOsSpecificState┃.┃CARET_STOP_OPTIONS┃ =┃ options┃;┃
-┃  }┃
+^  public^ void^ setCaretStopOptions^(^@^NotNull^ CaretStopOptions^ options^)^ {^
+^    myOsSpecificState^.^CARET_STOP_OPTIONS^ =^ options^;^
+^  }^
 """)
 
     doTest(DELETE, FORWARD, """
-┃my_list┃ =┃ [┃"║one║"┃,┃ "║two║"┃,┃ "║three║"┃,┃
-┃           "║four║"┃,┃ "║five║"┃,┃
-┃           "║six║"┃.┃six┃,┃ "║seven║"┃seven┃,┃
-┃           eight┃"║eight║"┃,┃ nine┃/┃"║nine║"┃]┃
+^my_list^ =^ [^"`one`"^,^ "`two`"^,^ "`three`"^,^
+^           "`four`"^,^ "`five`"^,^
+^           "`six`"^.^six^,^ "`seven`"^seven^,^
+^           eight^"`eight`"^,^ nine^/^"`nine`"^]^
 """)
   }
 
@@ -188,33 +188,33 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
 
   // TODO for some reason this test performs 4-5 time slower than its twin "Delete to Word End" test
   private fun `do test Delete to Word Start`() {
-    doTest(DELETE, BACKWARD, """┃doTest┃(┃"║test║"┃, ┃Direction┃.┃FORWARD┃)""")
+    doTest(DELETE, BACKWARD, """^doTest^(^"`test`"^, ^Direction^.^FORWARD^)""")
     doTest(DELETE, BACKWARD, """
-┃      ┃assert┃(┃i ┃< ┃expectedCaretOffset┃) ┃{ ┃"┃Duplicate ┃carets┃: ┃'┃${'$'}stringWithCaretStops┃'" ┃}┃
+^      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'" ^}^
 """)
 
     doTest(DELETE, BACKWARD, """
-┃  ┃private ┃fun ┃doTest┃(┃stringWithCaretStops┃: ┃String┃,┃
-┃                     ┃direction┃: ┃Direction┃,┃
-┃                     ┃isDelete┃: ┃Boolean ┃= ┃false┃) ┃{┃
+^  ^private ^fun ^doTest^(^stringWithCaretStops^: ^String^,^
+^                     ^direction^: ^Direction^,^
+^                     ^isDelete^: ^Boolean ^= ^false^) ^{^
 """)
 
     doTest(DELETE, BACKWARD, """
-┃data ┃class ┃CaretStopOptions┃(┃@┃OptionTag┃(┃"║BACKWARD║"┃) ┃val ┃backwardPolicy┃: ┃CaretStopPolicy┃,┃
-┃                            ┃@┃OptionTag┃(┃"║FORWARD║"┃) ┃val ┃forwardPolicy┃: ┃CaretStopPolicy┃) ┃{┃
+^data ^class ^CaretStopOptions^(^@^OptionTag^(^"`BACKWARD`"^) ^val ^backwardPolicy^: ^CaretStopPolicy^,^
+^                            ^@^OptionTag^(^"`FORWARD`"^) ^val ^forwardPolicy^: ^CaretStopPolicy^) ^{^
 """)
 
     doTest(DELETE, BACKWARD, """
-┃  ┃public ┃void ┃setCaretStopOptions┃(┃@┃NotNull ┃CaretStopOptions ┃options┃) ┃{┃
-┃    ┃myOsSpecificState┃.┃CARET_STOP_OPTIONS ┃= ┃options┃;┃
-┃  ┃}┃
+^  ^public ^void ^setCaretStopOptions^(^@^NotNull ^CaretStopOptions ^options^) ^{^
+^    ^myOsSpecificState^.^CARET_STOP_OPTIONS ^= ^options^;^
+^  ^}^
 """)
 
     doTest(DELETE, BACKWARD, """
-┃my_list ┃= ┃[┃"║one║"┃, ┃"║two║"┃, ┃"║three║"┃,┃
-┃           ┃"║four║"┃, ┃"║five║"┃,┃
-┃           ┃"║six║"┃.┃six┃, ┃"║seven║"┃seven┃,┃
-┃           ┃eight┃"║eight║"┃, ┃nine┃/┃"║nine║"┃]┃
+^my_list ^= ^[^"`one`"^, ^"`two`"^, ^"`three`"^,^
+^           ^"`four`"^, ^"`five`"^,^
+^           ^"`six`"^.^six^, ^"`seven`"^seven^,^
+^           ^eight^"`eight`"^, ^nine^/^"`nine`"^]^
 """)
   }
 
@@ -271,8 +271,8 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
   }
 
   companion object {
-    private const val READABLE_CARET = '┃' // use it verbatim for better readability
-    private const val SKIP_INNARDS_CARET = '║' // delete word consumes "quoted" words
+    private const val READABLE_CARET = '^'
+    private const val SKIP_INNARDS_CARET = '`' // delete word consumes "quoted" words
 
     private fun isTestCaret(ch: Char) =
       ch == READABLE_CARET || ch == SKIP_INNARDS_CARET
@@ -281,7 +281,7 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
 
     private fun String.extractCaretOffsets(): Pair<String, List<CaretOffset>> {
       val caretOffsets: List<CaretOffset> = trim(READABLE_CARET, SKIP_INNARDS_CARET)
-        .let { "┃$it┃" }
+        .let { "^$it^" }
         .mapIndexedNotNull { offset, ch ->
           (offset to (ch == SKIP_INNARDS_CARET)).takeIf { isTestCaret(ch) }
         }.mapIndexed { i, (offset, isSkipInnards) ->
