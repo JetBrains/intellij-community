@@ -476,32 +476,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     highlightAttributeNotUsedAnymore(ideaVersion.getMax(), holder);
     highlightUntilBuild(ideaVersion, holder);
 
-    GenericAttributeValue<String> sinceBuild = ideaVersion.getSinceBuild();
-    GenericAttributeValue<String> untilBuild = ideaVersion.getUntilBuild();
+    GenericAttributeValue<BuildNumber> sinceBuild = ideaVersion.getSinceBuild();
+    GenericAttributeValue<BuildNumber> untilBuild = ideaVersion.getUntilBuild();
     if (!DomUtil.hasXml(sinceBuild) &&
         !DomUtil.hasXml(untilBuild)) {
       return;
     }
 
-    BuildNumber sinceBuildNumber = parseBuildNumber(sinceBuild, holder);
-    BuildNumber untilBuildNumber = parseBuildNumber(untilBuild, holder);
+    BuildNumber sinceBuildNumber = sinceBuild.getValue();
+    BuildNumber untilBuildNumber = untilBuild.getValue();
     if (sinceBuildNumber == null || untilBuildNumber == null) return;
 
     int compare = Comparing.compare(sinceBuildNumber, untilBuildNumber);
     if (compare > 0) {
       holder.createProblem(untilBuild, DevKitBundle.message("inspections.plugin.xml.until.build.must.be.greater.than.since.build"));
-    }
-  }
-
-  @Nullable
-  private static BuildNumber parseBuildNumber(GenericAttributeValue<String> build,
-                                              DomElementAnnotationHolder holder) {
-    try {
-      return BuildNumber.fromString(build.getStringValue());
-    }
-    catch (RuntimeException e) {
-      holder.createProblem(build, DevKitBundle.message("inspections.plugin.xml.until.since.build.invalid", build.getStringValue()));
-      return null;
     }
   }
 
