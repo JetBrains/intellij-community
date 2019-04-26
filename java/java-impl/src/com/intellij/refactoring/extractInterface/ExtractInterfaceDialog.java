@@ -28,7 +28,6 @@ import com.intellij.refactoring.extractSuperclass.JavaExtractSuperBaseDialog;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -141,7 +140,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   @Override
   protected ExtractSuperBaseProcessor createProcessor() {
     return new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), getExtractedSuperName(),
-                                         mySourceClass, ArrayUtil.toObjectArray(getSelectedMemberInfos(), MemberInfo.class),
+                                         mySourceClass, getSelectedMemberInfos().toArray(new MemberInfo[0]),
                                          new DocCommentPolicy(getDocCommentPolicy()));
   }
 

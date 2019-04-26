@@ -208,7 +208,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @NotNull
-  private static THashSet<FilePath> removeAncestorsRecursive(@NotNull Collection<FilePath> dirs) {
+  private static THashSet<FilePath> removeAncestorsRecursive(@NotNull Collection<? extends FilePath> dirs) {
     List<FilePath> paths = ContainerUtil.sorted(dirs, Comparator.comparingInt(it -> it.getPath().length()));
 
     THashSet<FilePath> result = newFilePathsSet();
@@ -339,7 +339,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public void iterate(final Processor<FilePath> iterator) {
+  public void iterate(final Processor<? super FilePath> iterator) {
     if (myProject.isDisposed()) return;
 
     for (VirtualFile root : myAffectedContentRoots) {
@@ -371,7 +371,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public void iterateExistingInsideScope(Processor<VirtualFile> processor) {
+  public void iterateExistingInsideScope(Processor<? super VirtualFile> processor) {
     if (myProject.isDisposed()) return;
 
     for (VirtualFile root : myAffectedContentRoots) {

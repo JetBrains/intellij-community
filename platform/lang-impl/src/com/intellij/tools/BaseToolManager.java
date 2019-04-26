@@ -31,10 +31,10 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class BaseToolManager<T extends Tool> {
-  @NotNull private final ActionManagerEx myActionManager;
+  @Nullable private final ActionManagerEx myActionManager;
   private final SchemeManager<ToolsGroup<T>> mySchemeManager;
 
-  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
+  public BaseToolManager(@Nullable ActionManagerEx actionManagerEx, @NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
     myActionManager = actionManagerEx;
 
     //noinspection AbstractMethodCallInConstructor
@@ -88,6 +88,10 @@ public abstract class BaseToolManager<T extends Tool> {
   }
 
   void registerActions() {
+    if (myActionManager == null) {
+      return;
+    }
+
     unregisterActions();
 
     // register
@@ -110,6 +114,9 @@ public abstract class BaseToolManager<T extends Tool> {
 
   private void unregisterActions() {
     // unregister Tool actions
+    if (myActionManager == null) {
+      return;
+    }
     for (String oldId : myActionManager.getActionIds(getActionIdPrefix())) {
       myActionManager.unregisterAction(oldId);
     }

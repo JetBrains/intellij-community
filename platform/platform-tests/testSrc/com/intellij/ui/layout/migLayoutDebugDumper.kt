@@ -101,7 +101,9 @@ internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean 
   val dumperOptions = DumperOptions()
   dumperOptions.isAllowReadOnlyProperties = true
   dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
+  dumperOptions.width = 4096
   val yaml = Yaml(filter, dumperOptions)
+  @Suppress("SpellCheckingInspection")
   return yaml.dump(linkedMapOf(
     "layoutConstraints" to layout.layoutConstraints,
     "rowConstraints" to layout.rowConstraints,

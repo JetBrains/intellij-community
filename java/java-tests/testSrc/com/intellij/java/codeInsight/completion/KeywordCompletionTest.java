@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
-  private static final String[] FILE_SCOPE_KEYWORDS = {
-    "package", "public", "private", "import", "final", "class", "interface", "abstract", "enum", "default", null};
   private static final String[] CLASS_SCOPE_KEYWORDS = {
     "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", null};
   private static final String[] CLASS_SCOPE_KEYWORDS_2 = {
@@ -114,6 +112,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInMethodCall2() { doTest(); }
   public void testNewInMethodRefs() { doTest(1, "new", "null", "true", "false"); }
   public void testNewInCast() { doTest(2, "new", "null", "true", "false"); }
+  public void testNewInNegation() { doTest(1, "new", "null", "true", "false"); }
   public void testSpaceAfterInstanceof() { doTest(); }
   public void testInstanceofAfterUnresolved() { doTest(1, "instanceof"); }
   public void testInstanceofAfterStatementStart() { doTest(1, "instanceof"); }
@@ -140,6 +139,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testCharInAnnotatedParameter() { doTest(1, "char"); }
   public void testReturnInTernary() { doTest(1, "return"); }
   public void testReturnInRussian() { doTest(1, "return"); }
+  public void testReturnWithTypo() { doTest(1, "return"); }
   public void testFinalAfterParameterAnno() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterParameterAnno2() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() { doTest(3, "final", "float", "class"); }
@@ -161,6 +161,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testIntInGenerics2() { doTest(2, "int", "char", "final"); }
   public void testBreakInLabeledBlock() { doTest(1, "break label", "continue"); }
   public void testPrimitiveInForLoop() { doTest(1, "int"); }
+  public void testPrimitiveInEnumConstructorCast() { doTest(1, "int"); }
   public void testNoStatementInForLoopCondition() { doTest(0, "synchronized", "if"); }
   public void testNoStatementInForLoopUpdate() { doTest(0, "synchronized", "if"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
@@ -184,6 +185,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     configureFromFileText("package-info.java", "@Anno <caret>");
     complete();
     testByCount(1, "package");
+  }
+
+  public void testAfterWildcard() {
+    configureByTestName();
+    assertStringItems("extends", "super");
   }
 
   private void doTest() {

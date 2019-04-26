@@ -32,7 +32,7 @@ import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitProtectedBranchesKt;
-import git4idea.actions.GitAbstractRebaseAction;
+import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseSpec;
@@ -44,6 +44,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +56,6 @@ import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.GitUsagesTriggerCollector.reportUsage;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
@@ -79,10 +79,12 @@ class GitBranchPopupActions {
     LightActionGroup popupGroup = new LightActionGroup(false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
-    if (myRepository.isRebaseInProgress()) {
-      GitRebaseSpec rebaseSpec = GitRepositoryManager.getInstance(myProject).getOngoingRebaseSpec();
-      popupGroup.addAll(
-        rebaseSpec != null && isSpecForRepo(rebaseSpec, myRepository) ? getRebaseActions() : createPerRepoRebaseActions(myRepository));
+    GitRebaseSpec rebaseSpec = GitRepositoryManager.getInstance(myProject).getOngoingRebaseSpec();
+    if (rebaseSpec != null && isSpecForRepo(rebaseSpec, myRepository)) {
+      popupGroup.addAll(getRebaseActions());
+    }
+    else {
+      popupGroup.addAll(createPerRepoRebaseActions(myRepository));
     }
 
     popupGroup.addAction(new GitNewBranchAction(myProject, repositoryList));
@@ -133,32 +135,28 @@ class GitBranchPopupActions {
 
   @NotNull
   private static List<AnAction> createPerRepoRebaseActions(@NotNull GitRepository repository) {
-    return asList(createRepositoryRebaseAction("Git.Rebase.Abort", repository),
-                  createRepositoryRebaseAction("Git.Rebase.Continue", repository),
-                  createRepositoryRebaseAction("Git.Rebase.Skip", repository));
+    return mapNotNull(getRebaseActions(), action -> createRepositoryRebaseAction(action, repository));
   }
 
   @NotNull
   static List<AnAction> getRebaseActions() {
-    ActionManager actionManager = ActionManager.getInstance();
-    return asList(actionManager.getAction("Git.Rebase.Abort"),
-                  actionManager.getAction("Git.Rebase.Continue"),
-                  actionManager.getAction("Git.Rebase.Skip"));
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Git.Ongoing.Rebase.Actions");
+    return asList(group.getChildren(null));
   }
 
-  @NotNull
-  private static AnAction createRepositoryRebaseAction(@NotNull String rebaseActionId, @NotNull GitRepository repository) {
-    GitAbstractRebaseAction rebaseAction = notNull((GitAbstractRebaseAction)ActionManager.getInstance().getAction(rebaseActionId));
+  @Nullable
+  private static AnAction createRepositoryRebaseAction(@NotNull AnAction rebaseAction, @NotNull GitRepository repository) {
+    if (!(rebaseAction instanceof GitOngoingOperationAction)) return null;
+    GitOngoingOperationAction ongoingAction = (GitOngoingOperationAction)rebaseAction;
     DumbAwareAction repositoryAction = new DumbAwareAction() {
-
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(repository.isRebaseInProgress());
+        e.getPresentation().setEnabledAndVisible(ongoingAction.isEnabled(repository));
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        rebaseAction.performInBackground(repository);
+        ongoingAction.performInBackground(repository);
       }
     };
     repositoryAction.getTemplatePresentation().copyFrom(rebaseAction.getTemplatePresentation());
@@ -177,11 +175,9 @@ class GitBranchPopupActions {
       if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         if (options.shouldCheckout()) {
-          reportUsage(myProject, "git.branch.create.new");
           brancher.checkoutNewBranch(options.getName(), myRepositories);
         }
         else {
-          reportUsage(myProject, "git.branch.create.new.nocheckout");
           brancher.createBranch(options.getName(), StreamEx.of(myRepositories).toMap(position -> HEAD));
         }
       }
@@ -211,7 +207,6 @@ class GitBranchPopupActions {
         String reference = dialog.getReference();
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(reference, true, myRepositories, null);
-        reportUsage(myProject, "git.branch.checkout.revision");
       }
     }
 
@@ -248,6 +243,7 @@ class GitBranchPopupActions {
       myGitVcsSettings = GitVcsSettings.getInstance(myProject);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
+      getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, constructTooltip());
       setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
@@ -266,17 +262,36 @@ class GitBranchPopupActions {
       return myBranchName;
     }
 
+    @Nullable
+    private String constructTooltip() {
+      boolean incoming = hasIncomingCommits();
+      boolean outgoing = hasOutgoingCommits();
+      if (!incoming && !outgoing) return null;
+
+      StringBuilder stringBuilder = new StringBuilder("There are ");
+      String delimiter = "";
+      if (incoming) {
+        stringBuilder.append("incoming ");
+        delimiter = "and ";
+      }
+      if (outgoing) {
+        stringBuilder.append(delimiter).append("outgoing ");
+      }
+      stringBuilder.append("commits");
+      return stringBuilder.toString();
+    }
+
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{
         new CheckoutAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
-        new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
         new Separator(),
         new RenameBranchAction(myProject, myRepositories, myBranchName),
@@ -329,7 +344,6 @@ class GitBranchPopupActions {
       public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(myBranchName, false, myRepositories, null);
-        reportUsage(myProject, "git.branch.checkout.local");
       }
     }
 
@@ -354,7 +368,6 @@ class GitBranchPopupActions {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
         }
-        reportUsage(myProject, "git.checkout.as.new.branch");
       }
     }
 
@@ -378,7 +391,6 @@ class GitBranchPopupActions {
         if (newName != null) {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.renameBranch(myCurrentBranchName, newName, myRepositories);
-          reportUsage(myProject, "git.branch.rename");
         }
       }
 
@@ -407,7 +419,6 @@ class GitBranchPopupActions {
       public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteBranch(myBranchName, myRepositories);
-        reportUsage(myProject, "git.branch.delete.local");
       }
     }
   }
@@ -493,7 +504,6 @@ class GitBranchPopupActions {
         if (name != null) {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
-          reportUsage(myProject, "git.branch.checkout.remote");
         }
       }
 
@@ -521,7 +531,6 @@ class GitBranchPopupActions {
       public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteRemoteBranch(myBranchName, myRepositories);
-        reportUsage(myProject, "git.branch.delete.remote");
       }
 
       @Override
@@ -553,7 +562,6 @@ class GitBranchPopupActions {
 
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
-      reportUsage(myProject, "git.branch.compare");
     }
 
     @Override
@@ -593,7 +601,6 @@ class GitBranchPopupActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
-      reportUsage(myProject, "git.branch.merge");
     }
 
     private GitBrancher.DeleteOnMergeOption deleteOnMerge() {
@@ -633,7 +640,6 @@ class GitBranchPopupActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebase(myRepositories, myBranchName);
-      reportUsage(myProject, "git.branch.rebase");
     }
   }
 
@@ -662,7 +668,6 @@ class GitBranchPopupActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebaseOnCurrent(myRepositories, myBranchName);
-      reportUsage(myProject, "git.branch.checkout.with.rebase");
     }
   }
 
@@ -706,7 +711,6 @@ class GitBranchPopupActions {
       public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteTag(myTagName, myRepositories);
-        reportUsage(myProject, "git.tag.delete.local");
       }
     }
   }

@@ -59,7 +59,7 @@ public class RemoteServer {
 
     RMIClientSocketFactory clientSocketFactory = RMISocketFactory.getDefaultSocketFactory();
     RMIServerSocketFactory serverSocketFactory = new RMIServerSocketFactory() {
-      InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
+      final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
       public ServerSocket createServerSocket(int port) throws IOException {
         return new ServerSocket(port, 0, loopbackAddress);
       }

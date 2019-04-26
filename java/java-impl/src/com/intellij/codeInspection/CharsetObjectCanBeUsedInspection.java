@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -48,7 +50,15 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     new CharsetMethodMatcher("java.nio.channels.Channels", "newReader", "java.nio.channels.ReadableByteChannel", ""),
     new CharsetMethodMatcher("java.nio.channels.Channels", "newWriter", "java.nio.channels.WritableByteChannel", ""),
     new CharsetMethodMatcher(JAVA_UTIL_PROPERTIES, "storeToXML", "java.io.OutputStream", JAVA_LANG_STRING, ""),
+    
+    // Apache IO
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.io.InputStream", ""),
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.net.URI", ""),
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.net.URL", ""),
   };
+
+  private static final CallMatcher FOR_NAME_MATCHER =
+    CallMatcher.staticCall("java.nio.charset.Charset", "forName").parameterTypes(JAVA_LANG_STRING);
 
   private static final Map<String, String> SUPPORTED_CHARSETS =
     ContainerUtil.<String, String>immutableMapBuilder()
@@ -74,16 +84,28 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       @Override
       public void visitCallExpression(PsiCallExpression call) {
         CharsetMatch match = StreamEx.of(MATCHERS)
-                                     .map(matcher -> matcher.extractCharsetMatch(call))
-                                     .nonNull()
-                                     .findFirst().orElse(null);
+          .map(matcher -> matcher.extractCharsetMatch(call))
+          .nonNull()
+          .findFirst().orElse(null);
         if (match == null) return;
-        String charsetString = getCharsetString(match.myStringCharset);
+        addCharsetReplacement(match.myStringCharset, match.myStringCharset);
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        super.visitMethodCallExpression(call);
+        if (!FOR_NAME_MATCHER.matches(call)) return;
+        PsiExpressionList arguments = call.getArgumentList();
+        PsiExpression charset = arguments.getExpressions()[0];
+        addCharsetReplacement(call, charset);
+      }
+
+      private void addCharsetReplacement(@NotNull PsiElement place, @NotNull PsiExpression charset) {
+        String charsetString = getCharsetString(charset);
         if (charsetString == null) return;
         String constantName = "StandardCharsets." + SUPPORTED_CHARSETS.get(charsetString);
-        holder
-          .registerProblem(match.myStringCharset, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
-                           new CharsetObjectCanBeUsedFix(constantName));
+        holder.registerProblem(place, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
+                               new CharsetObjectCanBeUsedFix(constantName));
       }
 
       @Nullable
@@ -157,8 +179,8 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
       PsiMethod[] candidates = method.isConstructor() ? aClass.getConstructors() : aClass.findMethodsByName(method.getName(), false);
       PsiMethod charsetMethod = Arrays.stream(candidates)
-                                      .filter(psiMethod -> checkMethod(psiMethod, "java.nio.charset.Charset"))
-                                      .findFirst().orElse(null);
+        .filter(psiMethod -> checkMethod(psiMethod, "java.nio.charset.Charset"))
+        .findFirst().orElse(null);
       if (charsetMethod == null) return null;
       return new CharsetMatch(argument, method, charsetMethod);
     }
@@ -242,12 +264,12 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
-      PsiElement anchor = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
-      if (anchor == null) return;
+      PsiElement anchor = FOR_NAME_MATCHER.matches(expression) ? null : PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
       CommentTracker ct = new CommentTracker();
       String replacement = "java.nio.charset." + myConstantName;
       PsiReferenceExpression ref = (PsiReferenceExpression)ct.replaceAndRestoreComments(expression, replacement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
+      if (anchor == null) return;
       while (true) {
         PsiTryStatement tryStatement =
           PsiTreeUtil.getParentOfType(anchor, PsiTryStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
@@ -261,6 +283,11 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
               if (type.equalsToText("java.io.UnsupportedEncodingException") ||
                   type.equalsToText("java.io.IOException")) {
                 Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+                PsiResourceList resourceList = tryStatement.getResourceList();
+                if (resourceList != null) {
+                  Collection<PsiClassType> resourceExceptions = ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList);
+                  unhandledExceptions = StreamEx.of(unhandledExceptions, resourceExceptions).toFlatList(Function.identity());
+                }
                 if(unhandledExceptions.stream().noneMatch(ue -> ue.isAssignableFrom(type) || type.isAssignableFrom(ue))) {
                   if(parameter.getType() instanceof PsiDisjunctionType) {
                     DeleteMultiCatchFix.deleteCaughtExceptionType(element);

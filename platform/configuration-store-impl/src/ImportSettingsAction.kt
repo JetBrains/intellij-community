@@ -14,6 +14,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.getParentPath
@@ -99,8 +100,10 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
     val action = IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action")
-    val message = IdeBundle.message("message.settings.imported.successfully", action, ApplicationNamesInfo.getInstance().fullProductName)
-    if (Messages.showOkCancelDialog(message, IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
+    if (showOkCancelDialog(title = IdeBundle.message("title.restart.needed"),
+                           message = IdeBundle.message("message.settings.imported.successfully", action, ApplicationNamesInfo.getInstance().fullProductName),
+                           okText = IdeBundle.message("ide.restart.action"),
+                           icon = Messages.getQuestionIcon()) == Messages.OK) {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
     }
   }
@@ -108,8 +111,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = THashSet<String>()
     val root = Paths.get(PathManager.getConfigPath())
-    for ((file) in chosenComponents) {
-      result.add(root.relativize(file).systemIndependentPath)
+    for (item in chosenComponents) {
+      result.add(root.relativize(item.file).systemIndependentPath)
     }
 
     result.add(PluginManager.INSTALLED_TXT)

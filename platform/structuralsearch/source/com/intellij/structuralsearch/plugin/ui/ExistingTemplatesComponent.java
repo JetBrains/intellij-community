@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -7,7 +7,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -62,67 +61,54 @@ public class ExistingTemplatesComponent {
     }
     root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
 
+    TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final Object selection = patternTree.getLastSelectedPathComponent();
-          if (!(selection instanceof DefaultMutableTreeNode)) {
-            return;
-          }
-          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-          if (!(node.getUserObject() instanceof Configuration)) {
-            return;
-          }
-          final Configuration configuration = (Configuration)node.getUserObject();
-          if (configuration.isPredefined()) {
-            return;
-          }
-          final String configurationName = configuration.getName();
-          for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
-            final MatchVariableConstraint constraint =
-              otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
-            if (constraint == null) {
-              continue;
-            }
-            final String within = constraint.getWithinConstraint();
-            if (configurationName.equals(within)) {
-              if (Messages.CANCEL == Messages.showOkCancelDialog(
-                project,
-                SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
-                SSRBundle.message("template.in.use.title", configurationName),
-                CommonBundle.message("button.remove"),
-                Messages.CANCEL_BUTTON,
-                AllIcons.General.WarningDialog
-              )) {
-                return;
-              }
-              break;
-            }
-          }
-          final int[] rows = patternTree.getSelectionRows();
-          if (rows != null && rows.length > 0) {
-            patternTree.addSelectionRow(rows[0] - 1);
-          }
-          patternTreeModel.removeNodeFromParent(node);
-          queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
+      .setRemoveAction(button -> {
+        final Object selection = patternTree.getLastSelectedPathComponent();
+        if (!(selection instanceof DefaultMutableTreeNode)) {
+          return;
         }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          final Object selection = patternTree.getLastSelectedPathComponent();
-          if (selection instanceof DefaultMutableTreeNode) {
-            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-            final Object userObject = node.getUserObject();
-            if (userObject instanceof Configuration) {
-              final Configuration configuration = (Configuration)userObject;
-              return !configuration.isPredefined();
-            }
-          }
-          return false;
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+        if (!(node.getUserObject() instanceof Configuration)) {
+          return;
         }
+        final Configuration configuration = (Configuration)node.getUserObject();
+        if (configuration.isPredefined()) {
+          return;
+        }
+        final String configurationName = configuration.getName();
+        for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
+          final MatchVariableConstraint constraint =
+            otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+          if (constraint == null) {
+            continue;
+          }
+          final String within = constraint.getWithinConstraint();
+          if (configurationName.equals(within)) {
+            if (Messages.CANCEL == Messages.showOkCancelDialog(
+              project,
+              SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
+              SSRBundle.message("template.in.use.title", configurationName),
+              CommonBundle.message("button.remove"),
+              Messages.CANCEL_BUTTON,
+              AllIcons.General.WarningDialog
+            )) {
+              return;
+            }
+            break;
+          }
+        }
+        final int[] rows = patternTree.getSelectionRows();
+        if (rows != null && rows.length > 0) {
+          patternTree.addSelectionRow(rows[0] - 1);
+        }
+        patternTreeModel.removeNodeFromParent(node);
+        queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
+      }).setRemoveActionUpdater(e -> {
+        final Configuration configuration = getSelectedConfiguration();
+        return configuration != null && !configuration.isPredefined();
       })
       .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
@@ -174,6 +160,18 @@ public class ExistingTemplatesComponent {
     TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
+  public Configuration getSelectedConfiguration() {
+    final Object selection = patternTree.getLastSelectedPathComponent();
+    if (!(selection instanceof DefaultMutableTreeNode)) {
+      return null;
+    }
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+    if (!(node.getUserObject() instanceof Configuration)) {
+      return null;
+    }
+    return (Configuration)node.getUserObject();
+  }
+
   private void initialize() {
     final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
     userTemplatesNode.removeAllChildren();
@@ -192,7 +190,7 @@ public class ExistingTemplatesComponent {
       new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER && patternTree.isVisible() && getSelectedConfiguration() != null) {
             owner.close(DialogWrapper.OK_EXIT_CODE);
           }
         }
@@ -202,7 +200,9 @@ public class ExistingTemplatesComponent {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        owner.close(DialogWrapper.OK_EXIT_CODE);
+        if (patternTree.isVisible() && getSelectedConfiguration() != null) {
+          owner.close(DialogWrapper.OK_EXIT_CODE);
+        }
         return true;
       }
     }.installOn(component);
@@ -245,7 +245,6 @@ public class ExistingTemplatesComponent {
       }
     );
     tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch));
-    TreeUtil.expandAll(tree);
 
     return tree;
   }
@@ -340,7 +339,7 @@ public class ExistingTemplatesComponent {
 
   public void finish(boolean performQueuedActions) {
     if (performQueuedActions) {
-      queuedActions.forEach(a -> a.run());
+      queuedActions.forEach(Runnable::run);
     }
     queuedActions.clear();
   }

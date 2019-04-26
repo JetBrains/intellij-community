@@ -220,9 +220,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
-    WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(() -> {
-      runnable.run();
-    });
+    WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(() -> runnable.run());
     return false;
   }
 

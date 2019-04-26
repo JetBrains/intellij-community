@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
@@ -365,10 +365,11 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       Collection<VirtualFile> result = new HashSet<>();
       for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
         VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
-        VirtualFile root = vcsRoot.getPath();
-        AbstractVcs vcs = vcsRoot.getVcs();
-        if (git.equals(vcs) && root != null) {
-          result.add(root);
+        if (vcsRoot != null) {
+          VirtualFile root = vcsRoot.getPath();
+          if (git.equals(vcsRoot.getVcs()) && root != null) {
+            result.add(root);
+          }
         }
       }
       return result;

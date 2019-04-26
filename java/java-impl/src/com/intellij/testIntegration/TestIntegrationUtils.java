@@ -127,7 +127,10 @@ public class TestIntegrationUtils {
         @Override
         public boolean includeMember(PsiMember member) {
           if (!(member instanceof PsiMethod)) return false;
-          if (member.hasModifierProperty(PsiModifier.PRIVATE) || member.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
+          if (member.hasModifierProperty(PsiModifier.PRIVATE) ||
+              (member.hasModifierProperty(PsiModifier.ABSTRACT) && member.getContainingClass() != clazz)) {
+            return false;
+          }
           return true;
         }
       }, false);

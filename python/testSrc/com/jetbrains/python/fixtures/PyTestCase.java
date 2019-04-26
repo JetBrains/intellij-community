@@ -138,9 +138,9 @@ public abstract class PyTestCase extends UsefulTestCase {
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
                                                                                     createTempDirFixture());
+    myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
 
-    myFixture.setTestDataPath(getTestDataPath());
     PythonDialectsTokenSetProvider.reset();
   }
 
@@ -185,6 +185,9 @@ public abstract class PyTestCase extends UsefulTestCase {
       myFixture.tearDown();
       myFixture = null;
       FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -394,7 +397,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     @NotNull final CodeInsightTestFixture fixture,
     @NotNull final Class<C> expectedClass) {
     final DataContext context = DataManager.getInstance().getDataContext(fixture.getEditor().getComponent());
-    for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensions()) {
+    for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensionList()) {
       final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context));
       if (fromContext == null) {
         continue;

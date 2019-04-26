@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -168,7 +168,7 @@ public class ExecutionPointHighlighter {
 
   private void removeHighlighter() {
     if (myEditor != null) {
-      adjustCounter(myEditor, -1);
+      disableMouseHoverPopups(myEditor, false);
     }
 
     //if (myNotTopFrame && myEditor != null) {
@@ -182,7 +182,7 @@ public class ExecutionPointHighlighter {
   }
 
   private void addHighlighter() {
-    adjustCounter(myEditor, 1);
+    disableMouseHoverPopups(myEditor, true);
     int line = mySourcePosition.getLine();
     Document document = myEditor.getDocument();
     if (line < 0 || line >= document.getLineCount()) return;
@@ -222,16 +222,18 @@ public class ExecutionPointHighlighter {
     return myRangeHighlighter != null && myRangeHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
   }
 
-  private static void adjustCounter(@NotNull final Editor editor, final int increment) {
+  private static void disableMouseHoverPopups(@NotNull final Editor editor, final boolean disable) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    // need to always invoke later to maintain order of increment/decrement
+    // need to always invoke later to maintain order of enabling/disabling
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      JComponent component = editor.getComponent();
-      Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
-      Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-      component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+      if (disable) {
+        EditorMouseHoverPopupControl.disablePopups(editor);
+      }
+      else {
+        EditorMouseHoverPopupControl.enablePopups(editor);
+      }
     });
   }
 

@@ -344,8 +344,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
             final String firstToken = IOUtil.readString(reader);
             if (firstToken == null) break;
             if (firstToken.equals(HYPERLINK)) {
-              new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false)
-                .printOn(printer);
+              createHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), null, false).printOn(printer);
             }
             else {
               ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
@@ -387,8 +386,15 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     }
   }
 
+  protected DiffHyperlink createHyperlink(final String expected,
+                                          final String actual,
+                                          final String filePath,
+                                          final String actualFilePath, final boolean printOneLine) {
+    return new DiffHyperlink(expected, actual, filePath, actualFilePath, printOneLine);
+  }
+
   private void printOutputFile(List<Printable> currentPrintables) {
-    if (myOutputFile != null && new File(myOutputFile).exists()) {
+    if (myOutputFile != null && new File(myOutputFile).isFile()) {
       try (PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true))) {
         for (Printable currentPrintable : currentPrintables) {
           currentPrintable.printOn(new Printer() {

@@ -30,6 +30,7 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
   public String BEFORE_PATH;
   public String AFTER_PATH;
   @Nullable public String SHELVED_PATH;         // null if binary file was deleted
+  private Change myChange;
 
   public ShelvedBinaryFile() {
   }
@@ -74,24 +75,28 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
     return FileStatus.MODIFIED;
   }
 
-  public Change createChange(final Project project) {
-    ContentRevision before = null;
-    ContentRevision after = null;
-    final File baseDir = new File(project.getBaseDir().getPath());
-    if (BEFORE_PATH != null) {
-      final FilePath file = VcsUtil.getFilePath(new File(baseDir, BEFORE_PATH), false);
-      before = new CurrentBinaryContentRevision(file) {
-        @NotNull
-        @Override
-        public VcsRevisionNumber getRevisionNumber() {
-          return new TextRevisionNumber(VcsBundle.message("local.version.title"));
-        }
-      };
+  @NotNull
+  public Change createChange(@NotNull final Project project) {
+    if (myChange == null) {
+      ContentRevision before = null;
+      ContentRevision after = null;
+      final File baseDir = new File(project.getBaseDir().getPath());
+      if (BEFORE_PATH != null) {
+        final FilePath file = VcsUtil.getFilePath(new File(baseDir, BEFORE_PATH), false);
+        before = new CurrentBinaryContentRevision(file) {
+          @NotNull
+          @Override
+          public VcsRevisionNumber getRevisionNumber() {
+            return new TextRevisionNumber(VcsBundle.message("local.version.title"));
+          }
+        };
+      }
+      if (AFTER_PATH != null) {
+        after = createBinaryContentRevision(project);
+      }
+      myChange = new Change(before, after);
     }
-    if (AFTER_PATH != null) {
-      after = createBinaryContentRevision(project);
-    }
-    return new Change(before, after);
+    return myChange;
   }
 
   @NotNull

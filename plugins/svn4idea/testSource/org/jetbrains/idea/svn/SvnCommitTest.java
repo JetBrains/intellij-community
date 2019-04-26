@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.ArrayUtil.toObjectArray;
-import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static org.junit.Assert.*;
 
 public class SvnCommitTest extends SvnTestCase {
@@ -141,7 +140,7 @@ public class SvnCommitTest extends SvnTestCase {
   }
 
   private Set<String> assertCommit(VirtualFile... files) {
-    return assertCommit(toObjectArray(map(files, VcsUtil::getFilePath), FilePath.class));
+    return assertCommit(map2Array(files, FilePath.class, (VirtualFile file) -> VcsUtil.getFilePath(file)));
   }
 
   private Set<String> assertCommit(FilePath... files) {

@@ -69,7 +69,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @Override
   public void invoke(@NotNull final Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") final Editor editor,
+                     @Nullable final Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     XmlTag myTag = (XmlTag)startElement;
@@ -107,7 +107,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       template.addTextSegment(" " + myAttrName);
       if (!insertShorthand) {
         String quote = XmlEditUtil.getAttributeQuote(file);
-        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(attrDescriptor, quote);
+        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(attrDescriptor, quote, file);
 
         valuePostfix = presentation.getPostfix();
         template.addTextSegment("=" + presentation.getPrefix());

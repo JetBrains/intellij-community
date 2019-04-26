@@ -90,11 +90,11 @@ public class IDEARemoteTestNG extends TestNG {
     try {
       Class<?> configClass = Class.forName("org.testng.IDEATestNGConfigurationListener");
       Object configurationListener = configClass.getConstructor(new Class[] {IDEATestNGRemoteListener.class}).newInstance(listener);
-      addListener((Object)configurationListener);
+      addListener(configurationListener);
 
       Class<?> invokeClass = Class.forName("org.testng.IDEATestNGInvokedMethodListener");
       Object invokedMethodListener = invokeClass.getConstructor(new Class[]{IDEATestNGRemoteListener.class}).newInstance(listener);
-      addListener((Object)invokedMethodListener);
+      addListener(invokedMethodListener);
 
       //start with configuration started if invoke method listener was not added, otherwise with
       configClass.getMethod("setIgnoreStarted").invoke(configurationListener);

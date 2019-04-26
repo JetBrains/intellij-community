@@ -18,7 +18,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.text.View;
@@ -32,8 +31,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class CellPluginComponent extends JPanel {
-  public static final Color GRAY_COLOR = JBColor.namedColor("Label.grayForeground", new JBColor(Gray._120, Gray._135));
-  private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.selectionBackground", new JBColor(0xF5F9FF, 0x36393B));
+  public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
+  private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xF5F9FF, 0x36393B));
 
   public final IdeaPluginDescriptor myPlugin;
 
@@ -48,7 +47,6 @@ public abstract class CellPluginComponent extends JPanel {
     myPlugin = plugin;
   }
 
-  @TestOnly
   @NotNull
   public IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
@@ -74,7 +72,7 @@ public abstract class CellPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconLabel.setIcon(PluginLogoInfo.getIcon(false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurableNew.isJBPlugin(myPlugin), errors, disabled));
   }
 
   protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description, @NotNull LineFunction function) {
@@ -169,7 +167,7 @@ public abstract class CellPluginComponent extends JPanel {
     parent.repaint();
   }
 
-  public void setListeners(@NotNull LinkListener<IdeaPluginDescriptor> listener,
+  public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     //noinspection unchecked
@@ -193,12 +191,38 @@ public abstract class CellPluginComponent extends JPanel {
     eventHandler.addAll(this);
   }
 
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends CellPluginComponent> selection) {
   }
 
-  public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
+  }
+
+  public abstract void showProgress();
+
+  public abstract void hideProgress(boolean success);
+
+  public void clearProgress() {
+    throw new UnsupportedOperationException();
   }
 
   public void close() {
+  }
+
+  public abstract boolean isMarketplace();
+
+  public void updateEnabledState() {
+    throw new UnsupportedOperationException();
+  }
+
+  public void updateAfterUninstall() {
+    throw new UnsupportedOperationException();
+  }
+
+  public void updateErrors() {
+    throw new UnsupportedOperationException();
+  }
+
+  public void enableRestart() {
+    throw new UnsupportedOperationException();
   }
 }

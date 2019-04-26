@@ -19,6 +19,7 @@
  */
 package com.intellij.util.messages;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -364,5 +365,14 @@ public class MessageBusTest extends TestCase {
     });
     myBus.syncPublisher(TOPIC1).t11();
     assertEvents("root 11", "child 11", "root 12", "child 12");
+  }
+
+  public void testTwoHandlersBothDisconnecting() {
+    Disposable disposable = Disposer.newDisposable();
+    for (int i = 0; i < 2; i++) {
+      myBus.connect(disposable).subscribe(RUNNABLE_TOPIC, () -> Disposer.dispose(disposable));
+    }
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    assertTrue(Disposer.isDisposed(disposable));
   }
 }

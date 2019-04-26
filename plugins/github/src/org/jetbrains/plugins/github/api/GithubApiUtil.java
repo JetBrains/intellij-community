@@ -71,7 +71,7 @@ public class GithubApiUtil {
   }
 
   /**
-   * @deprecated use {@link GithubApi.Requests.Gists#get(GithubServerPath, String)} with {@link GithubApiRequestExecutor}
+   * @deprecated use {@link GithubApiRequests.Gists#get(GithubServerPath, String)} with {@link GithubApiRequestExecutor}
    */
   @Deprecated
   @NotNull

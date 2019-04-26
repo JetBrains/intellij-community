@@ -36,7 +36,7 @@ public class GithubUser {
   @NotNull public static final GithubUser UNKNOWN = createUnknownUser();
 
   @Mandatory private String login;
-  private Long id;
+  @Mandatory private Long id;
   private String avatarUrl;
   private String gravatarId;
 

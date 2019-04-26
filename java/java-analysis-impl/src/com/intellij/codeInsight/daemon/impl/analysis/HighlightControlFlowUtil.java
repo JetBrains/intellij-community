@@ -7,6 +7,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.ChangeModifierRequest;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -25,10 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author cdr
@@ -58,6 +59,9 @@ public class HighlightControlFlowUtil {
           PsiMethod method = (PsiMethod)parent;
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddReturnFix(method));
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true));
+        }
+        if (parent instanceof PsiLambdaExpression) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddReturnFix((PsiLambdaExpression)parent));
         }
         return info;
       }
@@ -91,7 +95,7 @@ public class HighlightControlFlowUtil {
         String description = JavaErrorMessages.message("unreachable.statement");
         PsiElement keyword = null;
         if (unreachableStatement instanceof PsiIfStatement ||
-            unreachableStatement instanceof PsiSwitchStatement ||
+            unreachableStatement instanceof PsiSwitchBlock ||
             unreachableStatement instanceof PsiLoopStatement) {
           keyword = unreachableStatement.getFirstChild();
         }
@@ -402,9 +406,12 @@ public class HighlightControlFlowUtil {
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddVariableInitializerFix(variable));
+      if (variable instanceof PsiLocalVariable) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, HighlightFixUtil.createInsertSwitchDefaultFix(variable, topBlock, expression));
+      }
       if (variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
+        ChangeModifierRequest request = MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false);
+        QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(variable, request));
       }
       return highlightInfo;
     }
@@ -413,21 +420,21 @@ public class HighlightControlFlowUtil {
   }
 
   private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass) {
-    PsiElement element = psiElement;
-    while (element != null) {
+    for (PsiElement element = psiElement;element != null;element = element.getParent()) {
       if (element instanceof PsiClass) {
         final boolean innerClass = !psiElement.getManager().areElementsEquivalent(element, containingClass);
         if (innerClass) {
           if (element instanceof PsiAnonymousClass) {
-            return !(PsiTreeUtil.isAncestor(((PsiAnonymousClass)element).getArgumentList(), psiElement, false) ||
-                     insideClassInitialization(containingClass, (PsiClass)element));
+            if (PsiTreeUtil.isAncestor(((PsiAnonymousClass)element).getArgumentList(), psiElement, false)) {
+              continue;
+            }
+            return !insideClassInitialization(containingClass, (PsiClass)element);
           }
           final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(psiElement, PsiLambdaExpression.class);
           return lambdaExpression == null || !insideClassInitialization(containingClass, (PsiClass)element);
         }
         return false;
       }
-      element = element.getParent();
     }
     return false;
   }
@@ -488,51 +495,33 @@ public class HighlightControlFlowUtil {
       final PsiField field = (PsiField)variable;
       final PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
-      // field can get assigned in other field initializers
-      final PsiField[] fields = aClass.getFields();
+      // field can get assigned in other field initializers or in class initializers
+      List<PsiMember> members = new ArrayList<>(Arrays.asList(aClass.getFields()));
       boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
-      for (PsiField psiField : fields) {
-        PsiExpression initializer = psiField.getInitializer();
-        if (psiField != field
-            && psiField.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
-            && initializer != null
-            && initializer != codeBlock
-            && !variableDefinitelyNotAssignedIn(field, initializer)) {
+      final PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
+      if (enclosingConstructorOrInitializer != null
+          && aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getContainingClass(), aClass)) {
+        members.addAll(Arrays.asList(aClass.getInitializers()));
+        Collections.sort(members, PsiUtil.BY_POSITION);
+      }
+
+      for (PsiMember member : members) {
+        if (member == field) continue;
+        PsiElement context = member instanceof PsiField ? ((PsiField)member).getInitializer()
+                                                        : ((PsiClassInitializer)member).getBody();
+
+        if (context != null
+            && member.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+            && !variableDefinitelyNotAssignedIn(field, context)) {
+          if (context == codeBlock) {
+            return null;
+          }
           alreadyAssigned = true;
           break;
         }
       }
 
-      if (!alreadyAssigned) {
-        // field can get assigned in class initializers
-        final PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
-        if (enclosingConstructorOrInitializer == null
-            || !aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getContainingClass(), aClass)) {
-          return null;
-        }
-        final PsiClassInitializer[] initializers = aClass.getInitializers();
-        for (PsiClassInitializer initializer : initializers) {
-          if (initializer.hasModifierProperty(PsiModifier.STATIC)
-              == field.hasModifierProperty(PsiModifier.STATIC)) {
-            final PsiCodeBlock body = initializer.getBody();
-            if (body == codeBlock) return null;
-            try {
-              final ControlFlow controlFlow = getControlFlow(body);
-              if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, controlFlow)) {
-                alreadyAssigned = true;
-                break;
-              }
-            }
-            catch (AnalysisCanceledException e) {
-              // incomplete code
-              return null;
-            }
-          }
-        }
-      }
-
-      if (!alreadyAssigned
-          && !field.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!alreadyAssigned && !isFieldStatic) {
         // then check if instance field already assigned in other constructor
         final PsiMethod ctr = codeBlock.getParent() instanceof PsiMethod ?
                               (PsiMethod)codeBlock.getParent() : null;
@@ -552,8 +541,7 @@ public class HighlightControlFlowUtil {
       String description = JavaErrorMessages.message("variable.already.assigned", variable.getName());
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo,
-                                            QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
+      QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
       return highlightInfo;
     }
@@ -585,8 +573,7 @@ public class HighlightControlFlowUtil {
       String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo,
-                                            QUICK_FIX_FACTORY.createModifierListFix((PsiVariable)resolved, PsiModifier.FINAL, false, false));
+      QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions((PsiVariable)resolved, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       return highlightInfo;
     }
     return null;
@@ -613,8 +600,7 @@ public class HighlightControlFlowUtil {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
     final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
     if (innerClass == null || variable instanceof PsiField) {
-      QuickFixAction.registerQuickFixAction(highlightInfo,
-                                            QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
+      QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
     }
     else {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));

@@ -170,6 +170,7 @@ public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesCho
                                                    @NotNull PyRemoteSdkAdditionalDataBase data,
                                                    @Nullable PyRemotePathMapper pathMapper);
 
+  @NotNull
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,

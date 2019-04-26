@@ -6,12 +6,16 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDashboardTreeAction<T, ServersToolWindowContent>
   implements DumbAware {
   protected ServersTreeAction(String text, String description, Icon icon) {

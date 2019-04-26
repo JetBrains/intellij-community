@@ -19,4 +19,10 @@ class BigDecimalEquals {
       System.out.println("equals");
     }
   }
+
+  boolean test(int x, BigDecimal d1, BigDecimal d2) {
+    return switch(x) {
+      default -> d1.compareTo(d2) == 0;
+    };
+  }
 }

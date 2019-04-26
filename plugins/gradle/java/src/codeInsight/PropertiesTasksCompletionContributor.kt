@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.codeInsight
 
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
 
 /**
  * @author Vladislav.Soroka
- * @since 12/12/2016
  */
 class PropertiesTasksCompletionContributor : AbstractGradleCompletionContributor() {
   class PropertiesTasksCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -52,24 +51,6 @@ class PropertiesTasksCompletionContributor : AbstractGradleCompletionContributor
           .withPresentableText(gradleProp.name)
           .withTailText("  via ext", true)
           .withTypeText(propVar.type.presentableText, GradleIcons.Gradle, false)
-        result.addElement(elementBuilder)
-      }
-
-      for (gradleTask in extensionsData.tasks) {
-        val docRef = Ref.create<String>()
-        val taskVar = object : GrLightVariable(position.manager, gradleTask.name, gradleTask.typeFqn, position) {
-          override fun getNavigationElement(): PsiElement {
-            val navigationElement = super.getNavigationElement()
-            navigationElement.putUserData(NonCodeMembersHolder.DOCUMENTATION, docRef.get())
-            return navigationElement
-          }
-        }
-        docRef.set(getDocumentation(gradleTask, taskVar))
-        val elementBuilder = LookupElementBuilder.create(taskVar, gradleTask.name)
-          .withIcon(ExternalSystemIcons.Task)
-          .withPresentableText(gradleTask.name)
-          .withTailText("  task", true)
-          .withTypeText(taskVar.type.presentableText)
         result.addElement(elementBuilder)
       }
     }

@@ -16,7 +16,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -171,28 +171,29 @@ final class JavacReferenceCollectorListener implements TaskListener {
           final MemberSelectTree classImport = (MemberSelectTree)qExpr;
           final Element ownerElement = incompletelyProcessedFile.getReferencedElement(classImport);
           final Name name = id.getIdentifier();
-          if (!myNameTableCache.isAsterisk(name)) {
+          final JavacRef.ImportProperties importProps = JavacRef.ImportProperties.create(anImport.isStatic(), myNameTableCache.isAsterisk(name));
+          if (!importProps.isOnDemand()) {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {
-                incrementOrAdd(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, null, myNameTableCache));
+                incrementOrAdd(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, null, myNameTableCache, importProps));
               }
             }
           }
-          collectClassImports(ownerElement, elements);
+          collectClassImports(ownerElement, elements, importProps);
         }
       } else {
         // class import
-        collectClassImports(element, elements);
+        collectClassImports(element, elements, JavacRef.ImportProperties.create(anImport.isStatic(), false));
       }
     }
   }
 
-  private void collectClassImports(Element baseImport, TObjectIntHashMap<JavacRef> collector) {
+  private void collectClassImports(Element baseImport, TObjectIntHashMap<JavacRef> collector, final JavacRef.ImportProperties importProps) {
     for (Element element = baseImport;
          element != null && element.getKind() != ElementKind.PACKAGE;
          element = element.getEnclosingElement()) {
-      incrementOrAdd(collector, JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache));
+      incrementOrAdd(collector, JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache, importProps));
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.application.UtilKt;
@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -33,6 +34,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -51,7 +53,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -101,7 +102,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import gnu.trove.THashSet;
@@ -127,6 +128,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
+@HardwareAgentRequired
 @SkipSlowTestLocally
 public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
@@ -151,6 +153,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         doPostponedFormatting(project);
         ProjectManagerEx.getInstanceEx().forceCloseProject(project, false);
       }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myDaemonCodeAnalyzer = null;
@@ -268,7 +273,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    if (isStressTest() && !getTestName(false).equals("TypingCurliesClearsEndOfFileErrorsInPhp_ItIsPerformanceTestBecauseItRunsTooLong")) {
+    if (isStressTest()) {
       // all possible inspections
       List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
       List<LocalInspectionTool> locals = new ArrayList<>();
@@ -1223,6 +1228,24 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }).usesAllCPUCores().assertTiming();
   }
 
+  public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
+    String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
+    String text = "class S { " +
+                  "String[] s = {" + listBody + "};\n" +
+                  "void foo(String... s) { foo(" + listBody + "); }\n" +
+                  "}";
+    configureByText(StdFileTypes.JAVA, text);
+
+    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 10_000, () -> {
+      assertEmpty(highlightErrors());
+
+      type("k");
+      assertNotEmpty(highlightErrors());
+
+      backspace();
+    }).usesAllCPUCores().assertTiming();
+  }
+
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
     String text = "class Foo { native Foo foo(); }\n" +
                   "class Bar<T extends Foo> extends Foo {\n" +
@@ -1333,14 +1356,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testApplyErrorInTheMiddle() {
-    String text = "class <caret>X { ";
+    StringBuilder text = new StringBuilder("class <caret>X { ");
     for (int i = 0; i < 100; i++) {
-      text += "\n    {\n" +
-              "//    String x = \"<zzzzzzzzzz/>\";\n" +
-              "    }";
+      text.append("\n    {\n" + "//    String x = \"<zzzzzzzzzz/>\";\n" + "    }");
     }
-    text += "\n}";
-    configureByText(StdFileTypes.JAVA, text);
+    text.append("\n}");
+    configureByText(StdFileTypes.JAVA, text.toString());
 
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
@@ -1543,7 +1564,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       return;
     }
     finally {
-      ProjectManagerEx.getInstanceEx().closeAndDispose(alienProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
     }
     fail("must throw PCE");
   }
@@ -1751,38 +1772,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long min = Arrays.stream(interruptTimes).min().getAsLong();
     System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
     assertTrue(String.valueOf(mean), mean < 10);
-  }
-
-  private static void startCPUProfiling() {
-    try {
-      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
-      Method method = ObjectUtils.assertNotNull(ReflectionUtil.getDeclaredMethod(aClass, "startCPUProfiling"));
-      method.invoke(null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-  private static void stopCPUProfiling() {
-    try {
-      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
-      Method method = ObjectUtils.assertNotNull(ReflectionUtil.getDeclaredMethod(aClass, "stopCPUProfiling"));
-      method.invoke(null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static String captureCPUSnapshot() {
-    try {
-      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
-      Method method = ObjectUtils.assertNotNull(ReflectionUtil.getDeclaredMethod(aClass, "captureCPUSnapshot"));
-      return (String)method.invoke(null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public void testPostHighlightingPassRunsOnEveryPsiModification() throws Exception {
@@ -2338,15 +2327,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private void waitForDaemon() {
     long deadline = System.currentTimeMillis() + 60_000;
     while (!daemonIsWorkingOrPending()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to start");
-      UIUtil.dispatchInvocationEvent();
     }
     while (daemonIsWorkingOrPending()) {
       if (System.currentTimeMillis() > deadline) {
         dumpThreadsToConsole();
         fail("Too long waiting for daemon to finish");
       }
-      UIUtil.dispatchInvocationEvent();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
   }
 
@@ -2402,7 +2391,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).tryGc();
       assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
       document.insertString(0, "class X { void foo() {}}");

@@ -1,4 +1,4 @@
-// "Make 'foo' static" "true"
+// "Make 'F.foo' static" "true"
 abstract class F {
     abstract void foo();
 }

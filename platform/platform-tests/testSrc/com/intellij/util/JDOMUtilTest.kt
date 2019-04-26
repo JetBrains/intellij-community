@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
@@ -31,22 +32,22 @@ internal class JDOMUtilTest {
   @Test
   fun deepMerge() {
     assertThat(JDOMUtil.deepMerge(
-      loadElement("""<project version="4">
-      <component name="ProjectModuleManager">
-        <modules>
-          <module fileurl="f1" />
-          <module fileurl="f2" />
-        </modules>
-      </component>
-    </project>"""),
-      loadElement("""<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="f3" />
-      <module fileurl="f4" />
-    </modules>
-  </component>
-</project>""")))
+      JDOMUtil.load("""<project version="4">
+            <component name="ProjectModuleManager">
+              <modules>
+                <module fileurl="f1" />
+                <module fileurl="f2" />
+              </modules>
+            </component>
+          </project>"""),
+      JDOMUtil.load("""<project version="4">
+        <component name="ProjectModuleManager">
+          <modules>
+            <module fileurl="f3" />
+            <module fileurl="f4" />
+          </modules>
+        </component>
+      </project>""")))
       .isEqualTo("""<project version="4">
   <component name="ProjectModuleManager">
     <modules>
@@ -62,14 +63,14 @@ internal class JDOMUtilTest {
   @Test
   fun `deepMerge override empty tag`() {
     assertThat(JDOMUtil.deepMerge(
-      loadElement("""<component name="CompilerConfiguration">
-        <bytecodeTargetLevel />
-      </component>"""),
-      loadElement("""<component name="ExternalCompilerConfiguration">
-        <bytecodeTargetLevel>
-          <module name="my-app" target="1.5" />
-        </bytecodeTargetLevel>
-      </component>""")))
+      JDOMUtil.load("""<component name="CompilerConfiguration">
+              <bytecodeTargetLevel />
+            </component>"""),
+      JDOMUtil.load("""<component name="ExternalCompilerConfiguration">
+              <bytecodeTargetLevel>
+                <module name="my-app" target="1.5" />
+              </bytecodeTargetLevel>
+            </component>""")))
       .isEqualTo("""
       <component name="ExternalCompilerConfiguration">
         <bytecodeTargetLevel>

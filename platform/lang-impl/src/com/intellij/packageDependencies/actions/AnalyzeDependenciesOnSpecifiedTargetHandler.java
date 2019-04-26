@@ -22,9 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyVisitorFactory;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -58,16 +58,6 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
   }
 
   @Override
-  protected String getPanelDisplayName(List<? extends DependenciesBuilder> builders) {
-    return getPanelDisplayName(getForwardScope(builders));
-  }
-
-  private static AnalysisScope getForwardScope(List<? extends DependenciesBuilder> builders) {
-    final DependenciesBuilder builder = builders.get(0);
-    return builder instanceof BackwardDependenciesBuilder ? ((BackwardDependenciesBuilder)builder).getForwardScope() : builder.getScope();
-  }
-
-  @Override
   protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
     for (DependenciesBuilder builder : builders) {
       for (Set<PsiFile> files : builder.getDependencies().values()) {
@@ -76,7 +66,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
         }
       }
     }
-    final String source = StringUtil.decapitalize(getForwardScope(builders).getDisplayName());
+    final String source = StringUtil.decapitalize(getPanelDisplayName(builders));
     final String target = StringUtil.decapitalize(myTargetScope.getDisplayName());
     String message = AnalysisScopeBundle.message("no.dependencies.found.message", source, target);
     if (DependencyVisitorFactory.VisitorOptions.fromSettings(myProject).skipImports()) {
@@ -89,6 +79,6 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
 
   @Override
   protected DependenciesBuilder createDependenciesBuilder(AnalysisScope scope) {
-    return new BackwardDependenciesBuilder(myProject, new AnalysisScope(myTargetScope, myProject), scope);
+    return new ForwardDependenciesBuilder(myProject, scope, myTargetScope);
   }
 }

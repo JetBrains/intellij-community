@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -140,7 +141,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   public void testCachingUrls() {
     String jdkUrl = getRtJarJdk17().getUrl();
+    List<String> computedUrls = ContainerUtil.map(orderEntries(myModule).classes().usingCache().getRoots(), VirtualFile::getUrl);
     final String[] urls = orderEntries(myModule).classes().usingCache().getUrls();
+    assertOrderedEquals(computedUrls, urls);
     assertOrderedEquals(urls, jdkUrl);
     assertSame(urls, orderEntries(myModule).classes().usingCache().getUrls());
 
@@ -164,6 +167,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
     assertClassRoots(orderEntries(myProject).withoutSdk(), testOutput, output, getJDomJar());
     assertSourceRoots(orderEntries(myProject).withoutSdk(), srcRoot, testRoot, getJDomSources());
+    List<Module> modules = new ArrayList<>();
+    orderEntries(myProject).forEachModule(modules::add);
+    assertSameElements(modules, myModule);
   }
 
   public void testModules() throws Exception {

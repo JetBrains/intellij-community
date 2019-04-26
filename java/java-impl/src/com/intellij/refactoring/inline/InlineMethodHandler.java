@@ -1,19 +1,5 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -30,6 +16,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 
+import java.util.Collections;
+import java.util.function.Supplier;
+
 class InlineMethodHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
@@ -44,7 +33,16 @@ class InlineMethodHandler extends JavaInlineActionHandler {
   @Override
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
     PsiMethod method = (PsiMethod)element.getNavigationElement();
-    final PsiCodeBlock methodBody = method.getBody();
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+
+    boolean allowInlineThisOnly = false;
+    PsiCodeBlock methodBody = method.getBody();
+    Supplier<PsiCodeBlock> specialization = InlineMethodSpecialization.forReference(reference);
+    if (specialization != null) {
+      allowInlineThisOnly = true;
+      methodBody = specialization.get();
+    }
+    
     if (methodBody == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -60,23 +58,11 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       return;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (reference != null) {
       final PsiElement refElement = reference.getElement();
       if (!isEnabledForLanguage(refElement.getLanguage())) {
         String message = RefactoringBundle
           .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
-        return;
-      }
-    }
-    boolean allowInlineThisOnly = false;
-    if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
-      if (reference != null && InlineUtil.getTailCallType(reference) != InlineUtil.TailCallType.None) {
-        allowInlineThisOnly = true;
-      }
-      else {
-        String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
         return;
       }
@@ -130,7 +116,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     final boolean invokedOnReference = reference != null;
     if (!invokedOnReference) {
       final VirtualFile vFile = method.getContainingFile().getVirtualFile();
-      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vFile);
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vFile));
     }
 
     PsiJavaCodeReferenceElement refElement = null;

@@ -18,10 +18,11 @@ public final class GithubIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  public static final Icon DefaultAvatar = load("/org/jetbrains/plugins/github/defaultAvatar.svg"); // 16x16
-  public static final Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg"); // 16x16
-  public static final Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg"); // 16x16
-  public static final Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg"); // 13x13
+  /** 16x16 */ public static final Icon Close = load("/org/jetbrains/plugins/github/close.svg");
+  /** 16x16 */ public static final Icon DefaultAvatar = load("/org/jetbrains/plugins/github/defaultAvatar.svg");
+  /** 16x16 */ public static final Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg");
+  /** 16x16 */ public static final Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg");
+  /** 13x13 */ public static final Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
   @SuppressWarnings("unused")

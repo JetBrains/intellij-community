@@ -59,7 +59,7 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  public static List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
+  public static List<FilePatch> buildPatch(@NotNull Collection<? extends BeforeAfter<AirContentRevision>> changes,
                                            @NotNull String basePath,
                                            boolean reversePatch,
                                            boolean isCaseSensitive,
@@ -69,7 +69,7 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
+  private List<FilePatch> build(@NotNull Collection<? extends BeforeAfter<AirContentRevision>> changes) throws VcsException {
     List<FilePatch> result = new ArrayList<>();
     for (BeforeAfter<AirContentRevision> c : changes) {
       if (myCancelChecker != null) myCancelChecker.run();
@@ -176,7 +176,7 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private static PatchHunk createHunk(@NotNull List<Range> hunkFragments,
+  private static PatchHunk createHunk(@NotNull List<? extends Range> hunkFragments,
                                       @NotNull List<String> beforeLines,
                                       @NotNull List<String> afterLines,
                                       boolean beforeNoNewlineAtEOF,
@@ -253,7 +253,7 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private static List<Range> appendRange(@NotNull List<Range> ranges, @NotNull Range change) {
+  private static List<Range> appendRange(@NotNull List<? extends Range> ranges, @NotNull Range change) {
     if (ranges.isEmpty()) return singletonList(change);
 
     Range lastRange = ranges.get(ranges.size() - 1);

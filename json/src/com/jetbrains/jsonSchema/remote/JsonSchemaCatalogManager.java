@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonCachedValues;
@@ -53,7 +53,7 @@ public class JsonSchemaCatalogManager {
   @Nullable
   public VirtualFile getSchemaFileForFile(@NotNull VirtualFile file) {
     if (!JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isCatalogEnabled()) return null;
-    for (JsonSchemaCatalogExclusion exclusion : JsonSchemaCatalogExclusion.EP_NAME.getExtensions()) {
+    for (JsonSchemaCatalogExclusion exclusion : JsonSchemaCatalogExclusion.EP_NAME.getIterable(null)) {
       if (exclusion.isExcluded(file)) {
         return null;
       }
@@ -76,17 +76,11 @@ public class JsonSchemaCatalogManager {
     return null;
   }
 
-  public List<String> getAllCatalogSchemas() {
+  public List<JsonSchemaCatalogEntry> getAllCatalogEntries() {
     if (myCatalog != null) {
-      List<Pair<Collection<String>, String>> catalog = JsonCachedValues.getSchemaCatalog(myCatalog, myProject);
-      if (catalog == null) return ContainerUtil.emptyList();
-      List<String> results = ContainerUtil.newArrayListWithCapacity(catalog.size());
-      for (Pair<Collection<String>, String> item: catalog) {
-        results.add(item.second);
-      }
-      return results;
+      final List<JsonSchemaCatalogEntry> catalog = JsonCachedValues.getSchemaCatalog(myCatalog, myProject);
+      return catalog == null ? ContainerUtil.emptyList() : catalog;
     }
-
     return ContainerUtil.emptyList();
   }
 
@@ -126,12 +120,12 @@ public class JsonSchemaCatalogManager {
   private static String resolveSchemaFile(@NotNull VirtualFile file, @NotNull VirtualFile catalogFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(catalogFile, project);
 
-    List<Pair<Collection<String>, String>> schemaCatalog = JsonCachedValues.getSchemaCatalog(catalogFile, project);
+    List<JsonSchemaCatalogEntry> schemaCatalog = JsonCachedValues.getSchemaCatalog(catalogFile, project);
     if (schemaCatalog == null) return catalogFile instanceof HttpVirtualFile ? NO_CACHE : null;
     String fileName = file.getName();
-    for (Pair<Collection<String>, String> maskAndPath: schemaCatalog) {
-      if (matches(fileName, maskAndPath.first)) {
-        return maskAndPath.second;
+    for (JsonSchemaCatalogEntry maskAndPath: schemaCatalog) {
+      if (matches(fileName, maskAndPath.getFileMasks())) {
+        return maskAndPath.getUrl();
       }
     }
 

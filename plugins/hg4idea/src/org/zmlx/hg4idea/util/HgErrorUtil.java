@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,21 @@ public final class HgErrorUtil {
   private static final String NOTHING_TO_REBASE_WARNING = "nothing to rebase";
 
   private HgErrorUtil() {
+  }
+
+  public static HgCommandResult ensureSuccess(@Nullable HgCommandResult result) throws VcsException {
+    if (result == null) {
+      throw new VcsException("Couldn't execute Mercurial command");
+    }
+    // workaround for mercurial: trying to merge with ancestor is not important/fatal error but natively hg produces abort error.
+    if (fatalErrorOccurred(result) && !isAncestorMergeError(result)) {
+      throw new VcsException(result.getRawError());
+    }
+    return result;
+  }
+
+  private static boolean fatalErrorOccurred(@NotNull HgCommandResult result) {
+    return result.getExitValue() == 255 || result.getRawError().contains("** unknown exception encountered");
   }
 
   public static boolean isAbort(@Nullable HgCommandResult result) {
@@ -82,7 +98,6 @@ public final class HgErrorUtil {
     return isAbort(result) || result.getExitValue() != 0;
   }
 
-  //todo should be modified and/or merged with HgErrorHandler
   public static boolean isCommandExecutionFailed(@Nullable HgCommandResult result) {
     return isAbort(result) || result.getExitValue() > 1;
   }
@@ -134,5 +149,11 @@ public final class HgErrorUtil {
   @Deprecated
   public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
     HgUtil.markDirectoryDirty(project, repository);
+  }
+
+  public static boolean isWLockError(@Nullable HgCommandResult result) {
+    //abort: working directory of repo_name: timed out waiting for lock held by 'process:id'
+    if (result == null) return false;
+    return isAbort(result) && result.getRawError().contains("timed out waiting for lock");
   }
 }

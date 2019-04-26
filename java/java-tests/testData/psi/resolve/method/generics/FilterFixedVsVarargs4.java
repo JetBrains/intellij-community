@@ -11,6 +11,6 @@ class Cast {
 
     public void g() {
 // Casts ensures correct candidates filtering
-        <ref>f((A) null);
+        <caret>f((A) null);
     }
 }

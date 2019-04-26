@@ -1,4 +1,8 @@
 {
 
-  "a": [<warning descr="Type is not allowed. Expected: string.">5</warning>, <warning descr="Type is not allowed. Expected: number.">"a"</warning>, <warning descr="Type is not allowed. Expected: boolean.">5</warning>, true, <warning descr="Type is not allowed. Expected: boolean.">"A"</warning>]
+  "a": [<warning descr="Incompatible types.
+ Required: string. Actual: integer.">5</warning>, <warning descr="Incompatible types.
+ Required: number. Actual: string.">"a"</warning>, <warning descr="Incompatible types.
+ Required: boolean. Actual: integer.">5</warning>, true, <warning descr="Incompatible types.
+ Required: boolean. Actual: string.">"A"</warning>]
 }

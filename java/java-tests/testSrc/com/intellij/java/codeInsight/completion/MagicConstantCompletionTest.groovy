@@ -19,11 +19,13 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 
 /**
  * @author peter
  */
+@CompileStatic
 class MagicConstantCompletionTest extends LightCodeInsightFixtureTestCase {
 
   void "test in method argument"() {

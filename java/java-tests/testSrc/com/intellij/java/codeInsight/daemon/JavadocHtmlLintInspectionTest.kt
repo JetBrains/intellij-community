@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInspection.javaDoc.JavadocHtmlLintInspection
@@ -44,7 +44,7 @@ class JavadocHtmlLintInspectionTest : LightCodeInsightFixtureTestCase() {
      *
      * Unknown attribute: <br <error descr="Unknown attribute: a">a</error>="">
      *
-     * <p <error descr="Invalid name for anchor: \"1\"">id</error>="1" <error descr="Repeated attribute: id">id</error>="2">Some repeated attributes</p>
+     * <p <error descr="Invalid name for anchor: \"1\"">id</error>="1" <error descr="Repeated attribute: id">id</error>="A">Some repeated attributes</p>
      *
      * <p>Empty ref: <a <error descr="Attribute lacks value">href</error>="">link</a></p>
      *

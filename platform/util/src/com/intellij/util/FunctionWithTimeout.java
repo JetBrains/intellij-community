@@ -25,12 +25,7 @@ public abstract class FunctionWithTimeout<T> {
 
   @NotNull
   public T calculate(long timeout, @NotNull final T initialValue) {
-    TimeoutUtil.executeWithTimeout(timeout, new Runnable() {
-      @Override
-      public void run() {
-        updateValue(initialValue);
-      }
-    });
+    TimeoutUtil.executeWithTimeout(timeout, () -> updateValue(initialValue));
     return initialValue;
   }
 }

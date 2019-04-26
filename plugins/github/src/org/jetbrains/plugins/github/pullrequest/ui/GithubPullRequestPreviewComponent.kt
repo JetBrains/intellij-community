@@ -9,14 +9,36 @@ internal class GithubPullRequestPreviewComponent(private val changes: GithubPull
                                                  private val details: GithubPullRequestDetailsComponent)
   : OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f), Disposable {
 
+  private var currentProvider: GithubPullRequestDataProvider? = null
+
+  private val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
+    override fun detailsRequestChanged() {
+      details.loadAndShow(currentProvider!!.detailsRequest)
+    }
+
+    override fun commitsRequestChanged() {
+      changes.loadAndShow(currentProvider!!.logCommitsRequest)
+    }
+  }
+
   init {
     firstComponent = details
     secondComponent = changes
   }
 
   fun setPreviewDataProvider(provider: GithubPullRequestDataProvider?) {
-    changes.loadAndShow(provider?.changesRequest)
+    val previousNumber = currentProvider?.number
+    currentProvider?.removeRequestsChangesListener(requestChangesListener)
+    currentProvider = provider
+    currentProvider?.addRequestsChangesListener(requestChangesListener)
+
+    if (previousNumber != provider?.number) {
+      details.reset()
+      changes.reset()
+    }
+
     details.loadAndShow(provider?.detailsRequest)
+    changes.loadAndShow(provider?.logCommitsRequest)
   }
 
   override fun dispose() {}

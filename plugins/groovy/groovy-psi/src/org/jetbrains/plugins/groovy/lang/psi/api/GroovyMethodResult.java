@@ -5,7 +5,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
 public interface GroovyMethodResult extends GroovyResolveResult {
 
@@ -14,8 +15,21 @@ public interface GroovyMethodResult extends GroovyResolveResult {
   PsiMethod getElement();
 
   @NotNull
-  PsiSubstitutor getPartialSubstitutor();
+  default PsiSubstitutor getPartialSubstitutor() {
+    return getSubstitutor();
+  }
+
+  @NotNull
+  @Override
+  PsiSubstitutor getSubstitutor();
+
+  @NotNull
+  default Applicability getApplicability() {
+    return isApplicable() ? Applicability.applicable : Applicability.inapplicable;
+  }
 
   @Nullable
-  MethodCandidate getCandidate();
+  default GroovyMethodCandidate getCandidate() {
+    return null;
+  }
 }

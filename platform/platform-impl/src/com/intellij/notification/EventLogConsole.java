@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -34,7 +35,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +64,7 @@ class EventLogConsole {
     @NotNull
     @Override
     protected EditorHyperlinkSupport compute() {
-      return new EditorHyperlinkSupport(getConsoleEditor(), myProjectModel.getProject());
+      return EditorHyperlinkSupport.get(getConsoleEditor());
     }
   };
   private final LogModel myProjectModel;
@@ -98,15 +97,11 @@ class EventLogConsole {
     clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(),
                                        editor.getContentComponent());
 
-    editor.setContextMenuGroupId(null); // disabling default context menu
-    editor.addEditorMouseListener(new EditorPopupHandler() {
+    editor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
-      public void invokePopup(final EditorMouseEvent event) {
+      public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
-        DefaultActionGroup actions = createPopupActions(actionManager, clearLog, editor, event);
-        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, actions);
-        final MouseEvent mouseEvent = event.getMouseEvent();
-        menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+        return createPopupActions(actionManager, clearLog, editor, event);
       }
     });
     return editor;
@@ -126,13 +121,14 @@ class EventLogConsole {
 
       @Override
       public String getConsoleFontName() {
-        return NotificationsUtil.getFontName();
+        String name = NotificationsUtil.getFontName();
+        return name == null ? super.getConsoleFontName() : name;
       }
 
       @Override
       public int getConsoleFontSize() {
-        Pair<String, Integer> data = NotificationsUtil.getFontData();
-        return data == null ? super.getConsoleFontSize() : data.second;
+        Integer size = NotificationsUtil.getFontSize();
+        return size == null ? super.getConsoleFontSize() : size;
       }
 
       @Override

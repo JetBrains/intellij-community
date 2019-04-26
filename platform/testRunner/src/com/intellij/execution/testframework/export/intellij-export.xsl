@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet version="1.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:str="http://exslt.org/strings">
   <xsl:output method="html" indent="yes" encoding="UTF-8"
               doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
               doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"/>
@@ -678,11 +680,10 @@ jQuery.cookie = function(name, value, options) {
         <ul>
           <xsl:for-each select="output">
             <xsl:variable name="displayText">
-              <xsl:call-template name="string-replace-all">
-                <xsl:with-param name="text" select="text()"/>
-                <xsl:with-param name="replace" select="'&#10;'"/>
-                <xsl:with-param name="by" select="'&lt;br/>'"/>
-              </xsl:call-template>
+              <xsl:for-each select="str:tokenize(text(), '&#10;')">
+                <xsl:value-of select="."/>
+                <xsl:text>&lt;br/&gt;</xsl:text>
+              </xsl:for-each>
             </xsl:variable>
             <li class="text">
               <xsl:variable name="output-type" select="@type"/>
@@ -709,26 +710,6 @@ jQuery.cookie = function(name, value, options) {
           <xsl:text> open</xsl:text>
         </xsl:if>
       </xsl:when>
-    </xsl:choose>
-  </xsl:template>
-
-  <xsl:template name="string-replace-all">
-    <xsl:param name="text"/>
-    <xsl:param name="replace"/>
-    <xsl:param name="by"/>
-    <xsl:choose>
-      <xsl:when test="contains($text, $replace)">
-        <xsl:value-of select="substring-before($text,$replace)"/>
-        <xsl:value-of select="$by"/>
-        <xsl:call-template name="string-replace-all">
-          <xsl:with-param name="text" select="substring-after($text,$replace)"/>
-          <xsl:with-param name="replace" select="$replace"/>
-          <xsl:with-param name="by" select="$by"/>
-        </xsl:call-template>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$text"/>
-      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 

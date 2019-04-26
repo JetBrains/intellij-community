@@ -306,7 +306,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
   }
 
-  private final class MyShowHintRequest implements Runnable{
+  private static final class MyShowHintRequest implements Runnable{
     private final QuickFixManager myManager;
 
     MyShowHintRequest(@NotNull final QuickFixManager manager) {

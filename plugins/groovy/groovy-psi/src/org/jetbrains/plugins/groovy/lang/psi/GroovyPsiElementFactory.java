@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -11,8 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -47,9 +49,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NotNull
   public abstract GrCodeReferenceElement createCodeReferenceElementFromClass(@NotNull PsiClass aClass);
-
-  @NotNull
-  public abstract GrCodeReferenceElement createCodeReferenceElementFromText(@NotNull String text);
 
   @NotNull
   public abstract GrReferenceExpression createThisExpression(@Nullable PsiClass psiClass);
@@ -135,12 +134,12 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrReferenceExpression createReferenceElementForClass(@NotNull PsiClass clazz);
 
   @NotNull
-  public GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName) {
-    return createReferenceElementFromText(refName, null);
+  public GrCodeReferenceElement createCodeReference(@NotNull String text) {
+    return createCodeReference(text, null);
   }
 
   @NotNull
-  public abstract GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName, @Nullable PsiElement context);
+  public abstract GrCodeReferenceElement createCodeReference(@NotNull String text, @Nullable PsiElement context);
 
   @NotNull
   public GrExpression createExpressionFromText(@NotNull CharSequence exprText) {
@@ -187,6 +186,14 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   @NotNull
   public GrClosableBlock createClosureFromText(@NotNull String s) throws IncorrectOperationException {
     return createClosureFromText(s, null);
+  }
+
+  @NotNull
+  public abstract GrLambdaExpression createLambdaFromText(@NotNull String text, @Nullable PsiElement context);
+
+  @NotNull
+  public GrLambdaExpression createLambdaFromText(@NotNull String text) {
+    return createLambdaFromText(text, null);
   }
 
   @NotNull
@@ -243,6 +250,9 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   @NotNull
   @Override
   public abstract GrAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
+
+  @NotNull
+  public abstract GrAnnotationNameValuePair createAnnotationAttribute(@NotNull String text, @Nullable PsiElement context);
 
   @NotNull
   public abstract GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrSignature signature);

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -517,7 +517,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
             if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
               if (!element.getManager().isInProject(element) ||
                   facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-                fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+                fixes.add(new NonNlsAnnotationProvider().createFix(element));
               }
             }
           }
@@ -684,13 +684,17 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       PsiElement parent = toplevel.getParent();
       if (parent instanceof PsiVariable && toplevel.equals(((PsiVariable)parent).getInitializer())) {
         var = (PsiVariable)parent;
-      } else if (parent instanceof PsiSwitchLabelStatement) {
-        final PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatement)parent).getEnclosingSwitchStatement();
-        if (switchStatement != null) {
-          final PsiExpression switchStatementExpression = switchStatement.getExpression();
-          if (switchStatementExpression instanceof PsiReferenceExpression) {
-            final PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
-            if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+      }
+      else if (parent instanceof PsiExpressionList) {
+        parent = parent.getParent();
+        if (parent instanceof PsiSwitchLabelStatementBase) {
+          PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchStatement();
+          if (switchStatement != null) {
+            PsiExpression switchStatementExpression = switchStatement.getExpression();
+            if (switchStatementExpression instanceof PsiReferenceExpression) {
+              PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
+              if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+            }
           }
         }
       }
@@ -811,10 +815,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
   }
 
   private static boolean isReturnedFromNonNlsMethod(final PsiLiteralExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    PsiElement parent = expression.getParent();
     PsiMethod method;
-    if (parent instanceof PsiNameValuePair) {
-      method = AnnotationUtil.getAnnotationMethod((PsiNameValuePair)parent);
+    PsiNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(expression, PsiNameValuePair.class);
+    if (nameValuePair != null) {
+      method = AnnotationUtil.getAnnotationMethod(nameValuePair);
     }
     else {
       final PsiElement returnStmt = PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class, PsiMethodCallExpression.class);

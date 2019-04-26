@@ -97,13 +97,15 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       if (regionStartOffset >= startOffset) break;
       startOffset = regionStartOffset;
     }
-    while (true) {
-      int lastLineEnd = DocumentUtil.getLineEndOffset(endOffset, document);
-      FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
-      if (collapsedAt == null) break;
-      int regionEndOffset = collapsedAt.getEndOffset();
-      if (regionEndOffset <= endOffset) break;
-      endOffset = regionEndOffset;
+    if (!hasSelection || !DocumentUtil.isAtLineStart(endOffset, document)) {
+      while (true) {
+        int lastLineEnd = DocumentUtil.getLineEndOffset(endOffset, document);
+        FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
+        if (collapsedAt == null) break;
+        int regionEndOffset = collapsedAt.getEndOffset();
+        if (regionEndOffset <= endOffset) break;
+        endOffset = regionEndOffset;
+      }
     }
 
     int startLine = document.getLineNumber(startOffset);

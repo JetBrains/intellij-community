@@ -15,24 +15,13 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * All metadata + changes.
- * <p/>
- * An instance of this object can be obtained via
- * {@link VcsLogObjectsFactory#createFullDetails(Hash, List, long, VirtualFile, String, String, String, String, String, String, long,
- * ThrowableComputable) VcsLogObjectsFactory#createFullDetails}
- * <p/>
- * It is not recommended to create a custom implementation of this interface, but if you need it, <b>make sure to implement {@code equals()}
- * and {@code hashcode()} so that they consider only the Hash</b>, i.e. two VcsFullCommitDetails are equal if and only if they have equal
- * hash codes. The VCS Log framework heavily relies on this fact.
  */
 public interface VcsFullCommitDetails extends VcsCommitMetadata {
 

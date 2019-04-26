@@ -172,11 +172,10 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
         result.stopHere();
       }
     };
-    EditorTextField result = provider.createEditor(project, false, editor -> {
+    EditorTextField result = provider.createEditor(project, true, editor -> {
       collapseIfPossible(editor, externalSystemId, project);
       editor.getSettings().setShowIntentionBulb(false);
     });
-    result.setBorder(UIUtil.getTextFieldBorder());
     result.setOneLineMode(true);
     result.setOpaque(true);
     result.setBackground(UIUtil.getTextFieldBackground());

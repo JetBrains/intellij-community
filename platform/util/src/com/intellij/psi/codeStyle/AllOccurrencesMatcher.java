@@ -28,17 +28,30 @@ import java.util.List;
  * {@link FixingLayoutMatcher} extension that returns all matches (not just the first one) 
  * from {@link MinusculeMatcher#matchingFragments(String)}.
  */
-public class AllOccurrencesMatcher extends FixingLayoutMatcher {
-  public AllOccurrencesMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
-    super(pattern, options, hardSeparators);
+public class AllOccurrencesMatcher extends MinusculeMatcher {
+  private final MinusculeMatcher delegate;
+
+  private AllOccurrencesMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+    delegate = new FixingLayoutMatcher(pattern, options, hardSeparators);
+  }
+
+  @NotNull
+  @Override
+  public String getPattern() {
+    return delegate.getPattern();
+  }
+
+  @Override
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
+    return delegate.matchingDegree(name, valueStartCaseMatch, fragments);
   }
 
   @Nullable
   @Override
   public FList<TextRange> matchingFragments(@NotNull String name) {
-    FList<TextRange> match = super.matchingFragments(name);
+    FList<TextRange> match = delegate.matchingFragments(name);
     if (!ContainerUtil.isEmpty(match)) {
-      List<FList<TextRange>> allMatchesReversed = new ArrayList<FList<TextRange>>();
+      List<FList<TextRange>> allMatchesReversed = new ArrayList<>();
       int lastOffset = 0;
       while (!ContainerUtil.isEmpty(match)) {
         FList<TextRange> reversedWithAbsoluteOffsets = FList.emptyList();
@@ -47,8 +60,7 @@ public class AllOccurrencesMatcher extends FixingLayoutMatcher {
         }
         allMatchesReversed.add(reversedWithAbsoluteOffsets);
         lastOffset = reversedWithAbsoluteOffsets.get(0).getEndOffset();
-        match = super.matchingFragments(name.substring(lastOffset));
-        
+        match = delegate.matchingFragments(name.substring(lastOffset));
       }
       match = FList.emptyList();
       for (int i = allMatchesReversed.size() - 1; i >= 0; i--) {
@@ -58,5 +70,16 @@ public class AllOccurrencesMatcher extends FixingLayoutMatcher {
       }
     }
     return match;
+  }
+
+  @Override
+  public String toString() {
+    return "AllOccurrencesMatcher{" +
+           "delegate=" + delegate +
+           '}';
+  }
+
+  public static MinusculeMatcher create(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+    return new AllOccurrencesMatcher(pattern, options, hardSeparators);
   }
 }

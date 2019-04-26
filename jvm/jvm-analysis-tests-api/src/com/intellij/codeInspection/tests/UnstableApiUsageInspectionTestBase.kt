@@ -10,7 +10,7 @@ abstract class UnstableApiUsageInspectionTestBase : AnnotatedElementUsageInspect
   private val inspection = UnstableApiUsageInspection()
   override fun getInspection() = inspection
 
-  override fun getAnnotationFqn(): String = "org.jetbrains.annotations.ApiStatus.Experimental"
+  override fun getAnnotationString(): String = "@org.jetbrains.annotations.ApiStatus.Experimental"
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(ApiStatus::class.java))

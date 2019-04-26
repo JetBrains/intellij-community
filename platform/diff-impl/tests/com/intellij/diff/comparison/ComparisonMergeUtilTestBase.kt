@@ -177,16 +177,16 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
       fun matching() {
         assertNull(matching)
         if (type != TestType.CHAR) {
-          matching = matchTexts.map { it, side -> parseLineMatching(it, texts!!(side).charsSequence) }
+          matching = matchTexts.map { it, side -> parseLineMatching(it, texts!!(side)) }
         }
         else {
-          matching = matchTexts.map { it -> parseMatching(it) }
+          matching = matchTexts.map { it, side -> parseMatching(it, texts!!(side)) }
         }
       }
     }
 
 
-    fun changes(vararg expected: Change): Unit {
+    fun changes(vararg expected: Change) {
       assertNull(changes)
       changes = ContainerUtil.list(*expected)
     }

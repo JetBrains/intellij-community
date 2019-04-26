@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -102,7 +102,7 @@ public class RegistryValue {
         try {
           return new Color(Integer.parseInt(rgb[0]), Integer.parseInt(rgb[1]), Integer.parseInt(rgb[2]));
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
         }
       }
     }
@@ -126,6 +126,10 @@ public class RegistryValue {
 
   public boolean isChangedFromDefault() {
     return isChangedFromDefault(asString());
+  }
+
+  public boolean isContributedByThirdPartyPlugin() {
+    return myKeyDescriptor != null && myKeyDescriptor.isContributedByThirdPartyPlugin();
   }
 
   boolean isChangedFromDefault(@NotNull String newValue) {
@@ -159,11 +163,11 @@ public class RegistryValue {
   }
 
   public void setValue(boolean value) {
-    setValue(Boolean.valueOf(value).toString());
+    setValue(Boolean.toString(value));
   }
 
   public void setValue(int value) {
-    setValue(Integer.valueOf(value).toString());
+    setValue(Integer.toString(value));
   }
 
   public void setValue(String value) {
@@ -184,7 +188,7 @@ public class RegistryValue {
     }
 
     myChangedSinceStart = true;
-    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '"');
+    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
   }
 
   public void setValue(boolean value, Disposable parentDisposable) {

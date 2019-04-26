@@ -26,7 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collections;
@@ -35,18 +34,30 @@ import java.util.List;
 import java.util.Set;
 
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
+  @NotNull
   private final Module myModule;
 
-  public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
+  public ModuleFileIndexImpl(@NotNull Module module, @NotNull DirectoryIndex directoryIndex) {
     super(directoryIndex, FileTypeRegistry.getInstance());
     myModule = module;
   }
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    final Set<VirtualFile> contentRoots = ReadAction.compute(() -> {
-      if (myModule.isDisposed()) return Collections.emptySet();
+    Set<VirtualFile> contentRoots = getModuleRootsToIterate();
+    for (VirtualFile contentRoot : contentRoots) {
+      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
+
+  @NotNull
+  Set<VirtualFile> getModuleRootsToIterate() {
+    return ReadAction.compute(() -> {
+      if (myModule.isDisposed()) return Collections.emptySet();
       Set<VirtualFile> result = new LinkedHashSet<>();
       VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
       for (VirtualFile[] roots : allRoots) {
@@ -57,26 +68,18 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
           VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
-            if (parentInfo.isInProject(parent) && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+            if (myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
           }
           result.add(root);
         }
       }
-
       return result;
     });
-    for (VirtualFile contentRoot : contentRoots) {
-      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInProject(fileOrDir) && myModule.equals(info.getModule());
+    return isInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
   }
 
   @Override
@@ -99,8 +102,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule())
-           && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
+    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && isTestSourcesRoot(info);
   }
 
   @Override
@@ -155,7 +157,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   private static class FakeOrderEntry implements OrderEntry {
     private final Module myOwnerModule;
 
-    FakeOrderEntry(Module ownerModule) {
+    FakeOrderEntry(@NotNull Module ownerModule) {
       myOwnerModule = ownerModule;
     }
 
@@ -202,5 +204,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     public boolean isSynthetic() {
       throw new IncorrectOperationException();
     }
+  }
+
+  @Override
+  boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+    return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
   }
 }

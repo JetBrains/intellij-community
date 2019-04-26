@@ -14,27 +14,27 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
+class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   private static final Logger LOG = Logger.getInstance(DirectoryInfoWithExcludePatterns.class);
   @Nullable private final FileTypeAssocTable<Boolean> myContentExcludePatterns;
   @Nullable private final Condition<? super VirtualFile> myLibraryExcludeCondition;
 
-  public DirectoryInfoWithExcludePatterns(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot,
-                                          @Nullable SourceFolder sourceFolder, VirtualFile libraryClassRoot, boolean inModuleSource, 
-                                          boolean inLibrarySource, boolean isExcluded,
-                                          @Nullable FileTypeAssocTable<Boolean> contentExcludePatterns,
-                                          @Nullable Condition<? super VirtualFile> libraryExcludeCondition,
-                                          @Nullable String unloadedModuleName) {
+  DirectoryInfoWithExcludePatterns(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot,
+                                   @Nullable SourceFolder sourceFolder, VirtualFile libraryClassRoot, boolean inModuleSource,
+                                   boolean inLibrarySource, boolean isExcluded,
+                                   @Nullable FileTypeAssocTable<Boolean> contentExcludePatterns,
+                                   @Nullable Condition<? super VirtualFile> libraryExcludeCondition,
+                                   @Nullable String unloadedModuleName) {
     super(root, module, contentRoot, sourceRoot, sourceFolder, libraryClassRoot, inModuleSource, inLibrarySource, isExcluded, unloadedModuleName);
     myContentExcludePatterns = contentExcludePatterns;
     myLibraryExcludeCondition = libraryExcludeCondition;
     LOG.assertTrue(myContentExcludePatterns != null || myLibraryExcludeCondition != null,
-                   "Directory info of '" + root + "' with exclude patterns have no any exclude patterns: " + toString());
+                   "Directory info of '" + root + "' with exclude patterns have no any exclude patterns: " + this);
   }
 
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile file) {
-    return myInLibrarySource && !isExcludedByCondition(file, myLibraryExcludeCondition);
+    return super.isInLibrarySource(file) && !isExcludedByCondition(file, myLibraryExcludeCondition);
   }
 
   private boolean isExcludedByCondition(@NotNull VirtualFile file, @Nullable Condition<? super VirtualFile> condition) {
@@ -63,21 +63,21 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
 
   @Override
   public boolean isExcluded(@NotNull VirtualFile file) {
-    if (myExcluded) return true;
+    if (isExcluded()) return true;
     if (myLibraryExcludeCondition == null && myContentExcludePatterns == null) {
-      LOG.error("Directory info of '" + getRoot() + "' with exclude patterns have no any exclude patterns: " + toString());
+      LOG.error("Directory info of '" + getRoot() + "' with exclude patterns have no any exclude patterns: " + this);
       return false;
     }
 
     boolean inContent = getContentRoot() != null;
-    if (!inContent && !myInLibrarySource) return false;
+    if (!inContent && !super.isInLibrarySource(file)) return false;
 
     VirtualFile current = getPhysicalFile(file);
     while (current != null && !myRoot.equals(current)) {
       CharSequence name = current.getNameSequence();
       boolean excludedFromModule = myContentExcludePatterns != null && myContentExcludePatterns.findAssociatedFileType(name) != null;
       boolean excludedFromLibrary = myLibraryExcludeCondition != null && myLibraryExcludeCondition.value(current);
-      if ((!inContent || excludedFromModule) && (!myInLibrarySource || excludedFromLibrary)) {
+      if ((!inContent || excludedFromModule) && (!super.isInLibrarySource(file) || excludedFromLibrary)) {
         return true;
       }
       current = current.getParent();
@@ -90,6 +90,6 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
 
   @Override
   public boolean isInModuleSource(@NotNull VirtualFile file) {
-    return myInModuleSource && !isExcludedByPatterns(file, myContentExcludePatterns);
+    return super.isInModuleSource(file) && !isExcludedByPatterns(file, myContentExcludePatterns);
   }
 }

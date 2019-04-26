@@ -46,11 +46,9 @@ class SliceForwardUtil {
                                            @NotNull final JavaSliceUsage parent,
                                            @NotNull final Processor<? super SliceUsage> processor) {
     PsiExpression expression = getMethodCallTarget(element);
-    if (expression != null) {
-      SliceUsage usage = SliceUtil.createSliceUsage(expression, parent, parent.getSubstitutor(), parent.indexNesting, "");
-      if (!processor.process(usage)) {
-        return false;
-      }
+    if (expression != null &&
+        !SliceUtil.createAndProcessSliceUsage(expression, parent, parent.getSubstitutor(), parent.indexNesting, "", processor)) {
+      return false;
     }
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
@@ -74,16 +72,14 @@ class SliceForwardUtil {
             if (parameters.length <= parameterIndex) return true;
             PsiParameter actualParam = parameters[parameterIndex];
 
-            SliceUsage usage = SliceUtil.createSliceUsage(actualParam, parent, superSubstitutor,parent.indexNesting, "");
-            return processor.process(usage);
+            return SliceUtil.createAndProcessSliceUsage(actualParam, parent, superSubstitutor, parent.indexNesting, "", processor);
           };
           if (!myProcessor.process(method)) return false;
           return OverridingMethodsSearch.search(method, parent.getScope().toSearchScope(), true).forEach(myProcessor);
         }
       }
 
-      SliceUsage usage = SliceUtil.createSliceUsage(target, parent, parent.getSubstitutor(),parent.indexNesting, "");
-      return processor.process(usage);
+      return SliceUtil.createAndProcessSliceUsage(target, parent, parent.getSubstitutor(),parent.indexNesting, "", processor);
     }
 
     if (element instanceof PsiReferenceExpression) {
@@ -201,13 +197,11 @@ class SliceForwardUtil {
     if (!parent.params.scope.contains(element)) return true;
     if (element instanceof PsiCompiledElement) element = element.getNavigationElement();
     if (element.getLanguage() != JavaLanguage.INSTANCE) {
-      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, EmptySubstitutor.getInstance(), parent.indexNesting, "");
-      return processor.process(usage);
+      return SliceUtil.createAndProcessSliceUsage(element, parent, EmptySubstitutor.getInstance(), parent.indexNesting, "", processor);
     }
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
-      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond(), parent.indexNesting, "");
-      return processor.process(usage);
+      return SliceUtil.createAndProcessSliceUsage(element, parent, pair.getSecond(), parent.indexNesting, "", processor);
     }
     if (parent.params.showInstanceDereferences && isDereferenced(element)) {
       SliceUsage usage = new JavaSliceDereferenceUsage(element.getParent(), parent, parent.getSubstitutor());

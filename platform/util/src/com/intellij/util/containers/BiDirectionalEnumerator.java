@@ -27,7 +27,7 @@ public class BiDirectionalEnumerator<T> extends Enumerator<T> {
   public BiDirectionalEnumerator(int expectNumber, @NotNull TObjectHashingStrategy<T> strategy) {
     super(expectNumber, strategy);
 
-    myIntToObjectMap = new TIntObjectHashMap<T>(expectNumber);
+    myIntToObjectMap = new TIntObjectHashMap<>(expectNumber);
   }
 
   @Override

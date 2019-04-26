@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.project.Project;
@@ -41,7 +41,6 @@ class ReplacementInfoImpl implements ReplacementInfo {
     return replacement;
   }
 
-  @Override
   public void setReplacement(String replacement) {
     this.replacement = replacement;
   }

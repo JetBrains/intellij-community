@@ -116,7 +116,7 @@
 ## Heading Group: <hgroup>
 
 	hgroup.elem =
-		element hgroup { hgroup.inner & hgroup.attrs } & nonW3C
+		element hgroup { hgroup.inner & hgroup.attrs }
 	hgroup.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.heading

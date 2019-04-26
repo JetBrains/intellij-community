@@ -59,7 +59,7 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
       icon = item.getSmallIcon();
     }
     else {
-      icon = UIDesignerIcons.Unknown_small;
+      icon = UIDesignerIcons.Unknown;
     }
     setIcon(icon);
 

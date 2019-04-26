@@ -296,7 +296,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         handleSelect(true, e);
       }
       else {
-        if (!isLocationInExpandControl(myWizardTree, path, e.getPoint().x, e.getPoint().y)) {
+        if (!TreeUtil.isLocationInExpandControl(myWizardTree, path, e.getX(), e.getY())) {
           toggleExpansion(path);
         }
       }
@@ -387,11 +387,6 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
       super.customizeCellRenderer(tree, value, shouldPaintSelected, expanded, leaf, row, shouldPaintFocus);
     }
-  }
-
-  private static boolean isLocationInExpandControl(JTree aTree, TreePath path, int mouseX, int mouseY) {
-    Range<Integer> box = TreeUtil.getExpandControlRange(aTree, path);
-    return box != null && box.isWithin(mouseX);
   }
 
   @Override

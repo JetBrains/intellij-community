@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-  package com.intellij.ide.ui.laf.intellij;
+package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.util.ui.JBDimension;
@@ -78,7 +78,7 @@ public class WinOnOffButtonUI extends BasicToggleButtonUI {
       // Fill
       g2.setColor(b.isSelected() ? new Color(0x119bfe) : new Color(0xe3e3e3));
 
-      Point location = new Point((b.isSelected() ? JBUI.scale(16): JBUI.scale(1)) + origin.x, JBUI.scale(1) + origin.y);
+      Point location = new Point((b.isSelected() ? JBUI.scale(16) : JBUI.scale(1)) + origin.x, JBUI.scale(1) + origin.y);
       Rectangle innerRect = new Rectangle(location, TOGGLE_SIZE);
       g2.fill(innerRect);
 
@@ -101,16 +101,17 @@ public class WinOnOffButtonUI extends BasicToggleButtonUI {
         b.getText() == null ? 0 : b.getIconTextGap());
 
       // Draw the Text
-      if(text != null && !text.isEmpty()) {
-        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+      if (text != null && !text.isEmpty()) {
+        View v = (View)c.getClientProperty(BasicHTML.propertyKey);
         if (v != null) {
           v.paint(g2, textRect);
-        } else {
+        }
+        else {
           paintText(g2, b, textRect, text);
         }
       }
-
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

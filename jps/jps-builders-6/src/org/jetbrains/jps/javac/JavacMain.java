@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -16,14 +15,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
-  private static final boolean CUSTOM_JAVAC_FILE_MANAGER = Boolean.valueOf(System.getProperty("jps.custom.javac.file.manager", "true")).booleanValue();
 
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
@@ -64,12 +61,9 @@ public class JavacMain {
 
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
     final boolean javacBefore9 = isJavacBefore9(compilingTool);
-    final JpsJavacFileManager fileManager = CUSTOM_JAVAC_FILE_MANAGER ? new JavacFileManager2(
-      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, false), javacBefore9, JavaSourceTransformer.getTransformers()
-    ) : new JavacFileManager(
-      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, javacBefore9), JavaSourceTransformer.getTransformers()
+    final JpsJavacFileManager fileManager = new JpsJavacFileManager(
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers()
     );
-
     if (!platformClasspath.isEmpty()) {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar
       // and thus usage of symbol file for resolution, when this file is not expected to be used
@@ -402,62 +396,15 @@ public class JavacMain {
 
   private static class ContextImpl implements JpsJavacFileManager.Context {
     private final StandardJavaFileManager myStdManager;
-    @Nullable
-    private final Method myCacheClearMethod;
     private final DiagnosticOutputConsumer myOutConsumer;
     private final OutputFileConsumer myOutputFileSink;
     private final CanceledStatus myCanceledStatus;
-    private static final AtomicBoolean ourOptimizedManagerMissingReported = new AtomicBoolean(false);
 
-    ContextImpl(@NotNull JavaCompiler compiler,
-                       @NotNull DiagnosticOutputConsumer outConsumer,
-                       @NotNull OutputFileConsumer sink,
-                       CanceledStatus canceledStatus, boolean canUseOptimizedmanager) {
+    ContextImpl(@NotNull JavaCompiler compiler, @NotNull DiagnosticOutputConsumer outConsumer, @NotNull OutputFileConsumer sink, CanceledStatus canceledStatus) {
       myOutConsumer = outConsumer;
       myOutputFileSink = sink;
       myCanceledStatus = canceledStatus;
-      StandardJavaFileManager optimizedManager = null;
-      Method cacheClearMethod = null;
-      if (canUseOptimizedmanager) {
-        final Class<StandardJavaFileManager> optimizedManagerClass = OptimizedFileManagerUtil.getManagerClass();
-        if (optimizedManagerClass != null) {
-          try {
-            final Constructor<StandardJavaFileManager> constructor = optimizedManagerClass.getConstructor();
-            // if optimizedManagerClass is loaded by another classloader, cls.newInstance() will not work
-            // that's why we need to call setAccessible() to ensure access
-            constructor.setAccessible(true);
-            optimizedManager = constructor.newInstance();
-            cacheClearMethod = OptimizedFileManagerUtil.getCacheClearMethod();
-          }
-          catch (Throwable e) {
-            if (SystemInfoRt.isWindows) {
-              reportMissingOptimizedManager(outConsumer, e.getMessage());
-            }
-          }
-        }
-        else {
-          reportMissingOptimizedManager(outConsumer, null);
-        }
-      }
-      myCacheClearMethod = cacheClearMethod;
-      if (optimizedManager != null) {
-        myStdManager = optimizedManager;
-      }
-      else {
-        myStdManager = compiler.getStandardFileManager(outConsumer, Locale.US, null);
-      }
-    }
-
-    private static void reportMissingOptimizedManager(DiagnosticOutputConsumer outConsumer, String message) {
-      if (!ourOptimizedManagerMissingReported.getAndSet(true)) {
-        if (message == null) {
-          message = OptimizedFileManagerUtil.getLoadError();
-          if (message == null) {
-            message = "";
-          }
-        }
-        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac:\n" + message));
-      }
+      myStdManager = compiler.getStandardFileManager(outConsumer, Locale.US, null);
     }
 
     @Override
@@ -478,21 +425,7 @@ public class JavacMain {
 
     @Override
     public void consumeOutputFile(@NotNull final OutputFileObject cls) {
-      try {
-        myOutputFileSink.save(cls);
-      }
-      finally {
-        final Method cacheClearMethod = myCacheClearMethod;
-        if (cacheClearMethod != null) {
-          try {
-            cacheClearMethod.invoke(myStdManager, cls.getFile());
-          }
-          catch (Throwable e) {
-            //noinspection UseOfSystemOutOrSystemErr
-            e.printStackTrace(System.err);
-          }
-        }
-      }
+      myOutputFileSink.save(cls);
     }
   }
 

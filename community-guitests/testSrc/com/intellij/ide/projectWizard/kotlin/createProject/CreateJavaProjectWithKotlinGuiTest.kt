@@ -7,10 +7,12 @@ import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenar
 import org.junit.Test
 
 class CreateJavaProjectWithKotlinGuiTest : KotlinGuiTestCase() {
+  private val testedJdk = "1.8"
   @Test
   @JvmName("java_with_jvm")
   fun createJavaWithKotlinJvmProject() {
     createJavaProject(projectFolder,
+                      testedJdk,
                       setOf(NewProjectDialogModel.LibraryOrFramework(kotlinProjects.getValue(Projects.JavaProject).frameworkName)))
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
       project = kotlinProjects.getValue(Projects.JavaProject),

@@ -16,14 +16,14 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.naming.AbstractMethodNamingConventionInspectionTest;
 import com.siyeh.ig.naming.NewMethodNamingConventionInspection;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JUnit4MethodNamingConventionInspectionTest extends LightInspectionTestCase {
+public class JUnit4MethodNamingConventionInspectionTest extends AbstractMethodNamingConventionInspectionTest {
 
   public void testJUnit4MethodNamingConvention() { doTest(); }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.credentialStore.LOG
@@ -112,13 +112,10 @@ internal class KdbxGroup(internal val element: Element, private val database: Ke
   }
 
   @Synchronized
-  fun getOrCreateEntry(title: String, userName: String?): KdbxEntry {
-    var entry = getEntry(title, userName)
-    if (entry == null) {
-      entry = database.createEntry(title)
-      entry.userName = userName
-      addEntry(entry)
-    }
+  fun createEntry(title: String, userName: String?): KdbxEntry {
+    val entry = database.createEntry(title)
+    entry.userName = userName
+    addEntry(entry)
     return entry
   }
 

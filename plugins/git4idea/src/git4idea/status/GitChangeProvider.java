@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -18,12 +19,14 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.config.GitVersionSpecialty;
+import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Git repository change provider
@@ -56,35 +59,50 @@ public class GitChangeProvider implements ChangeProvider {
                          @NotNull final ProgressIndicator progress,
                          @NotNull final ChangeListManagerGate addGate) throws VcsException {
     final GitVcs vcs = GitVcs.getInstance(myProject);
+    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
     if (LOG.isDebugEnabled()) LOG.debug("initial dirty scope: " + dirtyScope);
     appendNestedVcsRootsToDirt(dirtyScope, vcs, myVcsManager);
     if (LOG.isDebugEnabled()) LOG.debug("after adding nested vcs roots to dirt: " + dirtyScope);
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
-    Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
+    Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affected, repositoryManager::getRepositoryForRoot);
+
+    List<FilePath> newDirtyPaths = new ArrayList<>();
 
     try {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, addGate,
                                                                myFileDocumentManager, myVcsManager);
-      for (VirtualFile root : roots) {
-        LOG.debug("checking root: " + root.getPath());
-        GitChangesCollector collector = isNewGitChangeProviderAvailable()
-                                        ? GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
-                                                                         vcs, dirtyScope, root)
-                                        : GitOldChangesCollector.collect(myProject, myChangeListManager, myVcsManager,
-                                                                         vcs, dirtyScope, root);
+      for (GitRepository repo : repos) {
+        LOG.debug("checking root: " + repo.getRoot().getPath());
+        GitChangesCollector collector = GitChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
+                                                                    vcs, dirtyScope, repo);
         final Collection<Change> changes = collector.getChanges();
         holder.changed(changes);
         for (Change file : changes) {
           LOG.debug("process change: " + ChangesUtil.getFilePath(file).getPath());
           builder.processChange(file, GitVcs.getKey());
+
+          if (file.isMoved() || file.isRenamed()) {
+            FilePath beforePath = assertNotNull(ChangesUtil.getBeforePath(file));
+            FilePath afterPath = assertNotNull(ChangesUtil.getAfterPath(file));
+
+            if (dirtyScope.belongsTo(beforePath) != dirtyScope.belongsTo(afterPath)) {
+              newDirtyPaths.add(beforePath);
+              newDirtyPaths.add(afterPath);
+            }
+          }
         }
         for (VirtualFile f : collector.getUnversionedFiles()) {
           builder.processUnversionedFile(f);
           holder.unversioned(f);
         }
-        holder.feedBuilder(builder);
+
+        GitConflictsHolder conflictsHolder = repo.getConflictsHolder();
+        conflictsHolder.refresh(dirtyScope, collector.getConflicts());
       }
+      holder.feedBuilder(builder);
+
+      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(newDirtyPaths, null);
     }
     catch (ProcessCanceledException pce) {
       if(pce.getCause() != null) throw new VcsException(pce.getCause().getMessage(), pce.getCause());
@@ -123,10 +141,6 @@ public class GitChangeProvider implements ChangeProvider {
         }
       }
     }
-  }
-
-  private boolean isNewGitChangeProviderAvailable() {
-    return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(myProject);
   }
 
   private static class MyNonChangedHolder {
@@ -191,8 +205,11 @@ public class GitChangeProvider implements ChangeProvider {
           baseRevisions.put(root, beforeRevisionNumber);
         }
 
-        builder.processChange(new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
-                                         GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED), gitKey);
+        Change change = new Change(GitContentRevision.createRevision(filePath, beforeRevisionNumber, myProject),
+                                   GitContentRevision.createRevision(filePath, null, myProject), FileStatus.MODIFIED);
+
+        LOG.debug("process in-memory change " + change);
+        builder.processChange(change, gitKey);
       }
     }
   }

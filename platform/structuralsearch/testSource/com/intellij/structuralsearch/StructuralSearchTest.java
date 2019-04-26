@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -248,6 +248,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                               "}}";
     assertEquals("Find 2 dimensional array", 1, findMatchesCount(multiDimensional, "new String[][]{}"));
     assertEquals("Find 1 dimensional arrays", 2, findMatchesCount(multiDimensional, "new String[]{}"));
+    assertEquals("Find empty 1 dimensional arrays", 2, findMatchesCount(multiDimensional, "new String[0]"));
+
+    String singleDimensional = "class X {{" +
+                               "  String[] ss1 = new String[0];" +
+                               "  String[][] ss2 = new String[0][];" +
+                               "}}";
+    assertEquals("Find empty array", 1, findMatchesCount(singleDimensional, "new String[0]"));
   }
 
   public void testLiteral() {
@@ -410,6 +417,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String s85 = "class X {{ int a; a=1; a=1; return a; }}";
     assertEquals("two the same statements search", 1, findMatchesCount(s85, "'T; 'T;"));
+    assertEquals("simple statement search (ignoring whitespace)", 4, findMatchesCount(s85, "'T ;"));
 
     final String s87 = "class X {{ getSomething(\"2\"); getSomething(\"1\"); a.call(); }}";
     assertEquals("search for simple call", 1, findMatchesCount(s87, " '_Instance.'Call('_*); "));
@@ -2329,6 +2337,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern6 = "('_Parameter+) -> System.out.println()";
     assertEquals("should find lambdas with at least one parameter and matching body", 0, findMatchesCount(source, pattern6));
 
+    String typePattern = "'_X:[exprtype( Runnable )]";
+    assertEquals("should find Runnable lambda's", 2, findMatchesCount(source, typePattern));
+
     String source2 = "import java.util.function.Function;\n" +
                      "public class Test {\n" +
                      "   public static void main(String[] args) {\n" +
@@ -2352,6 +2363,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "   };\n" +
                       "}";
     assertEquals("match statement body correctly", 1, findMatchesCount(source2, pattern7));
+
+    String source3 = "class LambdaParameter {\n" +
+                     "\n" +
+                     "    void x() {\n" +
+                     "        Runnable r = (var a) -> a = \"\";\n" +
+                     "    }\n" +
+                     "}";
+    String pattern8 = "String '_x;";
+    assertEquals("avoid IncorrectOperationException", 0, findMatchesCount(source3, pattern8));
   }
 
   public void testFindDefaultMethods() {
@@ -2364,13 +2384,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}" +
                     "interface ABC {" +
                     "  void m();" +
+                    "}" +
+                    "interface KLM {" +
+                    "}" +
+                    "interface I {" +
+                    "  void m();" +
                     "}";
 
     String pattern1 = "interface '_Class {  default '_ReturnType 'MethodName+('_ParameterType '_Parameter*);}";
     assertEquals("should find default method", 1, findMatchesCount(source, pattern1));
 
     String pattern2 = "interface 'Class {  default '_ReturnType '_MethodName{0,0}('_ParameterType '_Parameter*);}";
-    assertEquals("should find interface without default methods", 1, findMatchesCount(source, pattern2));
+    assertEquals("should find interface without default methods", 3, findMatchesCount(source, pattern2));
 
     String pattern3 = "default '_ReturnType 'MethodName('_ParameterType '_Parameter*);";
     assertEquals("find naked default method", 1, findMatchesCount(source, pattern3));
@@ -2398,6 +2423,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern4 = "@AA A::new";
     assertEquals("should find annotated method references", 1, findMatchesCount(source, pattern4));
+
+    String pattern5 = "'_X:[exprtype( Runnable )]";
+    assertEquals("should find Runnable method references", 4, findMatchesCount(source, pattern5));
+  }
+
+  public void testNoException() {
+    String s = "class X {" +
+               "  void x(String[] tt, String[] ss, String s) {}" +
+               "}";
+    assertEquals("don't throw exception during matching", 0,
+                 findMatchesCount(s, "void '_Method('_ParameterType '_Parameter*, '_LastType[] '_lastParameter);"));
   }
 
   public void testNoUnexpectedException() {
@@ -2421,7 +2457,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, pattern3);
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
-
   }
 
   public void testInvalidPatternWarnings() {
@@ -2483,6 +2518,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     options.fillSearchCriteria("void '_a:* ();");
     assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("if (true) '_st{0,0};");
+    assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("while (true) '_st+;");
+    assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {
@@ -2634,6 +2675,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
                  "  }",
                  matches3.get(0).getMatchImage());
+
+    String source2 = "class X {{" +
+                     "  try {} catch (Thowable e) {} finally {}" +
+                     "  try {} finally {}" +
+                     "}}";
+    String pattern10 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; } finally { '_St3*; }";
+    final List<MatchResult> matches4 = findMatches(source2, pattern10, StdFileTypes.JAVA);
+    assertEquals(1, matches4.size());
+    assertEquals("Should find try without catch blocks",
+                 "try {} finally {}",
+                 matches4.get(0).getMatchImage());
   }
 
   public void testFindAsserts() {
@@ -3140,5 +3192,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                            "  @FindBy(name='_value)\n" +
                                                                            "  '_FieldType2 'field2 = '_init2?;\n" +
                                                                            "}"));
+  }
+
+  public void testForStatement() {
+    String in = "class X {{" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  " +
+                "  for (;;) {}" +
+                "  for (int i = 0; ;) {}" +
+                "  for (int i = 0; true; ) {}" +
+                "}}";
+    assertEquals("find all for loops", 4, findMatchesCount(in, "for(;;) '_st;"));
+    assertEquals("find loops without initializers", 1, findMatchesCount(in, "for('_init{0,0};;) '_st;"));
+    assertEquals("find loops without condition", 2, findMatchesCount(in, "for(;'_cond{0,0};) '_st;"));
+    assertEquals("find loops without update", 3, findMatchesCount(in, "for(;;'_update{0,0}) '_st;"));
+    assertEquals("find all for loops 2", 4, findMatchesCount(in, "for('_init?;;) '_st;"));
+    assertEquals("find all for loops 3", 4, findMatchesCount(in, "for(;;'_update?) '_st;"));
+    assertEquals("find all for loops 4", 4, findMatchesCount(in, "for(;'_cond?;) '_st;"));
   }
 }

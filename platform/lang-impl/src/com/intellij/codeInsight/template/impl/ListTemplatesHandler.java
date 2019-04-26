@@ -236,15 +236,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       if (item instanceof LiveTemplateLookupElementImpl) {
         final TemplateImpl template = ((LiveTemplateLookupElementImpl)item).getTemplate();
         final String argument = myTemplate2Argument != null ? myTemplate2Argument.get(template) : null;
-        WriteCommandAction.writeCommandAction(project).run(() -> {
-          ((TemplateManagerImpl)TemplateManager.getInstance(project)).startTemplateWithPrefix(lookup.getEditor(), template, null, argument);
-        });
+        WriteCommandAction.writeCommandAction(project).run(() -> ((TemplateManagerImpl)TemplateManager.getInstance(project)).startTemplateWithPrefix(lookup.getEditor(), template, null, argument));
       }
       else if (item instanceof CustomLiveTemplateLookupElement) {
         if (myFile != null) {
-          WriteCommandAction.writeCommandAction(project).run(() -> {
-            ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myFile);
-          });
+          WriteCommandAction.writeCommandAction(project).run(() -> ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myFile));
         }
       }
     }

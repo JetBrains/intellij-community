@@ -22,20 +22,27 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMultiResolvable
 
 class JavaUCallableReferenceExpression(
-  override val psi: PsiMethodReferenceExpression,
+  override val sourcePsi: PsiMethodReferenceExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression, UMultiResolvable {
-  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
+  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
 
   override val qualifierType: PsiType?
-    get() = psi.qualifierType?.type
+    get() = sourcePsi.qualifierType?.type
 
   override val callableName: String
-    get() = psi.referenceName.orAnonymous()
+    get() = sourcePsi.referenceName.orAnonymous()
 
-  override fun resolve(): PsiElement? = psi.resolve()
+  override fun resolve(): PsiElement? = sourcePsi.resolve()
 
-  override fun multiResolve(): Iterable<ResolveResult> = psi.multiResolve(false).asIterable()
+  override fun multiResolve(): Iterable<ResolveResult> = sourcePsi.multiResolve(false).asIterable()
 
-  override val resolvedName: String? = (psi.resolve() as? PsiNamedElement)?.name
+  override val resolvedName: String?
+    get() = (sourcePsi.resolve() as? PsiNamedElement)?.name
+
+  override val referenceNameElement: UElement? by lz {
+    sourcePsi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
+  }
+
+
 }

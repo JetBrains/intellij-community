@@ -28,12 +28,6 @@ public class GroovyPublicFieldAccessedInSynchronizedContextInspection extends Ba
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Non-private field accessed in synchronized context";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "Non-private field <code>#ref</code> accessed in synchronized context  #loc";
   }

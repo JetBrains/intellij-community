@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.*;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContextAware;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +28,11 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
 
 /**
@@ -185,7 +187,7 @@ public class IconUtil {
       return icon;
     }
     FileType fileType = vFile.getFileType();
-    if (vFile.isDirectory() && vFile.isInLocalFileSystem() && !(fileType instanceof DirectoryFileType)) {
+    if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return PlatformIcons.FOLDER_ICON;
     }
     return fileType.getIcon();
@@ -203,20 +205,11 @@ public class IconUtil {
   @NotNull
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(createEmptyIconLike(PlatformIcons.CLASS_ICON_PATH), 0);
+    baseIcon.setIcon(EmptyIcon.create(PlatformIcons.CLASS_ICON), 0);
     if (showVisibility) {
-      baseIcon.setIcon(createEmptyIconLike(PlatformIcons.PUBLIC_ICON_PATH), 1);
+      baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);
     }
     return baseIcon;
-  }
-
-  @NotNull
-  private static Icon createEmptyIconLike(@NotNull String baseIconPath) {
-    Icon baseIcon = IconLoader.findIcon(baseIconPath);
-    if (baseIcon == null) {
-      return EmptyIcon.ICON_16;
-    }
-    return EmptyIcon.create(baseIcon);
   }
 
   private static class FileIconProviderHolder {
@@ -456,7 +449,17 @@ public class IconUtil {
    */
   @Contract("null, _->null; !null, _->!null")
   public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
-    return IconLoader.copy(icon, ancestor);
+    return IconLoader.copy(icon, ancestor, false);
+  }
+
+  /**
+   * Returns a deep copy of the provided {@code icon}.
+   *
+   * @see CopyableIcon
+   */
+  @Contract("null, _->null; !null, _->!null")
+  public static Icon deepCopy(@Nullable Icon icon, @Nullable Component ancestor) {
+    return IconLoader.copy(icon, ancestor, true);
   }
 
   /**
@@ -517,6 +520,26 @@ public class IconUtil {
       scale /= usrScale;
     }
     return scale(icon, ancestor, scale);
+  }
+
+  /**
+   * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
+   *
+   * @see JBUIScale.UserScaleContext#overrideScale(JBUIScale.Scale)
+   */
+  @NotNull
+  public static Icon overrideScale(@NotNull Icon icon, JBUIScale.Scale scale) {
+    if (icon instanceof CompositeIcon) {
+      CompositeIcon compositeIcon = (CompositeIcon)icon;
+      for (int i = 0; i < compositeIcon.getIconCount(); i++) {
+        Icon subIcon = compositeIcon.getIcon(i);
+        if (subIcon != null) overrideScale(subIcon, scale);
+      }
+    }
+    if (icon instanceof ScaleContextAware) {
+      ((ScaleContextAware)icon).getScaleContext().overrideScale(scale);
+    }
+    return icon;
   }
 
   @NotNull
@@ -666,12 +689,14 @@ public class IconUtil {
 
   @NotNull
   public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
-    class MyIcon extends JBUI.ScalableJBIcon {
+    class MyIcon extends JBScalableIcon {
+      private @NotNull final String myText;
       private Font myFont;
       private FontMetrics myMetrics;
       private final WeakReference<Component> myCompRef = new WeakReference<>(component);
 
-      private MyIcon() {
+      private MyIcon(@NotNull final String text) {
+        myText = text;
         setIconPreScaled(false);
         getScaleContext().addUpdateListener(() -> update());
         update();
@@ -683,7 +708,7 @@ public class IconUtil {
         try {
           GraphicsUtil.setupAntialiasing(g);
           g.setFont(myFont);
-          UIUtil.drawStringWithHighlighting(g, text,
+          UIUtil.drawStringWithHighlighting(g, myText,
                                             (int)scaleVal(x, OBJ_SCALE) + (int)scaleVal(2),
                                             (int)scaleVal(y, OBJ_SCALE) + getIconHeight() - (int)scaleVal(1),
                                             JBColor.foreground(), JBColor.background());
@@ -695,7 +720,7 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return myMetrics.stringWidth(text) + (int)scaleVal(4);
+        return myMetrics.stringWidth(myText) + (int)scaleVal(4);
       }
 
       @Override
@@ -709,9 +734,20 @@ public class IconUtil {
         if (comp == null) comp = new Component() {};
         myMetrics = comp.getFontMetrics(myFont);
       }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MyIcon)) return false;
+        final MyIcon icon = (MyIcon)o;
+
+        if (!Objects.equals(myText, icon.myText)) return false;
+        if (!Objects.equals(myFont, icon.myFont)) return false;
+        return true;
+      }
     }
 
-    return new MyIcon();
+    return new MyIcon(text);
   }
 
   @NotNull
@@ -726,7 +762,39 @@ public class IconUtil {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
-    return IconLoader.filterIcon(icon, filter, ancestor);
+  public static Icon filterIcon(@NotNull Icon icon, Supplier<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+    return IconLoader.filterIcon(icon, filterSupplier, ancestor);
+  }
+
+  /**
+   * This method works with compound icons like RowIcon or LayeredIcon
+   * and replaces its inner 'simple' icon with another one recursively
+   * @return original icon with modified inner state
+   */
+  public static Icon replaceInnerIcon(@Nullable Icon icon, @NotNull Icon toCheck, @NotNull Icon toReplace) {
+    if (icon  instanceof LayeredIcon) {
+      Icon[] layers = ((LayeredIcon)icon).getAllLayers();
+      for (int i = 0; i < layers.length; i++) {
+        Icon layer = layers[i];
+        if (layer == toCheck) {
+          layers[i] = toReplace;
+        } else {
+          replaceInnerIcon(layer, toCheck, toReplace);
+        }
+      }
+    }
+    else if (icon instanceof RowIcon) {
+      Icon[] allIcons = ((RowIcon)icon).getAllIcons();
+      for (int i = 0; i < allIcons.length; i++) {
+        Icon anIcon = allIcons[i];
+        if (anIcon == toCheck) {
+          ((RowIcon)icon).setIcon(toReplace, i);
+        }
+        else {
+          replaceInnerIcon(anIcon, toCheck, toReplace);
+        }
+      }
+    }
+    return icon;
   }
 }

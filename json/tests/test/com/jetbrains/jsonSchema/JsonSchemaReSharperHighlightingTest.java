@@ -18,6 +18,7 @@ import java.io.File;
 import java.util.Collection;
 
 public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting/resharper";

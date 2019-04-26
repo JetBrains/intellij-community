@@ -102,6 +102,6 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   private static AttributeValuePresentation getValuePresentation(@NotNull Editor editor, @NotNull PsiFile file, @NotNull String quote) {
     PsiElement atParent = getAttributeCandidate(editor, file, true);
     XmlAttributeDescriptor descriptor = atParent instanceof XmlAttribute ? ((XmlAttribute)atParent).getDescriptor() : null;
-    return XmlExtension.getExtension(file).getAttributeValuePresentation(descriptor, quote);
+    return XmlExtension.getExtension(file).getAttributeValuePresentation(descriptor, quote, file);
   }
 }

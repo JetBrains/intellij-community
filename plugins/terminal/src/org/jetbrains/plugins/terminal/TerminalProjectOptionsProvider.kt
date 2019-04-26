@@ -7,7 +7,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
 import kotlin.reflect.KMutableProperty1
@@ -50,37 +50,20 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         }
       }
 
-      return directory ?: currentProjectFolder()
+      return directory ?: getDefaultWorkingDirectory()
     }
 
-
-  private fun currentProjectFolder() = if (project.isDefault) null else project.guessProjectDir()?.canonicalPath
-
-  val defaultShellPath: String
-    get() {
-      val shell = System.getenv("SHELL")
-
-      if (shell != null && File(shell).canExecute()) {
-        return shell
-      }
-
-      if (SystemInfo.isUnix) {
-        if (File("/bin/bash").exists()) {
-          return "/bin/bash"
-        }
-        else {
-          return "/bin/sh"
-        }
-      }
-      else {
-        return "cmd.exe"
-      }
-    }
+  private fun getDefaultWorkingDirectory(): String? {
+    val roots = ProjectRootManager.getInstance(project).contentRoots
+    @Suppress("DEPRECATION")
+    val dir = if (roots.size == 1 && roots[0] != null && roots[0].isDirectory) roots[0] else project.baseDir
+    return dir?.canonicalPath
+  }
 
   companion object {
     private val LOG = Logger.getInstance(TerminalProjectOptionsProvider::class.java)
 
-
+    @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
       return ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
     }
@@ -99,6 +82,3 @@ class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S,
     prop.set(state, if (value == default() || value.isNullOrEmpty()) null else value)
   }
 }
-
-
-

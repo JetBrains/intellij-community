@@ -18,8 +18,6 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.EnumMap;
-import java.util.Map;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
@@ -50,11 +48,13 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         "KEEP_SIMPLE_BLOCKS_IN_ONE_LINE",
         "KEEP_SIMPLE_METHODS_IN_ONE_LINE",
         "KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
+        "KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE",
 
         "WRAP_LONG_LINES",
 
         "CLASS_BRACE_STYLE",
         "METHOD_BRACE_STYLE",
+        "LAMBDA_BRACE_STYLE",
         "BRACE_STYLE",
 
         "EXTENDS_LIST_WRAP",
@@ -160,6 +160,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_AROUND_ADDITIVE_OPERATORS",
                                    "SPACE_AROUND_MULTIPLICATIVE_OPERATORS",
                                    "SPACE_AROUND_SHIFT_OPERATORS",
+                                   "SPACE_AROUND_LAMBDA_ARROW",
                                    //"SPACE_AROUND_UNARY_OPERATOR",
                                    "SPACE_AFTER_COMMA",
                                    "SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS",
@@ -262,21 +263,18 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     commonSettings.SPACE_WITHIN_BRACES = true;
     commonSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     commonSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    commonSettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
   }
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    return SAMPLES.get(settingsType);
-  }
-
-  private static final Map<SettingsType, String> SAMPLES;
-
-  static {
-    Map<SettingsType, String> samples = new EnumMap<>(SettingsType.class);
-    for (SettingsType type: new SettingsType[]{BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS}) {
-      samples.put(type, loadSample(type));
+    if (settingsType == BLANK_LINES_SETTINGS ||
+        settingsType == SPACING_SETTINGS ||
+        settingsType == WRAPPING_AND_BRACES_SETTINGS ||
+        settingsType == INDENT_SETTINGS) {
+        return loadSample(settingsType);
     }
-    SAMPLES = samples;
+    return null;
   }
 
   private static String loadSample(@NotNull SettingsType settingsType) {

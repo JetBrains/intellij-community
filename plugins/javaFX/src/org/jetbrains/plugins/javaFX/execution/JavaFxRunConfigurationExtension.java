@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.execution;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -54,7 +53,7 @@ public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
         if (sdkVersion != null &&
             sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) &&
             params.getModulePath().isEmpty() &&
-            JavaModuleNameIndex.getInstance().get(JAVAFX_GRAPHICS, project, searchScope).stream().noneMatch(mod -> belongsToJdk(mod))) {
+            JavaPsiFacade.getInstance(project).findModules(JAVAFX_GRAPHICS, searchScope).stream().noneMatch(mod -> belongsToJdk(mod))) {
 
           VirtualFile javaFxBase = getModuleJar(JAVAFX_BASE, project, searchScope);
           VirtualFile javafxGraphics = getModuleJar(JAVAFX_GRAPHICS, project, searchScope);
@@ -72,12 +71,12 @@ public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
 
   private static boolean belongsToJdk(PsiJavaModule mod) {
     VirtualFile file = PsiUtilCore.getVirtualFile(mod);
-    return file != null && 
+    return file != null &&
            ProjectRootManager.getInstance(mod.getProject()).getFileIndex().getOrderEntriesForFile(file).stream().anyMatch(e -> e instanceof JdkOrderEntry);
   }
 
   private static VirtualFile getModuleJar(String moduleName, Project project, GlobalSearchScope searchScope) {
-    Collection<PsiJavaModule> javaModules = JavaModuleNameIndex.getInstance().get(moduleName, project, searchScope);
+    Collection<PsiJavaModule> javaModules = JavaPsiFacade.getInstance(project).findModules(moduleName, searchScope);
     return VfsUtilCore.getVirtualFileForJar(PsiUtilCore.getVirtualFile(ContainerUtil.getFirstItem(javaModules)));
   }
 

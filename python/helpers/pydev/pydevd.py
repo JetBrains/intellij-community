@@ -31,14 +31,14 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
-    set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
+    set_global_debugger, WriterThread, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
-    InternalSendCurrExceptionTraceProceeded
+    InternalSendCurrExceptionTraceProceeded, CommunicationRole
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning
-from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, \
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, enable_cache_frames_without_breaks, \
     dummy_trace_dispatch, show_frame_eval_warning
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
@@ -173,14 +173,46 @@ class CheckOutputThread(PyDBDaemonThread):
                 except:
                     traceback.print_exc()
 
+                self.wait_pydb_threads_to_finish()
+
                 self.killReceived = True
 
             self.py_db.check_output_redirect()
 
+    def wait_pydb_threads_to_finish(self, timeout=0.5):
+        pydev_log.debug("Waiting for pydb daemon threads to finish")
+        pydb_daemon_threads = self.created_pydb_daemon_threads
+        started_at = time.time()
+        while time.time() < started_at + timeout:
+            if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(self, None):
+                return
+            time.sleep(0.01)
+        pydev_log.debug("The following pydb threads may not finished correctly: %s"
+                        % ', '.join([t.getName() for t in pydb_daemon_threads if t is not self]))
 
     def do_kill_pydev_thread(self):
         self.killReceived = True
 
+
+class TrackedLock(object):
+    """The lock that tracks if it has been acquired by the current thread
+    """
+    def __init__(self):
+        self._lock = thread.allocate_lock()
+        # thread-local storage
+        self._tls = threading.local()
+        self._tls.is_lock_acquired = False
+
+    def acquire(self):
+        self._lock.acquire()
+        self._tls.is_lock_acquired = True
+
+    def release(self):
+        self._lock.release()
+        self._tls.is_lock_acquired = False
+
+    def is_acquired_by_current_thread(self):
+        return self._tls.is_lock_acquired
 
 
 #=======================================================================================================================
@@ -222,7 +254,7 @@ class PyDB:
         self.break_on_caught_exceptions = {}
 
         self.ready_to_run = False
-        self._main_lock = thread.allocate_lock()
+        self._main_lock = TrackedLock()
         self._lock_running_thread_ids = thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
         CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
@@ -274,6 +306,12 @@ class PyDB:
 
         # this flag disables frame evaluation even if it's available
         self.do_not_use_frame_eval = False
+
+        # sequence id of `CMD_PROCESS_CREATED` command -> threading.Event
+        self.process_created_msg_received_events = dict()
+
+        # the role PyDB plays in the communication with IDE
+        self.communication_role = None
 
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
@@ -334,8 +372,10 @@ class PyDB:
 
     def connect(self, host, port):
         if host:
+            self.communication_role = CommunicationRole.CLIENT
             s = start_client(host, port)
         else:
+            self.communication_role = CommunicationRole.SERVER
             s = start_server(port)
 
         self.initialize_network(s)
@@ -739,12 +779,36 @@ class PyDB:
         self.post_internal_command(int_cmd, thread_id)
         self.process_internal_commands()
 
-
     def send_process_created_message(self):
         """Sends a message that a new process has been created.
         """
         cmd = self.cmd_factory.make_process_created_message()
         self.writer.add_command(cmd)
+
+    def send_process_will_be_substituted(self):
+        """When `PyDB` works in server mode this method sends a message that a
+        new process is going to be created. After that it waits for the
+        response from the IDE to be sure that the IDE received this message.
+        Waiting for the response is required because the current process might
+        become substituted before it actually sends the message and the IDE
+        will not try to connect to `PyDB` in this case.
+
+        When `PyDB` works in client mode this method does nothing because the
+        substituted process will try to connect to the IDE itself.
+        """
+        if self.communication_role == CommunicationRole.SERVER:
+            if self._main_lock.is_acquired_by_current_thread():
+                # if `_main_lock` is acquired by the current thread then `event.wait()` would stuck
+                # because the corresponding call of `event.set()` is made under the same `_main_lock`
+                pydev_log.debug("Skip sending process substitution notification\n")
+                return
+
+            cmd = self.cmd_factory.make_process_created_message()
+            # register event before putting command to the message queue
+            event = threading.Event()
+            self.process_created_msg_received_events[cmd.seq] = event
+            self.writer.add_command(cmd)
+            event.wait()
 
     def set_next_statement(self, frame, event, func_name, next_line):
         stop = False
@@ -964,7 +1028,7 @@ class PyDB:
                 frame = frame.f_back
         del frame
 
-    def prepare_to_run(self):
+    def prepare_to_run(self, enable_tracing_from_start=True):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
         if self.signature_factory is not None or self.thread_analyser is not None:
             # we need all data to be sent to IDE even after program finishes
@@ -973,14 +1037,13 @@ class PyDB:
             self.frame_eval_func = None
 
         self.patch_threads()
-        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
-        # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
-        # functions, because frame evaluation function is set to all threads by default.
+        if enable_tracing_from_start:
+            pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
 
         PyDBCommandThread(self).start()
 
         if show_tracing_warning or show_frame_eval_warning:
-            cmd = self.cmd_factory.make_show_cython_warning_message()
+            cmd = self.cmd_factory.make_show_warning_message("cython")
             self.writer.add_command(cmd)
 
 
@@ -1048,7 +1111,8 @@ class PyDB:
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
 
-            if self.break_on_caught_exceptions or (self.plugin and self.plugin.has_exception_breaks()) or self.signature_factory:
+            if self.break_on_caught_exceptions or self.has_plugin_line_breaks or self.has_plugin_exception_breaks \
+                    or self.signature_factory:
                 # disable frame evaluation if there are exception breakpoints with 'On raise' activation policy
                 # or if there are plugin exception breakpoints or if collecting run-time types is enabled
                 self.frame_eval_func = None
@@ -1259,6 +1323,9 @@ def _locked_settrace(
     global bufferStdOutToServer
     global bufferStdErrToServer
 
+    # Reset created PyDB daemon threads after fork - parent threads don't exist in a child process.
+    PyDBDaemonThread.created_pydb_daemon_threads = {}
+
     if not connected:
         pydevd_vm_type.setup_type()
 
@@ -1426,15 +1493,19 @@ class DispatchReader(ReaderThread):
             self.killReceived = True
 
 
-DISPATCH_APPROACH_NEW_CONNECTION = 1 # Used by PyDev
-DISPATCH_APPROACH_EXISTING_CONNECTION = 2 # Used by PyCharm
-DISPATCH_APPROACH = DISPATCH_APPROACH_NEW_CONNECTION
+def _should_use_existing_connection(setup):
+    '''
+    The new connection dispatch approach is used by PyDev when the `multiprocess` option is set,
+    the existing connection approach is used by PyCharm when the `multiproc` option is set.
+    '''
+    return setup.get('multiproc', False)
+
 
 def dispatch():
     setup = SetupHolder.setup
     host = setup['client']
     port = setup['port']
-    if DISPATCH_APPROACH == DISPATCH_APPROACH_EXISTING_CONNECTION:
+    if _should_use_existing_connection(setup):
         dispatcher = Dispatcher()
         try:
             dispatcher.connect(host, port)
@@ -1564,8 +1635,6 @@ def main():
 
         elif setup['multiproc']: # PyCharm
             pydev_log.debug("Started in multiproc mode\n")
-            global DISPATCH_APPROACH
-            DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION
 
             dispatcher = Dispatcher()
             try:

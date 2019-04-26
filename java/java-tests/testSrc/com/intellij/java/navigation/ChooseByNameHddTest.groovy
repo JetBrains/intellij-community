@@ -25,9 +25,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
   void "test go to file by full path"() {
     def psiFile = myFixture.addFileToProject("foo/index.html", "foo")

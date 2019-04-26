@@ -830,18 +830,16 @@ public final class TreeUtilVisitTest {
   private static void testSelectFirst(@NotNull Supplier<TreeNode> root, boolean visible, @NotNull String expected) {
     TreeTest.test(root, test -> {
       test.getTree().setRootVisible(visible);
-      TreeUtil.promiseSelectFirst(test.getTree()).onProcessed(path -> {
-        test.invokeSafely(() -> {
-          if (expected.isEmpty()) {
-            Assert.assertNull(path);
-          }
-          else {
-            Assert.assertNotNull(path);
-            Assert.assertTrue(test.getTree().isVisible(path));
-          }
-          test.assertTree(expected, true, test::done);
-        });
-      });
+      TreeUtil.promiseSelectFirst(test.getTree()).onProcessed(path -> test.invokeSafely(() -> {
+        if (expected.isEmpty()) {
+          Assert.assertNull(path);
+        }
+        else {
+          Assert.assertNotNull(path);
+          Assert.assertTrue(test.getTree().isVisible(path));
+        }
+        test.assertTree(expected, true, test::done);
+      }));
     });
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.PsiClassType
@@ -15,13 +15,15 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
+import org.jetbrains.plugins.groovy.lang.resolve.processReceiverType
 
 /**
  * @author Vladislav.Soroka
- * @since 11/10/2016
  */
 class GradleProjectContributor : GradleMethodContextContributor {
   companion object {
+    val projectClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT,
+                                                                                  "project", "configure", "subprojects", "allprojects"))
     val copySpecClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "copy", "copySpec"))
     val fileTreeClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
     val filesClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "files"))
@@ -30,6 +32,9 @@ class GradleProjectContributor : GradleMethodContextContributor {
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
+    if (projectClosure.accepts(closure)) {
+      return DelegatesToInfo(createType(GRADLE_API_PROJECT, closure), Closure.DELEGATE_FIRST)
+    }
     if (copySpecClosure.accepts(closure)) {
       return DelegatesToInfo(createType(GRADLE_API_FILE_COPY_SPEC, closure), Closure.DELEGATE_FIRST)
     }
@@ -45,7 +50,7 @@ class GradleProjectContributor : GradleMethodContextContributor {
       if (parent is GrMethodCallExpression) {
         val typeTakArgument = parent.namedArguments.find { "type" == it.labelName }?.expression?.type
         if (typeTakArgument is PsiClassType && "Class" == typeTakArgument.className) {
-          taskType = typeTakArgument.parameters.first()
+          taskType = typeTakArgument.parameters.firstOrNull()
         }
       }
       if (taskType == null) {
@@ -57,9 +62,5 @@ class GradleProjectContributor : GradleMethodContextContributor {
       return DelegatesToInfo(createType(GRADLE_PROCESS_EXEC_SPEC, closure), Closure.DELEGATE_FIRST)
     }
     return null
-  }
-
-  override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    return GradleResolverUtil.processDeclarations(processor, state, place, GRADLE_API_PROJECT)
   }
 }

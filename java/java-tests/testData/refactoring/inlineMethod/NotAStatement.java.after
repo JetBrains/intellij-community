@@ -1,0 +1,23 @@
+class AAA {
+  void fff(Project myProject) {
+      final String[] strings = new String[1];
+      ensureFilesWritable(strings).hasReadonlyFiles();
+  }
+
+    private Status ensureFilesWritable(final String[] strings) {
+    return new Status(strings);
+  }
+
+  class Status {
+    public Status(final String[] strings) {
+      
+    }
+
+    boolean hasReadonlyFiles() {
+      return true;
+    }
+  }
+
+  class Project {
+  }
+}

@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +133,7 @@ public class CodeBlockUtil {
   private static int calcBlockEndOffsetFromBraceMatcher(@NotNull Editor editor, @NotNull PsiFile file) {
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
-    final FileType fileType = file.getFileType();
+    final FileType fileType = getFileType(file, offset);
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return -1;
 
@@ -202,7 +203,7 @@ public class CodeBlockUtil {
     if (offset < 0) return -1;
 
     Document document = editor.getDocument();
-    final FileType fileType = file.getFileType();
+    final FileType fileType = getFileType(file, offset);
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
 
     int depth = 0;
@@ -245,6 +246,17 @@ public class CodeBlockUtil {
     }
 
     return isAfterRBrace ? iterator.getStart() : iterator.getEnd();
+  }
+
+  @NotNull
+  private static FileType getFileType(PsiFile file, int offset) {
+    PsiElement psiElement = file.findElementAt(offset);
+    if (psiElement != null) {
+      return psiElement.getContainingFile().getFileType();
+    }
+    else {
+      return file.getFileType();
+    }
   }
 
   private static boolean isLStructuralBrace(final FileType fileType, HighlighterIterator iterator, CharSequence fileText) {

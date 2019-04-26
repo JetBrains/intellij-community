@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,6 +10,9 @@ import com.siyeh.ig.migration.ForCanBeForeachInspection;
 public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
 
   public void testParenthesis() { doTest(); }
+  public void testParenthesisArrayLoop() { doTest(); }
+  public void testParenthesisArrayLoop2() { doTest(); }
+  public void testParenthesisIteratorLoop() { doTest(); }
   public void testInstanceofAndWhitespace() { doTest(); }
   public void testQualifyWithThis1() { doTest(); }
   public void testQualifyWithThis2() { doTest(); }

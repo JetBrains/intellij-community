@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -42,8 +43,16 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @NotNull
   @Override
   public String getGroupName() {
+    return GotoClassPresentationUpdater.getTabTitle(true);
+  }
+
+  @NotNull
+  @Override
+  public String getFullGroupName() {
     String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
-    return StringUtil.pluralize(split[0]) + (split.length > 1 ? " +" : "");
+    return Arrays.stream(split)
+      .map(StringUtil::pluralize)
+      .collect(Collectors.joining("/"));
   }
 
   @Override
@@ -158,7 +167,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
     return StringUtil.isEmpty(name) ? null : name;
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Language> {
+  public static class Factory implements SearchEverywhereContributorFactory<Object, Language> {
     public static final Function<Language, String> LANGUAGE_NAME_EXTRACTOR = Language::getDisplayName;
     public static final Function<Language, Icon> LANGUAGE_ICON_EXTRACTOR = language -> {
       final LanguageFileType fileType = language.getAssociatedFileType();
@@ -167,13 +176,13 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
 
     @NotNull
     @Override
-    public SearchEverywhereContributor<Language> createContributor(AnActionEvent initEvent) {
+    public SearchEverywhereContributor<Object, Language> createContributor(@NotNull AnActionEvent initEvent) {
       return new ClassSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Language> createFilter(AnActionEvent initEvent) {
+    public SearchEverywhereContributorFilter<Language> createFilter(@NotNull AnActionEvent initEvent) {
       Project project = initEvent.getProject();
       if (project == null) {
         return null;

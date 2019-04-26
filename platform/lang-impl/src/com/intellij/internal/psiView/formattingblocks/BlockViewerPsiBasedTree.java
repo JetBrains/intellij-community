@@ -184,7 +184,11 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       parents.add(parent);
       parent = parent.getParent();
     }
-    parents.add((SimpleNode)getRoot().getUserObject());
+
+    DefaultMutableTreeNode root = getRoot();
+    if (root != null) {
+      parents.add((SimpleNode)root.getUserObject());
+    }
 
     return new TreeVisitor.ByComponent<BlockTreeNode, BlockTreeNode>(currentBlockNode, converter) {
 

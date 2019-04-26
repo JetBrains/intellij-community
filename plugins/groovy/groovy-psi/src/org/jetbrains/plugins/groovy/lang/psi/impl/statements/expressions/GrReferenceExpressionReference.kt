@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 
+import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -8,12 +9,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrSuperReferenceResolver.resolveSuperExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrThisReferenceResolver.resolveThisExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isPropertyName
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyLValueProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyRValueProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorAwareProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*
 import java.util.*
@@ -21,6 +23,7 @@ import java.util.*
 abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    require(!incomplete)
     val staticResults = element.staticReference.resolve(incomplete)
     if (staticResults.isNotEmpty()) {
       return staticResults
@@ -48,14 +51,14 @@ class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceE
   }
 
   override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
-    return GroovyRValueProcessor(name, place, kinds)
+    return rValueProcessor(name, place, kinds)
   }
 }
 
 class GrLValueExpressionReference(ref: GrReferenceExpressionImpl, private val argument: Argument) : GrReferenceExpressionReference(ref) {
 
   override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
-    return GroovyLValueProcessor(name, place, kinds, listOf(argument))
+    return lValueProcessor(name, place, kinds, argument)
   }
 }
 
@@ -72,11 +75,37 @@ private fun GrReferenceExpression.handleSpecialCases(): Collection<GroovyResolve
   return null
 }
 
-private fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
-  return if (isQualified) {
+fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
+  return resolveKinds(isQualified)
+}
+
+fun resolveKinds(qualified: Boolean): Set<GroovyResolveKind> {
+  return if (qualified) {
     EnumSet.of(FIELD, PROPERTY, VARIABLE)
   }
   else {
     EnumSet.of(FIELD, PROPERTY, VARIABLE, BINDING)
   }
+}
+
+fun rValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
+  val accessorProcessors = if (name.isPropertyName())
+    listOf(
+      AccessorProcessor(name, PropertyKind.GETTER, emptyList(), place),
+      AccessorProcessor(name, PropertyKind.BOOLEAN_GETTER, emptyList(), place)
+    )
+  else {
+    emptyList()
+  }
+  return AccessorAwareProcessor(name, place, kinds, accessorProcessors)
+}
+
+fun lValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>, argument: Argument): GrResolverProcessor<*> {
+  val accessorProcessors = if (name.isPropertyName()) {
+    listOf(AccessorProcessor(name, PropertyKind.SETTER, listOf(argument), place))
+  }
+  else {
+    emptyList()
+  }
+  return AccessorAwareProcessor(name, place, kinds, accessorProcessors)
 }

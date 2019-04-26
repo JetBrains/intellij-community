@@ -35,7 +35,7 @@ public interface PermanentGraph<Id> {
   /**
    * Create a new instance of VisibleGraph with specific sort type, visible branches and commits.
    *
-   * @param sortType               mechanism of sorting for commits in the graph (see {@link PermanentGraph.SortType}):
+   * @param sortType               mechanism of sorting for commits in the graph (see {@link SortType}):
    *                               <ul><li/> sort topologically and by date,
    *                               <li/> show incoming commits first for merges (IntelliSort),
    *                               <li/> show incoming commits on top of main branch commits as if they were rebased (linear IntelliSort).</ul>
@@ -45,8 +45,8 @@ public interface PermanentGraph<Id> {
    */
   @NotNull
   VisibleGraph<Id> createVisibleGraph(@NotNull SortType sortType,
-                                      @Nullable Set<Id> headsOfVisibleBranches,
-                                      @Nullable Set<Id> matchedCommits);
+                                      @Nullable Set<? extends Id> headsOfVisibleBranches,
+                                      @Nullable Set<? extends Id> matchedCommits);
 
   @NotNull
   List<GraphCommit<Id>> getAllCommits();
@@ -58,7 +58,7 @@ public interface PermanentGraph<Id> {
   Set<Id> getContainingBranches(@NotNull Id commit);
 
   @NotNull
-  Condition<Id> getContainedInBranchCondition(@NotNull Collection<Id> currentBranchHead);
+  Condition<Id> getContainedInBranchCondition(@NotNull Collection<? extends Id> currentBranchHead);
 
   enum SortType {
     Normal("Off", "Sort commits topologically and by date"),

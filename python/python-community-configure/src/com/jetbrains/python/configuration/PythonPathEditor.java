@@ -4,10 +4,10 @@ package com.jetbrains.python.configuration;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -87,7 +87,7 @@ public class PythonPathEditor extends SdkPathEditor {
   @Override
   protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
     for (int i = 0, filesLength = files.length; i < filesLength; i++) {
-      if (!files[i].isDirectory() && files[i].getFileType() == FileTypes.ARCHIVE) {
+      if (!files[i].isDirectory() && files[i].getFileType() == ArchiveFileType.INSTANCE) {
         files[i] = JarFileSystem.getInstance().getJarRootForLocalFile(files[i]);
       }
     }
@@ -101,7 +101,7 @@ public class PythonPathEditor extends SdkPathEditor {
   protected void doRemoveItems(int[] idxs, JList list) {
     List<Pair<VirtualFile, Integer>> removed = Lists.newArrayList();
     for (int i : idxs) {
-      removed.add(Pair.create((VirtualFile)getListModel().get(i), i));
+      removed.add(Pair.create(getListModel().get(i), i));
     }
     ListUtil.removeIndices(list, myPathListModel.remove(removed));
     list.updateUI();
@@ -109,8 +109,14 @@ public class PythonPathEditor extends SdkPathEditor {
   }
 
   @Override
-  protected ListCellRenderer createListCellRenderer(JBList list) {
-    return new PythonPathListCellRenderer(super.createListCellRenderer(list), myPathListModel);
+  protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList list) {
+    return SimpleListCellRenderer.create("", value -> {
+      String suffix = myPathListModel.getPresentationSuffix(value);
+      if (suffix.length() > 0) {
+        suffix = "  " + suffix;
+      }
+      return getPresentablePath(value) + suffix;
+    });
   }
 
   @Override
@@ -289,25 +295,6 @@ public class PythonPathEditor extends SdkPathEditor {
 
     public boolean isExcluded(VirtualFile path) {
       return myExcluded.contains(path);
-    }
-  }
-
-
-  private class PythonPathListCellRenderer extends ListCellRendererWrapper<VirtualFile> {
-    private final PathListModel model;
-
-    PythonPathListCellRenderer(final ListCellRenderer listCellRenderer, PathListModel model) {
-      super();
-      this.model = model;
-    }
-
-    @Override
-    public void customize(JList list, VirtualFile value, int index, boolean selected, boolean hasFocus) {
-      String suffix = model.getPresentationSuffix(value);
-      if (suffix.length() > 0) {
-        suffix = "  " + suffix;
-      }
-      setText(value != null ? getPresentablePath(value) + suffix : "");
     }
   }
 

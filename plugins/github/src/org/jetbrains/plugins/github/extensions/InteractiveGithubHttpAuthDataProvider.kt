@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.DialogManager
@@ -31,7 +31,7 @@ internal class InteractiveGithubHttpAuthDataProvider(private val project: Projec
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
     val account = dialog.account
-    val token = invokeAndWaitIfNeed(parentComponent?.let(ModalityState::stateForComponent) ?: ModalityState.any()) {
+    val token = invokeAndWaitIfNeeded(parentComponent?.let(ModalityState::stateForComponent) ?: ModalityState.any()) {
       authenticationManager.getTokenForAccount(account) ?: authenticationManager.requestNewToken(account, project, parentComponent)
     } ?: return null
     if (dialog.setDefault) authenticationManager.setDefaultAccount(project, account)

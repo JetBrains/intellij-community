@@ -46,7 +46,7 @@ public class ShowCommitTooltipAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUsageTriggerCollector.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     VcsLogGraphTable table = ((AbstractVcsLogUi)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)).getTable();
     int row = table.getSelectedRow();

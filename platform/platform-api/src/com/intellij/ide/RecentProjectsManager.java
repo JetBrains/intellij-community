@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,15 +31,24 @@ public abstract class RecentProjectsManager {
   /**
    * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
    */
+  @NotNull
   public abstract AnAction[] getRecentProjectsActions(boolean addClearListItem);
 
+  @NotNull
   public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     return getRecentProjectsActions(addClearListItem);
   }
 
-  public List<ProjectGroup> getGroups() {return Collections.emptyList();}
-  public void addGroup(ProjectGroup group) {}
-  public void removeGroup(ProjectGroup group) {}
+  @NotNull
+  public List<ProjectGroup> getGroups() {
+    return Collections.emptyList();
+  }
+
+  public void addGroup(@NotNull ProjectGroup group) {
+  }
+
+  public void removeGroup(@NotNull ProjectGroup group) {
+  }
 
   public boolean hasPath(@SystemIndependent String path) {
     return false;

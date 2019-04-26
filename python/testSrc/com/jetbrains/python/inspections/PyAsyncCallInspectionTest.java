@@ -40,10 +40,23 @@ public class PyAsyncCallInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-31598
+  public void testScheduleFutureBuiltin() {
+    doMultiFileTest("a.py");
+  }
+
+  // PY-31598
+  public void testScheduleTask37() {
+    doMultiFileTest37("a.py");
+  }
 
   @Override
   protected void doMultiFileTest(@NotNull String filename) {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> super.doMultiFileTest(filename));
+  }
+
+  protected void doMultiFileTest37(@NotNull String filename) {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest(filename));
   }
 
   @Override

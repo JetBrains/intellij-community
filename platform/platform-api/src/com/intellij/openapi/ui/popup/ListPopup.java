@@ -24,7 +24,6 @@ import java.awt.event.InputEvent;
  *
  * @author mike
  * @see JBPopupFactory#createActionGroupPopup
- * @since 6.0
  */
 public interface ListPopup extends JBPopup {
 

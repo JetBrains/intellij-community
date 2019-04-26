@@ -75,9 +75,8 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     }
 
     final int offset = myEditor.getCaretModel().getOffset();
-    PsiElement[] elements = PsiFileBreadcrumbsCollector.getLinePsiElements(offset,
-                                                                           myFile.getVirtualFile(),
-                                                                           myProject, myInfoProvider);
+    PsiElement[] elements =
+      PsiFileBreadcrumbsCollector.getLinePsiElements(myEditor.getDocument(), offset, myFile.getVirtualFile(), myProject, myInfoProvider);
 
     if (elements == null || elements.length == 0 || !XmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
       elements = PsiElement.EMPTY_ARRAY;

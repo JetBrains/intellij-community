@@ -34,6 +34,31 @@ public interface JavacRef {
   @NotNull
   String getOwnerName();
 
+  /**
+   * @return non-null import descriptor object, if the reference comes from import list
+   */
+  @Nullable
+  ImportProperties getImportProperties();
+
+  abstract class ImportProperties {
+    public abstract boolean isStatic();
+    public abstract boolean isOnDemand();
+
+    public static ImportProperties create(final boolean isStatic, final boolean isOnDemand) {
+      return new ImportProperties() {
+        @Override
+        public boolean isStatic() {
+          return isStatic;
+        }
+
+        @Override
+        public boolean isOnDemand() {
+          return isOnDemand;
+        }
+      };
+    }
+  }
+
   interface JavacClass extends JavacRef {
     boolean isAnonymous();
   }
@@ -63,6 +88,12 @@ public interface JavacRef {
     @Override
     public final Set<Modifier> getModifiers() {
       return myModifiers;
+    }
+
+    @Nullable
+    @Override
+    public ImportProperties getImportProperties() {
+      return null;
     }
   }
 
@@ -127,11 +158,13 @@ public interface JavacRef {
     protected final @NotNull Element myOriginalElement;
     @Nullable private final Element myQualifier;
     protected final JavacNameTable myNameTableCache;
+    private final ImportProperties myImportProps;
 
-    protected JavacElementRefBase(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
+    protected JavacElementRefBase(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, ImportProperties importProps) {
       myOriginalElement = element;
       myQualifier = qualifier;
       myNameTableCache = nameTableCache;
+      myImportProps = importProps;
     }
 
     @NotNull
@@ -152,7 +185,18 @@ public interface JavacRef {
     }
 
     @Nullable
+    @Override
+    public ImportProperties getImportProperties() {
+      return myImportProps;
+    }
+
+    @Nullable
     public static JavacElementRefBase fromElement(Element element, Element qualifier, JavacNameTable nameTableCache) {
+      return fromElement(element, qualifier, nameTableCache, null);
+    }
+    
+    @Nullable
+    public static JavacElementRefBase fromElement(Element element, Element qualifier, JavacNameTable nameTableCache, @Nullable ImportProperties importProps) {
       if (qualifier != null) {
         TypeMirror type = qualifier.asType();
         if (!isValidType(type)) {
@@ -160,15 +204,15 @@ public interface JavacRef {
         }
       }
       if (element instanceof TypeElement) {
-        return new JavacElementClassImpl(element, qualifier, nameTableCache);
+        return new JavacElementClassImpl(element, qualifier, nameTableCache, importProps);
       }
       else if (element instanceof VariableElement) {
         if (qualifier == null && !checkEnclosingElement(element)) return null;
-        return new JavacElementFieldImpl(element, qualifier, nameTableCache);
+        return new JavacElementFieldImpl(element, qualifier, nameTableCache, importProps);
       }
       else if (element instanceof ExecutableElement) {
         if (qualifier == null && !checkEnclosingElement(element)) return null;
-        return new JavacElementMethodImpl(element, qualifier, nameTableCache);
+        return new JavacElementMethodImpl(element, qualifier, nameTableCache, importProps);
       }
       else if (element == null || element.getKind() == ElementKind.OTHER || element.getKind() == ElementKind.TYPE_PARAMETER) {
         // javac reserved symbol kind (e.g: com.sun.tools.javac.comp.Resolve.ResolveError)
@@ -212,8 +256,8 @@ public interface JavacRef {
   }
 
   class JavacElementClassImpl extends JavacElementRefBase implements JavacClass {
-   public JavacElementClassImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
-      super(element, qualifier, nameTableCache);
+   public JavacElementClassImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, final ImportProperties importProps) {
+      super(element, qualifier, nameTableCache, importProps);
     }
 
     @NotNull
@@ -229,8 +273,8 @@ public interface JavacRef {
   }
 
   class JavacElementMethodImpl extends JavacElementRefBase implements JavacMethod {
-    public JavacElementMethodImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
-      super(element, qualifier, nameTableCache);
+    public JavacElementMethodImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, final ImportProperties importProps) {
+      super(element, qualifier, nameTableCache, importProps);
     }
 
     @Override
@@ -240,8 +284,8 @@ public interface JavacRef {
   }
 
   class JavacElementFieldImpl extends JavacElementRefBase implements JavacField {
-    public JavacElementFieldImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
-      super(element, qualifier, nameTableCache);
+    public JavacElementFieldImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, final ImportProperties importProps) {
+      super(element, qualifier, nameTableCache, importProps);
     }
   }
 }

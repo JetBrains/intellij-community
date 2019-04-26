@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,6 @@ import java.util.stream.Collectors;
 
 
 public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
-  private static final String GROUP_ID = "statistics.platform.registry.application";
 
   @NotNull
   @Override
@@ -25,11 +25,12 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
   @NotNull
   static Set<UsageDescriptor> getChangedValuesUsages() {
     Set<UsageDescriptor> registry = Registry.getAll().stream()
-      .filter(key -> key.isChangedFromDefault())
+      .filter(key -> key.isChangedFromDefault() && !key.isContributedByThirdPartyPlugin())
       .map(key -> new UsageDescriptor(key.getKey()))
       .collect(Collectors.toSet());
 
     Set<UsageDescriptor> experiments = Arrays.stream(Experiments.EP_NAME.getExtensions())
+      .filter(f -> PluginInfoDetectorKt.getPluginInfo(f.getClass()).isDevelopedByJetBrains())
       .filter(f -> Experiments.isFeatureEnabled(f.id))
       .map(f -> new UsageDescriptor(f.id))
       .collect(Collectors.toSet());
@@ -42,6 +43,6 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
   @NotNull
   @Override
   public String getGroupId() {
-    return GROUP_ID;
+    return "platform.registry.application";
   }
 }

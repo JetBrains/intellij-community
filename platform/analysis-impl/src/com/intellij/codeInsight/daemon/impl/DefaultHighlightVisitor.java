@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
@@ -7,10 +7,12 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
@@ -24,33 +26,30 @@ import java.util.List;
 /**
  * @author yole
  */
-class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
+final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
+  private static final NotNullLazyKey<CachedAnnotators, Project> CACHED_ANNOTATORS_KEY = ServiceManager.createLazyKey(CachedAnnotators.class);
+
   private AnnotationHolderImpl myAnnotationHolder;
 
-  private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
   private final boolean myHighlightErrorElements;
   private final boolean myRunAnnotators;
   private final DumbService myDumbService;
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
-  private final CachedAnnotators myCachedAnnotators;
 
   @SuppressWarnings("UnusedDeclaration")
-  DefaultHighlightVisitor(@NotNull Project project, @NotNull CachedAnnotators cachedAnnotators) {
-    this(project, true, true, false, cachedAnnotators);
+  DefaultHighlightVisitor(@NotNull Project project) {
+    this(project, true, true, false);
   }
 
   DefaultHighlightVisitor(@NotNull Project project,
                           boolean highlightErrorElements,
                           boolean runAnnotators,
-                          boolean batchMode,
-                          @NotNull CachedAnnotators cachedAnnotators) {
+                          boolean batchMode) {
     myProject = project;
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
-    myCachedAnnotators = cachedAnnotators;
-    myErrorFilters = HighlightErrorFilter.EP_NAME.getExtensions(project);
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
   }
@@ -99,13 +98,15 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @Override
   @NotNull
   public HighlightVisitor clone() {
-    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode, myCachedAnnotators);
+    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode);
   }
 
-
   private void runAnnotators(PsiElement element) {
-    List<Annotator> annotators = myCachedAnnotators.get(element.getLanguage().getID());
-    if (annotators.isEmpty()) return;
+    List<Annotator> annotators = CACHED_ANNOTATORS_KEY.getValue(myProject).get(element.getLanguage().getID());
+    if (annotators.isEmpty()) {
+      return;
+    }
+
     final boolean dumb = myDumbService.isDumb();
 
     //noinspection ForLoopReplaceableByForEach
@@ -121,20 +122,24 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     }
   }
 
-  private void visitErrorElement(final PsiErrorElement element) {
-    for(HighlightErrorFilter errorFilter: myErrorFilters) {
+  private void visitErrorElement(@NotNull PsiErrorElement element) {
+    for (HighlightErrorFilter errorFilter : HighlightErrorFilter.EP_NAME.getIterable(myProject)) {
+      if (errorFilter == null) {
+        break;
+      }
+
       if (!errorFilter.shouldHighlightErrorElement(element)) {
         return;
       }
     }
-    HighlightInfo info = createErrorElementInfo(element);
-    myHolder.add(info);
+
+    myHolder.add(createErrorElementInfo(element));
   }
 
   private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
     HighlightInfo info = createInfoWithoutFixes(element);
     if (info != null) {
-      for(ErrorQuickFixProvider provider: ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
+      for (ErrorQuickFixProvider provider : ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
         provider.registerErrorQuickFix(element, info);
       }
     }

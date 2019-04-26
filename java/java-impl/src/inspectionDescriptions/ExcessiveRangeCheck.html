@@ -1,0 +1,8 @@
+<html>
+<body>
+Reports condition chains where a value range is checked which could be simplified to a single check. E.g. <b>x > 2 && x &lt; 4</b> could be
+  simplified to <b>x == 3</b> or <b>arr.length == 0 || arr.length > 1</b> could be simplified to <b>arr.length != 1</b>. 
+<!-- tooltip end -->
+<p><small>New in 2019.1</small></p>
+</body>
+</html>

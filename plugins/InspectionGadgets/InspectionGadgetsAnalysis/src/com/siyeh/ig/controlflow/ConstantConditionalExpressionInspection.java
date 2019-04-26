@@ -22,6 +22,7 @@ import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -91,7 +92,8 @@ public class ConstantConditionalExpressionInspection
           !type.equals(expressionType) &&
           PsiTypesUtil.isDenotableType(expressionType, expression)) {
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)ct
-          .replaceAndRestoreComments(expression, "(" + expressionType.getCanonicalText() + ")" + ct.text(replacement));
+          .replaceAndRestoreComments(expression, "(" + expressionType.getCanonicalText() + ")" + 
+                                                 ct.text(replacement, PsiPrecedenceUtil.TYPE_CAST_PRECEDENCE));
         if (RedundantCastUtil.isCastRedundant(castExpression)) {
           RemoveRedundantCastUtil.removeCast(castExpression);
         }

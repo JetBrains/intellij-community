@@ -79,7 +79,13 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
   }
 
   public void testContentRootMacro() throws Exception {
-    doTest("foo/bar/baz.txt", "$ContentRoot$",
-           FileUtil.toSystemDependentName(ModuleRootManager.getInstance(myModule).getContentRoots()[0].getPath()));
+    String root = FileUtil.toSystemDependentName(ModuleRootManager.getInstance(myModule).getContentRoots()[0].getPath());
+    doTest("foo/bar/baz.txt", "$ContentRoot$", root);
+    doTest("foo/bar/baz2.txt", "$ContentRoot$$ContentRoot$", root+root);
+    doTest("foo/bar/baz3.txt", "$ContentRoot$$ContentRoot$$ContentRoot$", root+root+root);
+    doTest("foo/bar/baz4.txt", "$ContentRoot$test", root+"test");
+    doTest("foo/bar/baz5.txt", "test$ContentRoot$$ContentRoot$", "test"+root+root);
+    doTest("foo/bar/baz6.txt", "test$ContentRoot$test$ContentRoot$", "test"+root+"test"+root);
+    doTest("foo/bar/baz7.txt", "$ContentRoot$$ContentRoot$$ContentRoot$test", root+root+root+"test");
   }
 }

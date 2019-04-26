@@ -1,12 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ import java.io.File;
 
 public class EditXmxVMOptionDialog extends DialogWrapper {
 
+  private static final int MAX_SUGGESTED_HEAP_SIZE = Registry.intValue("max.suggested.heap.size");
   final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
   final boolean isRestartCapable = app.isRestartCapable();
   private final Action myIgnoreAction;
@@ -35,7 +37,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
     super(false);
     setTitle(IdeBundle.message("change.memory.title"));
 
-    mySettingsFileHintLabel.setIcon(Messages.getWarningIcon());
+    mySettingsFileHintLabel.setIcon(AllIcons.General.Warning);
 
     myIgnoreAction = new AbstractAction("Close") {
       @Override
@@ -64,7 +66,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
 
       int newMemory;
       if (SystemInfo.is64Bit) {
-        newMemory = Math.min(2048, Math.round(currentMemory * 1.5f));
+        newMemory = Math.min(MAX_SUGGESTED_HEAP_SIZE, Math.round(currentMemory * 1.5f));
       }
       else {
         newMemory = Math.min(800, Math.round(currentMemory * 1.5f));

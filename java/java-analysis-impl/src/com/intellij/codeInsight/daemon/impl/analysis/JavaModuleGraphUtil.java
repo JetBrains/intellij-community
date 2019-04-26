@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.openapi.module.Module;
@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
-import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -148,9 +147,15 @@ public class JavaModuleGraphUtil {
       MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
       for (PsiJavaModule module : projectModules) {
         for (PsiRequiresStatement statement : module.getRequires()) {
-          PsiJavaModule dependency = PsiJavaModuleReference.resolve(statement, statement.getModuleName(), true);
-          if (dependency != null && projectModules.contains(dependency)) {
-            relations.putValue(module, dependency);
+          PsiJavaModuleReference ref = statement.getModuleReference();
+          if (ref != null) {
+            ResolveResult[] results = ref.multiResolve(true);
+            if (results.length == 1) {
+              PsiJavaModule dependency = (PsiJavaModule)results[0].getElement();
+              if (dependency != null && projectModules.contains(dependency)) {
+                relations.putValue(module, dependency);
+              }
+            }
           }
         }
       }
@@ -209,16 +214,20 @@ public class JavaModuleGraphUtil {
       relations.putValues(module, Collections.emptyList());
       boolean explicitJavaBase = false;
       for (PsiRequiresStatement statement : module.getRequires()) {
-        String moduleName = statement.getModuleName();
-        if (PsiJavaModule.JAVA_BASE.equals(moduleName)) explicitJavaBase = true;
-        for (PsiJavaModule dependency : PsiJavaModuleReference.multiResolve(statement, moduleName, false)) {
-          relations.putValue(module, dependency);
-          if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) transitiveEdges.add(RequiresGraph.key(dependency, module));
-          visit(dependency, relations, transitiveEdges);
+        PsiJavaModuleReference ref = statement.getModuleReference();
+        if (ref != null) {
+          if (PsiJavaModule.JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
+          for (ResolveResult result : ref.multiResolve(false)) {
+            PsiJavaModule dependency = (PsiJavaModule)result.getElement();
+            assert dependency != null : result;
+            relations.putValue(module, dependency);
+            if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) transitiveEdges.add(RequiresGraph.key(dependency, module));
+            visit(dependency, relations, transitiveEdges);
+          }
         }
       }
       if (!explicitJavaBase) {
-        PsiJavaModule javaBase = PsiJavaModuleReference.resolve(module, PsiJavaModule.JAVA_BASE, false);
+        PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(PsiJavaModule.JAVA_BASE, module.getResolveScope());
         if (javaBase != null) relations.putValue(module, javaBase);
       }
     }

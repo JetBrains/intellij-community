@@ -154,6 +154,19 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull LineOffsets lineOffsets1,
                                               @NotNull LineOffsets lineOffsets2,
                                               @NotNull ComparisonPolicy policy,
+                                              boolean innerFragments,
+                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    InnerFragmentsPolicy fragmentsPolicy = innerFragments ? InnerFragmentsPolicy.WORDS : InnerFragmentsPolicy.NONE;
+    return compareLinesInner(range, text1, text2, lineOffsets1, lineOffsets2, policy, fragmentsPolicy, indicator);
+  }
+
+  @NotNull
+  public List<LineFragment> compareLinesInner(@NotNull Range range,
+                                              @NotNull CharSequence text1,
+                                              @NotNull CharSequence text2,
+                                              @NotNull LineOffsets lineOffsets1,
+                                              @NotNull LineOffsets lineOffsets2,
+                                              @NotNull ComparisonPolicy policy,
                                               @NotNull InnerFragmentsPolicy fragmentsPolicy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineFragment> lineFragments = compareLines(range, text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
@@ -270,19 +283,27 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                                              @NotNull CharSequence subSequence2,
                                                              @NotNull ComparisonPolicy policy,
                                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    List<DiffFragment> innerChanges = doCompareChars(subSequence1, subSequence2, policy, indicator);
+    return singletonList(new LineFragmentImpl(fragment, innerChanges));
+  }
+
+  @NotNull
+  private static List<DiffFragment> doCompareChars(@NotNull CharSequence text1,
+                                                   @NotNull CharSequence text2,
+                                                   @NotNull ComparisonPolicy policy,
+                                                   @NotNull ProgressIndicator indicator) {
     DiffIterable iterable;
     if (policy == ComparisonPolicy.DEFAULT) {
-      iterable = ByChar.compareTwoStep(subSequence1, subSequence2, indicator);
+      iterable = ByChar.compareTwoStep(text1, text2, indicator);
     }
     else if (policy == ComparisonPolicy.TRIM_WHITESPACES) {
-      iterable = ByChar.compareTrimWhitespaces(subSequence1, subSequence2, indicator);
+      iterable = ByChar.compareTrimWhitespaces(text1, text2, indicator);
     }
     else {
-      iterable = ByChar.compareIgnoreWhitespaces(subSequence1, subSequence2, indicator);
+      iterable = ByChar.compareIgnoreWhitespaces(text1, text2, indicator);
     }
 
-    List<DiffFragment> innerChanges = convertIntoDiffFragments(iterable);
-    return singletonList(new LineFragmentImpl(fragment, innerChanges));
+    return convertIntoDiffFragments(iterable);
   }
 
   @NotNull
@@ -311,14 +332,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
                                          @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
-      return convertIntoDiffFragments(ByChar.compareIgnoreWhitespaces(text1, text2, indicator));
-    }
-    if (policy == ComparisonPolicy.DEFAULT) {
-      return convertIntoDiffFragments(ByChar.compareTwoStep(text1, text2, indicator));
-    }
-    LOG.warn(policy.toString() + " is not supported by ByChar comparison");
-    return convertIntoDiffFragments(ByChar.compareTwoStep(text1, text2, indicator));
+    return doCompareChars(text1, text2, policy, indicator);
   }
 
   @Override
@@ -614,9 +628,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
       lineFragments = createInnerFragments(lineFragments, text1, text2, ComparisonPolicy.DEFAULT, fragmentsPolicy, indicator);
     }
 
-    return ContainerUtil.mapNotNull(lineFragments, fragment -> {
-      return trimIgnoredInnerFragments(fragment, ignored1, ignored2);
-    });
+    return ContainerUtil.mapNotNull(lineFragments, fragment -> trimIgnoredInnerFragments(fragment, ignored1, ignored2));
   }
 
   @NotNull

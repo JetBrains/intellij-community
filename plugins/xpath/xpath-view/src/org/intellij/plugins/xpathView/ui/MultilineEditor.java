@@ -143,9 +143,7 @@ public class MultilineEditor extends JPanel {
         SwingUtilities.invokeLater(() -> {
             final Editor editor = myEditorTextField.getEditor();
             if (editor != null) {
-              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
-              });
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true));
             }
             myEditorTextField.selectAll();
         });

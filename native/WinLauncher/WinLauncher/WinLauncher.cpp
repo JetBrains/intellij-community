@@ -298,6 +298,7 @@ bool LocateJVM()
   if (FindJVMInSettings()) return true;
 
   std::vector<std::string> jrePaths;
+  if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jbr"));
   if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jre64"));
   jrePaths.push_back(GetAdjacentDir("jre32"));
   jrePaths.push_back(GetAdjacentDir("jre"));
@@ -581,7 +582,6 @@ bool LoadJVMLibrary()
 {
   std::string dllName(jvmPath);
   std::string binDir = dllName + "\\bin";
-  TCHAR currentDir[MAX_PATH];
   std::string serverDllName = binDir + "\\server\\jvm.dll";
   std::string clientDllName = binDir + "\\client\\jvm.dll";
   if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
@@ -593,15 +593,13 @@ bool LoadJVMLibrary()
     dllName = clientDllName;
   }
 
-  // ensure we can find msvcr100.dll which is located in jre/bin directory; jvm.dll depends on it.
-  GetCurrentDirectory(sizeof(currentDir),currentDir);
-  SetCurrentDirectoryA(binDir.c_str());
+  // ensure we can find msvcr<ver>.dll which is located in jre/bin directory; jvm.dll (awt.dll) depends on it.
+  SetDllDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
   if (hJVM)
   {
     pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");
   }
-  SetCurrentDirectory(currentDir);
   if (!pCreateJavaVM)
   {
     std::string jvmError = "Failed to load JVM DLL ";

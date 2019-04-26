@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,15 +24,11 @@ public class ExceptionUtil extends ExceptionUtilRt {
   }
 
   public static <T> T findCause(Throwable e, Class<T> klass) {
-    while (e != null && !klass.isInstance(e)) {
-      e = e.getCause();
-    }
-    @SuppressWarnings("unchecked") T t = (T)e;
-    return t;
+    return ExceptionUtilRt.findCause(e, klass);
   }
 
   public static boolean causedBy(Throwable e, Class klass) {
-    return findCause(e, klass) != null;
+    return ExceptionUtilRt.causedBy(e, klass);
   }
 
   @NotNull
@@ -54,11 +50,10 @@ public class ExceptionUtil extends ExceptionUtilRt {
   }
 
   @NotNull
-  public static String getThrowableText(@NotNull Throwable aThrowable) {
-    StringWriter stringWriter = new StringWriter();
-    PrintWriter writer = new PrintWriter(stringWriter);
-    aThrowable.printStackTrace(writer);
-    return stringWriter.getBuffer().toString();
+  public static String getThrowableText(@NotNull Throwable t) {
+    StringWriter writer = new StringWriter();
+    t.printStackTrace(new PrintWriter(writer));
+    return writer.getBuffer().toString();
   }
 
   @NotNull
@@ -117,12 +112,15 @@ public class ExceptionUtil extends ExceptionUtilRt {
 
   @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) {
-    ExceptionUtilRt.rethrow(throwable);
+    rethrowUnchecked(throwable);
+    throw new RuntimeException(throwable);
   }
 
   @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
-    ExceptionUtilRt.rethrowAllAsUnchecked(t);
+    if (t != null) {
+      rethrow(t);
+    }
   }
 
   @NotNull

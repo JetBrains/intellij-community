@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
+  static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
 
   @NotNull
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -46,14 +46,18 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract boolean hasUnsafeProgressIndicator();
 
   /**
-   * Runs given process synchronously (in calling thread).
+   * Runs the given process synchronously in calling thread, associating this thread with the specified progress indicator.
+   * This means that it'll be returned by {@link ProgressManager#getProgressIndicator()} inside the {@code process},
+   * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
    * @param progress an indicator to use, {@code null} means reuse current progress
    */
   public abstract void runProcess(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   /**
-   * Runs given process synchronously (in calling thread).
+   * Performs the given computation synchronously in calling thread and returns its result, associating this thread with the specified progress indicator.
+   * This means that it'll be returned by {@link ProgressManager#getProgressIndicator()} inside the {@code process},
+   * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
    * @param progress an indicator to use, {@code null} means reuse current progress
    */
@@ -88,6 +92,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
+   * If a dialog can't be shown (e.g. under write action or in headless environment),
+   * runs the given operation synchronously in the calling thread.
    *
    * @param process       the operation to execute.
    * @param progressTitle the title of the progress window.
@@ -103,6 +109,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
+   * If a dialog can't be shown (e.g. under write action or in headless environment),
+   * runs the given operation synchronously in the calling thread.
    *
    * @param process       the operation to execute.
    * @param progressTitle the title of the progress window.
@@ -119,6 +127,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
+   * If a dialog can't be shown (e.g. under write action or in headless environment),
+   * runs the given operation synchronously in the calling thread.
    *
    * @param process         the operation to execute.
    * @param progressTitle   the title of the progress window.
@@ -234,7 +244,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * </ul>
    * @param action the code to execute under read action
    * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
-   * @since 171.*
    */
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 

@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 /**
  * This group turns itself into a popup if there's more than one child.
  *
- * @see com.intellij.ide.actions.NonEmptyActionGroup
- * @see com.intellij.ide.actions.NonTrivialActionGroup
+ * @see NonEmptyActionGroup
+ * @see NonTrivialActionGroup
  * @author yole
  */
 public class SmartPopupActionGroup extends DefaultActionGroup {

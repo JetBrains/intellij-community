@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -63,7 +65,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
   @NotNull
-  @org.junit.runners.Parameterized.Parameter(0)
+  @org.junit.runners.Parameterized.Parameter()
   public String gradleVersion;
   private GradleProjectSettings myProjectSettings;
   private String myJdkHome;
@@ -105,22 +107,24 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       //super.setUp() wasn't called
       return;
     }
-    Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-    if (jdk != null) {
-      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
-    }
-
-    try {
-      Messages.setTestDialog(TestDialog.DEFAULT);
-      deleteBuildSystemDirectory();
-    }
-    finally {
-      super.tearDown();
-    }
+    new RunAll(
+      () -> {
+        Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
+        if (jdk != null) {
+          WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
+        }
+      },
+      () -> {
+        Messages.setTestDialog(TestDialog.DEFAULT);
+        deleteBuildSystemDirectory();
+      },
+      super::tearDown
+    ).run();
   }
 
   @Override
   protected void collectAllowedRoots(final List<String> roots) {
+    super.collectAllowedRoots(roots);
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
@@ -156,6 +160,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListenerAdapter() {
       @Override
       public void onProjectsLinked(@NotNull Collection settings) {
+        super.onProjectsLinked(settings);
         final Object item = ContainerUtil.getFirstItem(settings);
         if (item instanceof GradleProjectSettings) {
           ((GradleProjectSettings)item).setGradleJvm(GRADLE_JDK_NAME);
@@ -281,5 +286,26 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   protected boolean isGradleNewerThen_4_5() {
     return GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("4.5")) > 0;
+  }
+
+  protected boolean isGradleOlderThen_5_2() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.2")) < 0;
+  }
+
+  protected boolean isGradleOlderThen_4_8() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0;
+  }
+
+  protected boolean isGradleNewerOrSameThen_5_0() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.0")) >= 0;
+  }
+
+  protected String getExtraPropertiesExtensionFqn() {
+    return isGradleOlderThen_5_2() ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
+                                   : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension";
+  }
+
+  protected void enableGradleDebugWithSuspend() {
+    GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
   }
 }

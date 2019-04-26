@@ -29,7 +29,7 @@ import java.util.BitSet;
 // hold long offset and original record contains negative new record number,
 // same if size / capacity is overflowed: new record is created to hold integer offset / capacity and original record contains its
 // negative number
-public class CompactRecordsTable extends AbstractRecordsTable {
+class CompactRecordsTable extends AbstractRecordsTable {
   private final byte[] zeroes;
   private final boolean forceSplit;
 

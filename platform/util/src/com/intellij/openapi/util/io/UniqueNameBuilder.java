@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
  */
 public class UniqueNameBuilder<T> {
   private static final String VFS_SEPARATOR = "/";
-  private final Map<T, String> myPaths = new THashMap<T, String>();
+  private final Map<T, String> myPaths = new THashMap<>();
   private final String mySeparator;
   private final int myMaxLength;
   private final String myRoot;
@@ -51,7 +51,7 @@ public class UniqueNameBuilder<T> {
     Node(String text, Node parentNode) {
       myText = text;
       myParentNode = parentNode;
-      myChildren = new THashMap<String, Node>(1);
+      myChildren = new THashMap<>(1);
     }
 
     Node findOrAddChild(String word) {

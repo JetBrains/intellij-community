@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -29,6 +30,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
+import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.module.EffectiveLanguageLevelUtil.getEffectiveLanguageLevel;
@@ -346,7 +348,11 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals(0, counter.get());
   }
 
+  @Bombed(year = 2019, month = Calendar.APRIL, day = 1,
+    description = "need to distinguish inherited and explicitly defined properties",
+    user = "Alexander Bubenchikov")
   public void testParentVersionProperty() {
+    if (ignore()) return;
     String parentPomTemplate =
                     "<groupId>test</groupId>\n" +
                     "<artifactId>project</artifactId>\n" +

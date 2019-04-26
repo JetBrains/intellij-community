@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
@@ -30,9 +31,9 @@ public class InspectionTestUtil {
   private InspectionTestUtil() {
   }
 
-  public static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
-    List<Element> expectedProblems = new ArrayList<>(expectedDoc.getRootElement().getChildren("problem"));
-    List<Element> reportedProblems = new ArrayList<>(doc.getRootElement().getChildren("problem"));
+  public static void compareWithExpected(Element expectedDoc, Element doc, boolean checkRange) throws Exception {
+    List<Element> expectedProblems = new ArrayList<>(expectedDoc.getChildren("problem"));
+    List<Element> reportedProblems = new ArrayList<>(doc.getChildren("problem"));
 
     Element[] expectedArray = expectedProblems.toArray(new Element[0]);
     boolean failed = false;
@@ -131,7 +132,7 @@ public class InspectionTestUtil {
                                  boolean checkRange,
                                  @NotNull String testDir,
                                  @NotNull Collection<? extends InspectionToolWrapper> toolWrappers) {
-    final Element root = new Element("problems");
+    final Element root = new Element(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
 
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
@@ -141,7 +142,7 @@ public class InspectionTestUtil {
 
     try {
       File file = new File(testDir + "/expected.xml");
-      compareWithExpected(JDOMUtil.loadDocument(file), new Document(root), checkRange);
+      compareWithExpected(JDOMUtil.load(file), root, checkRange);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

@@ -2588,6 +2588,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-32240
+  public void testTypingNTFunctionInheritorField() {
+    doTest("str",
+           "from typing import NamedTuple\n" +
+           "\n" +
+           "class A(NamedTuple(\"NT\", [(\"user\", str)])):\n" +
+           "    pass\n" +
+           "    \n" +
+           "expr = A(undefined).user");
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorField() {
     // Seems that this case won't be supported because
@@ -3294,6 +3305,16 @@ public class PyTypeTest extends PyTestCase {
            "   expr = a");
   }
 
+  // PY-31956
+  public void testInAndNotBoolContains() {
+    doTest("bool",
+                   "class MyClass:\n" +
+                   "    def __contains__(self):\n" +
+                   "        return 42\n" +
+                   "\n" +
+                   "expr = 1 in MyClass()");
+  }
+
   // PY-32533
   public void testSuperWithAnotherType() {
     runWithLanguageLevel(
@@ -3315,6 +3336,39 @@ public class PyTypeTest extends PyTestCase {
                    "    def f(self):\n" +
                    "        expr = super(B, self)\n" +
                    "        return expr.f()")
+    );
+  }
+
+  // PY-32113
+  public void testAssertionOnVariableFromOuterScope() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("D",
+                   "class B: pass\n" +
+                   "\n" +
+                   "class D(B): pass\n" +
+                   "\n" +
+                   "g_b: B = undefined\n" +
+                   "\n" +
+                   "def main() -> None:\n" +
+                   "    assert isinstance(g_b, D)\n" +
+                   "    expr = g_b")
+    );
+  }
+
+  // PY-32113
+  public void testAssertionFunctionFromOuterScope() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("B",
+                   "class B: pass\n" +
+                   "\n" +
+                   "def g_b():\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "def main() -> None:\n" +
+                   "    assert isinstance(g_b, B)\n" +
+                   "    expr = g_b")
     );
   }
 

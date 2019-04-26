@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -10,11 +10,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
 
 /**
  * @author Konstantin Bulenkov
@@ -85,6 +87,11 @@ public class NavBarModel {
     PsiElement psiElement = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (psiElement == null) {
+        psiElement = findFileSystemItem(
+          CommonDataKeys.PROJECT.getData(dataContext),
+          CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
+      }
     }
 
     psiElement = normalize(psiElement);
@@ -109,8 +116,8 @@ public class NavBarModel {
 
   private Object calculateRoot(DataContext dataContext) {
     // Narrow down the root element to the first interesting one
-    Object root = LangDataKeys.MODULE.getData(dataContext);
-    if (root != null) return root;
+    Module root = LangDataKeys.MODULE.getData(dataContext);
+    if (root != null && !ModuleType.isInternal(root)) return root;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
@@ -278,35 +285,23 @@ public class NavBarModel {
 
   private static final class SiblingsComparator implements Comparator<Object> {
     @Override
-    public int compare(final Object o1, final Object o2) {
-      final Pair<Integer, String> w1 = getWeightedName(o1);
-      final Pair<Integer, String> w2 = getWeightedName(o2);
-      if (w1 == null) return w2 == null ? 0 : -1;
-      if (w2 == null) return 1;
-      if (!w1.first.equals(w2.first)) {
-        return -w1.first.intValue() + w2.first.intValue();
-      }
-      return Comparing.compare(w1.second, w2.second, String.CASE_INSENSITIVE_ORDER);
+    public int compare(Object o1, Object o2) {
+      int w1 = getWeight(o1);
+      int w2 = getWeight(o2);
+      if (w1 == 0) return w2 == 0 ? 0 : -1;
+      if (w2 == 0) return 1;
+      if (w1 != w2) return -w1 + w2;
+      String s1 = NavBarPresentation.calcPresentableText(o1);
+      String s2 = NavBarPresentation.calcPresentableText(o2);
+      return Comparing.compare(s1, s2, String.CASE_INSENSITIVE_ORDER);
     }
 
-    @Nullable
-    private static Pair<Integer, String> getWeightedName(Object object) {
-      if (object instanceof Module) {
-        return Pair.create(5, ((Module)object).getName());
-      }
-      if (object instanceof PsiDirectoryContainer) {
-        return Pair.create(4, ((PsiDirectoryContainer)object).getName());
-      }
-      else if (object instanceof PsiDirectory) {
-        return Pair.create(4, ((PsiDirectory)object).getName());
-      }
-      if (object instanceof PsiFile) {
-        return Pair.create(2, ((PsiFile)object).getName());
-      }
-      if (object instanceof PsiNamedElement) {
-        return Pair.create(3, ((PsiNamedElement)object).getName());
-      }
-      return null;
+    private static int getWeight(Object object) {
+      return object instanceof Module ? 5 :
+             object instanceof PsiDirectoryContainer ? 4 :
+             object instanceof PsiDirectory ? 4 :
+             object instanceof PsiFile ? 2 :
+             object instanceof PsiNamedElement ? 3 : 0;
     }
   }
 }

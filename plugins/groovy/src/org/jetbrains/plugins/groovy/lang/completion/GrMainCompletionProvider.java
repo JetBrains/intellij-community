@@ -109,7 +109,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       return (GrReferenceElement)parent;
     }
     if (couldContainReference(position)) {
-      return GroovyPsiElementFactory.getInstance(position.getProject()).createReferenceElementFromText("Foo", position);
+      return GroovyPsiElementFactory.getInstance(position.getProject()).createCodeReference("Foo", position);
     }
     return null;
   }
@@ -356,7 +356,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
 
       @Override
-      protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
+      protected LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads,
                                                   @NotNull PsiClass containingClass,
                                                   boolean shouldImport) {
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);

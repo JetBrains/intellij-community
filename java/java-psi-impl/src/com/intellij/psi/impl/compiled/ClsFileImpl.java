@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
@@ -345,7 +345,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           CharSequence mirrorText = document.getImmutableCharSequence();
           boolean internalDecompiler = StringUtil.startsWith(mirrorText, BANNER);
           PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
-          PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false);
+          PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false, true);
           mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getLanguageLevel());
 
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
@@ -633,7 +633,13 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
     @Override
     public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
-      new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+      try {
+        new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+      } catch (Exception e) {  // workaround for bug in skipping annotations when first parameter of inner class is dropped (IDEA-204145) 
+        VirtualFile file = innerClass.first;
+        if (LOG.isDebugEnabled()) LOG.debug(String.valueOf(file), e);
+        else LOG.info(file + ": " + e.getMessage());
+      }
     }
   };
 

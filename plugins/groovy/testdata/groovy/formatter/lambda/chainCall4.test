@@ -1,0 +1,13 @@
+foo( (a)->{
+  body
+})
+  .   bar( (b)->{
+  body
+})
+-----
+foo((a) -> {
+  body
+})
+    .bar((b) -> {
+      body
+    })

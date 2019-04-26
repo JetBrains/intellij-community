@@ -61,6 +61,9 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
 
       Messages.setTestDialog(myOldTestDialog);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myView = null;
       myEditors = null;

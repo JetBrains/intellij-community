@@ -274,7 +274,7 @@ def pytype_test(args):
             # We strip off the stack trace and just leave the last line with the
             # actual error; to see the stack traces use --print_stderr.
             bad.append((_get_relative(test_run.args[-1]),
-                        stderr.rstrip().rsplit('\n', 1)[-1]))
+                        stderr.rstrip().rsplit(b'\n', 1)[-1]))
 
         if runs % 25 == 0:
             print("  %3d/%d with %3d errors" % (runs, total_tests, errors))

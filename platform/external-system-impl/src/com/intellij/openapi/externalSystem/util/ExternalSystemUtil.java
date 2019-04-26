@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.BuildConsoleUtils;
@@ -13,8 +13,6 @@ import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
-import com.intellij.build.output.BuildOutputInstantReaderImpl;
-import com.intellij.build.output.BuildOutputParser;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -74,6 +72,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.*;
@@ -391,9 +390,13 @@ public class ExternalSystemUtil {
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
-      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+        DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
+      }
+
+      private void executeImpl(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
 
         if (indicator instanceof ProgressIndicatorEx) {
@@ -444,114 +447,106 @@ public class ExternalSystemUtil {
           Disposer.register(project, processHandler);
         }
 
-        List<BuildOutputParser> buildOutputParsers = new SmartList<>();
-        for (ExternalSystemOutputParserProvider outputParserProvider : ExternalSystemOutputParserProvider.EP_NAME.getExtensions()) {
-          if (resolveProjectTask.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
-            buildOutputParsers.addAll(outputParserProvider.getBuildOutputParsers(resolveProjectTask));
-          }
-        }
-
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        final BuildOutputInstantReaderImpl buildOutputInstantReader =
-          buildOutputParsers.isEmpty() ? null : new BuildOutputInstantReaderImpl(
-            resolveProjectTask.getId(), ServiceManager.getService(project, SyncViewManager.class), buildOutputParsers);
-
         Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
-        ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
-          @Override
-          public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-            long eventTime = System.currentTimeMillis();
-            AnAction rerunImportAction = new AnAction() {
-              @Override
-              public void update(@NotNull AnActionEvent e) {
-                super.update(e);
-                Presentation p = e.getPresentation();
-                p.setEnabled(processHandler.isProcessTerminated());
+        try (ExternalSystemEventDispatcher messageDispatcher =
+               new ExternalSystemEventDispatcher(resolveProjectTask, ServiceManager.getService(project, SyncViewManager.class))) {
+          ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
+            @Override
+            public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+              long eventTime = System.currentTimeMillis();
+              AnAction rerunImportAction = new AnAction() {
+                @Override
+                public void update(@NotNull AnActionEvent e) {
+                  Presentation p = e.getPresentation();
+                  p.setEnabled(processHandler.isProcessTerminated());
+                }
+
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                  Presentation p = e.getPresentation();
+                  p.setEnabled(false);
+                  refreshProject(externalProjectPath, importSpec);
+                }
+              };
+              String systemId = id.getProjectSystemId().getReadableName();
+              rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", systemId));
+              rerunImportAction.getTemplatePresentation()
+                .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
+              rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
+
+              if (isPreviewMode) return;
+              String message = "syncing...";
+              ServiceManager.getService(project, SyncViewManager.class).onEvent(
+                new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
+                  .withProcessHandler(processHandler, null)
+                  .withRestartAction(rerunImportAction)
+                  .withContentDescriptorSupplier(() -> {
+                    if (consoleView == null) {
+                      return null;
+                    }
+                    else {
+                      boolean activateToolWindow = isNewProject(project);
+                      BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
+                        consoleView, processHandler, consoleView.getComponent(), "Sync");
+                      contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
+                      contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                      contentDescriptor.setAutoFocusContent(reportRefreshError);
+                      return contentDescriptor;
+                    }
+                  })
+              );
+            }
+
+            @Override
+            public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+              processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+              messageDispatcher.append(text);
+            }
+
+            @Override
+            public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+              String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
+                                                          externalSystemId.getReadableName(), projectName);
+              com.intellij.build.events.FailureResult failureResult = createFailureResult(title, e, externalSystemId, project);
+              String message = isPreviewMode ? "project preview creation failed" : "sync failed";
+              finishSyncEventSupplier.set(
+                () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
+              printFailure(e, failureResult, consoleView, processHandler);
+              processHandler.notifyProcessTerminated(1);
+            }
+
+            @Override
+            public void onSuccess(@NotNull ExternalSystemTaskId id) {
+              String message = isPreviewMode ? "project preview created" : "sync finished";
+              finishSyncEventSupplier.set(
+                () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
+              processHandler.notifyProcessTerminated(0);
+            }
+
+            @Override
+            public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+              if (isPreviewMode) return;
+              if (event instanceof ExternalSystemBuildEvent) {
+                BuildEvent buildEvent = ((ExternalSystemBuildEvent)event).getBuildEvent();
+                messageDispatcher.onEvent(buildEvent);
               }
-
-              @Override
-              public void actionPerformed(@NotNull AnActionEvent e) {
-                Presentation p = e.getPresentation();
-                p.setEnabled(false);
-                refreshProject(externalProjectPath, importSpec);
+              else if (event instanceof ExternalSystemTaskExecutionEvent) {
+                BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
+                messageDispatcher.onEvent(buildEvent);
               }
-            };
-            String systemId = id.getProjectSystemId().getReadableName();
-            rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", systemId));
-            rerunImportAction.getTemplatePresentation()
-              .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
-            rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
-
-            if(isPreviewMode) return;
-            String message = "syncing...";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
-                .withProcessHandler(processHandler, null)
-                .withRestartAction(rerunImportAction)
-                .withContentDescriptorSupplier(() -> {
-                  if (consoleView == null) {
-                    return null;
-                  }
-                  else {
-                    boolean activateToolWindow = isNewProject(project);
-                    BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
-                      consoleView, processHandler, consoleView.getComponent(), "Sync");
-                    contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
-                    contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
-                    contentDescriptor.setAutoFocusContent(reportRefreshError);
-                    return contentDescriptor;
-                  }
-                })
-            );
-          }
-
-          @Override
-          public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-            processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
-
-            if (buildOutputInstantReader != null) {
-              buildOutputInstantReader.append(text);
             }
-          }
 
-          @Override
-          public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-            String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
-                                                        externalSystemId.getReadableName(), projectName);
-            com.intellij.build.events.FailureResult failureResult = createFailureResult(title, e, externalSystemId, project);
-            String message = isPreviewMode ? "project preview creation failed" : "sync failed";
-            finishSyncEventSupplier.set(
-              () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
-            printFailure(e, failureResult, consoleView, processHandler);
-            processHandler.notifyProcessTerminated(1);
-          }
-
-          @Override
-          public void onSuccess(@NotNull ExternalSystemTaskId id) {
-            String message = isPreviewMode ? "project preview created" : "sync finished";
-            finishSyncEventSupplier.set(
-              () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
-            processHandler.notifyProcessTerminated(0);
-          }
-
-          @Override
-          public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (!isPreviewMode && event instanceof ExternalSystemTaskExecutionEvent) {
-              BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-              ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
+            @Override
+            public void onEnd(@NotNull ExternalSystemTaskId id) {
+              messageDispatcher.close();
             }
-          }
-
-          @Override
-          public void onEnd(@NotNull ExternalSystemTaskId id) {
-            if (buildOutputInstantReader != null) {
-              buildOutputInstantReader.close();
-            }
-          }
-        };
-        final long startTS = System.currentTimeMillis();
-        resolveProjectTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
-        LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (System.currentTimeMillis() - startTS) + " ms.");
+          };
+          final long startTS = System.currentTimeMillis();
+          resolveProjectTask
+            .execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+          LOG.info("External project [" + externalProjectPath + "] resolution task executed in " +
+                   (System.currentTimeMillis() - startTS) + " ms.");
+        }
         if (project.isDisposed()) return;
 
         try {
@@ -784,7 +779,7 @@ public class ExternalSystemUtil {
     }
     else if (progressEvent instanceof ExternalSystemStatusEvent) {
       ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
-      buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName,
+      buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), progressEvent.getParentEventId(), eventTime, displayName,
                                               statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
     }
     else {
@@ -839,7 +834,10 @@ public class ExternalSystemUtil {
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
     ExecutionEnvironment environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
-    if (environment == null) return;
+    if (environment == null) {
+      LOG.warn("Execution environment for " + externalSystemId + " is null" );
+      return;
+    }
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
     assert runnerAndConfigurationSettings != null;
@@ -1130,7 +1128,7 @@ public class ExternalSystemUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
     }
   }
 

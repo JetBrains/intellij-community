@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -61,7 +61,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
         isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
       }
       if (connection == null) {
-        int transport = DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
+        int transport = DebuggerSettings.getInstance().getTransport();
         connection = DebuggerManagerImpl.createDebugParameters(parameters,
                                                                true,
                                                                transport,
@@ -160,6 +160,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     }
     return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
       .asyncAgent(beforeExecution)
+      .memoryAgent(beforeExecution && DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(javaParameters);
   }
 

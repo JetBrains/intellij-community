@@ -70,7 +70,7 @@ public class ActionCommand extends TypeCommand {
           Disposable disposable = Disposer.newDisposable();
           ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
             @Override
-            public void beforeActionPerformed(@NotNull final AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+            public void beforeActionPerformed(@NotNull final AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (context.isDisposed()) {
                   Disposer.dispose(disposable);

@@ -16,7 +16,7 @@
 package com.intellij.refactoring.chainCall;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
-import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,7 +60,7 @@ public interface ChainCallExtractor {
     if(expression instanceof PsiArrayInitializerExpression) {
       expression = RefactoringUtil.convertInitializerToNormalExpression(expression, expressionType);
     }
-    String typeArgument = OptionalUtil.getMapTypeArgument(expression, expressionType);
+    String typeArgument = OptionalRefactoringUtil.getMapTypeArgument(expression, expressionType);
     return "." + typeArgument + getMethodName(variable, expression, expressionType) +
            "(" + variable.getName() + "->" + expression.getText() + ")";
   }

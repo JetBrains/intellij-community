@@ -10,7 +10,7 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 
 import java.util.List;
 
-import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.toSortedStringPresentation;
+import static org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision.toSortedStringPresentation;
 
 public class SimplePropertyRevision implements ContentRevision, PropertyRevision {
   private final List<PropertyData> myProperty;

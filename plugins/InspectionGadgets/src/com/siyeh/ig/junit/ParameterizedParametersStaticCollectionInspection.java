@@ -110,28 +110,34 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
                     JavaPsiFacade.getInstance(project).findClass(Collection.class.getName(), GlobalSearchScope.allScope(project));
                   if (AnnotationUtil.isAnnotated(method, PARAMETERS_FQN, 0)) {
                     final PsiModifierList modifierList = method.getModifierList();
-                    boolean hasToFixSignature = false;
-                    String message = "Make method \'" + method.getName() + "\' ";
-                    String errorString = "Method \'#ref()\' should be ";
+                    String fixMessage = "Make method \'" + method.getName() + "\' ";
+                    String errorString = "Method \'#ref()\' should";
+                    String signatureDescription = "";
                     if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-                      message += PsiModifier.PUBLIC + " ";
-                      errorString += PsiModifier.PUBLIC + " ";
-                      hasToFixSignature = true;
+                      signatureDescription += PsiModifier.PUBLIC;
+                      errorString += " be ";
                     }
                     if (!modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-                      message += PsiModifier.STATIC;
-                      errorString += PsiModifier.STATIC;
-                      hasToFixSignature = true;
+                      if (!signatureDescription.isEmpty()) {
+                        signatureDescription += " " + PsiModifier.STATIC;
+                      }
+                      else {
+                        signatureDescription += PsiModifier.STATIC;
+                        errorString += " be ";
+                      }
                     }
+
                     if (collectionsClass != null &&
+                        !(returnType instanceof PsiArrayType) &&
                         (returnTypeClass == null || !InheritanceUtil.isInheritorOrSelf(returnTypeClass, collectionsClass, true))) {
-                      message += (hasToFixSignature ? " and" : "") + " return Collection";
-                      errorString += (hasToFixSignature ? " and" : "") + " return Collection";
+                      if (!signatureDescription.isEmpty()) {
+                        signatureDescription += " and";
+                      }
+                      signatureDescription += " return Collection";
                       returnType = JavaPsiFacade.getElementFactory(project).createType(collectionsClass);
-                      hasToFixSignature = true;
                     }
-                    if (hasToFixSignature) {
-                      candidates.add(new MethodCandidate(method, message, errorString, returnType));
+                    if (!signatureDescription.isEmpty()) {
+                      candidates.add(new MethodCandidate(method, fixMessage + signatureDescription, errorString + signatureDescription, returnType));
                       continue;
                     }
                     return;

@@ -30,9 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeConcatenationQuickFix");
@@ -71,15 +71,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   }
 
   private static String composeParametersText(final List<PsiExpression> args) {
-    final StringBuilder result = new StringBuilder();
-    for (Iterator<PsiExpression> iterator = args.iterator(); iterator.hasNext();) {
-      PsiExpression psiExpression = iterator.next();
-      result.append(psiExpression.getText());
-      if (iterator.hasNext()) {
-        result.append(",");
-      }
-    }
-    return result.toString();
+    return args.stream().map(PsiExpression::getText).collect(Collectors.joining(","));
   }
 
   @Override

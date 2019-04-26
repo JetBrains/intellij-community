@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
@@ -11,25 +11,22 @@ import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Pavel.Dolgov
  */
 public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
-  public FileTypeSelector(@NotNull List<FileType> types) {
-    super(createModel(types));
+  public FileTypeSelector() {
+    super(createModel());
     setRenderer(new MyCellRenderer());
     new MySpeedSearch(this);
   }
@@ -75,12 +72,20 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   }
 
   @NotNull
-  private static DefaultComboBoxModel<FileTypeInfo> createModel(List<FileType> types) {
+  private static DefaultComboBoxModel<FileTypeInfo> createModel() {
+    final List<FileType> types = new ArrayList<>();
+    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
+      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
+        types.add(fileType);
+      }
+    }
+    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     final List<FileTypeInfo> infos = new ArrayList<>();
     for (FileType fileType : types) {
       final boolean duplicated = isDuplicated(fileType, types);
 
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+      assert profile != null;
       if (profile instanceof StructuralSearchProfileBase) {
         final String[] contextNames = ((StructuralSearchProfileBase)profile).getContextNames();
         if (contextNames.length != 0) {
@@ -99,7 +104,9 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
         final Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
         Arrays.sort(languageDialects, Comparator.comparing(Language::getDisplayName));
         for (Language dialect : languageDialects) {
-          infos.add(new FileTypeInfo(fileType, dialect, null, true, duplicated));
+          if (profile.isMyLanguage(dialect)) {
+            infos.add(new FileTypeInfo(fileType, dialect, null, true, duplicated));
+          }
         }
       }
     }
@@ -123,22 +130,22 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
     }
   }
 
-  private static class MyCellRenderer extends ListCellRendererWrapper<FileTypeInfo> {
+  private static class MyCellRenderer extends SimpleListCellRenderer<FileTypeInfo> {
     private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
     private static final Icon WIDE_EMPTY_ICON = JBUI.scale(EmptyIcon.create(32, 18));
 
     @Override
-    public void customize(JList list, FileTypeInfo info, int index, boolean selected, boolean hasFocus) {
-      if (info == null) {
+    public void customize(JList<? extends FileTypeInfo> list, FileTypeInfo value, int index, boolean selected, boolean hasFocus) {
+      if (value == null) {
         return;
       }
-      if (info.isNested() && index >= 0) {
+      if (value.isNested() && index >= 0) {
         setIcon(WIDE_EMPTY_ICON);
-        setText(info.getText());
+        setText(value.getText());
       }
       else {
-        setIcon(getFileTypeIcon(info));
-        setText(info.getFullText());
+        setIcon(getFileTypeIcon(value));
+        setText(value.getFullText());
       }
     }
 

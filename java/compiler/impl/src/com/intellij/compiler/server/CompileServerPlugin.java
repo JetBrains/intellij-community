@@ -8,6 +8,9 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 
 /**
+ * This is the preferred way to specify compile server classpath. If it's not flexible enough for you, consider using
+ * {@link BuildProcessParametersProvider}
+ *
  * @author nik
  */
 public class CompileServerPlugin implements PluginAware {

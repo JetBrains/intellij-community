@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -29,9 +15,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-
-// Algorithm described at http://www.w3.org/html/wg/drafts/html/master/sections.html#outlines
-// One of implementations: http://hoyois.github.com/html5outliner/ (https://github.com/hoyois/html5outliner)
+// Algorithm described on https://www.w3.org/TR/html51/sections.html#creating-an-outline
+// One of the implementations: http://hoyois.github.com/html5outliner/ (https://github.com/hoyois/html5outliner)
 class Html5SectionsProcessor {
 
   private static class SectionHolder {
@@ -82,13 +67,13 @@ class Html5SectionsProcessor {
     }
   }
 
-  private static final String[] SECTIONING_ROOT_ELEMENTS = {"blockquote", "body", "details", "dialog", "fieldset", "figure", "td"};
+  private static final String[] SECTIONING_ROOT_ELEMENTS = {"blockquote", "body", "details", "fieldset", "figure", "td"};
   private static final String[] SECTIONING_CONTENT_ELEMENTS = {"article", "aside", "nav", "section"};
   private static final String[] HEADER_ELEMENTS = {"h1", "h2", "h3", "h4", "h5", "h6"};
   private static final String HGROUP_ELEMENT = "hgroup";
 
   private final Collection<SectionHolder> myRootSectionHolders = new SortedList<>(
-    (first, second) -> first.getTag().getTextRange().getStartOffset() - second.getTag().getTextRange().getStartOffset());
+    Comparator.comparingInt(holder -> holder.getTag().getTextRange().getStartOffset()));
 
   private SectionHolder myCurrentOutlinee = null;
   private Section myCurrentSection = null;
@@ -200,6 +185,9 @@ class Html5SectionsProcessor {
     final Collection<Html5SectionTreeElement> result = new ArrayList<>();
     for (SectionHolder sectionHolder : myRootSectionHolders) {
       for (Section section : sectionHolder.getChildren()) {
+        if ("td".equalsIgnoreCase(section.getTag().getName()) && section.getHeader() == null && section.getChildren().isEmpty()) {
+          continue;
+        }
         result.add(createHtml5SectionTreeElement(section));
       }
     }

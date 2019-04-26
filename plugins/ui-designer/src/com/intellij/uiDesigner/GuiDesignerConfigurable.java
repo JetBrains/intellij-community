@@ -18,7 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
@@ -124,13 +124,8 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     }
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
 
-    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
-    myGeneralUI.myLayoutManagerCombo.setRenderer(new ListCellRendererWrapper<String>() {
-      @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
-      }
-    });
+    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel<>(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
+    myGeneralUI.myLayoutManagerCombo.setRenderer(SimpleListCellRenderer.create("", LayoutManagerRegistry::getLayoutManagerDisplayName));
     myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
 
     myGeneralUI.myDefaultFieldAccessibilityCombo.setSelectedItem(configuration.DEFAULT_FIELD_ACCESSIBILITY);
@@ -148,8 +143,8 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     public JRadioButton myRbInstrumentClasses;
     public JRadioButton myRbInstrumentSources;
     public JCheckBox myChkCopyFormsRuntime;
-    private JComboBox myLayoutManagerCombo;
-    private JComboBox myDefaultFieldAccessibilityCombo;
+    private JComboBox<String> myLayoutManagerCombo;
+    private JComboBox<String> myDefaultFieldAccessibilityCombo;
     private JCheckBox myResizeHeaders;
   }
 

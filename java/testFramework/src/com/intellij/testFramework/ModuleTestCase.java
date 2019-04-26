@@ -73,32 +73,40 @@ public abstract class ModuleTestCase extends IdeaTestCase {
         CompoundRuntimeException.throwIfNotEmpty(errors);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myModulesToDispose.clear();
       super.tearDown();
     }
   }
 
+  @NotNull
   protected Module createModule(@NotNull File moduleFile) {
     return createModule(moduleFile, StdModuleTypes.JAVA);
   }
 
-  protected Module createModule(final File moduleFile, final ModuleType moduleType) {
+  @NotNull
+  protected Module createModule(@NotNull final File moduleFile, @NotNull ModuleType moduleType) {
     final String path = moduleFile.getAbsolutePath();
     return createModule(path, moduleType);
   }
 
-  protected Module createModule(final String path, final ModuleType moduleType) {
+  @NotNull
+  protected Module createModule(@NotNull String path, @NotNull ModuleType moduleType) {
     Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId()));
 
     myModulesToDispose.add(module);
     return module;
   }
 
+  @NotNull
   protected Module loadModule(@NotNull VirtualFile file) {
     return loadModule(file.getPath());
   }
 
+  @NotNull
   protected Module loadModule(@NotNull String modulePath) {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     Module module;
@@ -107,8 +115,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
         FileUtil.toSystemIndependentName(modulePath)));
     }
     catch (Exception e) {
-      LOG.error(e);
-      return null;
+      throw new RuntimeException(e);
     }
 
     myModulesToDispose.add(module);
@@ -141,7 +148,8 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return result.get();
   }
 
-  protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType,
+  @NotNull
+  protected Module createModuleFromTestData(@NotNull String dirInTestData, @NotNull String newModuleFileName, @NotNull ModuleType moduleType,
                                             final boolean addSourceRoot)
     throws IOException {
     final File dirInTestDataFile = new File(dirInTestData);

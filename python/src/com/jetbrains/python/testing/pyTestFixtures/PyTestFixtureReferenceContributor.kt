@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pyTestFixtures
 
 import com.intellij.openapi.util.Ref
@@ -8,6 +8,7 @@ import com.intellij.util.ProcessingContext
 import com.jetbrains.python.BaseReference
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.types.*
@@ -28,8 +29,10 @@ class PyTestFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFi
 
 
 object PyTextFixtureTypeProvider : PyTypeProviderBase() {
-  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    val param = referenceTarget as? PyNamedParameter ?: return null
+  override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
+    if (! context.maySwitchToAST(func)) {
+      return null
+    }
     val fixtureFunc = param.references.filterIsInstance<PyTestFixtureReference>().firstOrNull()?.getFunction() ?: return null
     val returnType = context.getReturnType(fixtureFunc)
     if (!fixtureFunc.isGenerator) {
@@ -40,11 +43,11 @@ object PyTextFixtureTypeProvider : PyTypeProviderBase() {
       // which generates iteratedItemType.
       // We also must open union (toStream)
       val itemTypes = PyTypeUtil.toStream(returnType)
-                        .map {
-                          if (it is PyCollectionType && PyTypingTypeProvider.isGenerator(it))
-                            it.iteratedItemType
-                          else it
-                        }.toList()
+        .map {
+          if (it is PyCollectionType && PyTypingTypeProvider.isGenerator(it))
+            it.iteratedItemType
+          else it
+        }.toList()
       return Ref(PyUnionType.union(itemTypes))
     }
   }
@@ -58,7 +61,7 @@ private object PyTestReferenceProvider : PsiReferenceProvider() {
   }
 }
 
-object PyTestFixtureReferenceContributor : PsiReferenceContributor() {
+class PyTestFixtureReferenceContributor : PsiReferenceContributor() {
 
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PyParameter::class.java), PyTestReferenceProvider,

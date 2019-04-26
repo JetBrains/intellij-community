@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.ASTNode;
@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
@@ -58,7 +58,7 @@ public final class GrVariableElementType extends GrStubElementType<GrVariableStu
   public boolean shouldCreateStub(ASTNode node) {
     ASTNode parent = node.getTreeParent();
     return parent != null &&
-           parent.getElementType() == GroovyElementTypes.VARIABLE_DEFINITION &&
-           GroovyElementTypes.VARIABLE_DEFINITION.shouldCreateStub(parent);
+           parent.getElementType() == GroovyStubElementTypes.VARIABLE_DECLARATION &&
+           GroovyStubElementTypes.VARIABLE_DECLARATION.shouldCreateStub(parent);
   }
 }

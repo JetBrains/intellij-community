@@ -1,20 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @deprecated Use Promise
- * @param <T>
- */
+/** @deprecated use {@link java.util.concurrent.CompletableFuture} or {@link org.jetbrains.concurrency.Promise} */
 @Deprecated
+@SuppressWarnings({"DeprecatedIsStillUsed", "LambdaUnfriendlyMethodOverload", "BoundedWildcard"})
 public class AsyncResult<T> extends ActionCallback {
   protected T myResult;
 
-  public AsyncResult() {
-  }
+  public AsyncResult() { }
 
   @NotNull
   public AsyncResult<T> setDone(T result) {
@@ -30,11 +27,7 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
-  /**
-   * @deprecated Use {@link #doWhenDone(Consumer)} (to remove in IDEA 16)
-   */
   @NotNull
-  @Deprecated
   public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(() -> handler.run(myResult));
     return this;
@@ -67,10 +60,6 @@ public class AsyncResult<T> extends ActionCallback {
     return myResult;
   }
 
-  /**
-   * @deprecated Use {@link Consumer} (to remove in IDEA 16)
-   */
-  @Deprecated
   public interface Handler<T> {
     void run(T t);
   }

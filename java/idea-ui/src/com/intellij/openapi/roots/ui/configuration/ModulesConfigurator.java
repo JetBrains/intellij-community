@@ -126,7 +126,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @Override
   @Nullable
-  public Module getModule(String name) {
+  public Module getModule(@NotNull String name) {
     final Module moduleByName = myModuleModel.findModuleByName(name);
     if (moduleByName != null) {
       return moduleByName;
@@ -144,7 +144,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return getOrCreateModuleEditor(module).getRootModel();
   }
 
-  public ModuleEditor getOrCreateModuleEditor(Module module) {
+  @NotNull
+  public ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
     LOG.assertTrue(getModule(module.getName()) != null, "Module has been deleted");
     ModuleEditor editor = getModuleEditor(module);
     if (editor == null) {
@@ -153,7 +154,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return editor;
   }
 
-  private ModuleEditor doCreateModuleEditor(final Module module) {
+  @NotNull
+  private ModuleEditor doCreateModuleEditor(@NotNull Module module) {
     final ModuleEditor moduleEditor = new HeaderHidingTabbedModuleEditor(myProject, this, module) {
       @Override
       public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -173,6 +175,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return moduleEditor;
   }
 
+  @NotNull
   @Override
   public FacetModel getFacetModel(@NotNull Module module) {
     return myFacetsConfigurator.getOrCreateModifiableModel(module);
@@ -527,12 +530,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     });
   }
 
-  public static boolean showDialog(Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
+  public static boolean showDialog(@NotNull Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> config.select(moduleToSelect, editorNameToSelect, true));
   }
 
-  public void moduleRenamed(Module module, final String oldName, final String name) {
+  public void moduleRenamed(@NotNull Module module, final String oldName, @NotNull String name) {
     ModuleEditor moduleEditor = myModuleEditors.get(module);
     if (moduleEditor != null) {
       moduleEditor.setModuleName(name);

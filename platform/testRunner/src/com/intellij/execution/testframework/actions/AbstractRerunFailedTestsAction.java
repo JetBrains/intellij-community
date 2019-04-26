@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -30,7 +30,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +184,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
                                                         boolean cellHasFocus) {
             final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof Executor) {
-              setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
+              setText(((Executor)value).getActionName());
               setIcon(((Executor)value).getIcon());
             }
             return component;
@@ -235,8 +234,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return null;
   }
 
-  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile,
-                                                                                       WrappingRunConfiguration<RunConfigurationBase> {
+  protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
+                                                                                                WrappingRunConfiguration<RunConfigurationBase> {
     @Deprecated
     public RunConfigurationBase getConfiguration() {
       return getPeer();

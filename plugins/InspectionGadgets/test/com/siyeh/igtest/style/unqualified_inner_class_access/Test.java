@@ -28,3 +28,14 @@ class C {
     new A().new X();
   }
 }
+class Outer {
+  Outer getAnonymousClass() {
+    return new Outer() {
+      {
+        Inner inner = new Inner();
+      }
+
+      class Inner { }
+    };
+  }
+}

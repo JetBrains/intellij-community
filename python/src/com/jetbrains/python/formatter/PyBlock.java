@@ -43,7 +43,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author yole
  */
-public class PyBlock implements ASTBlock {
+public class PyBlock implements ASTBlock, ReadOnlyBlockContainer {
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
                                                                       PyElementTypes.DICT_LITERAL_EXPRESSION,
@@ -295,7 +295,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      if (PyTokenTypes.STRING_NODES.contains(childType)) {
+      if (PyTokenTypes.STRING_NODES.contains(childType) || childType == PyElementTypes.FSTRING_NODE) {
         childAlignment = getAlignmentForChildren();
       }
     }

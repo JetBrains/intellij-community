@@ -24,7 +24,6 @@ public class IndentInfo {
 
   private final int mySpaces;
   private final int myIndentSpaces;
-  private final int myHiddenSpaces;
 
   private final int myLineFeeds;
   /** @see WhiteSpace#setForceSkipTabulationsUsage(boolean)  */
@@ -32,33 +31,17 @@ public class IndentInfo {
   private boolean myIndentEmptyLines; // Additional indent on empty lines (before the end of code block)
 
   public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces) {
-    this(lineFeeds, indentSpaces, spaces, 0, false);
+    this(lineFeeds, indentSpaces, spaces, false);
   }
 
   public IndentInfo(final int lineFeeds,
                     final int indentSpaces,
                     final int spaces,
-                    final int hiddenSpaces) {
-    this(lineFeeds, indentSpaces, spaces, hiddenSpaces, false);
-  }
-
-  public IndentInfo(final int lineFeeds,
-                    final int indentSpaces,
-                    final int spaces,
-                    final boolean forceSkipTabulationsUsage) {
-    this(lineFeeds, indentSpaces, spaces, 0, forceSkipTabulationsUsage);
-  }
-
-  public IndentInfo(final int lineFeeds,
-                    final int indentSpaces,
-                    final int spaces,
-                    final int hiddenSpaces,
                     final boolean forceSkipTabulationsUsage) {
     mySpaces = spaces;
     myIndentSpaces = indentSpaces;
     myLineFeeds = lineFeeds;
     myForceSkipTabulationsUsage = forceSkipTabulationsUsage;
-    myHiddenSpaces = hiddenSpaces;
   }
 
   public int getSpaces() {

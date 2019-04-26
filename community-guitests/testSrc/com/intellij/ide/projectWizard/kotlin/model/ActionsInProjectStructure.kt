@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
+import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.impl.ScreenshotOnFailure
 import com.intellij.testGuiFramework.impl.jTree
-import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel
 import com.intellij.testGuiFramework.util.scenarios.checkLibraryPresent
 import com.intellij.testGuiFramework.util.scenarios.checkModule
+import com.intellij.testGuiFramework.util.step
 import org.fest.swing.exception.ComponentLookupException
 
 // Attention: it's supposed that Project Structure dialog is open both before the function
@@ -13,14 +15,21 @@ import org.fest.swing.exception.ComponentLookupException
 fun ProjectStructureDialogModel.checkFacetInOneModule(expectedFacet: FacetStructure, vararg path: String) {
   checkModule {
     with(guiTestCase) {
-      try {
-        jTree(*path).clickPath()
-        logUIStep("Check facet for module `${path.joinToString(" -> ")}`")
-        (this as KotlinGuiTestCase).checkFacetState(expectedFacet)
-      }
-      catch (e: ComponentLookupException) {
-        val errorMessage = "Kotlin facet for module `${path.joinToString(" -> ")}` not found"
-        throw IllegalStateException(errorMessage, e as Throwable)
+      step("Check facet for module `${path.joinToString(" -> ")}`") {
+        try {
+          val tree = jTree(*path, timeout = Timeouts.seconds30)
+          tree.clickPath()
+          screenshot("path is clicked")
+          assert(tree.isPathSelected()) {
+            "path ${path.joinToString()} is not selected"
+          }
+
+          (this as KotlinGuiTestCase).checkFacetState(expectedFacet)
+        }
+        catch (e: ComponentLookupException) {
+          val errorMessage = "Kotlin facet for module `${path.joinToString(" -> ")}` not found"
+          throw IllegalStateException(errorMessage, e as Throwable)
+        }
       }
     }
   }

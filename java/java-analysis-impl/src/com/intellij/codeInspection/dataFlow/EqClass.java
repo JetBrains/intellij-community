@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,11 +71,11 @@ class EqClass extends SortedIntSet {
     List<DfaVariableValue> vars = ContainerUtil.newArrayList();
     forEach(id -> {
       DfaValue value = myFactory.getValue(id);
-      if (unwrap) {
-        value = DfaMemoryStateImpl.unwrap(value);
-      }
       if (value instanceof DfaVariableValue) {
         vars.add((DfaVariableValue)value);
+      }
+      else if (unwrap && value instanceof DfaBoxedValue) {
+        vars.add(((DfaBoxedValue)value).getWrappedValue());
       }
       return true;
     });
@@ -109,12 +106,12 @@ class EqClass extends SortedIntSet {
   }
 
   @Nullable
-  DfaValue findConstant(boolean wrapped) {
-    Ref<DfaValue> result = new Ref<>();
+  DfaConstValue findConstant() {
+    Ref<DfaConstValue> result = new Ref<>();
     forEach(id -> {
       DfaValue value = myFactory.getValue(id);
-      if (value instanceof DfaConstValue || wrapped && DfaMemoryStateImpl.unwrap(value) instanceof DfaConstValue) {
-        result.set(value);
+      if (value instanceof DfaConstValue) {
+        result.set((DfaConstValue)value);
         return false;
       }
       return true;
@@ -122,20 +119,9 @@ class EqClass extends SortedIntSet {
     return result.get();
   }
 
-  @Nullable
-  private static DfaConstValue asConstantValue(DfaValue value) {
-    value = DfaMemoryStateImpl.unwrap(value);
-    return value instanceof DfaConstValue ? (DfaConstValue)value : null;
-  }
-
   boolean containsConstantsOnly() {
-    for (int i = 0; i < size(); i++) {
-      if (asConstantValue(myFactory.getValue(get(i))) == null) {
-        return false;
-      }
-    }
-
-    return true;
+    int size = size();
+    return size <= 1 && (size == 0 || myFactory.getValue(get(0)) instanceof DfaConstValue);
   }
 
 }

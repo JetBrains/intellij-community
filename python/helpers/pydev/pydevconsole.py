@@ -282,6 +282,9 @@ def start_server(port):
     # `InterpreterInterface` implements all methods required for `server_handler`
     interpreter = InterpreterInterface(threading.currentThread())
 
+    # Tell UMD the proper default namespace
+    _set_globals_function(interpreter.get_namespace)
+
     server_socket = start_rpc_server_and_make_client('', port, server_service, client_service, create_server_handler_factory(interpreter))
 
     # 2. Print server port for the IDE
@@ -311,7 +314,7 @@ def start_client(host, port):
 
     # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
 
-    # # Tell UMD the proper default namespace
+    # Tell UMD the proper default namespace
     _set_globals_function(interpreter.get_namespace)
 
     server_service = PythonConsoleBackendService
@@ -322,6 +325,19 @@ def start_client(host, port):
     start_rpc_server(server_transport, server_service, server_handler)
 
     process_exec_queue(interpreter)
+
+
+def get_ipython_hidden_vars():
+    if IPYTHON and hasattr(__builtin__, 'interpreter'):
+        interpreter = get_interpreter()
+        return interpreter.get_ipython_hidden_vars_dict()
+    else:
+        try:
+            ipython_shell = get_ipython()
+            from _pydev_bundle.pydev_ipython_console_011 import get_ipython_hidden_vars
+            return get_ipython_hidden_vars(ipython_shell)
+        except:
+            pass
 
 
 def get_interpreter():

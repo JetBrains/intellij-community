@@ -24,6 +24,7 @@ import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.UserDirIgnores;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +64,6 @@ public class CvsEntriesManager implements VirtualFileListener {
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
-  private final MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
   private final CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
 
   public static CvsEntriesManager getInstance() {
@@ -85,10 +85,10 @@ public class CvsEntriesManager implements VirtualFileListener {
     }
   }
 
-  public void registerAsVirtualFileListener() {
+  public void registerAsVirtualFileListener(@NotNull Disposable listenerDisposable) {
     if (myIsActive == 0) {
-      VirtualFileManager.getInstance().addVirtualFileListener(this);
-      VirtualFileManager.getInstance().addVirtualFileManagerListener(myVirtualFileManagerListener);
+      VirtualFileManager.getInstance().addVirtualFileListener(this, listenerDisposable);
+      VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener(), listenerDisposable);
     }
     myIsActive++;
   }
@@ -97,8 +97,6 @@ public class CvsEntriesManager implements VirtualFileListener {
     LOG.assertTrue(isActive());
     myIsActive--;
     if (myIsActive == 0) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(this);
-      VirtualFileManager.getInstance().removeVirtualFileManagerListener(myVirtualFileManagerListener);
       myInfoByParentDirectoryPath.clear();
     }
   }

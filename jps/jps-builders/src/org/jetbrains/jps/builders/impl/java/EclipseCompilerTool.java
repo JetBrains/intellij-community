@@ -24,9 +24,8 @@ import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.JavaCompiler;
+import javax.tools.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -52,6 +51,11 @@ public class EclipseCompilerTool extends JavaCompilingTool {
   @Override
   public String getAlternativeId() {
     return JavaCompilers.ECLIPSE_EMBEDDED_ID;
+  }
+
+  @Override
+  public boolean isCompilerTreeAPISupported() {
+    return false;
   }
 
   @NotNull

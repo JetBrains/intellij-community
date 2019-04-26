@@ -569,7 +569,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 				)
 		form.attrs.accept-charset =
 			attribute accept-charset {
-				form.data.charsetlist
+				string
 			}	
 	form.inner =
 		( common.inner.flow )
@@ -588,11 +588,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)?
 		)
 	fieldset.inner =
-		(	(	legend.elem
-			|	legend.elem.w3c
-		)?
-		,	common.inner.flow
-		)
+		legend.elem?, common.inner.flow
 
 	common.elem.flow |= fieldset.elem
 	

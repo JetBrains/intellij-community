@@ -8,7 +8,7 @@ import org.jetbrains.idea.svn.NestedCopyType
 import org.jetbrains.idea.svn.SvnVcs
 
 class SvnWorkingCopyFormatUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.vcs.svn.format"
+  override fun getGroupId() = "vcs.svn.format"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val vcs = SvnVcs.getInstance(project)

@@ -69,9 +69,9 @@ public class TodoCheckinHandlerWorker {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
       FilePath afterFilePath = change.getAfterRevision().getFile();
+      VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
 
       MyEditedFileProcessor fileProcessor = ReadAction.compute(() -> {
-        final VirtualFile afterFile = getFileWithRefresh(afterFilePath);
         if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
           return null; // skip detection
         }
@@ -120,15 +120,6 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  @Nullable
-  private static VirtualFile getFileWithRefresh(@NotNull FilePath filePath) {
-    VirtualFile file = filePath.getVirtualFile();
-    if (file == null) {
-      file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(filePath.getIOFile());
-    }
-    return file;
-  }
-
   private static void applyFilterAndRemoveDuplicates(final List<TodoItem> todoItems, final TodoFilter filter) {
     TodoItem previous = null;
     for (Iterator<TodoItem> iterator = todoItems.iterator(); iterator.hasNext(); ) {
@@ -150,14 +141,14 @@ public class TodoCheckinHandlerWorker {
     @NotNull private final String myBeforeContent;
     @NotNull private final String myAfterContent;
     @NotNull private final FilePath myAfterFile;
-    @NotNull private final List<TodoItem> myNewTodoItems;
+    @NotNull private final List<? extends TodoItem> myNewTodoItems;
     private final TodoFilter myTodoFilter;
 
     private MyEditedFileProcessor(@NotNull Project project,
                                   @NotNull FilePath afterFilePath,
                                   @NotNull String beforeContent,
                                   @NotNull String afterContent,
-                                  @NotNull List<TodoItem> newTodoItems,
+                                  @NotNull List<? extends TodoItem> newTodoItems,
                                   @Nullable TodoFilter todoFilter) {
       myProject = project;
       myAfterFile = afterFilePath;

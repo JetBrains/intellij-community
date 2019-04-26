@@ -5,6 +5,6 @@ public class Test{
 class Test1 {
   static Test test = new Test();
   static {
-    System.out.println("" + test.<ref>a);
+    System.out.println("" + test.<caret>a);
   }
 }

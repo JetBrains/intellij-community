@@ -46,7 +46,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       assertNull(beforeDescription.getSourceLeftVersion());
 
       final ConflictVersion version = beforeDescription.getSourceRightVersion();
@@ -61,7 +60,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.DELETE, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNotNull(leftVersion);
       assertTrue(leftVersion.isFile());
@@ -87,7 +85,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.EDIT, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNotNull(leftVersion);
       assertTrue(leftVersion.isFile());
@@ -104,7 +101,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.DELETE, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNotNull(leftVersion);
       assertTrue(leftVersion.isFile());
@@ -121,7 +117,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -137,7 +132,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.EDIT, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNotNull(leftVersion);
       assertTrue(leftVersion.isFile());
@@ -154,7 +148,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
       //Assert.assertEquals(NodeKind.FILE, leftVersion.getKind());
@@ -172,7 +165,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -203,7 +195,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     Assert.assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(ConflictAction.DELETE, beforeDescription.getConflictAction());
 
-    Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
     Assert.assertEquals(NodeKind.DIR, leftVersion.getKind());
@@ -219,7 +210,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.EDIT, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNotNull(leftVersion);
       assertTrue(leftVersion.isDirectory());
@@ -236,7 +226,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.DELETE, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNotNull(leftVersion);
       assertTrue(leftVersion.isDirectory());
@@ -253,7 +242,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -269,7 +257,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.EDIT, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNotNull(leftVersion);
       assertTrue(leftVersion.isDirectory());
@@ -286,7 +273,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
       //Assert.assertEquals(NodeKind.DIR, leftVersion.getKind());
@@ -303,7 +289,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -319,7 +304,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -335,7 +319,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -351,7 +334,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -367,7 +349,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -384,7 +365,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -400,7 +380,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -416,7 +395,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -432,7 +410,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 
@@ -448,7 +425,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       assertEquals(ConflictOperation.UPDATE, beforeDescription.getOperation());
       assertEquals(ConflictAction.ADD, beforeDescription.getConflictAction());
 
-      assertTrue(beforeDescription.isTreeConflict());
       ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
       assertNull(leftVersion);
 

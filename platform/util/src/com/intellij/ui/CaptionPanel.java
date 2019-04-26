@@ -19,23 +19,13 @@ import java.awt.event.MouseEvent;
 public class CaptionPanel extends JPanel {
 
   public static final Color CNT_ACTIVE_COLOR = new JBColor(Gray._202, Gray._55);
-  public static final Color CNT_ACTIVE_BORDER_COLOR = new JBColor(new NotNullProducer<Color>() {
-    @NotNull @Override public Color produce() {
-      return UIUtil.isUnderDarcula() ? JBColor.border() : CNT_ACTIVE_COLOR;
-    }
-  });
+  public static final Color CNT_ACTIVE_BORDER_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? JBColor.border() : CNT_ACTIVE_COLOR);
 
   /**
    * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
    * to be removed in 2019.1
    */
-  @Deprecated public static final Color BND_ACTIVE_COLOR = new JBColor(new NotNullProducer<Color>() {
-    @NotNull
-    @Override
-    public Color produce() {
-      return JBUI.CurrentTheme.Popup.borderColor(true);
-    }
-  });
+  @Deprecated public static final Color BND_ACTIVE_COLOR = new JBColor(() -> JBUI.CurrentTheme.Popup.borderColor(true));
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;

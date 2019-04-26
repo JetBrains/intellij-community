@@ -35,4 +35,13 @@ public class For {
         }
         return result + size;
     }
+
+    int withIntermediateVariable(int a){
+        int r = 1;
+        for (int i = 0; i < 10; i++) {
+            a = r;
+            r = r + a;
+        }
+        return r;
+    }
 }

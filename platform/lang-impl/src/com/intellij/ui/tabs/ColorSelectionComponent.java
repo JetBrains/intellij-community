@@ -89,34 +89,10 @@ public class ColorSelectionComponent extends JPanel {
       if (!button.isSelected()) continue;
       if (button instanceof CustomColorButton) {
         final String color = ColorUtil.toHex(button.getColor());
-        String colorName  = findColorName(button.getColor());
+        String colorName  = FileColorManagerImpl.getColorName(button.getColor());
         return colorName == null ? color : colorName;
       }
       return name;
-    }
-    return null;
-  }
-
-  @Nullable
-  public static String findColorName(Color color) {
-    final String hex = ColorUtil.toHex(color);
-    if ("ffffe4".equals(hex) || "494539".equals(hex)) {
-      return "Yellow";
-    }
-
-    if ("e7fadb".equals(hex) || "2a3b2c".equals(hex)) {
-      return "Green";
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public Color getSelectedColor() {
-    for (String name : myColorToButtonMap.keySet()) {
-      ColorButton button = myColorToButtonMap.get(name);
-      if (!button.isSelected()) continue;
-      return button.getColor();
     }
     return null;
   }

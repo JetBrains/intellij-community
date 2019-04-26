@@ -1,9 +1,9 @@
-// "Merge with 'case 1:'" "GENERIC_ERROR_OR_WARNING"
+// "Merge with 'case 1'" "GENERIC_ERROR_OR_WARNING"
 class C {
     void foo(int n) {
         switch (n) {
             case 1:
-            default:
+            case 4:
                 bar("A");
                 break;
             case 2:

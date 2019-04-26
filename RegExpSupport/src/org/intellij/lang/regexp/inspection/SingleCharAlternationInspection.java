@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -92,7 +92,11 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         final PsiElement parent = pattern.getParent();
         final PsiElement victim =
           (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) ? parent : pattern;
-        RegExpReplacementUtil.replaceInContext(victim, buildReplacementText(pattern));
+        final String replacementText = buildReplacementText(pattern);
+        if (replacementText == null) {
+          return;
+        }
+        RegExpReplacementUtil.replaceInContext(victim, replacementText);
       }
     }
   }
@@ -101,6 +105,9 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
     final StringBuilder text = new StringBuilder("[");
     for (RegExpBranch branch : pattern.getBranches()) {
       for (PsiElement child : branch.getChildren()) {
+        if (!(child instanceof RegExpChar)) {
+          return null;
+        }
         final RegExpChar ch = (RegExpChar)child;
         final IElementType type = ch.getNode().getFirstChildNode().getElementType();
         if (type == RegExpTT.REDUNDANT_ESCAPE) {

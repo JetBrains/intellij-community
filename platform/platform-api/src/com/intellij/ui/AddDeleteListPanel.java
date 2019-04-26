@@ -33,7 +33,6 @@ import java.util.List;
  *
  * @author Konstantin Bulenkov
  * @author anna
- * @since 5.1
  */
 public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
   private final String myTitle;

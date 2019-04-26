@@ -19,7 +19,6 @@ package com.intellij.stats.network.service
 import java.io.File
 
 abstract class RequestService {
-    abstract fun post(url: String, file: File): ResponseData?
     abstract fun postZipped(url: String, file: File): ResponseData?
     abstract fun get(url: String): ResponseData?
 }

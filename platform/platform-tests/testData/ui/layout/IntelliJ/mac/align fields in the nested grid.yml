@@ -34,7 +34,7 @@ columnConstraints:
   count: 2
 componentConstrains:
   In KeePass: {spanX: 2097051, wrap: true}
-  'Database:':
+  Database [label]:
     horizontal:
       gapBefore:
         min: &id006 {horizontal: true, value: 26.0}
@@ -49,13 +49,13 @@ componentConstrains:
         preferred: *id007
     spanX: 2097051
     wrap: true
-  'Master Password:':
+  Master Password [label]:
     horizontal:
       gapBefore:
         min: &id008 {horizontal: true, value: 26.0}
         preferred: *id008
   'JBPasswordField #5': {spanX: 2097051, wrap: true}
-  Stored using weak encryption.:
+  Stored using weak encryption. [label]:
     horizontal:
       gapBefore:
         min: &id009 {horizontal: true, value: 1.0}
@@ -73,9 +73,9 @@ cellBounds:
 - [140, 84, 340, 13]
 componentBounds:
   In KeePass: [-3, -3, 92, 22]
-  'Database:': [26, 29, 61, 15]
+  Database [label]: [26, 29, 61, 15]
   'JTextField #2': [137, 23, 326, 27]
   'JLabel #3': [464, 29, 16, 16]
-  'Master Password:': [26, 60, 108, 15]
+  Master Password [label]: [26, 60, 108, 15]
   'JBPasswordField #5': [137, 54, 256, 27]
-  Stored using weak encryption.: [141, 84, 158, 13]
+  Stored using weak encryption. [label]: [141, 84, 158, 13]

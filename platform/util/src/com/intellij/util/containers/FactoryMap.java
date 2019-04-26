@@ -19,16 +19,13 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Producer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * a Map which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
@@ -36,8 +33,6 @@ import java.util.Set;
  * For thread-safe alternative please use {@link ConcurrentFactoryMap}
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("factoryMap");
-
   private Map<K, V> myMap;
 
   /**
@@ -49,7 +44,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   protected Map<K, V> createMap() {
-    return new THashMap<K, V>();
+    return new THashMap<>();
   }
 
   @Nullable
@@ -61,7 +56,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     K k = notNull(key);
     V value = map.get(k);
     if (value == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = create((K)key);
       if (stamp.mayCacheNow()) {
         V v = notNull(value);
@@ -86,7 +81,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   private static <T> T notNull(final Object key) {
     //noinspection unchecked
-    return key == null ? FactoryMap.<T>FAKE_NULL() : (T)key;
+    return key == null ? FactoryMap.FAKE_NULL() : (T)key;
   }
   @Nullable
   private static <T> T nullize(T value) {
@@ -118,7 +113,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     final Set<K> ts = getMap().keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
-      final java.util.HashSet<K> hashSet = new HashSet<K>(ts);
+      final java.util.HashSet<K> hashSet = new HashSet<>(ts);
       hashSet.remove(nullKey);
       hashSet.add(null);
       return hashSet;
@@ -163,23 +158,14 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @NotNull
   @Override
   public Collection<V> values() {
-    return ContainerUtil.map(getMap().values(), new Function<V, V>() {
-      @Override
-      public V fun(V v) {
-        return nullize(v);
-      }
-    });
+    return ContainerUtil.map(getMap().values(), FactoryMap::nullize);
   }
 
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return ContainerUtil.map2Set(getMap().entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
-          @Override
-          public Entry<K,V> fun(Entry<K,V> entry) {
-            return new AbstractMap.SimpleEntry<K, V>(nullize(entry.getKey()), nullize(entry.getValue()));
-          }
-        });
+    return ContainerUtil.map2Set(getMap().entrySet(),
+                                 entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));
   }
 
   /**
@@ -204,7 +190,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   @NotNull
-  public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Producer<? extends Map<K, V>> mapCreator) {
+  public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends Map<K, V>> mapCreator) {
     //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable
@@ -216,7 +202,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
       @NotNull
       @Override
       protected Map<K, V> createMap() {
-        return mapCreator.produce();
+        return mapCreator.get();
       }
     };
   }

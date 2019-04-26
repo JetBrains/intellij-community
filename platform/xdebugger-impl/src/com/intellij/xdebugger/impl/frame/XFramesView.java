@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
@@ -73,8 +73,9 @@ public class XFramesView extends XDebugView {
       }
     });
     myFramesList.addMouseListener(new MouseAdapter() {
+      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
       @Override
-      public void mousePressed(final MouseEvent e) {
+      public void mouseReleased(final MouseEvent e) {
         if (myListenersEnabled) {
           int i = myFramesList.locationToIndex(e.getPoint());
           if (i != -1 && myFramesList.isSelectedIndex(i)) {
@@ -96,7 +97,15 @@ public class XFramesView extends XDebugView {
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
 
     myThreadComboBox = new ComboBox<>();
-    myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
+    myThreadComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      if (value != null) {
+        label.setText(value.getDisplayName());
+        label.setIcon(value.getIcon());
+      }
+      else if (index >= 0) {
+        label.setText("Loading...");
+      }
+    }));
     myThreadComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
@@ -166,6 +175,7 @@ public class XFramesView extends XDebugView {
 
   private class ThreadsBuilder implements XSuspendContext.XExecutionStackContainer {
     private volatile boolean myObsolete;
+    private boolean myAddBeforeSelection = true;
 
     ThreadsBuilder() {
       myThreadComboBox.addItem(null); // rendered as "Loading..."
@@ -180,7 +190,7 @@ public class XFramesView extends XDebugView {
           removeLoading();
           myThreadsCalculated = true;
         }
-        addExecutionStacks(copyStacks);
+        myAddBeforeSelection = addExecutionStacks(copyStacks, myAddBeforeSelection);
 
         // reopen if popups height changed
         int newCount = myThreadComboBox.getItemCount();
@@ -291,13 +301,10 @@ public class XFramesView extends XDebugView {
       }
 
       XExecutionStack activeExecutionStack = mySelectedStack != null ? mySelectedStack : currentExecutionStack;
-      addExecutionStacks(Collections.singletonList(activeExecutionStack));
-
-      XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
-      addExecutionStacks(Arrays.asList(executionStacks));
+      addExecutionStacks(Collections.singletonList(activeExecutionStack), false);
 
       myThreadComboBox.setSelectedItem(activeExecutionStack);
-      boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
+      boolean invisible = activeExecutionStack == null || StringUtil.isEmpty(activeExecutionStack.getDisplayName());
       if (invisible != (myThreadComboBox.getParent() == null)) {
         if (invisible) {
           myThreadsPanel.remove(myThreadComboBox);
@@ -322,21 +329,30 @@ public class XFramesView extends XDebugView {
     myExecutionStacksWithSelection.clear();
   }
 
-  private void addExecutionStacks(List<? extends XExecutionStack> executionStacks) {
+  private boolean addExecutionStacks(List<? extends XExecutionStack> executionStacks, boolean addBeforeSelection) {
     int count = myThreadComboBox.getItemCount();
     boolean loading = count > 0 && myThreadComboBox.getItemAt(count - 1) == null;
+    Object selectedItem = myThreadComboBox.getSelectedItem();
     for (XExecutionStack executionStack : executionStacks) {
+      if (addBeforeSelection && executionStack.equals(selectedItem)) {
+        addBeforeSelection = false;
+      }
       if (!myExecutionStacksWithSelection.contains(executionStack)) {
-        if (loading) {
-          myThreadComboBox.insertItemAt(executionStack, count - 1); // add right before the loading node
-          count++;
+        if (addBeforeSelection) {
+          myThreadComboBox.insertItemAt(executionStack, myThreadComboBox.getSelectedIndex()); // add right before the selected node
         }
         else {
-          myThreadComboBox.addItem(executionStack);
+          if (loading) {
+            myThreadComboBox.insertItemAt(executionStack, myThreadComboBox.getItemCount() - 1); // add right before the loading node
+          }
+          else {
+            myThreadComboBox.addItem(executionStack);
+          }
         }
         myExecutionStacksWithSelection.put(executionStack, 0);
       }
     }
+    return addBeforeSelection;
   }
 
   private void updateFrames(XExecutionStack executionStack,

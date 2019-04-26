@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.configurationStore.Property;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -27,13 +15,16 @@ import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
@@ -229,6 +220,7 @@ public class CommonCodeStyleSettings {
   }
 
 //----------------- GENERAL --------------------
+  @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = -1;
 
   public boolean LINE_COMMENT_AT_FIRST_COLUMN = true;
@@ -269,6 +261,7 @@ public class CommonCodeStyleSettings {
    */
   public int KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
 
+  @Property(externalName = "keep_blank_lines_before_right_brace")
   public int KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
 
   public int BLANK_LINES_BEFORE_PACKAGE = 0;
@@ -338,8 +331,10 @@ public class CommonCodeStyleSettings {
   public static final int NEXT_LINE_IF_WRAPPED = 5;
 
   @MagicConstant(intValues = {END_OF_LINE, NEXT_LINE, NEXT_LINE_SHIFTED, NEXT_LINE_SHIFTED2, NEXT_LINE_IF_WRAPPED})
+  @Retention(RetentionPolicy.RUNTIME)
   public @interface BraceStyleConstant {}
 
+  @Property(externalName = "block_brace_style")
   @BraceStyleConstant public int BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int CLASS_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
@@ -391,7 +386,8 @@ public class CommonCodeStyleSettings {
   public boolean FINALLY_ON_NEW_LINE = false;
 
   public boolean INDENT_CASE_FROM_SWITCH = true;
-  
+
+  @Property(externalName = "case_statement_on_separate_line")
   public boolean CASE_STATEMENT_ON_NEW_LINE = true;
 
   /**
@@ -433,6 +429,7 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_THROWS_KEYWORD = false;
 
   public boolean ALIGN_MULTILINE_EXTENDS_LIST = false;
+  @Property(externalName = "align_multiline_method_parentheses")
   public boolean ALIGN_MULTILINE_METHOD_BRACKETS = false;
   public boolean ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
   public boolean ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false;
@@ -446,6 +443,7 @@ public class CommonCodeStyleSettings {
    */
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
   public boolean ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = false;
+  public boolean ALIGN_CONSECUTIVE_ASSIGNMENTS = false;
   public boolean ALIGN_SUBSEQUENT_SIMPLE_METHODS = false;
 
 //----------------- SPACES --------------------
@@ -498,7 +496,14 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_AFTER_COMMA = true;
   public boolean SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
   public boolean SPACE_BEFORE_COMMA = false;
+
+  @Property(
+    externalName = "space_after_for_semicolon"
+  )
   public boolean SPACE_AFTER_SEMICOLON = true; // in for-statement
+  @Property(
+    externalName = "space_before_for_semicolon"
+  )
   public boolean SPACE_BEFORE_SEMICOLON = false; // in for-statement
 
   /**
@@ -520,6 +525,7 @@ public class CommonCodeStyleSettings {
    * or
    * "f()"
    */
+  @Property(externalName = "space_within_empty_method_call_parentheses")
   public boolean SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
 
   /**
@@ -534,6 +540,7 @@ public class CommonCodeStyleSettings {
    * or
    * "void f()"
    */
+  @Property(externalName = "space_within_empty_method_parentheses")
   public boolean SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
 
   /**
@@ -618,6 +625,7 @@ public class CommonCodeStyleSettings {
    * or
    * "int X[] {}"
    */
+  @Property(externalName = "space_within_empty_array_initializer_braces")
   public boolean SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
@@ -690,6 +698,7 @@ public class CommonCodeStyleSettings {
    * or
    * "class A{"
    */
+  @Property(externalName = "space_before_class_left_brace")
   public boolean SPACE_BEFORE_CLASS_LBRACE = true;
 
   /**
@@ -697,6 +706,7 @@ public class CommonCodeStyleSettings {
    * or
    * "void f(){"
    */
+  @Property(externalName = "space_before_method_left_brace")
   public boolean SPACE_BEFORE_METHOD_LBRACE = true;
 
   /**
@@ -704,6 +714,7 @@ public class CommonCodeStyleSettings {
    * or
    * "if (...){"
    */
+  @Property(externalName = "space_before_if_left_brace")
   public boolean SPACE_BEFORE_IF_LBRACE = true;
 
   /**
@@ -711,6 +722,7 @@ public class CommonCodeStyleSettings {
    * or
    * "else{"
    */
+  @Property(externalName = "space_before_else_left_brace")
   public boolean SPACE_BEFORE_ELSE_LBRACE = true;
 
   /**
@@ -718,6 +730,7 @@ public class CommonCodeStyleSettings {
    * or
    * "while (...){"
    */
+  @Property(externalName = "space_before_while_left_brace")
   public boolean SPACE_BEFORE_WHILE_LBRACE = true;
 
   /**
@@ -725,6 +738,7 @@ public class CommonCodeStyleSettings {
    * or
    * "for (...){"
    */
+  @Property(externalName = "space_before_for_left_brace")
   public boolean SPACE_BEFORE_FOR_LBRACE = true;
 
   /**
@@ -732,6 +746,7 @@ public class CommonCodeStyleSettings {
    * or
    * "do{"
    */
+  @Property(externalName = "space_before_do_left_brace")
   public boolean SPACE_BEFORE_DO_LBRACE = true;
 
   /**
@@ -739,6 +754,7 @@ public class CommonCodeStyleSettings {
    * or
    * "switch (...){"
    */
+  @Property(externalName = "space_before_switch_left_brace")
   public boolean SPACE_BEFORE_SWITCH_LBRACE = true;
 
   /**
@@ -746,6 +762,7 @@ public class CommonCodeStyleSettings {
    * or
    * "try{"
    */
+  @Property(externalName = "space_before_try_left_brace")
   public boolean SPACE_BEFORE_TRY_LBRACE = true;
 
   /**
@@ -753,6 +770,7 @@ public class CommonCodeStyleSettings {
    * or
    * "catch (...){"
    */
+  @Property(externalName = "space_before_catch_left_brace")
   public boolean SPACE_BEFORE_CATCH_LBRACE = true;
 
   /**
@@ -760,6 +778,7 @@ public class CommonCodeStyleSettings {
    * or
    * "finally{"
    */
+  @Property(externalName = "space_before_finally_left_brace")
   public boolean SPACE_BEFORE_FINALLY_LBRACE = true;
 
   /**
@@ -767,6 +786,7 @@ public class CommonCodeStyleSettings {
    * or
    * "synchronized (...){"
    */
+  @Property(externalName = "space_before_synchronized_left_brace")
   public boolean SPACE_BEFORE_SYNCHRONIZED_LBRACE = true;
 
   /**
@@ -774,6 +794,7 @@ public class CommonCodeStyleSettings {
    * or
    * "new int[]{"
    */
+  @Property(externalName = "space_before_array_initializer_left_brace")
   public boolean SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
 
   /**
@@ -781,6 +802,7 @@ public class CommonCodeStyleSettings {
    * or
    * '@SuppressWarnings( {"unchecked"})
    */
+  @Property(externalName = "space_before_annotation_array_initializer_left_brace")
   public boolean SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = false;
 
   public boolean SPACE_BEFORE_ELSE_KEYWORD = true;
@@ -796,42 +818,66 @@ public class CommonCodeStyleSettings {
 
   //----------------- WRAPPING ---------------------------
 
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.FIELD)
+  public @interface WrapConstant {
+  }
+
   public static final int DO_NOT_WRAP = 0x00;
   public static final int WRAP_AS_NEEDED = 0x01;
   public static final int WRAP_ALWAYS = 0x02;
   public static final int WRAP_ON_EVERY_ITEM = 0x04;
 
+  @WrapConstant
   public int CALL_PARAMETERS_WRAP = DO_NOT_WRAP;
   public boolean PREFER_PARAMETERS_WRAP = false;
+  @Property(externalName = "call_parameters_new_line_after_left_paren")
   public boolean CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false; // misnamed, actually means: wrap AFTER lparen
+  @Property(externalName = "call_parameters_right_paren_on_new_line")
   public boolean CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int METHOD_PARAMETERS_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "method_parameters_new_line_after_left_paren")
   public boolean METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+  @Property(externalName = "method_parameters_right_paren_on_new_line")
   public boolean METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int RESOURCE_LIST_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "resource_list_new_line_after_left_paren")
   public boolean RESOURCE_LIST_LPAREN_ON_NEXT_LINE = false;
+  @Property(externalName = "resource_list_right_paren_on_new_line")
   public boolean RESOURCE_LIST_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int EXTENDS_LIST_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int THROWS_LIST_WRAP = DO_NOT_WRAP;
 
+  @WrapConstant
   public int EXTENDS_KEYWORD_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int THROWS_KEYWORD_WRAP = DO_NOT_WRAP;
 
+  @WrapConstant
   public int METHOD_CALL_CHAIN_WRAP = DO_NOT_WRAP;
   public boolean WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
 
+  @Property(externalName = "parentheses_expression_new_line_after_left_paren")
   public boolean PARENTHESES_EXPRESSION_LPAREN_WRAP = false;
+  @Property(externalName = "parentheses_expression_right_paren_on_new_line")
   public boolean PARENTHESES_EXPRESSION_RPAREN_WRAP = false;
 
+  @WrapConstant
   public int BINARY_OPERATION_WRAP = DO_NOT_WRAP;
   public boolean BINARY_OPERATION_SIGN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int TERNARY_OPERATION_WRAP = DO_NOT_WRAP;
   public boolean TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public boolean MODIFIER_LIST_WRAP = false;
 
   public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
@@ -840,14 +886,21 @@ public class CommonCodeStyleSettings {
   public boolean KEEP_SIMPLE_CLASSES_IN_ONE_LINE = false;
   public boolean KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
 
+  @WrapConstant
   public int FOR_STATEMENT_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "for_statement_new_line_after_left_paren")
   public boolean FOR_STATEMENT_LPAREN_ON_NEXT_LINE = false;
+  @Property(externalName = "for_statement_right_paren_on_new_line")
   public boolean FOR_STATEMENT_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int ARRAY_INITIALIZER_WRAP = DO_NOT_WRAP;
+  @Property(externalName = "array_initializer_new_line_after_left_brace")
   public boolean ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = false;
+  @Property(externalName = "array_initializer_right_brace_on_new_line")
   public boolean ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
   public boolean PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
 
@@ -856,6 +909,7 @@ public class CommonCodeStyleSettings {
 
   public boolean WRAP_COMMENTS = false;
 
+  @WrapConstant
   public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
   public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
 
@@ -869,6 +923,7 @@ public class CommonCodeStyleSettings {
   }
 
   @ForceBraceConstant public int IF_BRACE_FORCE = DO_NOT_FORCE;
+  @Property(externalName = "do_while_brace_force")
   @ForceBraceConstant public int DOWHILE_BRACE_FORCE = DO_NOT_FORCE;
   @ForceBraceConstant public int WHILE_BRACE_FORCE = DO_NOT_FORCE;
   @ForceBraceConstant public int FOR_BRACE_FORCE = DO_NOT_FORCE;
@@ -877,12 +932,18 @@ public class CommonCodeStyleSettings {
 
   //-------------- Annotation formatting settings-------------------------------------------
 
+  @WrapConstant
   public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
 
+  @Property(externalName = "space_before_annotation_parameter_list")
   public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
   public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
 
@@ -890,6 +951,7 @@ public class CommonCodeStyleSettings {
 
 
   //-------------------------Enums----------------------------------------------------------
+  @WrapConstant
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
 
   //-------------------------Force rearrange settings---------------------------------------
@@ -923,6 +985,7 @@ public class CommonCodeStyleSettings {
 
     public int INDENT_SIZE = DEFAULT_INDENT_SIZE;
     public int CONTINUATION_INDENT_SIZE = DEFAULT_CONTINUATION_INDENT_SIZE;
+    @Property(externalName = "tab_width")
     public int TAB_SIZE = DEFAULT_TAB_SIZE;
     public boolean USE_TAB_CHARACTER = false;
     public boolean SMART_TABS = false;
@@ -953,8 +1016,8 @@ public class CommonCodeStyleSettings {
       serialize(element, DEFAULT_INDENT_OPTIONS);
     }
 
-    public void serialize(Element indentOptionsElement, final IndentOptions defaultOptions) {
-      XmlSerializer.serializeInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
+    public void serialize(@NotNull Element indentOptionsElement, @Nullable IndentOptions defaultOptions) {
+      XmlSerializer.serializeObjectInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
         @Override
         protected void configure(@NotNull Object o) {
           if (o instanceof IndentOptions && defaultOptions != null) {
@@ -965,7 +1028,7 @@ public class CommonCodeStyleSettings {
     }
 
     public void deserialize(Element indentOptionsElement) {
-      XmlSerializer.deserializeInto(this, indentOptionsElement);
+      XmlSerializer.deserializeInto(indentOptionsElement, this);
     }
 
     @Override
@@ -1042,7 +1105,7 @@ public class CommonCodeStyleSettings {
 
     /**
      * @return True if the options can override the ones defined in language settings.
-     * @see CommonCodeStyleSettings.IndentOptions#setOverrideLanguageOptions(boolean) 
+     * @see CommonCodeStyleSettings.IndentOptions#setOverrideLanguageOptions(boolean)
      */
     public boolean isOverrideLanguageOptions() {
       return myOverrideLanguageOptions;
@@ -1051,7 +1114,7 @@ public class CommonCodeStyleSettings {
     /**
      * Make the indent options override options defined for a language block if the block implements {@code BlockEx.getLanguage()}
      * Useful when indent options provider must take a priority over any language settings for a formatter block.
-     * 
+     *
      * @param overrideLanguageOptions True if language block options should be ignored.
      * @see FileIndentOptionsProvider
      */

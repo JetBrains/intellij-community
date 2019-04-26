@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
@@ -31,13 +31,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.filter;
 
 /**
- * @author traff
  * <p>
- * All inhertors must be in {@link com.jetbrains.env}.*
+ * All inheritors must be in {@link com.jetbrains.env}.*
  * <p>
  * See "community/python/setup-test-environment/build.gradle"
+ *
+ * @author traff
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
@@ -97,17 +99,18 @@ public abstract class PyEnvTestCase {
 
   protected boolean isStaging(Description description) {
     try {
-      if (description.getTestClass().isAnnotationPresent(Staging.class)) {
+      Class<?> aClass = description.getTestClass();
+      if (aClass.isAnnotationPresent(Staging.class)) {
         return true;
       }
-      if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
+      if (aClass.getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
         return true;
       }
       else {
-        for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
-          if (so.os().isThisOs()) {
-            return true;
-          }
+        final StagingOn[] methodAnnotations = aClass.getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class);
+        final StagingOn[] classAnnotations = aClass.getAnnotationsByType(StagingOn.class);
+        if (Arrays.stream(ArrayUtil.mergeArrays(methodAnnotations, classAnnotations)).map(StagingOn::os).anyMatch(TestEnv::isThisOs)) {
+          return true;
         }
         return false;
       }
@@ -202,7 +205,7 @@ public abstract class PyEnvTestCase {
 
     List<String> roots = getPythonRoots();
 
-    /**
+    /*
      * <p>
      * {@link org.junit.AssumptionViolatedException} here means this test must be <strong>skipped</strong>.
      * TeamCity supports this (if not you should create and issue about that).

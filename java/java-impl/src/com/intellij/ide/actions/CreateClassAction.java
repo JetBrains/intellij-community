@@ -23,8 +23,6 @@ import java.util.Map;
 
 /**
  * The standard "New Class" action.
- *
- * @since 5.1
  */
 public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> implements DumbAware {
   public CreateClassAction() {

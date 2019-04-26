@@ -33,11 +33,13 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
@@ -45,10 +47,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
  * @author ilyas
  */
 public class GroovyParserDefinition implements ParserDefinition {
-  public static final IStubFileElementType GROOVY_FILE = GroovyElementTypes.GROOVY_FILE;
-  private static final IElementType[] STRINGS = new IElementType[]{
-    GSTRING, REGEX, GSTRING_INJECTION, GroovyTokenTypes.mREGEX_LITERAL, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL
-  };
+  public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
 
   @Override
   @NotNull
@@ -103,7 +102,7 @@ public class GroovyParserDefinition implements ParserDefinition {
     if (rType == GroovyTokenTypes.kIMPORT && lType != TokenType.WHITE_SPACE) {
       return SpaceRequirements.MUST_LINE_BREAK;
     }
-    else if (lType == MODIFIERS && rType == MODIFIERS) {
+    else if (lType == MODIFIER_LIST && rType == MODIFIER_LIST) {
       return SpaceRequirements.MUST;
     }
     if (lType == GroovyTokenTypes.mSEMI) {
@@ -119,7 +118,8 @@ public class GroovyParserDefinition implements ParserDefinition {
     if (rType == GroovyTokenTypes.mLT) return SpaceRequirements.MUST;
 
     final ASTNode parent = TreeUtil.findCommonParent(left, right);
-    if (parent == null || ArrayUtil.contains(parent.getElementType(), STRINGS)) {
+    if (parent == null || ArrayUtil.contains(parent.getElementType(), GSTRING, REGEX, GSTRING_INJECTION,
+                                             GroovyTokenTypes.mREGEX_LITERAL, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL)) {
       return SpaceRequirements.MUST_NOT;
     }
 

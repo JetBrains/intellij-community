@@ -14,7 +14,7 @@ import java.io.*;
  */
 public class IOUtilTest extends TestCase {
 
-  private static interface IO {
+  private interface IO {
     void save(String str, DataOutput out) throws IOException;
     String load(DataInput in) throws IOException;
   }

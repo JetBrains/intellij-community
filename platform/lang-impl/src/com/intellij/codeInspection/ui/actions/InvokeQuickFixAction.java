@@ -66,6 +66,6 @@ public class InvokeQuickFixAction extends AnAction {
   }
 
   static boolean cantApplyFixes(InspectionResultsView view) {
-    return view.isUpdating() && !view.getTree().areDescriptorNodesSelected();
+    return !view.getTree().areDescriptorNodesSelected();
   }
 }

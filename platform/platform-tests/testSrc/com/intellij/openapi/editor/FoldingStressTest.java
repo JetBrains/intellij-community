@@ -88,11 +88,9 @@ public class FoldingStressTest extends LightPlatformTestCase {
     try {
     FoldingModelEx model = (FoldingModelEx)editor.getFoldingModel();
     PlatformTestUtil.startPerformanceTest("restoring many fold regions", 1500, () -> model.runBatchFoldingOperation(() -> {
-      long t = System.nanoTime();
       for (int i = 0; i < N; i++) {
         addAndCollapseFoldRegion(model, i, i+1, "/*...*/");
       }
-      System.out.println((System.nanoTime() - t) / 1000000); // temporary code to investigate test blinking
     }))
       .setup(()-> model.runBatchFoldingOperation(model::clearFoldRegions))
       .assertTiming();

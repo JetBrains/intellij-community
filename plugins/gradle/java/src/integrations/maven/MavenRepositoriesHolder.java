@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -16,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -24,6 +26,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,7 +55,7 @@ public class MavenRepositoriesHolder {
         UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
     }
     else {
-      myNotIndexedUrls = ContainerUtil.newHashSet(repositories);
+      myNotIndexedUrls = new HashSet<>(repositories);
     }
   }
 
@@ -67,7 +70,7 @@ public class MavenRepositoriesHolder {
     if (notificationManager.isNotificationActive(NOTIFICATION_KEY)) return;
 
     final MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();
-    for (MavenIndex index : indicesManager.getIndices()) {
+    for (MavenSearchIndex index : indicesManager.getIndices()) {
       if (indicesManager.getUpdatingState(index) != IDLE) return;
     }
 
@@ -85,7 +88,7 @@ public class MavenRepositoriesHolder {
           ContainerUtil.filter(indicesManager.getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
         indicesManager.scheduleUpdate(myProject, notIndexed).onSuccess(aVoid -> {
           if (myNotIndexedUrls.isEmpty()) return;
-          for (MavenIndex index : notIndexed) {
+          for (MavenSearchIndex index : notIndexed) {
             if (index.getUpdateTimestamp() != -1 || index.getFailureMessage() != null) {
               myNotIndexedUrls.remove(index.getRepositoryPathOrUrl());
             }
@@ -119,12 +122,12 @@ public class MavenRepositoriesHolder {
     notificationManager.showNotification(GradleConstants.SYSTEM_ID, notificationData, NOTIFICATION_KEY);
   }
 
-  public static MavenRepositoriesHolder getInstance(Project p) {
-    return p.getComponent(MavenRepositoriesHolder.class);
+  public static MavenRepositoriesHolder getInstance(@NotNull Project p) {
+    return ServiceManager.getService(p, MavenRepositoriesHolder.class);
   }
 
   public void update(Set<MavenRemoteRepository> remoteRepositories) {
-    myRemoteRepositories = ContainerUtil.newHashSet(remoteRepositories);
+    myRemoteRepositories = new HashSet<>(remoteRepositories);
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {

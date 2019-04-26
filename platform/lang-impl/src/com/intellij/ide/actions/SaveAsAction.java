@@ -1,9 +1,7 @@
 package com.intellij.ide.actions;
 
-import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,19 +14,18 @@ public class SaveAsAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    e.getPresentation().setEnabled(project!=null && virtualFile!=null);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    e.getPresentation().setEnabled(project != null && virtualFile != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    @SuppressWarnings({"ConstantConditions"}) final PsiElement element = PsiManager.getInstance(project).findFile(virtualFile);
-    if(element==null) return;
-    CopyHandler.doCopy(new PsiElement[] {element.getContainingFile()}, PlatformPackageUtil.getDirectory(element));
+    Project project = e.getProject();
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (project == null || virtualFile == null) return;
+    PsiElement element = PsiManager.getInstance(project).findFile(virtualFile);
+    if (element == null) return;
+    CopyHandler.doCopy(new PsiElement[]{element.getContainingFile()}, null);
   }
 }

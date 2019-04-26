@@ -107,6 +107,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return true;
   }
 
+  public void updatePreview(boolean state, boolean fromModelRefresh) {
+    if (state) {
+      refresh(fromModelRefresh);
+    }
+    else {
+      clear();
+    }
+  }
+
   //
   // Impl
   //
@@ -224,11 +233,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   private class ChangesNavigatable implements PrevNextDifferenceIterable {
-    @NotNull private final List<Wrapper> myChanges;
+    @NotNull private final List<? extends Wrapper> myChanges;
     @NotNull private final Wrapper myFallback;
     private final boolean myUpdateSelection;
 
-    ChangesNavigatable(@NotNull List<Wrapper> allChanges, @NotNull Wrapper fallback, boolean updateSelection) {
+    ChangesNavigatable(@NotNull List<? extends Wrapper> allChanges, @NotNull Wrapper fallback, boolean updateSelection) {
       myChanges = allChanges;
       myFallback = fallback;
       myUpdateSelection = updateSelection;

@@ -53,13 +53,15 @@ public class ToolRunProfile implements ModuleRunProfile{
 
   public static String expandMacrosInName(Tool tool, DataContext context) {
     String name = tool.getName();
-    try {
-      return MacroManager.getInstance().expandMacrosInString(name, true, context);
+    if (name != null && name.contains("$")) {
+      try {
+        return MacroManager.getInstance().expandMacrosInString(name, true, context);
+      }
+      catch (Macro.ExecutionCancelledException e) {
+        LOG.info(e);
+      }
     }
-    catch (Macro.ExecutionCancelledException e) {
-      LOG.info(e);
-      return name;
-    }
+    return name;
   }
 
   @Override

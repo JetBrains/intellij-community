@@ -18,11 +18,11 @@ package com.intellij.java.codeInsight.editorActions
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.testFramework.TestFileType
-
+import groovy.transform.CompileStatic
 /**
  * @author Denis Zhdanov
- * @since 7/14/11 2:15 PM 
  */
+@CompileStatic
 class SelectionQuotingTest extends AbstractEditorTest {
 
   void testBuggySelection() {
@@ -43,7 +43,7 @@ var c = "test test test";\
     doTest(initial, expected, action, TestFileType.JS)
   }
 
-  void doTest(initial, expected, action, fileType = TestFileType.JAVA) {
+  void doTest(String initial, String expected, Closure action, TestFileType fileType = TestFileType.JAVA) {
     configureFromFileText("${getTestName(false)}.$fileType.extension", initial)
     def settings = CodeInsightSettings.getInstance()
     def old = settings.SURROUND_SELECTION_ON_QUOTE_TYPED

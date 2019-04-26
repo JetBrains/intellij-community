@@ -192,9 +192,21 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       return null;
     }
 
-    JLabel mnemonicLabel = new JLabel();
+    JLabel mnemonicLabel = new JLabel() {
+      @Override
+      public void setFont(Font font) {
+        super.setFont(font);
+        String oldText = getText();
+        try {
+          setPreferredSize(null);
+          setText("W.");
+          setPreferredSize(getPreferredSize());
+        } finally {
+          setText(oldText);
+        }
+      }
+    };
     mnemonicLabel.setFont(Bookmark.getBookmarkFont());
-    mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
     mnemonicLabel.setOpaque(false);
     return mnemonicLabel;
   }

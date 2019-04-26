@@ -334,6 +334,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myRefresher.refresh(roots);
   }
 
+  @NotNull
   public CommitDetailsGetter getCommitDetailsGetter() {
     return myDetailsGetter;
   }

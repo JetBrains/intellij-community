@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.codeInsight
 
@@ -14,10 +14,12 @@ import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -31,21 +33,40 @@ import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.XCollection
+import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.util.PsiUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInsight")
+@CompileStatic
 class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   private TempDirTestFixture myTempDirFixture
+  private PluginXmlDomInspection myInspection
 
   @Override
   protected void setUp() throws Exception {
     super.setUp()
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
-    myFixture.enableInspections(new PluginXmlDomInspection())
+    myTempDirFixture.setUp()
+    myInspection = new PluginXmlDomInspection()
+    myFixture.enableInspections(myInspection)
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      myTempDirFixture.tearDown()
+    }
+    catch (Throwable e) {
+      addSuppressedException(e)
+    }
+    finally {
+      myTempDirFixture = null
+      super.tearDown()
+    }
   }
 
   @Override
@@ -67,6 +88,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("core-api", coreApiJar)
     String editorUIApi = PathUtil.getJarPathForClass(AnAction.class)
     moduleBuilder.addLibrary("editor-ui-api", editorUIApi)
+    String coreImpl = PathUtil.getJarPathForClass(ServiceDescriptor.class)
+    moduleBuilder.addLibrary("coreImpl", coreImpl)
   }
 
   void testExtensionsHighlighting() {
@@ -75,6 +98,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
         <id>com.intellij</id>
         <extensionPoints>
             <extensionPoint name="completion.contributor"/>
+            <extensionPoint name="myService" beanClass="foo.MyServiceDescriptor"/>
         </extensionPoints>
     """)
     addPluginXml("indirect", """
@@ -93,6 +117,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
+    myFixture.addClass("package foo;\n" +
+                       "import com.intellij.util.xmlb.annotations.Attribute;\n" +
+                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
 
     configureByFile()
     myFixture.checkHighlighting(true, false, false)
@@ -157,6 +184,24 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testInnerClassCompletion() {
+    myFixture.addClass("package foo; public class Foo { public static class Fubar {} }")
+    myFixture.configureByFile(getTestName(false) + ".xml")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResultByFile(getTestName(false) + "_after.xml")
+  }
+
+  void testInnerClassCompletionInService() {
+    addPluginXml("idea_core", """
+        <id>com.intellij</id>
+        <extensionPoints>
+            <extensionPoint name="completion.contributor"/>
+            <extensionPoint name="myService" beanClass="foo.MyServiceDescriptor"/>
+        </extensionPoints>
+    """)
+    myFixture.addClass("package foo;\n" +
+                       "import com.intellij.util.xmlb.annotations.Attribute;\n" +
+                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
     myFixture.addClass("package foo; public class Foo { public static class Fubar {} }")
     myFixture.configureByFile(getTestName(false) + ".xml")
     myFixture.completeBasic()
@@ -251,6 +296,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   void testExtensionWithInnerTags() {
     doHighlightingTest("extensionWithInnerTags.xml", "ExtBeanWithInnerTags.java")
+  }
+
+  void testExtensionBeanWithDefaultValuesInAnnotations() {
+    doHighlightingTest("extensionWithDefaultValuesInAnnotations.xml", "ExtBeanWithDefaultValuesInAnnotations.java")
   }
 
   void testLanguageAttributeHighlighting() {
@@ -354,6 +403,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     testHighlightingInIdeaProject("pluginWithJetBrainsAndMeAsVendor.xml")
   }
 
+  void testPluginXmlInIdeaProjectWithAndroidId() {
+    testHighlightingInIdeaProject("pluginWithAndroidIdVendor.xml")
+  }
+
   void testSpecifyJetBrainsAsVendorQuickFix() {
     PsiUtil.markAsIdeaProject(project, true)
     try {
@@ -450,12 +503,12 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE))
   }
 
-  void testLoadForDefaultProject() throws Exception {
+  void testLoadForDefaultProject() {
     configureByFile()
     myFixture.testHighlighting(true, true, true)
   }
 
-  void testSkipForDefaultProject() throws Exception {
+  void testSkipForDefaultProject() {
     configureByFile()
     myFixture.testHighlighting(true, true, true)
   }
@@ -470,9 +523,15 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   void testActionHighlighting() {
     configureByFile()
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
+    myFixture.addClass("""package foo; class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
+                                        PackagePrivateActionBase() {}
+                                    } """)
+    myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase { }")
     myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
-    myFixture.addClass("package foo.bar; public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
-                       "  public boolean canBePerformed(com.intellij.openapi.actionSystem.DataContext context) {" +
+    myFixture.addClass("package foo.bar; import org.jetbrains.annotations.NotNull;" +
+                       "public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
+                       "    @Override " +
+                       "    public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) {" +
                        "    return true;" +
                        "  }" +
                        "}")
@@ -488,31 +547,59 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testRegistrationCheck() {
+    configureLanguageAttributeTest()
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
+    ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(AnAction.class))))
+    Module additionalModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "additionalModule",
+                                                 myTempDirFixture.findOrCreateDir("../additionalModuleDir"))
+    ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(LanguageExtensionPoint.class))))
     ModuleRootModificationUtil.addDependency(myModule, anotherModule)
+    ModuleRootModificationUtil.addDependency(myModule, additionalModule)
+    def moduleSet = new PluginXmlDomInspection.PluginModuleSet()
+    moduleSet.modules.add(myModule.name)
+    moduleSet.modules.add(additionalModule.name)
+    myInspection.PLUGINS_MODULES.add(moduleSet)
 
     def dependencyModuleClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClass.java",
                                                             "../anotherModuleDir/DependencyModuleClass.java")
+    def dependencyModuleLanguageExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtension.java",
+                                                            "../anotherModuleDir/MyLanguageExtension.java")
+    def dependencyModuleLanguageExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtensionPoint.java",
+                                                            "../anotherModuleDir/MyLanguageExtensionPoint.java")
+    def dependencyModuleFileTypeExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtension.java",
+                                                            "../anotherModuleDir/MyFileTypeExtension.java")
+    def dependencyModuleFileTypeExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtensionPoint.java",
+                                                            "../anotherModuleDir/MyFileTypeExtensionPoint.java")
+    def dependencyModuleActionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleAction.java",
+                                                            "../anotherModuleDir/DependencyModuleAction.java")
     def dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
                                                                   "../anotherModuleDir/DependencyModuleClassWithEpName.java")
     def dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
                                                              "../anotherModuleDir/META-INF/DependencyModulePlugin.xml")
+    def additionalModuleClass = myFixture.copyFileToProject("registrationCheck/additionalModule/AdditionalModuleClass.java",
+                                                                "../additionalModuleDir/AdditionalModuleClass.java")
     def mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
                                                       "MainModuleClass.java")
     def mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
                                                        "META-INF/MainModulePlugin.xml")
 
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionPointClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionPointClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleActionClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
+    myFixture.configureFromExistingVirtualFile(additionalModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModulePlugin)
 
     myFixture.testHighlighting(true, false, false, dependencyModulePlugin)
     myFixture.testHighlighting(true, false, false, mainModulePlugin)
     def highlightInfos = myFixture.doHighlighting(HighlightSeverity.WARNING)
-    assertSize(2, highlightInfos)
+    assertSize(5, highlightInfos)
 
     for (info in highlightInfos) {
       def ranges = info.quickFixActionRanges
@@ -551,7 +638,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testProductDescriptor() {
-    doHighlightingTest("productDescriptorInvalid.xml")
+    doHighlightingTest("productDescriptor.xml")
   }
 
   void testProductDescriptorInvalid() {
@@ -565,5 +652,13 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testPluginIconNotFound() {
     myFixture.testHighlighting(true, true, true, "pluginIconNotFound.xml")
+  }
+
+  void testRedundantComponentInterfaceClass() {
+    doHighlightingTest("redundantComponentInterfaceClass.xml")
+  }
+
+  void testRedundantServiceInterfaceClass() {
+    doHighlightingTest("redundantServiceInterfaceClass.xml")
   }
 }

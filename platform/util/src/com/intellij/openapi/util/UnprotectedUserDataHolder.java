@@ -15,10 +15,10 @@ public class UnprotectedUserDataHolder implements UserDataHolder, UserDataHolder
 
   private Map<Key, Object> myUserData;
 
-  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
+    //noinspection unchecked
     T value = myUserData != null ? (T)myUserData.get(key) : null;
     if (value == null && key instanceof KeyWithDefaultValue) {
       value = ((KeyWithDefaultValue<T>)key).getDefaultValue();

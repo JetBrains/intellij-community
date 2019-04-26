@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.URI;
 
@@ -162,13 +161,4 @@ public final class OutputFileObject extends JpsFileObject {
     myContent = new BinaryContent(updatedContent, 0, updatedContent.length);
   }
 
-  @Override
-  public int hashCode() {
-    return toUri().hashCode();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof JavaFileObject && toUri().equals(((JavaFileObject)obj).toUri());
-  }
 }

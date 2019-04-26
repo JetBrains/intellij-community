@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.util
 
+import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.junit.Before
@@ -50,5 +51,13 @@ class GradleUtilTest: UsefulTestCase() {
   fun `test project without settings is found from a file`() {
     val projectFile = File(rootDir, "build.gradle").apply { writeText("// empty project file") }
     assertEquals(rootDir.absolutePath, GradleUtil.determineRootProject(projectFile.absolutePath))
+  }
+
+  @Test
+  fun `test file chooser descriptor accepts kotlin scripts`() {
+    val chooserDescriptor = GradleUtil.getGradleProjectFileChooserDescriptor()
+
+    assertTrue("gradle groovy script should be selectable", chooserDescriptor.isFileSelectable(MockVirtualFile("build.gradle")))
+    assertTrue("gradle kotlin script should be selectable", chooserDescriptor.isFileSelectable(MockVirtualFile("build.gradle.kts")))
   }
 }

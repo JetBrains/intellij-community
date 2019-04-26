@@ -65,6 +65,45 @@ class DataNodeTest {
       .contains("foo.Baz")
   }
 
+  @Test
+  fun `ProjectSystemIds are re-used after deserialization`() {
+    val id = ProjectSystemId("MyTest")
+    val dataNodes = listOf(DataNode(Key.create(ProjectSystemId::class.java, 0), id, null),
+                           DataNode(Key.create(ProjectSystemId::class.java, 0), id, null))
+
+    val bos = ByteArrayOutputStream()
+    ObjectOutputStream(bos).use { it.writeObject(dataNodes) }
+    val bytes = bos.toByteArray()
+    val deserializedList = ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() } as List<DataNode<ProjectSystemId>>
+
+    assertThat(deserializedList).hasSize(2)
+    assertThat(deserializedList[0].data === deserializedList[1].data)
+      .`as`("project system ID instances should be re-used")
+      .isTrue()
+  }
+
+  @Test
+  fun `proxy instance referenced from invocation handler (de-)serialized`() {
+    val handler = object: InvocationHandler, Serializable {
+      var counter: Int = 0
+      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
+        return when (method?.name) {
+          "incrementAndGet" -> ++counter
+          else -> Unit
+        }
+      }
+
+      var ref: Counter? = null
+    }
+
+    val proxy = Proxy.newProxyInstance(javaClass.classLoader, arrayOf(Counter::class.java, Serializable::class.java), handler) as Counter
+    handler.ref = proxy
+    assertThat(proxy.incrementAndGet()).isEqualTo(1)
+
+    val dataNode = wrapAndDeserialize(Any::class.java, proxy)
+    val counter = dataNode.data as Counter
+    assertThat(counter.incrementAndGet()).isEqualTo(2)
+  }
 
   private fun wrapAndDeserialize(clz: Class<Any>,
                                  barObject: Any): DataNode<Any> {
@@ -74,6 +113,10 @@ class DataNodeTest {
     val bytes = bos.toByteArray()
     return ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() } as DataNode<Any>
   }
+}
+
+interface Counter {
+  fun incrementAndGet(): Int
 }
 
 

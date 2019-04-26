@@ -26,6 +26,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
   static final JBValue MINIMUM_HEIGHT = new JBValue.Float(21);
   static final JBValue BW = new JBValue.Float(3);
   static final JBValue ARC = new JBValue.Float(6);
+
   static float LW(Graphics2D g2) {
     return JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
   }
@@ -54,7 +55,8 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
       float arc = ARC.getFloat();
@@ -68,7 +70,8 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
 
       Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       path.append(outerShape, false);
-      path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc - lw, arc - lw), false);
+      path.append(new RoundRectangle2D.Float(
+        bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw), false);
 
       g2.setColor(OUTLINE_COLOR);
       g2.fill(path);
@@ -77,7 +80,8 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
         Object op = c.getClientProperty("JComponent.outline");
         if (op != null) {
           paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.valueOf(op.toString()));
-        } else {
+        }
+        else {
           DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
         }
       }

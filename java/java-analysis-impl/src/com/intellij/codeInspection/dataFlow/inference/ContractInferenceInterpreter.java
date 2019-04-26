@@ -42,7 +42,7 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
-  private List<LighterASTNode> getParameters() {
+  List<LighterASTNode> getParameters() {
     LighterASTNode paramList = firstChildOfType(myTree, myMethod, PARAMETER_LIST);
     return paramList != null ? getChildrenOfType(myTree, paramList, PARAMETER) : emptyList();
   }

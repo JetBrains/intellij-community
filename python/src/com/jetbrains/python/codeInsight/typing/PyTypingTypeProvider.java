@@ -94,6 +94,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
   private static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]+) *(#.*)?");
+  public static final String IGNORE = "ignore";
 
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")
@@ -650,22 +651,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subscriptionExpr = e.getValue();
       final PyClass superClass = e.getKey();
       final Map<PyType, PyType> superSubstitutions =
-        doPreventingRecursion(RECURSION_KEY, false, () -> getGenericSubstitutions(superClass, context));
+        doPreventingRecursion(superClass, false, () -> getGenericSubstitutions(superClass, context));
       if (superSubstitutions != null) {
         results.putAll(superSubstitutions);
       }
-      if (superClass != null) {
-        final Context ctx = new Context(context);
-        final List<PyType> superGenerics = collectGenericTypes(superClass, ctx);
-        final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
-        for (int i = 0; i < superGenerics.size(); i++) {
-          final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
-          final PyType superGeneric = superGenerics.get(i);
-          final Ref<PyType> typeRef = expr != null ? getType(expr, ctx) : null;
-          final PyType actualType = typeRef != null ? typeRef.get() : null;
-          if (!superGeneric.equals(actualType)) {
-            results.put(superGeneric, actualType);
-          }
+      final Context ctx = new Context(context);
+      final List<PyType> superGenerics = collectGenericTypes(superClass, ctx);
+      final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
+      for (int i = 0; i < superGenerics.size(); i++) {
+        final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
+        final PyType superGeneric = superGenerics.get(i);
+        final Ref<PyType> typeRef = expr != null ? getType(expr, ctx) : null;
+        final PyType actualType = typeRef != null ? typeRef.get() : null;
+        if (!superGeneric.equals(actualType)) {
+          results.put(superGeneric, actualType);
         }
       }
     }
@@ -827,6 +826,15 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (anyType != null) {
         return anyType;
       }
+      // We perform chained resolve only for actual aliases as tryResolvingWithAliases() returns the passed-in 
+      // expression both when it's not a reference expression and when it's failed to resolve it, hence we might
+      // hit SOE for mere unresolved references in the latter case.
+      if (alias != null) {
+        final Ref<PyType> aliasedType = getAliasedType(resolved, context);
+        if (aliasedType != null) {
+          return aliasedType;
+        }
+      }
       final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
       if (classType != null) {
         return classType;
@@ -838,6 +846,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         context.getExpressionCache().remove(alias);
       }
     }
+  }
+
+  @Nullable
+  private static Ref<PyType> getAliasedType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyReferenceExpression && ((PyReferenceExpression)resolved).asQualifiedName() != null) {
+      return getType((PyExpression)resolved, context);
+    }
+    return null;
   }
 
   @Nullable
@@ -1156,7 +1172,19 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static PyType getGenericTypeBound(@NotNull PyExpression[] typeVarArguments, @NotNull Context context) {
     final List<PyType> types = new ArrayList<>();
     for (int i = 1; i < typeVarArguments.length; i++) {
-      types.add(Ref.deref(getType(typeVarArguments[i], context)));
+      final PyExpression argument = typeVarArguments[i];
+
+      if (argument instanceof PyKeywordArgument) {
+        if ("bound".equals(((PyKeywordArgument)argument).getKeyword())) {
+          final PyExpression value = ((PyKeywordArgument)argument).getValueExpression();
+          return value == null ? null : Ref.deref(getType(value, context));
+        }
+        else {
+          break; // covariant, contravariant
+        }
+      }
+
+      types.add(Ref.deref(getType(argument, context)));
     }
     return PyUnionType.union(types);
   }

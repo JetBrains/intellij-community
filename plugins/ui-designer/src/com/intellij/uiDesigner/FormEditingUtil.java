@@ -490,7 +490,7 @@ public final class FormEditingUtil {
     iterateStringDescriptors(rootContainer, new StringDescriptorVisitor<IComponent>() {
       @Override
       public boolean visit(final IComponent component, final StringDescriptor descriptor) {
-        if (descriptor.getBundleName() != null && !bundleNames.contains(descriptor.getBundleName())) {
+        if (descriptor.getBundleName() != null) {
           bundleNames.add(descriptor.getBundleName());
         }
         return true;

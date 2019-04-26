@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,9 +17,9 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushParams;
+import git4idea.rebase.GitHandlerRebaseEditorManager;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorHandler;
-import git4idea.rebase.GitRebaseEditorService;
 import git4idea.rebase.GitRebaseResumeMode;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -48,8 +37,6 @@ import static java.util.Collections.*;
 /**
  * Easy-to-use wrapper of common native Git commands.
  * Most of them return result as {@link GitCommandResult}.
- *
- * @author Kirill Likhodedov
  */
 public class GitImpl extends GitImplBase {
 
@@ -72,6 +59,65 @@ public class GitImpl extends GitImplBase {
     h.setSilent(false);
     h.setStdoutSuppressed(false);
     return runCommand(h);
+  }
+
+  @NotNull
+  @Override
+  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<FilePath> paths)
+    throws VcsException {
+    Set<VirtualFile> ignoredFiles = new HashSet<>();
+
+    if (paths == null) {
+      ignoredFiles.addAll(ignoredFilesNoChunk(project, root, null));
+    }
+    else {
+      for (List<String> relativePaths : VcsFileUtil.chunkPaths(root, paths)) {
+        ignoredFiles.addAll(ignoredFilesNoChunk(project, root, relativePaths));
+      }
+    }
+    return ignoredFiles;
+  }
+
+  @NotNull
+  @Override
+  public Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths)
+    throws VcsException {
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.STATUS);
+    h.setSilent(true);
+    h.addParameters("--ignored", "--porcelain", "-z");
+    if (paths != null) {
+      h.addParameters(paths);
+    }
+    h.endOptions();
+
+    final String output = runCommand(h).getOutputOrThrow();
+    return parseFiles(root, output, "!! ");
+  }
+
+  @NotNull
+  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root,
+                                             @Nullable String output,
+                                             @NotNull String fileStatusPrefix) {
+    if (StringUtil.isEmptyOrSpaces(output)) return emptySet();
+
+    final Set<VirtualFile> files = new HashSet<>();
+    for (String relPath : output.split("\u0000")) {
+      ProgressManager.checkCanceled();
+      if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
+
+      String relativePath = relPath.substring(fileStatusPrefix.length());
+      VirtualFile f = VfsUtil.findFileByIoFile(new File(root.getPath(), relativePath), true);
+      if (f == null) {
+        // files was created on disk, but VirtualFile hasn't yet been created,
+        // when the GitChangeProvider has already been requested about changes.
+        LOG.info(String.format("VirtualFile for path [%s] is null", relPath));
+      }
+      else {
+        files.add(f);
+      }
+    }
+
+    return files;
   }
 
   /**
@@ -108,7 +154,6 @@ public class GitImpl extends GitImplBase {
                                                        @NotNull VirtualFile root,
                                                        @Nullable List<String> relativePaths)
     throws VcsException {
-    final Set<VirtualFile> untrackedFiles = new HashSet<>();
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LS_FILES);
     h.setSilent(true);
     h.addParameters("--exclude-standard", "--others", "-z");
@@ -118,23 +163,7 @@ public class GitImpl extends GitImplBase {
     }
 
     final String output = runCommand(h).getOutputOrThrow();
-    if (StringUtil.isEmptyOrSpaces(output)) {
-      return untrackedFiles;
-    }
-
-    for (String relPath : output.split("\u0000")) {
-      VirtualFile f = root.findFileByRelativePath(relPath);
-      if (f == null) {
-        // files was created on disk, but VirtualFile hasn't yet been created,
-        // when the GitChangeProvider has already been requested about changes.
-        LOG.info(String.format("VirtualFile for path [%s] is null", relPath));
-      }
-      else {
-        untrackedFiles.add(f);
-      }
-    }
-
-    return untrackedFiles;
+    return parseFiles(root, output, "");
   }
 
   @Override
@@ -448,17 +477,20 @@ public class GitImpl extends GitImplBase {
       if (updateTracking) {
         h.addParameters("--set-upstream");
       }
-      if (force) {
-        h.addParameters("--force");
+      if (GitVersionSpecialty.SUPPORTS_FORCE_PUSH_WITH_LEASE.existsIn(repository) &&
+          !forceWithLease.isEmpty()) {
+        for (GitPushParams.ForceWithLease lease : forceWithLease) {
+          String parameter = lease.getParameter();
+          if (parameter != null) {
+            h.addParameters("--force-with-lease=" + parameter);
+          }
+          else {
+            h.addParameters("--force-with-lease");
+          }
+        }
       }
-      for (GitPushParams.ForceWithLease lease : forceWithLease) {
-        String parameter = lease.getParameter();
-        if (parameter != null) {
-          h.addParameters("--force-with-lease=" + parameter);
-        }
-        else {
-          h.addParameters("--force-with-lease");
-        }
+      else if (force) {
+        h.addParameters("--force");
       }
       if (tagMode != null) {
         h.addParameters(tagMode);
@@ -683,16 +715,11 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   private GitRebaseCommandResult runWithEditor(@NotNull GitLineHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
-    GitRebaseEditorService service = GitRebaseEditorService.getInstance();
-    service.configureHandler(handler, editorHandler.getHandlerNo());
-    try {
+    try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(handler, editorHandler)) {
       GitCommandResult result = runCommand(handler);
       if (editorHandler.wasCommitListEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitList(result);
       if (editorHandler.wasUnstructuredEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitMessage(result);
       return GitRebaseCommandResult.normal(result);
-    }
-    finally {
-      service.unregisterHandler(editorHandler.getHandlerNo());
     }
   }
 
@@ -702,7 +729,7 @@ public class GitImpl extends GitImplBase {
                                                            @NotNull VirtualFile root,
                                                            @NotNull GitLineHandler handler,
                                                            boolean commitListAware) {
-    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(GitRebaseEditorService.getInstance(), project, root);
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, root);
     if (!commitListAware) {
       editor.setRebaseEditorShown();
     }

@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
-import com.intellij.util.ArrayUtil
 import gnu.trove.THashSet
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -155,7 +154,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
   }
 
   private fun updateControls() {
-    isOKActionEnabled = !StringUtil.isEmptyOrSpaces(pathPanel.text)
+    isOKActionEnabled = !pathPanel.text.isNullOrBlank()
   }
 
   override fun createLeftSideActions(): Array<Action> {
@@ -221,9 +220,9 @@ private class ComponentElementProperties : MultiStateElementsChooser.ElementProp
 
   override fun toString(): String {
     val names = LinkedHashSet<String>()
-    for ((_, presentableName) in items) {
-      names.add(presentableName)
+    for (item in items) {
+      names.add(item.presentableName)
     }
-    return StringUtil.join(ArrayUtil.toStringArray(names), ", ")
+    return names.joinToString(", ")
   }
 }

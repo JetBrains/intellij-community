@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@Debug.Renderer(text = "\"size = \" + myBaseMap.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public class MultiValuesMap<K, V>{
   private final Map<K, Collection<V>> myBaseMap;
   private final boolean myOrdered;
@@ -30,7 +18,7 @@ public class MultiValuesMap<K, V>{
 
   public MultiValuesMap(boolean ordered) {
     myOrdered = ordered;
-    myBaseMap = ordered ? new LinkedHashMap<K, Collection<V>>() : new HashMap<K, Collection<V>>();
+    myBaseMap = ordered ? new LinkedHashMap<>() : new HashMap<>();
   }
 
   public void putAll(K key, @NotNull Collection<V> values) {
@@ -48,7 +36,7 @@ public class MultiValuesMap<K, V>{
   public void put(K key, V value) {
     Collection<V> collection = myBaseMap.get(key);
     if (collection == null) {
-      collection = myOrdered ? new LinkedHashSet<V>() : new HashSet<V>();
+      collection = myOrdered ? new LinkedHashSet<>() : new HashSet<>();
       myBaseMap.put(key, collection);
     }
 
@@ -66,7 +54,7 @@ public class MultiValuesMap<K, V>{
 
   @NotNull
   public Collection<V> values() {
-    Set<V> result = myOrdered ? new LinkedHashSet<V>() : new HashSet<V>();
+    Set<V> result = myOrdered ? new LinkedHashSet<>() : new HashSet<>();
     for (final Collection<V> values : myBaseMap.values()) {
       result.addAll(values);
     }

@@ -175,7 +175,13 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   @Override
   protected void doAction() {
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    checkMethodConflicts(conflicts);
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ApplicationManager.getApplication().runReadAction(
+        () -> checkMethodConflicts(conflicts)
+      ), "Checking Conflicts...", true, myProject)) {
+      return;
+    }
+
     if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       if (!conflictsDialog.showAndGet()) {

@@ -65,6 +65,14 @@ def get_ipython_hidden_vars():
     if IPYTHON and hasattr(__builtin__, 'interpreter'):
         code_executor = get_code_executor()
         return code_executor.get_ipython_hidden_vars_dict()
+    else:
+        try:
+            ipython_shell = get_ipython()
+            from _pydev_bundle.pydev_ipython_console_011 import get_ipython_hidden_vars
+            return get_ipython_hidden_vars(ipython_shell)
+        except:
+            pass
+
 
 def get_code_executor():
     try:

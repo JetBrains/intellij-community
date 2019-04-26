@@ -20,9 +20,10 @@ public class OrderRootType {
 
   public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
 
-  protected static PersistentOrderRootType[] ourPersistentOrderRootTypes = new PersistentOrderRootType[0];
+  @NotNull
+  static PersistentOrderRootType[] ourPersistentOrderRootTypes = new PersistentOrderRootType[0];
 
-  protected OrderRootType(String name) {
+  protected OrderRootType(@NotNull String name) {
     myName = name;
   }
 
@@ -65,6 +66,7 @@ public class OrderRootType {
     }
   }
 
+  @NotNull
   public String name() {
     return myName;
   }
@@ -79,10 +81,12 @@ public class OrderRootType {
     return false;
   }
 
+  @NotNull
   public static synchronized OrderRootType[] getAllTypes() {
     return getAllPersistentTypes();
   }
 
+  @NotNull
   public static PersistentOrderRootType[] getAllPersistentTypes() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
@@ -91,6 +95,7 @@ public class OrderRootType {
     return ourPersistentOrderRootTypes;
   }
 
+  @NotNull
   public static List<PersistentOrderRootType> getSortedRootTypes() {
     List<PersistentOrderRootType> allTypes = new ArrayList<>();
     Collections.addAll(allTypes, getAllPersistentTypes());
@@ -111,10 +116,12 @@ public class OrderRootType {
     return null;
   }
 
+  @Override
   public final int hashCode() {
     return super.hashCode();
   }
 
+  @Override
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }

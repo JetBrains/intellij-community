@@ -18,7 +18,7 @@ package com.intellij.codeInspection.capitalization;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +45,7 @@ public class AnnotateCapitalizationIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiModifierListOwner element = getElement(editor, file);
     if (element == null ||
-        (!ApplicationManager.getApplication().isUnitTestMode() && ScratchFileService.isInProjectOrScratch(element)) ||
+        (!ApplicationManager.getApplication().isUnitTestMode() && BaseIntentionAction.canModify(element)) ||
         AnnotationUtil.findAnnotation(element, Nls.class.getName()) != null) return false;
     return true;
   }

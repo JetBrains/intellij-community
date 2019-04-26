@@ -1,18 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
-import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
-import com.intellij.openapi.vcs.changes.LogicalLock;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -48,9 +45,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
-  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
-  protected static final int FILE_PATH_SORT_WEIGHT = 5;
-  protected static final int GENERIC_FILE_PATH_SORT_WEIGHT = 6;
+  protected static final int MODULE_SORT_WEIGHT = 4;
+  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 5;
+  protected static final int FILE_PATH_SORT_WEIGHT = 6;
   protected static final int CHANGE_SORT_WEIGHT = 7;
   protected static final int VIRTUAL_FILE_SORT_WEIGHT = 8;
   protected static final int UNVERSIONED_SORT_WEIGHT = 9;
@@ -107,11 +104,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   @NotNull
   public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
-  }
-
-  @NotNull
-  public static ChangesBrowserNode createGeneric(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, @NotNull Object userObject) {
-    return new ChangesBrowserGenericNode(filePath, fileStatus, userObject);
   }
 
   @NotNull
@@ -325,6 +317,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   public int compareUserObjects(final T o2) {
     return 0;
+  }
+
+  protected static int compareFileNames(@NotNull String name1, @NotNull String name2) {
+    return FileNameComparator.INSTANCE.compare(name1, name2);
+  }
+
+  protected static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
+    return HierarchicalFilePathComparator.NATURAL.compare(path1, path2);
   }
 
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {

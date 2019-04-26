@@ -30,6 +30,7 @@ typedef struct _WndInfo {
   DbusmenuServer *server;
   DbusmenuMenuitem *menuroot;
   jeventcallback jhandler;
+  jrunnable onReleaseCallback;
   GList* linkedXids;
 } WndInfo;
 
@@ -64,7 +65,7 @@ static void _printWndInfo(const WndInfo *wi, char *out, int outLen) {
     return;
   }
 
-  snprintf(out, outLen, "xid=0x%X menuPath='%s' registrar=0x%p server=0x%p menuroot=0x%p", wi->xid, wi->menuPath,
+  snprintf(out, (size_t)outLen, "xid=0x%X menuPath='%s' registrar=0x%p server=0x%p menuroot=0x%p", wi->xid, wi->menuPath,
            wi->registrar, wi->server, wi->menuroot);
 }
 
@@ -162,7 +163,7 @@ static void _releaseMenuItem(gpointer data) {
   }
 }
 
-static void _unregisterWindow(long xid, GDBusProxy * registrar) {
+static void _unregisterWindow(guint32 xid, GDBusProxy * registrar) {
   // NOTE: sync call g_dbus_proxy_call_sync(wi->registrar, "UnregisterWindow", g_variant_new("(u)", wi->xid), G_DBUS_CALL_FLAGS_NONE, -1, NULL, &error)
   // under ubuntu18 (with GlobalMenu plugin) executes several minutes.
   // We make async call and don't care about results and errors (i.e. NULL callbacks)
@@ -199,7 +200,7 @@ static void _releaseWindow(WndInfo *wi) {
     _unregisterWindow(wi->xid, wi->registrar);
     if (wi->linkedXids != NULL) {
       for (GList* l = wi->linkedXids; l != NULL; l = l->next)
-        _unregisterWindow(l->data, wi->registrar);
+        _unregisterWindow((guint32)l->data, wi->registrar);
     }
 
     g_object_unref(wi->registrar);
@@ -211,6 +212,10 @@ static void _releaseWindow(WndInfo *wi) {
     wi->linkedXids = NULL;
   }
 
+  if (wi->onReleaseCallback != NULL) {
+    (*wi->onReleaseCallback)();
+    wi->onReleaseCallback = NULL;
+  }
   free(wi);
 }
 
@@ -235,7 +240,7 @@ void createMenuRootForWnd(WndInfo *wi) {
         dbusmenu_server_set_root(wi->server, wi->menuroot);
 }
 
-WndInfo *registerWindow(long windowXid, jeventcallback handler) {
+WndInfo *registerWindow(guint32 windowXid, jeventcallback handler) {
   // _info("register new window");
 
   WndInfo *wi = (WndInfo *) malloc(sizeof(WndInfo));
@@ -243,7 +248,7 @@ WndInfo *registerWindow(long windowXid, jeventcallback handler) {
 
   wi->xid = (guint32) windowXid;
   wi->menuPath = malloc(64);
-  sprintf(wi->menuPath, "/com/canonical/menu/0x%lx", windowXid);
+  sprintf(wi->menuPath, "/com/canonical/menu/0x%x", windowXid);
 
   wi->menuroot = dbusmenu_menuitem_new();
   if (wi->menuroot == NULL) {
@@ -300,7 +305,7 @@ WndInfo *registerWindow(long windowXid, jeventcallback handler) {
   return wi;
 }
 
-void bindNewWindow(WndInfo * wi, long windowXid) {
+void bindNewWindow(WndInfo * wi, guint32 windowXid) {
   if (wi == NULL || wi->server == NULL || wi->menuPath == NULL)
     return;
 
@@ -321,10 +326,10 @@ void bindNewWindow(WndInfo * wi, long windowXid) {
   }
 
   // _logmsg(LOG_LEVEL_INFO, "bind new window 0x%lx", windowXid);
-  wi->linkedXids = g_list_append(wi->linkedXids, windowXid);
+  wi->linkedXids = g_list_append(wi->linkedXids, (gpointer)windowXid);
 }
 
-void unbindWindow(WndInfo * wi, long windowXid) {
+void unbindWindow(WndInfo * wi, guint32 windowXid) {
   if (wi == NULL || wi->server == NULL || wi->menuPath == NULL)
     return;
 
@@ -332,7 +337,7 @@ void unbindWindow(WndInfo * wi, long windowXid) {
   _unregisterWindow(windowXid, wi->registrar);
 
   if (wi->linkedXids != NULL)
-    wi->linkedXids = g_list_remove(wi->linkedXids, windowXid);
+    wi->linkedXids = g_list_remove(wi->linkedXids, (gpointer)windowXid);
 }
 
 static gboolean _execReleaseWindow(gpointer user_data) {
@@ -340,8 +345,10 @@ static gboolean _execReleaseWindow(gpointer user_data) {
   return FALSE;
 }
 
-void releaseWindowOnMainLoop(WndInfo *wi) {
+void releaseWindowOnMainLoop(WndInfo *wi, jrunnable onReleased) {
   // _info("scheduled releaseWindowOnMainLoop");
+  if (wi != NULL)
+    wi->onReleaseCallback = onReleased;
   g_idle_add(_execReleaseWindow, wi);
 }
 
@@ -383,8 +390,9 @@ static const char *_type2str(int type) {
       return "sig-shown";
     case SIGNAL_CHILD_ADDED:
       return "sig-child-added";
+    default:
+        return "unknown event type";
   }
-  return "unknown event type";
 }
 
 static void _handleItemSignal(DbusmenuMenuitem *item, int type) {
@@ -439,10 +447,10 @@ DbusmenuMenuitem *addRootMenu(WndInfo *wi, int uid, const char * label) {
   if (wi == NULL || wi->menuroot == NULL)
     return NULL;
   // _logmsg(LOG_LEVEL_INFO, "add root %d", uid);
-  return addMenuItem(wi->menuroot, uid, label, true);
+  return addMenuItem(wi->menuroot, uid, label, true, -1);
 }
 
-DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * label, int type) {
+DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * label, int type, int position) {
   // _logmsg(LOG_LEVEL_INFO, "add menu item %s (%d) [p %s]", label, uid, _getItemLabel(parent));
 
   DbusmenuMenuitem *item = dbusmenu_menuitem_new();
@@ -469,24 +477,40 @@ DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * la
     if (data == NULL)
       _logmsg(LOG_LEVEL_ERROR, "parent of item %d hasn't jhandler", uid);
     g_object_set_data(G_OBJECT(item), MENUITEM_JHANDLER_PROPERTY, data);
-    dbusmenu_menuitem_child_append(parent, item);
+    if (position < 0)
+      dbusmenu_menuitem_child_append(parent, item);
+    else
+      dbusmenu_menuitem_child_add_position(parent, item, (guint)position);
   }
 
   return item;
 }
 
-DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid) {
+DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid, int position) {
   DbusmenuMenuitem* item = dbusmenu_menuitem_new();
   dbusmenu_menuitem_property_set(item, DBUSMENU_MENUITEM_PROP_TYPE, "separator");
   dbusmenu_menuitem_property_set_int(item, MENUITEM_UID_PROPERTY, uid);
   dbusmenu_menuitem_property_set_bool(item, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
-  if (parent != NULL)
-    dbusmenu_menuitem_child_append(parent, item);
+  if (parent != NULL) {
+    if (position < 0)
+      dbusmenu_menuitem_child_append(parent, item);
+    else
+      dbusmenu_menuitem_child_add_position(parent, item, (guint)position);
+  }
 
   return item;
 }
 
+void reorderMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item, int position) { dbusmenu_menuitem_child_reorder(parent, item, (guint)position); }
+
 void removeMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item) { dbusmenu_menuitem_child_delete(parent, item); }
+
+static gboolean _showMenuItem(gpointer item) {
+    dbusmenu_menuitem_show_to_user(item, 0);
+    return FALSE;
+}
+
+void showMenuItem(DbusmenuMenuitem* item) { g_idle_add(_showMenuItem, item); }
 
 void setItemLabel(DbusmenuMenuitem *item, const char *label) {
   dbusmenu_menuitem_property_set(item, DBUSMENU_MENUITEM_PROP_LABEL, label);
@@ -497,35 +521,34 @@ void setItemEnabled(DbusmenuMenuitem *item, bool isEnabled) {
 }
 
 void setItemIcon(DbusmenuMenuitem *item, const char *iconBytesPng, int iconBytesCount) {
-  const gboolean propreturn = dbusmenu_menuitem_property_set_byte_array(item, DBUSMENU_MENUITEM_PROP_ICON_DATA,
-                                                                        (guchar *) iconBytesPng, iconBytesCount);
+  dbusmenu_menuitem_property_set_byte_array(item, DBUSMENU_MENUITEM_PROP_ICON_DATA, (guchar*)iconBytesPng, (gsize)iconBytesCount);
   // NOTE: memory copied (try to call memset(iconBytesPng, 0, iconBytesCount) after)
-
-//  if (propreturn)
-//    _logmsg(LOG_LEVEL_INFO, "\tset %d icon bytes for item %s", iconBytesCount, _getItemLabel(item));
-//  else
-//    _logmsg(LOG_LEVEL_ERROR, "\tcan't set %d icon bytes for item %s", iconBytesCount, _getItemLabel(item));
 }
 
-void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode) {
-  GVariantBuilder builder;
-  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
-  if ((jmodifiers & JMOD_SHIFT) != 0)
-    g_variant_builder_add(&builder, "s",  DBUSMENU_MENUITEM_SHORTCUT_SHIFT);
-  if ((jmodifiers & JMOD_CTRL) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_CONTROL);
-  if ((jmodifiers & JMOD_ALT) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_ALT);
-  if ((jmodifiers & JMOD_META) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_SUPER);
+// java modifiers
+static const int SHIFT_MASK          = 1 << 0;
+static const int CTRL_MASK           = 1 << 1;
+static const int META_MASK           = 1 << 2;
+static const int ALT_MASK            = 1 << 3;
 
-  char* xname = XKeysymToString(jkeycode);
+void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int x11keycode) {
+  char* xname = XKeysymToString((KeySym)x11keycode);
   if (xname == NULL) {
-    _logmsg(LOG_LEVEL_ERROR, "XKeysymToString returns null for jkeycode=%d", jkeycode);
+    // _logmsg(LOG_LEVEL_ERROR, "XKeysymToString returns null for x11keycode=%d", x11keycode);
     return;
   }
+  // _logmsg(LOG_LEVEL_INFO, "XKeysymToString returns %s for x11keycode=%d", xname, x11keycode);
 
-  // _logmsg(LOG_LEVEL_INFO, "XKeysymToString returns %s for jkeycode=%d", xname, jkeycode);
+  GVariantBuilder builder;
+  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
+  if ((jmodifiers & SHIFT_MASK) != 0)
+    g_variant_builder_add(&builder, "s",  DBUSMENU_MENUITEM_SHORTCUT_SHIFT);
+  if ((jmodifiers & CTRL_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_CONTROL);
+  if ((jmodifiers & ALT_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_ALT);
+  if ((jmodifiers & META_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_SUPER);
 
   g_variant_builder_add(&builder, "s", xname);
 

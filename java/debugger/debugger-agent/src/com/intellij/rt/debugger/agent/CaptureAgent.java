@@ -17,6 +17,7 @@ import java.util.jar.JarFile;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class CaptureAgent {
+  public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
 
   private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
@@ -65,26 +66,48 @@ public class CaptureAgent {
 
   @SuppressWarnings("SSBasedInspection")
   private static void appendStorageJar(Instrumentation instrumentation) throws IOException {
-    InputStream inputStream = CaptureAgent.class.getResourceAsStream("/debugger-agent-storage.jar");
+    File storageJar = null;
+
+    // do not extract if storage jar is available nearby
     try {
-      File storageJar = File.createTempFile("debugger-agent-storage", "jar");
-      storageJar.deleteOnExit();
-      OutputStream outStream = new FileOutputStream(storageJar);
+      storageJar = new File(new File(CaptureAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile(),
+                            AGENT_STORAGE_JAR);
+    }
+    catch (Exception e) {
       try {
-        byte[] buffer = new byte[10 * 1024];
-        int bytesRead;
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
-          outStream.write(buffer, 0, bytesRead);
+        String path = "/" + CaptureAgent.class.getName().replace('.', '/') + ".class";
+        String classResource = CaptureAgent.class.getResource(path).getFile();
+        if (classResource.startsWith("file:")) {
+          storageJar = new File(new File(classResource.substring(5, classResource.length() - path.length() - 1)).getParentFile(),
+                                AGENT_STORAGE_JAR);
+        }
+      } catch (Exception ignored) {
+      }
+    }
+
+    if (storageJar == null || !storageJar.exists()) {
+      InputStream inputStream = CaptureAgent.class.getResourceAsStream("/" + AGENT_STORAGE_JAR);
+      try {
+        storageJar = File.createTempFile("debugger-agent-storage", ".jar");
+        storageJar.deleteOnExit();
+        OutputStream outStream = new FileOutputStream(storageJar);
+        try {
+          byte[] buffer = new byte[10 * 1024];
+          int bytesRead;
+          while ((bytesRead = inputStream.read(buffer)) != -1) {
+            outStream.write(buffer, 0, bytesRead);
+          }
+        }
+        finally {
+          outStream.close();
         }
       }
       finally {
-        outStream.close();
+        inputStream.close();
       }
-      instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
     }
-    finally {
-      inputStream.close();
-    }
+
+    instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
   }
 
   private static void setupJboss() {
@@ -145,7 +168,7 @@ public class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      if (className != null) {
+      if (className != null && classBeingRedefined == null) { // we do not support redefinition or retransform
         List<InstrumentPoint> classPoints = myInstrumentPoints.get(className);
         if (classPoints != null) {
           try {

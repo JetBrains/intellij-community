@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +99,7 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     if (id == null) {
       return true;
     }
-    @NonNls final HashSet<String> parts = ContainerUtil.newHashSet(StringUtil.getWordsIn(text));
+    @NonNls final HashSet<String> parts = new HashSet<>(StringUtil.getWordsIn(text));
     return parts.contains(id) || parts.contains(XmlSuppressableInspectionTool.ALL);
   }
 

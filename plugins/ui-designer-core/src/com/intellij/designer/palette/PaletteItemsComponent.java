@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
@@ -230,9 +231,7 @@ public class PaletteItemsComponent extends JBList {
     else if (getModel().getSize() == 0) {
       indexToSelect = -1;
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
     setSelectedIndex(indexToSelect);
     if (indexToSelect >= 0) {
       ensureIndexIsVisible(indexToSelect);
@@ -262,10 +261,10 @@ public class PaletteItemsComponent extends JBList {
 
   private void initActions() {
     ActionMap map = getActionMap();
-    map.put("selectPreviousRow", new MoveFocusAction(map.get("selectPreviousRow"), false));
-    map.put("selectNextRow", new MoveFocusAction(map.get("selectNextRow"), true));
-    map.put("selectPreviousColumn", new MoveFocusAction(new ChangeColumnAction(map.get("selectPreviousColumn"), false), false));
-    map.put("selectNextColumn", new MoveFocusAction(new ChangeColumnAction(map.get("selectNextColumn"), true), true));
+    map.put(ListActions.Up.ID, new MoveFocusAction(map.get(ListActions.Up.ID), false));
+    map.put(ListActions.Down.ID, new MoveFocusAction(map.get(ListActions.Down.ID), true));
+    map.put(ListActions.Left.ID, new MoveFocusAction(new ChangeColumnAction(map.get(ListActions.Left.ID), false), false));
+    map.put(ListActions.Right.ID, new MoveFocusAction(new ChangeColumnAction(map.get(ListActions.Right.ID), true), true));
   }
 
   private class MoveFocusAction extends AbstractAction {
@@ -300,9 +299,7 @@ public class PaletteItemsComponent extends JBList {
                        : policy.getComponentBefore(container, PaletteItemsComponent.this);
       if (next instanceof PaletteGroupComponent) {
         clearSelection();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(next, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
         ((PaletteGroupComponent)next).scrollRectToVisible(next.getBounds());
       }
     }

@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -34,13 +35,13 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 
@@ -101,6 +102,9 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   updateValue(pair, colorUIResource, row, column);
                   changed = true;
                 }
+              } else if (value instanceof Boolean) {
+                updateValue(pair, !((Boolean)value), row, column);
+                changed = true;
               } else if (value instanceof Integer) {
                 Integer newValue = editNumber(key.toString(), value.toString());
                 if (newValue != null) {
@@ -168,6 +172,14 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                                          int row,
                                                          int column) {
             value = column == 0 ? ((Pair)value).first : ((Pair)value).second;
+            if (value instanceof Boolean) {
+              TableCellRenderer renderer = table.getDefaultRenderer(Boolean.class);
+              if (renderer != null) {
+                JCheckBox box = (JCheckBox)renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                box.setHorizontalAlignment(SwingConstants.LEFT);
+                return box;
+              }
+            }
             final JPanel panel = new JPanel(new BorderLayout());
             final JLabel label = new JLabel(value == null ? "" : value.toString());
             panel.add(label, BorderLayout.CENTER);
@@ -261,8 +273,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       private void addNewValue() {
         ApplicationManager.getApplication().invokeLater(() -> new DialogWrapper(myTable, true) {
-          JBTextField name = new JBTextField(40);
-          JBTextField value = new JBTextField(40);
+          final JBTextField name = new JBTextField(40);
+          final JBTextField value = new JBTextField(40);
           {
             setTitle("Add New Value");
             init();
@@ -371,7 +383,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
 
         try {
-          List<Integer> v = Arrays.stream(parts).map(p -> Integer.parseInt(p)).collect(Collectors.toList());
+          List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
           return JBUI.insets(v.get(0), v.get(1), v.get(2), v.get(3));
         } catch (NumberFormatException nex) {
           return null;
@@ -406,7 +418,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
 
         try {
-          List<Integer> v = Arrays.stream(parts).map(p -> Integer.parseInt(p)).collect(Collectors.toList());
+          List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
           return new UIUtil.GrayFilter(v.get(0), v.get(1), v.get(2));
         } catch (NumberFormatException nex) {
           return null;
@@ -472,6 +484,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         if (column != 1) return false;
         Object value = ((Pair)getValueAt(row, column)).second;
         return (value instanceof Color ||
+                value instanceof Boolean ||
                 value instanceof Integer ||
                 value instanceof EmptyBorder ||
                 value instanceof Insets ||

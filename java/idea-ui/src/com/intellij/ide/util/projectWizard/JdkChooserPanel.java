@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.StatusText;
 import gnu.trove.TIntArrayList;
@@ -96,7 +97,6 @@ public class JdkChooserPanel extends JPanel {
    * Sets the JDK types which may be shown in the panel.
    *
    * @param allowedJdkTypes the array of JDK types which may be shown, or null if all JDK types are allowed.
-   * @since 7.0.3
    */
   public void setAllowedJdkTypes(@Nullable final SdkType[] allowedJdkTypes) {
     myAllowedJdkTypes = allowedJdkTypes;
@@ -180,23 +180,15 @@ public class JdkChooserPanel extends JPanel {
       myList.getEmptyText().setText("");
       myLoadingDecorator.startLoading(false);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<String> homePaths = JavaHomeFinder.suggestHomePaths();
+        List<String> suggestedPaths = JavaHomeFinder.suggestHomePaths();
+        suggestedPaths.removeAll(ContainerUtil.map(knownJdks, sdk -> sdk.getHomePath()));//remove all known path to avoid duplicates
         ApplicationManager.getApplication().invokeLater(() -> {
-          outer:
-          for (String homePath : homePaths) {
-            for (Sdk jdk : knownJdks) {
-              if (Comparing.equal(jdk.getHomePath(), homePath)) continue outer;
-            }
+          for (String homePath : suggestedPaths) {
             VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(homePath);
             if (virtualFile != null) {
               JavaSdk sdkType = JavaSdk.getInstance();
               JavaVersion version = JavaVersion.tryParse(sdkType.getVersionString(homePath));
-              String suggestedName;
-              if (version != null) {
-                suggestedName = version.toString();
-              } else {
-                suggestedName = SimpleJavaSdkType.suggestJavaSdkName(sdkType, "", homePath);
-              }
+              String suggestedName = version != null ? version.toString() : "";
               Sdk jdk = sdkType.createJdk(suggestedName, homePath, false);
               if (jdk instanceof ProjectJdkImpl) {
                 ProjectJdkImpl tmp = SdkConfigurationUtil.createSdk(allJdks.toArray(new Sdk[0]), virtualFile, sdkType, null, suggestedName);
@@ -308,13 +300,15 @@ public class JdkChooserPanel extends JPanel {
     IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
     final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"),
                                frame != null ? frame : new JLabel("onair"), projectJdk);
-    if (jdk == null) {
+    String path = jdk != null ? jdk.getHomePath() : null;
+    if (path == null) {
       return null;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectJdkTable table = ProjectJdkTable.getInstance();
-      if (!table.getSdksOfType(jdk.getSdkType()).contains(jdk)) {
-        table.addJdk(jdk);
+      List<Sdk> sdks = table.getSdksOfType(jdk.getSdkType());
+      if (ContainerUtil.find(sdks, sdk -> path.equals(sdk.getHomePath())) == null) {
+        table.addJdk(jdk);//this jdk is unknown yet and so it has to be added to Platform-level table now
       }
       ProjectRootManager.getInstance(project).setProjectSdk(jdk);
     });

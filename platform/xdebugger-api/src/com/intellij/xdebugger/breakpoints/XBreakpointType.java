@@ -257,4 +257,9 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull B breakpoint, @Nullable XDebugSession currentSession) {
     return Collections.emptyList();
   }
+
+  @Override
+  public String toString() {
+    return myId;
+  }
 }

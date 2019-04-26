@@ -38,7 +38,7 @@ public class TeamCityBuildInfoPrinter implements BuildInfoPrinter {
   private static String escape(String text) {
     StringBuilder escaped = new StringBuilder();
     for (char c: text.toCharArray()) {
-      Character escChar = escapedChar(c);
+      char escChar = escapedChar(c);
       if (escChar == 0) {
         escaped.append(c);
       } else {

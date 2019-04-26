@@ -53,6 +53,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
+import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
 
 public class MavenProject {
 
@@ -657,6 +658,21 @@ public class MavenProject {
     return res;
   }
 
+  public void setConfigFileError(@Nullable String message) {
+    if (message != null) {
+      myState.myReadingProblems.add(new MavenProjectProblem(myFile.getPath() + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, message, SYNTAX));
+    }
+  }
+
+  @Nullable
+  public String getConfigFileError() {
+    return myState
+      .myReadingProblems.stream().filter(p -> p.getPath().endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH))
+      .map(p -> p.getDescription())
+      .findFirst()
+      .orElse(null);
+  }
+
   @NotNull
   public MavenProjectChanges read(@NotNull MavenGeneralSettings generalSettings,
                                   @NotNull MavenExplicitProfiles profiles,
@@ -674,10 +690,10 @@ public class MavenProject {
                                                                      @NotNull ResolveContext context)
     throws MavenProcessCanceledException {
     Collection<MavenProjectReaderResult> results = reader.resolveProject(generalSettings,
-                                                            embedder,
-                                                            Collections.singleton(getFile()),
-                                                            getActivatedProfilesIds(),
-                                                            locator);
+                                                                         embedder,
+                                                                         Collections.singleton(getFile()),
+                                                                         getActivatedProfilesIds(),
+                                                                         locator);
     final MavenProjectReaderResult result = results.iterator().next();
     MavenProjectChanges changes = set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
 

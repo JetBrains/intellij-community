@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.merge;
 
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.merge.MergeTool.MergeViewer;
@@ -34,6 +35,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,17 +46,20 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
+import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
+
 public class MergeUtil {
   @NotNull
   public static Action createSimpleResolveAction(@NotNull MergeResult result,
                                                  @NotNull MergeRequest request,
                                                  @NotNull MergeContext context,
-                                                 @NotNull MergeViewer viewer) {
+                                                 @NotNull MergeViewer viewer,
+                                                 boolean contentWasModified) {
     String caption = getResolveActionTitle(result, request, context);
     return new AbstractAction(caption) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (result == MergeResult.CANCEL && !showExitWithoutApplyingChangesDialog(viewer, request, context)) {
+        if (result == MergeResult.CANCEL && !showExitWithoutApplyingChangesDialog(viewer, request, context, contentWasModified)) {
           return;
         }
         context.finishMerge(result);
@@ -62,7 +68,7 @@ public class MergeUtil {
   }
 
   @NotNull
-  public static String getResolveActionTitle(@NotNull MergeResult result, @NotNull MergeRequest request, @NotNull MergeContext context) {
+  public static String getResolveActionTitle(@NotNull MergeResult result, @Nullable MergeRequest request, @Nullable MergeContext context) {
     Function<MergeResult, String> getter = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS);
     String message = getter != null ? getter.fun(result) : null;
     if (message != null) return message;
@@ -131,13 +137,14 @@ public class MergeUtil {
 
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull MergeViewer viewer,
                                                              @NotNull MergeRequest request,
-                                                             @NotNull MergeContext context) {
+                                                             @NotNull MergeContext context,
+                                                             boolean contentWasModified) {
     Condition<MergeViewer> customHandler = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_HANDLER);
     if (customHandler != null) {
       return customHandler.value(viewer);
     }
 
-    return showExitWithoutApplyingChangesDialog(viewer.getComponent(), request, context);
+    return !contentWasModified || showExitWithoutApplyingChangesDialog(viewer.getComponent(), request, context);
   }
 
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
@@ -152,6 +159,14 @@ public class MergeUtil {
     }
 
     return Messages.showYesNoDialog(component.getRootPane(), message, title, Messages.getQuestionIcon()) == Messages.YES;
+  }
+
+  public static boolean shouldRestoreOriginalContentOnCancel(@NotNull MergeRequest request) {
+    MergeCallback callback = MergeCallback.getCallback(request);
+    if (callback.checkIsValid()) return true;
+    return Messages.showYesNoDialog("Merge conflict is outdated. Restore file content prior to conflict resolve start?",
+                                    DiffBundle.message("cancel.visual.merge.dialog.title"), "Restore", "Do nothing",
+                                    Messages.getQuestionIcon()) == Messages.YES;
   }
 
   public static void putRevisionInfos(@NotNull MergeRequest request, @NotNull MergeData data) {
@@ -179,5 +194,19 @@ public class MergeUtil {
         content.putUserData(DiffUserDataKeysEx.REVISION_INFO, Pair.create(filePath, revision));
       }
     }
+  }
+
+  public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
+    if (project != null && file != null && isProjectFile(file)) {
+      StoreReloadManager.getInstance().saveChangedProjectFile(file, project);
+    }
+  }
+
+  private static boolean isProjectFile(@NotNull VirtualFile file) {
+    if (file.isDirectory()) return false;
+    if (isProjectOrWorkspaceFile(file)) return true;
+
+    ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
+    return importProvider != null && importProvider.lookForProjectsInDirectory();
   }
 }

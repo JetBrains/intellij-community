@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -10,9 +10,9 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.attribute
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
@@ -54,7 +54,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     var element = dataHolder.read()
 
     if (isShared && element.name == "component") {
-      element = element.getChild("configuration")
+      element = element.getChild("configuration") ?: throw RuntimeException("Unexpected element: " + JDOMUtil.write(element))
     }
 
     converters.any {
@@ -65,15 +65,21 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
       settings.readExternal(element, isShared)
     }
     catch (e: InvalidDataException) {
-      RunManagerImpl.LOG.error(e)
+      LOG.error(e)
     }
 
     var elementAfterStateLoaded: Element? = element
-    try {
-      elementAfterStateLoaded = writeScheme(settings)
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot compute digest for RC using state after load", e)
+
+    if (!settings.needsToBeMigrated()) {
+      try {
+        elementAfterStateLoaded = writeScheme(settings)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error("Cannot compute digest for RC using state after load", e)
+      }
     }
 
     // very important to not write file with only changed line separators
@@ -120,7 +126,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     val result = super.writeScheme(scheme) ?: return null
     if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
-        .attribute("name", "ProjectRunConfigurationManager")
+        .setAttribute("name", "ProjectRunConfigurationManager")
         .addContent(result)
     }
     else if (scheme.isTemplate) {

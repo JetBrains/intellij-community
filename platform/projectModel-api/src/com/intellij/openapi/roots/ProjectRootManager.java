@@ -70,6 +70,7 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
    * TODO: remove this method?
    */
+  @NotNull
   public abstract VirtualFile[] getContentRootsFromAllModules();
 
   /**
@@ -134,5 +135,5 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    *
    * @param name the name of the JDK.
    */
-  public abstract void setProjectSdkName(String name);
+  public abstract void setProjectSdkName(@NotNull String name);
 }

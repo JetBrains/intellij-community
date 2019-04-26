@@ -41,12 +41,13 @@ public class CommonBundle extends BundleBase {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle>(bundle);
+      ourBundle = new SoftReference<>(bundle);
     }
     return bundle;
   }
 
   public static String messageOrDefault(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
+    if (bundle == null || !bundle.containsKey(key)) return defaultValue;
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
@@ -80,6 +81,10 @@ public class CommonBundle extends BundleBase {
     return message("title.error");
   }
 
+  /**
+   * @deprecated Use more informative title instead
+   */
+  @Deprecated
   public static String getWarningTitle() {
     return message("title.warning");
   }

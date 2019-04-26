@@ -61,7 +61,7 @@ public class LocalInspectionsPassFactory implements MainHighlightingPassFactory 
                                    @NotNull TextRange textRange,
                                    @NotNull TextRange visibleRange,
                                    @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-      super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true, highlightInfoProcessor);
+      super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true, highlightInfoProcessor, true);
     }
 
     @NotNull

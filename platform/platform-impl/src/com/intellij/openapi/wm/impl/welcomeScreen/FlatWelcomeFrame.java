@@ -9,6 +9,7 @@ import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.plugins.InstalledPluginsManagerMain;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -27,8 +28,11 @@ import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameViewHolder;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
@@ -97,12 +101,23 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     setGlassPane(glassPane);
     glassPane.setVisible(false);
-    //setUndecorated(true);
-    setContentPane(myScreen.getWelcomePanel());
+
+    int defaultHeight = DEFAULT_HEIGHT;
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      CustomFrameViewHolder holder =
+        CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
+      setContentPane(holder.getContent());
+
+      defaultHeight+=holder.getHeaderHeight();
+    } else {
+      setContentPane(myScreen.getWelcomePanel());
+    }
+
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
-    getRootPane().setPreferredSize(JBUI.size(width, DEFAULT_HEIGHT));
+
+    getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
     setResizable(false);
 
     Dimension size = getPreferredSize();
@@ -137,6 +152,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     Disposer.register(ApplicationManager.getApplication(), this);
 
     UIUtil.decorateWindowHeader(getRootPane());
+  }
+
+  @Override
+  public void addNotify() {
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      JdkEx.setHasCustomDecoration(this);
+    }
+    super.addNotify();
   }
 
   @Override
@@ -316,16 +339,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       super.paint(g);
       if (inDnd) {
         Rectangle bounds = getBounds();
-        Color background = JBColor.namedColor("DragAndDrop.backgroundColor", new Color(225, 235, 245));
+        Color background = JBColor.namedColor("DragAndDrop.areaBackground", new Color(225, 235, 245));
         g.setColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 206));
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        Color backgroundBorder = JBColor.namedColor("DragAndDrop.backgroundBorderColor", new Color(137, 178, 222));
+        Color backgroundBorder = JBColor.namedColor("DragAndDrop.areaBorderColor", new Color(137, 178, 222));
         g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
 
-        Color foreground = JBColor.namedColor("DragAndDrop.foregroundColor", Gray._120);
+        Color foreground = JBColor.namedColor("DragAndDrop.areaForeground", Gray._120);
         g.setColor(foreground);
         Font labelFont = UIUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);

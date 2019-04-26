@@ -58,7 +58,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     DaemonProgressIndicator.setDebug(false);
     int numOfThreads = Runtime.getRuntime().availableProcessors();
     int iterations = Timings.adjustAccordingToMySpeed(20, true);
-    System.out.println("iterations = " + iterations);
+    LOG.debug("iterations = " + iterations);
     final int readIterations = iterations * 3;
 
     synchronized (this) {

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -28,26 +13,22 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author peter
  */
-public class GradleClassFinder extends NonClasspathClassFinder {
+public final class GradleClassFinder extends NonClasspathClassFinder {
   @NotNull private final GradleBuildClasspathManager myBuildClasspathManager;
-  private final Map<String, PackageDirectoryCache> myCaches;
 
-  public GradleClassFinder(@NotNull Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
+  public GradleClassFinder(@NotNull Project project) {
     super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
-    myBuildClasspathManager = buildClasspathManager;
-    myCaches = ConcurrentFactoryMap.createMap(path -> createCache(myBuildClasspathManager.getModuleClasspathEntries(path)));
+    myBuildClasspathManager = GradleBuildClasspathManager.getInstance(project);
   }
 
   @Override
@@ -59,7 +40,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     if (scope instanceof ExternalModuleBuildGlobalSearchScope) {
-      return myCaches.get(((ExternalModuleBuildGlobalSearchScope)scope).getExternalModulePath());
+      return myBuildClasspathManager.getClassFinderCache().get(((ExternalModuleBuildGlobalSearchScope)scope).getExternalModulePath());
     }
     return super.getCache(scope);
   }
@@ -67,12 +48,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   public void clearCache() {
     super.clearCache();
-    // The parent class can publish a reference to this object before the constructor has returned.
-    // Thus, it's possible that not all fields of this object are initialized by the time they
-    // are accessed in clearCache(). Workaround is to null check.
-    if (myCaches != null) {
-      myCaches.clear();
-    }
+    myBuildClasspathManager.getClassFinderCache().clear();
   }
 
   @Override
@@ -86,8 +62,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
     VirtualFile file = containingFile != null ? containingFile.getVirtualFile() : null;
     return file != null &&
            !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file) &&
-           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibraryClasses(file) &&
-           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrarySource(file) ? aClass : null;
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrary(file) ? aClass : null;
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -286,5 +287,24 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       return StreamEx.<ReferenceType>ofNullable(((ClassType)type).superclass()).prepend(((ClassType)type).interfaces());
     }
     return StreamEx.empty();
+  }
+
+  @Nullable
+  public static byte[] readBytesArray(Value bytesArray) {
+    if (bytesArray instanceof ArrayReference) {
+      List<Value> values = ((ArrayReference)bytesArray).getValues();
+      byte[] res = new byte[values.size()];
+      int idx = 0;
+      for (Value value : values) {
+        if (value instanceof ByteValue) {
+          res[idx++] = ((ByteValue)value).value();
+        }
+        else {
+          return null;
+        }
+      }
+      return res;
+    }
+    return null;
   }
 }

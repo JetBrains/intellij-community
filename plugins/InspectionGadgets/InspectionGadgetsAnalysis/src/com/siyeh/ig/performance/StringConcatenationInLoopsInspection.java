@@ -259,10 +259,10 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiExpression otherQualifier = other.getQualifierExpression();
       if (qualifier == null && otherQualifier == null) return true;
       if (qualifier == null && ref.resolve() instanceof PsiField) {
-        qualifier = ExpressionUtils.getQualifierOrThis(ref);
+        qualifier = ExpressionUtils.getEffectiveQualifier(ref);
       }
       if (otherQualifier == null && other.resolve() instanceof PsiField) {
-        otherQualifier = ExpressionUtils.getQualifierOrThis(other);
+        otherQualifier = ExpressionUtils.getEffectiveQualifier(other);
       }
       if (qualifier == null || otherQualifier == null) return false;
       if (qualifier instanceof PsiReferenceExpression) {

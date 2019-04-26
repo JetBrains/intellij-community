@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" exported="" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="de.ruedigermoeller:fst" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Objenesis" level="project" />

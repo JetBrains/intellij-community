@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.Language;
@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,11 +36,11 @@ public class PythonFileType extends LanguageFileType {
 
   public static final PythonFileType INSTANCE = new PythonFileType();
 
-  public PythonFileType() {
+  private PythonFileType() {
     this(PythonLanguage.INSTANCE);
   }
 
-  public PythonFileType(Language language) {
+  protected PythonFileType(Language language) {
     super(language);
   }
 
@@ -73,7 +74,7 @@ public class PythonFileType extends LanguageFileType {
       return CharsetToolkit.UTF8;
     }
     ByteBuffer bytes = ByteBuffer.wrap(content, 0, Math.min(256, content.length));
-    String decoded = CharsetToolkit.UTF8_CHARSET.decode(bytes).toString();
+    String decoded = StandardCharsets.UTF_8.decode(bytes).toString();
     return getCharsetFromEncodingDeclaration(StringUtil.convertLineSeparators(decoded));
   }
 

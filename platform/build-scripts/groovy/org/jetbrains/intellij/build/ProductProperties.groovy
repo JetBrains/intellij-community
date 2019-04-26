@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -73,7 +73,7 @@ abstract class ProductProperties {
 
   /**
    * Now file containing information about third-party libraries is bundled and shown inside IDE.
-   * If {@code true} html file of third-party libraries will be placed alongside with build artifacts.
+   * If {@code true} html & json files of third-party libraries will be placed alongside with build artifacts.
    */
   boolean generateLibrariesLicensesTable = true
 
@@ -102,6 +102,12 @@ abstract class ProductProperties {
    * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built
    */
   boolean buildCrossPlatformDistribution = false
+
+  /**
+   * A {@link org.jetbrains.intellij.build.impl.ClassVersionChecker class version checker} config map
+   * when .class file version verification inside {@link #buildCrossPlatformDistribution cross-platform distribution} is needed.
+   */
+  Map<String, String> versionCheckerConfig = null
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file
@@ -139,17 +145,6 @@ abstract class ProductProperties {
    * If {@code true} a zip archive containing sources of all modules included into the product will be produced.
    */
   boolean buildSourcesArchive = false
-
-  /**
-   * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin'
-   * directories of Windows, Linux and macOS distributions. If {@code null} no agent files will be bundled.
-   */
-  String yourkitAgentBinariesDirectoryPath = null
-
-  /**
-   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts. It makes sense only if {@link #yourkitAgentBinariesDirectoryPath} is non-null.
-   */
-  boolean enableYourkitAgentInEAP = false
 
   /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.

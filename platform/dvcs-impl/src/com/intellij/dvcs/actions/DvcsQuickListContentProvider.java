@@ -2,10 +2,13 @@
 package com.intellij.dvcs.actions;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
+import com.intellij.openapi.vcs.actions.VcsQuickListPopupAction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,20 +27,24 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
     final ActionManager manager = ActionManager.getInstance();
     final List<AnAction> actions = new ArrayList<>();
 
-    // Can be modified via Vcs.Operations.Popup
-    CustomActionsSchema schema = CustomActionsSchema.getInstance();
-    ActionGroup vcsAwareGroup = (ActionGroup)schema.getCorrectedAction("Vcs.Operations.Popup.VcsAware");
-    ContainerUtil.addAll(actions, vcsAwareGroup.getChildren(null));
+    ActionGroup vcsGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP);
+    ActionGroup vcsAwareGroup = (ActionGroup)ContainerUtil.find(vcsGroup.getChildren(null), action -> {
+      if (action instanceof CustomisedActionGroup) action = ((CustomisedActionGroup)action).getOrigin();
+      return action instanceof VcsQuickListPopupAction.VcsAware;
+    });
+    if (vcsAwareGroup != null) ContainerUtil.addAll(actions, vcsAwareGroup.getChildren(null));
 
+    List<AnAction> providerActions = collectVcsSpecificActions(manager);
+    actions.removeAll(providerActions);
     actions.add(Separator.getInstance());
-    addVcsSpecificActions(manager, actions);
+    actions.addAll(providerActions);
     return actions;
   }
 
   @NotNull
   protected abstract String getVcsName();
 
-  protected abstract void addVcsSpecificActions(@NotNull ActionManager manager, @NotNull List<AnAction> actions);
+  protected abstract List<AnAction> collectVcsSpecificActions(@NotNull ActionManager manager);
 
   @Override
   public boolean replaceVcsActionsFor(@NotNull AbstractVcs activeVcs, @Nullable DataContext dataContext) {

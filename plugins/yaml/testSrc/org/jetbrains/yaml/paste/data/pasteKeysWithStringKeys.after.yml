@@ -1,0 +1,5 @@
+top:
+  next: value1
+  key:
+    '|':
+      ">":

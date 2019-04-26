@@ -185,7 +185,7 @@ public interface CaretModel {
   int getCaretCount();
 
   /**
-   * Returns all carets currently existing in the document, ordered by their position in the document.
+   * Returns all carets currently existing in the document, ordered by their visual position in editor.
    */
   @NotNull
   List<Caret> getAllCarets();
@@ -280,6 +280,12 @@ public interface CaretModel {
    * if it's {@code true}.
    */
   void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder);
+
+  /**
+   * Adds a listener which will be notified before and after all-caret operations are performed by {@link #runForEachCaret(CaretAction)} and
+   * {@link #runForEachCaret(CaretAction, boolean)}.
+   */
+  void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable);
 
   /**
    * Executes the given task, performing caret merging afterwards. Caret merging will not happen until the operation is finished.

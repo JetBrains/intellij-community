@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<DiffRequestProducer> {
+public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<DiffRequestProducer> {
   private static final Logger LOG = Logger.getInstance(CacheDiffRequestChainProcessor.class);
 
   @NotNull private final DiffRequestChain myRequestChain;

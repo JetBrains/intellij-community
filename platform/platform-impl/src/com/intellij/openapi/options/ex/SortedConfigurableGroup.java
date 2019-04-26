@@ -18,7 +18,6 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ public final class SortedConfigurableGroup
   @Override
   protected Configurable[] buildConfigurables() {
     Collections.sort(myList, COMPARATOR);
-    Configurable[] result = ArrayUtil.toObjectArray(myList, Configurable.class);
+    Configurable[] result = myList.toArray(new Configurable[0]);
     myList.clear();
     myList = null;
     return result;

@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.concurrency.JobLauncher;
@@ -57,8 +42,6 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
-  protected final DaemonCodeAnalyzerSettings myDaemonSettings;
-  protected final EditorColorsManager myColorsManager;
   private final Option myLambdaOption = new Option("java.lambda", "Lambda", AllIcons.Gutter.ImplementingFunctionalInterface);
   private final Option myOverriddenOption = new Option("java.overridden", "Overridden method", AllIcons.Gutter.OverridenMethod);
   private final Option myImplementedOption = new Option("java.implemented", "Implemented method", AllIcons.Gutter.ImplementedMethod);
@@ -69,9 +52,12 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall("java.util.ServiceLoader", "load", "loadInstalled");
 
+  public JavaLineMarkerProvider() {
+  }
+
+  @SuppressWarnings("unused")
+  @Deprecated
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
-    myDaemonSettings = daemonSettings;
-    myColorsManager = colorsManager;
   }
 
   @Override
@@ -95,7 +81,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
           if (!myImplementingOption.isEnabled()) return null;
           icon = AllIcons.Gutter.ImplementingMethod;
         }
-        return createSuperMethodLineMarkerInfo(element, icon, Pass.LINE_MARKERS);
+        return createSuperMethodLineMarkerInfo(element, icon);
       }
     }
     // in case of ()->{}, anchor to "->"
@@ -108,11 +94,11 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       ) {
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(parent);
       if (interfaceMethod != null) {
-        return createSuperMethodLineMarkerInfo(element, AllIcons.Gutter.ImplementingFunctionalInterface, Pass.LINE_MARKERS);
+        return createSuperMethodLineMarkerInfo(element, AllIcons.Gutter.ImplementingFunctionalInterface);
       }
     }
 
-    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
+    if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
       PsiElement element1 = element;
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
@@ -139,7 +125,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
 
         if (drawSeparator) {
-          return LineMarkersPass.createMethodSeparatorLineMarker(element, myColorsManager);
+          return LineMarkersPass.createMethodSeparatorLineMarker(element, EditorColorsManager.getInstance());
         }
       }
     }
@@ -148,8 +134,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   @NotNull
-  private static LineMarkerInfo createSuperMethodLineMarkerInfo(@NotNull PsiElement name, @NotNull Icon icon, int passId) {
-    ArrowUpLineMarkerInfo info = new ArrowUpLineMarkerInfo(name, icon, MarkerType.OVERRIDING_METHOD, passId);
+  private static LineMarkerInfo createSuperMethodLineMarkerInfo(@NotNull PsiElement name, @NotNull Icon icon) {
+    ArrowUpLineMarkerInfo info = new ArrowUpLineMarkerInfo(name, icon, MarkerType.OVERRIDING_METHOD);
     return NavigateAction.setNavigateAction(info, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
   }
 
@@ -234,8 +220,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     Map<PsiMethod, FindSuperElementsHelper.SiblingInfo> map = FindSuperElementsHelper.getSiblingInheritanceInfos(methods);
     return ContainerUtil.map(map.keySet(), method -> {
       PsiElement range = getMethodRange(method);
-      ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.SiblingInheritedMethod, MarkerType.SIBLING_OVERRIDING_METHOD,
-                                                               Pass.LINE_MARKERS);
+      ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.SiblingInheritedMethod, MarkerType.SIBLING_OVERRIDING_METHOD
+      );
       return NavigateAction.setNavigateAction(upInfo, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
     });
   }
@@ -284,7 +270,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
       MarkerType type = MarkerType.SUBCLASSED_CLASS;
       LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(range, range.getTextRange(),
-                                                 icon, Pass.LINE_MARKERS, type.getTooltip(),
+                                                 icon, type.getTooltip(),
                                                  type.getNavigationHandler(),
                                                  GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
@@ -327,7 +313,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;
       LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(range, range.getTextRange(),
-                                                             icon, Pass.LINE_MARKERS, type.getTooltip(),
+                                                             icon, type.getTooltip(),
                                                              type.getNavigationHandler(),
                                                              GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, overrides ? "Go to overriding methods" : "Go to implementation(s)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
@@ -388,7 +374,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
                     String interfaceClassName = interfaceClass.getQualifiedName();
                     if (interfaceClassName != null) {
                       LineMarkerInfo<PsiElement> info =
-                        new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service, Pass.LINE_MARKERS,
+                        new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
                                              e -> DaemonBundle.message("service.provides", interfaceClassName),
                                              new ServiceProvidesNavigationHandler(interfaceClassName, implementerClassName),
                                              GutterIconRenderer.Alignment.LEFT);
@@ -426,7 +412,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
                 PsiJavaCodeReferenceElement reference = statement.getClassReference();
                 if (reference != null && reference.isReferenceTo(psiClass)) {
                   LineMarkerInfo<PsiElement> info =
-                    new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service, Pass.LINE_MARKERS,
+                    new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
                                          e -> DaemonBundle.message("service.uses", qualifiedName),
                                          new ServiceUsesNavigationHandler(qualifiedName),
                                          GutterIconRenderer.Alignment.LEFT);
@@ -443,8 +429,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
 
   private static class ArrowUpLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
-    private ArrowUpLineMarkerInfo(@NotNull PsiElement element, @NotNull Icon icon, @NotNull MarkerType markerType, int passId) {
-      super(element, element.getTextRange(), icon, passId, markerType.getTooltip(),
+    private ArrowUpLineMarkerInfo(@NotNull PsiElement element, @NotNull Icon icon, @NotNull MarkerType markerType) {
+      super(element, element.getTextRange(), icon, markerType.getTooltip(),
             markerType.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
     }
 

@@ -50,7 +50,7 @@ public class FindByXPathAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         final Project project = e.getProject();
-        final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
+        final Module module = e.getData(LangDataKeys.MODULE);
 
         if (project != null) {
             executeSearch(project, module);

@@ -372,6 +372,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
           if (parameter.getType().equals(((PsiParameter)element).getType()) && parameter.getName().equals(((PsiParameter)element).getName())) {
             bound = true;
+            break;
           }
         }
         if (!bound) {

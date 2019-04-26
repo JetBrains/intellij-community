@@ -75,7 +75,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   }
 
   /**
-   * @Deprecated to delete in 2017.X
+   * @deprecated to delete in 2017.X
    */
   @Nullable
   @Deprecated
@@ -166,7 +166,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   public Collection<Repository> getRepositories() {
     try {
       REPO_LOCK.readLock().lock();
-      return Collections.unmodifiableCollection(myRepositories.values());
+      return new ArrayList<>(myRepositories.values());
     }
     finally {
       REPO_LOCK.readLock().unlock();

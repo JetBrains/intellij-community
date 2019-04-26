@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -54,6 +55,18 @@ public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
+
+    if (SystemInfo.isWin10OrNewer) {
+      // For pythons installed from WindowsStore
+      final VirtualFile installLocation = WindowsStoreServiceKt.findInstallLocationForPackage("Python");
+      if (installLocation != null) {
+        final VirtualFile pythonFromStore = installLocation.findChild("python.exe");
+        if (pythonFromStore != null) {
+          candidates.add(pythonFromStore.getPath());
+        }
+      }
+    }
+
     return candidates;
   }
 

@@ -8,5 +8,6 @@
   -Override anchor
    key
   Reuse anchor
+  *an
 
 LeadPath: [anchorsAndAliases.yml, YAML document, Override anchor, key]

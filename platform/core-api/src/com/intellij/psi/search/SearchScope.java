@@ -46,7 +46,7 @@ public abstract class SearchScope {
   }
 
   @Nullable
-  public Icon getDisplayIcon() {
+  public Icon getIcon() {
     return null;
   }
 

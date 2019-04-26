@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
-import com.intellij.util.Function;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,12 +27,14 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
   public static final String PROP_KEY = "jps.backward.ref.index.builder";
 
   private static volatile JavaBackwardReferenceIndexWriter ourInstance;
+  private static int ourInitAttempt = 0;
+
 
   private JavaBackwardReferenceIndexWriter(JavaCompilerBackwardReferenceIndex index) {
     super(index);
   }
 
-  public static void closeIfNeed(boolean clearIndex) {
+  public synchronized static void closeIfNeed(boolean clearIndex) {
     if (ourInstance != null) {
       File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
@@ -49,7 +52,10 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
     return ourInstance;
   }
 
-  static void initialize(@NotNull final CompileContext context, int attempt) {
+  public static void initialize(@NotNull final CompileContext context) {
+    if (ourInstance != null) {
+      return;
+    }
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
@@ -63,7 +69,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
         CompilerReferenceIndex.removeIndexFiles(buildDir);
       } else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
         CompilerReferenceIndex.removeIndexFiles(buildDir);
-        if ((attempt == 0 && areAllJavaModulesAffected(context))) {
+        if ((ourInitAttempt++ == 0 && areAllJavaModulesAffected(context))) {
           throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
         } else {
           // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
@@ -72,6 +78,9 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
 
       if (CompilerReferenceIndex.exists(buildDir) || isRebuild) {
         ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, false));
+        ShutDownTracker.getInstance().registerShutdownTask(() -> {
+          closeIfNeed(false);
+        });
       }
     } else {
       CompilerReferenceIndex.removeIndexFiles(buildDir);

@@ -5,7 +5,6 @@ package com.intellij.lang.jvm;
  * Marker interface for languages which are compiled into JVM-bytecode.
  *
  * @see JvmMetaLanguage
- * @since 2018.2
  */
 public interface JvmLanguage {
 }

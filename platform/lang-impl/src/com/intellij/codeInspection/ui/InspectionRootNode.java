@@ -16,19 +16,13 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
-/**
- * @author max
- */
 public class InspectionRootNode extends InspectionTreeNode {
-  public InspectionRootNode(Project project, @NotNull InspectionTreeUpdater updater) {
-    super(project);
-    myUpdater = updater;
+  protected InspectionRootNode(InspectionTreeModel model) {
+    super(null);
   }
 
-  public InspectionTreeUpdater getUpdater() {
-    return myUpdater;
+  @Override
+  public String getPresentableText() {
+    return "InspectionViewTree";
   }
 }

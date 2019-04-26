@@ -31,7 +31,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import os
-import shlex
 import sys
 
 from _pydev_bundle import pydev_imports
@@ -182,7 +181,7 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
 
     sys.argv = [filename]
     if args is not None:
-        for arg in shlex.split(args):
+        for arg in args:
             sys.argv.append(arg)
 
     if wdir is not None:

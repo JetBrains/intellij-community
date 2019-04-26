@@ -52,6 +52,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
     PsiType defaultType = typeSelectorManager.getDefaultType();
     PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), defaultType) : defaultType;
     assertEquals(myExpectedTypeText, type.getInternalCanonicalText());
+    boolean isDeclareVarType = canBeExtractedWithoutExplicitType(expr) && createVarType();
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
       public String getEnteredName() {
@@ -81,6 +82,11 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
       @Override
       public boolean isOK() {
         return true;
+      }
+
+      @Override
+      public boolean isDeclareVarType() {
+        return isDeclareVarType;
       }
     };
     boolean validationResult = validator.isOK(introduceVariableSettings);

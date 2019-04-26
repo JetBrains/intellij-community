@@ -142,7 +142,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByScopeAction extends RuleAction {
     private GroupByScopeAction(UsageViewImpl view) {
-      super(view, "Group by test/production", AllIcons.Actions.GroupByTestProduction);
+      super(view, UsageViewBundle.message("action.group.by.test.production"), AllIcons.Actions.GroupByTestProduction);
     }
     @Override
     protected boolean getOptionValue() {

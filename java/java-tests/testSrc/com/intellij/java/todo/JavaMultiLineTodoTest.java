@@ -24,6 +24,13 @@ public class JavaMultiLineTodoTest extends TodoItemsTestCase {
                "}");
   }
 
+  public void testNoContinuationOnJaggedLineComments() {
+    testTodos("class C {\n" +
+              "  int a; // [TODO something]\n" +
+              "  int ab; // unrelated\n" +
+              "}");
+  }
+
   @Override
   protected String getFileExtension() {
     return JavaFileType.DEFAULT_EXTENSION;

@@ -2,28 +2,30 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
+import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.uast.UastVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UImportStatement;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
 import java.util.List;
 
 /**
  * This class can be extended by inspections that should report usage of elements annotated with some particular annotation(s).
- *
- * @since 2018.3
  */
 public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool {
   public boolean myIgnoreInsideImports = true;
@@ -31,13 +33,6 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
 
   @NotNull
   protected abstract List<String> getAnnotations();
-
-  protected abstract void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder);
-
-  protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
-    return isLibraryElement(element);
-  }
-
 
   @NotNull
   @Override
@@ -47,67 +42,20 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
   }
 
   @NotNull
+  protected abstract AnnotatedApiUsageProcessor buildAnnotatedApiUsageProcessor(@NotNull ProblemsHolder holder);
+
+  @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!isApplicable(holder.getFile(), holder.getProject())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    return new PsiElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (element instanceof PsiLanguageInjectionHost) {
-          return; // better performance
-        }
-
-        if (myIgnoreInsideImports && isInsideImport(element)) {
-          return;
-        }
-
-        // Java constructors must be handled a bit differently (works fine with Kotlin)
-        PsiMethod resolvedConstructor = null;
-        PsiElement elementParent = element.getParent();
-        if (elementParent instanceof PsiConstructorCall) {
-          resolvedConstructor = ((PsiConstructorCall)elementParent).resolveConstructor();
-        }
-
-        for (PsiReference reference : element.getReferences()) {
-          PsiModifierListOwner modifierListOwner = getModifierListOwner(reference, resolvedConstructor);
-          if (modifierListOwner == null || !shouldProcessElement(modifierListOwner)) {
-            continue;
-          }
-
-          for (String annotation : getAnnotations()) {
-            if (modifierListOwner.hasAnnotation(annotation)) {
-              createProblem(reference, holder);
-              return;
-            }
-          }
-        }
-      }
-    };
-  }
-
-  private static boolean isInsideImport(@NotNull PsiElement element) {
-    return PsiTreeUtil.findFirstParent(element, parent -> UastContextKt.toUElement(parent, UImportStatement.class) != null) != null;
-  }
-
-  @Nullable
-  private static PsiModifierListOwner getModifierListOwner(@NotNull PsiReference reference, @Nullable PsiMethod resolvedConstructor) {
-    if (resolvedConstructor != null) {
-      return resolvedConstructor;
-    }
-
-    if (reference instanceof ResolvingHint && !((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
-      return null;
-    }
-
-    PsiElement resolvedElement = reference.resolve();
-    if (resolvedElement instanceof PsiModifierListOwner) {
-      return (PsiModifierListOwner)resolvedElement;
-    }
-    return null;
+    AnnotatedApiUsageProcessor annotatedApiProcessor = buildAnnotatedApiUsageProcessor(holder);
+    AnnotatedApiUsageProcessorBridge processorBridge = new AnnotatedApiUsageProcessorBridge(
+      myIgnoreInsideImports, getAnnotations(), annotatedApiProcessor
+    );
+    return new UastVisitorAdapter(new ApiUsageUastVisitor(processorBridge), true);
   }
 
   private boolean isApplicable(@Nullable PsiFile file, @Nullable Project project) {
@@ -126,23 +74,60 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
     return false;
   }
 
-  @NotNull
-  protected static String getReferenceText(@NotNull PsiReference reference) {
-    if (reference instanceof PsiQualifiedReference) {
-      String referenceName = ((PsiQualifiedReference)reference).getReferenceName();
-      if (referenceName != null) {
-        return referenceName;
-      }
-    }
-    // references are not PsiQualifiedReference for annotation attributes
-    return StringUtil.getShortName(reference.getCanonicalText());
+  protected static String getPresentableText(@NotNull PsiElement psiElement) {
+    return DeprecationInspectionBase.getPresentableName(psiElement);
   }
 
-  private static boolean isLibraryElement(@NotNull PsiElement element) {
+  protected static boolean isLibraryElement(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
     VirtualFile containingVirtualFile = PsiUtilCore.getVirtualFile(element);
     return containingVirtualFile != null && ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
+  }
+
+  private static final class AnnotatedApiUsageProcessorBridge implements ApiUsageProcessor {
+    private final boolean myIgnoreInsideImports;
+    private final List<String> myAnnotations;
+    private final AnnotatedApiUsageProcessor myAnnotatedApiProcessor;
+
+    private AnnotatedApiUsageProcessorBridge(boolean ignoreInsideImports,
+                                             @NotNull List<String> annotations,
+                                             @NotNull AnnotatedApiUsageProcessor annotatedApiProcessor) {
+      myIgnoreInsideImports = ignoreInsideImports;
+      myAnnotations = annotations;
+      myAnnotatedApiProcessor = annotatedApiProcessor;
+    }
+
+    @Override
+    public void processImportReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target) {
+      if (!myIgnoreInsideImports) {
+        maybeProcessAnnotatedTarget(sourceNode, target);
+      }
+    }
+
+    @Override
+    public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
+      maybeProcessAnnotatedTarget(sourceNode, target);
+    }
+
+    @Override
+    public void processConstructorInvocation(@NotNull UElement sourceNode,
+                                                   @NotNull PsiClass instantiatedClass,
+                                                   @Nullable PsiMethod constructor,
+                                                   @Nullable UClass subclassDeclaration) {
+      if (constructor == null || !maybeProcessAnnotatedTarget(sourceNode, constructor)) {
+        maybeProcessAnnotatedTarget(sourceNode, instantiatedClass);
+      }
+    }
+
+    private boolean maybeProcessAnnotatedTarget(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target) {
+      List<PsiAnnotation> annotations = AnnotationUtil.findAllAnnotations(target, myAnnotations, false);
+      if (annotations.isEmpty()) {
+        return false;
+      }
+      myAnnotatedApiProcessor.processAnnotatedTarget(sourceNode, target, annotations);
+      return true;
+    }
   }
 }

@@ -14,7 +14,7 @@ public class YouTrackFileType extends LanguageFileType {
   public static final YouTrackFileType INSTANCE = new YouTrackFileType();
   public static final String DEFAULT_EXTENSION = "youtrack";
 
-  public YouTrackFileType() {
+  private YouTrackFileType() {
     super(YouTrackLanguage.INSTANCE);
   }
 

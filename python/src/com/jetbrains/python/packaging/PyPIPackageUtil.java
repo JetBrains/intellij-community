@@ -115,7 +115,7 @@ public class PyPIPackageUtil {
     });
   
   /**
-   * Prevents simultaneous updates of {@link PyPackageService#PY_PACKAGES}
+   * Prevents simultaneous updates of {@link PyPackageService#PYPI_REMOVED}
    * because the corresponding response contains tons of data and multiple
    * queries at the same time can cause memory issues. 
    */

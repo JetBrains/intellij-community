@@ -94,7 +94,7 @@ public class EachToForIntention extends Intention {
     if (!(clause instanceof GrForInClause)) return;
     final GrVariable variable = ((GrForInClause)clause).getDeclaredVariable();
 
-    forStatement = updateReturnStatements(forStatement);
+    updateReturnStatements(forStatement);
 
     if (variable == null) return;
 

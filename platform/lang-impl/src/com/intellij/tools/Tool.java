@@ -278,6 +278,10 @@ public class Tool implements SchemeElement {
         ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(project,
                                                                               DefaultRunExecutor.getRunExecutorInstance(),
                                                                               new ToolRunProfile(this, dataContext)).build();
+        if (environment.getState() == null) {
+          return false;
+        }
+
         environment.setExecutionId(executionId);
         environment.getRunner().execute(environment, new ProgramRunner.Callback() {
           @Override

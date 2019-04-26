@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,25 +18,36 @@ import java.io.File;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
-  private static final EventLogSettingsService mySettingsService = EventLogExternalSettingsService.getInstance();
   private static final int MAX_FILES_TO_SEND = 20;
+
+  private final String myRecorder;
+  private final EventLogSettingsService mySettingsService;
+
+  public EventLogStatisticsService(@NotNull String recorder) {
+    myRecorder = recorder;
+    mySettingsService = new EventLogExternalSettingsService(recorder);
+  }
 
   @Override
   public StatisticsResult send() {
-    return send(mySettingsService, new EventLogCounterResultDecorator());
+    return send(myRecorder, mySettingsService, new EventLogCounterResultDecorator());
   }
 
-  public static StatisticsResult send(@NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
-    if (!FeatureUsageLogger.INSTANCE.isEnabled()) {
-      throw new StatServiceException("Event Log collector is not enabled");
+  public static StatisticsResult send(@NotNull String recorder, @NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
+    final StatisticsEventLoggerProvider config = StatisticsEventLoggerKt.getEventLogProvider(recorder);
+
+    final List<File> logs = getLogFiles(config);
+    if (!config.isSendEnabled()) {
+      cleanupFiles(logs);
+      return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
 
-    final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
     if (logs.isEmpty()) {
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to send");
     }
@@ -48,7 +58,7 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     if (!isSendLogsEnabled(settings.getPermittedTraffic())) {
-      cleanupAllFiles();
+      cleanupFiles(logs);
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
@@ -58,7 +68,7 @@ public class EventLogStatisticsService implements StatisticsService {
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
         final File file = logs.get(i);
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter);
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, config.getRecorderId(), filter, settings.isInternal());
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
@@ -128,8 +138,7 @@ public class EventLogStatisticsService implements StatisticsService {
     if (percent == 0) {
       return false;
     }
-    final String userId = PermanentInstallationID.get();
-    return (Math.abs(userId.hashCode()) % 100) < percent;
+    return EventLogConfiguration.INSTANCE.getBucket() < percent * 2.56;
   }
 
   @Nullable
@@ -138,11 +147,14 @@ public class EventLogStatisticsService implements StatisticsService {
       return "File is empty or has invalid format: " + file.getName();
     }
 
-    if (StringUtil.isEmpty(request.getUser())) {
-      return "Cannot upload event log, user ID is empty";
+    if (StringUtil.isEmpty(request.getDevice())) {
+      return "Cannot upload event log, device ID is empty";
     }
     else if (StringUtil.isEmpty(request.getProduct())) {
       return "Cannot upload event log, product code is empty";
+    }
+    else if (StringUtil.isEmpty(request.getRecorder())) {
+      return "Cannot upload event log, recorder code is empty";
     }
     else if (request.getRecords().isEmpty()) {
       return "Cannot upload event log, record list is empty";
@@ -156,16 +168,15 @@ public class EventLogStatisticsService implements StatisticsService {
     return null;
   }
 
-  private static void cleanupAllFiles() {
+  @NotNull
+  protected static List<File> getLogFiles(StatisticsEventLoggerProvider config) {
     try {
-      final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
-      if (!logs.isEmpty()) {
-        cleanupFiles(logs);
-      }
+      return config.getLogFiles();
     }
     catch (Exception e) {
       LOG.info(e);
     }
+    return Collections.emptyList();
   }
 
   private static void cleanupFiles(@NotNull List<File> toRemove) {

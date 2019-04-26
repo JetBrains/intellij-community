@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -24,6 +10,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -100,7 +87,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     Runnable listener = new Runnable() {
       @Override
       public void run() {
-        List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+        Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
         List<String> ids = ContainerUtil.map(switchedPlugins, PluginId::getIdString);
         boolean notificationValid = enabled
                                     ? ids.stream().noneMatch(disabledPlugins::contains)
@@ -126,10 +113,11 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   }
 
   private static void switchPlugins(Collection<PluginId> ids, boolean enabled) throws IOException {
-    Collection<String> disabledPlugins = new HashSet<>(PluginManagerCore.getDisabledPlugins());
+    Collection<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     if (enabled) {
       ids.forEach(id -> disabledPlugins.remove(id.getIdString()));
-    } else {
+    }
+    else {
       ids.forEach(id -> disabledPlugins.add(id.getIdString()));
     }
     PluginManagerCore.saveDisabledPlugins(disabledPlugins, false);
@@ -209,7 +197,9 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
       }
 
       Notification next = PLUGINS_LIST_CHANGED_GROUP
-        .createNotification(IdeBundle.message("plugins.changed.notification.content"), NotificationType.INFORMATION)
+        .createNotification(
+          IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
+          NotificationType.INFORMATION)
         .setTitle(IdeBundle.message("plugins.changed.notification.title"));
 
       if (prevNotification.compareAndSet(prev, next)) {

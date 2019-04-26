@@ -15,6 +15,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.openapi.keymap.KeymapManager
@@ -262,26 +263,14 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                       hasMore: Boolean): JComponent {
     val presentation = Presentation()
     presentation.icon = AllIcons.Actions.More
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     val actions = mutableListOf<AnAction>()
     actions.add(ShowActionsAction(reloader, tooltipAction != null))
     val docAction = ShowDocAction(reloader, hasMore)
     actions.add(docAction)
     val actionGroup = SettingsActionGroup(actions)
 
-    val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
-      override fun paintComponent(g: Graphics?) {
-        val state = popState
-        if (state == ActionButtonComponent.POPPED && UIUtil.isUnderDarcula()) {
-          val look = buttonLook
-          look.paintBackground(g!!, this, getSettingsIconHoverBackgroundColor())
-          look.paintIcon(g, this, icon)
-          look.paintBorder(g, this)
-          return
-        }
-
-        paintButtonLook(g)
-      }
-    }
+    val settingsButton = ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18))
     settingsButton.setNoIconsInPopup(true)
     settingsButton.border = JBUI.Borders.empty()
     settingsButton.isOpaque = false
@@ -358,11 +347,7 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
 }
 
 private fun getKeymapColor(): Color {
-  return JBColor.namedColor("ToolTip.Actions.grayForeground", JBColor(0x99a4ad, 0x919191))
-}
-
-private fun getSettingsIconHoverBackgroundColor(): Color {
-  return JBColor.namedColor("tooltips.actions.settings.icon.background.color", JBColor(0xe9eac0, 0x44494c))
+  return JBColor.namedColor("ToolTip.Actions.infoForeground", JBColor(0x99a4ad, 0x919191))
 }
 
 private fun getActionFont(): Font? {

@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.lang.IdeLanguageCustomization;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -39,8 +41,16 @@ public class NewProjectCheckoutListener implements CheckoutListener {
   public boolean processCheckedOutDirectory(Project project, File directory) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
     LOG.assertTrue(file != null, "Can't find " + directory);
+
+    String projectKind;
+    if (IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages().contains(JavaLanguage.INSTANCE)) {
+      projectKind = ProjectCheckoutListener.getProductNameWithArticle();
+    }
+    else {
+      projectKind = "a Java";
+    }
     int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt",
-                                                                 ProjectCheckoutListener.getProductNameWithArticle(),
+                                                                 projectKind,
                                                                  directory.getAbsolutePath()),
                                       VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
     if (rc == Messages.YES) {

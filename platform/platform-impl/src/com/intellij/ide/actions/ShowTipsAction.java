@@ -3,22 +3,16 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.ide.util.TipDialog;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowTipsAction extends AnAction implements DumbAware {
-  private static TipDialog ourTipDialog;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (ourTipDialog != null && ourTipDialog.isVisible()) {
-      ourTipDialog.dispose();
-    }
-    FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "shown.manually");
-    ourTipDialog = new TipDialog();
-    ourTipDialog.show();
+    TipsOfTheDayUsagesCollector.trigger( "shown.manually");
+    TipDialog.showForProject(e.getProject());
   }
 }

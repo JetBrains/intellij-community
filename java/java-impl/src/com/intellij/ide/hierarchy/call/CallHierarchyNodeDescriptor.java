@@ -161,11 +161,11 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
 
     final PsiReference firstReference = myReferences.get(0);
     final PsiElement element = firstReference.getElement();
-    if (element == null) return;
     final PsiElement callElement = element.getParent();
     if (callElement instanceof Navigatable && ((Navigatable)callElement).canNavigate()) {
       ((Navigatable)callElement).navigate(requestFocus);
-    } else {
+    }
+    else {
       final PsiFile psiFile = callElement.getContainingFile();
       if (psiFile == null || psiFile.getVirtualFile() == null) return;
       FileEditorManager.getInstance(myProject).openFile(psiFile.getVirtualFile(), requestFocus);
@@ -174,19 +174,16 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     Editor editor = PsiUtilBase.findEditor(callElement);
 
     if (editor != null) {
-
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
       for (PsiReference psiReference : myReferences) {
         final PsiElement eachElement = psiReference.getElement();
-        if (eachElement != null) {
-          final PsiElement eachMethodCall = eachElement.getParent();
-          if (eachMethodCall != null) {
-            final TextRange textRange = eachMethodCall.getTextRange();
-            highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);
-          }
+        final PsiElement eachMethodCall = eachElement.getParent();
+        if (eachMethodCall != null) {
+          final TextRange textRange = eachMethodCall.getTextRange();
+          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);
         }
       }
     }

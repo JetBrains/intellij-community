@@ -21,11 +21,11 @@ import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UElement
 
 class JavaUClassLiteralExpression(
-  override val psi: PsiClassObjectAccessExpression,
+  override val sourcePsi: PsiClassObjectAccessExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UClassLiteralExpression {
   override val type: PsiType
-    get() = psi.operand.type
+    get() = sourcePsi.operand.type
 
-  override val expression: JavaUTypeReferenceExpression by lz { JavaUTypeReferenceExpression(psi.operand, this) }
+  override val expression: JavaUTypeReferenceExpression by lz { JavaUTypeReferenceExpression(sourcePsi.operand, this) }
 }

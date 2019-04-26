@@ -18,8 +18,8 @@ package com.siyeh.ipp.forloop;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,10 +85,10 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
     if (rhs == null) {
       return false;
     }
-    if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+    if (ExpressionUtils.isReferenceTo(lhs, variable)) {
       return true;
     }
-    else if (VariableAccessUtils.evaluatesToVariable(rhs, variable)) {
+    else if (ExpressionUtils.isReferenceTo(rhs, variable)) {
       return true;
     }
     return false;
@@ -112,7 +112,7 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
         return false;
       }
       final PsiExpression operand = prefixExpression.getOperand();
-      return VariableAccessUtils.evaluatesToVariable(operand, variable);
+      return ExpressionUtils.isReferenceTo(operand, variable);
     }
     else if (expression instanceof PsiPostfixExpression) {
       final PsiPostfixExpression postfixExpression =
@@ -123,7 +123,7 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
         return false;
       }
       final PsiExpression operand = postfixExpression.getOperand();
-      return VariableAccessUtils.evaluatesToVariable(operand, variable);
+      return ExpressionUtils.isReferenceTo(operand, variable);
     }
     else if (expression instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression =
@@ -132,7 +132,7 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
         assignmentExpression.getOperationTokenType();
       PsiExpression lhs = assignmentExpression.getLExpression();
       lhs = ParenthesesUtils.stripParentheses(lhs);
-      if (!VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+      if (!ExpressionUtils.isReferenceTo(lhs, variable)) {
         return false;
       }
       PsiExpression rhs = assignmentExpression.getRExpression();
@@ -141,27 +141,18 @@ class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
         if (!(rhs instanceof PsiBinaryExpression)) {
           return false;
         }
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)rhs;
-        final IElementType token =
-          binaryExpression.getOperationTokenType();
-        if (!token.equals(JavaTokenType.PLUS) &&
-            !token.equals(JavaTokenType.MINUS)) {
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
+        final IElementType token = binaryExpression.getOperationTokenType();
+        if (!token.equals(JavaTokenType.PLUS) && !token.equals(JavaTokenType.MINUS)) {
           return false;
         }
         PsiExpression lOperand = binaryExpression.getLOperand();
         lOperand = ParenthesesUtils.stripParentheses(lOperand);
         PsiExpression rOperand = binaryExpression.getROperand();
         rOperand = ParenthesesUtils.stripParentheses(rOperand);
-        if (VariableAccessUtils.evaluatesToVariable(rOperand, variable)) {
-          return true;
-        }
-        else if (VariableAccessUtils.evaluatesToVariable(lOperand, variable)) {
-          return true;
-        }
+        return ExpressionUtils.isReferenceTo(rOperand, variable) || ExpressionUtils.isReferenceTo(lOperand, variable);
       }
-      else if (tokenType == JavaTokenType.PLUSEQ ||
-               tokenType == JavaTokenType.MINUSEQ) {
+      else if (tokenType == JavaTokenType.PLUSEQ || tokenType == JavaTokenType.MINUSEQ) {
         return true;
       }
     }

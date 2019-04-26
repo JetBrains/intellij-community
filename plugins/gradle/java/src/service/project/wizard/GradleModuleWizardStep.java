@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -242,6 +243,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public void disposeUIResources() {
     Disposer.dispose(myParentProjectForm);
+  }
+
+  @TestOnly
+  public void setArtifactId(@NotNull String artifactId) {
+    myArtifactIdField.setText(artifactId);
   }
 }
 

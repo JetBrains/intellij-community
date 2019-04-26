@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -14,6 +14,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.psi.util.PsiTreeUtil.countChildrenOfType;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -36,6 +38,11 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
   }
 
   @Override
+  public int getTypeArgumentCount() {
+    return countChildrenOfType(this, GrTypeElement.class);
+  }
+
+  @Override
   public GrTypeElement[] getTypeArgumentElements() {
     return findChildrenByClass(GrTypeElement.class);
   }
@@ -54,7 +61,7 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
 
   @Override
   public boolean isDiamond() {
-    return getTypeArgumentElements().length == 0;
+    return findChildByClass(GrTypeElement.class) == null;
   }
 
   @Override

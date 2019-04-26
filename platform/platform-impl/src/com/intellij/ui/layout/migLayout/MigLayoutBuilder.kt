@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
@@ -10,10 +12,8 @@ import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JDialog
-import javax.swing.JLabel
+import javax.swing.*
+import kotlin.reflect.KProperty0
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
   companion object {
@@ -53,6 +53,12 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
   private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
 
+  override var preferredFocusedComponent: JComponent? = null
+  override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
+  override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
+  override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
+  override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
+
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
@@ -68,20 +74,15 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   }
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
-    addNoteOrComment(noteComponent(text, linkHandler))
+    rootRow.createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
   override fun commentRow(text: String) {
-    addNoteOrComment(ComponentPanelBuilder.createCommentComponent(text, true))
+    rootRow.createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
   }
 
-  private fun addNoteOrComment(component: JComponent) {
-    val cc = CC()
-    cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
-
-    val row = rootRow.createChildRow(label = null, noGrid = true)
-    row.addComponent(component, lazyOf(cc))
+  fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
+    componentConstraints.getOrPut(component) { CC() }.callback()
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
@@ -106,18 +107,12 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
       override fun layoutContainer(parent: Container) {
         if (!isLayoutInsetsAdjusted) {
           isLayoutInsetsAdjusted = true
-
-          var topParent = parent.parent
-          while (topParent != null) {
-            if (topParent is JDialog) {
-              val topBottom = createUnitValue(spacing.dialogTopBottom, false)
-              val leftRight = createUnitValue(spacing.dialogLeftRight, true)
-              // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
-              // but instead set insets to our content panel (so, child components are not clipped)
-              lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
-              break
-            }
-            topParent = topParent.parent
+          if (container.getClientProperty(DialogWrapper.DIALOG_CONTENT_PANEL_PROPERTY) != null) {
+            val topBottom = createUnitValue(spacing.dialogTopBottom, false)
+            val leftRight = createUnitValue(spacing.dialogLeftRight, true)
+            // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
+            // but instead set insets to our content panel (so, child components are not clipped)
+            lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
           }
         }
 
@@ -172,7 +167,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
 
     fun processRows(rows: List<MigLayoutRow>) {
       for (row in rows) {
-        configureComponents(row)
+        // configureComponents will increase rowIndex, but if row doesn't have components, it is synthetic row (e.g. titled row that contains only sub rows)
+        if (row.components.isNotEmpty()) {
+          configureComponents(row)
+        }
         row.subRows?.let {
           processRows(it)
         }

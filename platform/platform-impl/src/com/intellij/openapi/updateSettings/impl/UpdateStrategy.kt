@@ -40,10 +40,12 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     return CheckForUpdateResult(newBuild, updatedChannel, patches)
   }
 
-  private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>) =
-      candidate.number > currentBuild &&
-      candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
-      candidate.target?.inRange(currentBuild) ?: true
+  private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean {
+    val customization = UpdateStrategyCustomization.getInstance()
+    return customization.isNewerVersion(candidate.number, currentBuild) &&
+           candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
+           candidate.target?.inRange(currentBuild) ?: true
+  }
 
   private fun compareBuilds(n1: BuildNumber, n2: BuildNumber): Int {
     val customization = UpdateStrategyCustomization.getInstance()

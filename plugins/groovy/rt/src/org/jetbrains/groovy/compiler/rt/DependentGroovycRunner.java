@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.Binding;
@@ -37,6 +23,8 @@ import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -47,6 +35,7 @@ public class DependentGroovycRunner {
   public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
   private static final String STUB_DIR = "stubDir";
 
+  @SuppressWarnings("unused")
   public static boolean runGroovyc(boolean forStubs, String argsPath,
                                    @Nullable String configScript,
                                    @Nullable String targetBytecode, @Nullable Queue mailbox) {
@@ -78,10 +67,9 @@ public class DependentGroovycRunner {
     }
 
     try {
-      if (!"false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
-        config.getOptimizationOptions().put("asmResolving", true);
-        config.getOptimizationOptions().put("classLoaderResolving", false);
-      }
+      boolean asm = !"false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY));
+      config.getOptimizationOptions().put("asmResolving", asm);
+      config.getOptimizationOptions().put("classLoaderResolving", !asm);
     }
     catch (NoSuchMethodError ignored) { // old groovyc's don't have optimization options
     }
@@ -379,7 +367,11 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader, final GroovyClassLoader transformLoader, final Queue mailbox, final GroovyCompilerWrapper wrapper) {
+  private static CompilationUnit createStubGenerator(final CompilerConfiguration config,
+                                                     final GroovyClassLoader classLoader,
+                                                     final GroovyClassLoader transformLoader,
+                                                     final Queue<Object> mailbox,
+                                                     final GroovyCompilerWrapper wrapper) {
     final JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
       private boolean annoRemovedAdded;
 
@@ -465,7 +457,7 @@ public class DependentGroovycRunner {
               System.out.flush();
               System.err.flush();
 
-              pauseAndWaitForJavac(mailbox);
+              pauseAndWaitForJavac((LinkedBlockingQueue<Object>)mailbox);
               wrapper.onContinuation();
             }
           }
@@ -476,20 +468,16 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  @SuppressWarnings("unchecked")
-  private static void pauseAndWaitForJavac(Queue mailbox) {
-    mailbox.offer(GroovyRtConstants.STUBS_GENERATED);
+  private static void pauseAndWaitForJavac(LinkedBlockingQueue<Object> mailbox) {
+    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<String>();
+    mailbox.offer(fromJps); // signal that stubs are generated
     while (true) {
       try {
-        //noinspection BusyWait
-        Thread.sleep(10);
-        Object response = mailbox.poll();
-        if (GroovyRtConstants.STUBS_GENERATED.equals(response)) {
-          mailbox.offer(response); // another thread hasn't received it => resend
-        } else if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
+        Object response = fromJps.poll(1, TimeUnit.MINUTES);
+        if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
           throw new RuntimeException(GroovyRtConstants.BUILD_ABORTED);
         } else if (GroovyRtConstants.JAVAC_COMPLETED.equals(response)) {
-          break; // stop waiting and continue compiling
+          return; // stop waiting and continue compiling
         } else if (response != null) {
           throw new RuntimeException("Unknown response: " + response);
         }

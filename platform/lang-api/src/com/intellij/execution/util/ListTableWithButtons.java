@@ -15,8 +15,7 @@
  */
 package com.intellij.execution.util;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,10 +40,11 @@ import java.util.Observable;
  */
 public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = ContainerUtil.newArrayList();
-  private final JPanel myPanel;
+  private JPanel myPanel;
   private final TableView<T> myTableView;
   private final CommonActionsPanel myActionsPanel;
   private boolean myIsEnabled = true;
+  private final ToolbarDecorator myDecorator;
 
   protected ListTableWithButtons() {
     myTableView = new TableView<T>(createListModel()) {
@@ -66,7 +66,10 @@ public abstract class ListTableWithButtons<T> extends Observable {
                   int nextRow = nextColumn == 0 ? row + 1 : row;
                   if (nextRow > myTableView.getRowCount() - 1) {
                     if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
-                      ToolbarDecorator.findAddButton(myPanel).actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
+                      AnActionButton addButton = ToolbarDecorator.findAddButton(myPanel);
+                      if (addButton != null) {
+                        addButton.actionPerformed(ActionUtil.createEmptyEvent());
+                      }
                       return;
                     }
                     else {
@@ -84,52 +87,34 @@ public abstract class ListTableWithButtons<T> extends Observable {
     };
     myTableView.setIntercellSpacing(JBUI.emptySize());
     myTableView.setStriped(true);
-
     myTableView.getTableViewModel().setSortable(false);
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
-    myPanel = decorator
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myTableView.stopEditing();
-          setModified();
-          SwingUtilities.invokeLater(() -> {
-            if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
-              myElements.add(createElement());
-              myTableView.getTableViewModel().setItems(myElements);
-            }
-            myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-            myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
-          });
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeSelected();
-        }
-      }).disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
-
-    ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        List<T> selection = getSelection();
-        if (selection.isEmpty() || !myIsEnabled) return false;
-        for (T t : selection) {
-          if (!canDeleteElement(t)) return false;
-        }
-        return true;
-      }
-    });
-    ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        return myIsEnabled;
-      }
-    });
-
-    myActionsPanel = decorator.getActionsPanel();
-
     myTableView.getComponent().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+    myDecorator = ToolbarDecorator.createDecorator(myTableView);
+    myActionsPanel = myDecorator.getActionsPanel();
+  }
+
+  @Nullable
+  protected AnActionButtonRunnable createRemoveAction() {
+    return button -> removeSelected();
+  }
+
+  @Nullable
+  protected AnActionButtonRunnable createAddAction() {
+    return button -> {
+      myTableView.stopEditing();
+      setModified();
+      SwingUtilities.invokeLater(() -> {
+        if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
+          myElements.add(createElement());
+          myTableView.getTableViewModel().setItems(myElements);
+        }
+        myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
+        myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+        myTableView.getComponent().revalidate();
+        myTableView.getComponent().repaint();
+      });
+    };
   }
 
   protected void removeSelected() {
@@ -139,7 +124,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       setModified();
       int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
       myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
-      selected = ContainerUtil.filter(selected, t -> canDeleteElement(t));
+      selected = ContainerUtil.filter(selected, this::canDeleteElement);
       myElements.removeAll(selected);
       myTableView.getSelectionModel().clearSelection();
       myTableView.getTableViewModel().setItems(myElements);
@@ -171,6 +156,29 @@ public abstract class ListTableWithButtons<T> extends Observable {
   }
 
   public JComponent getComponent() {
+    if (myPanel == null) {
+      myPanel = myDecorator
+        .setAddAction(createAddAction())
+        .setRemoveAction(createRemoveAction())
+        .disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
+
+      AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myPanel);
+      if (removeButton != null) {
+        removeButton.addCustomUpdater(e -> {
+          List<T> selection = getSelection();
+          if (selection.isEmpty() || !myIsEnabled) return false;
+          for (T t : selection) {
+            if (!canDeleteElement(t)) return false;
+          }
+          return true;
+        });
+      }
+
+      AnActionButton addButton = ToolbarDecorator.findAddButton(myPanel);
+      if (addButton != null) {
+        addButton.addCustomUpdater(e -> myIsEnabled);
+      }
+    }
     return myPanel;
   }
 

@@ -35,7 +35,9 @@ data class ProjectProperties(
   // Gradle/Maven based projects: used for multimodule projects
   val modules: Set<TargetPlatform> = emptySet(),
   // Idea, Gradle or Maven
-  val buildSystem: BuildSystem
+  val buildSystem: BuildSystem,
+  // project SDK
+  val projectSdk: String = "1.8"
 ) : Serializable
 
 enum class Projects(val title: String) {
@@ -68,14 +70,14 @@ val kotlinProjects = mapOf(
   ),
   Projects.KotlinProjectJvm to ProjectProperties(
     group = NewProjectDialogModel.Groups.Kotlin,
-    frameworkName = NewProjectDialogModel.Constants.itemKotlinJvm,
+    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJvm,
     libName = "KotlinJavaRuntime",
     jars = kotlinJvmJavaKotlinJars,
     buildSystem = BuildSystem.IDEA
   ),
   Projects.KotlinProjectJs to ProjectProperties(
     group = NewProjectDialogModel.Groups.Kotlin,
-    frameworkName = NewProjectDialogModel.Constants.itemKotlinJs,
+    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJs,
     libName = "KotlinJavaScript",
     jars = kotlinJsJavaKotlinLibs,
     buildSystem = BuildSystem.IDEA
@@ -118,14 +120,14 @@ val kotlinProjects = mapOf(
   ),
   Projects.GradleGProjectJvm to ProjectProperties(
     group = NewProjectDialogModel.Groups.Gradle,
-    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJvm,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinJvm,
     modules = setOf(TargetPlatform.JVM18),
     jars = kotlinJvmGradleLibs,
     buildSystem = BuildSystem.Gradle
   ),
   Projects.GradleGProjectJs to ProjectProperties(
     group = NewProjectDialogModel.Groups.Gradle,
-    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJs,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinJs,
     modules = setOf(TargetPlatform.JavaScript),
     // TODO: change back to kotlinJsGradleLibs after KT-21166 fixing
     jars = kotlinJsGradleKLibs,
@@ -133,7 +135,7 @@ val kotlinProjects = mapOf(
   ),
   Projects.GradleKProjectJvm to ProjectProperties(
     group = NewProjectDialogModel.Groups.Gradle,
-    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJvm,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinJvm,
     isKotlinDsl = true,
     modules = setOf(TargetPlatform.JVM18),
     jars = kotlinJvmGradleLibs,
@@ -141,7 +143,7 @@ val kotlinProjects = mapOf(
   ),
   Projects.GradleKProjectJs to ProjectProperties(
     group = NewProjectDialogModel.Groups.Gradle,
-    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJs,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinJs,
     isKotlinDsl = true,
     modules = setOf(TargetPlatform.JavaScript),
     jars = kotlinJsGradleKLibs,

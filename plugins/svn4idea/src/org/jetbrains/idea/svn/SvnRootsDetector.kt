@@ -126,8 +126,8 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
     if (svnStatus != null && svnStatus.url != null) {
       info.url = svnStatus.url
       info.format = myVcs.getWorkingCopyFormat(infoFile, false)
-      if (svnStatus.repositoryRootURL != null) {
-        info.rootURL = svnStatus.repositoryRootURL
+      if (svnStatus.repositoryRootUrl != null) {
+        info.rootURL = svnStatus.repositoryRootUrl
       }
       refreshed = true
     }

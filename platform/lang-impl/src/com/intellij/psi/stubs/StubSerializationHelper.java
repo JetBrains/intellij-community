@@ -18,14 +18,17 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
@@ -33,36 +36,49 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Author: dmitrylomov
  */
-public class StubSerializationHelper {
+class StubSerializationHelper {
   private final AbstractStringEnumerator myNameStorage;
 
-  private final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<>();
-  private final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<>();
+  private final TIntObjectHashMap<String> myIdToName = new TIntObjectHashMap<>();
+  private final TObjectIntHashMap<String> myNameToId = new TObjectIntHashMap<>();
+  private final THashMap<String, Computable<ObjectStubSerializer>> myNameToLazySerializer = new THashMap<>();
+
+  private final ConcurrentIntObjectMap<ObjectStubSerializer> myIdToSerializer = ContainerUtil.createConcurrentIntObjectMap();
+  private final Map<ObjectStubSerializer, Integer> mySerializerToId = ContainerUtil.newConcurrentMap();
 
   StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage, @NotNull Disposable parentDisposable) {
     myNameStorage = nameStorage;
     myStringInterner = new RecentStringInterner(parentDisposable);
   }
 
-  void assignId(@NotNull final ObjectStubSerializer serializer) throws IOException {
-    final int id = persistentId(serializer);
-    final ObjectStubSerializer old = myIdToSerializer.put(id, serializer);
-    assert old == null : "ID: " + serializer.getExternalId() + " is not unique; Already registered serializer with this ID: " + old.getClass().getName();
+  void assignId(@NotNull Computable<ObjectStubSerializer> serializer, String name) throws IOException {
+    Computable<ObjectStubSerializer> old = myNameToLazySerializer.put(name, serializer);
+    if (old != null) {
+      ObjectStubSerializer existing = old.compute();
+      ObjectStubSerializer computed = serializer.compute();
+      if (existing != computed) {
+        throw new AssertionError("ID: " + name + " is not unique, but found in both " +
+                                 existing.getClass().getName() + " and " + computed.getClass().getName());
+      }
+      return;
+    }
 
-    final int oldId = mySerializerToId.put(serializer, id);
-    assert oldId == 0 : "Serializer " + serializer + " is already registered; Old ID:" + oldId;
+    int id = myNameStorage.enumerate(name);
+    myIdToName.put(id, name);
+    myNameToId.put(name, id);
   }
 
-  private int persistentId(@NotNull final ObjectStubSerializer serializer) throws IOException {
-    return myNameStorage.enumerate(serializer.getExternalId());
+  void copyFrom(@Nullable StubSerializationHelper helper) throws IOException {
+    if (helper == null) return;
+
+    for (String name : helper.myNameToLazySerializer.keySet()) {
+      assignId(helper.myNameToLazySerializer.get(name), name);
+    }
   }
 
   private ObjectStubSerializer<Stub, Stub> writeSerializerId(Stub stub, @NotNull DataOutput stream)
@@ -121,13 +137,15 @@ public class StubSerializationHelper {
   }
 
   private int getClassId(final ObjectStubSerializer serializer) {
-    final int idValue = mySerializerToId.get(serializer);
-    assert idValue > 0 : "No ID found for serializer " +
-                         LogUtil.objectAndClass(serializer) +
-                         ", external id:" +
-                         serializer.getExternalId() +
-                         (serializer instanceof IElementType ?
-                      ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "");
+    Integer idValue = mySerializerToId.get(serializer);
+    if (idValue == null) {
+      String name = serializer.getExternalId();
+      idValue = myNameToId.get(name);
+      assert idValue > 0 : "No ID found for serializer " + LogUtil.objectAndClass(serializer) +
+                           ", external id:" + name +
+                           (serializer instanceof IElementType ? ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "");
+      mySerializerToId.put(serializer, idValue);
+    }
     return idValue;
   }
 
@@ -334,20 +352,35 @@ public class StubSerializationHelper {
     return myStringInterner.get(str);
   }
 
+  @SuppressWarnings("unchecked")
   private ObjectStubSerializer<?, Stub> getClassById(int id, @Nullable Stub parentStub) throws SerializerNotFoundException {
-    //noinspection unchecked
     ObjectStubSerializer<?, Stub> serializer = myIdToSerializer.get(id);
     if (serializer == null) {
-      String externalId = null;
-      try {
-        externalId = myNameStorage.valueOf(id);
-      } catch (Throwable ignore) {}
-      throw new SerializerNotFoundException(
-        brokenStubFormat(ourRootStubSerializer.get()) +
-        "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
-        "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
+      myIdToSerializer.put(id, serializer = instantiateSerializer(id, parentStub));
     }
     return serializer;
+  }
+
+  @NotNull
+  private ObjectStubSerializer instantiateSerializer(int id, @Nullable Stub parentStub) throws SerializerNotFoundException {
+    String name = myIdToName.get(id);
+    Computable<ObjectStubSerializer> lazy = name == null ? null : myNameToLazySerializer.get(name);
+    ObjectStubSerializer serializer = lazy == null ? null : lazy.compute();
+    if (serializer == null) {
+      throw reportMissingSerializer(id, parentStub);
+    }
+    return serializer;
+  }
+
+  private SerializerNotFoundException reportMissingSerializer(int id, @Nullable Stub parentStub) {
+    String externalId = null;
+    try {
+      externalId = myNameStorage.valueOf(id);
+    } catch (Throwable ignore) {}
+    return new SerializerNotFoundException(
+      brokenStubFormat(ourRootStubSerializer.get()) +
+      "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
+      "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
   }
 
   static String brokenStubFormat(ObjectStubSerializer root) {

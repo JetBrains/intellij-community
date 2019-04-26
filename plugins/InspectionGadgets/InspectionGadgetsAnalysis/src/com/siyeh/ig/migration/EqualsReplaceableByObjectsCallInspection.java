@@ -384,10 +384,6 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
 
   private static class NoSideEffectExpressionEquivalenceChecker extends EquivalenceChecker {
 
-    NoSideEffectExpressionEquivalenceChecker() {
-      super(false);
-    }
-
     @Override
     protected Match newExpressionsMatch(@NotNull PsiNewExpression newExpression1,
                                         @NotNull PsiNewExpression newExpression2) {

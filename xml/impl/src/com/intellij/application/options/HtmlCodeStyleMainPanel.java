@@ -18,5 +18,6 @@ public class HtmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
     addIndentOptionsTab(settings);
     addTab(new CodeStyleHtmlPanel(settings));
     addTab(new ArrangementSettingsPanel(settings, HTMLLanguage.INSTANCE));
+    addTab(new GenerationCodeStylePanel(settings, HTMLLanguage.INSTANCE));
   }
 }

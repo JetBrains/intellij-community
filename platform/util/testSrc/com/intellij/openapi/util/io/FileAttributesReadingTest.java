@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
@@ -17,6 +16,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public abstract class FileAttributesReadingTest {
   public static class MainTest extends FileAttributesReadingTest {
     @BeforeClass
@@ -195,7 +196,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void linkToFile() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File file = tempDir.newFile("file.txt");
     FileUtil.writeToFile(file, myTestData);
@@ -217,7 +218,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void doubleLink() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File file = tempDir.newFile("file.txt");
     FileUtil.writeToFile(file, myTestData);
@@ -241,7 +242,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void linkToDirectory() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File dir = tempDir.newFolder("dir");
     if (SystemInfo.isUnix) assertTrue(dir.setWritable(false, false));
@@ -262,7 +263,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void missingLink() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File file = new File(tempDir.getRoot(), "file.txt");
     File link = new File(tempDir.getRoot(), "link");
@@ -279,7 +280,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void selfLink() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File dir = tempDir.newFolder("dir");
     File link = new File(dir, "link");
@@ -431,7 +432,7 @@ public abstract class FileAttributesReadingTest {
         assertTrue(getAttributes(dir).isDirectory());
 
         file = new File(dir, "file.txt");
-        FileUtil.writeToFile(file, "test".getBytes(CharsetToolkit.UTF8_CHARSET));
+        FileUtil.writeToFile(file, "test".getBytes(StandardCharsets.UTF_8));
         assertTrue(file.exists());
         assertFileAttributes(file);
 
@@ -466,11 +467,12 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hardLink() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
     File target = tempDir.newFile("file.txt");
     File link = new File(tempDir.getRoot(), "link");
     Files.createLink(link.toPath(), target.toPath());
 
-    FileAttributes attributes = getAttributes(link, SystemInfo.areSymLinksSupported);  // ignore XP
+    FileAttributes attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
@@ -485,7 +487,7 @@ public abstract class FileAttributesReadingTest {
       assertEquals(myTestData.length, bytes.length);
     }
 
-    attributes = getAttributes(link, SystemInfo.areSymLinksSupported);  // ignore XP
+    attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);

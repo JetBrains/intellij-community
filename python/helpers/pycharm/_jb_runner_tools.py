@@ -2,12 +2,11 @@
 """
 Tools to implement runners (https://confluence.jetbrains.com/display/~link/PyCharm+test+runners+protocol)
 """
-import atexit
-import _jb_utils
 import os
 import re
 import sys
 
+import _jb_utils
 from teamcity import teamcity_presence_env_var, messages
 
 # Some runners need it to "detect" TC and start protocol
@@ -20,6 +19,7 @@ if teamcity_presence_env_var not in os.environ:
 JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
 # getcwd resolves symlinks, but PWD is not supported by some shells
 PROJECT_DIR = os.getenv('PWD', os.getcwd())
+
 
 def _parse_parametrized(part):
     """
@@ -39,125 +39,38 @@ def _parse_parametrized(part):
         return [match.group(1), match.group(2)]
 
 
-# Monkeypatching TC to pass location hint
-
-class _TreeManager(object):
-    """
-    Manages output tree by building it from flat test names.
-    """
-
+class _TreeManagerHolder(object):
     def __init__(self):
-        super(_TreeManager, self).__init__()
-        # Currently active branch as list. New nodes go to this branch
-        self.current_branch = []
-        # node unique name to its nodeId
-        self._node_ids_dict = {}
-        # Node id mast be incremented for each new branch
-        self._max_node_id = 0
-
-    def _calculate_relation(self, branch_as_list):
-        """
-        Get relation of branch_as_list to current branch.
-        :return: tuple. First argument could be: "same", "child", "parent" or "sibling"(need to start new tree)
-        Second argument is relative path from current branch to child if argument is child
-        """
-        if branch_as_list == self.current_branch:
-            return "same", None
-
-        hierarchy_name_len = len(branch_as_list)
-        current_branch_len = len(self.current_branch)
-
-        if hierarchy_name_len > current_branch_len and branch_as_list[0:current_branch_len] == self.current_branch:
-            return "child", branch_as_list[current_branch_len:]
-
-        if hierarchy_name_len < current_branch_len and self.current_branch[0:hierarchy_name_len] == branch_as_list:
-            return "parent", None
-
-        return "sibling", None
-
-    def _add_new_node(self, new_node_name):
-        """
-        Adds new node to branch
-        """
-        self.current_branch.append(new_node_name)
-        self._max_node_id += 1
-        self._node_ids_dict[".".join(self.current_branch)] = self._max_node_id
-
-    def level_opened(self, test_as_list, func_to_open):
-        """
-        To be called on test start.
-
-        :param test_as_list: test name splitted as list
-        :param func_to_open: func to be called if test can open new level
-        :return: None if new level opened, or tuple of command client should execute and try opening level again
-         Command is "open" (open provided level) or "close" (close it). Second item is test name as list
-        """
-        relation, relative_path = self._calculate_relation(test_as_list)
-        if relation == 'same':
-            return  # Opening same level?
-        if relation == 'child':
-            # If one level -- open new level gracefully
-            if len(relative_path) == 1:
-                self._add_new_node(relative_path[0])
-                func_to_open()
-                return None
-            else:
-                # Open previous level
-                return "open", self.current_branch + relative_path[0:1]
-        if relation == "sibling":
-            if self.current_branch:
-                # Different tree, close whole branch
-                return "close", self.current_branch
-            else:
-                return None
-        if relation == 'parent':
-            # Opening parent? Insane
-            pass
-
-    def level_closed(self, test_as_list, func_to_close):
-        """
-        To be called on test end or failure.
-
-        See level_opened doc.
-        """
-        relation, relative_path = self._calculate_relation(test_as_list)
-        if relation == 'same':
-            # Closing current level
-            func_to_close()
-            self.current_branch.pop()
-        if relation == 'child':
-            return None
-
-        if relation == 'sibling':
-            pass
-        if relation == 'parent':
-            return "close", self.current_branch
+        self.parallel = "JB_USE_PARALLEL_TREE_MANAGER" in os.environ
+        self._manager_imp = None
 
     @property
-    def parent_branch(self):
-        return self.current_branch[:-1] if self.current_branch else None
+    def manager(self):
+        if not self._manager_imp:
+            self._fill_manager()
+        return self._manager_imp
 
-    def _get_node_id(self, branch):
-        return self._node_ids_dict[".".join(branch)]
-
-    @property
-    def node_ids(self):
-        """
-
-        :return: (current_node_id, parent_node_id)
-        """
-        current = self._get_node_id(self.current_branch)
-        parent = self._get_node_id(self.parent_branch) if self.parent_branch else "0"
-        return str(current), str(parent)
-
-    def close_all(self):
-        if not self.current_branch:
-            return None
-        return "close", self.current_branch
+    def _fill_manager(self):
+        if self.parallel:
+            from _jb_parallel_tree_manager import ParallelTreeManager
+            self._manager_imp = ParallelTreeManager()
+        else:
+            from _jb_serial_tree_manager import SerialTreeManager
+            self._manager_imp = SerialTreeManager()
 
 
-TREE_MANAGER = _TreeManager()
+_TREE_MANAGER_HOLDER = _TreeManagerHolder()
 
+
+def set_parallel_mode():
+    _TREE_MANAGER_HOLDER.parallel = True
+
+
+def is_parallel_mode():
+    return _TREE_MANAGER_HOLDER.parallel
+
+
+# Monkeypatching TC
 _old_service_messages = messages.TeamcityServiceMessages
 
 PARSE_FUNC = None
@@ -165,9 +78,9 @@ PARSE_FUNC = None
 
 class NewTeamcityServiceMessages(_old_service_messages):
     _latest_subtest_result = None
-    
+
     def message(self, messageName, **properties):
-        if messageName in set(["enteredTheMatrix", "testCount"]):
+        if messageName in {"enteredTheMatrix", "testCount"}:
             _old_service_messages.message(self, messageName, **properties)
             return
 
@@ -187,13 +100,13 @@ class NewTeamcityServiceMessages(_old_service_messages):
             _old_service_messages.message(self, messageName, **properties)
             return
 
+        current, parent = _TREE_MANAGER_HOLDER.manager.get_node_ids(properties["name"])
         # Shortcut for name
         try:
             properties["name"] = str(properties["name"]).split(".")[-1]
         except IndexError:
             pass
 
-        current, parent = TREE_MANAGER.node_ids
         properties["nodeId"] = str(current)
         properties["parentNodeId"] = str(parent)
 
@@ -236,8 +149,8 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return
 
         # closing subtest
-        test_name = ".".join(TREE_MANAGER.current_branch)
-        if self._latest_subtest_result in set(["Failure", "Error"]):
+        test_name = ".".join(_TREE_MANAGER_HOLDER.manager.current_branch)
+        if self._latest_subtest_result in {"Failure", "Error"}:
             self.testFailed(test_name)
         if self._latest_subtest_result == "Skip":
             self.testIgnored(test_name)
@@ -246,7 +159,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self._latest_subtest_result = None
 
     def subTestBlockOpened(self, name, subTestResult, flowId=None):
-        self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))
+        self.testStarted(".".join(_TREE_MANAGER_HOLDER.manager.current_branch + [name]))
         self._latest_subtest_result = subTestResult
 
     def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None):
@@ -255,15 +168,15 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         def _write_start_message():
             # testName, captureStandardOutput, flowId
-            args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo":metainfo}
+            args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo": metainfo}
             if is_suite:
                 self.message("testSuiteStarted", **args)
             else:
                 self.message("testStarted", **args)
 
-        commands = TREE_MANAGER.level_opened(self._test_to_list(testName), _write_start_message)
+        commands = _TREE_MANAGER_HOLDER.manager.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
-            self.do_command(commands[0], commands[1])
+            self.do_commands(commands)
             self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
@@ -275,7 +188,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         def _write_finished_message():
             # testName, captureStandardOutput, flowId
-            current, parent = TREE_MANAGER.node_ids
+            current, parent = _TREE_MANAGER_HOLDER.manager.get_node_ids(testName)
             args = {"nodeId": current, "parentNodeId": parent, "name": testName}
 
             # TODO: Doc copy/paste with parent, extract
@@ -286,36 +199,29 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 args["duration"] = str(duration_ms)
 
             if is_suite:
+                if is_parallel_mode():
+                    del args["duration"]
                 self.message("testSuiteFinished", **args)
             else:
                 self.message("testFinished", **args)
 
-        commands = TREE_MANAGER.level_closed(self._test_to_list(testName), _write_finished_message)
+        commands = _TREE_MANAGER_HOLDER.manager.level_closed(self._test_to_list(testName), _write_finished_message)
         if commands:
-            self.do_command(commands[0], commands[1])
+            self.do_commands(commands)
             self.testFinished(testName, testDuration)
 
-    def do_command(self, command, test):
+    def do_commands(self, commands):
         """
 
         Executes commands, returned by level_closed and level_opened
         """
-        test_name = ".".join(test)
-        # By executing commands we open or close suites(branches) since tests(leaves) are always reported by runner
-        if command == "open":
-            self.testStarted(test_name, is_suite=True)
-        else:
-            self.testFinished(test_name, is_suite=True)
-
-    def close_all(self):
-        """
-
-        Closes all tests
-        """
-        commands = TREE_MANAGER.close_all()
-        if commands:
-            self.do_command(commands[0], commands[1])
-            self.close_all()
+        for command, test in commands:
+            test_name = ".".join(test)
+            # By executing commands we open or close suites(branches) since tests(leaves) are always reported by runner
+            if command == "open":
+                self.testStarted(test_name, is_suite=True)
+            else:
+                self.testFinished(test_name, is_suite=True)
 
 
 messages.TeamcityServiceMessages = NewTeamcityServiceMessages
@@ -353,13 +259,25 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
 
 def jb_start_tests():
     """
-    Parses arguments, starts protocol and returns tuple of arguments
+    Parses arguments, starts protocol and fixes syspath and returns tuple of arguments
+    """
+    path, targets, additional_args = parse_arguments()
+    start_protocol()
+    return path, targets, additional_args
+
+
+def start_protocol():
+    properties = {"durationStrategy": "manual"} if is_parallel_mode() else dict()
+    NewTeamcityServiceMessages().message('enteredTheMatrix', **properties)
+
+
+def parse_arguments():
+    """
+    Parses arguments, fixes syspath and returns tuple of arguments
 
     :return: (string with path or None, list of targets or None, list of additional arguments)
-    :param func_to_parse function that accepts each part of test name and returns list to be used instead of it.
     It may return list with only one element (name itself) if name is the same or split names to several parts
     """
-
     # Handle additional args after --
     additional_args = []
     try:
@@ -369,12 +287,10 @@ def jb_start_tests():
     except ValueError:
         pass
     utils = _jb_utils.VersionAgnosticUtils()
-
     namespace = utils.get_options(
         _jb_utils.OptionDescription('--path', 'Path to file or folder to run'),
         _jb_utils.OptionDescription('--target', 'Python target to run', "append"))
     del sys.argv[1:]  # Remove all args
-    NewTeamcityServiceMessages().message('enteredTheMatrix')
 
     # PyCharm helpers dir is first dir in sys.path because helper is launched.
     # But sys.path should be same as when launched with test runner directly
@@ -384,13 +300,6 @@ def jb_start_tests():
     except KeyError:
         pass
     return namespace.path, namespace.target, additional_args
-
-
-def _close_all_tests():
-    NewTeamcityServiceMessages().close_all()
-
-
-atexit.register(_close_all_tests)
 
 
 def jb_doc_args(framework_name, args):

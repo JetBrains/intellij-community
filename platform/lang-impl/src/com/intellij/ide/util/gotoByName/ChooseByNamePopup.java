@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
+import com.google.common.util.concurrent.UncheckedTimeoutException;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -18,11 +20,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,8 +43,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
   public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<>("ChooseByNamePattern");
 
-  private Component myOldFocusOwner = null;
-  private boolean myShowListForEmptyPattern = false;
+  private Component myOldFocusOwner;
+  private boolean myShowListForEmptyPattern;
   private final boolean myMayRequestCurrentWindow;
   private final ChooseByNamePopup myOldPopup;
   private ActionMap myActionMap;
@@ -317,7 +323,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
@@ -327,13 +333,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   //space character in the end of pattern forces full matches search
   private static final String fullMatchSearchSuffix = " ";
 
+  @NotNull
   @Override
-  public String transformPattern(String pattern) {
+  public String transformPattern(@NotNull String pattern) {
     final ChooseByNameModel model = getModel();
     return getTransformedPattern(pattern, model);
   }
 
-  public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
+  @NotNull
+  public static String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
     String rawPattern = pattern;
 
     Pattern regex = null;
@@ -449,7 +457,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myRepaintQueue.queue(new Update(this) {
       @Override
       public void run() {
-        ChooseByNamePopup.this.repaintListImmediate();
+        repaintListImmediate();
       }
     });
   }
@@ -465,4 +473,26 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
     }
   }
+
+  @NotNull
+  @TestOnly
+  public List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
+    List<Object> elements = ContainerUtil.newArrayList("empty");
+    Semaphore semaphore = new Semaphore(1);
+    scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, SelectMostRelevant.INSTANCE, set -> {
+      elements.clear();
+      elements.addAll(set);
+      semaphore.up();
+    });
+    long start = System.currentTimeMillis();
+    while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 20_000) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    if (!semaphore.waitFor(10)) {
+      PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
+      throw new UncheckedTimeoutException("Too long background calculation");
+    }
+    return elements;
+  }
+
 }

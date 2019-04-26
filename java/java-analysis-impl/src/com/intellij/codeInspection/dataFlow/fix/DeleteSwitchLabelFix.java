@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,12 +25,16 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
   private final String myName;
   private final boolean myBranch;
 
-  public DeleteSwitchLabelFix(PsiSwitchLabelStatement label) {
-    myName = Objects.requireNonNull(label.getCaseValue()).getText();
-    myBranch = shouldRemoveBranch(label);
+  public DeleteSwitchLabelFix(@NotNull PsiExpression label) {
+    myName = label.getText();
+    PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
+    PsiExpressionList values = labelStatement.getCaseValues();
+    boolean multiple = values != null && values.getExpressionCount() > 1;
+    myBranch = !multiple && shouldRemoveBranch(labelStatement);
   }
 
-  private static boolean shouldRemoveBranch(PsiSwitchLabelStatement label) {
+  private static boolean shouldRemoveBranch(PsiSwitchLabelStatementBase label) {
+    if (label instanceof PsiSwitchLabeledRuleStatement) return true;
     PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(label, PsiStatement.class);
     if (nextStatement instanceof PsiSwitchLabelStatement) {
       return false;
@@ -56,16 +61,23 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiSwitchLabelStatement label = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiSwitchLabelStatement.class);
+    PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    if (expression == null) return;
+    PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(expression);
     if (label == null) return;
-    deleteLabel(label);
+    PsiExpressionList values = label.getCaseValues();
+    if (values != null && values.getExpressionCount() == 1) {
+      deleteLabel(label);
+    } else {
+      new CommentTracker().deleteAndRestoreComments(expression);
+    }
   }
 
-  public static void deleteLabel(PsiSwitchLabelStatement label) {
+  public static void deleteLabel(PsiSwitchLabelStatementBase label) {
     if (shouldRemoveBranch(label)) {
       PsiCodeBlock scope = ObjectUtils.tryCast(label.getParent(), PsiCodeBlock.class);
       if (scope == null) return;
-      PsiSwitchLabelStatement nextLabel = PsiTreeUtil.getNextSiblingOfType(label, PsiSwitchLabelStatement.class);
+      PsiSwitchLabelStatementBase nextLabel = PsiTreeUtil.getNextSiblingOfType(label, PsiSwitchLabelStatementBase.class);
       PsiElement stopAt = nextLabel == null ? scope.getRBrace() : nextLabel;
       while(true) {
         PsiStatement next = PsiTreeUtil.getNextSiblingOfType(nextLabel, PsiStatement.class);

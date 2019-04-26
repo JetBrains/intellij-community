@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
+@Deprecated
 public abstract class ActionButtonPresentation {
   private final String myName;
 

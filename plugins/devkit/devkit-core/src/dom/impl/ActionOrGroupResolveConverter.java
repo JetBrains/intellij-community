@@ -43,8 +43,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @Override
   public Collection<? extends ActionOrGroup> getVariants(ConvertContext context) {
     final List<ActionOrGroup> variants = new ArrayList<>();
+    final Set<String> processedVariants = new HashSet<>();
     PairProcessor<String, ActionOrGroup> collectProcessor = (s, actionOrGroup) -> {
-      if (isRelevant(actionOrGroup)) {
+      if (isRelevant(actionOrGroup) && processedVariants.add(s)) {
         variants.add(actionOrGroup);
       }
       return true;
@@ -165,9 +166,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   }
 
   private static boolean processPlugins(Collection<IdeaPlugin> plugins, PairProcessor<String, ActionOrGroup> processor) {
-    for (IdeaPlugin plugin: plugins) {
+    for (IdeaPlugin plugin : plugins) {
       final Map<String, ActionOrGroup> forFile = collectForFile(plugin);
-      for (Map.Entry<String, ActionOrGroup> entry: forFile.entrySet()) {
+      for (Map.Entry<String, ActionOrGroup> entry : forFile.entrySet()) {
         if (!processor.process(entry.getKey(), entry.getValue())) return false;
       }
     }
@@ -178,22 +179,22 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     final XmlFile xmlFile = DomUtil.getFile(plugin);
     return CachedValuesManager.getCachedValue(xmlFile, () -> {
       Map<String, ActionOrGroup> result = new HashMap<>();
-      for (Actions actions: plugin.getActions()) {
+      for (Actions actions : plugin.getActions()) {
         collectRecursive(result, actions);
       }
 
-      return CachedValueProvider.Result.create(result, xmlFile);
+      return CachedValueProvider.Result.create(result, DomManager.getDomManager(xmlFile.getProject()));
     });
   }
 
   private static void collectRecursive(Map<String, ActionOrGroup> result, Actions actions) {
-    for (Action action: actions.getActions()) {
+    for (Action action : actions.getActions()) {
       final String name = getName(action);
       if (!StringUtil.isEmptyOrSpaces(name)) {
         result.put(name, action);
       }
     }
-    for (Group group: actions.getGroups()) {
+    for (Group group : actions.getGroups()) {
       final String name = getName(group);
       if (!StringUtil.isEmptyOrSpaces(name)) {
         result.put(name, group);

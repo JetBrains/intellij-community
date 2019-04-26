@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -29,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.CompressedRefs
 import com.intellij.vcs.log.data.DataPack
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
@@ -41,15 +25,11 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
-import com.intellij.vcs.log.impl.VcsLogRevisionFilterImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.visible.CommitCountStage
-import com.intellij.vcs.log.visible.VcsLogFilterer
-import com.intellij.vcs.log.visible.VcsLogFiltererImpl
-import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
-import com.intellij.vcs.log.visible.VisiblePack
+import com.intellij.vcs.log.util.findBranch
+import com.intellij.vcs.log.visible.*
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
 internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
   private val project = logData.project
@@ -89,8 +69,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       if (index.isIndexed(root) && (dataPack.isFull || filePath.isDirectory)) {
         val visiblePack = filterWithIndex(dataPack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
-        checkNotEmpty(dataPack, visiblePack, true)
-        return Pair.create(visiblePack, commitCount)
+        if (checkNotEmpty(dataPack, visiblePack, true)) {
+          return Pair(visiblePack, commitCount)
+        }
       }
 
       if (filePath.isDirectory) {
@@ -104,7 +85,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
             LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                       " for computing history for $filePath with history provider")
             checkNotEmpty(dataPack, visiblePack, false)
-            Pair.create(visiblePack, commitCount)
+            Pair(visiblePack, commitCount)
           }
           catch (e: VcsException) {
             LOG.error(e)
@@ -117,14 +98,17 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
     }
 
-    private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean) {
+    private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean): Boolean {
       if (!dataPack.isFull) {
         LOG.debug("Data pack is not full while computing file history for $filePath\n" +
                   "Found ${visiblePack.visibleGraph.visibleCommitCount} commits")
+        return true
       }
       else if (visiblePack.visibleGraph.visibleCommitCount == 0) {
         LOG.warn("Empty file history from ${if (withIndex) "index" else "provider"} for $filePath")
+        return false
       }
+      return true
     }
 
     @Throws(VcsException::class)
@@ -158,9 +142,8 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
 
       val refs = getFilteredRefs(dataPack)
-      val providers = ContainerUtil.newHashMap(Pair.create<VirtualFile, VcsLogProvider>(root, logProviders[root]))
 
-      val fakeDataPack = DataPack.build(commits, refs, providers, storage, false)
+      val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]), storage, false)
       val visibleGraph = vcsLogFilterer.createVisibleGraph(fakeDataPack, sortType, null,
                                                            null/*no need to filter here, since we do not have any extra commits in this pack*/)
       return FileHistoryVisiblePack(fakeDataPack, visibleGraph, false, filters, pathsMap)
@@ -187,7 +170,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, data.buildPathsMap())
       }
 
-      if (matchesNothing(matchingHeads) || data.isEmpty) {
+      if (matchingHeads.matchesNothing() || data.isEmpty) {
         return VisiblePack.EMPTY
       }
 
@@ -214,7 +197,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     private fun getHead(pack: DataPack): Hash? {
-      return VcsLogUtil.findBranch(pack.refsModel, root, "HEAD")?.commitHash
+      return pack.refsModel.findBranch(VcsLogUtil.HEAD, root)?.commitHash
     }
   }
 
@@ -247,10 +230,10 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
       val revisionFilter = when {
         showAllBranches -> null
-        revision != null -> VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
-        else -> VcsLogBranchFilterImpl.fromBranch("HEAD")
+        revision != null -> VcsLogFilterObject.fromCommit(CommitId(revision, root))
+        else -> VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD)
       }
-      return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build()
+      return VcsLogFilterObject.collection(fileFilter, revisionFilter)
     }
   }
 }

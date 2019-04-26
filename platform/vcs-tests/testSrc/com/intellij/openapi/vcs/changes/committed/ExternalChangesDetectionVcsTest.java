@@ -46,7 +46,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
   private LocalFileSystem myLFS;
-  private ChangeListManager myChangeListManager;
+  private ChangeListManagerImpl myChangeListManager;
   private VcsDirtyScopeManager myVcsDirtyScopeManager;
   private TempDirTestFixture myTempDirTestFixture;
   private File myClientRoot;
@@ -70,7 +70,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       myVcsManager.setDirectoryMapping("", myVcs.getName());
 
       myLFS = LocalFileSystem.getInstance();
-      myChangeListManager = ChangeListManager.getInstance(myProject);
+      myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     });
   }
@@ -95,12 +95,12 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     final File f = new File(myClientRoot, "f.txt");
     f.createNewFile();
     final VirtualFile vf = myLFS.refreshAndFindFileByIoFile(f);
-    myChangeListManager.ensureUpToDate(false);
-    ((ChangeListManagerImpl) myChangeListManager).getUnversionedFiles().contains(vf);
+    myChangeListManager.ensureUpToDate();
+    myChangeListManager.getUnversionedFiles().contains(vf);
     FileUtil.delete(f);
     myWorkingCopyDir.refresh(false, true);
-    myChangeListManager.ensureUpToDate(false);
-    ((ChangeListManagerImpl) myChangeListManager).getUnversionedFiles().isEmpty();
+    myChangeListManager.ensureUpToDate();
+    myChangeListManager.getUnversionedFiles().isEmpty();
   }
 
   @Test
@@ -110,8 +110,8 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       f.createNewFile();
     }
     myWorkingCopyDir.refresh(false, true);
-    myChangeListManager.ensureUpToDate(false);
-    final List<VirtualFile> unversionedFiles = ((ChangeListManagerImpl)myChangeListManager).getUnversionedFiles();
+    myChangeListManager.ensureUpToDate();
+    final List<VirtualFile> unversionedFiles = myChangeListManager.getUnversionedFiles();
     final Pattern pattern = Pattern.compile("f([0-9])+\\.txt");
     int cnt = 0;
     for (VirtualFile unversionedFile : unversionedFiles) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.highlighting
 
 import com.intellij.JavaTestUtil
@@ -20,7 +6,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -106,6 +94,15 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
     checkUnselect()
   }
 
+  void testBreakInSwitchExpr() {
+    IdeaTestUtil.withLevel myModule, LanguageLevel.JDK_12_PREVIEW, {
+      configureFile()
+      ctrlShiftF7()
+      assertRangeText 'switch', 'break', 'break'
+      checkUnselect()
+    }
+  }
+
   void testBreakInDoWhile() {
     configureFile()
     ctrlShiftF7()
@@ -180,8 +177,8 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testSuppressedWarningsInInjectionHighlights() {
-    MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(myFixture.getTestRootDisposable());
+    MyTestInjector testInjector = new MyTestInjector(getPsiManager())
+    testInjector.injectAll(myFixture.getTestRootDisposable())
     myFixture.configureByText 'Foo.java', '''
       public class Foo {
         public static void a(boolean b, String c) {

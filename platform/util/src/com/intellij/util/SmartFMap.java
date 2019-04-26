@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Generated;
 import java.util.*;
 
 /**
@@ -27,7 +13,6 @@ import java.util.*;
  *
  * @author peter
  */
-@SuppressWarnings("unchecked")
 public class SmartFMap<K,V> implements Map<K,V> {
   private static final SmartFMap EMPTY = new SmartFMap(ArrayUtil.EMPTY_OBJECT_ARRAY);
   private static final int ARRAY_THRESHOLD = 8;
@@ -38,16 +23,18 @@ public class SmartFMap<K,V> implements Map<K,V> {
   }
 
   public static <K,V> SmartFMap<K, V> emptyMap() {
+    //noinspection unchecked
     return EMPTY;
   }
 
   public SmartFMap<K, V> plus(@NotNull K key, V value) {
-    return new SmartFMap<K, V>(doPlus(myMap, key, value));
+    return new SmartFMap<>(doPlus(myMap, key, value));
   }
 
   private static Object doPlus(Object oldMap, Object key, Object value) {
     if (oldMap instanceof Map) {
-      Map newMap = new THashMap((Map)oldMap);
+      //noinspection unchecked
+      Map<Object,Object> newMap = new THashMap<>((Map)oldMap);
       newMap.put(key, value);
       return newMap;
     }
@@ -62,7 +49,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
       }
     }
     if (array.length == 2 * ARRAY_THRESHOLD) {
-      THashMap map = new THashMap();
+      Map<Object,Object> map = new THashMap<>();
       for (int i = 0; i < array.length; i += 2) {
         map.put(array[i], array[i + 1]);
       }
@@ -79,7 +66,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
 
   public SmartFMap<K, V> minus(@NotNull K key) {
     if (myMap instanceof Map) {
-      THashMap<K, V> newMap = new THashMap<K, V>((Map<K, V>)myMap);
+      Map<K, V> newMap = new THashMap<>(asMap());
       newMap.remove(key);
       if (newMap.size() <= ARRAY_THRESHOLD) {
         Object[] newArray = new Object[newMap.size() * 2];
@@ -88,23 +75,23 @@ public class SmartFMap<K,V> implements Map<K,V> {
           newArray[i++] = k;
           newArray[i++] = newMap.get(k);
         }
-        return new SmartFMap<K, V>(newArray);
+        return new SmartFMap<>(newArray);
       }
 
-      return new SmartFMap<K, V>(newMap);
+      return new SmartFMap<>(newMap);
     }
 
     Object[] array = (Object[])myMap;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
         if (size() == 1) {
-          return EMPTY;
+          return emptyMap();
         }
 
         Object[] newArray = new Object[array.length - 2];
         System.arraycopy(array, 0, newArray, 0, i);
         System.arraycopy(array, i + 2, newArray, i, array.length - i - 2);
-        return new SmartFMap<K, V>(newArray);
+        return new SmartFMap<>(newArray);
       }
     }
     return this;
@@ -128,7 +115,23 @@ public class SmartFMap<K,V> implements Map<K,V> {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof Map && entrySet().equals(((Map)obj).entrySet());
+    if (myMap instanceof Map) {
+      return myMap.equals(obj);
+    }
+
+    if (!(obj instanceof Map)) return false;
+
+    Map map = (Map)obj;
+    if (size() != map.size()) return false;
+
+    Object[] array = (Object[])myMap;
+    for (int i = 0; i < array.length; i += 2) {
+      if (!Comparing.equal(array[i + 1], map.get(array[i]))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
@@ -142,7 +145,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
       return false;
     }
     if (myMap instanceof Map) {
-      return ((Map<K, V>)myMap).containsKey(key);
+      return asMap().containsKey(key);
     }
     Object[] array = (Object[])myMap;
     for (int i = 0; i < array.length; i += 2) {
@@ -161,21 +164,17 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   @Nullable
   public V get(Object key) {
-    return (V)doGet(myMap, key);
-  }
-
-  @Nullable
-  private static Object doGet(Object map, Object key) {
     if (key == null) {
       return null;
     }
-    if (map instanceof Map) {
-      return ((Map)map).get(key);
+    if (myMap instanceof Map) {
+      return asMap().get(key);
     }
-    Object[] array = (Object[])map;
+    Object[] array = (Object[])myMap;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
-        return array[i + 1];
+        //noinspection unchecked
+        return (V)array[i + 1];
       }
     }
     return null;
@@ -203,8 +202,8 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   public Set<K> keySet() {
     if (isEmpty()) return Collections.emptySet();
-    
-    LinkedHashSet<K> result = new LinkedHashSet<K>();
+
+    LinkedHashSet<K> result = new LinkedHashSet<>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getKey());
     }
@@ -215,8 +214,8 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   public Collection<V> values() {
     if (isEmpty()) return Collections.emptyList();
-    
-    ArrayList<V> result = new ArrayList<V>();
+
+    ArrayList<V> result = new ArrayList<>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getValue());
     }
@@ -232,9 +231,14 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   public int size() {
     if (myMap instanceof Map) {
-      return ((Map<K, V>)myMap).size();
+      return asMap().size();
     }
     return ((Object[])myMap).length >> 1;
+  }
+
+  private Map<K, V> asMap() {
+    //noinspection unchecked
+    return (Map<K, V>)myMap;
   }
 
   @Override
@@ -246,23 +250,24 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   public Set<Entry<K, V>> entrySet() {
     if (isEmpty()) return Collections.emptySet();
-    
-    LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<Entry<K, V>>();
+
+    LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<>();
     if (myMap instanceof Map) {
-      for (Entry<K, V> entry : ((Map<K, V>)myMap).entrySet()) {
-        set.add(new AbstractMap.SimpleImmutableEntry<K, V>(entry));
+      for (Entry<K, V> entry : asMap().entrySet()) {
+        set.add(new AbstractMap.SimpleImmutableEntry<>(entry));
       }
     } else {
       Object[] array = (Object[])myMap;
       for (int i = 0; i < array.length; i += 2) {
-        set.add(new AbstractMap.SimpleImmutableEntry<K, V>((K)array[i], (V)array[i + 1]));
+        //noinspection unchecked
+        set.add(new AbstractMap.SimpleImmutableEntry<>((K)array[i], (V)array[i + 1]));
       }
     }
     return Collections.unmodifiableSet(set);
   }
 
   // copied from AbstractMap
-  @Generated("from AbstractMap")
+  @Override
   public String toString() {
     Iterator<Entry<K,V>> i = entrySet().iterator();
     if (! i.hasNext())

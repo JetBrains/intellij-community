@@ -406,9 +406,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return results;
     }
     final List<String> allNames = getDunderAll();
-    if (allNames != null && allNames.contains(name)) {
+    if (allNames != null && !name.contains(".") && allNames.contains(name)) {
       final ResolveResultList allFallbackResults = new ResolveResultList();
-
 
       PyResolveImportUtil
         .resolveModuleAt(QualifiedName.fromComponents(name), getContainingDirectory(), PyResolveImportUtil.fromFoothold(this))

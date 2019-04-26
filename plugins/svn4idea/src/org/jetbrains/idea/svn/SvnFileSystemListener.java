@@ -57,7 +57,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     @Nullable private final File myCopyFrom;
     private final boolean myRecursive;
 
-    AddedFileInfo(final VirtualFile dir, final String name, @Nullable final File copyFrom, boolean recursive) {
+    AddedFileInfo(@NotNull VirtualFile dir, @NotNull String name, @Nullable final File copyFrom, boolean recursive) {
       myDir = dir;
       myName = name;
       myCopyFrom = copyFrom;
@@ -70,7 +70,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     private final File mySrc;
     private final File myDst;
 
-    private MovedFileInfo(final Project project, final File src, final File dst) {
+    private MovedFileInfo(@NotNull Project project, @NotNull File src, @NotNull File dst) {
       myProject = project;
       mySrc = src;
       myDst = dst;
@@ -114,6 +114,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     return e instanceof SvnBindException && ((SvnBindException)e).contains(ErrorCode.ENTRY_EXISTS) ? createMoveTargetExistsError(e) : e;
   }
 
+  @NotNull
   private static VcsException createMoveTargetExistsError(@NotNull Exception e) {
     return new VcsException(Arrays.asList("Target of move operation is already under version control.",
                                           "Subversion move had not been performed. ", e.getMessage()));
@@ -121,7 +122,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   @Override
   @Nullable
-  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) {
+  public File copy(@NotNull final VirtualFile file, @NotNull final VirtualFile toDir, @NotNull final String copyName) {
     startOperation(file);
 
     SvnVcs vcs = getVCS(toDir);
@@ -158,7 +159,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     return null;
   }
 
-  private boolean sameRoot(final SvnVcs vcs, final VirtualFile srcDir, final VirtualFile dstDir) {
+  private boolean sameRoot(@NotNull SvnVcs vcs, @NotNull VirtualFile srcDir, @NotNull VirtualFile dstDir) {
     final UUIDHelper helper = new UUIDHelper(vcs);
     final String srcUUID = helper.getRepositoryUUID(vcs.getProject(), srcDir);
     final String dstUUID = helper.getRepositoryUUID(vcs.getProject(), dstDir);
@@ -169,7 +170,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   private class UUIDHelper {
     private final SvnVcs myVcs;
 
-    private UUIDHelper(final SvnVcs vcs) {
+    private UUIDHelper(@NotNull SvnVcs vcs) {
       myVcs = vcs;
     }
 
@@ -177,7 +178,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
      * passed dir must be under VC control (it is assumed)
      */
     @Nullable
-    public String getRepositoryUUID(final Project project, final VirtualFile dir) {
+    public String getRepositoryUUID(@NotNull Project project, @NotNull VirtualFile dir) {
       try {
         final Info info1 = new RepeatSvnActionThroughBusy() {
           @Override
@@ -185,7 +186,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
             myT = myVcs.getInfo(virtualToIoFile(dir));
           }
         }.compute();
-        if (info1 == null || info1.getRepositoryUUID() == null) {
+        if (info1 == null || info1.getRepositoryId() == null) {
           // go deeper if current parent was added (if parent was added, it theoretically could NOT know its repo UUID)
           final VirtualFile parent = dir.getParent();
           if (parent == null) {
@@ -195,7 +196,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
             return getRepositoryUUID(project, parent);
           }
         } else {
-          return info1.getRepositoryUUID();
+          return info1.getRepositoryId();
         }
       }
       catch (VcsException e) {
@@ -206,7 +207,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   @Override
-  public boolean move(VirtualFile file, VirtualFile toDir) {
+  public boolean move(@NotNull VirtualFile file, @NotNull VirtualFile toDir) {
     startOperation(file);
 
     File srcFile = getIOFile(file);
@@ -237,7 +238,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   @Override
-  public boolean rename(VirtualFile file, String newName) {
+  public boolean rename(@NotNull VirtualFile file, @NotNull String newName) {
     startOperation(file);
 
     File srcFile = getIOFile(file);
@@ -254,7 +255,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     return false;
   }
 
-  private boolean doMove(@NotNull SvnVcs vcs, final File src, final File dst) {
+  private boolean doMove(@NotNull SvnVcs vcs, @NotNull File src, @NotNull File dst) {
     try {
       final boolean isUndo = isUndo(vcs);
       final String list = isUndo ? null : SvnChangelistListener.getCurrentMapping(vcs, src);
@@ -291,7 +292,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   private boolean for17move(final SvnVcs vcs, final File src, final File dst, boolean undo, Status srcStatus) throws VcsException {
-    if (srcStatus != null && srcStatus.getCopyFromURL() == null) {
+    if (srcStatus != null && srcStatus.getCopyFromUrl() == null) {
       undo = false;
     }
     if (undo) {
@@ -399,14 +400,14 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
 
   @Override
-  public boolean createFile(VirtualFile dir, String name) {
+  public boolean createFile(@NotNull VirtualFile dir, @NotNull String name) {
     startOperation(dir);
 
     return createItem(dir, name, false, false);
   }
 
   @Override
-  public boolean createDirectory(VirtualFile dir, String name) {
+  public boolean createDirectory(@NotNull VirtualFile dir, @NotNull String name) {
     startOperation(dir);
 
     return createItem(dir, name, true, false);
@@ -427,7 +428,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
    * deleted: do nothing, return true (strange)
    */
   @Override
-  public boolean delete(VirtualFile file) {
+  public boolean delete(@NotNull VirtualFile file) {
     startOperation(file);
 
     final SvnVcs vcs = getVCS(file);
@@ -557,8 +558,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     final File targetFile = new File(ioDir, name);
     Status status = getFileStatus(vcs, targetFile);
 
-    if (status == null || status.getContentsStatus() == StatusType.STATUS_NONE ||
-        status.getContentsStatus() == StatusType.STATUS_UNVERSIONED) {
+    if (status == null || status.is(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED)) {
       myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(dir, name, null, recursive));
       return false;
     }
@@ -566,7 +566,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       return false;
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
-      NodeKind kind = status.getKind();
+      NodeKind kind = status.getNodeKind();
       // kind differs.
       if (directory && !kind.isDirectory() || !directory && !kind.isFile()) {
         return false;
@@ -740,8 +740,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   private static Runnable createAdditionRunnable(final Project project,
                                final SvnVcs vcs,
                                final Map<VirtualFile, File> copyFromMap,
-                               final Collection<VirtualFile> filesToProcess,
-                               final List<VcsException> exceptions) {
+                               final Collection<? extends VirtualFile> filesToProcess,
+                               final List<? super VcsException> exceptions) {
     return () -> {
       for (VirtualFile file : filesToProcess) {
         final File ioFile = virtualToIoFile(file);
@@ -809,9 +809,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private void fillAddedFiles(Project project,
                               SvnVcs vcs,
-                              List<VirtualFile> addedVFiles,
+                              List<? super VirtualFile> addedVFiles,
                               Map<VirtualFile, File> copyFromMap,
-                              Set<VirtualFile> recursiveItems) {
+                              Set<? super VirtualFile> recursiveItems) {
     final Collection<AddedFileInfo> addedFileInfos = myAddedFiles.remove(project);
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
@@ -880,8 +880,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private static Runnable createDeleteRunnable(final Project project,
                                         final SvnVcs vcs,
-                                        final Collection<FilePath> filesToProcess,
-                                        final List<VcsException> exceptions) {
+                                        final Collection<? extends FilePath> filesToProcess,
+                                        final List<? super VcsException> exceptions) {
     return () -> {
       for (FilePath file : filesToProcess) {
         VirtualFile vFile = file.getVirtualFile();  // for deleted directories
@@ -903,10 +903,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     };
   }
 
-  private static Collection<FilePath> promptAboutDeletion(List<Pair<FilePath, WorkingCopyFormat>> deletedFiles,
-                                                   SvnVcs vcs,
-                                                   VcsShowConfirmationOption.Value value,
-                                                   AbstractVcsHelper vcsHelper) {
+  private static Collection<FilePath> promptAboutDeletion(List<? extends Pair<FilePath, WorkingCopyFormat>> deletedFiles,
+                                                          SvnVcs vcs,
+                                                          VcsShowConfirmationOption.Value value,
+                                                          AbstractVcsHelper vcsHelper) {
     Collection<FilePath> filesToProcess;
     if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       filesToProcess = map(deletedFiles, Functions.pairFirst());
@@ -929,7 +929,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     return filesToProcess;
   }
 
-  private void fillDeletedFiles(Project project, List<Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<FilePath> deleteAnyway)
+  private void fillDeletedFiles(Project project, List<? super Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<? super FilePath> deleteAnyway)
     throws VcsException {
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final Collection<File> files = myDeletedFiles.remove(project);
@@ -942,7 +942,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       }.compute();
 
       final FilePath filePath = VcsUtil.getFilePath(file);
-      if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      if (status.is(StatusType.STATUS_ADDED)) {
         deleteAnyway.add(filePath);
       } else {
         deletedFiles.add(Pair.create(filePath, vcs.getWorkingCopyFormat(file)));
@@ -966,7 +966,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   @Nullable
-  private static SvnVcs getVCS(VirtualFile file) {
+  private static SvnVcs getVCS(@NotNull VirtualFile file) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
@@ -978,7 +978,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
 
-  private static File getIOFile(VirtualFile vf) {
+  @NotNull
+  private static File getIOFile(@NotNull VirtualFile vf) {
     return virtualToIoFile(vf).getAbsoluteFile();
   }
 
@@ -997,10 +998,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
-  private static boolean isUndo(SvnVcs vcs) {
-    if (vcs == null || vcs.getProject() == null) {
-      return false;
-    }
+  private static boolean isUndo(@NotNull SvnVcs vcs) {
     Project p = vcs.getProject();
     return UndoManager.getInstance(p).isUndoInProgress();
   }
@@ -1016,7 +1014,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   @Override
-  public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
+  public void afterDone(@NotNull final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
     if (!myIsInCommand && myGuessedProject != null) {
       commandFinished(myGuessedProject);
       myGuessedProject = null;

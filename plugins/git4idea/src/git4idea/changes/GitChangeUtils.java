@@ -143,12 +143,13 @@ public class GitChangeUtils {
       final ContentRevision before;
       final ContentRevision after;
       final String path = tokens[tokens.length - 1];
+      final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, true);
       switch (tokens[0].charAt(0)) {
         case 'C':
         case 'A':
           before = null;
           status = FileStatus.ADDED;
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true);
+          after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;
         case 'U':
           status = FileStatus.MERGED_WITH_CONFLICTS;
@@ -156,23 +157,24 @@ public class GitChangeUtils {
           if (status == null) {
             status = FileStatus.MODIFIED;
           }
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true);
+          before = GitContentRevision.createRevision(filePath, parentRevision, project);
+          after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;
         case 'D':
           status = FileStatus.DELETED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
+          before = GitContentRevision.createRevision(filePath, parentRevision, project);
           after = null;
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, tokens[1], parentRevision, project, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true);
+          final FilePath oldFilePath = GitContentRevision.createPath(vcsRoot, tokens[1], true);
+          before = GitContentRevision.createRevision(oldFilePath, parentRevision, project);
+          after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;
         case 'T':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
-          after = GitContentRevision.createRevisionForTypeChange(project, vcsRoot, path, thisRevision, true);
+          before = GitContentRevision.createRevision(filePath, parentRevision, project);
+          after = GitContentRevision.createRevisionForTypeChange(filePath, thisRevision, project);
           break;
         default:
           throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
@@ -410,8 +412,28 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    return getLocalChanges(project, root, "--cached", "-M");
+  }
+
+  @NotNull
+  public static Collection<Change> getUnstagedChanges(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      boolean detectMoves) throws VcsException {
+    if (detectMoves) {
+      return getLocalChanges(project, root, "-M");
+    }
+    else {
+      return getLocalChanges(project, root, "--no-renames");
+    }
+  }
+
+  @NotNull
+  private static Collection<Change> getLocalChanges(@NotNull Project project,
+                                                    @NotNull VirtualFile root,
+                                                    String... parameters) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
-    diff.addParameters("--name-status", "--cached", "-M");
+    diff.addParameters("--name-status");
+    diff.addParameters(parameters);
     String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
 
     Collection<Change> changes = new ArrayList<>();

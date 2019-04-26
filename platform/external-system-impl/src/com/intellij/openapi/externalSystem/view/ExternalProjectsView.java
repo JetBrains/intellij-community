@@ -62,6 +62,9 @@ public interface ExternalProjectsView {
 
   boolean getShowIgnored();
 
+  @Nullable
+  String getDisplayName(@Nullable DataNode node);
+
   interface Listener {
     void onDoubleClickOrEnter(@NotNull ExternalSystemNode node, InputEvent inputEvent);
   }

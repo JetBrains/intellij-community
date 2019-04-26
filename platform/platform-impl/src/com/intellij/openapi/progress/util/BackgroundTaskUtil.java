@@ -84,7 +84,7 @@ public class BackgroundTaskUtil {
     if (forceEDT) {
       ProgressIndicator indicator = new EmptyProgressIndicator(modality);
       try {
-        Runnable callback = backgroundTask.fun(indicator);
+        Runnable callback = ProgressManager.getInstance().runProcess(() -> backgroundTask.fun(indicator), indicator);
         finish(callback, indicator);
       }
       catch (ProcessCanceledException ignore) {
@@ -207,9 +207,7 @@ public class BackgroundTaskUtil {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
 
-    CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
-      ProgressManager.getInstance().runProcess(runnable, indicator);
-    }, AppExecutorUtil.getAppExecutorService());
+    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(runnable, indicator), AppExecutorUtil.getAppExecutorService());
 
     Disposable disposable = () -> {
       if (indicator.isRunning()) indicator.cancel();
@@ -225,7 +223,7 @@ public class BackgroundTaskUtil {
         }
       }
       catch (InterruptedException | TimeoutException e) {
-        LOG.error(e);
+        LOG.debug("Couldn't await background process on disposal: " + runnable);
       }
     };
 

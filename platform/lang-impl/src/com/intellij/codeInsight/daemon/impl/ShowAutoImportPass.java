@@ -26,10 +26,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
@@ -40,7 +41,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
 
-  public ShowAutoImportPass(@NotNull Project project, @NotNull final PsiFile file, @NotNull Editor editor) {
+  ShowAutoImportPass(@NotNull Project project, @NotNull final PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -62,7 +63,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     TransactionGuard.submitTransaction(myProject, this::addImports);
   }
 
-  public void addImports() {
+  private void addImports() {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (!application.isHeadlessEnvironment() && !myEditor.getContentComponent().hasFocus()) return;
@@ -87,28 +88,34 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return;
 
-    Document document = getDocument();
+    Document document = myEditor.getDocument();
     final List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (!info.hasHint() || info.getSeverity() != HighlightSeverity.ERROR) {
-        return true;
+      if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.getFixTextRange().containsOffset(caretOffset)) {
+        infos.add(info);
       }
-      PsiReference reference = myFile.findReferenceAt(info.getActualStartOffset());
-      if (reference != null && reference.getElement().getTextRange().containsOffset(caretOffset)) return true;
-      infos.add(info);
       return true;
     });
 
     List<ReferenceImporter> importers = ReferenceImporter.EP_NAME.getExtensionList();
     for (HighlightInfo info : infos) {
+      for (HintAction action : extractHints(info)) {
+        if (action.isAvailable(myProject, myEditor, myFile) && action.fixSilently(myEditor)) {
+          break;
+        }
+      }
       for(ReferenceImporter importer: importers) {
+        //noinspection deprecation
         if (importer.autoImportReferenceAt(myEditor, myFile, info.getActualStartOffset())) break;
       }
     }
   }
 
   @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(final int startOffset, final int endOffset, Project project, final Editor editor) {
+  private static List<HighlightInfo> getVisibleHighlights(final int startOffset,
+                                                          final int endOffset,
+                                                          @NotNull Project project,
+                                                          @NotNull Editor editor) {
     final List<HighlightInfo> highlights = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
       if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
@@ -119,23 +126,38 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return highlights;
   }
 
-  private boolean showAddImportHint(HighlightInfo info) {
+  private boolean showAddImportHint(@NotNull HighlightInfo info) {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return false;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return false;
     PsiElement element = myFile.findElementAt(info.startOffset);
     if (element == null || !element.isValid()) return false;
 
-    final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
-    for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {
-      final IntentionAction action = pair.getFirst().getAction();
-      if (action instanceof HintAction && action.isAvailable(myProject, myEditor, myFile)) {
-        return ((HintAction)action).showHint(myEditor);
+    for (HintAction action : extractHints(info)) {
+      if (action.isAvailable(myProject, myEditor, myFile) && action.showHint(myEditor)) {
+        return true;
       }
     }
     return false;
   }
 
-  public static String getMessage(final boolean multiple, final String name) {
+  @NotNull
+  private static List<HintAction> extractHints(@NotNull HighlightInfo info) {
+    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
+    if (list == null) return Collections.emptyList();
+
+    List<HintAction> hintActions = new SmartList<>();
+    for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {
+      IntentionAction action = pair.getFirst().getAction();
+      if (action instanceof HintAction) {
+        hintActions.add((HintAction)action);
+      }
+    }
+    return hintActions;
+  }
+
+
+  @NotNull
+  public static String getMessage(final boolean multiple, @NotNull String name) {
     final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
     hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));

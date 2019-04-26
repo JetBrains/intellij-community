@@ -17,20 +17,26 @@ package com.intellij.psi.impl.java;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.search.ApproximateResolver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -82,6 +88,29 @@ public class ReferenceChainLink {
   List<PsiMember> getGlobalMembers(VirtualFile placeFile, Project project) {
     if (isExpensive(project)) return null;
 
+    GlobalSearchScope scope = ResolveScopeManager.getInstance(project).getDefaultResolveScope(placeFile);
+    if (!isCall) {
+      PsiPackage pkg = JavaPsiFacade.getInstance(project).findPackage(referenceName);
+      if (pkg != null && pkg.getDirectories(scope).length > 0) return null;
+    }
+
+    Map<Pair<ReferenceChainLink, GlobalSearchScope>, List<PsiMember>> cache =
+      CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+        Map<Pair<ReferenceChainLink, GlobalSearchScope>, List<PsiMember>> map = ConcurrentFactoryMap.createMap(
+          pair -> pair.first.calcMembersUnlessTooMany(pair.second));
+        return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
+      });
+    List<PsiMember> candidates = cache.get(Pair.create(this, scope));
+    if (candidates == null) {
+      markExpensive(project);
+      return null;
+    }
+
+    return ContainerUtil.filter(candidates, candidate -> canBeAccessible(placeFile, candidate));
+  }
+
+  @Nullable
+  private List<PsiMember> calcMembersUnlessTooMany(@NotNull GlobalSearchScope scope) {
     List<PsiMember> candidates = new ArrayList<>();
     AtomicInteger count = new AtomicInteger();
     Processor<PsiMember> processor = member -> {
@@ -90,30 +119,22 @@ public class ReferenceChainLink {
       }
       return count.incrementAndGet() < 42;
     };
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    GlobalSearchScope scope = ResolveScopeManager.getInstance(project).getDefaultResolveScope(placeFile);
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
     if (isCall) {
       if (!cache.processMethodsWithName(referenceName, processor, scope, null)) {
-        markExpensive(project);
         return null;
       }
     }
     else {
-      PsiPackage pkg = JavaPsiFacade.getInstance(project).findPackage(referenceName);
-      if (pkg != null && pkg.getDirectories(scope).length > 0) return null;
-
       if (!cache.processFieldsWithName(referenceName, processor, scope, null)) {
-        markExpensive(project);
         return null;
       }
     }
 
     if (!cache.processClassesWithName(referenceName, processor, scope, null)) {
-      markExpensive(project);
       return null;
     }
-
-    return ContainerUtil.filter(candidates, candidate -> canBeAccessible(placeFile, candidate));
+    return candidates;
   }
 
   private static boolean canBeAccessible(VirtualFile placeFile, PsiMember member) {

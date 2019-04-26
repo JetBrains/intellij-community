@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
@@ -59,7 +59,7 @@ public class PrepareToDeployAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
+    final Module module = e.getData(LangDataKeys.MODULE);
     if (module != null && PluginModuleType.isOfType(module)) {
       doPrepare(Arrays.asList(module), e.getProject());
     }
@@ -201,7 +201,7 @@ public class PrepareToDeployAction extends AnAction {
       return true;
     }
     final VirtualFile vfile = VfsUtil.findFileByURL(url);
-    return vfile == null || !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles();
+    return vfile == null || !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vfile)).hasReadonlyFiles();
   }
 
   private static FileFilter createFilter(final ProgressIndicator progressIndicator, @Nullable final FileTypeManager fileTypeManager) {
@@ -378,10 +378,9 @@ public class PrepareToDeployAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
+    final Module module = e.getData(LangDataKeys.MODULE);
     boolean enabled = module != null && PluginModuleType.isOfType(module);
-    e.getPresentation().setVisible(enabled);
-    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled) {
       e.getPresentation().setText(DevKitBundle.message("prepare.for.deployment", module.getName()));
     }

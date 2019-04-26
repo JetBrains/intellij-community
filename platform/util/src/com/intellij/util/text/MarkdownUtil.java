@@ -63,7 +63,7 @@ public class MarkdownUtil {
       if (imageEndIndex != -1) {
         TextRange linkRange = findEnclosingLink(text, i, imageEndIndex);
         if (intervals == null) {
-          intervals = new ArrayList<TextRange>(1);
+          intervals = new ArrayList<>(1);
         }
         final TextRange range;
         if (linkRange != null) {

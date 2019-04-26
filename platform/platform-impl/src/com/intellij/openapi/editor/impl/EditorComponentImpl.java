@@ -5,6 +5,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -15,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Caret;
@@ -39,6 +39,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
@@ -68,7 +69,6 @@ import java.util.Map;
 
 public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
   private final EditorImpl myEditor;
-  private final ApplicationImpl myApplication;
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -95,7 +95,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         return myEditor.visualPositionToXY(magnificationPosition);
       }
     });
-    myApplication = (ApplicationImpl)ApplicationManager.getApplication();
+    putClientProperty(UndoRedoAction.IGNORE_SWING_UNDO_MANAGER, Boolean.TRUE);
 
     // This editor extends JTextComponent rather than JComponent *only* for accessibility
     // purposes, and the JTextComponent is not fully supported: it does not reflect the
@@ -168,6 +168,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public Dimension getPreferredSize() {
     return myEditor.getPreferredSize();
+  }
+
+  @Override
+  public void setCursor(Cursor cursor) {
+    super.setCursor(cursor);
+    myEditor.myCursorSetExternally = true;
   }
 
   protected void fireResized() {
@@ -503,23 +509,23 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
 
     @Override
-    public void remove(final int offset, final int length) throws BadLocationException {
+    public void remove(final int offset, final int length) {
       editDocumentSafely(offset, length, null);
     }
 
     @Override
-    public void insertString(final int offset, final String text, AttributeSet attributeSet) throws BadLocationException {
+    public void insertString(final int offset, final String text, AttributeSet attributeSet) {
       editDocumentSafely(offset, 0, text);
     }
 
     @Override
-    public String getText(final int offset, final int length) throws BadLocationException {
+    public String getText(final int offset, final int length) {
       return ReadAction
         .compute(() -> myEditor.getDocument().getText(new TextRange(offset, offset + length)));
     }
 
     @Override
-    public void getText(int offset, int length, Segment segment) throws BadLocationException {
+    public void getText(int offset, int length, Segment segment) {
       char[] s = getText(offset, length).toCharArray();
       segment.array = s;
       segment.offset = 0;
@@ -542,7 +548,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Nullable
     @Override
-    public Position createPosition(int i) throws BadLocationException {
+    public Position createPosition(int i) {
       notSupported();
       return null;
     }
@@ -690,33 +696,27 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   /** Inserts, removes or replaces the given text at the given offset */
   private void editDocumentSafely(final int offset, final int length, @Nullable final String text) {
+    Document document = myEditor.getDocument();
+    RangeMarker marker = document.createRangeMarker(offset, offset + length);
+
     TransactionGuard.submitTransaction(myEditor.getDisposable(), () -> {
       Project project = myEditor.getProject();
-      Document document = myEditor.getDocument();
-      if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+      if (!marker.isValid() || !FileDocumentManager.getInstance().requestWriting(document, project)) {
+        marker.dispose();
         return;
       }
 
       CommandProcessor.getInstance().executeCommand(project, () -> WriteAction.run(() -> {
         document.startGuardedBlockChecking();
         try {
-          if (text == null) {
-            // remove
-            document.deleteString(offset, offset + length);
-          }
-          else if (length == 0) {
-            // insert
-            document.insertString(offset, text);
-          }
-          else {
-            document.replaceString(offset, offset + length, text);
-          }
+          document.replaceString(marker.getStartOffset(), marker.getEndOffset(), StringUtil.notNullize(text));
         }
         catch (ReadOnlyFragmentModificationException e) {
           EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
         }
         finally {
           document.stopGuardedBlockChecking();
+          marker.dispose();
         }
       }), "", document, UndoConfirmationPolicy.DEFAULT, document);
     });
@@ -813,7 +813,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   private class EditorAccessibilityTextUI extends TextUI {
     @Nullable
     @Override
-    public Rectangle modelToView(JTextComponent tc, int offset) throws BadLocationException {
+    public Rectangle modelToView(JTextComponent tc, int offset) {
       return modelToView(tc, offset, Position.Bias.Forward);
     }
 
@@ -825,7 +825,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Nullable
     @Override
-    public Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) throws BadLocationException {
+    public Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
       LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
       LogicalPosition posNext = myEditor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
         .leanForward(bias != Position.Bias.Forward);
@@ -844,7 +844,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public int getNextVisualPositionFrom(JTextComponent t, int pos, Position.Bias b,
                                          int direction,
-                                         Position.Bias[] biasRet) throws BadLocationException {
+                                         Position.Bias[] biasRet) {
       notSupported();
       return 0;
     }
@@ -914,7 +914,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public void caretPositionChanged(@NotNull CaretEvent e) {
       Caret caret = e.getCaret();
-      if (caret == null) {
+      if (caret != myEditor.getCaretModel().getPrimaryCaret()) {
         return;
       }
       int dot = caret.getOffset();

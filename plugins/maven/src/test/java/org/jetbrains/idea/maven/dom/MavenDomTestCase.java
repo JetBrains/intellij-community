@@ -24,7 +24,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
@@ -52,7 +51,6 @@ import com.intellij.usages.UsageTargetUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -386,15 +384,10 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   protected List<PsiElement> search(VirtualFile file) {
     final MapDataContext context = createDataContext(file);
-    UsageTarget[] targets = UsageTargetUtil.findUsageTargets(new DataProvider() {
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        return context.getData(dataId);
-      }
-    });
+    UsageTarget[] targets = UsageTargetUtil.findUsageTargets(context::getData);
     PsiElement target = ((PsiElement2UsageTargetAdapter)targets[0]).getElement();
     List<PsiReference> result = new ArrayList<>(ReferencesSearch.search(target).findAll());
-    return ContainerUtil.map(result, psiReference -> psiReference.getElement());
+    return ContainerUtil.map(result, PsiReference::getElement);
   }
 
   protected void assertHighlighted(VirtualFile file, HighlightInfo... expected) {

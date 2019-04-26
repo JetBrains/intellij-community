@@ -46,6 +46,9 @@ public class RenameModuleTest extends ModuleTestCase {
     try {
       Messages.setTestInputDialog(TestInputDialog.DEFAULT);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

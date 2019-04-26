@@ -41,7 +41,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -299,7 +298,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private void initTree() {
-    myTree = new SimpleTree();
+    myTree = new ExternalProjectTree(myProject);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
     final ActionManager actionManager = ActionManager.getInstance();
@@ -369,7 +368,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
     }
   }
 
@@ -487,8 +486,9 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }
   }
 
+  @Override
   @Nullable
-  String getDisplayName(@Nullable DataNode node) {
+  public String getDisplayName(@Nullable DataNode node) {
     if (node == null) return null;
     return myViewContributors.stream()
                              .map(contributor -> contributor.getDisplayName(node))

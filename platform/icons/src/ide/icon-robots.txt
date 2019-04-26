@@ -1,2 +1,9 @@
 deprecated: error.png -> /ide/fatalError.svg; to be removed in IDEA 2020 - use AllIcons.Ide.FatalError
+deprecated: error_notifications.png -> /general/error.svg; to be removed in IDEA 2020 - use AllIcons.General.Error
 deprecated: emptyFatalError.svg -> /ide/fatalError-read.svg; to be removed in IDEA 2020 - use AllIcons.Ide.FatalError_read
+deprecated: hectorNo.png -> /ide/hectorOff.svg; to be removed in IDEA 2020 - use AllIcons.Ide.HectorOff
+deprecated: info_notifications.png -> /general/information.svg; to be removed in IDEA 2020 - use AllIcons.General.Information
+deprecated: noNotifications13.png; to be removed in IDEA 2020
+deprecated: notifications.png -> /ide/notification/noEvents.svg; to be removed in IDEA 2020 - use AllIcons.Ide.Notification.NoEvents
+deprecated: warning_notifications.png -> /general/warning.svg; to be removed in IDEA 2020 - use AllIcons.General.Warning
+deprecated: incomingChangesOff.png; to be removed in IDEA 2020

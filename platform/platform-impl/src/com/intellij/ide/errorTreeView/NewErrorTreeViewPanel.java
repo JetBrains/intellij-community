@@ -129,7 +129,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     myAutoScrollToSourceHandler.install(myTree);
     TreeUtil.installActions(myTree);
-    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);

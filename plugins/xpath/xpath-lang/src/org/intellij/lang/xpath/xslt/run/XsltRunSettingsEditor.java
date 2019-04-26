@@ -96,9 +96,9 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private ButtonGroup myJdkOptions;
     private JRadioButton myJdkChoice;
     private JRadioButton myModuleChoice;
-    private ComboBox myModule;
-    private ComboBox myJDK;
-    private ComboBox myFileType;
+    private ComboBox<Object> myModule;
+    private ComboBox<Sdk> myJDK;
+    private ComboBox<FileType> myFileType;
     private JPanel myClasspathAndJDKPanel;
     private JPanel myPanelSettings;
     private JPanel myPanelAdvanced;
@@ -165,7 +165,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
                 assert f != null;
                 associations[i] = f.getPath().replace('/', File.separatorChar);
               }
-              comboBox.setModel(new DefaultComboBoxModel(associations));
+              comboBox.setModel(new DefaultComboBoxModel<>(associations));
             }
             if (!found) {
               comboBox.getEditor().setItem(oldXml);
@@ -173,7 +173,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             comboBox.setSelectedItem(oldXml);
           }
           else {
-            comboBox.setModel(new DefaultComboBoxModel(ArrayUtil.EMPTY_OBJECT_ARRAY));
+            comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtil.EMPTY_OBJECT_ARRAY));
             comboBox.getEditor().setItem(oldXml);
           }
         }
@@ -222,17 +222,17 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       myFileType.setRenderer(new FileTypeRenderer() {
         @Override
-        public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
-          if (type == null) {
+        public void customize(JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
+          if (value == null) {
             setIcon(AllIcons.Actions.Cancel);
             setText("Disabled");
           }
           else {
-            super.customize(list, type, index, selected, hasFocus);
+            super.customize(list, value, index, selected, hasFocus);
           }
         }
       });
-      myFileType.setModel(new DefaultComboBoxModel(getFileTypes(project)));
+      myFileType.setModel(new DefaultComboBoxModel<>(getFileTypes(project)));
 
       myParameters = new JBTable(new ParamTableModel());
       myParameters.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
@@ -273,24 +273,21 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }).createPanel(), BorderLayout.CENTER);
 
       final Module[] modules = ModuleManager.getInstance(project).getModules();
-      myModule.setModel(new DefaultComboBoxModel(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
-      myModule.setRenderer(new ListCellRendererWrapper() {
-        @Override
-        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value instanceof Module) {
-            final Module module = (Module)value;
-            setText(ReadAction.compute(() -> module.getName()));
-            setIcon(ModuleType.get(module).getIcon());
-          }
-          else if (value instanceof String) {
-            setText((String)value);
-          }
+      myModule.setModel(new DefaultComboBoxModel<>(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
+      myModule.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+        if (value instanceof Module) {
+          final Module module = (Module)value;
+          label.setText(ReadAction.compute(() -> module.getName()));
+          label.setIcon(ModuleType.get(module).getIcon());
         }
-      });
+        else if (value instanceof String) {
+          label.setText((String)value);
+        }
+      }));
 
       final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(),
                                                      sdk -> sdk.getSdkType() instanceof JavaSdkType);
-      myJDK.setModel(new DefaultComboBoxModel(allJdks.toArray()));
+      myJDK.setModel(new DefaultComboBoxModel<>(allJdks.toArray(new Sdk[0])));
       if (allJdks.size() > 0) {
         myJDK.setSelectedIndex(0);
       }
@@ -298,15 +295,12 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         myJdkChoice.setEnabled(false);
         myJDK.setEnabled(false);
       }
-      myJDK.setRenderer(new ListCellRendererWrapper<Sdk>() {
-        @Override
-        public void customize(JList list, final Sdk jdk, int index, boolean isSelected, boolean cellHasFocus) {
-          if (jdk != null) {
-            setText(ReadAction.compute(() -> jdk.getName()));
-            setIcon(((SdkType) jdk.getSdkType()).getIcon());
-          }
+      myJDK.setRenderer(SimpleListCellRenderer.create((label, jdk, index) -> {
+        if (jdk != null) {
+          label.setText(ReadAction.compute(() -> jdk.getName()));
+          label.setIcon(((SdkType)jdk.getSdkType()).getIcon());
         }
-      });
+      }));
 
       final ItemListener updateListener = new ItemListener() {
         @Override

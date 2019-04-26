@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -23,10 +9,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.tabs.JBTabsPosition;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
-import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
@@ -211,7 +194,7 @@ public class TabLabel extends JPanel implements Accessible {
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
-          JBColor.namedColor("EditorTabs.active.foreground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
+               JBColor.namedColor("EditorTabs.selectedForeground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
       }
 
     };
@@ -234,6 +217,10 @@ public class TabLabel extends JPanel implements Accessible {
       else {
         insets.right = 3;
       }
+    }
+
+    if (myTabs.getPosition() == JBTabsPosition.top) {
+      insets.top += getNonSelectedOffset();
     }
     return insets;
   }
@@ -328,6 +315,12 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void doPaint(final Graphics g) {
+    if (myTabs.getPosition() == JBTabsPosition.top) {
+      super.paint(g);
+      return;
+    }
+
+
     doTranslate((x, y) -> g.translate(x, y));
 
     final Composite oldComposite = ((Graphics2D)g).getComposite();
@@ -392,7 +385,7 @@ public class TabLabel extends JPanel implements Accessible {
     }
 
     JBTabsImpl tabs =
-      JBTabsImpl.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
+      (JBTabsImpl)JBTabsEx.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
     if (tabs == myTabs && myTabs.myAddNavigationGroup) {
       toShow.addAll(myTabs.myNavigationActions);
     }

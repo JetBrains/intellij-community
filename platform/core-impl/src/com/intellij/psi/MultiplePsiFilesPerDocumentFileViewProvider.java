@@ -81,7 +81,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
       if (target != getBaseLanguage() && !getLanguages().contains(target)) {
         return null;
       }
-      file = (PsiFileImpl)createFile(target);
+      file = createPsiFileImpl(target);
       if (file == null) return null;
       if (myOriginal != null) {
         final PsiFile originalFile = myOriginal.getPsi(target);
@@ -94,6 +94,10 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
     return file;
   }
 
+  @Nullable
+  protected PsiFileImpl createPsiFileImpl(@NotNull Language target) {
+    return (PsiFileImpl)createFile(target);
+  }
 
   @Override
   public final PsiFile getCachedPsi(@NotNull Language target) {

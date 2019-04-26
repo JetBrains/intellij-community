@@ -18,6 +18,7 @@ package com.intellij.junit4;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
@@ -32,6 +33,7 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataProvider;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import jetbrains.buildServer.messages.serviceMessages.TestIgnored;
@@ -42,6 +44,7 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.util.Calendar;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,7 +70,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
-    assertSize(4, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+    assertSize(4, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
   }
 
   public void testSelectedMethods() throws Exception {
@@ -76,8 +79,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
       GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
       PsiElement[] elements = new PsiElement[]{
-        psiFacade.findClass("mixed.v4.MyTest4", scope).getMethods()[0],
-        psiFacade.findClass("mixed.v5.MyTest5", scope).getMethods()[0]
+        psiFacade.findClass("mixed.v5.MyTest5", scope).getMethods()[0],
+        psiFacade.findClass("mixed.v4.MyTest4", scope).getMethods()[0]
       };
       testApplication.setDataProvider(new TestDataProvider(myProject) {
         @Override
@@ -103,7 +106,35 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       assertTrue(processOutput.sys.toString().contains("-junit5"));
       //assertEmpty(err); // commented due unavoidable messages from JUnit engine: WARNING: Method 'public void mixed.v4.MyTest4.singleMethodTest()' could not be resolved
       assertEmpty(processOutput.out);
-      assertSize(2, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+      assertSize(2, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
+      TestFailed firstFailure = (TestFailed)ContainerUtil.find(processOutput.messages, TestFailed.class::isInstance);
+      assertNotNull(firstFailure);
+      String id = firstFailure.getAttributes().get("id");
+      assertNotNull(id);
+      assertTrue("First failure: " + id, id.contains("v5"));
+    }
+    finally {
+      testApplication.setDataProvider(null);
+    }
+  }
+
+  public void testPatternConfiguration() throws Exception {
+    final IdeaTestApplication testApplication = IdeaTestApplication.getInstance();
+    try {
+      JUnitConfiguration configuration = new JUnitConfiguration("pattern", getProject());
+      JUnitConfiguration.Data data = configuration.getPersistentData();
+      data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+      LinkedHashSet<String> pattern = new LinkedHashSet<>();
+      pattern.add(".*MyTest.*");
+      data.setPatterns(pattern);
+      data.setScope(TestSearchScope.WHOLE_PROJECT);
+
+      ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+      assertTrue(processOutput.sys.toString().contains("-junit5"));
+      assertEmpty(processOutput.out);
+      assertSize(4, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+      assertSize(4, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
     }
     finally {
       testApplication.setDataProvider(null);
@@ -124,7 +155,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
-    assertSize(1, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+    assertSize(1, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
   }
 
 
@@ -137,7 +168,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
-    assertSize(1, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+    assertSize(1, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
     assertTrue(systemOutput.contains("-junit5"));
   }
 
@@ -153,7 +184,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
-    assertSize(2, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+    assertSize(2, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
     assertTrue(systemOutput.contains("-junit5"));
   }
 
@@ -232,8 +263,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertNoIgnored(processOutput);
 
     //assuming only suiteTreeNode/start/finish events
-    assertSize(3, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()"))
-      .collect(Collectors.toList()));
+    assertSize(3,
+               ContainerUtil.filter(processOutput.messages, m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()")));
   }
 
   public void testRunSpecificDisabledIfMethod() throws Exception {
@@ -247,8 +278,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertNoIgnored(processOutput);
 
     //assuming only suiteTreeNode/start/finish events
-    assertSize(3, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()"))
-      .collect(Collectors.toList()));
+    assertSize(3, ContainerUtil
+      .filter(processOutput.messages, m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()")));
   }
 
   public void testRunSpecificDisabledMethodByCondition() throws Exception {
@@ -262,8 +293,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertNoIgnored(processOutput);
 
     //assuming only suiteTreeNode/start/failed(no String to inject)/finish events
-    assertSize(4, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod(String)"))
-      .collect(Collectors.toList()));
+    assertSize(4, ContainerUtil
+      .filter(processOutput.messages, m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod(String)")));
   }
 
   private static void assertNoIgnored(ProcessOutput processOutput) {

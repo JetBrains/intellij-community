@@ -52,9 +52,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
   @Override
   public void selectAll() {
     myTextField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTextField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTextField, true));
   }
 
   @Nullable

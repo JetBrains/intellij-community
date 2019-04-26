@@ -16,6 +16,18 @@ public class EnterAfterJavadocTagHandlerTest {
     EnterAfterJavadocTagHandler.Context context = parse(text);
     assertEmpty(context);
   }
+
+  @Test
+  public void unterminatedTagAtTheEnd() {
+    String text = "/**\n * <p><";
+    EnterAfterJavadocTagHandler.Context context = parse(text, text.length() - 1);
+    assertEquals(9, context.startTagEndOffset);
+    assertEquals(-1, context.endTagStartOffset);
+    String text2 = "/**\n * <p></";
+    context = parse(text2, text2.length() - 2);
+    assertEquals(9, context.startTagEndOffset);
+    assertEquals(-1, context.endTagStartOffset);
+  }
   
   @Test
   public void startTagOnly() {

@@ -4,16 +4,14 @@ package org.zmlx.hg4idea.provider;
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.actions.VcsQuickListContentProviderBase;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HgQuickListProvider extends DvcsQuickListContentProvider {
-
-  private static final Logger LOG = Logger.getInstance(HgQuickListProvider.class.getName());
-
   @NotNull
   @Override
   protected String getVcsName() {
@@ -21,10 +19,13 @@ public class HgQuickListProvider extends DvcsQuickListContentProvider {
   }
 
   @Override
-  protected void addVcsSpecificActions(@NotNull ActionManager manager, @NotNull List<AnAction> actions) {
+  protected List<AnAction> collectVcsSpecificActions(@NotNull ActionManager manager) {
+    List<AnAction> actions = new ArrayList<>();
     add("hg4idea.branches", manager, actions);
     add("hg4idea.pull", manager, actions);
     add("Vcs.Push", manager, actions);
     add("hg4idea.updateTo", manager, actions);
+    add("ChangesView.AddUnversioned", manager, actions);
+    return actions;
   }
 }

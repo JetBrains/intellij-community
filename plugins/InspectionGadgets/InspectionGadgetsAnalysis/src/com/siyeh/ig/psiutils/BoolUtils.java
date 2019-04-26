@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.util.OptionalUtil.*;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
 public class BoolUtils {
@@ -85,11 +86,6 @@ public class BoolUtils {
   private static final CallMatcher STREAM_ANY_MATCH = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "anyMatch");
   private static final CallMatcher STREAM_NONE_MATCH = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "noneMatch");
 
-
-  private static final String OPTIONAL_INT = "java.util.OptionalInt";
-  private static final String OPTIONAL_LONG = "java.util.OptionalLong";
-  private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
-
   private static final CallMatcher OPTIONAL_IS_PRESENT =
     CallMatcher.anyOf(
       CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0),
@@ -105,10 +101,6 @@ public class BoolUtils {
       CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isEmpty").parameterCount(0)
     );
 
-  private static Predicate<PsiMethodCallExpression> withMinimalLanguageLevel(CallMatcher matcher, LanguageLevel level) {
-    return matcher.and(expression -> PsiUtil.getLanguageLevel(expression).isAtLeast(level));
-  }
-
   private static class PredicatedReplacement {
     Predicate<PsiMethodCallExpression> predicate;
     String name;
@@ -122,7 +114,7 @@ public class BoolUtils {
   private static final List<PredicatedReplacement> ourReplacements = new ArrayList<>();
   static {
     ourReplacements.add(new PredicatedReplacement(OPTIONAL_IS_EMPTY, "isPresent"));
-    ourReplacements.add(new PredicatedReplacement(withMinimalLanguageLevel(OPTIONAL_IS_PRESENT, LanguageLevel.JDK_11), "isEmpty"));
+    ourReplacements.add(new PredicatedReplacement(OPTIONAL_IS_PRESENT.withLanguageLevelAtLeast(LanguageLevel.JDK_11), "isEmpty"));
     ourReplacements.add(new PredicatedReplacement(STREAM_ANY_MATCH, "noneMatch"));
     ourReplacements.add(new PredicatedReplacement(STREAM_NONE_MATCH, "anyMatch"));
   }

@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class JBListUpdater implements ListComponentUpdater {
-  private JBList myComponent;
+  private final JBList myComponent;
 
   public JBListUpdater(JBList component) {
     myComponent = component;

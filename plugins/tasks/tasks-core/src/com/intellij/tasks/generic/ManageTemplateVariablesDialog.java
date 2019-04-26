@@ -199,7 +199,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
           return "Whether this template variable will be hidden like password field";
         }
       };
-      return new ListTableModel((new ColumnInfo[]{name, value, isShownOnFirstTab, isHidden}));
+      return new ListTableModel(name, value, isShownOnFirstTab, isHidden);
     }
 
     @Override

@@ -34,11 +34,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.Graphics2DDelegate;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.tabs.JBTabs;
@@ -57,6 +56,7 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
+import java.awt.image.VolatileImage;
 import java.net.URL;
 import java.util.Set;
 
@@ -68,6 +68,8 @@ public class IdeBackgroundUtil {
   public static final String EDITOR_PROP = "idea.background.editor";
   public static final String FRAME_PROP = "idea.background.frame";
   public static final String TARGET_PROP = "idea.background.target";
+
+  public static final Key<Boolean> NO_BACKGROUND = Key.create("SUPPRESS_BACKGROUND");
 
   public enum Fill {
     PLAIN, SCALE, TILE
@@ -100,7 +102,7 @@ public class IdeBackgroundUtil {
     if (type == null) return false;
     String spec = System.getProperty(TARGET_PROP, "*");
     boolean allInclusive = spec.startsWith("*");
-    return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
+    return allInclusive ? spec.contains("-" + type) : !spec.contains(type);
   }
 
   private static final Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
@@ -131,7 +133,7 @@ public class IdeBackgroundUtil {
   }
 
   @NotNull
-  public static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
+  private static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
     JRootPane rootPane = component.getRootPane();
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
     PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
@@ -139,11 +141,11 @@ public class IdeBackgroundUtil {
     return MyGraphics.wrap(g, helper, component);
   }
 
-  public static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
+  static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
     PaintersHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
 
-  public static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
+  static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
     PaintersHelper painters = glassPane.getNamedPainters(FRAME_PROP);
     PaintersHelper.initWallpaperPainter(FRAME_PROP, painters);
 
@@ -156,7 +158,7 @@ public class IdeBackgroundUtil {
       painters.addPainter(PaintersHelper.newImagePainter(centerImage, Fill.PLAIN, Anchor.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
     }
     painters.addPainter(new AbstractPainter() {
-      EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
+      final EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
 
       @Override
       public boolean needsRepaint() {
@@ -174,9 +176,8 @@ public class IdeBackgroundUtil {
   @NotNull
   public static Color getIdeBackgroundColor() {
     return new JBColor(() -> {
-      Color light = UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground())));
-      //noinspection UseJBColor
-      return UIUtil.isUnderDarcula() ? new Color(40, 40, 41) : light;
+      Color light = ColorUtil.darker(UIUtil.getPanelBackground(), 3);
+      return UIUtil.isUnderDarcula() ? Gray._40 : light;
     });
   }
 
@@ -374,12 +375,14 @@ public class IdeBackgroundUtil {
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
       if (width <= 1 || height <= 1) return;
-      // skip painters for transparent 'reasons'
-      if (reason instanceof Color && ((Color)reason).getAlpha() < 255) return;
-      if (reason instanceof Image) {
-        if (!(reason instanceof BufferedImage)) return;
-        if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
-      }
+      boolean hasAlpha =
+        reason instanceof Color ? ((Color)reason).getAlpha() < 255 :
+        reason instanceof BufferedImage ? ((BufferedImage)reason).getColorModel().hasAlpha() :
+        reason instanceof VolatileImage ? ((VolatileImage)reason).getTransparency() != Transparency.OPAQUE :
+        true;
+      // skip painters when alpha is already present
+      if (hasAlpha) return;
+
       Shape prevClip = getClip();
       Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
       if (tmpClip == null) return;
@@ -400,6 +403,7 @@ public class IdeBackgroundUtil {
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
     public Graphics2D fun(JComponent c, Graphics2D g) {
+      if (Boolean.TRUE.equals(UIUtil.getClientProperty(c, NO_BACKGROUND))) return g;
       String type = getComponentType(c);
       if (type == null) return g;
       if ("frame".equals(type)) return withFrameBackground(g, c);

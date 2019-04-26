@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -37,12 +37,12 @@ import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -59,6 +59,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 @State(
@@ -70,7 +71,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
   private final Project myProject;
-  private final WindowManagerEx myWindowManager;
   private final EventDispatcher<ToolWindowManagerListener> myDispatcher = EventDispatcher.create(ToolWindowManagerListener.class);
   private final DesktopLayout myLayout = new DesktopLayout();
   private final Map<String, InternalDecorator> myId2InternalDecorator = new HashMap<>();
@@ -119,11 +119,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private final SingleAlarm myUpdateHeadersAlarm = new SingleAlarm(() -> updateToolWindowHeaders(), 50, this);
   private final CommandProcessor myCommandProcessor = new CommandProcessor();
 
-  public ToolWindowManagerImpl(final Project project,
-                               final WindowManagerEx windowManagerEx,
-                               final ActionManager actionManager) {
+  public ToolWindowManagerImpl(@NotNull Project project) {
     myProject = project;
-    myWindowManager = windowManagerEx;
 
     if (project.isDefault()) {
       return;
@@ -133,7 +130,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         if (myCurrentState != KeyState.hold) {
           resetHoldState();
         }
@@ -164,7 +161,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     });
 
-    myLayout.copyFrom(windowManagerEx.getLayout());
+    myLayout.copyFrom(WindowManagerEx.getInstanceEx().getLayout());
 
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
@@ -188,27 +185,26 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Windows.ToolWindowFilter
       .filterBySignal(new Windows.Signal(predicate))
-      .withEscAction(actionManager)
+      .withEscAction()
       .handleDocked(toolWindowId -> {})
       .handleFloating(toolWindowId -> {})
       .handleFocusLostOnPinned(toolWindowId -> {
         List<FinalizableCommand> commands = new ArrayList<>();
         deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands);
-        myCommandProcessor.execute(commands, myProject.getDisposed());
+        execute(commands, true); // notify clients that toolwindow is deactivated
       })
       .handleWindowed(toolWindowId -> {})
       .bind(myProject);
   }
 
-  private void focusDefaultElementInSelectedEditor() {
-    JComponent defaultFocusedComponentInEditor;
+  private static void focusDefaultElementInSelectedEditor() {
     EditorsSplitters splittersToFocus = getSplittersToFocus();
     if (splittersToFocus != null) {
     final EditorWindow window = splittersToFocus.getCurrentWindow();
       if (window != null) {
         final EditorWithProviderComposite editor = window.getSelectedEditor();
         if (editor != null) {
-          defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+          JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
           if (defaultFocusedComponentInEditor != null) {
             defaultFocusedComponentInEditor.requestFocus();
           }
@@ -256,58 +252,53 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     }
 
-    Set<Integer> vks = getActivateToolWindowVKs();
+    int vks = getActivateToolWindowVKsMask();
 
-    if (vks.isEmpty()) {
+    if (vks == 0) {
       resetHoldState();
       return false;
     }
 
-    if (vks.contains(e.getKeyCode())) {
+    int mouseMask = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
+    if (BitUtil.isSet(vks, keyCodeToInputMask(e.getKeyCode())) && (e.getModifiersEx() & mouseMask) == 0) {
       boolean pressed = e.getID() == KeyEvent.KEY_PRESSED;
       int modifiers = e.getModifiers();
-
-      int mouseMask = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
-      if ((e.getModifiersEx() & mouseMask) == 0) {
-        if (areAllModifiersPressed(modifiers, vks) || !pressed) {
-          processState(pressed);
-        }
-        else {
-          resetHoldState();
-        }
+      if (areAllModifiersPressed(modifiers, vks) || !pressed) {
+        processState(pressed);
+      }
+      else {
+        resetHoldState();
       }
     }
-
 
     return false;
   }
 
-  private static boolean areAllModifiersPressed(@JdkConstants.InputEventMask int modifiers, Set<Integer> modifierCodes) {
-    int mask = 0;
-    for (Integer each : modifierCodes) {
-      if (each == KeyEvent.VK_SHIFT) {
-        mask |= InputEvent.SHIFT_MASK;
-      }
-
-      if (each == KeyEvent.VK_CONTROL) {
-        mask |= InputEvent.CTRL_MASK;
-      }
-
-      if (each == KeyEvent.VK_META) {
-        mask |= InputEvent.META_MASK;
-      }
-
-      if (each == KeyEvent.VK_ALT) {
-        mask |= InputEvent.ALT_MASK;
-      }
-    }
-
+  private static boolean areAllModifiersPressed(@JdkConstants.InputEventMask int modifiers, @JdkConstants.InputEventMask int mask) {
     return (modifiers ^ mask) == 0;
   }
 
-  @NotNull
-  private static Set<Integer> getActivateToolWindowVKs() {
-    if (ApplicationManager.getApplication() == null) return new HashSet<>();
+  @JdkConstants.InputEventMask
+  private static int keyCodeToInputMask(int code) {
+    int mask = 0;
+    if (code == KeyEvent.VK_SHIFT) {
+      mask = InputEvent.SHIFT_MASK;
+    }
+    if (code == KeyEvent.VK_CONTROL) {
+      mask = InputEvent.CTRL_MASK;
+    }
+    if (code == KeyEvent.VK_META) {
+      mask = InputEvent.META_MASK;
+    }
+    if (code == KeyEvent.VK_ALT) {
+      mask = InputEvent.ALT_MASK;
+    }
+    return mask;
+  }
+
+  @JdkConstants.InputEventMask
+  private static int getActivateToolWindowVKsMask() {
+    if (ApplicationManager.getApplication() == null) return 0;
 
     Keymap keymap = Objects.requireNonNull(KeymapManager.getInstance()).getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
@@ -321,28 +312,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
       }
     }
-    return getModifiersVKs(baseModifiers);
-  }
-
-  @NotNull
-  private static Set<Integer> getModifiersVKs(int mask) {
-    Set<Integer> codes = new THashSet<>();
-    if ((mask & InputEvent.SHIFT_MASK) > 0) {
-      codes.add(KeyEvent.VK_SHIFT);
-    }
-    if ((mask & InputEvent.CTRL_MASK) > 0) {
-      codes.add(KeyEvent.VK_CONTROL);
-    }
-
-    if ((mask & InputEvent.META_MASK) > 0) {
-      codes.add(KeyEvent.VK_META);
-    }
-
-    if ((mask & InputEvent.ALT_MASK) > 0) {
-      codes.add(KeyEvent.VK_ALT);
-    }
-
-    return codes;
+    // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
+    return baseModifiers & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK | InputEvent.ALT_MASK);
   }
 
   private void resetHoldState() {
@@ -397,10 +368,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   @Override
   public void dispose() {
-    for (String id : new ArrayList<>(myId2StripeButton.keySet())) {
-      unregisterToolWindow(id);
-    }
-
     LOG.assertTrue(myId2StripeButton.isEmpty(), myId2StripeButton);
   }
 
@@ -410,7 +377,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
-    myFrame = myWindowManager.allocateFrame(myProject);
+    myFrame = WindowManagerEx.getInstanceEx().allocateFrame(myProject);
     LOG.assertTrue(myFrame != null);
 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
@@ -430,24 +397,21 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }, this);
 
     UIUtil.putClientProperty(
-      myToolWindowsPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
-        @Override
-        public Iterator<JComponent> iterator() {
-          List<WindowInfoImpl> infos = myLayout.getInfos();
-          List<JComponent> result = new ArrayList<>(infos.size());
-          for (WindowInfoImpl info : infos) {
-            @SuppressWarnings("ConstantConditions")
-            JComponent decorator = getInternalDecorator(info.getId());
-            if (decorator.getParent() == null) {
-              result.add(decorator);
-            }
+      myToolWindowsPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
+        List<WindowInfoImpl> infos = myLayout.getInfos();
+        List<JComponent> result = new ArrayList<>(infos.size());
+        for (WindowInfoImpl info : infos) {
+          @SuppressWarnings("ConstantConditions")
+          JComponent decorator = getInternalDecorator(info.getId());
+          if (decorator.getParent() == null) {
+            result.add(decorator);
           }
-          return result.iterator();
         }
+        return result.iterator();
       });
   }
 
-  private void initAll(List<FinalizableCommand> commandsList) {
+  private void initAll(List<? super FinalizableCommand> commandsList) {
     appendUpdateToolWindowsPaneCmd(commandsList);
 
     JComponent editorComponent = createEditorComponent(myProject);
@@ -460,7 +424,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     return FrameEditorComponentProvider.EP.getExtensions()[0].createEditorComponent(project);
   }
 
-  private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
+  private void registerToolWindowsFromBeans(List<? super FinalizableCommand> list) {
     for (ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
       list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
         @Override
@@ -489,7 +453,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     final ToolWindowFactory factory = bean.getToolWindowFactory();
     ToolWindow window = registerToolWindow(bean.id, label, toolWindowAnchor, false, bean.canCloseContents,
                                            DumbService.isDumbAware(factory), factory.shouldBeAvailable(myProject));
-    final ToolWindowImpl toolWindow = (ToolWindowImpl)registerDisposable(bean.id, myProject, window);
+    final ToolWindowImpl toolWindow = (ToolWindowImpl)window;
     toolWindow.setContentFactory(factory);
     if (bean.icon != null && toolWindow.getIcon() == null) {
       Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
@@ -539,7 +503,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     // remove ToolWindowsPane
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
-    myWindowManager.releaseFrame(myFrame);
+    WindowManagerEx.getInstanceEx().releaseFrame(myFrame);
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendUpdateToolWindowsPaneCmd(commandsList);
 
@@ -605,7 +569,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     focusDefaultElementInSelectedEditor();
   }
 
-  private void deactivateWindows(@NotNull String idToIgnore, @NotNull List<FinalizableCommand> commandList) {
+  private void deactivateWindows(@NotNull String idToIgnore, @NotNull List<? super FinalizableCommand> commandList) {
     for (WindowInfoImpl info : myLayout.getInfos()) {
       if (!idToIgnore.equals(info.getId())) {
         deactivateToolWindowImpl(info, isToHideOnDeactivation(info), commandList);
@@ -628,7 +592,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    */
   private void showAndActivate(@NotNull String id,
                                final boolean dirtyMode,
-                               @NotNull List<FinalizableCommand> commandsList,
+                               @NotNull List<? super FinalizableCommand> commandsList,
                                boolean autoFocusContents) {
     //noinspection ConstantConditions
     if (!getToolWindow(id).isAvailable()) {
@@ -668,7 +632,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private void activateToolWindowImpl(@NotNull String id,
-                                      @NotNull List<FinalizableCommand> commandList,
+                                      @NotNull List<? super FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
     ToolWindowCollector.getInstance().recordActivation(id);
@@ -709,7 +673,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (info == null) {
       throw new IllegalThreadStateException("window with id=\"" + id + "\" is unknown");
     }
-    else if (!info.isRegistered()) {
+    if (!info.isRegistered()) {
       LOG.error("window with id=\"" + id + "\" isn't registered");
     }
     return info;
@@ -718,7 +682,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   /**
    * Helper method. It deactivates (and hides) window with specified {@code id}.
    */
-  private void deactivateToolWindowImpl(@NotNull WindowInfoImpl info, final boolean shouldHide, @NotNull List<FinalizableCommand> commandsList) {
+  private void deactivateToolWindowImpl(@NotNull WindowInfoImpl info, final boolean shouldHide, @NotNull List<? super FinalizableCommand> commandsList) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: deactivateToolWindowImpl(" + info.getId() + "," + shouldHide + ")");
     }
@@ -755,7 +719,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   @Override
   @Nullable
-  public String getLastActiveToolWindowId(@Nullable Condition<JComponent> condition) {
+  public String getLastActiveToolWindowId(@Nullable Condition<? super JComponent> condition) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     String lastActiveToolWindowId = null;
     for (int i = 0; i < myActiveStack.getPersistentSize(); i++) {
@@ -914,7 +878,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   /**
    * @param dirtyMode if {@code true} then all UI operations are performed in dirty mode.
    */
-  private void showToolWindowImpl(@NotNull String id, final boolean dirtyMode, @NotNull List<FinalizableCommand> commandsList) {
+  private void showToolWindowImpl(@NotNull String id, final boolean dirtyMode, @NotNull List<? super FinalizableCommand> commandsList) {
     final WindowInfoImpl toBeShownInfo = getRegisteredInfoOrLogError(id);
     ToolWindow window = getToolWindow(id);
     if (window != null && toBeShownInfo.isWindowed()) {
@@ -1011,7 +975,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                                        @NotNull ToolWindowAnchor anchor,
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode, boolean canCloseContents) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, true));
+    return registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, true);
   }
 
   @NotNull
@@ -1048,8 +1012,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode,
                                        boolean secondary) {
-    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode, true);
-    return registerDisposable(id, parentDisposable, window);
+    return registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode, true);
   }
 
   @NotNull
@@ -1080,6 +1043,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     // Create decorator
 
     ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
+    Disposer.register(this, toolWindow);
     toolWindow.setAvailable(shouldBeAvailable, null);
     InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow, canWorkInDumbMode);
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
@@ -1091,6 +1055,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     // Create and show tool button
 
     final StripeButton button = new StripeButton(decorator, myToolWindowsPane);
+    Disposer.register(toolWindow, button);
     myId2StripeButton.put(id, button);
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendAddButtonCmd(button, info, commandsList);
@@ -1114,14 +1079,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     return toolWindow;
   }
 
-  @NotNull
-  private ToolWindow registerDisposable(@NotNull final String id, @NotNull final Disposable parentDisposable, @NotNull ToolWindow window) {
-    Disposer.register(parentDisposable, () -> unregisterToolWindow(id));
-    return window;
-  }
-
   @Override
   public void unregisterToolWindow(@NotNull final String id) {
+    ToolWindowImpl window = (ToolWindowImpl)getToolWindow(id);
+    if (window != null) {
+      Disposer.dispose(window);
+    }
+  }
+
+  void doUnregisterToolWindow(@NotNull String id) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: unregisterToolWindow(" + id + ")");
     }
@@ -1154,8 +1120,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     toolWindow.removePropertyChangeListener(myToolWindowPropertyChangeListener);
 
     // Destroy stripe button
-    final StripeButton button = getStripeButton(id);
-    Disposer.dispose(button);
     myId2StripeButton.remove(id);
     //
     ToolWindowFocusWatcher watcher = (ToolWindowFocusWatcher)myId2FocusWatcher.remove(id);
@@ -1168,7 +1132,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     myId2InternalDecorator.remove(id);
   }
 
-  private void applyInfo(@NotNull String id, WindowInfoImpl info, List<FinalizableCommand> commandsList) {
+  private void applyInfo(@NotNull String id, WindowInfoImpl info, List<? super FinalizableCommand> commandsList) {
     info.setVisible(false);
     if (info.isFloating()) {
       appendRemoveFloatingDecoratorCmd(info, commandsList);
@@ -1181,6 +1145,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
+  @NotNull
   @Override
   public DesktopLayout getLayout() {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -1325,13 +1290,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     final Balloon balloon = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getTitleForeground(), type.getPopupBackground(), listenerWrapper)
       .setBorderColor(type.getBorderColor()).setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
-    NotificationsManagerImpl.frameActivateBalloonListener(balloon, () -> {
-      final Alarm alarm = new Alarm();
-      alarm.addRequest(() -> {
-        ((BalloonImpl)balloon).setHideOnClickOutside(true);
-        Disposer.dispose(alarm);
-      }, 100);
-    });
+    NotificationsManagerImpl.frameActivateBalloonListener(balloon, () ->
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(()->((BalloonImpl)balloon).setHideOnClickOutside(true), 100, TimeUnit.MILLISECONDS)
+    );
     listenerWrapper.myBalloon = balloon;
     myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, () -> {
@@ -1447,7 +1408,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private void setToolWindowAnchorImpl(@NotNull String id,
                                        @NotNull ToolWindowAnchor anchor,
                                        final int order,
-                                       @NotNull List<FinalizableCommand> commandsList) {
+                                       @NotNull List<? super FinalizableCommand> commandsList) {
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (anchor == info.getAnchor() && order == info.getOrder()) {
       return;
@@ -1513,7 +1474,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     activateToolWindow(id, false, false);
   }
 
-  private void setSplitModeImpl(@NotNull String id, final boolean isSplit, @NotNull List<FinalizableCommand> commandList) {
+  private void setSplitModeImpl(@NotNull String id, final boolean isSplit, @NotNull List<? super FinalizableCommand> commandList) {
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (isSplit == info.isSplit()) {
       return;
@@ -1577,7 +1538,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     execute(commandList);
   }
 
-  private void setToolWindowAutoHideImpl(@NotNull String id, final boolean autoHide, @NotNull List<FinalizableCommand> commandsList) {
+  private void setToolWindowAutoHideImpl(@NotNull String id, final boolean autoHide, @NotNull List<? super FinalizableCommand> commandsList) {
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (info.isAutoHide() == autoHide) {
       return;
@@ -1597,7 +1558,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     execute(commandList);
   }
 
-  private void setToolWindowTypeImpl(@NotNull String id, @NotNull ToolWindowType type, @NotNull List<FinalizableCommand> commandsList) {
+  private void setToolWindowTypeImpl(@NotNull String id, @NotNull ToolWindowType type, @NotNull List<? super FinalizableCommand> commandsList) {
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
     if (info.getType() == type) {
       return;
@@ -1626,7 +1587,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
-  private void appendApplyWindowInfoCmd(@NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
+  private void appendApplyWindowInfoCmd(@NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
     final StripeButton button = getStripeButton(Objects.requireNonNull(info.getId()));
     final InternalDecorator decorator = getInternalDecorator(info.getId());
     commandsList.add(new ApplyWindowInfoCmd(info, button, decorator, myCommandProcessor));
@@ -1638,29 +1599,29 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private void appendAddDecoratorCmd(@NotNull InternalDecorator decorator,
                                      @NotNull WindowInfoImpl info,
                                      boolean dirtyMode,
-                                     @NotNull List<FinalizableCommand> commandsList) {
+                                     @NotNull List<? super FinalizableCommand> commandsList) {
     commandsList.add(myToolWindowsPane.createAddDecoratorCmd(decorator, info, dirtyMode, myCommandProcessor));
   }
 
   /**
    * @see ToolWindowsPane#createRemoveDecoratorCmd
    */
-  private void appendRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull List<FinalizableCommand> commandsList) {
+  private void appendRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull List<? super FinalizableCommand> commandsList) {
     commandsList.add(myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myCommandProcessor));
   }
 
-  private void appendRemoveFloatingDecoratorCmd(@NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
+  private void appendRemoveFloatingDecoratorCmd(@NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
     commandsList.add(new RemoveFloatingDecoratorCmd(info));
   }
 
-  private void appendRemoveWindowedDecoratorCmd(@NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
+  private void appendRemoveWindowedDecoratorCmd(@NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
     commandsList.add(new RemoveWindowedDecoratorCmd(info));
   }
 
   /**
    * @see ToolWindowsPane#createAddButtonCmd
    */
-  private void appendAddButtonCmd(final StripeButton button, @NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
+  private void appendAddButtonCmd(final StripeButton button, @NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
     Comparator<StripeButton> comparator = myLayout.comparator(info.getAnchor());
     commandsList.add(myToolWindowsPane.createAddButtonCmd(button, info, comparator, myCommandProcessor));
   }
@@ -1668,14 +1629,14 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   /**
    * @see ToolWindowsPane#createAddButtonCmd
    */
-  private void appendRemoveButtonCmd(@NotNull String id, @NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
+  private void appendRemoveButtonCmd(@NotNull String id, @NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
     FinalizableCommand cmd = myToolWindowsPane.createRemoveButtonCmd(info, id, myCommandProcessor);
     if (cmd != null) {
       commandsList.add(cmd);
     }
   }
 
-  private void appendRequestFocusInToolWindowCmd(final String id, List<FinalizableCommand> commandList) {
+  private void appendRequestFocusInToolWindowCmd(final String id, List<? super FinalizableCommand> commandList) {
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
     commandList
@@ -1685,19 +1646,20 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   /**
    * @see ToolWindowsPane#createSetEditorComponentCmd
    */
-  private void appendSetEditorComponentCmd(@Nullable final JComponent component, @NotNull List<FinalizableCommand> commandsList) {
+  private void appendSetEditorComponentCmd(@Nullable final JComponent component, @NotNull List<? super FinalizableCommand> commandsList) {
     commandsList.add(myToolWindowsPane.createSetEditorComponentCmd(component, myCommandProcessor));
   }
 
-  private void appendUpdateToolWindowsPaneCmd(final List<FinalizableCommand> commandsList) {
+  private void appendUpdateToolWindowsPaneCmd(final List<? super FinalizableCommand> commandsList) {
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) {
       commandsList.add(new UpdateRootPaneCmd(rootPane, myCommandProcessor));
     }
   }
 
-  private EditorsSplitters getSplittersToFocus() {
-    Window activeWindow = myWindowManager.getMostRecentFocusedWindow();
+  @Nullable
+  private static EditorsSplitters getSplittersToFocus() {
+    Window activeWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     if (activeWindow instanceof FloatingDecorator) {
       IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
@@ -1753,6 +1715,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     Element element = new Element("state");
 
     // Save frame's bounds
+    // [tav] Where we load these bounds? Should we just remove this code? (because we load frame bounds in WindowManagerImpl.allocateFrame)
+    // Anyway, we should save bounds in device space to preserve backward compatibility with the IDE-managed HiDPI mode (see JBUI.ScaleType).
+    // However, I won't change thise code because I can't even test it.
     final Rectangle frameBounds = myFrame.getBounds();
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
@@ -1896,7 +1861,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       if (bounds != null &&
           bounds.width > 0 &&
           bounds.height > 0 &&
-          myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
+          WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
         myFloatingDecorator.setBounds(new Rectangle(bounds));
       }
       else {
@@ -1971,7 +1936,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       if (bounds != null &&
           bounds.width > 0 &&
           bounds.height > 0 &&
-          myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
+          WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
         window.setBounds(new Rectangle(bounds));
       }
       else { // place new frame at the center of main frame if there are no floating bounds
@@ -1988,9 +1953,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           hideToolWindow(Objects.requireNonNull(info.getId()), false);
         }
       });
-
-      final IdeFrame parent = WindowManager.getInstance().getIdeFrame(myProject);
-      IdeMenuBar.bindAppMenuOfParent(window, parent);
     }
 
     @Override
@@ -2196,21 +2158,21 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
             another = (InternalDecorator)splitter.getSecondComponent();
           }
           if (anchor.isSplitVertically()) {
-            info.setSideWeight(sizeInSplit / (float)splitter.getHeight());
+            info.setSideWeight(sizeInSplit / splitter.getHeight());
           }
           else {
-            info.setSideWeight(sizeInSplit / (float)splitter.getWidth());
+            info.setSideWeight(sizeInSplit / splitter.getWidth());
           }
         }
 
         float paneWeight = anchor.isHorizontal()
-                           ? (float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight()
-                           : (float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
+                           ? (float)source.getHeight() / myToolWindowsPane.getMyLayeredPane().getHeight()
+                           : (float)source.getWidth() / myToolWindowsPane.getMyLayeredPane().getWidth();
         info.setWeight(paneWeight);
         if (another != null && anchor.isSplitVertically()) {
           paneWeight = anchor.isHorizontal()
-                       ? (float)another.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight()
-                       : (float)another.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
+                       ? (float)another.getHeight() / myToolWindowsPane.getMyLayeredPane().getHeight()
+                       : (float)another.getWidth() / myToolWindowsPane.getMyLayeredPane().getWidth();
           another.getWindowInfo().setWeight(paneWeight);
         }
       }
@@ -2235,12 +2197,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     public void visibleStripeButtonChanged(@NotNull InternalDecorator source, boolean visible) {
       setShowStripeButton(source.getToolWindow().getId(), visible);
     }
-  }
-
-  @NotNull
-  public ActionCallback requestDefaultFocus(@SuppressWarnings("unused") final boolean forced) {
-    //todo need to implement
-    return ActionCallback.DONE;
   }
 
   private void focusToolWindowByDefault(@Nullable String idToIgnore) {
@@ -2289,7 +2245,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
     info.setShowStripeButton(visibleOnPanel);
-    triggerUsage("StripeButton[" + id + "]." + (visibleOnPanel ? "shown" : "hidden"));
 
     List<FinalizableCommand> commandList = new ArrayList<>();
     appendApplyWindowInfoCmd(info, commandList);
@@ -2316,8 +2271,5 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         });
       }
     }
-  }
-
-  private static void triggerUsage(@NotNull String feature) {
   }
 }

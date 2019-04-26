@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +19,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 
-public class TextBlockTransferable implements Transferable {
+public class TextBlockTransferable implements Transferable, Sizeable {
   private final Collection<? extends TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;
@@ -45,6 +46,15 @@ public class TextBlockTransferable implements Transferable {
     }
     dataFlavors.sort(Comparator.comparingInt(value -> -value.priority));
     myTransferDataFlavors = ContainerUtil.map2Array(dataFlavors, DataFlavor.class, value -> value.flavor);
+  }
+
+  @Override
+  public int getSize() {
+    int size = myText.length();
+    if (myRawText != null && myRawText.rawText != myText) {
+      size += StringUtil.length(myRawText.rawText);
+    }
+    return size;
   }
 
   @NotNull

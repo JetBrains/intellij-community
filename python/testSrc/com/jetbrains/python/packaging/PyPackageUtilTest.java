@@ -18,6 +18,7 @@ package com.jetbrains.python.packaging;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
@@ -263,5 +264,21 @@ public class PyPackageUtilTest extends PyTestCase {
       assertNotNull(argument);
       assertEquals(text, argument.getText());
     }
+  }
+
+  // PY-17241
+  public void testCollectingPackageNamesIgnoresExcludedDirectoriesWithSdkRoots() {
+    addExcludedRoot("env");
+    final VirtualFile sdkRoot = myFixture.findFileInTempDir("env/site-packages");
+    runWithAdditionalClassEntryInSdkRoots(sdkRoot, () -> {
+      final List<String> collected = PyPackageUtil.getPackageNames(myFixture.getModule());
+      assertSameElements(collected, "project", "project.pkg");
+    });
+  }
+
+  // PY-17241
+  public void testCollectingPackageNamesIgnoresChildrenOfDirectoriesWithoutInitPy() {
+    final List<String> collected = PyPackageUtil.getPackageNames(myFixture.getModule());
+    assertSameElements(collected, "project", "project.pkg");
   }
 }

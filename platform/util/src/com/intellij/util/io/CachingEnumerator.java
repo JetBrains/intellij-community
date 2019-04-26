@@ -42,8 +42,8 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
     int probationalSize = 8192;
 
     for(int i = 0; i < STRIPE_COUNT; ++i) {
-      myHashcodeToIdCache[i] = new SLRUMap<Integer, Integer>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
-      myIdToStringCache[i] = new SLRUMap<Integer, Data>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
+      myHashcodeToIdCache[i] = new SLRUMap<>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
+      myIdToStringCache[i] = new SLRUMap<>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
       myStripeLocks[i] = new ReentrantLock();
     }
 

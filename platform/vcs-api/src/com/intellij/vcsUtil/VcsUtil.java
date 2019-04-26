@@ -23,7 +23,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -31,15 +33,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
+import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +47,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.groupingBy;
@@ -418,6 +419,19 @@ public class VcsUtil {
     return result;
   }
 
+  public static <T> T computeWithModalProgress(@Nullable Project project,
+                                               @NotNull String title,
+                                               boolean canBeCancelled,
+                                               @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends VcsException> computable)
+    throws VcsException {
+    return ProgressManager.getInstance().run(new Task.WithResult<T, VcsException>(project, title, canBeCancelled) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws VcsException {
+        return computable.convert(indicator);
+      }
+    });
+  }
+
   @Deprecated
   @Nullable
   public static VirtualFile waitForTheFile(@NotNull String path) {
@@ -564,4 +578,14 @@ public class VcsUtil {
 
     return change.getBeforeRevision().getFile();
   }
+
+  @NotNull
+  public static Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
+    return IgnoredFileContentProvider
+      .IGNORE_FILE_CONTENT_PROVIDER
+      .extensions(project)
+      .map(IgnoredFileContentProvider::getFileName)
+      .collect(Collectors.toSet());
+  }
+
 }

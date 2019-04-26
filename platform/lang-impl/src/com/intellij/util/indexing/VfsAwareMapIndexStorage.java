@@ -30,8 +30,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.MapIndexStorage;
-import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.*;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
                                  boolean keyIsUniqueForIndexedFile,
                                  boolean buildKeyHashToVirtualFileMapping) throws IOException {
     super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false, false);
-    myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping && FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
 
@@ -150,13 +150,15 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
     l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
+
       if (myBuildKeyHashToVirtualFileMapping && idFilter != null) {
         TIntHashSet hashMaskSet = null;
         long l = System.currentTimeMillis();
+        GlobalSearchScope effectiveFilteringScope = calculateEffectiveFilteringScope(scope, idFilter);
 
-        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, scope);
+        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, effectiveFilteringScope);
         final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS &&
-                                         (scope instanceof ProjectScopeImpl || scope instanceof ProjectAndLibrariesScope) &&
+                                         (effectiveFilteringScope instanceof ProjectScopeImpl || effectiveFilteringScope instanceof ProjectAndLibrariesScope) &&
                                          fileWithCaches != null;
         int id = myKeyHashToVirtualFileMapping.getCurrentLength();
 
@@ -190,7 +192,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
           });
 
           if (useCachedHashIds) {
-            saveHashedIds(hashMaskSet, id, scope);
+            saveHashedIds(hashMaskSet, id, effectiveFilteringScope);
           }
         }
 
@@ -214,6 +216,21 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
     finally {
       l.unlock();
     }
+  }
+
+  @NotNull
+  private static GlobalSearchScope calculateEffectiveFilteringScope(GlobalSearchScope scope, IdFilter idFilter) {
+    GlobalSearchScope effectiveFilteringScope = scope;
+    Project project = scope.getProject();
+
+    if (project != null) {
+      if(idFilter == IdFilter.getProjectIdFilter(project, true)) {
+        effectiveFilteringScope = GlobalSearchScope.allScope(project);
+      } else if (idFilter == IdFilter.getProjectIdFilter(project, false)) {
+        effectiveFilteringScope = GlobalSearchScope.projectScope(project);
+      }
+    }
+    return effectiveFilteringScope;
   }
 
   @NotNull

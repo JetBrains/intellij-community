@@ -6,9 +6,12 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
+import kotlin.properties.Delegates
 
 internal abstract class GithubDataLoadingComponent<T> : Wrapper() {
-  private var updateFuture: CompletableFuture<Unit>? = null
+  private var updateFuture by Delegates.observable<CompletableFuture<Unit>?>(null) { _, oldValue, _ ->
+    oldValue?.cancel(true)
+  }
 
   /**
    * This works because [handleOnEdt] basically forms a EDT-synchronized section and result/exception is acquired from [dataRequest] on EDT
@@ -18,26 +21,26 @@ internal abstract class GithubDataLoadingComponent<T> : Wrapper() {
    */
   @CalledInAwt
   fun loadAndShow(dataRequest: CompletableFuture<T>?) {
-    updateFuture?.cancel(true)
-    reset()
-
-    if (dataRequest == null) {
-      updateFuture = null
-      setBusy(false)
-      return
-    }
-
-    setBusy(true)
-    updateFuture = dataRequest.handleOnEdt { result, error ->
-      when {
-        error != null && !GithubAsyncUtil.isCancellation(error) -> handleError(error)
-        result != null -> handleResult(result)
+    updateFuture = dataRequest?.let {
+      setBusy(true)
+      it.handleOnEdt { result, error ->
+        when {
+          error != null && !GithubAsyncUtil.isCancellation(error) -> handleError(error)
+          result != null -> handleResult(result)
+        }
+        setBusy(false)
       }
-      setBusy(false)
     }
   }
 
-  protected abstract fun reset()
+  @CalledInAwt
+  fun reset() {
+    updateFuture = null
+    resetUI()
+    setBusy(false)
+  }
+
+  protected abstract fun resetUI()
   protected abstract fun handleResult(result: T)
   protected abstract fun handleError(error: Throwable)
   protected abstract fun setBusy(busy: Boolean)

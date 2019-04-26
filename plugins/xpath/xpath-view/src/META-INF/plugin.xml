@@ -4,28 +4,19 @@
 
   <!-- Plugin name -->
   <id>XPathView</id>
-  <name>XPathView + XSLT Support</name>
+  <name>XPathView + XSLT</name>
 
   <!-- Description -->
   <description><![CDATA[
-    The XPath part of the plugin provides a possibility to evaluate XPath expressions against any XML document
+    Provides a possibility to evaluate XPath expressions against any XML document
     opened in IDEA. It can also generate and show an XPath expression that matches the current node.
     <p>
-    The XSLT part adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
+    Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
     expressions and named templates for XSLT documents.</p>
   ]]>
   </description>
 
-  <!-- Plugin version -->
-  <version>4</version>
-
   <vendor>JetBrains</vendor>
-
-  <change-notes>
-    <![CDATA[
-      * Basic XPath 2.0 / XSLT 2.0 Support<br>
-  ]]>
-  </change-notes>
 
   <depends>com.intellij.modules.xml</depends>
   
@@ -59,13 +50,9 @@
 
     <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations" displayName="XSLT File Associations" nonDefaultProject="true" />
 
-    <projectService
-        serviceInterface="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState"
-        serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
+    <projectService serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
 
-    <projectService
-      serviceInterface="org.intellij.plugins.xpathView.XPathProjectComponent"
-      serviceImplementation="org.intellij.plugins.xpathView.XPathProjectComponent"/>
+    <projectService serviceImplementation="org.intellij.plugins.xpathView.XPathProjectComponent"/>
 
     <annotator language="XPath" implementationClass="org.intellij.lang.xpath.validation.XPathAnnotator" />
     <lang.parserDefinition language="XPath" implementationClass="org.intellij.lang.xpath.XPathParserDefinition" />

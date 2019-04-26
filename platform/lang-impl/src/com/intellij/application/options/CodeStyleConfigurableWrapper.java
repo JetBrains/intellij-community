@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
@@ -103,6 +103,12 @@ public class CodeStyleConfigurableWrapper
     return getConfigurableId(getDisplayName());
   }
 
+  @NotNull
+  @Override
+  public Class<?> getOriginalClass() {
+    return myProvider.getClass();
+  }
+
   @Override
   public void disposeUIResources() {
     if (myPanel != null) {
@@ -120,6 +126,7 @@ public class CodeStyleConfigurableWrapper
     }
   }
 
+  @NotNull
   @Override
   public Set<String> processListOptions() {
     if (myPanel == null) {

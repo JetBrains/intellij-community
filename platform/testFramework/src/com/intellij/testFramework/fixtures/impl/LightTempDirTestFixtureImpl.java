@@ -60,6 +60,9 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     try {
       deleteAll();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -21,8 +21,12 @@ import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,15 +38,16 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   
   private final CodeStyleSchemesModel myModel;
   
-  private boolean myIsReset = false;
+  private boolean myIsReset;
 
   public CodeStyleSchemesPanel(CodeStyleSchemesModel model, int vGap) {
     super(vGap);
     myModel = model;
   }
-  public CodeStyleSchemesPanel(CodeStyleSchemesModel model, @NotNull JComponent linkComponent) {
+  CodeStyleSchemesPanel(CodeStyleSchemesModel model, @NotNull JComponent linkComponent) {
     super(DEFAULT_VGAP, linkComponent);
     myModel = model;
+    showMessage(myModel.getOverridingStatus(), MessageType.INFO);
   }
 
   private void onCombo() {
@@ -74,6 +79,7 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     }
   }
 
+  @NotNull
   @Override
   protected AbstractSchemeActions<CodeStyleScheme> createSchemeActions() {
     return
@@ -116,4 +122,10 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   public boolean useBoldForNonRemovableSchemes() {
     return true;
   }
+
+  public final void updateOverridingMessage() {
+    showMessage(myModel.getOverridingStatus(), MessageType.INFO);
+  }
+
+
 }

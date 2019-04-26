@@ -51,4 +51,15 @@ public abstract class ParameterTypeInferencePolicy {
   public boolean inferLowerBoundForFreshVariables() {
     return false;
   }
+
+  /**
+   * Workaround for inference < 1.8. 
+   * 
+   * Boxed type is used for inference as it may be specified as type argument explicitly later for completion 
+   * {@link com.intellij.codeInsight.completion.JavaMethodCallElement#setInferenceSubstitutorFromExpectedType(com.intellij.psi.PsiElement, com.intellij.psi.PsiType)},
+   * but should not be used for normal inference due to javac bug
+   */
+  public boolean requestForBoxingExplicitly() {
+    return false;
+  }
 }

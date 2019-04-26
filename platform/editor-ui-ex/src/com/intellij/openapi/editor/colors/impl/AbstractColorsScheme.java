@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.colors.impl;
 
@@ -7,7 +7,6 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -412,7 +411,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private void readColors(Element childNode) {
+  public void readColors(@NotNull Element childNode) {
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = colorElement.getAttributeValue(NAME_ATTR);
       Color valueColor = myValueReader.read(Color.class, colorElement);
@@ -633,10 +632,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme ?
                                         ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
       boolean parentOverwritingInheritance = parentAttributes != null && parentAttributes != INHERITED_ATTRS_MARKER;
-      if (baseKey != null && parentOverwritingInheritance) {
+      if (parentOverwritingInheritance) {
         attrElements.addContent(new Element(OPTION_ELEMENT)
                                   .setAttribute(NAME_ATTR, key.getExternalName())
-                                  .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));
+                                  .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey != null ? baseKey.getExternalName() : ""));
       }
       return;
     }
@@ -748,7 +747,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
     }
 
-    String rgb = color == NULL_COLOR_MARKER ? "" : Integer.toString(color.getRGB() & 0xFFFFFF, 16);
+    String rgb = "";
+    if (color != NULL_COLOR_MARKER) {
+      rgb = Integer.toString(0xFFFFFF & color.getRGB(), 16);
+      int alpha = 0xFF & color.getAlpha();
+      if (alpha != 0xFF) rgb += Integer.toString(alpha, 16);
+    }
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
   }
 
@@ -791,6 +795,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
+  @NotNull
   public String getConsoleFontName() {
     return myConsoleFontPreferences.getFontFamily();
   }
@@ -1022,10 +1027,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private static class TemporaryParent extends EditorColorsSchemeImpl {
 
-    private static final Logger LOG = Logger.getInstance(TemporaryParent.class);
-
     private final String myParentName;
-    private boolean isErrorReported;
 
     TemporaryParent(@NotNull String parentName) {
       super(EmptyColorScheme.INSTANCE);
@@ -1038,22 +1040,13 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     @Override
     public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
-      reportError();
       return super.getAttributes(key);
     }
 
     @Nullable
     @Override
     public Color getColor(ColorKey key) {
-      reportError();
       return super.getColor(key);
-    }
-
-    private void reportError() {
-      if (!isErrorReported) {
-        LOG.error("Unresolved link to " + myParentName);
-        isErrorReported = true;
-      }
     }
   }
 

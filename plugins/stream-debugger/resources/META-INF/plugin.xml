@@ -1,11 +1,12 @@
 <idea-plugin>
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Stream Debugger</name>
-  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.java</depends>
 
   <description><![CDATA[
+      <p>Visualizes chains of operations on Java streams.</p>
       <p>In some ways, Stream API is better than traditional loop approach: it takes full advantage of modern multi-core architectures,
       and lets you process data in a declarative way. What's also good is that this approach helps to avoid the state issues, and the
       code written in it looks more elegant. But, there's a certain downside to it: the code sometimes is sure hard to read, understand,
@@ -28,35 +29,6 @@
 
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
-
-  <change-notes><![CDATA[
-      2017.3 <br>
-        <ul>
-            <li> Add as a bundled plugin to the IDEA Community </li>
-            <li> Update UI </li>
-            <li> Bug-fixes and improvements </li>
-        </ul>
-      0.1.4 <br>
-        <ul>
-            <li> Support <a href="https://github.com/amaembo/streamex">StreamEx</a> library </li>
-            <li> Minor fixes and improvements </li>
-        </ul>
-      0.1.3 <br>
-        <ul>
-            <li> Remove usage of unsupported API </li>
-        </ul>
-      0.1.2 <br>
-        <ul>
-            <li> Add transitions for toArray/collect/find*/*Match terminal methods </li>
-            <li> Support stream with nulls </li>
-            <li> Fix bug when IDE hangs </li>
-            <li> Minor fixes and improvements </li>
-        </ul>
-    ]]>
-  </change-notes>
-
-  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="171"/>
 
   <extensionPoints>
     <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider"/>

@@ -24,6 +24,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -80,7 +81,7 @@ public class ArtifactPropertiesEditors {
       return o1.compareTo(o2);
     });
     for (String tab : sortedTabs) {
-      tabbedPane.addTab(tab, myMainPanels.get(tab));
+      tabbedPane.addTab(tab, new JBScrollPane(myMainPanels.get(tab)));
     }
   }
 

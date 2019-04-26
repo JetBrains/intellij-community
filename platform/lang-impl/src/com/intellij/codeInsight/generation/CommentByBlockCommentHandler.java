@@ -139,7 +139,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         int selectionStart = myCaret.getSelectionStart();
         int selectionEnd = myCaret.getSelectionEnd();
         if (commenter instanceof IndentedCommenter) {
-          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedBlockComment();
           if (value == Boolean.TRUE) {
             selectionStart = myDocument.getLineStartOffset(myDocument.getLineNumber(selectionStart));
             selectionEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(selectionEnd));
@@ -151,7 +151,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         EditorUtil.fillVirtualSpaceUntilCaret(editor);
         int caretOffset = myCaret.getOffset();
         if (commenter instanceof IndentedCommenter) {
-          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedBlockComment();
           if (value == Boolean.TRUE) {
             final int lineNumber = myDocument.getLineNumber(caretOffset);
             final int start = myDocument.getLineStartOffset(lineNumber);

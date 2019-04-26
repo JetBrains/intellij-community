@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
@@ -26,8 +26,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.run.PluginConfigurationType;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
-public class PluginModuleBuilder extends JavaModuleBuilder{
-
+public class PluginModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public ModuleType getModuleType() {
@@ -35,7 +34,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
   }
 
   @Override
-  public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
+  public void setupRootModel(@NotNull final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
     String contentEntryPath = getContentEntryPath();
     if (contentEntryPath == null) return;
@@ -72,7 +71,8 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
     if (module != null) {
       RunManager runManager = RunManager.getInstance(project);
       RunnerAndConfigurationSettings configuration =
-        runManager.createConfiguration(DevKitBundle.message("run.configuration.title"), new PluginConfigurationType().getConfigurationFactories()[0]);
+        runManager.createConfiguration(DevKitBundle.message("run.configuration.title"),
+                                       new PluginConfigurationType().getConfigurationFactories()[0]);
       runManager.addConfiguration(configuration);
       runManager.setSelectedConfiguration(configuration);
     }
@@ -96,6 +96,19 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
 
   @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
-    return StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, this);
+    final ModuleWizardStep step = StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, this);
+    if (step == null) return null;
+
+    //final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
+    //final HyperlinkLabel linkLabel = new HyperlinkLabel();
+    //linkLabel.setIcon(AllIcons.General.BalloonWarning);
+    //linkLabel.setHtmlText("Using Plugin DevKit to create new projects is not recommended. " +
+    //                      "Use <a>Gradle-based setup</a>");
+    //linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
+    //panel.addToCenter(linkLabel);
+    //
+    //final JComponent component = step.getComponent();
+    //component.add(panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.insetsTop(8), 0, 0));
+    return step;
   }
 }

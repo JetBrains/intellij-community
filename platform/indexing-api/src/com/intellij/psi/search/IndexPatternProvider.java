@@ -28,7 +28,6 @@ import java.beans.PropertyChangeListener;
  * as extensions for the {@code indexPatternProvider} extension point.
  *
  * @author yole
- * @since 5.1
  * @see com.intellij.psi.search.searches.IndexPatternSearch
  */
 public interface IndexPatternProvider {

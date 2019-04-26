@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.google.gson.GsonBuilder
 import com.intellij.util.containers.ContainerUtil
 import groovy.text.SimpleTemplateEngine
 import groovy.transform.CompileStatic
@@ -32,24 +33,27 @@ import org.jetbrains.jps.model.module.JpsModule
 @CompileStatic
 class LibraryLicensesListGenerator {
   private final BuildMessages messages
-  private final JpsProject project
-  private final List<LibraryLicense> licensesList
+  private Map<LibraryLicense, String> licensesInModules
 
-  LibraryLicensesListGenerator(BuildMessages messages, JpsProject project, List<LibraryLicense> licensesList) {
+  private LibraryLicensesListGenerator(BuildMessages messages,
+                                       Map<LibraryLicense, String> licensesInModules) {
     this.messages = messages
-    this.project = project
-    this.licensesList = licensesList
+    this.licensesInModules = licensesInModules
   }
 
-  static List<String> getLibraryNames(JpsLibrary lib) {
-    def name = lib.name
-    if (name.startsWith("#")) {
-      return ContainerUtil.map(lib.getFiles(JpsOrderRootType.COMPILED), {f->f.getName()})
-    }
-    return Collections.singletonList(name)
+  static LibraryLicensesListGenerator create(BuildMessages messages,
+                                             JpsProject project,
+                                             List<LibraryLicense> licensesList,
+                                             Set<String> usedModulesNames) {
+    Map<LibraryLicense, String> licences = generateLicenses(messages, project, licensesList, usedModulesNames)
+    return new LibraryLicensesListGenerator(messages, licences)
   }
 
-  void generateLicensesTable(String filePath, Set<String> usedModulesNames) {
+  private static Map<LibraryLicense, String> generateLicenses(BuildMessages messages,
+                                                              JpsProject project,
+                                                              List<LibraryLicense> licensesList,
+                                                              Set<String> usedModulesNames) {
+    Map<LibraryLicense, String> licenses = [:]
     messages.debug("Generating licenses table")
     messages.debug("Used modules: $usedModulesNames")
     Set<JpsModule> usedModules = project.modules.findAll { usedModulesNames.contains(it.name) } as Set<JpsModule>
@@ -62,8 +66,7 @@ class LibraryLicensesListGenerator {
       }
     }
 
-    Map<LibraryLicense, String> licenses = [:]
-    licensesList.findAll {it.license != LibraryLicense.JETBRAINS_OWN}.each { LibraryLicense lib ->
+    licensesList.findAll { it.license != LibraryLicense.JETBRAINS_OWN }.each { LibraryLicense lib ->
       if (usedModulesNames.contains(lib.attachedTo)) {
         licenses[lib] = lib.attachedTo
       }
@@ -76,7 +79,18 @@ class LibraryLicensesListGenerator {
         }
       }
     }
+    return licenses
+  }
 
+  static List<String> getLibraryNames(JpsLibrary lib) {
+    def name = lib.name
+    if (name.startsWith("#")) {
+      return ContainerUtil.map(lib.getFiles(JpsOrderRootType.COMPILED), {f->f.getName()})
+    }
+    return Collections.singletonList(name)
+  }
+
+  void generateHtml(String filePath) {
     messages.debug("Used libraries:")
     List<String> lines = []
 
@@ -93,7 +107,7 @@ class LibraryLicensesListGenerator {
       '''.trim()
     def engine = new SimpleTemplateEngine()
 
-    licenses.entrySet().each {
+    licensesInModules.entrySet().each {
       LibraryLicense lib = it.key
       String moduleName = it.value
 
@@ -108,10 +122,6 @@ class LibraryLicensesListGenerator {
       messages.debug(" $lib.name (in module $moduleName)")
       lines << engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString()
     }
-    //projectBuilder.info("Unused libraries:")
-    //licensesList.findAll {!licenses.containsKey(it)}.each {LibraryLicense lib ->
-    //  projectBuilder.info(" $lib.name")
-    //}
 
     lines.sort(true, String.CASE_INSENSITIVE_ORDER)
     File file = new File(filePath)
@@ -169,6 +179,28 @@ class LibraryLicensesListGenerator {
     }
     finally {
       out.close()
+    }
+  }
+
+  void generateJson(String filePath) {
+    List<LibraryLicenseData> entries = []
+
+    licensesInModules.keySet().sort( {it.name} ).each {
+      entries.add(
+        new LibraryLicenseData(
+          name: it.name,
+          url: it.url,
+          version: it.version,
+          license: it.license,
+          licenseUrl: it.libraryLicenseUrl
+        )
+      )
+    }
+
+    File file = new File(filePath)
+    file.parentFile.mkdirs()
+    file.withWriter {
+      new GsonBuilder().setPrettyPrinting().create().toJson(entries, it)
     }
   }
 }

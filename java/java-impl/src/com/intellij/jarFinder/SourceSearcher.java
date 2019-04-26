@@ -9,11 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.HttpRequests;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.filter2.Filters;
+import org.jdom.xpath.XPathFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -21,8 +24,14 @@ import java.util.jar.JarFile;
  * @author Sergey Evdokimov
  */
 public abstract class SourceSearcher {
-
   private static final String MAVEN_POM_ENTRY_PREFIX = "META-INF/maven/";
+
+  @NotNull
+  protected static List<Element> findElements(@NotNull String expression, @NotNull Element element) {
+    return XPathFactory.instance()
+      .compile(expression, Filters.element())
+      .evaluate(element);
+  }
 
   /**
    * @param indicator
@@ -52,7 +61,7 @@ public abstract class SourceSearcher {
   }
 
   @NotNull
-  protected static Element readDocumentCancelable(final ProgressIndicator indicator, String url) throws IOException {
+  protected static Element readElementCancelable(final ProgressIndicator indicator, String url) throws IOException {
     return HttpRequests.request(url)
       .accept("application/xml")
       .connect(new HttpRequests.RequestProcessor<Element>() {
@@ -88,7 +97,6 @@ public abstract class SourceSearcher {
 }
 
 class SourceSearchException extends Exception {
-
   SourceSearchException(String message) {
     super(message);
   }

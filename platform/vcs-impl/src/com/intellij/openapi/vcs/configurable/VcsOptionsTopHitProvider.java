@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.ide.ui.OptionsTopHitProvider;
+import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.PublicFieldBasedOptionDescription;
 import com.intellij.ide.ui.PublicMethodBasedOptionDescription;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -30,7 +16,6 @@ import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,7 +26,8 @@ import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRigh
 /**
  * @author Sergey.Malenkov
  */
-public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
+public final class VcsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+  @NotNull
   @Override
   public String getId() {
     return "vcs";
@@ -49,10 +35,11 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<OptionDescription> getOptions(@Nullable Project project) {
-    if (project == null || ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
+  public Collection<OptionDescription> getOptions(@NotNull Project project) {
+    if (ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
       return Collections.emptyList();
     }
+
     VcsConfiguration vcs = VcsConfiguration.getInstance(project);
     if (vcs == null) {
       return Collections.emptyList();
@@ -85,7 +72,7 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     options.add(option(vcs, id, "Perform in background: Edit/Checkout", "PERFORM_EDIT_IN_BACKGROUND"));
     options.add(option(vcs, id, "Perform in background: Add/Remove", "PERFORM_ADD_REMOVE_IN_BACKGROUND"));
     options.add(option(vcs, id, "Perform in background: revert", "PERFORM_ROLLBACK_IN_BACKGROUND"));
-    
+
     id = ShelfProjectConfigurable.HELP_ID;
     options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
 

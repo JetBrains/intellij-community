@@ -139,7 +139,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
       if (view != null) {
         view.revalidate();
         for (Component component : view.getComponents()) {
-          ((JComponent)component).revalidate();
+          component.revalidate();
         }
       }
     }

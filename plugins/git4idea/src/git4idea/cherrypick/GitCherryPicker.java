@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitApplyChangesProcess;
@@ -16,6 +15,7 @@ import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
+import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -29,13 +29,16 @@ import java.util.List;
 import static git4idea.GitProtectedBranchesKt.isCommitPublished;
 
 public class GitCherryPicker extends VcsCherryPicker {
-
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcsSettings mySettings;
+
+  public GitCherryPicker(@NotNull Project project) {
+    this(project, Git.getInstance());
+  }
 
   public GitCherryPicker(@NotNull Project project, @NotNull Git git) {
     myProject = project;
@@ -45,11 +48,11 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public void cherryPick(@NotNull List<VcsFullCommitDetails> commits) {
+  public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
     GitApplyChangesProcess applyProcess = new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick", "applied",
                                                                      (repository, commit, autoCommit, listeners) ->
       myGit.cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
-                       ArrayUtil.toObjectArray(listeners, GitLineHandlerListener.class)),
+                       listeners.toArray(new GitLineHandlerListener[0])),
       result -> isNothingToCommitMessage(result),
       (repository, commit) -> createCommitMessage(repository, commit),
       true,
@@ -112,11 +115,11 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private boolean isAutoCommit() {
-    return GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
+    return GitVcsApplicationSettings.getInstance().isAutoCommitOnCherryPick();
   }
 
   @Override
-  public boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots) {
+  public boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots) {
     return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
   }
 }

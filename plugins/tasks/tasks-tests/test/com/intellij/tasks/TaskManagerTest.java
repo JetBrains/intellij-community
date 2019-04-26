@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -21,6 +7,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -40,28 +27,23 @@ import java.util.List;
  */
 public class TaskManagerTest extends TaskManagerTestCase {
   public void testTaskSwitch() {
-
     final Ref<Integer> count = Ref.create(0);
-    TaskListener listener = new TaskListenerAdapter() {
+    myTaskManager.addTaskListener(new TaskListenerAdapter() {
       @Override
       public void taskActivated(@NotNull LocalTask task) {
         count.set(count.get() + 1);
       }
-    };
-    myTaskManager.addTaskListener(listener, myFixture.getTestRootDisposable());
-    LocalTask localTask = myTaskManager.createLocalTask("foo");
-    myTaskManager.activateTask(localTask, false);
+    }, getTestRootDisposable());
+    myTaskManager.activateTask(myTaskManager.createLocalTask("foo"), false);
     assertEquals(1, count.get().intValue());
 
-    LocalTask other = myTaskManager.createLocalTask("bar");
-    myTaskManager.activateTask(other, false);
+    myTaskManager.activateTask(myTaskManager.createLocalTask("bar"), false);
     assertEquals(2, count.get().intValue());
   }
 
   public void testNotifications() {
-
     final Ref<Notification> notificationRef = new Ref<>();
-    getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
         notificationRef.set(notification);
@@ -102,7 +84,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     configuration.loadState(XmlSerializer.deserialize(element, TaskProjectConfiguration.class));
     assertEquals(1, state.servers.size());
 
-    myTaskManager.projectOpened();
+    myTaskManager.callProjectOpened();
 
     TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(1, repositories.length);
@@ -205,5 +187,17 @@ public class TaskManagerTest extends TaskManagerTestCase {
     myTaskManager.loadState(config);
     assertEquals("${id}", myTaskManager.getState().branchNameFormat);
     assertEquals("${id} ${summary}", myTaskManager.getState().changelistNameFormat);
+  }
+
+  public void testPasswordMigration() {
+    TestRepository repository = new TestRepository();
+    repository.setUrl("http://server");
+    repository.setUsername("me");
+    String password = "foo";
+    repository.setEncodedPassword(PasswordUtil.encodePassword(password));
+    repository.setRepositoryType(new TestRepositoryType());
+    repository.initializeRepository();
+    assertEquals(password, repository.getPassword());
+    assertNull(repository.getEncodedPassword());
   }
 }

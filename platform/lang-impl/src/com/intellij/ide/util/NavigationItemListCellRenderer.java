@@ -46,7 +46,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
-public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
+public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer<Object> {
 
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());

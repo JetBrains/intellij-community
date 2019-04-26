@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
@@ -51,14 +51,14 @@ class AsyncPromiseTest {
       }
     }
 
-    val setResulter: () -> Promise<String> = {
+    val setResultHandler: () -> Promise<String> = {
       promise.setResult("test")
       promise
     }
 
     val numThreads = 30
     val array = Array(numThreads) {
-      if ((it and 1) == 0) Incrementer("handler $it") else setResulter
+      if ((it and 1) == 0) Incrementer("handler $it") else setResultHandler
     }
     assertConcurrentPromises(*array)
 
@@ -142,7 +142,7 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun collectResultsMustReturnArrayWithTheSameOrder() {
+  fun `collectResults must return array with the same order`() {
     val promise0 = AsyncPromise<String>()
     val promise1 = AsyncPromise<String>()
     val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 1, TimeUnit.SECONDS)
@@ -156,7 +156,7 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun `collectResultsMustReturnArrayWithTheSameOrder - ignore errors`() {
+  fun `collectResults must return array with the same order - ignore errors`() {
     val promiseList = listOf<AsyncPromise<String>>(AsyncPromise(), AsyncPromise(), AsyncPromise())
     val toExecute = listOf(
       JobScheduler.getScheduler().schedule({ promiseList[0].setResult("0") }, 5, TimeUnit.MILLISECONDS),
@@ -167,5 +167,47 @@ class AsyncPromiseTest {
     val l = results.blockingGet(15, TimeUnit.SECONDS)
     assertThat(l).containsExactly("0", "1")
     toExecute.forEach { it.get() }
+  }
+
+  @Test
+  fun `do not swallow exceptions`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    assertThatThrownBy {
+      promise.setError(error)
+    }
+      .isInstanceOf(AssertionError::class.java)
+      .hasCause(error)
+  }
+
+  @Test
+  fun `do not swallow exceptions - do not log CancellationException`() {
+    val promise = AsyncPromise<String>()
+    promise.cancel()
+    assertThat(promise.state).isEqualTo(Promise.State.REJECTED)
+  }
+
+  // this case quite tested by other tests, but better to have special test
+  @Test
+  fun `do not swallow exceptions - error handler added`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    promise.onError {
+      // ignore
+    }
+    promise.setError(error)
+  }
+
+  // this case quite tested by other tests, but better to have special test
+  @Test
+  fun `do not swallow exceptions - error handler added to nested`() {
+    val promise = AsyncPromise<String>()
+    val error = Error("boo")
+    promise
+      .onSuccess { }
+      .onError {
+        // ignore
+      }
+    promise.setError(error)
   }
 }

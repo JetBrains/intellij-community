@@ -386,7 +386,7 @@ public class PyStatementMover extends LineMover {
     final Document document = editor.getDocument();
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();
-    Integer selectionLen = selectionContainer.myLen;
+    int selectionLen = selectionContainer.myLen;
     final PsiElement at = file.findElementAt(offset);
     if (at != null) {
       final PsiElement added = getCommentOrStatement(document, at);

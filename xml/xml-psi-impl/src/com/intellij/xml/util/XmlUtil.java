@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -123,7 +123,7 @@ public class XmlUtil {
   @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   @NonNls public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
-  public static final List<String> ourSchemaUrisList = Arrays.asList(SCHEMA_URIS);
+  public static final List<String> ourSchemaUrisList = ContainerUtil.immutableList(SCHEMA_URIS);
   public static final Key<Boolean> ANT_FILE_SIGN = new Key<>("FORCED ANT FILE");
   @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
@@ -802,6 +802,11 @@ public class XmlUtil {
    * @return true if enumeration is exhaustive
    */
   public static boolean processEnumerationValues(final XmlTag element, final Processor<? super XmlTag> tagProcessor) {
+    return processEnumerationValues(element, tagProcessor, new HashSet<>());
+  }
+
+  private static boolean processEnumerationValues(XmlTag element, Processor<? super XmlTag> tagProcessor, Set<XmlTag> visited) {
+    if (!visited.add(element)) return true;
     boolean exhaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
@@ -817,13 +822,13 @@ public class XmlUtil {
       }
       else if (localName.equals("union")) {
         exhaustiveEnum = false;
-        processEnumerationValues(tag, tagProcessor);
+        processEnumerationValues(tag, tagProcessor, visited);
         XmlAttribute attribute = tag.getAttribute("memberTypes");
         if (attribute != null && attribute.getValueElement() != null) {
           for (PsiReference reference : attribute.getValueElement().getReferences()) {
             PsiElement resolve = reference.resolve();
             if (resolve instanceof XmlTag) {
-              processEnumerationValues((XmlTag)resolve, tagProcessor);
+              processEnumerationValues((XmlTag)resolve, tagProcessor, visited);
             }
           }
         }
@@ -831,12 +836,12 @@ public class XmlUtil {
       else if (localName.equals("extension")) {
         XmlTag base = XmlSchemaTagsProcessor.resolveTagReference(tag.getAttribute("base"));
         if (base != null) {
-          return processEnumerationValues(base, tagProcessor);
+          return processEnumerationValues(base, tagProcessor, visited);
         }
       }
       else if (!doNotVisitTags.contains(localName)) {
         // don't go into annotation
-        exhaustiveEnum &= processEnumerationValues(tag, tagProcessor);
+        exhaustiveEnum &= processEnumerationValues(tag, tagProcessor, visited);
       }
     }
     return exhaustiveEnum;

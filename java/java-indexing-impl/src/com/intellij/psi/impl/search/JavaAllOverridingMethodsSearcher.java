@@ -46,6 +46,6 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
       return true;
     };
 
-    return ClassInheritorsSearch.search(psiClass, scope, true).forEach(inheritorsProcessor);
+    return ClassInheritorsSearch.search(psiClass, scope, true).allowParallelProcessing().forEach(inheritorsProcessor);
   }
 }

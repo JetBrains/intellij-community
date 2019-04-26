@@ -45,7 +45,7 @@ class ProprietaryBuildTools {
   MacHostProperties macHostProperties
 
   /**
-   * Describes a server that can be used to download built artifacts
+   * Describes a server that can be used to download built artifacts to install plugins into IDE
    */
   ArtifactsServer artifactsServer
 }

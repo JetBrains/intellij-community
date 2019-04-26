@@ -10,7 +10,6 @@ import org.jetbrains.uast.UParameter;
  * A node in the reference graph corresponding to a Java method parameter.
  *
  * @author anna
- * @since 6.0
  */
 public interface RefParameter extends RefJavaElement {
   Object VALUE_IS_NOT_CONST = ObjectUtils.sentinel("VALUE_IS_NOT_CONST");

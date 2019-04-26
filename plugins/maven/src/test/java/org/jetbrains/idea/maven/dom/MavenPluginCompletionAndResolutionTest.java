@@ -89,7 +89,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
+    assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
   }
 
   public void testArtifactWithoutGroupCompletion() {
@@ -125,7 +125,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST", "2.0.2", "3.1");
+    assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
   }
 
   public void testResolvingPlugins() throws Exception {

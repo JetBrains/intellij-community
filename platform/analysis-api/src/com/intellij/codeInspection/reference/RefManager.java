@@ -20,7 +20,6 @@ import java.util.List;
  *
  * @author anna
  * @see com.intellij.codeInspection.GlobalInspectionContext#getRefManager()
- * @since 6.0
  */
 public abstract class RefManager {
   /**

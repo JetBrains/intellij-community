@@ -100,6 +100,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
         checkedClass.getContainingFile().getVirtualFile() == null ||
         checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
         checkedClass.isEnum() ||
+        checkedClass.isDeprecated() ||
         PsiUtil.isInnerClass(checkedClass) ||
         !shouldCheckActionClass(checkedClass)) {
       return;

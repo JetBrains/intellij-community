@@ -25,11 +25,13 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 @PlatformTestCase.WrapInCommand
 public class NormalizeDeclarationTest extends PsiTestCase{
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/normalizeDeclaration";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return BASE_PATH;

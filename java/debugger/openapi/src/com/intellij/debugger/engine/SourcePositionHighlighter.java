@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -22,8 +20,7 @@ public abstract class SourcePositionHighlighter {
 
   @Nullable
   public static TextRange getHighlightRangeFor(SourcePosition sourcePosition) {
-    DumbService dumbService = DumbService.getInstance(sourcePosition.getFile().getProject());
-    for (SourcePositionHighlighter provider : dumbService.filterByDumbAwareness(EP_NAME.getExtensionList())) {
+    for (SourcePositionHighlighter provider : DumbService.getDumbAwareExtensions(sourcePosition.getFile().getProject(), EP_NAME)) {
       TextRange range = provider.getHighlightRange(sourcePosition);
       if (range != null) {
         return range;

@@ -5,11 +5,13 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
@@ -42,17 +44,22 @@ public class PyMethodOverridingInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(final PyFunction function) {
-      // sanity checks
-      PyClass cls = function.getContainingClass();
-      if (cls == null) return; // not a method, ignore
-      String name = function.getName();
-      if (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) return;  // these are expected to change signature
-      // real work
+      final PyClass cls = function.getContainingClass();
+      if (cls == null) return;
+      final String name = function.getName();
+
+      if (PyNames.INIT.equals(name) ||
+          PyNames.NEW.equals(name) ||
+          PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
+          ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensions(), e -> e.ignoreMethodParameters(function, myTypeEvalContext))) {
+        return;
+      }
+
       for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext)) {
         if (psiElement instanceof PyFunction) {
           final PyFunction baseMethod = (PyFunction)psiElement;
-          final PyClass baseClass = baseMethod.getContainingClass();
           if (!PyUtil.isSignatureCompatibleTo(function, baseMethod, myTypeEvalContext)) {
+            final PyClass baseClass = baseMethod.getContainingClass();
             final String msg = PyBundle.message("INSP.signature.mismatch",
                                                 cls.getName() + "." + name + "()",
                                                 baseClass != null ? baseClass.getName() : "");

@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -235,14 +234,8 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
       PsiElement elementToReplace = context.myAssignment.getParent();
       if (initializer != null && elementToReplace != null) {
-        // Don't normalize the original declaration: it may declare many variables
-        PsiElement declCopy = context.myVariable.getParent().copy();
-        PsiLocalVariable varCopy = (PsiLocalVariable)ContainerUtil.find(
-          declCopy.getChildren(), e -> e instanceof PsiLocalVariable && context.myName.equals(((PsiLocalVariable)e).getName()));
-
+        PsiLocalVariable varCopy = DeclarationJoinLinesHandler.copyVarWithInitializer(context.myVariable, initializer);
         if (varCopy != null) {
-          varCopy.setInitializer(initializer);
-          varCopy.normalizeDeclaration();
           String text = varCopy.getText();
 
           CommentTracker tracker = new CommentTracker();

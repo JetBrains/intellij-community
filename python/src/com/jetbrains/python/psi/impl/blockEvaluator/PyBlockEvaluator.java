@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -132,11 +131,6 @@ public class PyBlockEvaluator {
   public List getValueAsList(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
     return value instanceof List ? (List)value : null;
-  }
-
-  @NotNull
-  public List<String> getValueAsStringList(@NotNull final String[] name) {
-    return Arrays.stream(name).flatMap(o -> getValueAsStringList(o).stream()).collect(Collectors.toList());
   }
 
   @NotNull

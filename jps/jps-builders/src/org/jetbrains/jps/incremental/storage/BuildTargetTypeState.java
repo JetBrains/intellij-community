@@ -88,25 +88,19 @@ public class BuildTargetTypeState {
   }
 
   public synchronized void save() {
-    try {
-      FileUtil.createParentDirs(myTargetsFile);
-      DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)));
-      try {
-        output.writeInt(VERSION);
-        output.writeInt(myTargetIds.size() + myStaleTargetIds.size());
-        for (Map.Entry<BuildTarget<?>, Integer> entry : myTargetIds.entrySet()) {
-          IOUtil.writeString(entry.getKey().getId(), output);
-          output.writeInt(entry.getValue());
-        }
-        for (Pair<String, Integer> pair : myStaleTargetIds) {
-          IOUtil.writeString(pair.first, output);
-          output.writeInt(pair.second);
-        }
-        output.writeLong(myAverageTargetBuildTimeMs);
+    FileUtil.createParentDirs(myTargetsFile);
+    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)))) {
+      output.writeInt(VERSION);
+      output.writeInt(myTargetIds.size() + myStaleTargetIds.size());
+      for (Map.Entry<BuildTarget<?>, Integer> entry : myTargetIds.entrySet()) {
+        IOUtil.writeString(entry.getKey().getId(), output);
+        output.writeInt(entry.getValue());
       }
-      finally {
-        output.close();
+      for (Pair<String, Integer> pair : myStaleTargetIds) {
+        IOUtil.writeString(pair.first, output);
+        output.writeInt(pair.second);
       }
+      output.writeLong(myAverageTargetBuildTimeMs);
     }
     catch (IOException e) {
       LOG.info("Cannot save " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);

@@ -7,9 +7,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +66,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(arg, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression[] args = call.getArgumentList().getExpressions();
-      int idx = ArrayUtils.indexOf(args, arg);
+      int idx = ArrayUtil.indexOf(args, arg);
       if(idx < 0) return;
       ExpressionUtils.bindCallTo(call, myName);
       String lambdaText = myInfo.makeLambda(arg);

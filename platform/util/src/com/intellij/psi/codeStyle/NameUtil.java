@@ -13,12 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NameUtil {
-  private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
-    @Override
-    public String fun(final String s) {
-      return s.toLowerCase();
-    }
-  };
+  private static final Function<String,String> LOWERCASE_MAPPING = String::toLowerCase;
   private static final int MAX_LENGTH = 40;
 
   private NameUtil() {}
@@ -30,7 +25,7 @@ public class NameUtil {
 
   @NotNull
   public static String[] nameToWords(@NotNull String name){
-    List<String> array = new ArrayList<String>();
+    List<String> array = new ArrayList<>();
     int index = 0;
 
     while(index < name.length()){
@@ -228,7 +223,7 @@ public class NameUtil {
   @NotNull
   public static String[] splitNameIntoWords(@NotNull String name) {
     final String[] underlineDelimited = name.split("_");
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String word : underlineDelimited) {
       addAllWords(word, result);
     }
@@ -242,7 +237,7 @@ public class NameUtil {
                                                   boolean upperCaseStyle,
                                                   boolean preferLongerNames,
                                                   boolean isArray) {
-    ArrayList<String> answer = new ArrayList<String>();
+    ArrayList<String> answer = new ArrayList<>();
     String[] words = nameToWords(name);
 
     for (int step = 0; step < words.length; step++) {
@@ -409,6 +404,7 @@ public class NameUtil {
     private final String pattern;
     private String separators = "";
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
+    private boolean typoTolerant = Registry.is("ide.completion.typo.tolerance");
 
     public MatcherBuilder(String pattern) {
       this.pattern = pattern;
@@ -424,9 +420,14 @@ public class NameUtil {
       return this;
     }
 
+    public MatcherBuilder typoTolerant() {
+      this.typoTolerant = true;
+      return this;
+    }
+
     public MinusculeMatcher build() {
-      return Registry.is("ide.completion.typo.tolerance") ? new FixingLayoutTypoTolerantMatcher(pattern, caseSensitivity, separators)
-                                                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      return typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
+                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
   }
 
@@ -440,14 +441,17 @@ public class NameUtil {
     return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
+  public static MinusculeMatcher buildMatcherWithFallback(@NotNull String pattern,
+                                                          @NotNull String fallbackPattern,
+                                                          @NotNull MatchingCaseSensitivity options) {
+    return pattern.equals(fallbackPattern) ?
+           buildMatcher(pattern, options) :
+           new MatcherWithFallback(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
+  }
+
   @NotNull
   public static String capitalizeAndUnderscore(@NotNull String name) {
-    return splitWords(name, '_', new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return StringUtil.toUpperCase(s);
-      }
-    });
+    return splitWords(name, '_', StringUtil::toUpperCase);
   }
 
   @NotNull

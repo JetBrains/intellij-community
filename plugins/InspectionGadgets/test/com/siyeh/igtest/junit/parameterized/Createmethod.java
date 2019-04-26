@@ -1,2 +1,2 @@
-@org.<error descr="Cannot resolve symbol 'junit'">junit</error>.runner.RunWith(org.<error descr="Cannot resolve symbol 'junit'">junit</error>.runners.Parameterized.class)
-public class <warning descr="Class ParametricRegularExpressionTest annotated @RunWith(Parameterized.class) lacks data provider">ParametricRegularExpressionTest</warning> {}
+@org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
+public class <warning descr="Class Createmethod annotated @RunWith(Parameterized.class) lacks data provider">Createmethod</warning> {}

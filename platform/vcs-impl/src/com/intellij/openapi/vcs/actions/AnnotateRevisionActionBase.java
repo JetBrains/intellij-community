@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -106,7 +107,8 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     final Ref<Integer> newLineRef = new Ref<>();
     final Ref<VcsException> exceptionRef = new Ref<>();
 
-    VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).lock();
+    final BackgroundableActionLock actionLock = VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file);
+    actionLock.lock();
 
     Semaphore semaphore = new Semaphore(0);
     AtomicBoolean shouldOpenEditorInSync = new AtomicBoolean(true);
@@ -132,7 +134,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
 
       @Override
       public void onFinished() {
-        VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).unlock();
+        actionLock.unlock();
       }
 
       @Override

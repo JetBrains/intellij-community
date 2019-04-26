@@ -55,6 +55,6 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.user.advanced.info";
+    return "user.advanced.info";
   }
 }

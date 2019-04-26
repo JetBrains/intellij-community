@@ -27,7 +27,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
 
   @Override
   public boolean shouldCollect(@NotNull VirtualFile file) {
-    if (myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibraryClasses(file) || myProjectFileIndex.isInLibrarySource(file)) {
+    if (myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibrary(file)) {
       return !myFileTypeManager.isFileIgnored(file);
     }
     return false;
@@ -56,7 +56,8 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         contributedRoots.addAll(IndexableSetContributor.getProjectRootsToIndex(contributor, myProject));
       }
       for (VirtualFile root : contributedRoots) {
-        if (visitedRoots.add(root)) {
+        // do not try to visit under-content-roots because the first task took care of that already
+        if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
           tasks.add(() -> {
             if (myProject.isDisposed() || !root.isValid()) return;
             FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, null);
@@ -71,7 +72,8 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         }
         for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
           for (VirtualFile root : library.getAllRoots()) {
-            if (visitedRoots.add(root)) {
+            // do not try to visit under-content-roots because the first task took care of that already
+            if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
               tasks.add(() -> {
                 if (myProject.isDisposed() || !root.isValid()) return;
                 FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);
@@ -92,7 +94,8 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
               final VirtualFile[] libClasses = entry.getRootFiles(OrderRootType.CLASSES);
               for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
                 for (final VirtualFile root : roots) {
-                  if (visitedRoots.add(root)) {
+                  // do not try to visit under-content-roots because the first task took care of that already
+                  if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
                     tasks.add(() -> {
                       if (myProject.isDisposed() || module.isDisposed() || !root.isValid()) return;
                       FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);

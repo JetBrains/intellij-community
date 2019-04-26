@@ -124,7 +124,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     C control = getControl();
     control.setShowProjectFormatPanel(context.isCreatingNewProject());
-    control.reset(context);
+    control.reset(context, null);
     String pathToUse = getFileToImport();
     control.setLinkedProjectPath(pathToUse);
     doPrepare(context);

@@ -121,7 +121,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
 
     for (HgFileRevision revision : localRevisions) {
       HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
-      List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
+      List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
 
       HgRevisionNumber firstParent = parents.isEmpty() ? null : parents.get(0); // can have no parents if it is a root
 
@@ -237,7 +237,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     }
     HgFileRevision localRevision = revisions.get(0);
     HgRevisionNumber vcsRevisionNumber = localRevision.getRevisionNumber();
-    List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
+    List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
     HgRevisionNumber firstParent = parents.isEmpty() ? null : parents.get(0); // can have no parents if it is a root
     List<Change> changes = new ArrayList<>();
     for (String file : localRevision.getModifiedFiles()) {

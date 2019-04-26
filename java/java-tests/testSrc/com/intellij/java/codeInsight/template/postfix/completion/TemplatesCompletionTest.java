@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
     super.setUp();
     LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable());
   }
@@ -31,6 +31,9 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
       settings.setProviderToDisabledTemplates(ContainerUtil.newHashMap());
       settings.setPostfixTemplatesEnabled(true);
       settings.setTemplatesCompletionEnabled(true);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

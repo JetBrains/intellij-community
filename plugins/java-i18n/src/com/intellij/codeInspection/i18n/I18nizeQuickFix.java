@@ -1,10 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o.
 // Use of this source code is governed by the Apache 2.0 license that can be
 // found in the LICENSE file.
-
-/**
- * @author cdr
- */
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -32,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * @author cdr
+ */
 public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
   private TextRange mySelectionRange;

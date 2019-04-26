@@ -13,7 +13,7 @@ import java.util.*
 
 class EditorConfigResolveTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/resolve/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/resolve/"
 
   fun testSubcaseHeader() = doTest()
   fun testSiblingHeader() = doTest()

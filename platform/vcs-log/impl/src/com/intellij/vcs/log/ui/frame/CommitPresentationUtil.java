@@ -185,7 +185,7 @@ public class CommitPresentationUtil {
                                    @NotNull String text,
                                    @NotNull Font font,
                                    int style,
-                                   @NotNull Convertor<String, String> convertor) {
+                                   @NotNull Convertor<? super String, String> convertor) {
     return FontUtil.getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, text, convertor)), style, font);
   }
 

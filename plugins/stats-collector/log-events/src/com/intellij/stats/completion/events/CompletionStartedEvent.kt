@@ -4,7 +4,7 @@ package com.intellij.stats.completion.events
 
 import com.intellij.stats.completion.Action
 import com.intellij.stats.completion.LogEventVisitor
-import com.intellij.stats.completion.LookupEntryInfo
+import com.intellij.stats.completion.LookupState
 
 
 class CompletionStartedEvent(
@@ -16,24 +16,19 @@ class CompletionStartedEvent(
         @JvmField var language: String?,
         @JvmField var performExperiment: Boolean,
         @JvmField var experimentVersion: Int,
-        completionList: List<LookupEntryInfo>,
+        lookupState: LookupState,
         @JvmField var userFactors: Map<String, String?>,
         @JvmField var queryLength: Int,
-        selectedPosition: Int,
         timestamp: Long)
 
     : LookupStateLogData(
         userId,
         sessionId,
         Action.COMPLETION_STARTED,
-        completionList.map { it.id },
-        completionList,
-        selectedPosition,
+        lookupState,
         timestamp)
 {
 
-    //seems it's not needed, remove when possible
-    @JvmField var completionListLength: Int = completionList.size
     @JvmField var isOneLineMode: Boolean = false
 
     @JvmField var lookupShownTime: Long = -1

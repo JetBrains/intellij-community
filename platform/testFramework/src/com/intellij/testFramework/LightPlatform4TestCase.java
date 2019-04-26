@@ -2,12 +2,11 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.junit.runners.model.Statement;
 
 /**
  * @author gregsh
@@ -15,18 +14,21 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public abstract class LightPlatform4TestCase extends LightPlatformTestCase {
   @Rule
-  public final TestName myTestName = new TestName();
-
-  @Before
-  @Override
-  public void setUp() throws Exception {
-    setName("test" + StringUtil.capitalize(myTestName.getMethodName()));
-    super.setUp();
-  }
-
-  @After
-  @Override
-  public void tearDown() {
-    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
-  }
+  public TestRule rule = (base, description) -> new Statement() {
+    @Override
+    public void evaluate() {
+      TestRunnerUtil.replaceIdeEventQueueSafely();
+      String name = description.getMethodName();
+      setName(name.startsWith("test") ? name : "test" + StringUtil.capitalize(name));
+      EdtTestUtil.runInEdtAndWait(() -> {
+        setUp();
+        try {
+          base.evaluate();
+        }
+        finally {
+          tearDown();
+        }
+      });
+    }
+  };
 }

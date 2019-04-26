@@ -65,6 +65,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     try {
       FontLayoutService.setInstance(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -175,6 +178,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   public static Inlay addInlay(int offset) {
     return addInlay(offset, false);
+  }
+
+  public static Inlay addInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addInlay(myEditor, offset, false, widthInPixels);
   }
 
   public static Inlay addInlay(int offset, boolean relatesToPrecedingText) {

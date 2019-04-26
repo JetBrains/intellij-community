@@ -188,7 +188,7 @@ public class TypesUtil implements TypeConstants {
     final ConversionResult result = areTypesConvertible(targetType, actualType, context, position);
     if (result != null) return result;
 
-    if (isAssignableWithoutConversions(targetType, actualType, context)) {
+    if (isAssignableWithoutConversions(targetType, actualType)) {
       return ConversionResult.OK;
     }
 
@@ -235,9 +235,7 @@ public class TypesUtil implements TypeConstants {
     return null;
   }
 
-  public static boolean isAssignableWithoutConversions(@Nullable PsiType lType,
-                                                       @Nullable PsiType rType,
-                                                       @NotNull PsiElement context) {
+  public static boolean isAssignableWithoutConversions(@Nullable PsiType lType, @Nullable PsiType rType) {
     if (lType == null || rType == null) return false;
 
     if (rType == PsiType.NULL) {
@@ -246,7 +244,7 @@ public class TypesUtil implements TypeConstants {
 
     if (rType instanceof GrTraitType) {
       for (PsiType type : ((GrTraitType)rType).getConjuncts()) {
-        if (isAssignableWithoutConversions(lType, type, context)) return true;
+        if (isAssignableWithoutConversions(lType, type)) return true;
       }
       return false;
     }
@@ -269,10 +267,8 @@ public class TypesUtil implements TypeConstants {
   }
 
   @NotNull
-  public static ConversionResult canAssignWithinMultipleAssignment(@NotNull PsiType targetType,
-                                                                   @NotNull PsiType actualType,
-                                                                   @NotNull PsiElement context) {
-    return isAssignableWithoutConversions(targetType, actualType, context) ? ConversionResult.OK : ConversionResult.ERROR;
+  public static ConversionResult canAssignWithinMultipleAssignment(@NotNull PsiType targetType, @NotNull PsiType actualType) {
+    return isAssignableWithoutConversions(targetType, actualType) ? ConversionResult.OK : ConversionResult.ERROR;
   }
 
   public static boolean isNumericType(@Nullable PsiType type) {
@@ -360,8 +356,7 @@ public class TypesUtil implements TypeConstants {
   @Nullable
   public static PsiType getLeastUpperBoundNullable(@NotNull Iterable<PsiType> collection, @NotNull PsiManager manager) {
     Iterator<PsiType> iterator = collection.iterator();
-    if (!iterator.hasNext()) return null;
-    PsiType result = iterator.next();
+    PsiType result = null;
     while (iterator.hasNext()) {
       result = getLeastUpperBoundNullable(result, iterator.next(), manager);
     }
@@ -394,7 +389,8 @@ public class TypesUtil implements TypeConstants {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrImmediateTupleType(Arrays.asList(components3), JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrImmediateTupleType(Arrays.asList(components3), JavaPsiFacade.getInstance(manager.getProject()),
+                                      tuple1.getResolveScope().intersectWith(tuple2.getResolveScope()));
     }
     else if (checkEmptyListAndList(type1, type2)) {
       return genNewListBy(type2, manager);
@@ -449,8 +445,7 @@ public class TypesUtil implements TypeConstants {
       int i1 = LUB_NUMERIC_TYPES.indexOf(unboxedType1);
       int i2 = LUB_NUMERIC_TYPES.indexOf(unboxedType2);
       if (i1 >= 0 && i2 >= 0) {
-        if (i1 > i2) return type1;
-        if (i2 >= i1) return type2;
+        return i1 > i2 ? type1 : type2;
       }
     }
     return null;
@@ -557,6 +552,11 @@ public class TypesUtil implements TypeConstants {
     return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(fqName, context.getResolveScope());
   }
 
+  @Nullable
+  public static PsiType createJavaLangClassType(@Nullable PsiType type, @NotNull PsiElement context) {
+    return createJavaLangClassType(type, context.getProject(), context.getResolveScope());
+  }
+  
   @Nullable
   public static PsiType createJavaLangClassType(@Nullable PsiType type,
                                                 Project project,

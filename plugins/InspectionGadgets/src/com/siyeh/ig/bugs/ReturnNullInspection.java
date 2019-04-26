@@ -1,34 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.*;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
@@ -36,8 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class ReturnNullInspection extends BaseInspection {
+
+  private static final CallMatcher.Simple MAP_COMPUTE =
+    CallMatcher.instanceCall("java.util.Map", "compute", "computeIfPresent", "computeIfAbsent");
 
   @SuppressWarnings({"PublicField"})
   public boolean m_reportObjectMethods = true;
@@ -145,7 +140,7 @@ public class ReturnNullInspection extends BaseInspection {
 
     @NotNull
     private String getReplacementText() {
-      return myTypeText + "." + ("com.google.common.base.Optional".equals(myTypeText) ? "absent" : "empty") + "()";
+      return myTypeText + "." + (OptionalUtil.GUAVA_OPTIONAL.equals(myTypeText) ? "absent" : "empty") + "()";
     }
   }
 
@@ -158,27 +153,25 @@ public class ReturnNullInspection extends BaseInspection {
       if (!PsiKeyword.NULL.equals(text)) {
         return;
       }
-      PsiElement parent = value.getParent();
-      while (parent instanceof PsiParenthesizedExpression ||
-             parent instanceof PsiConditionalExpression ||
-             parent instanceof PsiTypeCastExpression) {
-        parent = parent.getParent();
-      }
-      if (!(parent instanceof PsiReturnStatement)) {
+      final PsiElement parent = ExpressionUtils.getPassThroughParent(value);
+      if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiLambdaExpression)) {
         return;
       }
       final PsiElement element = PsiTreeUtil.getParentOfType(value, PsiMethod.class, PsiLambdaExpression.class);
       final PsiMethod method;
       final PsiType returnType;
+      final boolean lambda;
       if (element instanceof PsiMethod) {
         method = (PsiMethod)element;
         returnType = method.getReturnType();
+        lambda = false;
       } 
       else if (element instanceof PsiLambdaExpression) {
         final PsiType functionalInterfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
         method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-      } 
+        lambda = true;
+      }
       else {
         return;
       }
@@ -190,12 +183,26 @@ public class ReturnNullInspection extends BaseInspection {
         registerError(value, value);
         return;
       }
-
-      if (m_ignorePrivateMethods && method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        return;
+      if (lambda) {
+        if (m_ignorePrivateMethods || isInNullableContext(element)) {
+          return;
+        }
       }
-
-      if (NullableNotNullManager.isNullable(method)) {
+      else {
+        if (m_ignorePrivateMethods && method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          return;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass instanceof PsiAnonymousClass) {
+          if (m_ignorePrivateMethods || isInNullableContext(containingClass.getParent())) {
+            return;
+          }
+        }
+      }
+      final Project project = method.getProject();
+      final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(project);
+      final PsiAnnotation annotation = nullableNotNullManager.getNullableAnnotation(method, false);
+      if (annotation != null && !InferredAnnotationsManager.getInstance(project).isInferredAnnotation(annotation)) {
         return;
       }
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
@@ -213,6 +220,27 @@ public class ReturnNullInspection extends BaseInspection {
           registerError(value, value);
         }
       }
+    }
+
+    private boolean isInNullableContext(PsiElement element) {
+      final PsiElement parent = element instanceof PsiExpression ? ExpressionUtils.getPassThroughParent((PsiExpression)element) : element;
+      if (parent instanceof PsiVariable) {
+        final PsiVariable variable = (PsiVariable)parent;
+        final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+        if (codeBlock == null) {
+          return false;
+        }
+        final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, variable, element);
+        return Arrays.stream(refs).anyMatch(this::isInNullableContext);
+      }
+      else if (parent instanceof PsiExpressionList) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+          return MAP_COMPUTE.test(methodCallExpression);
+        }
+      }
+      return false;
     }
   }
 }

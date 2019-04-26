@@ -21,11 +21,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +142,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
         return false;
       }
       else if (expression instanceof PsiReferenceExpression) {
-        return expression.getType() instanceof PsiArrayType;
+        return expression.getType() instanceof PsiArrayType || TypeUtils.isJavaLangObject(expression.getType());
       }
       else if (expression instanceof PsiArrayAccessExpression) {
         return true;
@@ -214,10 +217,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
           return;
         }
         super.visitReferenceExpression(expression);
-        final PsiElement target = expression.resolve();
-        if (target != myVariable) {
-          return;
-        }
+        if (!expression.isReferenceTo(myVariable)) return;
         if (PsiUtil.isAccessedForWriting(expression)) {
           final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
           if (parent instanceof PsiAssignmentExpression) {
@@ -229,6 +229,10 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
             }
             else if (!isZeroSizeArrayExpression(rhs)) {
               myWritten = true;
+            }
+            if (!ExpressionUtils.isVoidContext(assignmentExpression)) {
+              myWritten = true;
+              myRead = true;
             }
           }
           return;
@@ -253,14 +257,17 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
           if (PsiUtil.isAccessedForWriting(arrayAccessExpression)) {
             myWritten = true;
           }
-          if (PsiUtil.isAccessedForReading(arrayAccessExpression)) {
+          if (PsiUtil.isAccessedForReading(arrayAccessExpression) && !goesToSameArray(arrayAccessExpression) &&
+              // compound writes like += are not considered as reads, because result result goes to the same array as well
+              (!PsiUtil.isAccessedForWriting(arrayAccessExpression) || 
+               parent instanceof PsiExpression && !ExpressionUtils.isVoidContext((PsiExpression)parent))) {
             myRead = true;
           }
         }
         else if (parent instanceof PsiReferenceExpression) {
           final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
           final String name = referenceExpression.getReferenceName();
-          if ("length".equals(name) || ("clone".equals(name) && referenceExpression.getParent() instanceof PsiMethodCallExpression)) {
+          if ("clone".equals(name) && referenceExpression.getParent() instanceof PsiMethodCallExpression) {
             myRead = true;
           }
         }
@@ -318,6 +325,23 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
           myWritten = true;
           myRead = true;
         }
+      }
+
+      private boolean goesToSameArray(PsiExpression expression) {
+        PsiExpression parent = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(expression.getParent()), PsiExpression.class);
+        if (parent == null) return false;
+        if (parent instanceof PsiPolyadicExpression || parent instanceof PsiUnaryExpression || 
+            parent instanceof PsiInstanceOfExpression || parent instanceof PsiConditionalExpression) {
+          return goesToSameArray(parent);
+        }
+        if (parent instanceof PsiAssignmentExpression) {
+          PsiExpression left = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
+          if (left instanceof PsiArrayAccessExpression && !PsiTreeUtil.isAncestor(left, expression, false)) {
+            PsiExpression arrayExpression = ((PsiArrayAccessExpression)left).getArrayExpression();
+            return ExpressionUtils.isReferenceTo(arrayExpression, myVariable);
+          }
+        }
+        return false;
       }
 
       private static PsiElement getParent(PsiElement element) {

@@ -5,11 +5,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,7 @@ final class Banner extends SimpleBanner {
   Banner(Action action) {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
-    myProjectIcon.setForeground(JBColor.GRAY);
+    myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
     myProjectIcon.setVisible(false);
     myLeftPanel.add(myBreadcrumbs, 0);
     add(BorderLayout.CENTER, myProjectIcon);

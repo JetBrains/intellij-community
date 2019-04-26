@@ -32,8 +32,12 @@ import java.util.Map;
 
 public class BaseFilterLexerUtil {
   private static final Key<ScanContent> scanContentKey = Key.create("id.todo.scan.content");
+  private static final ScanContent EMPTY = new ScanContent(Collections.emptyMap(), Collections.emptyMap());
 
   public static ScanContent scanContent(FileContent content, IdAndToDoScannerBasedOnFilterLexer indexer) {
+    IndexPattern[] patterns = IndexPatternUtil.getIndexPatterns();
+    if (patterns.length <= 0) return EMPTY;
+
     ScanContent data = content.getUserData(scanContentKey);
     if (data != null) {
       content.putUserData(scanContentKey, null);
@@ -52,7 +56,7 @@ public class BaseFilterLexerUtil {
 
     Map<TodoIndexEntry,Integer> todoMap = null;
     if (needTodo) {
-      for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
+      for (IndexPattern indexPattern : patterns) {
           final int count = todoOccurrenceConsumer.getOccurrenceCount(indexPattern);
           if (count > 0) {
             if (todoMap == null) todoMap = new THashMap<>();

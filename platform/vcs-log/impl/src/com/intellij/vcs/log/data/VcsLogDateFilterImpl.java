@@ -18,16 +18,22 @@ package com.intellij.vcs.log.data;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
+@ApiStatus.Internal
 public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
 
   @Nullable private final Date myAfter;
   @Nullable private final Date myBefore;
 
+  /**
+     * @deprecated use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromDates(Date, Date)}
+     */
+  @Deprecated
   public VcsLogDateFilterImpl(@Nullable Date after, @Nullable Date before) {
     myAfter = after;
     myBefore = before;

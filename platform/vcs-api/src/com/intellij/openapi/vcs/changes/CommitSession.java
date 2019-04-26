@@ -54,7 +54,6 @@ public interface CommitSession {
 
   /**
    * @return the ID of the help topic to show for the dialog
-   * @since 10.5
    */
   @Nullable
   default String getHelpId() {

@@ -18,6 +18,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -200,9 +201,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull final String all, int exitCode) {
           Assert.assertEquals("Parametrized test produced bad tree",
                               "Test tree:\n" +
-                              "[root]\n" +
-                              ".test_pytest_parametrized\n" +
-                              "..test_eval\n" +
+                              "[root](-)\n" +
+                              ".test_pytest_parametrized(-)\n" +
+                              "..test_eval(-)\n" +
                               "...(three plus file-8)(-)\n" +
                               ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
@@ -233,18 +234,53 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull final String all, int exitCode) {
           Assert.assertEquals("Test name before message broke output",
                               "Test tree:\n" +
-                              "[root]\n" +
-                              ".test_test\n" +
-                              "..SampleTest1\n" +
+                              "[root](+)\n" +
+                              ".test_test(+)\n" +
+                              "..SampleTest1(+)\n" +
                               "...test_sample_1(+)\n" +
                               "...test_sample_2(+)\n" +
                               "...test_sample_3(+)\n" +
                               "...test_sample_4(+)\n" +
-                              "..SampleTest2\n" +
+                              "..SampleTest2(+)\n" +
                               "...test_sample_5(+)\n" +
                               "...test_sample_6(+)\n" +
                               "...test_sample_7(+)\n" +
                               "...test_sample_8(+)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+  @Test
+  public void testTestEmptySuite() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted",
+                                                                SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_test.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull final PyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setKeywords("asdasdasd");
+            }
+          };
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        final int exitCode) {
+          Assert.assertEquals("Wrong message for empty suite",
+                              PyBundle.message("runcfg.tests.empty_suite"),
+                              runner.getTestProxy().getPresentation());
+          Assert.assertEquals("Wrong empty suite tree", "Test tree:\n" +
+                                                        "[root](-)\n", runner.getFormattedTestTree());
+
+          runner.getFormattedTestTree();
         }
       });
   }
@@ -297,8 +333,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull String stderr,
                                         @NotNull String all, int exitCode) {
           Assert.assertEquals("Marker support broken", "Test tree:\n" +
-                                                       "[root]\n" +
-                                                       ".test_with_markers\n" +
+                                                       "[root](+)\n" +
+                                                       ".test_with_markers(+)\n" +
                                                        "..test_fast(+)\n",
                               runner.getFormattedTestTree());
         }
@@ -712,9 +748,9 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         assertEquals("Wrong number of passed tests", 0, runner.getPassedTestsCount());
         assertEquals("Wrong number of failed tests", 1, runner.getFailedTestsCount());
         assertEquals("Wrong tests executed", "Test tree:\n" +
-                                             "[root]\n" +
-                                             ".test_subsystems\n" +
-                                             "..TestBar\n" +
+                                             "[root](-)\n" +
+                                             ".test_subsystems(-)\n" +
+                                             "..TestBar(-)\n" +
                                              "...test_something(-)\n", runner.getFormattedTestTree());
       }
     });

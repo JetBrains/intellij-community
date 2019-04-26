@@ -243,7 +243,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return result;
   }
 
-  private static ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
+  public static ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
     ArtifactRepositoryManager manager = MANAGER_KEY.get(context);
     if (manager == null) {
 

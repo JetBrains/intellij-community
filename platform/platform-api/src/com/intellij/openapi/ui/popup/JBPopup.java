@@ -38,7 +38,6 @@ import java.awt.event.KeyEvent;
  *
  * @author mike
  * @see com.intellij.openapi.ui.popup.JBPopupFactory
- * @since 6.0
  */
 public interface JBPopup extends Disposable, LightweightWindow {
 

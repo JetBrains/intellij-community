@@ -41,8 +41,8 @@ import org.jetbrains.lang.manifest.psi.ManifestTokenType;
  * @author <a href="mailto:janthomae@janthomae.de">Jan Thom&auml;</a>
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class ManifestCompletionContributor extends CompletionContributor {
-  public ManifestCompletionContributor(@NotNull final HeaderParserRepository repository) {
+final class ManifestCompletionContributor extends CompletionContributor {
+  ManifestCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement(ManifestTokenType.HEADER_NAME).withLanguage(ManifestLanguage.INSTANCE),
            new CompletionProvider<CompletionParameters>() {
@@ -50,7 +50,7 @@ public class ManifestCompletionContributor extends CompletionContributor {
              public void addCompletions(@NotNull CompletionParameters parameters,
                                         @NotNull ProcessingContext context,
                                         @NotNull CompletionResultSet resultSet) {
-               for (String header : repository.getAllHeaderNames()) {
+               for (String header : HeaderParserRepository.getInstance().getAllHeaderNames()) {
                  resultSet.addElement(LookupElementBuilder.create(header).withInsertHandler(HEADER_INSERT_HANDLER));
                }
              }

@@ -20,16 +20,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * @author nik
@@ -53,32 +56,50 @@ class OrderRootsCache {
     }
   }
 
-  VirtualFilePointerContainer setCachedRoots(@NotNull OrderRootType rootType, int flags, @NotNull Collection<String> urls) {
-    final VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myRootsDisposable);
-    for (String url : urls) {
-      container.add(url);
+  private static final VirtualFilePointerContainer EMPTY = ObjectUtils.sentinel("Empty roots container", VirtualFilePointerContainer.class);
+  @NotNull
+  private VirtualFilePointerContainer setCachedRoots(@NotNull CacheKey key, @NotNull Collection<String> urls) {
+    // optimization: avoid creating heavy container for empty list, use 'EMPTY' stub for that case
+    VirtualFilePointerContainer container;
+    if (urls.isEmpty()) {
+      container = EMPTY;
+    }
+    else {
+      container = VirtualFilePointerManager.getInstance().createContainer(myRootsDisposable);
+      ((VirtualFilePointerContainerImpl)container).addAll(urls);
     }
     Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(myRoots, ContainerUtil.newConcurrentMap());
-    map.put(new CacheKey(rootType, flags), container);
+    map.put(key, container);
     return container;
   }
 
-  @Nullable
-  public VirtualFile[] getCachedRoots(@NotNull OrderRootType rootType, int flags) {
+  private VirtualFilePointerContainer getOrComputeContainer(@NotNull OrderRootType rootType,
+                                                            int flags,
+                                                            @NotNull Supplier<? extends Collection<String>> computer) {
     Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
-    final VirtualFilePointerContainer cached = map == null ? null : map.get(new CacheKey(rootType, flags));
-    return cached == null ? null : cached.getFiles();
+    CacheKey key = new CacheKey(rootType, flags);
+    VirtualFilePointerContainer cached = map == null ? null : map.get(key);
+    if (cached == null) {
+      Collection<String> roots = computer.get();
+      cached = setCachedRoots(key, roots);
+    }
+    return cached == EMPTY ? null : cached;
   }
 
-  @Nullable
-  public String[] getCachedUrls(@NotNull OrderRootType rootType, int flags) {
-    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
-    final VirtualFilePointerContainer cached = map == null ? null : map.get(new CacheKey(rootType, flags));
-    return cached != null ? cached.getUrls() : null;
+  @NotNull
+  VirtualFile[] getOrComputeRoots(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+    VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
+    return container == null ? VirtualFile.EMPTY_ARRAY : container.getFiles();
   }
 
-  public void clearCache() {
+  @NotNull
+  String[] getOrComputeUrls(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+    VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
+    return container == null ? ArrayUtil.EMPTY_STRING_ARRAY : container.getUrls();
+  }
+
+  void clearCache() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     disposePointers();
     myRoots.set(null);

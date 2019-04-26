@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" exported="" name="Velocity" level="project" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.usageView" exported="" />

@@ -36,7 +36,7 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
 
   @NotNull
   public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Status status) {
-    Revision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommittedRevision();
+    Revision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommitInfo().getRevision();
     return createBaseRevision(vcs, file, revision);
   }
 

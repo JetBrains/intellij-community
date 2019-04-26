@@ -32,17 +32,21 @@ import java.util.Map;
 public interface PyClassStub extends NamedStub<PyClass> {
 
   /**
-  * @return a {@code Map} which contains imported class names as keys and their original names as values.
-  * <i>Note: the returned {@code Map} could contain nulls as keys and as values.</i>
-  */
+   * @return a {@code Map} which contains imported class names as keys and their original names as values.
+   * <i>Note: the returned {@code Map} could contain nulls as keys and as values.</i>
+   */
   @NotNull
   Map<QualifiedName, QualifiedName> getSuperClasses();
 
   /**
    * Returns literal text of the subscription expressions in the base classes list.
    * It's intended to be used for resolving generic types and type parameters in PEP 484 notation.
+   *
+   * @deprecated Use {@link PyClassStub#getSuperClassesText()} instead.
+   * This method will be removed in 2019.2.
    */
   @NotNull
+  @Deprecated
   List<String> getSubscriptedSuperClasses();
 
   @Nullable
@@ -54,8 +58,22 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @Nullable
   String getDocString();
 
+  /**
+   * @return literal text of expressions in the base classes list.
+   * @apiNote This method will be marked as abstract in 2019.2.
+   */
   @NotNull
   default List<String> getSuperClassesText() {
     return Collections.emptyList();
+  }
+
+  /**
+   * @deprecated It is our internal API, try to avoid using it.
+   * It is planned to be removed sooner or later, so please don't rely on this method.
+   */
+  @Deprecated
+  @Nullable
+  default <T> T getCustomStub(@NotNull Class<T> stubClass) {
+    return null;
   }
 }

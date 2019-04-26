@@ -25,6 +25,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -119,13 +120,13 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       String containerText = containerPresentation == null ? null : containerPresentation.getPresentableText();
       fullName = (containerText == null ? "" : containerText+".") + presentation.getPresentableText();
     }
-    return CodeInsightBundle.message("goto.implementation.chooserTitle", fullName, length, finished ? "" : " so far");
+    return CodeInsightBundle.message("goto.implementation.chooserTitle", StringUtil.escapeXmlEntities(fullName), length, finished ? "" : " so far");
   }
 
   @NotNull
   @Override
   protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
-    return CodeInsightBundle.message("goto.implementation.findUsages.title", name, length);
+    return CodeInsightBundle.message("goto.implementation.findUsages.title", StringUtil.escapeXmlEntities(name), length);
   }
 
   @NotNull

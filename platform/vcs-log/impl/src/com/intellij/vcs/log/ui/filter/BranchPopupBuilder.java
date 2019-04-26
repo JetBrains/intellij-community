@@ -33,18 +33,18 @@ import java.util.*;
 public abstract class BranchPopupBuilder {
   @NotNull protected final VcsLogDataPack myDataPack;
   @Nullable private final Collection<VirtualFile> myVisibleRoots;
-  @Nullable private final List<List<String>> myRecentItems;
+  @Nullable private final List<? extends List<String>> myRecentItems;
 
   protected BranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
                                @Nullable Collection<VirtualFile> visibleRoots,
-                               @Nullable List<List<String>> recentItems) {
+                               @Nullable List<? extends List<String>> recentItems) {
     myDataPack = dataPack;
     myVisibleRoots = visibleRoots;
     myRecentItems = recentItems;
   }
 
   @NotNull
-  protected abstract AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs);
+  protected abstract AnAction createAction(@NotNull String name, @NotNull Collection<? extends VcsRef> refs);
 
   protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItem) {
     assert myRecentItems == null;
@@ -54,7 +54,7 @@ public abstract class BranchPopupBuilder {
   }
 
   @NotNull
-  protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<VcsRef> refs) {
+  protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<? extends VcsRef> refs) {
     return createAction(actionName, refs);
   }
 
@@ -64,7 +64,7 @@ public abstract class BranchPopupBuilder {
 
   private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack,
                                       @Nullable Collection<VirtualFile> visibleRoots,
-                                      @Nullable List<List<String>> recentItems) {
+                                      @Nullable List<? extends List<String>> recentItems) {
     Groups filteredGroups = new Groups();
     Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
     for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
@@ -126,7 +126,7 @@ public abstract class BranchPopupBuilder {
     private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> collapsedGroups = ContainerUtil.newTreeMap();
   }
 
-  private static void putActionsForReferences(@NotNull VcsLogDataPack pack, @NotNull List<RefGroup> references, @NotNull Groups actions) {
+  private static void putActionsForReferences(@NotNull VcsLogDataPack pack, @NotNull List<? extends RefGroup> references, @NotNull Groups actions) {
     for (RefGroup refGroup : references) {
       if (refGroup instanceof SingletonRefGroup) {
         VcsRef ref = ((SingletonRefGroup)refGroup).getRef();
@@ -159,7 +159,7 @@ public abstract class BranchPopupBuilder {
     append(map, key, Collections.singleton(value));
   }
 
-  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map, @NotNull String key, @NotNull Collection<T> values) {
+  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map, @NotNull String key, @NotNull Collection<? extends T> values) {
     map.computeIfAbsent(key, k -> new HashSet<>()).addAll(values);
   }
 }

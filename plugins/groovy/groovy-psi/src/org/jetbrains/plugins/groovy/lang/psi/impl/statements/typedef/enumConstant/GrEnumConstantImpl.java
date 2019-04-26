@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -19,29 +17,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrEnumConstructorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.MODIFIER_LIST;
 
-/**
- * @author: Dmitry.Krasilschikov
- * @date: 06.04.2007
- */
 public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
-  private final MyReference myReference = new MyReference();
+
+  private final GroovyCallReference myReference = new GrEnumConstructorReference(this);
 
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public GrEnumConstantImpl(GrFieldStub stub) {
-    super(stub, GroovyElementTypes.ENUM_CONSTANT);
+    super(stub, GroovyStubElementTypes.ENUM_CONSTANT);
   }
 
   @Override
@@ -161,7 +155,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @Override
   @Nullable
   public GrEnumConstantInitializer getInitializingClass() {
-    return getStubOrPsiChild(GroovyElementTypes.ENUM_CONSTANT_INITIALIZER);
+    return getStubOrPsiChild(GroovyStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
   @NotNull
@@ -195,9 +189,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
-    PsiClass clazz = getContainingClass();
-    return ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, argTypes, this);
+    return myReference.multiResolve(incompleteCode);
   }
 
   @NotNull
@@ -208,65 +200,15 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return aClass;
   }
 
-  private class MyReference implements PsiPolyVariantReference {
-    @Override
-    @NotNull
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return GrEnumConstantImpl.this.multiResolve(false);
-    }
-
-    @NotNull
-    @Override
-    public PsiElement getElement() {
-      return GrEnumConstantImpl.this;
-    }
-
-    @NotNull
-    @Override
-    public TextRange getRangeInElement() {
-      return getNameIdentifierGroovy().getTextRange().shiftLeft(getNode().getStartOffset());
-    }
-
-    @Override
-    public PsiElement resolve() {
-      return resolveMethod();
-    }
-
-    @NotNull
-    public GroovyResolveResult advancedResolve() {
-      return GrEnumConstantImpl.this.advancedResolve();
-    }
-
-    @Override
-    @NotNull
-    public String getCanonicalText() {
-      return getContainingClass().getName();
-    }
-
-    @Override
-    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-      return getElement();
-    }
-
-    @Override
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      throw new IncorrectOperationException("invalid operation");
-    }
-
-    @Override
-    public boolean isReferenceTo(@NotNull PsiElement element) {
-      return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
-    }
-
-    @Override
-    public boolean isSoft() {
-      return false;
-    }
-  }
-
   @Nullable
   @Override
   public Object computeConstantValue() {
     return this;
+  }
+
+  @NotNull
+  @Override
+  public GroovyCallReference getConstructorReference() {
+    return myReference;
   }
 }

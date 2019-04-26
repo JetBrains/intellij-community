@@ -14,6 +14,6 @@ public final class SpellcheckerIcons {
     return IconLoader.getIcon(path, SpellcheckerIcons.class);
   }
 
-  public static final Icon Dictionary = load("/icons/dictionary.png"); // 16x16
-  public static final Icon Spellcheck = load("/icons/spellcheck.png"); // 16x16
+  /** 16x16 */ public static final Icon Dictionary = load("/icons/dictionary.svg");
+  /** 16x16 */ public static final Icon Spellcheck = load("/icons/spellcheck.svg");
 }

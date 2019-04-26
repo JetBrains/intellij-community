@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ public class PyPackageUtil {
   /**
    * @param expression expression to resolve
    * @return {@code expression} if it is not a reference or element that is found by following assignments chain.
-   * <i>Note: if result is {@code com.jetbrains.python.psi.PyExpression} then paretheses around will be flattened.</i>
+   * <em>Note: if result is {@link PyExpression} then parentheses around will be flattened.</em>
    */
   @Nullable
   private static PsiElement resolveValue(@Nullable PyExpression expression) {
@@ -312,10 +312,14 @@ public class PyPackageUtil {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.equals(root)) {
+          return true;
+        }
         if (!fileIndex.isExcluded(file) && file.isDirectory() && file.findChild(PyNames.INIT_DOT_PY) != null) {
           results.add(VfsUtilCore.getRelativePath(file, root, '.'));
+          return true;
         }
-        return true;
+        return false;
       }
     });
   }

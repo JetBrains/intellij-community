@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TeamCityLogger;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -41,9 +42,9 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
 
   public void testBigColdFile() {
     Ref<IndentOptions> ref = Ref.create();
-    long fileLoadTime = trackTime(() -> configureByFile(getFileNameWithExtension()));
+    long fileLoadTime = TimeoutUtil.measureExecutionTime(() -> configureByFile(getFileNameWithExtension()));
 
-    long detectingTime = trackTime(() -> ref.set(detectIndentOptions()));
+    long detectingTime = TimeoutUtil.measureExecutionTime(() -> ref.set(detectIndentOptions()));
     double ratio = (double)detectingTime / fileLoadTime;
     if (ratio > 0.3) {
       TeamCityLogger.error("Detecting indent have taken too much time proportionally to file read time " + ratio);
@@ -68,14 +69,7 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
   
   public void testBigOneLineFile() {
     configureByFile("oneLine.json");
-    long time = trackTime(AbstractIndentAutoDetectionTest::detectIndentOptions);
+    long time = TimeoutUtil.measureExecutionTime(AbstractIndentAutoDetectionTest::detectIndentOptions);
     assertTrue(time < 40);
-  }
-  
-
-  private static long trackTime(Runnable runnable) {
-    long startTime = System.currentTimeMillis();
-    runnable.run();
-    return System.currentTimeMillis() - startTime;
   }
 }

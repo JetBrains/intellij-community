@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -21,9 +20,7 @@ public class AssumeInliner implements CallInliner {
     if (ASSUME_NOT_NULL.test(call) && MethodCallUtils.isVarArgCall(call)) {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       for (PsiExpression arg : args) {
-        builder.pushExpression(arg)
-               .checkNotNull(arg, NullabilityProblemKind.assumeNotNull)
-               .pop();
+        builder.pushExpression(arg, NullabilityProblemKind.assumeNotNull).pop();
       }
       builder.pushUnknown();
       return true;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarFinder;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -46,31 +32,26 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
-import org.cyberneko.html.parsers.DOMParser;
+import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class FindJarFix<T extends PsiElement> implements IntentionAction, Iconable {
-
   private static final Logger LOG = Logger.getInstance(FindJarFix.class);
 
   private static final String CLASS_ROOT_URL = "http://findjar.com/class/";
   private static final String CLASS_PAGE_EXT = ".html";
   private static final String SERVICE_URL = "http://findjar.com";
-  private static final String LINK_TAG_NAME = "a";
-  private static final String LINK_ATTR_NAME = "href";
 
   protected final T myRef;
   protected final Module myModule;
@@ -128,125 +109,106 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     }
   }
 
-  private void findJarsForFqn(final String fqn, final Editor editor) {
-    final Map<String, String> libs = new HashMap<>();
+  private void findJarsForFqn(final String fqn, @NotNull Editor editor) {
+    ProgressManager.getInstance().run(new Task.Modal(editor.getProject(), "Looking for Libraries", true) {
+      final Map<String, String> libs = new HashMap<>();
 
-    final Runnable runnable = () -> {
-      try {
-        final DOMParser parser = new DOMParser();
-        parser.parse(CLASS_ROOT_URL + fqn.replace('.', '/') + CLASS_PAGE_EXT);
-        final Document doc = parser.getDocument();
-        if (doc != null) {
-          final NodeList links = doc.getElementsByTagName(LINK_TAG_NAME);
-          for (int i = 0; i < links.getLength(); i++) {
-            final Node link = links.item(i);
-            final String libName = link.getTextContent();
-            final NamedNodeMap attributes = link.getAttributes();
-            if (attributes != null) {
-              final Node href = attributes.getNamedItem(LINK_ATTR_NAME);
-              if (href != null) {
-                final String pathToJar = href.getTextContent();
-                if (pathToJar != null && (pathToJar.startsWith("/jar/") || pathToJar.startsWith("/class/../"))) {
-                  libs.put(libName, SERVICE_URL + pathToJar);
-                }
-              }
-            }
-          }
-        }
-      }
-      catch (IOException ignore) {//
-      }
-      catch (Exception e) {//
-        LOG.warn(e);
-      }
-    };
-
-    Task.Modal task = new Task.Modal(editor.getProject(), "Looking for Libraries", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        runUncanceledRunnableWithProgress(runnable, indicator);
+        try {
+          String html = HttpRequests.request(CLASS_ROOT_URL + fqn.replace('.', '/') + CLASS_PAGE_EXT).readString(indicator);
+          indicator.checkCanceled();
+          Matcher matcher = URLUtil.HREF_PATTERN.matcher(html);
+          if (!matcher.find()) {
+            return;
+          }
+
+          do {
+            indicator.checkCanceled();
+
+            String pathToJar = matcher.group(1);
+            if (pathToJar != null && (pathToJar.startsWith("/jar/") || pathToJar.startsWith("/class/../"))) {
+              libs.put(matcher.group(2), SERVICE_URL + pathToJar);
+            }
+          }
+          while (matcher.find());
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
       }
 
       @Override
       public void onSuccess() {
-        super.onSuccess();
         if (libs.isEmpty()) {
           HintManager.getInstance().showInformationHint(editor, "No libraries found for '" + fqn + "'");
-        } else {
+        }
+        else {
           JBList<String> libNames = new JBList<>(ContainerUtil.sorted(libs.keySet()));
           libNames.installCellRenderer(o -> new JLabel(o.toString(), PlatformIcons.JAR_ICON, SwingConstants.LEFT));
           if (libs.size() == 1) {
             final String jarName = libs.keySet().iterator().next();
             final String url = libs.get(jarName);
-            initiateDownload(url, jarName);
-          } else {
+            initiateDownload(url, jarName, editor.getProject());
+          }
+          else {
             JBPopupFactory.getInstance()
             .createListPopupBuilder(libNames)
-            .setTitle("Select a JAR file")
+            .setTitle("Select a JAR File")
             .setItemChoosenCallback(() -> {
               String jarName = libNames.getSelectedValue();
               String url = libs.get(jarName);
               if (url != null) {
-                initiateDownload(url, jarName);
+                initiateDownload(url, jarName, editor.getProject());
               }
             })
             .createPopup().showInBestPositionFor(editor);
           }
         }
       }
-    };
-
-    ProgressManager.getInstance().run(task);
+    });
   }
 
-  private void initiateDownload(String url, String jarName) {
-    DOMParser parser = new DOMParser();
-    try {
-      parser.parse(url);
-      final Document doc = parser.getDocument();
-      if (doc != null) {
-        final NodeList links = doc.getElementsByTagName(LINK_TAG_NAME);
-        if (links != null) {
-          for (int i = 0; i < links.getLength(); i++) {
-            final Node item = links.item(i);
-            if (item != null) {
-              final NamedNodeMap attributes = item.getAttributes();
-              if (attributes != null) {
-                final Node link = attributes.getNamedItem(LINK_ATTR_NAME);
-                if (link != null) {
-                  final String jarUrl = link.getTextContent();
-                  if (jarUrl != null && jarUrl.endsWith(jarName)) {
-                    downloadJar(jarUrl, jarName);
-                  }
-                }
-              }
+  private void initiateDownload(@NotNull String url, @NotNull String jarName, @Nullable Project project) {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Download Library Descriptor", true) {
+      private String jarUrl;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          String html = HttpRequests.request(url).readString(indicator);
+          indicator.checkCanceled();
+          Matcher matcher = URLUtil.HREF_PATTERN.matcher(html);
+          if (!matcher.find()) {
+            return;
+          }
+
+          do {
+            indicator.checkCanceled();
+
+            String jarUrl = matcher.group(1);
+            if (jarUrl != null && jarUrl.endsWith(jarName)) {
+              this.jarUrl = jarUrl;
+              return;
             }
           }
+          while (matcher.find());
+        }
+        catch (IOException e) {
+          LOG.warn(e);
         }
       }
-    }
-    catch (SAXException | IOException e) {//
-    }
-  }
 
-  private static void runUncanceledRunnableWithProgress(Runnable run, ProgressIndicator indicator) {
-    Thread t = new Thread(run, "FindJar download thread");
-    t.setDaemon(true);
-    t.start();
-
-    try {
-      while (t.isAlive()) {
-        t.join(500);
-        indicator.checkCanceled();
+      @Override
+      public void onSuccess() {
+        if (jarUrl != null) {
+          downloadJar(jarUrl, jarName);
+        }
       }
-    }
-    catch (InterruptedException e) {
-      indicator.checkCanceled();
-    }
+    });
   }
 
-  private void downloadJar(String jarUrl, String jarName) {
+  private void downloadJar(@NotNull String jarUrl, @NotNull String jarName) {
     final Project project = myModule.getProject();
     final String dirPath = PropertiesComponent.getInstance(project).getValue("findjar.last.used.dir");
     VirtualFile toSelect = dirPath == null ? null : LocalFileSystem.getInstance().findFileByIoFile(new File(dirPath));

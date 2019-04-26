@@ -19,10 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
-import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.task.BaseExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,15 +28,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -50,23 +45,25 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.intellij.util.containers.ContainerUtil.*;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 /**
  * @author Denis Zhdanov
  */
-public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
+public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecutionSettings> {
 
-  private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
   public static final Key<String> INIT_SCRIPT_PREFIX_KEY = Key.create("INIT_SCRIPT_PREFIX_KEY");
+  private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
-  private final Map<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = ContainerUtil.newConcurrentMap();
+  private final Map<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = newConcurrentMap();
 
   public GradleTaskManager() {
   }
@@ -91,7 +88,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
     if (forkedDebuggerSetup != null && isGradleScriptDebug(settings)) {
-      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater(effectiveSettings)));
+      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater(effectiveSettings.getJavaHome())));
     }
 
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
@@ -100,18 +97,29 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       try {
         appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);
         try {
-          GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection, id, listener, cancellationTokenSource);
-          if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
-            listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
-              id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
-          }
-
           for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
             effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
           }
 
+          List<String> args = newSmartList();
+          for (Iterator<String> iterator = effectiveSettings.getArguments().iterator(); iterator.hasNext(); ) {
+            String arg = iterator.next();
+            if ("--args".equals(arg) && iterator.hasNext()) {
+              args.add("--args");
+              args.add(iterator.next());
+            }
+          }
+          String[] tasksArray;
+          if (!args.isEmpty()) {
+            // todo append --args only after JavaExec tasks
+            tasksArray = taskNames.stream().flatMap(task -> concat(list(task), args).stream()).toArray(String[]::new);
+          }
+          else {
+            tasksArray = ArrayUtil.toStringArray(taskNames);
+          }
+
           BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-          launcher.forTasks(ArrayUtil.toStringArray(taskNames));
+          launcher.forTasks(tasksArray);
 
           launcher.withCancellationToken(cancellationTokenSource.token());
           launcher.run();
@@ -139,17 +147,27 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       .orElse(false);
   }
 
-  protected boolean isJdk9orLater(GradleExecutionSettings effectiveSettings) {
-    String javaHome = effectiveSettings.getJavaHome();
-    JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
-      javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
-    return jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
+  @Override
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
+    throws ExternalSystemException {
+    final CancellationTokenSource cancellationTokenSource = myCancellationMap.get(id);
+    if (cancellationTokenSource != null) {
+      cancellationTokenSource.cancel();
+      return true;
+    }
+    // extension points are available only in IDE process
+    if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
+      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
+        if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
+      }
+    }
+    return false;
   }
 
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,
                                               @Nullable String jvmAgentSetup,
                                               @NotNull GradleExecutionSettings effectiveSettings) {
-    final List<String> initScripts = ContainerUtil.newArrayList();
+    final List<String> initScripts = newArrayList();
     final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -157,7 +175,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       final String resolverClassName = resolverExtension.getClass().getName();
       resolverExtension.enhanceTaskProcessing(taskNames, jvmAgentSetup, script -> {
         if (StringUtil.isNotEmpty(script)) {
-          ContainerUtil.addAllNotNull(
+          addAllNotNull(
             initScripts,
             "//-- Generated by " + resolverClassName,
             script,
@@ -194,22 +212,5 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         throw new ExternalSystemException(e);
       }
     }
-  }
-
-  @Override
-  public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
-    throws ExternalSystemException {
-    final CancellationTokenSource cancellationTokenSource = myCancellationMap.get(id);
-    if (cancellationTokenSource != null) {
-      cancellationTokenSource.cancel();
-      return true;
-    }
-    // extension points are available only in IDE process
-    if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
-      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
-      }
-    }
-    return false;
   }
 }

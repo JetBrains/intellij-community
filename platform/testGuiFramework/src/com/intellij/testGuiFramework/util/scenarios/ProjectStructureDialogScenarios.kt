@@ -19,36 +19,41 @@ val GuiTestCase.projectStructureDialogScenarios by ProjectStructureDialogScenari
 fun ProjectStructureDialogScenarios.openProjectStructureAndCheck(actions: GuiTestCase.() -> Unit) {
   with(guiTestCase) {
     val projectStructureTitle = ProjectStructureDialogModel.Constants.projectStructureTitle
-    logTestStep("Check structure of the project")
-    ideFrame {
-      projectView {
-        this.activate()
-        click()
-        shortcut(Key.HOME)
-      }
-      val numberOfAttempts = 5
-      var isCorrectDialogOpen = false
-      for (currentAttempt in 0..numberOfAttempts) {
-        waitAMoment()
-        logUIStep("Call '$projectStructureTitle' dialog with menu action. Attempt ${currentAttempt + 1}")
-        invokeMainMenu("ShowProjectStructureSettings")
-                logUIStep("Call '$projectStructureTitle' dialog with Ctrl+Shift+Alt+S. Attempt ${currentAttempt + 1}")
-                shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
-        val activeDialog = GuiTestUtil.getActiveModalDialog()
-        logUIStep("Active dialog: ${activeDialog?.title}")
-        if (activeDialog?.title == projectStructureTitle) {
-          projectStructureDialogModel.checkInProjectStructure {
-            isCorrectDialogOpen = true
-            actions()
-          }
+    step("check structure of the project") {
+      ideFrame {
+        projectView {
+          this.activate()
+          click()
+          shortcut(Key.HOME)
         }
-        else {
-          if (activeDialog != null) {
-            logUIStep("Active dialog is incorrect, going to close it with Escape")
-            shortcut(Key.ESCAPE)
+        val numberOfAttempts = 5
+        var isCorrectDialogOpen = false
+        for (currentAttempt in 0..numberOfAttempts) {
+          waitAMoment()
+          step("call '$projectStructureTitle' dialog with menu action. Attempt ${currentAttempt + 1}") {
+            invokeMainMenu("ShowProjectStructureSettings")
+            step("call '$projectStructureTitle' dialog with Ctrl+Shift+Alt+S. Attempt ${currentAttempt + 1}") {
+              shortcut(Modifier.CONTROL + Modifier.SHIFT + Modifier.ALT + Key.S)
+            }
           }
+          val activeDialog = GuiTestUtil.getActiveModalDialog()
+          step("at active dialog '${activeDialog?.title}'") {
+            if (activeDialog?.title == projectStructureTitle) {
+              projectStructureDialogModel.checkInProjectStructure {
+                isCorrectDialogOpen = true
+                actions()
+              }
+            }
+            else {
+              if (activeDialog != null) {
+                step("active dialog is incorrect, going to close it with Escape") {
+                  shortcut(Key.ESCAPE)
+                }
+              }
+            }
+          }
+          if (isCorrectDialogOpen) break
         }
-        if (isCorrectDialogOpen) break
       }
     }
   }

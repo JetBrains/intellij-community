@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -10,9 +8,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableFilter;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -168,7 +166,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   @NotNull
   private static ConfigurableEP<Configurable> deserializeConfigurable(@NotNull String text) throws IOException, JDOMException {
-    Element element = JdomKt.loadElement(text);
+    Element element = JDOMUtil.load(text);
     ConfigurableEP<Configurable> bean = new ConfigurableEP<>();
     XmlSerializer.deserializeInto(element, bean);
     return bean;

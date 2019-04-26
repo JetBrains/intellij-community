@@ -121,7 +121,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   protected Object clone() {
     CompositeElement treeElement = calcTreeElement();
     CompositeElement treeElementClone
-      = (CompositeElement)(treeElement.getTreeParent() != null ? treeElement.copyElement() : (ASTNode)treeElement.clone());
+      = (CompositeElement)(treeElement.getTreeParent() != null ? treeElement.copyElement() : treeElement.clone());
     /*
     if (treeElementClone.getPsiElement() != null) {
       return treeElementClone.getPsiElement();
@@ -135,13 +135,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     clone.setNode(treeElementClone);
     treeElementClone.setPsi(clone);
     return clone;
-  }
-
-  @Override
-  public void subtreeChanged() {
-    final CompositeElement compositeElement = calcTreeElement();
-    if (compositeElement != null) compositeElement.clearCaches();
-    super.subtreeChanged();
   }
 
   @Override

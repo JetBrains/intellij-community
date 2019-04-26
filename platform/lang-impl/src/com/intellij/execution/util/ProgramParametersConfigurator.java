@@ -69,16 +69,21 @@ public class ProgramParametersConfigurator {
 
   public static String expandMacros(@Nullable String path) {
     if (path != null && Registry.is("allow.macros.for.run.configurations")) {
-        Collection<Macro> macros = MacroManager.getInstance().getMacros();
-        for (Macro macro: macros) {
-          if (!path.contains("$" + macro.getName() + "$")) continue;
+      Collection<Macro> macros = MacroManager.getInstance().getMacros();
+      for (Macro macro : macros) {
+        String template = "$" + macro.getName() + "$";
+        for (int index = path.indexOf(template);
+             index != -1 && index < path.length() + template.length();
+             index = path.indexOf(template, index)) {
           String value = StringUtil.notNullize(macro instanceof PromptMacro ? ((PromptMacro)macro).promptUser() :
                                                macro.preview());
           if (StringUtil.containsWhitespaces(value)) {
             value = "\"" + value + "\"";
           }
-          path = path.replace("$" + macro.getName() + "$", value);
+          path = path.substring(0, index) + value + path.substring(index + template.length());
+          index += value.length();
         }
+      }
     }
     return path;
   }

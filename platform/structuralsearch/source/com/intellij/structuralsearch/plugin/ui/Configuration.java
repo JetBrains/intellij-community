@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
+  @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
+
   public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String CREATED_ATTRIBUTE_NAME = "created";
@@ -48,7 +50,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @NotNull
   public String getName() {
     if (StringUtil.isEmptyOrSpaces(name)) {
-      return getMatchOptions().getSearchPattern();
+      return StringUtil.collapseWhiteSpace(getMatchOptions().getSearchPattern());
     }
     return name;
   }
@@ -112,6 +114,8 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
 
   public abstract NamedScriptableDefinition findVariable(String name);
 
+  public abstract void removeUnusedVariables();
+
   public String getCurrentVariableName() {
     return myCurrentVariableName;
   }
@@ -139,6 +143,4 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   public int hashCode() {
     return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
   }
-
-  @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
 }

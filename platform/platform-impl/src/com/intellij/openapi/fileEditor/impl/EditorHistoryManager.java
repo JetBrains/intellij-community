@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -24,7 +25,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -215,7 +215,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @TestOnly
+  /**
+   * For internal or test-only usage.
+   */
+  @VisibleForTesting
   public synchronized void removeAllFiles() {
     for (HistoryEntry entry : myEntriesList) {
       entry.destroy();
@@ -305,7 +308,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
   @Override
   public synchronized void loadState(@NotNull Element state) {
-    myEntriesList.clear();
+    // each HistoryEntry contains myDisposable that must be disposed to dispose corresponding virtual file pointer
+    removeAllFiles();
+
     // backward compatibility - previously entry maybe duplicated
     Map<String, Element> fileToElement = new LinkedHashMap<>();
     for (Element e : state.getChildren(HistoryEntry.TAG)) {
@@ -348,10 +353,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
   @Override
   public synchronized void dispose() {
-    for (HistoryEntry entry : myEntriesList) {
-      entry.destroy();
-    }
-    myEntriesList.clear();
+    removeAllFiles();
   }
 
   /**

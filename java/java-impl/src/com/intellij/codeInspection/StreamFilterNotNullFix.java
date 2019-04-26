@@ -18,14 +18,13 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,10 +63,7 @@ public class StreamFilterNotNullFix implements LocalQuickFix, HighPriorityAction
       }
     }
     PsiType type = StreamApiUtil.getStreamElementType(qualifier.getType());
-    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(function.getProject());
-    SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, name, null, type, true);
-    name = ArrayUtil.getFirstElement(info.names);
-    return javaCodeStyleManager.suggestUniqueVariableName(name == null ? "obj" : name, qualifier, false);
+    return new VariableNameGenerator(qualifier, VariableKind.PARAMETER).byName(name).byType(type).byName("obj").generate(false);
   }
 
   @Nullable

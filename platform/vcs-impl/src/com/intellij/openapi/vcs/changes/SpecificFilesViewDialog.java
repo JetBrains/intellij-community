@@ -45,7 +45,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull String title,
                                     @NotNull DataKey<Stream<VirtualFile>> shownDataKey,
-                                    @NotNull List<VirtualFile> initDataFiles) {
+                                    @NotNull List<? extends VirtualFile> initDataFiles) {
     super(project, true);
     setTitle(title);
     myProject = project;
@@ -95,7 +95,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     return new Action[]{getOKAction()};
   }
 
-  private void initData(@NotNull final List<VirtualFile> files) {
+  private void initData(@NotNull final List<? extends VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
     DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.getGrouping(), files);

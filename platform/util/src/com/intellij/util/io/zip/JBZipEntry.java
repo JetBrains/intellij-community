@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -63,7 +49,6 @@ public class JBZipEntry implements Cloneable {
    *
    * @param name the name of the entry
    * @param file
-   * @since 1.1
    */
   protected JBZipEntry(String name, JBZipFile file) {
     this.name = name;
@@ -72,7 +57,6 @@ public class JBZipEntry implements Cloneable {
 
   /**
    * @param file
-   * @since 1.9
    */
   protected JBZipEntry(JBZipFile file) {
     name = "";
@@ -83,7 +67,6 @@ public class JBZipEntry implements Cloneable {
    * Retrieves the internal file attributes.
    *
    * @return the internal file attributes
-   * @since 1.1
    */
   public int getInternalAttributes() {
     return internalAttributes;
@@ -93,7 +76,6 @@ public class JBZipEntry implements Cloneable {
    * Sets the internal file attributes.
    *
    * @param value an {@code int} value
-   * @since 1.1
    */
   public void setInternalAttributes(int value) {
     internalAttributes = value;
@@ -103,7 +85,6 @@ public class JBZipEntry implements Cloneable {
    * Retrieves the external file attributes.
    *
    * @return the external file attributes
-   * @since 1.1
    */
   public long getExternalAttributes() {
     return externalAttributes;
@@ -113,7 +94,6 @@ public class JBZipEntry implements Cloneable {
    * Sets the external file attributes.
    *
    * @param value an {@code long} value
-   * @since 1.1
    */
   public void setExternalAttributes(long value) {
     externalAttributes = value;
@@ -132,7 +112,6 @@ public class JBZipEntry implements Cloneable {
    * unzip command.
    *
    * @param mode an {@code int} value
-   * @since Ant 1.5.2
    */
   public void setUnixMode(int mode) {
     setExternalAttributes((mode << 16)
@@ -147,7 +126,6 @@ public class JBZipEntry implements Cloneable {
    * Unix permission.
    *
    * @return the unix permissions
-   * @since Ant 1.6
    */
   public int getUnixMode() {
     return (int)((getExternalAttributes() >> SHORT_SHIFT) & SHORT_MASK);
@@ -159,7 +137,6 @@ public class JBZipEntry implements Cloneable {
    *
    * @return 0 (MS-DOS FAT) unless {@link #setUnixMode setUnixMode}
    *         has been called, in which case 3 (Unix) will be returned.
-   * @since Ant 1.5.2
    */
   public int getPlatform() {
     return platform;
@@ -169,7 +146,6 @@ public class JBZipEntry implements Cloneable {
    * Set the platform (UNIX or FAT).
    *
    * @param platform an {@code int} value - 0 is FAT, 3 is UNIX
-   * @since 1.9
    */
   protected void setPlatform(int platform) {
     this.platform = platform;
@@ -193,7 +169,6 @@ public class JBZipEntry implements Cloneable {
    * Retrieves the extra data for the local file data.
    *
    * @return the extra data for local file
-   * @since 1.1
    */
   public byte[] getLocalFileDataExtra() {
     byte[] e = getExtra();
@@ -250,7 +225,6 @@ public class JBZipEntry implements Cloneable {
    * Get the name of the entry.
    *
    * @return the entry name
-   * @since 1.9
    */
   public String getName() {
     return name;
@@ -315,7 +289,7 @@ public class JBZipEntry implements Cloneable {
    */
   public void setMethod(int method) {
     if (method != ZipEntry.STORED && method != ZipEntry.DEFLATED) {
-      throw new IllegalArgumentException("invalid compression method");
+      throw new IllegalArgumentException("invalid compression method: " + method);
     }
     this.method = method;
   }
@@ -334,7 +308,6 @@ public class JBZipEntry implements Cloneable {
    * Is this entry a directory?
    *
    * @return true if the entry is a directory
-   * @since 1.10
    */
   public boolean isDirectory() {
     return getName().endsWith("/");
@@ -354,7 +327,6 @@ public class JBZipEntry implements Cloneable {
    * This uses the name as the hashcode.
    *
    * @return a hashcode.
-   * @since Ant 1.7
    */
   public int hashCode() {
     // this method has severe consequences on performance. We cannot rely
@@ -465,12 +437,8 @@ public class JBZipEntry implements Cloneable {
   }
 
   void doSetDataFromFile(File file) throws IOException {
-    InputStream input = new BufferedInputStream(new FileInputStream(file));
-    try {
+    try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
       myFile.getOutputStream().putNextEntryContent(this, file.length(), input);
-    }
-    finally {
-      input.close();
     }
   }
 
@@ -484,12 +452,8 @@ public class JBZipEntry implements Cloneable {
   public byte[] getData() throws IOException {
     if (size == -1) throw new IOException("no data");
 
-    final InputStream stream = getInputStream();
-    try {
+    try (InputStream stream = getInputStream()) {
       return FileUtil.loadBytes(stream, (int)size);
-    }
-    finally {
-      stream.close();
     }
   }
 

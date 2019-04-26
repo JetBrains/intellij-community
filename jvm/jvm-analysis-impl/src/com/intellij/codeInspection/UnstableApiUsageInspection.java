@@ -3,17 +3,23 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UElement;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.getPresentableName;
+
 public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
   public final List<String> unstableApiAnnotations = new ExternalizableStringSet(
     "org.jetbrains.annotations.ApiStatus.Experimental",
+    "org.jetbrains.annotations.ApiStatus.Internal",
     "com.google.common.annotations.Beta",
     "io.reactivex.annotations.Beta",
     "io.reactivex.annotations.Experimental",
@@ -29,10 +35,24 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
     return unstableApiAnnotations;
   }
 
+  @NotNull
   @Override
-  protected void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder) {
-    String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getReferenceText(reference));
-    holder.registerProblem(reference, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+  protected AnnotatedApiUsageProcessor buildAnnotatedApiUsageProcessor(@NotNull ProblemsHolder holder) {
+    return new AnnotatedApiUsageProcessor() {
+      @Override
+      public void processAnnotatedTarget(@NotNull UElement sourceNode,
+                                         @NotNull PsiModifierListOwner annotatedTarget,
+                                         @NotNull List<PsiAnnotation> annotations) {
+        if (!AnnotatedElementInspectionBase.isLibraryElement(annotatedTarget)) {
+          return;
+        }
+        String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getPresentableName(annotatedTarget));
+        PsiElement elementToHighlight = sourceNode.getSourcePsi();
+        if (elementToHighlight != null) {
+          holder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        }
+      }
+    };
   }
 
   @NotNull

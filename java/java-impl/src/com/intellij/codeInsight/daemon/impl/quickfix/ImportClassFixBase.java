@@ -15,8 +15,8 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -96,7 +96,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       PsiElement element = result.getElement();
       // already imported
       // can happen when e.g. class name happened to be in a method position
-      if (element instanceof PsiClass && result.isValidResult()) return Collections.emptyList();
+      if (element instanceof PsiClass && (result.isValidResult() || result.getCurrentFileResolveScope() instanceof PsiImportStatement)) {
+        return Collections.emptyList();
+      }
     }
 
     String name = getReferenceName(myRef);
@@ -132,7 +134,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     boolean anyAccessibleFound = classList.stream().anyMatch(aClass -> isAccessible(aClass, myElement));
     PsiManager manager = myElement.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    classList.removeIf(aClass -> (anyAccessibleFound || !ScratchFileService.isInProjectOrScratch(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
+    classList.removeIf(
+      aClass -> (anyAccessibleFound || !BaseIntentionAction.canModify(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
 
     if (acceptWrongNumberOfTypeParams && referenceHasTypeParameters) {
       final List<PsiClass> candidates = new ArrayList<>();
@@ -285,7 +288,14 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     POPUP_NOT_SHOWN
   }
 
+  @Override
+  public boolean fixSilently(@NotNull Editor editor) {
+    return doFix(editor, false, false) == Result.CLASS_AUTO_IMPORTED;
+  }
+
+  @NotNull
   public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<PsiClass> classesToImport = getClassesToImport();
     //do not show popups for already imported classes when library is missing (show them for explicit action)
     filterAlreadyImportedButUnresolved(classesToImport);
@@ -442,7 +452,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected AddImportAction createAddImportAction(PsiClass[] classes, Project project, Editor editor) {
     return new AddImportAction(project, myRef, editor, classes) {
       @Override
-      protected void bindReference(PsiReference ref, PsiClass targetClass) {
+      protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
         ImportClassFixBase.this.bindReference(ref, targetClass);
       }
     };

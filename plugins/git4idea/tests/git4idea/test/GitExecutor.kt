@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GitExecutor")
 
 package git4idea.test
@@ -21,13 +7,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.vcs.ExecutableHelper
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.commands.Git
+import git4idea.commands.GitBinaryHandler
 import git4idea.commands.GitLineHandler
 import git4idea.commands.getGitCommandInstance
 import git4idea.repo.GitRepository
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import java.io.File
 
 fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
@@ -48,6 +37,18 @@ fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = fals
     throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}\n${result.output}\n${result.errorOutput}")
   }
   return result.errorOutputAsJoinedString + result.outputAsJoinedString
+}
+
+fun GitRepository.gitAsBytes(command: String): ByteArray {
+  cd(this)
+  return gitAsBytes(project, command)
+}
+fun gitAsBytes(project: Project, command: String): ByteArray {
+  val workingDir = VfsUtil.findFileByIoFile(ourCurrentDir(), true)!!
+  val split = splitCommandInParameters(command)
+  val handler = GitBinaryHandler(project, workingDir, getGitCommandInstance(split[0]))
+  handler.addParameters(split.subList(1, split.size))
+  return handler.run()
 }
 
 fun cd(repository: GitRepository) = cd(repository.root.path)
@@ -188,6 +189,12 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
   fun create(content: String = ""): TestFile {
     assertNotExists()
     FileUtil.writeToFile(file, content.toByteArray(), false)
+    return this
+  }
+
+  fun delete(): TestFile {
+    assertTrue(file.exists())
+    FileUtil.delete(file)
     return this
   }
 

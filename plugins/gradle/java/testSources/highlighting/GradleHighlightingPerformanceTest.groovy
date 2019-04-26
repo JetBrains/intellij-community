@@ -1,16 +1,23 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.highlighting
 
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
+
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.junit.Test
+import org.junit.runners.Parameterized
 
 class GradleHighlightingPerformanceTest extends GradleHighlightingBaseTest {
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @Parameterized.Parameters(name = "with Gradle-{0}")
+  static Collection<Object[]> data() {
+    return [[BASE_GRADLE_VERSION].toArray()]
+  }
+
   @Test
   void testPerformance() throws Exception {
     def text = """
@@ -54,7 +61,7 @@ task bitbucketJenkinsTest() {
           fixture.type it
           PsiDocumentManager.getInstance(fixture.project).commitAllDocuments()
           fixture.doHighlighting()
-          CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, fixture.project, fixture.editor, 0, false)
+          fixture.completeBasic()
         }
       } as ThrowableRunnable).assertTiming()
     }

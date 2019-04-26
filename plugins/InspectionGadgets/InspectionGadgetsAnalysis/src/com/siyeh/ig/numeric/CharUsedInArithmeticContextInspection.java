@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -55,7 +56,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement expression = (PsiElement)infos[0];
-    PsiElement parent = expression.getParent();
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiExpression) {
       final PsiExpression binaryExpression = (PsiExpression)parent;
       final PsiType type = binaryExpression.getType();
@@ -64,7 +65,9 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         result.add(new CharUsedInArithmeticContentCastFix(typeText));
       }
     }
-    if (!(expression instanceof PsiLiteralExpression)) {
+    if (!(expression instanceof PsiLiteralExpression) &&
+        !(expression instanceof PsiParenthesizedExpression &&
+          PsiUtil.skipParenthesizedExprDown((PsiExpression)expression) instanceof PsiLiteralExpression)) {
       return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
     }
     while (parent instanceof PsiPolyadicExpression) {
@@ -72,7 +75,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         result.add(new CharUsedInArithmeticContentFix());
         break;
       }
-      parent = parent.getParent();
+      parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
     }
 
     return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);

@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,108 +44,12 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
+    setLanguageLevel(LanguageLevel.JDK_1_4);
     return IdeaTestUtil.getMockJdk14();
   }
 
-  public void testPackageLocals() throws Exception {
-    doTest(BASE_PATH + "/packageLocals/x/sub/UsingMain.java", BASE_PATH + "/packageLocals", false, false);
-  }
-
-  public void testPackageLocalClassInTheMiddle() throws Exception {
-    doTest(BASE_PATH + "/packageLocals/x/A.java", BASE_PATH + "/packageLocals", false, false);
-  }
-
-  public void testEffectiveAccessLevel() throws Exception {
-    doTest(BASE_PATH + "/accessLevel/effectiveAccess/p2/p3.java", BASE_PATH + "/accessLevel", false, false);
-  }
-
-  public void testSingleImportConflict() throws Exception {
-    doTest(BASE_PATH + "/singleImport/d.java", BASE_PATH + "/singleImport", false, false);
-  }
-
-  public void testDuplicateTopLevelClass() throws Exception {
-    doTest(BASE_PATH + "/duplicateClass/A.java", BASE_PATH + "/duplicateClass", false, false);
-  }
-
-  public void testDuplicateTopLevelClass2() throws Exception {
-    doTest(BASE_PATH + "/duplicateClass/java/lang/Runnable.java", BASE_PATH + "/duplicateClass", false, false);
-  }
-
-  public void testProtectedConstructorCall() throws Exception {
-    doTest(BASE_PATH + "/protectedConstructor/p2/C2.java", BASE_PATH + "/protectedConstructor", false, false);
-  }
-
-  public void testProtectedConstructorCallInSamePackage() throws Exception {
-    doTest(BASE_PATH + "/protectedConstructor/samePackage/C2.java", BASE_PATH + "/protectedConstructor", false, false);
-  }
-
-  public void testProtectedConstructorCallInInner() throws Exception {
-    doTest(BASE_PATH + "/protectedConstructorInInner/p2/C2.java", BASE_PATH + "/protectedConstructorInInner", false, false);
-  }
-
-  public void testArrayLengthAccessFromSubClass() throws Exception {
-    doTest(BASE_PATH + "/arrayLength/p2/SubTest.java", BASE_PATH + "/arrayLength", false, false);
-  }
-
-  public void testAccessibleMember() throws Exception {
-    doTest(BASE_PATH + "/accessibleMember/com/red/C.java", BASE_PATH + "/accessibleMember", false, false);
-  }
-
-  public void testStaticPackageLocalMember() throws Exception {
-    doTest(BASE_PATH + "/staticPackageLocalMember/p1/C.java", BASE_PATH + "/staticPackageLocalMember", false, false);
-  }
-
-  public void testOnDemandImportConflict() throws Exception {
-    doTest(BASE_PATH + "/onDemandImportConflict/Outer.java", BASE_PATH + "/onDemandImportConflict", false, false);
-  }
-
-  public void testPackageLocalOverride() throws Exception {
-    doTest(BASE_PATH + "/packageLocalOverride/y/C.java", BASE_PATH + "/packageLocalOverride", false, false);
-  }
-
-  public void testPackageLocalOverrideJustCheckThatPackageLocalMethodDoesNotGetOverridden() throws Exception {
-    doTest(BASE_PATH + "/packageLocalOverride/y/B.java", BASE_PATH + "/packageLocalOverride", false, false);
-  }
-
-  public void testProtectedAccessFromOtherPackage() throws Exception {
-    doTest(BASE_PATH + "/protectedAccessFromOtherPackage/a/Main.java", BASE_PATH + "/protectedAccessFromOtherPackage", false, false);
-  }
-
-  public void testProtectedFieldAccessFromOtherPackage() throws Exception {
-    doTest(BASE_PATH + "/protectedAccessFromOtherPackage/a/A.java", BASE_PATH + "/protectedAccessFromOtherPackage", false, false);
-  }
-
-  public void testPackageLocalClassInTheMiddle1() throws Exception {
-    doTest(BASE_PATH + "/foreignPackageInBetween/a/A1.java", BASE_PATH + "/foreignPackageInBetween", false, false);
-  }
-
-  public void testImportOnDemand() throws Exception {
-    doTest(BASE_PATH + "/importOnDemand/y/Y.java", BASE_PATH + "/importOnDemand", false, false);
-  }
-
-  public void testImportOnDemandVsSingle() throws Exception {
-    doTest(BASE_PATH + "/importOnDemandVsSingle/y/Y.java", BASE_PATH + "/importOnDemandVsSingle", false, false);
-  }
-
-  public void testImportSingleVsSamePackage() throws Exception {
-    doTest(BASE_PATH + "/importSingleVsSamePackage/y/Y.java", BASE_PATH + "/importSingleVsSamePackage", false, false);
-  }
-
-  public void testImportSingleVsInherited() throws Exception {
-    doTest(BASE_PATH + "/importSingleVsInherited/Test.java", BASE_PATH + "/importSingleVsInherited", false, false);
-  }
-
-  public void testImportOnDemandVsInherited() throws Exception {
-    doTest(BASE_PATH + "/importOnDemandVsInherited/Test.java", BASE_PATH + "/importOnDemandVsInherited", false, false);
-  }
-
-  public void testOverridePackageLocal() throws Exception {
-    doTest(BASE_PATH + "/overridePackageLocal/x/y/Derived.java", BASE_PATH + "/overridePackageLocal", false, false);
-  }
-
-  public void testAlreadyImportedClass() throws Exception {
-    doTest(BASE_PATH + "/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH + "/alreadyImportedClass", false, false);
+  public void testPackageAndClassConflict12() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash1/pkg/sub.java", BASE_PATH + "/packageClassClash1", false, false);
   }
 
   public void testScopeBased() {
@@ -257,49 +160,10 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     assertEquals(vFile1.getParent(), vFile2.getParent());
   }
 
-  public void testNotAKeywords() throws Exception {
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
-    doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords", false, false);
-  }
-
-  public void testPackageAndClassConflict11() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash1/pkg/sub/Test.java", BASE_PATH + "/packageClassClash1", false, false);
-  }
-
-  public void testPackageAndClassConflict12() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash1/pkg/sub.java", BASE_PATH + "/packageClassClash1", false, false);
-  }
-
-  public void testPackageAndClassConflict21() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash2/pkg/sub/Test.java", BASE_PATH + "/packageClassClash2", false, false);
-  }
-
-  public void testPackageAndClassConflict22() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash2/pkg/Sub.java", BASE_PATH + "/packageClassClash2", false, false);
-  }
-
-  public void testPackageAndClassConflictNoClassInSubdir() throws Exception {
-    doTest(BASE_PATH + "/packageClassClashNoClassInDir/pkg/sub.java", BASE_PATH + "/packageClassClashNoClassInDir", false, false);
-  }
-
   // todo[r.sh] IDEA-91596 (probably PJCRE.resolve() should be changed to qualifier-first model)
   //public void testPackageAndClassConflict3() throws Exception {
   //  doTest(BASE_PATH + "/packageClassClash3/test/Test.java", BASE_PATH + "/packageClassClash3", false, false);
   //}
-
-  public void testDefaultPackageAndClassConflict() throws Exception {
-    doTest(BASE_PATH + "/lang.java", false, false);
-  }
-
-  public void testPackageObscuring() throws Exception {
-    doTest(BASE_PATH + "/packageObscuring/main/Main.java", BASE_PATH + "/packageObscuring", false, false);
-  }
-  public void testPublicClassInRightFile() throws Exception {
-    doTest(BASE_PATH + "/publicClassInRightFile/x/X.java", BASE_PATH + "/publicClassInRightFile", false, false);
-  }
-  public void testPublicClassInRightFile2() throws Exception {
-    doTest(BASE_PATH + "/publicClassInRightFile/x/Y.java", BASE_PATH + "/publicClassInRightFile", false, false);
-  }
 
   public void testUnusedPublicMethodReferencedViaSubclass() throws Exception {
     UnusedDeclarationInspectionBase deadCodeInspection = new UnusedDeclarationInspectionBase(true);

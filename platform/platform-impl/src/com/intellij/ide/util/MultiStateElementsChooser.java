@@ -20,8 +20,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class MultiStateElementsChooser<T, S> extends JPanel implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   private final MarkStateDescriptor<T, S> myMarkStateDescriptor;
@@ -161,10 +161,10 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
   private static void installActions(JTable table) {
     InputMap inputMap = table.getInputMap(WHEN_FOCUSED);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), "selectLastRow");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), "selectFirstRow");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.SHIFT_DOWN_MASK), "selectFirstRowExtendSelection");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK), "selectLastRowExtendSelection");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), TableActions.CtrlEnd.ID);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), TableActions.CtrlHome.ID);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.SHIFT_DOWN_MASK), TableActions.CtrlShiftHome.ID);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK), TableActions.CtrlShiftEnd.ID);
   }
 
   @NotNull
@@ -274,9 +274,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
         myTable.getSelectionModel().clearSelection();
       }
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
   }
 
   public void removeAllElements() {
@@ -320,9 +318,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myTableModel.addElement(element, markState);
     myElementToPropertiesMap.put(element, elementProperties);
     selectRow(myTableModel.getRowCount() - 1);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
   }
 
   public void setElementProperties(T element, ElementProperties properties) {
@@ -365,9 +361,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     final int[] rows = getElementsRows(elements);
     TableUtil.selectRows(myTable, rows);
     TableUtil.scrollSelectionToVisible(myTable);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
   }
 
   private int[] getElementsRows(final Collection<? extends T> elements) {

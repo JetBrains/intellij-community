@@ -167,6 +167,12 @@
   <action id="Diff.NextChange">
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
+  <action id="Diff.ApplyLeftSide">
+    <keyboard-shortcut first-keystroke="control shift RIGHT"/>
+  </action>
+  <action id="Diff.ApplyRightSide">
+    <keyboard-shortcut first-keystroke="control shift LEFT"/>
+  </action>
   <action id="ShowContent">
     <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
@@ -420,6 +426,9 @@
   <action id="ShowFilterPopup">
     <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
+  <action id="ShowSearchHistory">
+    <keyboard-shortcut first-keystroke="alt down"/>
+  </action>
 
   <action id="SearchEverywhere.NavigateToNextGroup">
     <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
@@ -428,5 +437,10 @@
   <action id="SearchEverywhere.NavigateToPrevGroup">
     <keyboard-shortcut first-keystroke="PAGE_UP"/>
     <keyboard-shortcut first-keystroke="meta UP"/>
+  </action>
+
+  <action id="RunToCursor">
+    <keyboard-shortcut first-keystroke="alt f9" />
+    <mouse-shortcut keystroke="Force touch" />
   </action>
 </keymap>

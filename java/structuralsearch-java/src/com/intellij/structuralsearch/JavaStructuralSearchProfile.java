@@ -861,7 +861,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   private static boolean isApplicableMinCount(@NotNull PsiElement variableNode) {
     final PsiElement parent = variableNode.getParent();
-    if (parent instanceof PsiBreakStatement) return true;
     if (parent instanceof PsiContinueStatement) return true;
 
     final PsiElement grandParent = parent.getParent();
@@ -874,9 +873,14 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiReturnStatement) return true;
       if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
       if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
+      if (grandParent instanceof PsiBreakStatement) return true;
+      if (grandParent instanceof PsiForStatement) return true;
     }
-    if (grandParent instanceof PsiSwitchLabelStatement) {
-      return ((PsiSwitchLabelStatement)grandParent).getEnclosingSwitchStatement() != null;
+    if (grandParent instanceof PsiExpressionList) {
+      PsiElement label = grandParent.getParent();
+      if (label instanceof PsiSwitchLabelStatementBase) {
+        return ((PsiSwitchLabelStatementBase)label).getEnclosingSwitchStatement() != null;
+      }
     }
     if (grandParent instanceof PsiVariable) {
       return ((PsiVariable)grandParent).getInitializer() == parent;
@@ -891,11 +895,18 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         return type instanceof PsiWildcardType && ((PsiWildcardType)type).isExtends();
       }
     }
-    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
+    if (grandParent instanceof PsiExpressionStatement) {
       final PsiElement greatGrandParent = grandParent.getParent();
-      return !(greatGrandParent instanceof PsiCodeBlock) ||
-             !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
-             PsiTreeUtil.getChildrenOfAnyType(greatGrandParent, PsiStatement.class, PsiComment.class).size() > 1;
+      if (greatGrandParent instanceof PsiForStatement &&
+          !PsiTreeUtil.isAncestor(((PsiForStatement)greatGrandParent).getBody(), variableNode, true)) {
+        return true;
+      }
+      if (hasSemicolon(grandParent)) {
+        if (greatGrandParent instanceof PsiLoopStatement || greatGrandParent instanceof PsiIfStatement) return false;
+        return !(greatGrandParent instanceof PsiCodeBlock) ||
+               !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
+               PsiTreeUtil.getChildrenOfAnyType(greatGrandParent, PsiStatement.class, PsiComment.class).size() > 1;
+      }
     }
     return false;
   }
@@ -912,12 +923,15 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
-    if (grandParent instanceof PsiSwitchLabelStatement)  return true;
-    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) return true;
+    if (grandParent instanceof PsiExpressionList && grandParent.getParent() instanceof PsiSwitchLabelStatementBase)  return true;
+    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
+      final PsiElement greatGrandParent = grandParent.getParent();
+      return greatGrandParent instanceof PsiCodeBlock;
+    }
     if (grandParent instanceof PsiReferenceList) {
       final PsiElement greatGrandParent = grandParent.getParent();
       return !(greatGrandParent instanceof PsiClass) || ((PsiClass)greatGrandParent).getExtendsList() != grandParent ||
-        greatGrandParent instanceof PsiTypeParameter;
+             greatGrandParent instanceof PsiTypeParameter;
     }
     return false;
   }
@@ -929,10 +943,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiCatchSection && parent instanceof PsiParameter) return true;
     if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) return true;
-    if (grandParent instanceof PsiParameterList || grandParent instanceof PsiExpressionList ||
+    if (grandParent instanceof PsiParameterList || grandParent instanceof PsiArrayInitializerMemberValue ||
+        (grandParent instanceof PsiExpressionList && !(grandParent.getParent() instanceof PsiSwitchLabelStatementBase)) ||
         grandParent instanceof PsiTypeParameterList || grandParent instanceof PsiResourceList ||
-        grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression ||
-        grandParent instanceof PsiArrayInitializerMemberValue) {
+        grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression) {
       return true;
     }
     if (grandParent instanceof PsiTypeElement) {

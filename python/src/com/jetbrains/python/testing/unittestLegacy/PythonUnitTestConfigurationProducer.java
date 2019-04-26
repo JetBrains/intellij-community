@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.jetbrains.python.testing.unittestLegacy;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
@@ -18,9 +19,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonUnitTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
+import static com.jetbrains.python.testing.PyTestLegacyInteropKt.isNewTestsModeEnabled;
+
+public final class PythonUnitTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
   public PythonUnitTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY);
+    if (isNewTestsModeEnabled()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY;
   }
 
   @Override

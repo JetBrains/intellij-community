@@ -71,11 +71,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
         !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(this.getParent()))) {
       //15.25.3 Reference Conditional Expressions 
       // The type of a poly reference conditional expression is the same as its target type.
-      final PsiType targetType = InferenceSession.getTargetType(this);
-      if (targetType instanceof PsiClassType) {
-        return ((PsiClassType)targetType).setLanguageLevel(PsiUtil.getLanguageLevel(this));
-      }
-      return targetType;
+      return InferenceSession.getTargetType(this);
     }
 
     final int typeRank1 = TypeConversionUtil.getTypeRank(type1);

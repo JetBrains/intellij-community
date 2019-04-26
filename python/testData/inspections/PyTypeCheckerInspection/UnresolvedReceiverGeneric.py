@@ -5,4 +5,4 @@ T = TypeVar("T")
 
 def foo(values: Dict[T, Iterable[Any]]):
     for e in []:
-        values.setdefault(e, None)
+        values.setdefault(e, undefined)

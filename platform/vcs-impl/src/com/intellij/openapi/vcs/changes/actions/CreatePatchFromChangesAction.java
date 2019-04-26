@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
@@ -91,13 +92,13 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   public static void createPatch(@Nullable Project project,
                                  @Nullable String commitMessage,
-                                 @NotNull List<Change> changes) {
+                                 @NotNull List<? extends Change> changes) {
     createPatch(project, commitMessage, changes, false);
   }
 
   public static void createPatch(@Nullable Project project,
                                  @Nullable String commitMessage,
-                                 @NotNull List<Change> changes,
+                                 @NotNull List<? extends Change> changes,
                                  boolean silentClipboard) {
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     if (silentClipboard) {
@@ -108,7 +109,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     }
   }
 
-  private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<Change> changes) {
+  private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<? extends Change> changes) {
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession();
     if (commitSession instanceof CommitSessionContextAware) {
@@ -121,12 +122,12 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                                     commitMessage);
     if (!sessionDialog.showAndGet()) return;
 
-    preloadContent(project, changes);
-
-    commitSession.execute(changes, commitMessage);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      commitSession.execute((Collection<Change>)changes, commitMessage);
+    }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }
 
-  private static void createIntoClipboard(@NotNull Project project, @NotNull List<Change> changes) {
+  private static void createIntoClipboard(@NotNull Project project, @NotNull List<? extends Change> changes) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         String base = PatchWriter.calculateBaseForWritingPatch(project, changes).getPath();
@@ -139,31 +140,6 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
         VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
-  }
-
-  private static void preloadContent(final Project project, final List<Change> changes) {
-    // to avoid multiple progress dialogs, preload content under one progress
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        for (Change change : changes) {
-          checkLoadContent(change.getBeforeRevision());
-          checkLoadContent(change.getAfterRevision());
-        }
-      }
-
-      private void checkLoadContent(final ContentRevision revision) {
-        ProgressManager.checkCanceled();
-        if (revision != null && !(revision instanceof BinaryContentRevision)) {
-          try {
-            revision.getContent();
-          }
-          catch (VcsException e1) {
-            // ignore at the moment
-          }
-        }
-      }
-    }, VcsBundle.message("create.patch.loading.content.progress"), true, project);
   }
 
   @Override

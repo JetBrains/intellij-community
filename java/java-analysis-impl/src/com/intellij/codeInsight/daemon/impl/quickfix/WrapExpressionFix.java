@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -39,11 +26,13 @@ public class WrapExpressionFix implements IntentionAction {
   private final PsiExpression myExpression;
   private final PsiClassType myExpectedType;
   private final boolean myPrimitiveExpected;
+  private final String myMethodPresentation;
 
   public WrapExpressionFix(@NotNull PsiType expectedType, @NotNull PsiExpression expression) {
     myExpression = expression;
     myExpectedType = getClassType(expectedType, expression);
     myPrimitiveExpected = expectedType instanceof PsiPrimitiveType;
+    myMethodPresentation = getMethodPresentation(myExpression, myExpectedType, myPrimitiveExpected);
   }
 
   @Nullable
@@ -60,10 +49,21 @@ public class WrapExpressionFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    PsiType type = myExpression.getType();
-    final PsiMethod wrapper = myExpression.isValid() && myExpectedType != null && type != null ? findWrapper(type, myExpectedType, myPrimitiveExpected) : null;
-    final String methodPresentation = wrapper != null ? wrapper.getContainingClass().getName() + "." + wrapper.getName() : "";
-    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
+    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", myMethodPresentation);
+  }
+
+  private static String getMethodPresentation(PsiExpression expression, PsiClassType expectedType, boolean primitiveExpected) {
+    PsiType type = expression.getType();
+    if (expectedType != null && type != null) {
+      final PsiMethod wrapper = findWrapper(type, expectedType, primitiveExpected);
+      if (wrapper != null) {
+        final PsiClass containingClass = wrapper.getContainingClass();
+        if (containingClass != null) {
+          return containingClass.getName() + '.' + wrapper.getName();
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -104,9 +104,10 @@ public class WrapExpressionFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myExpression.isValid()
-           && ScratchFileService.isInProjectOrScratch(myExpression)
-           && !(myExpression.getParent() instanceof PsiSwitchLabelStatement)
+    return myMethodPresentation != null
+           && myExpression.isValid()
+           && BaseIntentionAction.canModify(myExpression)
+           && PsiImplUtil.getSwitchLabel(myExpression) == null
            && myExpectedType != null
            && myExpectedType.isValid()
            && myExpression.getType() != null

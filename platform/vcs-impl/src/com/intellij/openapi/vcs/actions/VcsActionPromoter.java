@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diff.actions.DiffWalkerAction;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
@@ -37,10 +36,7 @@ public class VcsActionPromoter implements ActionPromoter {
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
 
-    Set<AnAction> promoted = new HashSet<>(ContainerUtil.filter(actions, action -> {
-      return action instanceof ShowMessageHistoryAction ||
-             action instanceof DiffWalkerAction;
-    }));
+    Set<AnAction> promoted = new HashSet<>(ContainerUtil.filter(actions, action -> action instanceof ShowMessageHistoryAction));
 
     reorderedActions.removeAll(promoted);
     reorderedActions.addAll(0, promoted);

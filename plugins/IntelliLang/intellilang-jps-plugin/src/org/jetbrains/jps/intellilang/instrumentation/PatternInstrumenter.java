@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
-import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
-import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,12 +24,6 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   static final String JAVA_UTIL_REGEX_PATTERN = "[Ljava/util/regex/Pattern;";
   static final String NULL_PATTERN = "((((";
 
-  static final boolean NEW_ASM;
-  static {
-    try { NEW_ASM = (Integer)Opcodes.class.getField("API_VERSION").get(null) > Opcodes.ASM6; }
-    catch (Exception e) { throw new RuntimeException(e); }
-  }
-
   private final String myPatternAnnotationClassName;
   private final boolean myDoAssert;
   private final InstrumentationClassFinder myClassFinder;
@@ -41,7 +33,6 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   private String myClassName;
   private boolean myEnum;
   private boolean myInner;
-  private boolean myEnclosed;
   private boolean myHasAssertions;
   private boolean myHasStaticInitializer;
   private boolean myInstrumented;
@@ -82,12 +73,6 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     if (myClassName.equals(name)) {
       myInner = (access & ACC_STATIC) == 0;
     }
-  }
-
-  @Override
-  public void visitOuterClass(String owner, String name, String desc) {
-    super.visitOuterClass(owner, name, desc);
-    myEnclosed = true;
   }
 
   @Override
@@ -183,9 +168,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       Type[] argTypes = Type.getArgumentTypes(desc);
       Type returnType = Type.getReturnType(desc);
       if (isCandidate(argTypes, returnType)) {
-        int offset = !"<init>".equals(name) ? 0 : NEW_ASM
-          ? (myEnum ? -2 : myInner ? -1 : 0)
-          : (myEnclosed && myInner && signature != null ? Math.max(0, argTypes.length - countSignatureParameters(signature) - 1) : 0);
+        int offset = !"<init>".equals(name) ? 0 : myEnum ? 2 : myInner ? 1 : 0;
         return new InstrumentationAdapter(this, methodvisitor, argTypes, returnType, myClassName, name, myDoAssert, isStatic, offset);
       }
     }
@@ -207,20 +190,6 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
 
   static boolean isStringType(Type type) {
     return type.getSort() == Type.OBJECT && type.getDescriptor().equals(JAVA_LANG_STRING);
-  }
-
-  private static int countSignatureParameters(String signature) {
-    int[] count = {0};
-    if (signature != null) {
-      new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.API_VERSION) {
-        @Override
-        public SignatureVisitor visitParameterType() {
-          count[0]++;
-          return super.visitParameterType();
-        }
-      });
-    }
-    return count[0];
   }
 
   int addPattern(String s) {

@@ -87,7 +87,7 @@ public abstract class InstructionVisitor {
                             @NotNull DfaMemoryState state) {
     PsiExpression anchor = instruction.getExpression();
     if (isExpressionPush(instruction, anchor)) {
-      if (anchor instanceof PsiMethodReferenceExpression && !(instruction instanceof PushInstruction)) {
+      if (anchor instanceof PsiMethodReferenceExpression && !(instruction instanceof MethodReferenceInstruction)) {
         beforeMethodReferenceResultPush(value, (PsiMethodReferenceExpression)anchor, state);
       }
       else {
@@ -106,11 +106,6 @@ public abstract class InstructionVisitor {
           PsiTreeUtil.isAncestor(assignment.getLExpression(), anchor, false)) {
         return false;
       }
-    }
-    if (instruction instanceof MethodCallInstruction) {
-      MethodCallInstruction.MethodType type = ((MethodCallInstruction)instruction).getMethodType();
-      return type != MethodCallInstruction.MethodType.BOXING &&
-             type != MethodCallInstruction.MethodType.UNBOXING;
     }
     if (instruction instanceof PushInstruction) {
       return !((PushInstruction)instruction).isReferenceWrite();
@@ -154,6 +149,32 @@ public abstract class InstructionVisitor {
     memState.push(dest);
     flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dest, memState);
     return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitBox(BoxingInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    DfaValue value = state.pop();
+    DfaValueFactory factory = runner.getFactory();
+    if (value instanceof DfaBinOpValue) {
+      value = factory.getFactValue(DfaFactType.RANGE, state.getValueFact(value, DfaFactType.RANGE));
+    }
+    DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
+    state.push(boxed == null ? factory.createTypeValue(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
+    return nextInstruction(instruction, runner, state);
+  }
+
+  public DfaInstructionState[] visitUnwrapField(UnwrapSpecialFieldInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    DfaValue value = state.pop();
+    DfaValue field = instruction.getSpecialField().createValue(runner.getFactory(), value);
+    state.push(field);
+    return nextInstruction(instruction, runner, state);
+  }
+
+  public DfaInstructionState[] visitConvertPrimitive(PrimitiveConversionInstruction instruction,
+                                                     DataFlowRunner runner,
+                                                     DfaMemoryState state) {
+    state.pop();
+    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, state);
+    return nextInstruction(instruction, runner, state);
   }
 
   protected void flushArrayOnUnknownAssignment(AssignInstruction instruction,
@@ -276,8 +297,9 @@ public abstract class InstructionVisitor {
     }
   }
 
-  public DfaInstructionState[] visitFieldReference(DereferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  public DfaInstructionState[] visitMethodReference(MethodReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
+    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
@@ -299,10 +321,6 @@ public abstract class InstructionVisitor {
     memState.pop(); //qualifier
     pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
-  }
-
-  public DfaInstructionState[] visitCast(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    return visitMethodCall(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitNot(NotInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

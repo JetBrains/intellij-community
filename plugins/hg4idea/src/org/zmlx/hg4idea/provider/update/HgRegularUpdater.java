@@ -35,9 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
+import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgRegularUpdater implements HgUpdater {
 

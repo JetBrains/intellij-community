@@ -7,6 +7,7 @@
     <extensionPoint name="vcsRepositoryCreator" interface="com.intellij.dvcs.repo.VcsRepositoryCreator" area="IDEA_PROJECT"/>
 
     <extensionPoint name="prePushHandler" interface="com.intellij.dvcs.push.PrePushHandler" area="IDEA_PROJECT"/>
+    <extensionPoint name="clonePathProvider" interface="com.intellij.dvcs.repo.ClonePathProvider"/>
 
   </extensionPoints>
   <actions>
@@ -50,6 +51,10 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.dvcs.repo.VcsRepositoryManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.dvcs.shelf.ShelfViewUpdater</implementation-class>
+      <headless-implementation-class/>
     </component>
   </project-components>
 

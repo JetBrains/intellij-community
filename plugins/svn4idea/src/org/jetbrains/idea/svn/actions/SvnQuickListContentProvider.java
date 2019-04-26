@@ -3,11 +3,8 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.actions.VcsQuickListContentProviderBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.ArrayList;
@@ -16,25 +13,19 @@ import java.util.List;
 /**
  * @author Roman.Chernyatchik
  */
-public class SvnQuickListContentProvider implements VcsQuickListContentProvider {
+public class SvnQuickListContentProvider extends VcsQuickListContentProviderBase {
+  @NotNull
   @Override
-  public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs,
-                                      @Nullable DataContext dataContext) {
+  protected String getVcsName() {
+    return SvnVcs.VCS_NAME;
+  }
 
-    if (activeVcs == null || !SvnVcs.VCS_NAME.equals(activeVcs.getName())) {
-      return null;
-    }
-
-    final ActionManager manager = ActionManager.getInstance();
+  @Override
+  protected List<AnAction> collectVcsSpecificActions(@NotNull ActionManager manager) {
     final List<AnAction> actions = new ArrayList<>();
+    add("ChangesView.Move", manager, actions);
     add("Subversion.Copy", manager, actions);
     add("Subversion.Clenaup", manager, actions);
     return actions;
-  }
-
-  private void add(String actionName, ActionManager manager, List<AnAction> actions) {
-    final AnAction action = manager.getAction(actionName);
-    assert action != null;
-    actions.add(action);
   }
 }

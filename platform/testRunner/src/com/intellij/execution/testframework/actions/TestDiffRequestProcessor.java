@@ -83,7 +83,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
 
   @Nullable
   private static VirtualFile findFile(@Nullable String path) {
-    return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
+    return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByPath(path) : null;
   }
 
   @NotNull

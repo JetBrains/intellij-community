@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -44,7 +45,11 @@ fun Path.outputStream(): OutputStream {
   return Files.newOutputStream(this)
 }
 
+@Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
+
+@Throws(IOException::class)
+fun Path.inputStreamSkippingBom() = CharsetToolkit.inputStreamSkippingBOM(inputStream().buffered())
 
 fun Path.inputStreamIfExists(): InputStream? {
   try {
@@ -64,9 +69,16 @@ fun Path.createSymbolicLink(target: Path): Path {
   return this
 }
 
-fun Path.delete() {
-  val attributes = basicAttributesIfExists() ?: return
+@JvmOverloads
+fun Path.delete(deleteRecursively: Boolean = true) {
   try {
+    if (!deleteRecursively) {
+      // performance optimisation: try to delete regular file without any checks
+      Files.delete(this)
+      return
+    }
+
+    val attributes = basicAttributesIfExists() ?: return
     if (attributes.isDirectory) {
       deleteRecursively()
     }
@@ -155,13 +167,13 @@ fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
 @Throws(IOException::class)
-fun Path.readChars(): CharSequence = inputStream().reader().readCharSequence(size().toInt())
+fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
+fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
+fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
 
 @Throws(IOException::class)
 @JvmOverloads
@@ -193,10 +205,10 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   return this
 }
 
+@JvmOverloads
 @Throws(IOException::class)
-fun Path.write(data: String): Path {
-  parent?.createDirectories()
-
+fun Path.write(data: String, createParentDirs: Boolean = true): Path {
+  if (createParentDirs) parent?.createDirectories()
   Files.write(this, data.toByteArray())
   return this
 }
@@ -207,7 +219,7 @@ fun Path.basicAttributesIfExists(): BasicFileAttributes? {
   try {
     return Files.readAttributes(this, BasicFileAttributes::class.java)
   }
-  catch (ignored: NoSuchFileException) {
+  catch (ignored: FileSystemException) {
     return null
   }
 }
@@ -296,3 +308,11 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
 
 val Path.isWritable: Boolean
   get() = Files.isWritable(this)
+
+fun isDirectory(attributes: BasicFileAttributes?): Boolean {
+  return attributes != null && attributes.isDirectory
+}
+
+fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
+  return attributes != null && attributes.isSymbolicLink
+}

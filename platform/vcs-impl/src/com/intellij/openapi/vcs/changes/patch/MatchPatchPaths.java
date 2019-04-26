@@ -85,7 +85,7 @@ public class MatchPatchPaths {
   }
 
   private void workWithNotExisting(@NotNull PatchBaseDirectoryDetector directoryDetector,
-                                   @NotNull List<FilePatch> newOrWithoutMatches,
+                                   @NotNull List<? extends FilePatch> newOrWithoutMatches,
                                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
     for (FilePatch patch : newOrWithoutMatches) {
       String afterName = patch.getAfterName();
@@ -131,7 +131,7 @@ public class MatchPatchPaths {
            match.score == best.score && myBaseDir.equals(match.file);
   }
 
-  private static void selectByContextOrByStrip(@NotNull List<PatchAndVariants> candidates,
+  private static void selectByContextOrByStrip(@NotNull List<? extends PatchAndVariants> candidates,
                                                @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
     for (final PatchAndVariants candidate : candidates) {
       candidate.findAndAddBestVariant(result);
@@ -168,7 +168,7 @@ public class MatchPatchPaths {
 
   private void findCandidates(@NotNull List<? extends FilePatch> list,
                               @NotNull final PatchBaseDirectoryDetector directoryDetector,
-                              @NotNull List<PatchAndVariants> candidates, @NotNull List<FilePatch> newOrWithoutMatches) {
+                              @NotNull List<? super PatchAndVariants> candidates, @NotNull List<? super FilePatch> newOrWithoutMatches) {
     for (final FilePatch patch : list) {
       final String fileName = patch.getBeforeFileName();
       if (patch.isNewFile() || (patch.getBeforeName() == null)) {
@@ -207,7 +207,7 @@ public class MatchPatchPaths {
   }
 
   private static void putSelected(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result,
-                                  @NotNull final List<AbstractFilePatchInProgress> variants,
+                                  @NotNull final List<? extends AbstractFilePatchInProgress> variants,
                                   @NotNull AbstractFilePatchInProgress patchInProgress) {
     patchInProgress.setAutoBases(mapNotNull(variants, AbstractFilePatchInProgress::getBase));
     result.putValue(patchInProgress.getBase(), patchInProgress);

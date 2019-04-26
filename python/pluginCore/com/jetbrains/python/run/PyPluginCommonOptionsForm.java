@@ -10,7 +10,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
@@ -24,6 +23,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,6 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JBCheckBox myAddContentRootsCheckbox;
   private JBCheckBox myAddSourceRootsCheckbox;
   private JComponent labelAnchor;
-  private final HideableDecorator myDecorator;
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = Lists.newArrayList();
 
@@ -72,7 +71,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myModuleComboBox.setSelectedModule(selection);
 
     myInterpreterComboBox.setMinimumAndPreferredWidth(100);
-    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
+    myInterpreterComboBox.setRenderer(new PySdkListCellRenderer(null,"<Project Default>"));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
@@ -90,7 +89,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     setAnchor(myEnvsComponent.getLabel());
 
 
-    myDecorator = new HideableDecorator(myHideablePanel, "Environment", false) {
+    final HideableDecorator decorator = new HideableDecorator(myHideablePanel, "Environment", false) {
       @Override
       protected void on() {
         super.on();
@@ -107,8 +106,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
         PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
       }
     };
-    myDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
-    myDecorator.setContentComponent(myMainPanel);
+    decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
+    decorator.setContentComponent(myMainPanel);
     myPathMappingsComponent.setAnchor(myEnvsComponent.getLabel());
     updateControls();
 

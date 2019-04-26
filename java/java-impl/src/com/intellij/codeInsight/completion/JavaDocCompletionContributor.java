@@ -223,7 +223,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       for (LookupElement element : completeJavadocReference(ref.getElement(), ref)) {
         result.addElement(LookupElementDecorator.withInsertHandler(element, wrapIntoLinkTag((context, item) -> element.handleInsert(context))));
       }
-    } else if (matcher.getPrefix().length() > 0) {
+    }
+    else if (matcher.getPrefix().length() > 0) {
       InsertHandler<JavaPsiClassReferenceElement> handler = wrapIntoLinkTag(JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER);
       AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() == 1, psiClass ->
         result.addElement(AllClassesGetter.createLookupItem(psiClass, handler)));

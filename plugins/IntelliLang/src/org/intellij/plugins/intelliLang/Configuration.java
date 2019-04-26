@@ -322,7 +322,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         });
     };
     for (String key : ContainerUtil.newTreeSet(myInjections.keySet())) {
-      Set<BaseInjection> injections = ContainerUtil.newHashSet(myInjections.get(key));
+      Set<BaseInjection> injections = new HashSet<>(myInjections.get(key));
       injections.removeAll(getDefaultInjections());
       for (BaseInjection injection : ContainerUtil.sorted(injections, comparator)) {
         element.addContent(injection.getState());
@@ -491,9 +491,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     replaceInjectionsWithUndo(project, null, newInjections, originalInjections, psiElementsToRemove);
   }
 
-  /**
-   * @since 2018.3
-   */
   public void replaceInjectionsWithUndo(Project project,
                                         @Nullable PsiFile hostFile,
                                         List<? extends BaseInjection> newInjections,
@@ -526,9 +523,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     replaceInjectionsWithUndo(project, null, add, remove, true, psiElementsToRemove, actualProcessor);
   }
 
-  /**
-   * @since 2018.3
-   */
   public static <T> void replaceInjectionsWithUndo(final Project project,
                                                    @Nullable PsiFile hostFile,
                                                    final T add,

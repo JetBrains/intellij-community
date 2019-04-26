@@ -2,6 +2,7 @@ package com.siyeh.igtest.performance.object_allocation_in_loop;
 
 import java.util.regex.*;
 import java.util.function.*;
+import java.util.*;
 
 class ObjectAllocationInLoop {
 
@@ -75,4 +76,15 @@ class ObjectAllocationInLoop {
       };
     }
   }
+
+  // IDEA-206221
+  public static Map<Integer, Boolean> viaLoop(List<Boolean> values) {
+    Map<Integer, Boolean> result = new HashMap<>();
+    for (Boolean value : values) {
+      result.merge(key(), value, (oldValue, newValue) -> Boolean.FALSE.equals(oldValue) ? newValue : oldValue);
+    }
+    return result;
+  }
+
+  static native Integer key();
 }

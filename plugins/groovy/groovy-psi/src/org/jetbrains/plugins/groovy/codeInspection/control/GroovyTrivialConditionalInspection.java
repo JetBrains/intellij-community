@@ -32,17 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 public class GroovyTrivialConditionalInspection extends BaseInspection {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Redundant conditional expression";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

@@ -16,11 +16,13 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.configurationStore.Property;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,9 +97,19 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     myDoNotImportInner = doNotImportInner;
   }
 
+  /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean REPLACE_INSTANCEOF = false;
+  /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean REPLACE_CAST = false;
+  public boolean REPLACE_INSTANCEOF_AND_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;
+
+  @Property(externalName = "replace_sum_lambda_with_method_ref")
+  public boolean REPLACE_SUM = true;
 
   public boolean SPACES_WITHIN_ANGLE_BRACKETS;
 
@@ -110,6 +122,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION;
 
+  @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
 
@@ -135,31 +148,49 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+  @Property(externalName = "imports_layout")
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
   // region JavaDoc
+  @Property(externalName = "doc_enable_formatting")
   public boolean ENABLE_JAVADOC_FORMATTING = true;
+  @Property(externalName = "doc_align_param_comments")
   public boolean JD_ALIGN_PARAM_COMMENTS = true;
+  @Property(externalName = "doc_align_exception_comments")
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
+  @Property(externalName = "doc_add_blank_line_after_param_comments")
   public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS;
+  @Property(externalName = "doc_add_blank_line_after_return")
   public boolean JD_ADD_BLANK_AFTER_RETURN;
+  @Property(externalName = "doc_add_blank_line_after_description")
   public boolean JD_ADD_BLANK_AFTER_DESCRIPTION = true;
+  @Property(externalName = "doc_add_p_tag_on_empty_lines")
   public boolean JD_P_AT_EMPTY_LINES = true;
 
+  @Property(externalName = "doc_keep_invalid_tags")
   public boolean JD_KEEP_INVALID_TAGS = true;
+  @Property(externalName = "doc_keep_empty_lines")
   public boolean JD_KEEP_EMPTY_LINES = true;
+  @Property(externalName = "doc_do_not_wrap_if_one_line")
   public boolean JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
 
+  @Property(externalName = "doc_use_throws_not_exception_tag")
   public boolean JD_USE_THROWS_NOT_EXCEPTION = true;
+  @Property(externalName = "doc_keep_empty_parameter_tag")
   public boolean JD_KEEP_EMPTY_PARAMETER = true;
+  @Property(externalName = "doc_keep_empty_throws_tag")
   public boolean JD_KEEP_EMPTY_EXCEPTION = true;
+  @Property(externalName = "doc_keep_empty_return_tag")
   public boolean JD_KEEP_EMPTY_RETURN = true;
 
-
+  @Property(externalName = "doc_enable_leading_asterisks")
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+  @Property(externalName = "doc_preserve_line_breaks")
   public boolean JD_PRESERVE_LINE_FEEDS;
+  @Property(externalName = "doc_param_description_on_new_line")
   public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
 
+  @Property(externalName = "doc_indent_on_continuation")
   public boolean JD_INDENT_ON_CONTINUATION = false;
 
   // endregion
@@ -296,9 +327,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = rootSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(rootSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     IMPORT_LAYOUT_TABLE.copyFrom(rootSettings.IMPORT_LAYOUT_TABLE);
-    REPLACE_INSTANCEOF = rootSettings.REPLACE_INSTANCEOF;
-    REPLACE_CAST = rootSettings.REPLACE_CAST;
-    REPLACE_NULL_CHECK = rootSettings.REPLACE_NULL_CHECK;
     FIELD_NAME_PREFIX = rootSettings.FIELD_NAME_PREFIX;
     STATIC_FIELD_NAME_PREFIX = rootSettings.STATIC_FIELD_NAME_PREFIX;
     PARAMETER_NAME_PREFIX = rootSettings.PARAMETER_NAME_PREFIX;
@@ -319,28 +347,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     STATIC_FIELD_TYPE_TO_NAME.copyFrom(rootSettings.STATIC_FIELD_TYPE_TO_NAME);
 
     ENABLE_JAVADOC_FORMATTING = rootSettings.ENABLE_JAVADOC_FORMATTING;
-    JD_ALIGN_PARAM_COMMENTS = rootSettings.JD_ALIGN_PARAM_COMMENTS;
-    JD_ALIGN_EXCEPTION_COMMENTS = rootSettings.JD_ALIGN_EXCEPTION_COMMENTS;
-    JD_ADD_BLANK_AFTER_PARM_COMMENTS = rootSettings.JD_ADD_BLANK_AFTER_PARM_COMMENTS;
-    JD_ADD_BLANK_AFTER_RETURN = rootSettings.JD_ADD_BLANK_AFTER_RETURN;
-    JD_ADD_BLANK_AFTER_DESCRIPTION = rootSettings.JD_ADD_BLANK_AFTER_DESCRIPTION;
-    JD_P_AT_EMPTY_LINES = rootSettings.JD_P_AT_EMPTY_LINES;
-
-    JD_KEEP_INVALID_TAGS = rootSettings.JD_KEEP_INVALID_TAGS;
-    JD_KEEP_EMPTY_LINES = rootSettings.JD_KEEP_EMPTY_LINES;
-    JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = rootSettings.JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
-
-    JD_USE_THROWS_NOT_EXCEPTION = rootSettings.JD_USE_THROWS_NOT_EXCEPTION;
-    JD_KEEP_EMPTY_PARAMETER = rootSettings.JD_KEEP_EMPTY_PARAMETER;
-    JD_KEEP_EMPTY_EXCEPTION = rootSettings.JD_KEEP_EMPTY_EXCEPTION;
-    JD_KEEP_EMPTY_RETURN = rootSettings.JD_KEEP_EMPTY_RETURN;
-
 
     JD_LEADING_ASTERISKS_ARE_ENABLED = rootSettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
-    JD_PRESERVE_LINE_FEEDS = rootSettings.JD_PRESERVE_LINE_FEEDS;
-    JD_PARAM_DESCRIPTION_ON_NEW_LINE = rootSettings.JD_PARAM_DESCRIPTION_ON_NEW_LINE;
-
-    JD_INDENT_ON_CONTINUATION = rootSettings.JD_INDENT_ON_CONTINUATION;
 
     if (rootSettings.WRAP_COMMENTS) {
       rootSettings.getCommonSettings(JavaLanguage.INSTANCE).WRAP_COMMENTS = rootSettings.WRAP_COMMENTS;
@@ -422,6 +430,13 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
       }
       child.addContent(element);
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  protected void afterLoaded() {
+    REPLACE_INSTANCEOF_AND_CAST |= REPLACE_CAST || REPLACE_INSTANCEOF;
+    REPLACE_CAST = REPLACE_INSTANCEOF = false;
   }
 
   @NotNull

@@ -42,6 +42,11 @@ public class SearchConfiguration extends Configuration {
   }
 
   @Override
+  public void removeUnusedVariables() {
+    matchOptions.removeUnusedVariables();
+  }
+
+  @Override
   public void readExternal(Element element) {
     super.readExternal(element);
 

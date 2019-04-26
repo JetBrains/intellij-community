@@ -239,9 +239,6 @@ public final class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @since 2018.2
-   */
   @Contract(pure=true)
   public LookupElementBuilder withItemTextItalic(boolean italic) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -285,9 +282,6 @@ public final class LookupElementBuilder extends LookupElement {
                                     myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @since 2018.1
-   */
   public LookupElementBuilder withTypeIconRightAligned(boolean typeIconRightAligned) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeIconRightAligned(typeIconRightAligned);

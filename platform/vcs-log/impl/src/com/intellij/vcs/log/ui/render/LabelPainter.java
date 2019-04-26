@@ -85,7 +85,7 @@ public class LabelPainter {
     }
   }
 
-  public void customizePainter(@NotNull Collection<VcsRef> references,
+  public void customizePainter(@NotNull Collection<? extends VcsRef> references,
                                @NotNull Color background,
                                @NotNull Color foreground,
                                boolean isSelected,
@@ -109,7 +109,7 @@ public class LabelPainter {
   }
 
   @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<RefGroup> refGroups,
+  private Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<? extends RefGroup> refGroups,
                                                                              @NotNull FontMetrics fontMetrics,
                                                                              @NotNull Color background,
                                                                              int availableWidth,
@@ -125,7 +125,7 @@ public class LabelPainter {
 
 
   @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<RefGroup> refGroups,
+  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<? extends RefGroup> refGroups,
                                                                                     @NotNull FontMetrics fontMetrics,
                                                                                     @NotNull Color background,
                                                                                     int availableWidth) {
@@ -150,7 +150,7 @@ public class LabelPainter {
   }
 
   @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<RefGroup> refGroups,
+  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<? extends RefGroup> refGroups,
                                                                                  @NotNull FontMetrics fontMetrics,
                                                                                  @NotNull Color background,
                                                                                  int availableWidth) {
@@ -193,12 +193,12 @@ public class LabelPainter {
   }
 
   @NotNull
-  private LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<Color> colors) {
+  private LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<? extends Color> colors) {
     return myIconCache.getIcon(myComponent, height, background, colors);
   }
 
   @NotNull
-  private static List<Color> getColors(@NotNull Collection<RefGroup> groups) {
+  private static List<Color> getColors(@NotNull Collection<? extends RefGroup> groups) {
     LinkedHashMap<Color, Integer> usedColors = ContainerUtil.newLinkedHashMap();
 
     for (RefGroup group : groups) {
@@ -251,7 +251,7 @@ public class LabelPainter {
   }
 
   @Nullable
-  private static Color calculateGreyBackground(@NotNull List<RefGroup> refGroups,
+  private static Color calculateGreyBackground(@NotNull List<? extends RefGroup> refGroups,
                                                @NotNull Color background,
                                                boolean isSelected,
                                                boolean isCompact) {

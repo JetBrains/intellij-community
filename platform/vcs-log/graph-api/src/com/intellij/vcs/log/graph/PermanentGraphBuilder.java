@@ -19,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- */
+@Deprecated
 public interface PermanentGraphBuilder<Id> {
 
+  @Deprecated
   @NotNull
-  PermanentGraph<Id> build(@NotNull List<GraphCommit<Id>> commits);
+  PermanentGraph<Id> build(@NotNull List<? extends GraphCommit<Id>> commits);
 }

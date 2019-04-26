@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
@@ -156,7 +155,6 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
   protected fun refreshCLM() {
     dirtyScopeManager.markEverythingDirty()
-    clm.scheduleUpdate()
     clm.waitUntilRefreshed()
     UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
   }
@@ -188,12 +186,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   fun runBatchFileChangeOperation(task: () -> Unit) {
-    BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(ourProject, "Update")
+    BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onFreeze()
     try {
       task()
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(ourProject)
+      BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
     }
   }
 

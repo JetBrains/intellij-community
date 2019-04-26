@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
 import org.intellij.lang.annotations.Language;
@@ -10,8 +10,16 @@ import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
 
 public interface TypingTest extends BaseTest {
 
-  default void typingTest(@Language("Groovy") String text, @Nullable String expectedType) {
-    typingTest(configureByExpression(text), expectedType);
+  default void expressionTypeTest(@Language("Groovy") @NotNull String text, @Nullable String expectedType) {
+    typingTest(lastExpression(text), expectedType);
+  }
+
+  default void typingTest(@NotNull String text, @Nullable String expectedType) {
+    typingTest(elementUnderCaret(text, GrExpression.class), expectedType);
+  }
+
+  default void typingTest(@NotNull String text, @NotNull Class<? extends GrExpression> clazz, @Nullable String expectedType) {
+    typingTest(elementUnderCaret(text, clazz), expectedType);
   }
 
   default void typingTest(@NotNull GrExpression expression, @Nullable String expectedType) {

@@ -21,10 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -35,7 +32,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   private boolean myEnabled = false;
   private boolean myObtainProcessorsFromClasspath = true;
   private String myProcessorPath = "";
-  private final Set<String> myProcessors = new THashSet<>(1); // empty list means all discovered
+  private final Set<String> myProcessors = new LinkedHashSet<>(1); // empty list means all discovered
   private final Map<String, String> myProcessorOptions = new THashMap<>(1); // key=value map of options
   private String myGeneratedProductionDirectoryName = DEFAULT_PRODUCTION_DIR_NAME;
   private String myGeneratedTestsDirectoryName = DEFAULT_TESTS_DIR_NAME;

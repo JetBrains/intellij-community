@@ -44,6 +44,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -112,18 +113,19 @@ public class PythonSdkUpdater implements StartupActivity {
    */
   public static boolean update(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable final Project project,
                                @Nullable final Component ownerComponent) {
+
+    final Application application = ApplicationManager.getApplication();
+    assert !application.isWriteAccessAllowed() : "Can't update SDK under write action, not allowed in background";
+
     final String key = PythonSdkType.getSdkKey(sdk);
     synchronized (ourLock) {
       ourScheduledToRefresh.add(key);
     }
 
-    final Application application = ApplicationManager.getApplication();
-
     String sdkHome = sdk.getHomePath();
-    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
+    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
       final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
-        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
-                        PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
+        PythonSdkType.activateVirtualEnv(sdk); // pre-cache virtualenv activated environment
       });
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak
@@ -247,7 +249,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Changes the version string of an SDK if it's out of date.
-   *
+   * <p>
    * May be invoked from any thread. May freeze the current thread while evaluating the run-time Python version.
    */
   private static void updateLocalSdkVersion(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
@@ -265,7 +267,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Updates the paths of a local SDK.
-   *
+   * <p>
    * May be invoked from any thread. May freeze the current thread while evaluating sys.path.
    */
   private static boolean updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project) {
@@ -288,9 +290,9 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Updates the paths of a remote SDK.
-   *
+   * <p>
    * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
-   *
+   * <p>
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
   private static void updateRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
@@ -326,7 +328,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Returns all the paths for a remote SDK.
-   *
+   * <p>
    * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
    */
   @NotNull
@@ -352,7 +354,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Returns local paths for a remote SDK that have been mapped to remote paths during the skeleton refresh step.
-   *
+   * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
@@ -385,10 +387,12 @@ public class PythonSdkUpdater implements StartupActivity {
       }
     }
     final List<VirtualFile> results = Lists.newArrayList();
+    // TODO: Refactor SDK so they can provide exclusions for root paths
+    final VirtualFile condaFolder = PythonSdkType.isConda(sdk) ? PyCondaPackageManagerImpl.getCondaDirectory(sdk) : null;
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
         final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
-        if (virtualFile != null) {
+        if (virtualFile != null && !virtualFile.equals(condaFolder)) {
           final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
           if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
             results.add(rootFile);
@@ -437,7 +441,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Evaluates sys.path by running the Python interpreter from a local SDK.
-   *
+   * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
@@ -453,7 +457,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Commits new SDK paths using an SDK modificator if the paths have been changed.
-   *
+   * <p>
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
@@ -475,7 +479,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Applies a processor to an SDK modificator or an SDK and commits it.
-   *
+   * <p>
    * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
    */
   private static void changeSdkModificator(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator,
@@ -486,7 +490,7 @@ public class PythonSdkUpdater implements StartupActivity {
       final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
       final SdkModificator effectiveModificator = sdkModificator != null ? sdkModificator :
                                                   sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : sdk.getSdkModificator();
-      if (processor .process(effectiveModificator)) {
+      if (processor.process(effectiveModificator)) {
         effectiveModificator.commitChanges();
       }
     });

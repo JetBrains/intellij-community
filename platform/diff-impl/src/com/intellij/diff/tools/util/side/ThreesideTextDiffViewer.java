@@ -53,8 +53,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @Nullable private List<? extends EditorEx> myEditors;
   @NotNull private final List<? extends EditorEx> myEditableEditors;
 
-  @NotNull private final MyVisibleAreaListener myVisibleAreaListener1 = new MyVisibleAreaListener(Side.LEFT);
-  @NotNull private final MyVisibleAreaListener myVisibleAreaListener2 = new MyVisibleAreaListener(Side.RIGHT);
+  @NotNull private final MyVisibleAreaListener myVisibleAreaListener = new MyVisibleAreaListener();
   @Nullable protected ThreesideSyncScrollSupport mySyncScrollSupport;
 
   @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
@@ -127,11 +126,9 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
     new TextDiffViewerUtil.EditorFontSizeSynchronizer(getEditors()).install(this);
 
-    getEditor(ThreeSide.LEFT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
-    getEditor(ThreeSide.BASE).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
-
-    getEditor(ThreeSide.BASE).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
-    getEditor(ThreeSide.RIGHT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(ThreeSide.LEFT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.BASE).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.RIGHT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
 
     SyncScrollSupport.SyncScrollable scrollable1 = getSyncScrollable(Side.LEFT);
     SyncScrollSupport.SyncScrollable scrollable2 = getSyncScrollable(Side.RIGHT);
@@ -143,11 +140,9 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   @CalledInAwt
   public void destroyEditorListeners() {
-    getEditor(ThreeSide.LEFT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
-    getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
-
-    getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
-    getEditor(ThreeSide.RIGHT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(ThreeSide.LEFT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.RIGHT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
 
     mySyncScrollSupport = null;
   }
@@ -329,14 +324,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     }
     return super.getData(dataId);
   }
-  
+
   private class MyVisibleAreaListener implements VisibleAreaListener {
-    @NotNull Side mySide;
-
-    MyVisibleAreaListener(@NotNull Side side) {
-      mySide = side;
-    }
-
     @Override
     public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
@@ -366,8 +355,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   protected class TextShowPartialDiffAction extends ShowPartialDiffAction {
-    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode) {
-      super(mode);
+    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
+      super(mode, hasFourSides);
     }
 
     @NotNull

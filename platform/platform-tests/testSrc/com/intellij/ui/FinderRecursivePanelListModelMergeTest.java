@@ -99,7 +99,7 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (panel.isMergeListItemsRunning()) return;
-        assertTrue("selection changed", false);
+        fail("selection changed");
       }
     };
     list.addListSelectionListener(selectionListener);
@@ -114,19 +114,18 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
     list.removeListSelectionListener(selectionListener);
   }
 
-
   @NotNull
-  private StringFinderRecursivePanel createStringPanel(String[] initialItems) {
+  private static StringFinderRecursivePanel createStringPanel(String[] initialItems) {
     StringFinderRecursivePanel panel = new StringFinderRecursivePanel(initialItems);
     panel.initPanel();
     return panel;
   }
 
-  private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
+  private static class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
     private final String[] myInitialItems;
 
     StringFinderRecursivePanel(String[] initialItems) {
-      super(FinderRecursivePanelListModelMergeTest.this.getProject(), null);
+      super(LightPlatformTestCase.getProject(), null);
       myInitialItems = initialItems;
     }
 

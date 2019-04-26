@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -34,22 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Non short-circuit boolean";
-  }
-
-  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Non short-circuit boolean expression #loc";
 
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 
   @Override

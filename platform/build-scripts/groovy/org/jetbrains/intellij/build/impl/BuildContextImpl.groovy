@@ -191,11 +191,6 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  boolean isBundledJreModular() {
-    return compilationContext.isBundledJreModular()
-  }
-
-  @Override
   File findFileInModuleSources(String moduleName, String relativePath) {
     getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
       new File(it.first, StringUtil.trimStart(relativePath, it.second))

@@ -2,7 +2,6 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
@@ -390,7 +389,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                                              "Libraries Are Required", Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }

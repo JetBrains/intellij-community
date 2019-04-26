@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.ide.GeneralSettings;
@@ -70,6 +70,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
 
   @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
 
+  @NotNull
   @Override
   public String getName() {
     return GradleBundle.message("gradle.name");
@@ -82,7 +83,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Override
-  public boolean canOpenProject(VirtualFile file) {
+  public boolean canOpenProject(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
       return Arrays.stream(file.getChildren()).anyMatch(GradleProjectOpenProcessor::canOpenFile);
     }
@@ -211,7 +212,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
         }
 
         @Override
-        public void setupRootModel(ModifiableRootModel modifiableRootModel) {
+        public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) {
           String contentEntryPath = getContentEntryPath();
           if (StringUtil.isEmpty(contentEntryPath)) {
             return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,6 +69,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     Document document = getDocument();
     if (document == null) {
       return;
+    }
+    if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
+      document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
     }
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -263,6 +266,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
+      mySourcePosition = null; // need to clear this no matter what as the offset may be cached inside
     }
   }
 

@@ -19,13 +19,13 @@ import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTestCase {
   @NotNull
@@ -36,9 +36,8 @@ public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTes
 
   public void testPrimitiveReturnTypes() {
     PsiClass aClass = myFixture.addClass("class Foo {double foo(double d) {return d;}}");
-    List<String> suggestedTypes = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(aClass.getMethods()[0]).stream()
-      .map(PsiType::getCanonicalText)
-      .collect(Collectors.toList());
+    List<String> suggestedTypes =
+      ContainerUtil.map(FunctionalInterfaceSuggester.suggestFunctionalInterfaces(aClass.getMethods()[0]), PsiType::getCanonicalText);
     assertEquals(4, suggestedTypes.size());
     assertTrue(suggestedTypes.containsAll(Arrays.asList("java.util.function.ToDoubleFunction<java.lang.Double>",
                                                         "java.util.function.Function<java.lang.Double,java.lang.Double>",
@@ -50,9 +49,8 @@ public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTes
     PsiClass aClass = myFixture.addClass("class Foo {void foo(String s) {} void foo(int i) {}}");
     PsiExpression expression = getElementFactory().createExpressionFromText("Foo::foo", aClass);
     assertInstanceOf(expression, PsiMethodReferenceExpression.class);
-    List<String> suggestedTypes = FunctionalInterfaceSuggester.suggestFunctionalInterfaces((PsiFunctionalExpression)expression).stream()
-      .map(PsiType::getCanonicalText)
-      .collect(Collectors.toList());
+    List<String> suggestedTypes = ContainerUtil
+      .map(FunctionalInterfaceSuggester.suggestFunctionalInterfaces((PsiFunctionalExpression)expression), PsiType::getCanonicalText);
     assertEquals(3, suggestedTypes.size());
     assertTrue(suggestedTypes.containsAll(Arrays.asList("java.util.function.BiConsumer<Foo,java.lang.Integer>",
                                                         "java.util.function.BiConsumer<Foo,java.lang.String>",
@@ -197,18 +195,16 @@ public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTes
   public void testLambdaExpression() {
     PsiLambdaExpression expression = (PsiLambdaExpression)getElementFactory().createExpressionFromText("() -> 123", myFixture.addClass("class Empty{}"));
     checkWithExpected(FunctionalInterfaceSuggester.suggestFunctionalInterfaces(expression),
+                      "java.util.concurrent.Callable<java.lang.Integer>",
                       "java.util.function.DoubleSupplier",
                       "java.util.function.IntSupplier",
-                      "java.util.function.LongSupplier");
+                      "java.util.function.LongSupplier",
+                      "java.util.function.Supplier<java.lang.Integer>");
   }
 
   private static void checkWithExpected(Collection<? extends PsiType> suggestedTypes, final String... expectedTypes) {
-    assertEquals(expectedTypes.length, suggestedTypes.size());
-    List<String> canonicalTextPresentation = suggestedTypes
-      .stream()
-      .map(PsiType::getCanonicalText)
-      .collect(Collectors.toList());
-    assertTrue(canonicalTextPresentation.containsAll(Arrays.asList(expectedTypes)));
+    assertEquals("Suggested types: " + suggestedTypes.toString(), expectedTypes.length, suggestedTypes.size());
+    assertTrue(ContainerUtil.map(suggestedTypes, PsiType::getCanonicalText).containsAll(Arrays.asList(expectedTypes)));
   }
 
   private Collection<? extends PsiType> suggestTypes(@Language("JAVA") String fooClassText, String functionalExpressionText) {

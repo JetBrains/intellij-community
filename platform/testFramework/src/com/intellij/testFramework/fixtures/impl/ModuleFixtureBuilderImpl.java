@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,11 +116,12 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected abstract T instantiateFixture();
 
   Module buildModule() {
-    return WriteAction.compute(() -> {
-      Module module = createModule();
-      initModule(module);
-      return module;
-    });
+    Module[] module = new Module[1];
+    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myFixtureBuilder.getFixture().getProject()).mergeRootsChangesDuring(() -> {
+      module[0] = createModule();
+      initModule(module[0]);
+    }));
+    return module[0];
   }
 
   protected void initModule(Module module) {

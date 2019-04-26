@@ -60,7 +60,7 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
       for (ParamInfo info : paramInfos) {
         MavenParamReferenceProvider providerInstance = info.getProviderInstance();
         if (providerInstance != null) {
-          return providerInstance.getReferencesByElement(xmlText, paramInfos.getDomCfg(), context);
+          return providerInstance.getReferencesByElement(element, paramInfos.getDomCfg(), context);
         }
       }
 

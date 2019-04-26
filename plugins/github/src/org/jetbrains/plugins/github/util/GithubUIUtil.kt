@@ -18,30 +18,30 @@ object GithubUIUtil {
       fun foreground(list: JList<*>, isSelected: Boolean): Color {
         val default = UIUtil.getListForeground()
         return if (isSelected) {
-          if (list.hasFocus()) JBColor.namedColor("Github.List.tallRow.selectionForeground", default)
-          else JBColor.namedColor("Github.List.tallRow.selectionForeground.unfocused", default)
+          if (list.hasFocus()) JBColor.namedColor("Table.lightSelectionForeground", default)
+          else JBColor.namedColor("Table.lightSelectionInactiveForeground", default)
         }
-        else JBColor.namedColor("Github.List.tallRow.foreground", default)
+        else JBColor.namedColor("Table.foreground", default)
       }
 
       fun secondaryForeground(list: JList<*>, isSelected: Boolean): Color {
         return if (isSelected) {
           foreground(list, true)
         }
-        else JBColor.namedColor("Github.List.tallRow.secondary.foreground", UIUtil.getContextHelpForeground())
+        else JBColor.namedColor("Component.infoForeground", UIUtil.getContextHelpForeground())
       }
 
       fun background(list: JList<*>, isSelected: Boolean): Color {
         return if (isSelected) {
-          if (list.hasFocus()) JBColor.namedColor("Github.List.tallRow.selectionBackground", selectionBackground)
-          else JBColor.namedColor("Github.List.tallRow.selectionBackground.unfocused", unfocusedSelectionBackground)
+          if (list.hasFocus()) JBColor.namedColor("Table.lightSelectionBackground", selectionBackground)
+          else JBColor.namedColor("Table.lightSelectionInactiveBackground", unfocusedSelectionBackground)
         }
         else list.background
       }
     }
   }
 
-  fun createIssueLabelLabel(label: GithubIssueLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.MINI).apply {
+  fun createIssueLabelLabel(label: GithubIssueLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     val apiColor = ColorUtil.fromHex(label.color)
     background = JBColor(apiColor, ColorUtil.darker(apiColor, 3))
     foreground = computeForeground(background)

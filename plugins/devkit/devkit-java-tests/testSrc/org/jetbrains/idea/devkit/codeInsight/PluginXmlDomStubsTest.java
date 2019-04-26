@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "    Element:name:pluginName\n" +
                   "    Element:depends:anotherPlugin\n" +
                   "      Attribute:config-file:anotherPlugin.xml\n" +
+                  "      Attribute:optional:true\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
                   "    Element:extensionPoints\n" +
@@ -96,10 +97,10 @@ public class PluginXmlDomStubsTest extends DomStubTest {
     assertEquals("actions", included.getName());
 
     List<Actions> actions = element.getRootElement().getActions();
-    assertEquals(1, actions.size());
-    assertNotNull(actions.get(0).getXmlTag());
+    assertEquals(2, actions.size());
 
-    Action action = actions.get(0).getGroups().get(0).getActions().get(0);
+    assertNotNull(actions.get(1).getXmlTag());
+    Action action = actions.get(1).getGroups().get(0).getActions().get(0);
     DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(action.getId());
     assertNotNull(handler.getStub());
 

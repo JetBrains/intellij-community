@@ -87,7 +87,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
   @NotNull
   @Override
-  public List<CodeSmellInfo> findCodeSmells(@NotNull final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
+  public List<CodeSmellInfo> findCodeSmells(@NotNull final List<? extends VirtualFile> filesToCheck) throws ProcessCanceledException {
     List<CodeSmellInfo> result = new ArrayList<>();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -100,6 +100,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
             result.addAll(findCodeSmells(filesToCheck, progress));
           }
           catch (ProcessCanceledException e) {
+            LOG.info("Code analysis canceled", e);
             exception.set(e);
           }
           catch (Exception e) {
@@ -123,7 +124,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   @NotNull
-  private List<CodeSmellInfo> findCodeSmells(@NotNull List<VirtualFile> files,
+  private List<CodeSmellInfo> findCodeSmells(@NotNull List<? extends VirtualFile> files,
                                              @NotNull ProgressIndicator progress) {
     final List<CodeSmellInfo> result = new ArrayList<>();
     for (int i = 0; i < files.size(); i++) {
@@ -194,8 +195,8 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     throw exception;
   }
 
-  private void convertErrorsAndWarnings(@NotNull Collection<HighlightInfo> highlights,
-                                        @NotNull List<CodeSmellInfo> result,
+  private void convertErrorsAndWarnings(@NotNull Collection<? extends HighlightInfo> highlights,
+                                        @NotNull List<? super CodeSmellInfo> result,
                                         @NotNull Document document) {
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();

@@ -30,25 +30,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.icons.AllIcons.General.ArrowDownSmall;
+import static com.intellij.icons.AllIcons.General.ArrowDown;
 import static com.intellij.icons.AllIcons.General.ArrowRight;
 
 public abstract class SplitterWithSecondHideable {
-  public interface OnOffListener<T> {
-    void on(T t);
-    void off(T t);
+  public interface OnOffListener {
+    void on(int hideableHeight);
+    void off(int hideableHeight);
   }
 
   @NotNull private final PseudoSplitter mySplitter;
-  @NotNull private final AbstractTitledSeparatorWithIcon myTitledSeparator;
-  @NotNull private final OnOffListener<Integer> myListener;
+  @NotNull private final MyTitledSeparator myTitledSeparator;
+  @NotNull private final OnOffListener myListener;
   @NotNull private final JPanel myFictivePanel;
   private float myPreviousProportion;
 
   public SplitterWithSecondHideable(boolean vertical,
                                     @NotNull String separatorText,
                                     @NotNull JComponent firstComponent,
-                                    @NotNull OnOffListener<Integer> listener) {
+                                    @NotNull OnOffListener listener) {
     myListener = listener;
     myFictivePanel = Panels.simplePanel();
     myTitledSeparator = new MyTitledSeparator(separatorText, vertical);
@@ -81,6 +81,10 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator.initOn();
   }
 
+  public void setInitialProportion() {
+    myTitledSeparator.setInitialProportion();
+  }
+
   public void on() {
     myTitledSeparator.on();
   }
@@ -95,7 +99,7 @@ public abstract class SplitterWithSecondHideable {
 
   private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
     MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
-      super(ArrowRight, vertical ? ArrowDownSmall : ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
+      super(ArrowRight, vertical ? ArrowDown : ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
     }
 
     @Override
@@ -105,16 +109,16 @@ public abstract class SplitterWithSecondHideable {
 
     @Override
     protected void initOnImpl() {
-      float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
       mySplitter.setSecondComponent(myDetailsComponent.getPanel());
       mySplitter.setResizeEnabled(true);
+    }
 
-      SwingUtilities.invokeLater(() -> {
-        mySplitter.fixFirst(proportion);
-        mySplitter.invalidate();
-        mySplitter.validate();
-        mySplitter.repaint();
-      });
+    public void setInitialProportion() {
+      float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
+      mySplitter.fixFirst(proportion);
+      mySplitter.invalidate();
+      mySplitter.validate();
+      mySplitter.repaint();
     }
 
     @Override

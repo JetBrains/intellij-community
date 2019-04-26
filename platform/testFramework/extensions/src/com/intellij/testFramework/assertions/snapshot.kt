@@ -42,9 +42,30 @@ private class DumpRepresenter : Representer() {
 
 @Throws(FileComparisonFailure::class)
 fun compareFileContent(actual: Any, snapshotFile: Path) {
-  val expectedContent = StringUtilRt.convertLineSeparators(snapshotFile.readText().trimEnd())
+  val rawExpectedText = snapshotFile.readText()
+  val trimmedExpectedText = rawExpectedText.trimEnd()
+  val expectedContent = StringUtilRt.convertLineSeparators(trimmedExpectedText)
   val actualContent = if (actual is String) actual.trimEnd() else dumpData(actual).trimEnd()
   if (actualContent != expectedContent) {
+    if (expectedContent.endsWith("\n")) {
+      val rawTail = getTail(rawExpectedText)
+      val trimmedTail = getTail(trimmedExpectedText)
+      val expectedTail = getTail(expectedContent)
+      val trimAgainTail = getTail(expectedContent.trimEnd())
+      println("Strange thing happens: expected content ends with line break, though it was trimmed\n" +
+              "Raw content end chars: $rawTail\n" +
+              "Trimmed content end chars: $trimmedTail\n" +
+              "Expected end chars: $expectedTail\n" + 
+              "End chars after trimming again: $trimAgainTail\n")
+    }
     throw FileComparisonFailure(null, expectedContent, actualContent, snapshotFile.toString())
   }
+}
+
+private fun getTail(text: String): String {
+  if (text.length <= 4) return "??"
+  return text[text.length - 4].toInt().toString() + "." +
+         text[text.length - 3].toInt().toString() + "." +
+         text[text.length - 2].toInt().toString() + "." +
+         text[text.length - 1].toInt().toString()
 }

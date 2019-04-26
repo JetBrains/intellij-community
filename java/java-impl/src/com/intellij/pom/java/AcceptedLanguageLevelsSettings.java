@@ -4,6 +4,7 @@ package com.intellij.pom.java;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -19,7 +20,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.LegalNoticeDialog;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -27,6 +28,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
@@ -189,8 +191,18 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   private static String getLegalNotice(LanguageLevel level) {
     return
       "You must accept the terms of legal notice of the beta Java specification to enable support for " +
-      "\"" + StringUtil.substringAfter(level.getPresentableText(), " - ") + "\".<br/><br/>" +
+      "\"" + level.getPresentableText() + "\".<br/><br/>" +
       "<b>The implementation of an early-draft specification developed under the Java Community Process (JCP) " +
       "is made available for testing and evaluation purposes only and is not compatible with any specification of the JCP.</b>";
+  }
+
+  @TestOnly
+  public static void allowLevel(@NotNull Disposable parentDisposable, @NotNull LanguageLevel level) {
+    List<String> acceptedNames = getSettings().acceptedNames;
+    String name = level.name();
+    if (!acceptedNames.contains(name)) {
+      acceptedNames.add(name);
+      Disposer.register(parentDisposable, () -> getSettings().acceptedNames.remove(name));
+    }
   }
 }

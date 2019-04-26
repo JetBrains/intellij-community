@@ -16,7 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -148,12 +148,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       super(project);
       setTitle("Create Service");
 
-      myModuleCombo.setRenderer(new ListCellRendererWrapper<Module>() {
-        @Override
-        public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
-          setText(module.getName());
-        }
-      });
+      myModuleCombo.setRenderer(SimpleListCellRenderer.create("", Module::getName));
 
       myRootDirCombo.setRenderer(new PsiDirectoryListCellRenderer());
       myModuleCombo.addActionListener(e -> updateRootDirsCombo(psiRootDirs));

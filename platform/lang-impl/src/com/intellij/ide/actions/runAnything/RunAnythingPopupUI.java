@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
@@ -46,10 +45,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -96,7 +92,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private boolean mySkipFocusGain = false;
-  private Editor myEditor;
   @Nullable
   private VirtualFile myVirtualFile;
   @NotNull private final DataContext myDataContext;
@@ -104,6 +99,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private boolean myIsItemSelected;
   private String myLastInputText = null;
   private RunAnythingSearchListModel.RunAnythingMainListModel myListModel;
+  private Project myProject;
+  private Module myModule;
 
   private void onMouseClicked(@NotNull MouseEvent event) {
     int clickCount = event.getClickCount();
@@ -154,15 +151,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
           mySkipFocusGain = false;
           return;
         }
-        String text = RunAnythingUtil.getInitialTextForNavigation(myEditor);
-        text = text != null ? text.trim() : "";
-
-        mySearchField.setText(text);
         mySearchField.setForeground(UIUtil.getLabelForeground());
-        mySearchField.selectAll();
         mySearchField.setColumns(SEARCH_FIELD_COLUMNS);
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           final JComponent parent = (JComponent)mySearchField.getParent();
           parent.revalidate();
           parent.repaint();
@@ -180,8 +171,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
             }
             myAlarm.cancelAllRequests();
 
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+            ApplicationManager.getApplication().invokeLater(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+
+            searchFinishedHandler.run();
           }
           finally {
             result.setDone();
@@ -224,7 +216,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (group != null) {
         myCurrentWorker.doWhenProcessed(() -> {
           myCalcThread = new CalcThread(project, pattern, true);
-          model.triggerMoreStatistics(project, group);
+          RunAnythingUsageCollector.Companion.triggerMoreStatistics(project, group, model.getClass());
           myCurrentWorker = myCalcThread.insert(index, group);
         });
 
@@ -233,7 +225,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     if (model != null) {
-      model.triggerExecCategoryStatistics(project, index);
+      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(project, model.getGroups(), model.getClass(), index);
     }
     DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
     if (SHIFT_IS_PRESSED.get()) {
@@ -256,16 +248,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private Project getProject() {
-    final Project project = CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext());
-    assert project != null;
-    return project;
+    return myProject;
   }
 
   @Nullable
   private Module getModule() {
-    Module module = myActionEvent.getData(LangDataKeys.MODULE);
-    if (module != null) {
-      return module;
+    if (myModule != null) {
+      return myModule;
     }
 
     Project project = getProject();
@@ -377,7 +366,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
         myIsItemSelected = true;
 
         if (isMoreItem(myResultsList.getSelectedIndex())) {
-          mySearchField.setText(myLastInputText != null ? myLastInputText : "");
+          if (myLastInputText != null) {
+            mySearchField.setText(myLastInputText);
+          }
           return;
         }
 
@@ -549,7 +540,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final JLabel myTitle = new JLabel();
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
       Component cmp = null;
       if (isMoreItem(index)) {
         cmp = RunAnythingMore.get(isSelected);
@@ -557,12 +548,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(isSelected);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
-          p.setBackground(UIUtil.getListBackground(isSelected));
+          p.setBackground(UIUtil.getListBackground(isSelected, true));
           p.add(cmp, BorderLayout.CENTER);
           cmp = p;
         }
@@ -606,7 +597,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
   private class CalcThread implements Runnable {
     @NotNull private final Project myProject;
     @NotNull private final String myPattern;
@@ -614,7 +604,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final ActionCallback myDone = new ActionCallback();
     @NotNull private final RunAnythingSearchListModel myListModel;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
+    private CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
       myProject = project;
       myPattern = pattern;
       RunAnythingSearchListModel model = getSearchingModel(myResultsList);
@@ -631,8 +621,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       try {
         check();
 
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
           myResultsList.getEmptyText().setText("Searching...");
 
@@ -646,7 +635,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
               if (!myDone.isRejected()) {
                 myResultsList.setModel(myListModel);
-                updatePopup();
               }
             }, LIST_REBUILD_DELAY);
           }
@@ -662,6 +650,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
         if (isHelpMode(mySearchField.getText())) {
           buildHelpGroups(myListModel);
+          updatePopup();
           return;
         }
 
@@ -677,10 +666,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
       finally {
         if (!isCanceled()) {
-          //noinspection SSBasedInspection
-          SwingUtilities
+          ApplicationManager.getApplication()
             .invokeLater(() -> myResultsList.getEmptyText().setText(IdeBundle.message("run.anything.command.empty.list.title")));
-          updatePopup();
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -698,14 +685,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
         group.collectItems(myDataContext, myListModel, trimHelpPattern(), () -> check());
         check();
       });
-
-      updatePopup();
     }
 
     private void runReadAction(@NotNull Runnable action) {
       if (!DumbService.getInstance(myProject).isDumb()) {
         ApplicationManager.getApplication().runReadAction(action);
-        updatePopup();
       }
     }
 
@@ -742,9 +726,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
       return myProgressIndicator.isCanceled() || myDone.isRejected();
     }
 
-    @SuppressWarnings("SSBasedInspection")
     void updatePopup() {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         myListModel.update();
         myResultsList.revalidate();
         myResultsList.repaint();
@@ -766,7 +749,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
           RunAnythingGroup.SearchResult result = group.getItems(myDataContext, myListModel, trimHelpPattern(), true, this::check);
 
           check();
-          SwingUtilities.invokeLater(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             try {
               int shift = 0;
               int i = index + 1;
@@ -826,8 +809,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
         synchronized (lock) {
           myCurrentWorker = ActionCallback.DONE;
           myCalcThread = null;
-          myEditor = null;
           myVirtualFile = null;
+          myProject = null;
+          myModule = null;
         }
       }
     });
@@ -840,10 +824,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myActionEvent = actionEvent;
 
     myCurrentWorker = ActionCallback.DONE;
-    myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
+    myProject = ObjectUtils.notNull(myActionEvent.getData(CommonDataKeys.PROJECT));
     myDataContext = createDataContext(actionEvent);
+    myModule = myActionEvent.getData(LangDataKeys.MODULE);
 
     init();
 
@@ -862,22 +847,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myListModel = new RunAnythingSearchListModel.RunAnythingMainListModel();
     addListDataListener(myListModel);
 
-    return new JBList<Object>(myListModel) {
-      @Override
-      public void clearSelection() {
-        //avoid blinking
-      }
-
-      @Override
-      public Object getSelectedValue() {
-        try {
-          return super.getSelectedValue();
-        }
-        catch (Exception e) {
-          return null;
-        }
-      }
-    };
+    return new JBList<>(myListModel);
   }
 
   private void initSearchActions() {
@@ -917,8 +887,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       model.shiftIndexes(index, -1);
       if (model.size() > 0) ScrollingUtil.selectItem(myResultsList, index < model.size() ? index : index - 1);
 
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (myCalcThread != null) {
           myCalcThread.updatePopup();
         }
@@ -985,7 +954,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class RunAnythingShowFilterAction extends ShowFilterAction {
-    public RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
+    private RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
       super(parentDisposable, myProject);
     }
 

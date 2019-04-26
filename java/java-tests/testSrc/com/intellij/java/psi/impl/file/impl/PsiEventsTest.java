@@ -21,14 +21,12 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -164,27 +162,12 @@ public class PsiEventsTest extends PsiTestCase {
     assertEquals(psiFile.getName(), expected, string);
   }
 
-  public void testRenameFileWithoutDir() throws Exception {
+  public void testRenameFileWithoutDir() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
 
-    GCUtil.tryGcSoftlyReachableObjects();
-
-
-    if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
-      LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class,
-                           directory -> directory.getVirtualFile().equals(myPrjDir1));
-
-      String dumpPath = FileUtil.createTempFile(
-        new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof.zip",
-                 false, false).getPath();
-      MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
-      System.out.println(dumpPath);
-
-      assertNull(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1));
-      fail("directory just died");
-    }
+    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1)).tryGc();
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -271,7 +254,7 @@ public class PsiEventsTest extends PsiTestCase {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir1");
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(file)).tryGc();
 
     assertNull(((FileManagerImpl)fileManager).getCachedDirectory(file));
 

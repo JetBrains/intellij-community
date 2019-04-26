@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,34 +38,33 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
-public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListener {
+public class VcsRootScanner implements AsyncVfsEventsListener {
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
-  @NotNull private final List<VcsRootChecker> myCheckers;
+  @NotNull private final List<? extends VcsRootChecker> myCheckers;
 
   @NotNull private final Alarm myAlarm;
   private static final long WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1);
 
-  public static void start(@NotNull Project project, @NotNull List<VcsRootChecker> checkers) {
+  public static void start(@NotNull Project project, @NotNull List<? extends VcsRootChecker> checkers) {
     new VcsRootScanner(project, checkers).scheduleScan();
   }
 
-  private VcsRootScanner(@NotNull Project project, @NotNull List<VcsRootChecker> checkers) {
+  private VcsRootScanner(@NotNull Project project, @NotNull List<? extends VcsRootChecker> checkers) {
     myProject = project;
     myProjectManager = ProjectRootManager.getInstance(project);
     myRootProblemNotifier = VcsRootProblemNotifier.getInstance(project);
     myCheckers = checkers;
 
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, project);
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
   @Override
-  public void filesChanged(@NotNull List<VFileEvent> events) {
+  public void filesChanged(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
       if (file != null && file.isDirectory()) {
@@ -114,11 +110,6 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
 
   private boolean isVcsDir(@NotNull String filePath) {
     return myCheckers.stream().anyMatch(it -> it.isVcsDir(filePath));
-  }
-
-  @Override
-  public void rootsChanged(@NotNull ModuleRootEvent event) {
-    scheduleScan();
   }
 
   private void scheduleScan() {

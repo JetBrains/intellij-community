@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldStaticFinalFix;
+import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -35,18 +35,18 @@ import java.util.List;
 
 public class NonStaticFinalLoggerInspection extends BaseInspection {
 
-  protected final List<String> loggerClassNames = new ArrayList();
+  protected final List<String> loggerClassNames = new ArrayList<>();
   @SuppressWarnings("PublicField")
-  public String loggerClassName = "java.util.logging.Logger" + ',' +
-                                  "org.slf4j.Logger" + ',' +
-                                  "org.apache.commons.logging.Log" + ',' +
-                                  "org.apache.log4j.Logger";
+  public String loggerClassName = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
+
+  public NonStaticFinalLoggerInspection() {
+    parseString(loggerClassName, loggerClassNames);
+  }
 
   @Override
   public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(loggerClassNames, InspectionGadgetsBundle.message("logger.class.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.logger.class"));
+    return UiUtils.createTreeClassChooserList(loggerClassNames, InspectionGadgetsBundle.message("logger.class.name"),
+                                              InspectionGadgetsBundle.message("choose.logger.class"));
   }
 
   @Override

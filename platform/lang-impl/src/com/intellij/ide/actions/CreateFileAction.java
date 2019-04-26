@@ -18,8 +18,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
@@ -45,7 +47,7 @@ import java.util.StringTokenizer;
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
 
   public CreateFileAction() {
-    super(IdeBundle.message("action.create.new.file"), IdeBundle.message("action.create.new.file.description"), AllIcons.FileTypes.Text);
+    super(ActionsBundle.message("action.NewFile.text"), IdeBundle.message("action.create.new.file.description"), AllIcons.FileTypes.Text);
   }
 
   public CreateFileAction(final String text, final String description, final Icon icon) {
@@ -230,10 +232,9 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       final PsiDirectory psiDirectory = getDirectory();
 
       final Project project = psiDirectory.getProject();
-      final boolean[] result = {false};
-      FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
-      result[0] = super.canClose(getFileName(inputString));
-      return result[0];
+      FileType fileType = FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
+      if (fileType == null) return false;
+      return super.canClose(getFileName(inputString));
     }
   }
 }

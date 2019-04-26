@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author yole
  * @see TemplateBuilderFactory
- * @since 9.0
  */
 public interface TemplateBuilder {
   /**

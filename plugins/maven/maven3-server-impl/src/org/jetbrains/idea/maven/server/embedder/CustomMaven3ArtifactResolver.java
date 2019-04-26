@@ -67,7 +67,7 @@ import java.util.regex.Matcher;
 @Component(role = ArtifactResolver.class, hint = "ide")
 public class CustomMaven3ArtifactResolver
   implements ArtifactResolver, Disposable
-{
+  {
   @Requirement
   private Logger logger;
 

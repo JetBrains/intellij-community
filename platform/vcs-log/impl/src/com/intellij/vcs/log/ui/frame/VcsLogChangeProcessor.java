@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
@@ -23,11 +24,15 @@ import java.util.List;
 class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
-  VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
-    super(project, DiffPlaces.VCS_LOG_VIEW);
+  VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, boolean isInEditor,
+                        @NotNull Disposable disposable) {
+    super(project, isInEditor ? DiffPlaces.DEFAULT : DiffPlaces.VCS_LOG_VIEW);
     myBrowser = browser;
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     Disposer.register(disposable, this);
+
+    myBrowser.addListener(() -> updatePreviewLater(), this);
+    myBrowser.getViewer().addSelectionListener(this::updatePreviewLater, this);
   }
 
   @NotNull
@@ -60,14 +65,13 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     }
   }
 
+  private void updatePreviewLater() {
+    ApplicationManager.getApplication().invokeLater(() -> updatePreview(getComponent().isShowing()));
+  }
+
   public void updatePreview(boolean state) {
     // We do not have local changes here, so it's OK to always use `fromModelRefresh == false`
-    if (state) {
-      refresh(false);
-    }
-    else {
-      clear();
-    }
+    updatePreview(state, false);
   }
 
   private class MyChangeWrapper extends Wrapper {

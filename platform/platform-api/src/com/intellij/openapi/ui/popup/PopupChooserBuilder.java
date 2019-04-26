@@ -60,7 +60,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private Function<Object,String> myItemsNamer = null;
   private boolean myMayBeParent;
-  private int myAdAlignment = SwingUtilities.LEFT;
+  private int myAdAlignment = SwingConstants.LEFT;
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
@@ -149,7 +149,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   @NotNull
-  public PopupChooserBuilder<T> setTitle(@NotNull @Nls String title) {
+  public PopupChooserBuilder<T> setTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     myTitle = title;
     return this;
   }
@@ -330,7 +330,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       public void mouseReleased(MouseEvent e) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
           if (myCloseOnEnter) {
-            closePopup(true, e, true);
+            closePopup(e, true);
           }
           else {
             myItemChosenRunnable.run();
@@ -399,7 +399,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setModalContext(myModalContext)
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
       .setCancelOnClickOutside(myCancelOnClickOutside)
-      .setCouldPin(myCouldPin);
+      .setCouldPin(myCouldPin)
+      .setOkHandler(myItemChosenRunnable);
 
     BooleanFunction<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
     if (keyEventHandler != null) {
@@ -450,7 +451,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (!shouldPerformAction && myChooserComponent.checkResetFilter()) return;
-        closePopup(shouldPerformAction, null, shouldPerformAction);
+        closePopup(null, shouldPerformAction);
       }
     });
   }
@@ -459,11 +460,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     myChooserComponent.getComponent().registerKeyboardAction(action, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
-  private void closePopup(boolean shouldPerformAction, MouseEvent e, boolean isOk) {
-    if (shouldPerformAction) {
-      myPopup.setFinalRunnable(myItemChosenRunnable);
-    }
-
+  private void closePopup(MouseEvent e, boolean isOk) {
     if (isOk) {
       myPopup.closeOk(e);
     } else {
@@ -516,7 +513,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   @NotNull
   public PopupChooserBuilder<T> setAdText(String ad) {
-    setAdText(ad, SwingUtilities.LEFT);
+    setAdText(ad, SwingConstants.LEFT);
     return this;
   }
 

@@ -15,29 +15,29 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import org.jetbrains.annotations.NotNull;
 
-public class RemoteServerConnectAction extends ServersTreeAction<ServersTreeStructure.RemoteServerNode> {
+import static com.intellij.remoteServer.impl.runtime.ui.tree.actions.ServersTreeActionUtils.getRemoteServerTarget;
 
-  public RemoteServerConnectAction() {
-    super("Connect", "Connect to the selected remote server", AllIcons.Actions.Execute);
+public class RemoteServerConnectAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    boolean visible = node != null;
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && !node.isConnected());
   }
 
   @Override
-  protected Class<ServersTreeStructure.RemoteServerNode> getTargetNodeClass() {
-    return ServersTreeStructure.RemoteServerNode.class;
-  }
-
-  @Override
-  protected boolean isEnabled4(ServersTreeStructure.RemoteServerNode node) {
-    return !node.isConnected();
-  }
-
-  @Override
-  protected void doActionPerformed(ServersTreeStructure.RemoteServerNode node) {
-    ServerConnectionManager.getInstance().getOrCreateConnection(node.getValue()).connect(EmptyRunnable.INSTANCE);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    if (node != null) {
+      ServerConnectionManager.getInstance().getOrCreateConnection(node.getValue()).connect(EmptyRunnable.INSTANCE);
+    }
   }
 }

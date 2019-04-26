@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -56,22 +56,23 @@ public class GitInit extends DumbAwareAction {
         return;
       }
 
-      GitCommandResult result = Git.getInstance().init(project, root);
-      if (!result.success()) {
-        VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
-        return;
-      }
-
-      if (project.isDefault()) {
-        return;
-      }
-      GitVcs.runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
+      new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          GitCommandResult result = Git.getInstance().init(project, root);
+          if (!result.success()) {
+            VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
+            return;
+          }
+
+          if (project.isDefault()) {
+            return;
+          }
+
           refreshAndConfigureVcsMappings(project, root, root.getPath());
-          GitUtil.generateGitignoreFileIfNeeded(project, root);
+          GitUtil.proposeUpdateGitignore(project, root);
         }
-      });
+      }.queue();
     });
   }
 

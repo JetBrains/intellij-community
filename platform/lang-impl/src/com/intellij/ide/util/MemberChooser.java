@@ -359,7 +359,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     final Tree tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
 
     tree.setCellRenderer(getTreeCellRenderer());
-    UIUtil.setLineStyleAngled(tree);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.addKeyListener(new TreeKeyListener());

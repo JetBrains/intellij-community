@@ -236,9 +236,9 @@ class UnifiedFragmentBuilderTest : DiffTestCase() {
         builder.exec()
 
 
-        val lineCount1 = input1.count({ it == '_' }) + 1
-        val lineCount2 = input2.count({ it == '_' }) + 1
-        val resultLineCount = result.count({ it == '_' }) + 1
+        val lineCount1 = input1.count { it == '_' } + 1
+        val lineCount2 = input2.count { it == '_' } + 1
+        val resultLineCount = result.count { it == '_' } + 1
         val lineIterable = DiffIterableUtil.create(fragments.map { Range(it.startLine1, it.endLine1, it.startLine2, it.endLine2) },
                                                    lineCount1, lineCount2)
 

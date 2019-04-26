@@ -1,0 +1,9 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="DevKit.lang">
+    <goodCodeRedVisitor language="Groovy" implementationClass="org.jetbrains.idea.devkit.inspections.internal.GroovyGoodCodeRedVisitor"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="groovy.good.code.is.red" defaultValue="false"
+                 description="When enabled, groovy code would be checked for resolving symbols, accessibility and type checks"/>
+  </extensions>
+</idea-plugin>

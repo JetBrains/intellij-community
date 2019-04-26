@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.mergeTool;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,19 +13,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectOpenProcessor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
+@Deprecated
 public interface MergeVersion {
   Document createWorkingDocument(Project project);
 
@@ -101,41 +82,11 @@ public interface MergeVersion {
       setDocumentText(myDocument, text, DiffBundle.message("save.merge.result.command.name"), project);
 
       FileDocumentManager.getInstance().saveDocument(myDocument);
-      reportProjectFileChangeIfNeeded(project, getFile());
-    }
-
-    public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
-      if (project != null && file != null && !file.isDirectory() && (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file))) {
-        ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
-      }
-    }
-
-    @Nullable
-    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<? extends VirtualFile> files) {
-      final Set<VirtualFile> vfs = new THashSet<>();
-      for (VirtualFile file : files) {
-        if (file != null && !file.isDirectory()) {
-          if (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
-            vfs.add(file);
-          }
-        }
-      }
-      return vfs.isEmpty() ? null : (Runnable)() -> {
-        ProjectManagerEx ex = ProjectManagerEx.getInstanceEx();
-        for (VirtualFile vf : vfs) {
-          ex.saveChangedProjectFile(vf, project);
-        }
-      };
     }
 
     @Override
     public void restoreOriginalContent(final Project project) {
       ApplicationManager.getApplication().runWriteAction(() -> doRestoreOriginalContent(project));
-    }
-
-    public static boolean isProjectFile(VirtualFile file) {
-      final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
-      return importProvider != null && importProvider.lookForProjectsInDirectory();
     }
 
     protected void doRestoreOriginalContent(@Nullable Project project) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ArrayUtil;
@@ -130,8 +131,18 @@ public class GradleParentProjectForm implements Disposable {
   private ProjectData findPotentialParentProject(@Nullable Project project) {
     if (project == null) return null;
 
-    ExternalProjectSettings linkedProjectSettings =
-      ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectSettings(myContext.getProjectFileDirectory());
+    String contextProjectFileDirectory = myContext.getProjectFileDirectory();
+    ExternalProjectSettings linkedProjectSettings = null;
+    for (Object settings : ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings()) {
+      if (settings instanceof ExternalProjectSettings) {
+        String projectPath = ((ExternalProjectSettings)settings).getExternalProjectPath();
+        if (FileUtil.isAncestor(projectPath, contextProjectFileDirectory, false)) {
+          linkedProjectSettings = (ExternalProjectSettings)settings;
+          break;
+        }
+      }
+    }
+
     if(linkedProjectSettings == null) return null;
 
     final ExternalProjectInfo projectInfo =

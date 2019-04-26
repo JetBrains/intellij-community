@@ -1,10 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -14,10 +18,24 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 
 public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> {
   public ExpandableEditorSupport(@NotNull EditorTextField field) {
     super(field, null, null);
+    field.addSettingsProvider(editor -> {
+      initFieldEditor(editor, field.getBackground());
+      updateFieldFolding(editor);
+    });
+  }
+
+  public ExpandableEditorSupport(@NotNull EditorTextField field,
+                                 @NotNull Function<? super String, ? extends java.util.List<String>> parser,
+                                 @NotNull Function<? super List<String>, String> joiner) {
+    super(field, text -> StringUtil.join(parser.fun(text), "\n"),
+          text -> joiner.fun(asList(StringUtil.splitByLines(text))));
     field.addSettingsProvider(editor -> {
       initFieldEditor(editor, field.getBackground());
       updateFieldFolding(editor);
@@ -59,7 +77,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   @NotNull
   @Override
   protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
-    EditorTextField popup = new EditorTextField(onShow.fun(field.getText()), field.getProject(), field.getFileType());
+    EditorTextField popup = createPopupEditor(field, onShow.fun(field.getText()));
     Color background = field.getBackground();
     popup.setBackground(background);
     popup.setOneLineMode(false);
@@ -88,6 +106,13 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
         if (editor instanceof EditorEx) updateFieldFolding((EditorEx)editor);
       }
     };
+  }
+
+  @NotNull
+  protected EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
+    Document document = Comparing.equal(text, field.getDocument().getText()) ? field.getDocument() :
+                        EditorFactory.getInstance().createDocument(text);
+    return new EditorTextField(document, field.getProject(), field.getFileType());
   }
 
   private static void copyCaretPosition(@NotNull Editor destination, Editor source) {

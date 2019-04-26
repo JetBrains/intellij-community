@@ -118,7 +118,7 @@ public class NewProjectUtil {
             canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
           }
           catch (IOException ignored) { }
-          extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
+          extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
         }
       }), null, null);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,15 @@ public class BadPluginTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    System.setProperty(PathManager.PROPERTY_CONFIG_PATH, myOldConfigPath);
-    super.tearDown();
+    try {
+      System.setProperty(PathManager.PROPERTY_CONFIG_PATH, myOldConfigPath);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private final String myOldConfigPath = System.getProperty(PathManager.PROPERTY_CONFIG_PATH);

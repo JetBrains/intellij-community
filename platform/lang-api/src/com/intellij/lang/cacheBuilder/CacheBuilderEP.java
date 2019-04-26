@@ -17,61 +17,40 @@
 package com.intellij.lang.cacheBuilder;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
  * @author yole
  */
-public class CacheBuilderEP implements PluginAware {
+public class CacheBuilderEP extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.cacheBuilder.CacheBuilderEP");
 
   public static final ExtensionPointName<CacheBuilderEP> EP_NAME = new ExtensionPointName<>("com.intellij.cacheBuilder");
-
 
   @Attribute("fileType")
   public String fileType;
   @Attribute("wordsScannerClass")
   public String wordsScannerClass;
-  private WordsScanner myWordsScanner;
-  private PluginDescriptor myPluginDescriptor;
 
-  public String getFileType() {
+  private Class<WordsScanner> myCachedClass;
+
+  String getFileType() {
     return fileType;
   }
 
-  public void setFileType(final String fileType) {
-    this.fileType = fileType;
-  }
-
-
-  @Override
-  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
-    myPluginDescriptor = pluginDescriptor;
-  }
-
-  public String getWordsScannerClass() {
-    return wordsScannerClass;
-  }
-
-  public void setWordsScannerClass(final String wordsScannerClass) {
-    this.wordsScannerClass = wordsScannerClass;
-  }
-
-  public WordsScanner getWordsScanner() {
-    if (myWordsScanner == null) {
-      try {
-        final Class<?> aClass = Class.forName(wordsScannerClass, true,
-                                              myPluginDescriptor == null ? getClass().getClassLoader()  : myPluginDescriptor.getPluginClassLoader());
-        myWordsScanner = (WordsScanner) aClass.newInstance();
+  WordsScanner getWordsScanner() {
+    try {
+      Class<WordsScanner> aClass = myCachedClass;
+      if (aClass == null) {
+        myCachedClass = aClass = findClass(wordsScannerClass);
       }
-      catch(Exception e) {
-        LOG.error(e);
-        return null;
-      }
+      return aClass.newInstance();
     }
-    return myWordsScanner;
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
   }
 }

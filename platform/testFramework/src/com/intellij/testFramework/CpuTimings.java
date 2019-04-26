@@ -15,6 +15,8 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.util.TimeoutUtil;
+
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.MBeanServer;
@@ -36,7 +38,7 @@ class CpuTimings {
 
     StringBuilder log = new StringBuilder();
     for (int i = 0;; i++) {
-      long time = calcCpuTiming(CpuTimings::addBigIntegers);
+      long time = TimeoutUtil.measureExecutionTime(CpuTimings::addBigIntegers);
       if (time < minTime) {
         //log.append("Iteration " + i + ", time " + time + "\n");
         minTime = time;
@@ -47,12 +49,6 @@ class CpuTimings {
         return minTime;
       }
     }
-  }
-
-  private static long calcCpuTiming(Runnable oneIteration)  {
-    long start = System.currentTimeMillis();
-    oneIteration.run();
-    return System.currentTimeMillis() - start;
   }
 
   private static void addBigIntegers() {

@@ -20,6 +20,9 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     try {
       CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES = mySavedTabOutSetting;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -85,6 +88,15 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
                 "class C {\n" +
                 "  java.util.List<ArrayList><caret>\n" +
                 "}");
+  }
+
+  public void testSemicolon() {
+    configureJava("class C { void m() { System.exi<caret> } }");
+    complete("exit");
+    checkResult("class C { void m() { System.exit(<caret>); } }");
+    type('1');
+    tabOut();
+    checkResult("class C { void m() { System.exit(1);<caret> } }");
   }
 
   private void tabOut() {

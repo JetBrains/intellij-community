@@ -41,6 +41,7 @@
     <option name="MODIFIED_LINES_COLOR" value="1aabff" />
     <option name="NOTIFICATION_BACKGROUND" value="80" />
     <option name="QUESTION_HINT" value="5380" />
+    <option name="RECENT_LOCATIONS_SELECTION" value="383838" />
     <option name="RECURSIVE_CALL_ATTRIBUTES" value="b4c738" />
     <option name="RIGHT_MARGIN_COLOR" value="808080" />
     <option name="SELECTED_INDENT_GUIDE" value="999999" />
@@ -57,6 +58,31 @@
     <option name="VISUAL_INDENT_GUIDE" value="808080" />
     <option name="WHITESPACES" value="ffffff" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="666666" />
+    <option name="ScrollBar.background" value="000000"/>
+    <option name="ScrollBar.trackColor" value="000000"/>
+    <option name="ScrollBar.thumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.thumbBorderColor" value="000000"/>
+    <option name="ScrollBar.hoverTrackColor" value="000000"/>
+    <option name="ScrollBar.hoverThumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.hoverThumbBorderColor" value="000000"/>
+    <option name="ScrollBar.Transparent.trackColor" value="E6E6E600"/>
+    <option name="ScrollBar.Transparent.thumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.Transparent.thumbBorderColor" value="000000"/>
+    <option name="ScrollBar.Transparent.hoverTrackColor" value="E6E6E65A"/>
+    <option name="ScrollBar.Transparent.hoverThumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.Transparent.hoverThumbBorderColor" value="000000"/>
+    <option name="ScrollBar.Mac.trackColor" value="000000"/>
+    <option name="ScrollBar.Mac.thumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.Mac.thumbBorderColor" value="000000"/>
+    <option name="ScrollBar.Mac.hoverTrackColor" value="000000"/>
+    <option name="ScrollBar.Mac.hoverThumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.Mac.hoverThumbBorderColor" value="000000"/>
+    <option name="ScrollBar.Mac.Transparent.trackColor" value="E6E6E65A"/>
+    <option name="ScrollBar.Mac.Transparent.thumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.Mac.Transparent.thumbBorderColor" value="000000"/>
+    <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="E6E6E65A"/>
+    <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="FFFFFFBE"/>
+    <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="000000"/>
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

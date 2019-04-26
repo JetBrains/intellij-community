@@ -21,7 +21,7 @@ public class ApplyBinaryFilePatch extends ApplyFilePatchBase<BinaryFilePatch> {
   }
 
   @Override
-  protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException {
+  protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<? extends CharSequence> baseContents) throws IOException {
     fileToPatch.setBinaryContent(myPatch.getAfterContent());
     return SUCCESS;
   }

@@ -212,7 +212,6 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     tree.setCellRenderer(NODE_RENDERER);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(tree);
 
     TreeUtil.installActions(tree);
 

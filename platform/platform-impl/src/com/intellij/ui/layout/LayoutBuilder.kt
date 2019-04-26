@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -6,10 +6,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.Label
+import com.intellij.ui.layout.migLayout.*
 import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty0
 
 open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
   inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
@@ -43,6 +47,10 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
     LayoutBuilder(builder, ButtonGroup()).init()
   }
 
+  fun <T : Any> buttonGroup(prop: KMutableProperty0<T>, init: LayoutBuilderWithButtonGroupProperty<T>.() -> Unit) {
+    LayoutBuilderWithButtonGroupProperty(builder, prop).init()
+  }
+
   inline fun buttonGroup(crossinline elementActionListener: () -> Unit, init: LayoutBuilder.() -> Unit): ButtonGroup {
     val group = ButtonGroup()
     LayoutBuilder(builder, group).init()
@@ -54,10 +62,6 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
     return group
   }
 
-  inline fun <T : Any> buttonGroup(propertyManager: ChoicePropertyUiManager<T>, init: LayoutBuilderWithButtonGroup<T>.() -> Unit) {
-    LayoutBuilderWithButtonGroup(builder, propertyManager).init()
-  }
-
   @Suppress("PropertyName")
   @PublishedApi
   @Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
@@ -65,8 +69,21 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
     get() = builder
 }
 
-@Suppress("unused")
-class LayoutBuilderWithButtonGroup<T : Any> @PublishedApi internal constructor(builder: LayoutBuilderImpl, internal val propertyManager: ChoicePropertyUiManager<T>) : LayoutBuilder(builder)
+class LayoutBuilderWithButtonGroupProperty<T : Any>
+    @PublishedApi internal constructor(builder: LayoutBuilderImpl, private val prop: KMutableProperty0<T>) : LayoutBuilder(builder, ButtonGroup()) {
+
+  fun Row.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+    val component = JBRadioButton(text, prop.get() == value)
+    subRowsEnabled = component.isSelected
+    component.addChangeListener {
+      subRowsEnabled = component.isSelected
+    }
+    return component()
+      .onApply { if (component.isSelected) prop.set(value) }
+      .onReset { component.isSelected = prop.get() == value }
+      .onIsModified { component.isSelected != (prop.get() == value) }
+  }
+}
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
   FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)

@@ -60,7 +60,8 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   override fun configureArrowButton(): Unit = super.configureArrowButton().also { arrowButton.isOpaque = false }
   override fun unconfigureArrowButton(): Unit = super.unconfigureArrowButton().also { arrowButton.isOpaque = true }
 
-  override val arrowButtonPreferredSize: Dimension get() = Dimension(getArrowButtonPreferredSize(null).width, optionButton.preferredSize.height)
+  override val arrowButtonPreferredSize: Dimension
+    get() = Dimension(getArrowButtonPreferredSize(null).width, optionButton.preferredSize.height)
 
   override val showPopupXOffset: Int get() = JBUI.scale(3)
 

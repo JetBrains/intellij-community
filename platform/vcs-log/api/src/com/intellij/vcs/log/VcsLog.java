@@ -61,7 +61,7 @@ public interface VcsLog {
    *
    * @param consumer  called in EDT after all details are loaded.
    */
-  void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer);
+  void requestSelectedDetails(@NotNull Consumer<? super List<VcsFullCommitDetails>> consumer);
 
   /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable yet.

@@ -264,15 +264,19 @@ public final class NavigationUtil {
    */
   @NotNull
   public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean showContainingModules) {
-    Object[] elements = new Object[items.size()];
+    List<Object> elements = new ArrayList<>(items.size());
     //todo[nik] move presentation logic to GotoRelatedItem class
     final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<>();
-    for (int i = 0; i < items.size(); i++) {
-      GotoRelatedItem item = items.get(i);
-      elements[i] = item.getElement() != null ? item.getElement() : item;
-      itemsMap.put(item.getElement(), item);
+    for (GotoRelatedItem item : items) {
+      if (item.getElement() != null) {
+        if (itemsMap.putIfAbsent(item.getElement(), item) == null) {
+          elements.add(item.getElement());
+        }
+      }
+      else {
+        elements.add(item);
+      }
     }
-
     return getPsiElementPopup(elements, itemsMap, title, showContainingModules, element -> {
       if (element instanceof PsiElement) {
         itemsMap.get(element).navigate();
@@ -285,7 +289,7 @@ public final class NavigationUtil {
     );
   }
 
-  private static JBPopup getPsiElementPopup(final Object[] elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
+  private static JBPopup getPsiElementPopup(final List<Object> elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
                                            final String title, final boolean showContainingModules, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
@@ -366,7 +370,27 @@ public final class NavigationUtil {
         return component;
       }
     };
-    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, Arrays.asList(elements)) {
+    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, elements) {
+      final Map<Object, ListSeparator> separators = new HashMap<>();
+      {
+        String current = null;
+        boolean hasTitle = false;
+        for (Object element : elements) {
+          final GotoRelatedItem item = itemsMap.get(element);
+          if (item != null && !StringUtil.equals(current, item.getGroup())) {
+            current = item.getGroup();
+            separators.put(element, new ListSeparator(hasTitle && StringUtil.isEmpty(current) ? "Other" : current));
+            if (!hasTitle && !StringUtil.isEmpty(current)) {
+              hasTitle = true;
+            }
+          }
+        }
+
+        if (!hasTitle) {
+          separators.remove(elements.get(0));
+        }
+      }
+
       @Override
       public boolean isSpeedSearchEnabled() {
         return true;
@@ -387,36 +411,20 @@ public final class NavigationUtil {
         processor.process(selectedValue);
         return super.onChosen(selectedValue, finalChoice);
       }
+
+      @Nullable
+      @Override
+      public ListSeparator getSeparatorAbove(Object value) {
+        return separators.get(value);
+      }
     }) {
     };
-    popup.getList().setCellRenderer(new PopupListElementRenderer(popup) {
-      Map<Object, String> separators = new HashMap<>();
-      {
-        final ListModel model = popup.getList().getModel();
-        String current = null;
-        boolean hasTitle = false;
-        for (int i = 0; i < model.getSize(); i++) {
-          final Object element = model.getElementAt(i);
-          final GotoRelatedItem item = itemsMap.get(element);
-          if (item != null && !StringUtil.equals(current, item.getGroup())) {
-            current = item.getGroup();
-            separators.put(element, current);
-            if (!hasTitle && !StringUtil.isEmpty(current)) {
-              hasTitle = true;
-            }
-          }
-        }
-
-        if (!hasTitle) {
-          separators.remove(model.getElementAt(0));
-        }
-      }
+    popup.getList().setCellRenderer(new PopupListElementRenderer<Object>(popup) {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final String separator = separators.get(value);
 
-        if (separator != null) {
+        if (myDescriptor.hasSeparatorAboveOf(value)) {
           JPanel panel = new JPanel(new BorderLayout());
           panel.add(component, BorderLayout.CENTER);
           final SeparatorWithText sep = new SeparatorWithText() {
@@ -427,7 +435,7 @@ public final class NavigationUtil {
               super.paintComponent(g);
             }
           };
-          sep.setCaption(separator);
+          sep.setCaption(myDescriptor.getCaptionAboveOf(value));
           panel.add(sep, BorderLayout.NORTH);
           return panel;
         }

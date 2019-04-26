@@ -57,6 +57,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     return doCreate(type, name, roots);
   }
 
+  @NotNull
   private static <P extends LibraryProperties<?>> NewLibraryConfiguration doCreate(final LibraryType<P> type, final String name, final List<? extends OrderRoot> roots) {
     return new NewLibraryConfiguration(name, type, type != null ? type.getKind().createDefaultProperties() : null) {
       @Override
@@ -66,6 +67,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     };
   }
 
+  @NotNull
   public static String suggestLibraryName(@NotNull VirtualFile[] classesRoots) {
     if (classesRoots.length >= 1) {
       return FileUtil.getNameWithoutExtension(PathUtil.getFileName(classesRoots[0].getPath()));
@@ -73,6 +75,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     return DEFAULT_LIBRARY_NAME;
   }
 
+  @NotNull
   public static String suggestLibraryName(@NotNull List<? extends OrderRoot> roots) {
     if (roots.size() >= 1) {
       return FileUtil.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));

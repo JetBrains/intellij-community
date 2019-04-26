@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,11 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -479,8 +482,16 @@ public class JavaBuilderUtil {
 
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdkLibrary = reference.resolve();
     if (sdkLibrary == null) {
-      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
-                                                 "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'"));
+      JpsLibrary library = context.getProjectDescriptor().getModel().getGlobal().getLibraryCollection().findLibrary(reference.getSdkName());
+      JpsSdkType sdkType = library != null ? ObjectUtils.tryCast(library.getType(), JpsSdkType.class) : null;
+      String errorMessage;
+      if (sdkType == null) {
+        errorMessage = "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'";
+      }
+      else {
+        errorMessage = "Cannot find JDK for module '" + module.getName() + "': '" + reference.getSdkName() + "' points to " + sdkType.getPresentableName();
+      }
+      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, errorMessage));
       throw new StopBuildException();
     }
     return sdkLibrary.getProperties();

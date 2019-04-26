@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -26,7 +25,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -106,7 +106,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Nullable
   @Override
   public GrTypeDefinitionBody getBody() {
-    return getStubOrPsiChild(GroovyElementTypes.CLASS_BODY);
+    return getStubOrPsiChild(GroovyEmptyStubElementTypes.CLASS_BODY);
   }
 
   @NotNull
@@ -125,13 +125,13 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Nullable
   @Override
   public GrExtendsClause getExtendsClause() {
-    return getStubOrPsiChild(GroovyElementTypes.EXTENDS_CLAUSE);
+    return getStubOrPsiChild(GroovyStubElementTypes.EXTENDS_CLAUSE);
   }
 
   @Nullable
   @Override
   public GrImplementsClause getImplementsClause() {
-    return getStubOrPsiChild(GroovyElementTypes.IMPLEMENTS_CLAUSE);
+    return getStubOrPsiChild(GroovyStubElementTypes.IMPLEMENTS_CLAUSE);
   }
 
   @Override
@@ -422,7 +422,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     ASTNode parent = treeElement.getTreeParent();
 
     while (parent != null) {
-      if (parent.getElementType() instanceof IStubElementType && !(parent.getElementType() == GroovyElementTypes.CLASS_BODY)) {
+      if (parent.getElementType() instanceof IStubElementType && !(parent.getElementType() == GroovyEmptyStubElementTypes.CLASS_BODY)) {
         return parent.getPsi();
       }
       parent = parent.getTreeParent();
@@ -500,7 +500,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Nullable
   @Override
   public GrModifierList getModifierList() {
-    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST);
   }
 
   @Override
@@ -532,7 +532,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Nullable
   @Override
   public GrTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(GroovyEmptyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @NotNull

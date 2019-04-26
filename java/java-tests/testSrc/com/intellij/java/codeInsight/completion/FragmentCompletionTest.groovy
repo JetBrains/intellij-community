@@ -18,16 +18,17 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.JavaCompletionUtil
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.PairFunction
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
   void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
     final String text = CommonClassNames.JAVA_LANG_OBJECT + ".<caret>"
@@ -160,6 +161,28 @@ class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.assertPreferredCompletionItems 0, 'Field', 'Field'
     assert fooField == items[0].object
     assert barField == items[1].object
+  }
+
+  void "test package default class in code fragment"() {
+    myFixture.addClass "class ABCD {}"
+    PsiJavaCodeReferenceCodeFragment fragment =
+      JavaCodeFragmentFactory.getInstance(getProject()).createReferenceCodeFragment("ABC<caret>", null, true, true)
+    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE)
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile())
+    myFixture.complete(CompletionType.BASIC)
+    assert myFixture.lookupElements.find { (it.lookupString == "ABCD") } != null
+  }
+
+  void "test qualified class in code fragment"() {
+    myFixture.addClass "package foo; public class Foo1 {}"
+    PsiJavaCodeReferenceCodeFragment fragment =
+      JavaCodeFragmentFactory.getInstance(getProject()).createReferenceCodeFragment("Foo<caret>", null, true, true)
+    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE)
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile())
+    myFixture.completeBasic()
+    assert myFixture.lookupElements.find { (it.lookupString == "Foo1") } != null
+    myFixture.type('\n')
+    myFixture.checkResult("foo.Foo1");
   }
 
 }

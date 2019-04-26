@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
@@ -124,10 +123,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     //save 1px for mouse handler
     if (state == State.COLLAPSED) {
       return JBUI.Borders.emptyBottom(1);
-    }
-
-    if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
-      return null;
     }
 
     return UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ? super.getBorder() : null;
@@ -251,7 +246,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     updateMenuActions();
 
     // Add updater for menus
-    myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
+    myActionManager.addTimerListener(1000, new WeakTimerListener(myTimerListener));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
@@ -295,8 +290,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return false;
   }
 
+  @Nullable
   private Component findActualComponent(MouseEvent mouseEvent) {
     Component component = mouseEvent.getComponent();
+    if (component == null) {
+      return null;
+    }
     Component deepestComponent;
     if (getState() != State.EXPANDED &&
         !getState().isInProgress() &&
@@ -490,6 +489,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           break;
         default:
       }
+      if (!isShowing()) {
+        return;
+      }
       revalidate();
       if (getState() == State.COLLAPSED) {
         //we should repaint parent, to clear 1px on top when menu is collapsed
@@ -532,12 +534,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
             // re-target border clicks as a menu item ones
             item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1));
             e.consume();
-            return;
           }
         }
       }
-
-      super.mouseClicked(e);
     }
   }
 
@@ -576,6 +575,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     if (!(parent instanceof JFrame))
       return;
 
+    if (frame instanceof JFrame) {
+      final JFrame jfr = (JFrame)frame;
+      if (jfr.getJMenuBar() != null)
+        jfr.getJMenuBar().setVisible(false); // all children of IdeFrame mustn't show swing-menubar
+    }
+
     final JFrame fr = (JFrame)parent;
     if (fr.getJMenuBar() instanceof IdeMenuBar) {
       final IdeMenuBar frameMenuBar = (IdeMenuBar)fr.getJMenuBar();
@@ -592,6 +597,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         });
       }
     }
+  }
+
+  public void onToggleFullScreen(boolean isFullScreen) {
+    if (myGlobalMenuLinux == null)
+      return;
+
+     myGlobalMenuLinux.toggle(!isFullScreen);
   }
 
   private static class MyExitFullScreenButton extends JButton {

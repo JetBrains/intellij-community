@@ -15,16 +15,23 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
+import com.intellij.testGuiFramework.impl.actionButtonByClass
+import com.intellij.testGuiFramework.impl.waitUntilFound
+import com.intellij.testGuiFramework.util.step
+import com.intellij.testGuiFramework.util.waitFor
 import org.fest.reflect.core.Reflection.field
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner.execute
 import org.fest.swing.edt.GuiTask
+import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.fixture.JTextComponentFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause.pause
@@ -36,85 +43,21 @@ import javax.swing.JDialog
 import javax.swing.JTextField
 import javax.swing.tree.TreePath
 
-class FileChooserDialogFixture private constructor(robot: Robot,
-                                                   dialogAndWrapper: IdeaDialogFixture.DialogAndWrapper<FileChooserDialogImpl>) : IdeaDialogFixture<FileChooserDialogImpl>(
-  robot, dialogAndWrapper) {
+class FileChooserDialogFixture constructor(robot: Robot, fileChooserDialog: JDialog) : JDialogFixture(robot, fileChooserDialog) {
 
-  internal var myTargetPath: TreePath? = null
-  private var myJTextFieldFixture: JTextComponentFixture? = null
-
-  fun select(file: VirtualFile): FileChooserDialogFixture {
-    val fileSystemTree = field("myFileSystemTree").ofType(FileSystemTreeImpl::class.java)
-      .`in`(dialogWrapper)
-      .get()
-    assertNotNull(fileSystemTree)
-    val fileSelected = AtomicBoolean()
-    execute(object : GuiTask() {
-      @Throws(Throwable::class)
-      override fun executeInEDT() {
-        fileSystemTree!!.select(file, Runnable { fileSelected.set(true) })
+  fun setPath(pluginPath: String) {
+    step("specify file path") {
+      waitFor {
+        val pluginPathTextField: JTextField =
+          waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.isEnabled && it.isShowing }
+        clickRefresh()
+        JTextComponentFixture(robot(), pluginPathTextField).deleteText().enterText(pluginPath)
+        pluginPathTextField.text == pluginPath
       }
-    })
-
-    pause(object : Condition("File " + quote(file.path) + " is selected") {
-      override fun test(): Boolean {
-        return fileSelected.get()
-      }
-    }, Timeouts.minutes02)
-
-    return this
-  }
-
-  val textFieldFixture: JTextComponentFixture
-    get() {
-      if (myJTextFieldFixture == null) {
-        val textField = robot().finder().find(this.target(), object : GenericTypeMatcher<JTextField>(JTextField::class.java, true) {
-          override fun isMatching(@Nonnull field: JTextField): Boolean {
-            return true
-          }
-        })
-        myJTextFieldFixture = JTextComponentFixture(robot(), textField)
-      }
-      return myJTextFieldFixture!!
-
-    }
-
-  fun waitFilledTextField(): FileChooserDialogFixture {
-    pause(object : Condition("Wait until JTextField component will be filled by default path") {
-      override fun test(): Boolean {
-        val text = textFieldFixture.text()
-        return text != null && text.isNotEmpty()
-      }
-    }, Timeouts.seconds30)
-    return this
-  }
-
-  fun clickOk(): FileChooserDialogFixture {
-    findAndClickOkButton(this)
-    return this
-  }
-
-  companion object {
-
-    fun findOpenProjectDialog(robot: Robot): FileChooserDialogFixture {
-      return findDialog(robot, object : GenericTypeMatcher<JDialog>(JDialog::class.java) {
-        override fun isMatching(dialog: JDialog): Boolean {
-          return dialog.isShowing && "Open File or Project" == dialog.title
-        }
-      })
-    }
-
-    fun findImportProjectDialog(robot: Robot): FileChooserDialogFixture {
-      return findDialog(robot, object : GenericTypeMatcher<JDialog>(JDialog::class.java) {
-        override fun isMatching(dialog: JDialog): Boolean {
-          val title = dialog.title
-          return dialog.isShowing && title != null && title.startsWith("Select") && title.endsWith("Project to Import")
-        }
-      })
-    }
-
-    fun findDialog(robot: Robot, matcher: GenericTypeMatcher<JDialog>): FileChooserDialogFixture {
-      return FileChooserDialogFixture(robot, IdeaDialogFixture.find(robot, FileChooserDialogImpl::class.java, matcher))
     }
   }
+
+  fun clickRefresh() = actionButtonByClass(RefreshFileChooserAction::class.java.simpleName).click()
+
+  fun clickOk() = findAndClickButtonWhenEnabled(this, "OK")
 }

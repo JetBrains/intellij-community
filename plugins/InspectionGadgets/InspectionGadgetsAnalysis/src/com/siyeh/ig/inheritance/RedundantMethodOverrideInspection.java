@@ -28,9 +28,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +84,9 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
+      if (method.isConstructor()) {
+        return;
+      }
       final PsiCodeBlock body = method.getBody();
       if (body == null || method.getNameIdentifier() == null) {
         return;
@@ -104,50 +107,17 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
       final PsiCodeBlock superBody = superMethod.getBody();
 
-      final EquivalenceChecker checker = new ParameterEquivalenceChecker(method, superMethod);
+      final TrackingEquivalenceChecker checker = new TrackingEquivalenceChecker();
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        final PsiParameter parameter = parameters[i];
+        final PsiParameter superParameter = superParameters[i];
+        checker.markDeclarationsAsEquivalent(parameter, superParameter);
+      }
+      checker.markDeclarationsAsEquivalent(method, superMethod);
       if (checker.codeBlocksAreEquivalent(body, superBody) || isSuperCallWithSameArguments(body, method, superMethod)) {
         registerMethodError(method);
-      }
-    }
-
-    private static class ParameterEquivalenceChecker extends EquivalenceChecker {
-      private final PsiMethod myMethod;
-      private final PsiMethod mySuperMethod;
-
-      ParameterEquivalenceChecker(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
-        super(true);
-        myMethod = method;
-        mySuperMethod = superMethod;
-      }
-
-      @Override
-      protected Match referenceExpressionsMatch(PsiReferenceExpression referenceExpression1,
-                                                PsiReferenceExpression referenceExpression2) {
-        if (areSameParameters(referenceExpression1, referenceExpression2)) {
-          return EXACT_MATCH;
-        }
-        return super.referenceExpressionsMatch(referenceExpression1, referenceExpression2);
-      }
-
-      private boolean areSameParameters(PsiReferenceExpression referenceExpression1, PsiReferenceExpression referenceExpression2) {
-        // parameters of super method and overridden method should be considered the same
-        PsiElement resolved1 = referenceExpression1.resolve();
-        PsiElement resolved2 = referenceExpression2.resolve();
-        if (!(resolved1 instanceof PsiParameter) || !(resolved2 instanceof PsiParameter)) return false;
-        PsiElement scope1 = ((PsiParameter)resolved1).getDeclarationScope();
-        PsiElement scope2 = ((PsiParameter)resolved2).getDeclarationScope();
-        if (scope1 == scope2 || scope1 != myMethod && scope1 != mySuperMethod || scope2 != myMethod && scope2 != mySuperMethod) {
-          return false;
-        }
-        PsiElement parent1 = resolved1.getParent();
-        PsiElement parent2 = resolved2.getParent();
-        if (!(parent1 instanceof PsiParameterList) || !(parent2 instanceof PsiParameterList)) {
-          return false;
-        }
-        int index1 = ((PsiParameterList)parent1).getParameterIndex((PsiParameter)resolved1);
-        int index2 = ((PsiParameterList)parent2).getParameterIndex((PsiParameter)resolved2);
-
-        return index1 == index2;
       }
     }
 

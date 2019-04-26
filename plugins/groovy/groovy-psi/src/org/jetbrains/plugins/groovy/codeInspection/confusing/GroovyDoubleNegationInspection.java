@@ -36,12 +36,6 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Double negation";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "Double negation #ref #loc";
   }
@@ -50,11 +44,6 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
   @Nullable
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     return new DoubleNegationFix();
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   private static class DoubleNegationFix extends GroovyFix {

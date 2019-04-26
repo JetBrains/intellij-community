@@ -22,7 +22,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
   public static final String DEFAULT_NAME = "unnamed";
 
   protected BasicRendererProperties myProperties;
-  private String myDefaultName;
+  private final String myDefaultName;
 
   protected NodeRendererImpl() {
     this(DEFAULT_NAME, false);

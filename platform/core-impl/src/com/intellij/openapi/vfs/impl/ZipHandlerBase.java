@@ -94,7 +94,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
                                  long size,
                                  long time,
                                  @NotNull String entryName) {
-    CharSequence sequence = shortName instanceof ByteArrayCharSequence ? shortName : ByteArrayCharSequence.convertToBytesIfPossible(shortName);
+    CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(shortName);
     EntryInfo info = new EntryInfo(sequence, isDirectory, size, time, parentInfo);
     map.put(entryName, info);
     return info;

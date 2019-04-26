@@ -32,10 +32,10 @@ import java.util.Map;
  * @author nik
  */
 public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
-  private final Map<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>> myCache = Collections.synchronizedMap(new HashMap<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>>());
+  private final Map<List<? extends VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>> myCache = Collections.synchronizedMap(new HashMap<>());
   
   @Override
-  public boolean processProperties(@NotNull List<VirtualFile> files, @NotNull LibraryPropertiesProcessor processor) {
+  public boolean processProperties(@NotNull List<? extends VirtualFile> files, @NotNull LibraryPropertiesProcessor processor) {
     for (Pair<LibraryKind, LibraryProperties> pair : getOrComputeKinds(files)) {
       if (!processor.processProperties(pair.getFirst(), pair.getSecond())) {
         return false;
@@ -46,10 +46,10 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
 
   @Nullable
   @Override
-  public Pair<LibraryType<?>, LibraryProperties<?>> detectType(@NotNull List<VirtualFile> files) {
+  public Pair<LibraryType<?>, LibraryProperties<?>> detectType(@NotNull List<? extends VirtualFile> files) {
     Pair<LibraryType<?>, LibraryProperties<?>> result = null;
     for (LibraryType<?> type : LibraryType.EP_NAME.getExtensions()) {
-      final LibraryProperties<?> properties = type.detect(files);
+      final LibraryProperties<?> properties = type.detect((List<VirtualFile>)files);
       if (properties != null) {
         if (result != null) {
           return null;
@@ -60,7 +60,7 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
     return result;
   }
 
-  private List<Pair<LibraryKind, LibraryProperties>> getOrComputeKinds(List<VirtualFile> files) {
+  private List<Pair<LibraryKind, LibraryProperties>> getOrComputeKinds(List<? extends VirtualFile> files) {
     List<Pair<LibraryKind, LibraryProperties>> result = myCache.get(files);
     if (result == null) {
       result = computeKinds(files);
@@ -69,7 +69,7 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
     return result;
   }
 
-  private static List<Pair<LibraryKind, LibraryProperties>> computeKinds(List<VirtualFile> files) {
+  private static List<Pair<LibraryKind, LibraryProperties>> computeKinds(List<? extends VirtualFile> files) {
     final SmartList<Pair<LibraryKind, LibraryProperties>> result = new SmartList<>();
     final LibraryType<?>[] libraryTypes = LibraryType.EP_NAME.getExtensions();
     final LibraryPresentationProvider[] presentationProviders = LibraryPresentationProvider.EP_NAME.getExtensions();

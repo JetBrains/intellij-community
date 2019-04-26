@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -60,7 +61,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
       override fun handle(message: TransportMessage) {
         val content = (message.content as JUnitTestContainer)
-        LOG.info("Added test to testQueue: ${content.toString()}")
+        LOG.info("Added test to testQueue: $content")
         testQueue.add(content)
       }
     }
@@ -73,7 +74,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
         if (!content.additionalInfo.containsKey(RESUME_LABEL)) throw Exception(
           "Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
         System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo[RESUME_LABEL].toString())
-        System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClass.canonicalName}#${content.testName}")
+        System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClassName}#${content.testName}")
         LOG.info("Added test to testQueue: $content")
         testQueue.add(content)
       }
@@ -101,14 +102,31 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
   private fun port(): Int = System.getProperty(GuiTestStarter.GUI_TEST_PORT).toInt()
 
   private fun runTest(testContainer: JUnitTestContainer) {
+    val testClass: Class<*> =
+      try {
+        Class.forName(testContainer.testClassName)
+      } catch (e: ClassNotFoundException) {
+        loadClassFromPlugins(testContainer.testClassName)
+      }
     if (testContainer.additionalInfo["parameters"] == null) {
       //todo: replace request with a runner
-      val request = Request.method(testContainer.testClass, testContainer.testName)
+      val request = Request.method(testClass, testContainer.testName)
       core.run(request)
     } else {
-      val runner = GuiTestLocalRunnerParam(TestWithParameters(testContainer.testName, TestClass(testContainer.testClass), testContainer.additionalInfo["parameters"] as MutableList<*>))
+      val runner = GuiTestLocalRunnerParam(TestWithParameters(testContainer.testName, TestClass(testClass), testContainer.additionalInfo["parameters"] as MutableList<*>))
       core.run(runner)
     }
+  }
+
+  private fun loadClassFromPlugins(className: String): Class<*> {
+    return PluginManagerCore.getPlugins().firstOrNull {
+      try {
+        it.pluginClassLoader.loadClass(className)
+        true
+      } catch (e: ClassNotFoundException) {
+        false
+      }
+    }?.let { it.pluginClassLoader.loadClass(className) } ?: throw ClassNotFoundException("Unable to find class ($className) in IDE plugin classloaders")
   }
 
   private fun String.getParameterisedPart(): String {

@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -10,14 +9,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -28,28 +27,22 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteState;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
-
 /**
  * @author ven
  */
 public class ControlFlowBuilderUtil {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil");
-
   private ControlFlowBuilderUtil() {
   }
 
   public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
     DFAEngine<ReadBeforeWriteState> engine = new DFAEngine<>(
       flow,
-      new ReadBeforeWriteInstance(buildNamesIndex(flow), onlyFirstRead),
+      new ReadBeforeWriteInstance(buildVariablesIndex(flow), onlyFirstRead),
       ReadBeforeWriteSemilattice.INSTANCE
     );
     List<ReadBeforeWriteState> dfaResult = engine.performDFAWithTimeout();
@@ -65,18 +58,18 @@ public class ControlFlowBuilderUtil {
     return result.toArray(ReadWriteVariableInstruction.EMPTY_ARRAY);
   }
 
-  private static TObjectIntHashMap<String> buildNamesIndex(Instruction[] flow) {
-    TObjectIntHashMap<String> namesIndex = new ObjectIntHashMap<>();
+  private static TObjectIntHashMap<VariableDescriptor> buildVariablesIndex(Instruction[] flow) {
+    TObjectIntHashMap<VariableDescriptor> variablesIndex = new ObjectIntHashMap<>();
     int idx = 0;
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction) {
-        String name = ((ReadWriteVariableInstruction)instruction).getVariableName();
-        if (!namesIndex.contains(name)) {
-          namesIndex.put(name, idx++);
+        VariableDescriptor descriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
+        if (!variablesIndex.contains(descriptor)) {
+          variablesIndex.put(descriptor, idx++);
         }
       }
     }
-    return namesIndex;
+    return variablesIndex;
   }
 
   public static boolean isInstanceOfBinary(GrBinaryExpression binary) {
@@ -134,8 +127,8 @@ public class ControlFlowBuilderUtil {
       }
     }
 
-    else if (parent instanceof GrClosableBlock) {
-      return st == ArrayUtil.getLastElement(((GrClosableBlock)parent).getStatements());
+    else if (parent instanceof GrClosableBlock || parent instanceof GrBlockLambdaBody) {
+      return st == ArrayUtil.getLastElement(((GrCodeBlock)parent).getStatements());
     }
 
     else if (parent instanceof GroovyFileBase) {
@@ -184,21 +177,5 @@ public class ControlFlowBuilderUtil {
       }
     }
     return true;
-  }
-
-  @NotNull
-  public static GroovyResolveResult[] resolveNonQualifiedRefWithoutFlow(@NotNull GrReferenceExpression ref) {
-    LOG.assertTrue(!ref.isQualified());
-
-    final String referenceName = ref.getReferenceName();
-    final ResolverProcessor processor = new PropertyResolverProcessor(referenceName, ref);
-
-    treeWalkUp(ref, processor);
-    final GroovyResolveResult[] candidates = processor.getCandidates();
-    if (candidates.length != 0) {
-      return candidates;
-    }
-
-    return GroovyResolveResult.EMPTY_ARRAY;
   }
 }

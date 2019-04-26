@@ -51,6 +51,31 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     return new RenameReferenceQuickFix(unboundParams);
   }
 
+  private String getResolveErrorMessage(@NotNull PsiReference reference,
+                                        PsiElement resolved,
+                                        @NotNull PsiElement context,
+                                        CharSequence referenceText) {
+    if (resolved == null && reference instanceof PsiPolyVariantReference) {
+      return getResolveErrorMessage(((PsiPolyVariantReference)reference).multiResolve(false), context, referenceText);
+    }
+
+    return getResolveErrorMessage(resolved, context, referenceText);
+  }
+
+  private String getResolveErrorMessage(@NotNull ResolveResult[] resolveResults, @NotNull PsiElement context, CharSequence referenceText) {
+    if (resolveResults.length == 0) {
+      return InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
+    }
+
+    boolean allAccessible = !REPORT_INACCESSIBLE ||
+                            Arrays.stream(resolveResults).map(ResolveResult::getElement)
+                              .filter(Objects::nonNull)
+                              .allMatch(element -> isAccessible(element, context));
+
+    return allAccessible ? null :
+           InspectionsBundle.message("inspection.javadoc.problem.inaccessible", "<code>" + referenceText + "</code>");
+  }
+
   private String getResolveErrorMessage(PsiElement resolved, @NotNull PsiElement context, CharSequence referenceText) {
     if (resolved == null) {
       return InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
@@ -100,7 +125,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (valueElement == null) return;
     CharSequence paramName = value.getContainingFile().getViewProvider().getContents().subSequence(textOffset, value.getTextRange().getEndOffset());
 
-    String message = getResolveErrorMessage(element, context, paramName);
+    String message = getResolveErrorMessage(reference, element, context, paramName);
     if (message == null) {
       return;
     }

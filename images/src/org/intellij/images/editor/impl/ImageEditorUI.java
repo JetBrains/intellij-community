@@ -38,8 +38,7 @@ import com.intellij.ui.components.Magnificator;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
@@ -328,15 +327,6 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
     }
-
-    @Override
-    protected void paintComponent(@NotNull Graphics g) {
-      super.paintComponent(g);
-      if (UIUtil.isUnderDarcula()) {
-        g.setColor(UIUtil.getControlColor().brighter());
-        g.fillRect(0, 0, getWidth(), getHeight());
-      }
-    }
   }
 
   private final class ImageWheelAdapter implements MouseWheelListener {
@@ -350,10 +340,10 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         double oldZoomFactor = zoomModel.getZoomFactor();
         Point oldPosition = myScrollPane.getViewport().getViewPosition();
 
-        if (rotation < 0) {
+        if (rotation > 0) {
           zoomModel.zoomOut();
         }
-        else if (rotation > 0) {
+        else if (rotation < 0) {
           zoomModel.zoomIn();
         }
 

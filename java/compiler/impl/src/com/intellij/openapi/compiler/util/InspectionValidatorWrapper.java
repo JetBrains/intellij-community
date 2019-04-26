@@ -85,7 +85,7 @@ public class InspectionValidatorWrapper implements Validator {
   private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
                                                             @NotNull LocalInspectionTool inspectionTool) {
     InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
-    GlobalInspectionContext context = inspectionManager.createNewGlobalContext(false);
+    GlobalInspectionContext context = inspectionManager.createNewGlobalContext();
     return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
   }
 
@@ -135,7 +135,7 @@ public class InspectionValidatorWrapper implements Validator {
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     final Project project = context.getProject();
-    if (project.isDefault() || !ValidationConfiguration.shouldValidate(this, context)) {
+    if (project.isDefault() || !ValidationConfiguration.shouldValidate(this, project)) {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final ExcludesConfiguration excludesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);

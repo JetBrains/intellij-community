@@ -18,7 +18,7 @@ import java.util.List;
 
 public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingTestBase {
   protected void doTest(@Language("JSON") @NotNull String schema, @NotNull String text, String fixName, String afterFix) throws Exception {
-    PsiFile file = configureInitially(schema, text);
+    PsiFile file = configureInitially(schema, text, "json");
     HashMap<VirtualFile, EditorInfo> map = new HashMap<>();
     map.put(file.getVirtualFile(), new EditorInfo(file.getText()));
     List<Editor> editors = openEditors(map);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -63,12 +63,10 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
   public final void update(@NotNull AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor == null) {
-      e.getPresentation().setVisible(false);
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(true);
+      e.getPresentation().setEnabledAndVisible(true);
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
       update(editor, selection, e);
     }

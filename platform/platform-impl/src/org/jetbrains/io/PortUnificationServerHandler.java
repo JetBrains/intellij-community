@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,40 +8,49 @@ import io.netty.channel.*;
 import io.netty.handler.codec.compression.ZlibCodecFactory;
 import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BinaryRequestHandler;
 
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.UUID;
 
 @ChannelHandler.Sharable
 class PortUnificationServerHandler extends Decoder {
-  // keytool -genkey -keyalg RSA -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -keysize 2048
+  // https://stackoverflow.com/questions/33827789/self-signed-certificate-dnsname-components-must-begin-with-a-letter
+  // https://github.com/kaikramer/keystore-explorer (use cert.cet as cert ext template)
+  // keytool -genkey -keyalg EC -keysize 256 -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -ext 'san=dns:localhost,dns:*.localhost,dns:*.dev,dns:*.local'
   @SuppressWarnings("SpellCheckingInspection")
-  private static final AtomicNotNullLazyValue<SSLContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SSLContext>() {
+  private static final AtomicNotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SslContext>() {
     @NotNull
     @Override
-    protected SSLContext compute() {
+    protected SslContext compute() {
       String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
       if (algorithm == null) {
         algorithm = "SunX509";
       }
 
       try {
-        KeyStore ks = KeyStore.getInstance("JKS");
-        char[] password = "jetbrains".toCharArray();
-        ks.load(getClass().getResourceAsStream("cert.jks"), password);
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(algorithm);
-        kmf.init(ks, password);
-        SSLContext serverContext = SSLContext.getInstance("TLS");
-        serverContext.init(kmf.getKeyManagers(), null, null);
-        return serverContext;
+        KeyStore ks = KeyStore.getInstance("JCEKS");
+        char[] password = "jb".toCharArray();
+        String keyStoreResourceName = "cert.jceks";
+        InputStream keyStoreData = getClass().getResourceAsStream(keyStoreResourceName);
+        if (keyStoreData == null) {
+          throw new RuntimeException("Cannot find " + keyStoreResourceName);
+        }
+
+        ks.load(keyStoreData, password);
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm);
+        keyManagerFactory.init(ks, password);
+        return SslContextBuilder.forServer(keyManagerFactory)
+          .build();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -79,17 +74,17 @@ class PortUnificationServerHandler extends Decoder {
   }
 
   @Override
-  protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
+  protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) {
     ByteBuf buffer = getBufferIfSufficient(input, 5, context);
     if (buffer != null) {
       decode(context, buffer);
     }
   }
 
-  protected void decode(@NotNull ChannelHandlerContext context, @NotNull ByteBuf buffer) throws Exception {
+  protected void decode(@NotNull ChannelHandlerContext context, @NotNull ByteBuf buffer) {
     ChannelPipeline pipeline = context.pipeline();
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
-      SSLEngine engine = SSL_SERVER_CONTEXT.getValue().createSSLEngine();
+      SSLEngine engine = SSL_SERVER_CONTEXT.getValue().newEngine(context.alloc());
       engine.setUseClientMode(false);
       pipeline.addLast(new SslHandler(engine), new ChunkedWriteHandler(),
                        new PortUnificationServerHandler(delegatingHttpRequestHandler, false, detectGzip));
@@ -139,7 +134,7 @@ class PortUnificationServerHandler extends Decoder {
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
     NettyUtil.logAndClose(cause, Logger.getInstance(BuiltInServer.class), context.channel());
   }
 
@@ -160,7 +155,7 @@ class PortUnificationServerHandler extends Decoder {
     private static final int UUID_LENGTH = 16;
 
     @Override
-    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
+    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) {
       ByteBuf buffer = getBufferIfSufficient(input, UUID_LENGTH, context);
       if (buffer == null) {
         return;

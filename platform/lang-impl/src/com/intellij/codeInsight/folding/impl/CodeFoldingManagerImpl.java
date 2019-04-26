@@ -214,7 +214,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void scheduleAsyncFoldingUpdate(@NotNull Editor editor) {
-    editor.putUserData(FoldingUpdate.CODE_FOLDING_KEY, null);
+    FoldingUpdate.clearFoldingCache(editor);
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
@@ -258,23 +258,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     if (runnable != null) {
       runnable.run();
     }
-  }
-
-  @Override
-  public void forceDefaultState(@NotNull final Editor editor) {
-    PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, true, false);
-    if (runnable != null) {
-      runnable.run();
-    }
-
-    final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
-    editor.getFoldingModel().runBatchFoldingOperation(() -> {
-      for (FoldRegion region : regions) {
-        Boolean collapsedByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
-        if (collapsedByDefault != null) region.setExpanded(!collapsedByDefault);
-      }
-    });
   }
 
   @Override

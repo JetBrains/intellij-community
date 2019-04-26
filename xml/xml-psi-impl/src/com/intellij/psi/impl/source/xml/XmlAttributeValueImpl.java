@@ -48,8 +48,6 @@ import javax.swing.*;
  */
 public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, PsiLanguageInjectionHost, RegExpLanguageHost, PsiMetaOwner, PsiMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeValueImpl");
-  private volatile PsiReference[] myCachedReferences;
-  private volatile long myModCount;
 
   public XmlAttributeValueImpl() {
     super(XmlElementType.XML_ATTRIBUTE_VALUE);
@@ -94,23 +92,9 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   @Override
-  public void clearCaches() {
-    super.clearCaches();
-    myCachedReferences = null;
-  }
-
-  @Override
   @NotNull
   public PsiReference[] getReferences() {
-    PsiReference[] cachedReferences = myCachedReferences;
-    final long curModCount = getManager().getModificationTracker().getModificationCount();
-    if (cachedReferences != null && myModCount == curModCount) {
-      return cachedReferences;
-    }
-    cachedReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this);
-    myCachedReferences = cachedReferences;
-    myModCount = curModCount;
-    return cachedReferences;
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 
   @Override

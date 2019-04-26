@@ -154,7 +154,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
         
         index.processChangedFiles(project, new Processor<VirtualFile>() {
           int filesInProjectToBeIndexed;
-          String projectBasePath = project.getBasePath();
+          final String projectBasePath = project.getBasePath();
           
           @Override
           public boolean process(VirtualFile file) {

@@ -180,7 +180,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusesChanged(), ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> fileStatusesChanged(), ModalityState.any());
       return;
     }
 
@@ -195,7 +195,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
     myCachedStatuses.put(virtualFile, fs);
     if (FileStatus.NOT_CHANGED.equals(fs)) {
-      final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
+      final ThreeState parentingStatus = myFileStatusProvider == null ? null : myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
       if (ThreeState.YES.equals(parentingStatus)) {
         myWhetherExactlyParentToChanged.put(virtualFile, true);
       }
@@ -212,7 +212,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   public void fileStatusChanged(final VirtualFile file) {
     final Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() && !application.isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusChanged(file));
+      ApplicationManager.getApplication().invokeLater(() -> fileStatusChanged(file));
       return;
     }
 

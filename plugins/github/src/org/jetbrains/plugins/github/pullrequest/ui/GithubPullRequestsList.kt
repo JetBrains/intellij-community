@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
@@ -19,6 +18,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Component
@@ -45,7 +45,6 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
     UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
     ScrollingUtil.installActions(this)
-    Disposer.register(this, avatarIconsProvider)
   }
 
   override fun getToolTipText(event: MouseEvent): String? {
@@ -64,7 +63,11 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
 
   override fun isCopyVisible(dataContext: DataContext) = false
 
-  override fun getData(dataId: String) = if (PlatformDataKeys.COPY_PROVIDER.`is`(dataId)) this else null
+  override fun getData(dataId: String): Any? = when {
+    PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
+    GithubPullRequestKeys.SELECTED_SEARCHED_ISSUE.`is`(dataId) -> selectedValue
+    else -> null
+  }
 
   override fun dispose() {}
 
@@ -123,7 +126,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
       }
       labels.apply {
         removeAll()
-        for (label in value.labels) add(GithubUIUtil.createIssueLabelLabel(label))
+        for (label in value.labels.orEmpty()) add(GithubUIUtil.createIssueLabelLabel(label))
       }
       assignees.apply {
         removeAll()

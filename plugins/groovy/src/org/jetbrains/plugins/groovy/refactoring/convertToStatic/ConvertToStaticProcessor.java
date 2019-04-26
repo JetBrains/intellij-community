@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,10 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -21,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
@@ -123,6 +121,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
       @Override
       public void visitMethod(@NotNull GrMethod method) {
         processMethods(method, methodsWithUnresolvedRef);
+        super.visitMethod(method);
       }
     });
   }
@@ -154,10 +153,10 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     return GroovyRefactoringBundle.message("converting.files.to.static");
   }
 
-  void addAnnotation(@NotNull PsiModifierListOwner owner, boolean isStatic) {
+  void addAnnotation(@NotNull PsiMember owner, boolean isStatic) {
     PsiModifierList modifierList = owner.getModifierList();
-    String annotation = isStatic ? GROOVY_TRANSFORM_COMPILE_STATIC : GROOVY_TRANSFORM_COMPILE_DYNAMIC;
-    if (modifierList != null && !modifierList.hasAnnotation(annotation)) {
+    if (modifierList != null && GroovyPsiManager.getCompileStaticAnnotation(owner) == null) {
+      String annotation = isStatic ? GROOVY_TRANSFORM_COMPILE_STATIC : GROOVY_TRANSFORM_COMPILE_DYNAMIC;
       modifierList.addAnnotation(annotation);
     }
   }

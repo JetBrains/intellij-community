@@ -457,7 +457,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     List<PsiType> substituted = ContainerUtil.map(parameters, parameter -> {
       PsiType type = substitutor.substitute(parameter);
-      return type instanceof PsiWildcardType ? ((PsiWildcardType)type).getExtendsBound() : type;
+      if (type instanceof PsiWildcardType) type = ((PsiWildcardType)type).getExtendsBound();
+      return PsiUtil.resolveClassInClassTypeOnly(type) == parameter ? null : type;
     });
     if (ContainerUtil.exists(substituted, t -> t == null || t instanceof PsiCapturedWildcardType)) return null;
     if (substituted.equals(ContainerUtil.map(parameters, TypeConversionUtil::typeParameterErasure))) return null;

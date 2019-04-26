@@ -171,7 +171,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void addManageAction() {
-    if (myController.getAllRepositories() != null) {
+    if (myController.canManageRepositories()) {
       myManageButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -340,9 +340,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             e.consume();
             filter();
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(myPackages, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPackages, true));
           } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             onEscape(e);
           }

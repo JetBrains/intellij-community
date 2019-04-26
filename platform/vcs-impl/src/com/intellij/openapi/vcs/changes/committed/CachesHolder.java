@@ -58,7 +58,7 @@ public class CachesHolder {
     return new RootsCalculator(myProject, vcs, myLocationCache).getRoots();
   }
 
-  public void iterateAllCaches(@NotNull Processor<ChangesCacheFile> processor) {
+  public void iterateAllCaches(@NotNull Processor<? super ChangesCacheFile> processor) {
     for (AbstractVcs vcs : myPlManager.getAllActiveVcss()) {
       if (vcs.getCommittedChangesProvider() instanceof CachingCommittedChangesProvider) {
         for (Map.Entry<VirtualFile, RepositoryLocation> entry : getAllRootsUnderVcs(vcs).entrySet()) {

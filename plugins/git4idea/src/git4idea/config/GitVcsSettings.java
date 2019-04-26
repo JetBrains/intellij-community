@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsBranchInfo;
@@ -7,6 +7,7 @@ import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -52,7 +53,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public String RECENT_GIT_ROOT_PATH = null;
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<>();
     public String RECENT_COMMON_BRANCH = null;
-    public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
     public boolean AUTO_COMMIT_ON_REVERT = false;
     public boolean WARN_ABOUT_CRLF = true;
     public boolean WARN_ABOUT_DETACHED_HEAD = true;
@@ -61,11 +61,11 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
-    public boolean UPDATE_BRANCHES_INFO = false;
+    public boolean UPDATE_BRANCHES_INFO = true;
     public int BRANCH_INFO_UPDATE_TIME = 10;
     public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
     public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
-    public boolean COMMIT_RENAMES_SEPARATELY = false;
+    public boolean COMMIT_RENAMES_SEPARATELY = true;
     public boolean ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS = true;
 
     @Property(surroundWithTag = false, flat = true)
@@ -192,14 +192,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.RECENT_COMMON_BRANCH = branch;
   }
 
-  public void setAutoCommitOnCherryPick(boolean autoCommit) {
-    myState.AUTO_COMMIT_ON_CHERRY_PICK = autoCommit;
-  }
-
-  public boolean isAutoCommitOnCherryPick() {
-    return myState.AUTO_COMMIT_ON_CHERRY_PICK;
-  }
-
   public void setAutoCommitOnRevert(boolean autoCommit) {
     myState.AUTO_COMMIT_ON_REVERT = autoCommit;
   }
@@ -251,7 +243,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public boolean shouldUpdateBranchInfo() {
-    return false;
+    return Registry.is("git.update.incoming.outgoing.info") && myState.UPDATE_BRANCHES_INFO;
   }
 
   public void setUpdateBranchInfo(boolean state) {
@@ -288,15 +280,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setCommitRenamesSeparately(boolean state) {
     myState.COMMIT_RENAMES_SEPARATELY = state;
-  }
-
-  /**
-   * Provides migration from project settings.
-   * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
-   */
-  @Deprecated
-  public boolean isIdeaSsh() {
-    return getAppSettings().isUseIdeaSsh();
   }
 
   @NotNull

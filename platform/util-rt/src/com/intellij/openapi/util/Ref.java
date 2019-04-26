@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Simple value wrapper.
+ *
+ * @param <T> Value type.
  * @author ven
  */
 public class Ref<T> {
@@ -62,7 +65,7 @@ public class Ref<T> {
   @Nullable
   public static <T> T deref(@Nullable Ref<T> ref) {
     return ref == null ? null : ref.get();
-  } 
+  }
 
   @Override
   public String toString() {

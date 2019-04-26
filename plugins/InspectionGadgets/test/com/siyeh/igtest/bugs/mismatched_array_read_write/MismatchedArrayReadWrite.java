@@ -90,6 +90,36 @@ public class MismatchedArrayReadWrite {
       arr[0] = 0;
       Arrays.fill(data, arr);
     }
+    
+    void fillInLoop(int max) {
+      int[] <warning descr="Contents of array 'squares' are written to, but never read">squares</warning> = new int[max];
+      for(int i=0; i<squares.length; i++) {
+        squares[i] = i*i;
+      }
+    }
+    
+    void doFill(int[] arr) {
+      arr[0] = 1;
+    }
+    
+    void useDoFill() {
+      int[] x;
+      doFill(x = new int[10]);
+      System.out.println(x[0]);
+    }
+    
+    void reuseSelf() {
+      int[] <warning descr="Contents of array 'arr' are written to, but never read">arr</warning> = new int[10];
+      for(int i=0; i<arr.length; i++) arr[i] = i;
+      for(int i=1; i<arr.length; i++) arr[i] += arr[i-1];
+      for(int i=1; i<arr.length; i++) arr[i] = arr[i-1] + 1;
+    }
+    
+    void objectType(Object x) {
+      if(!(x instanceof int[])) return;
+      int[] arr = (int[])x;
+      arr[0] = 1;
+    }
 }
 class Test{
     public void bar(){
@@ -106,8 +136,21 @@ class Test{
     }
 
     private void testStuff() {
+        int[][] <warning descr="Contents of array 'array' are written to, but never read">array</warning> = new int[2][2];
+        array[0][1]++;
+    }
+
+    private void testStuff2() { // IDEA-47651
         int[][] array = new int[2][2];
         array[0][1]++;
+        System.out.println(array[0][1]);
+    }
+    
+    void compoundReused() {
+      int[] arr1 = new int[1];
+      if(arr1[0]++ > 10) System.out.println("oops");
+      int[] arr2 = new int[1];
+      if((arr2[0]+=10) > 10) System.out.println("oops");
     }
 
     void foo1() {
@@ -126,7 +169,7 @@ class Test{
     }
 
     void foo4() {
-        int[] array = {1, 2, 4};
+        int[] <warning descr="Contents of array 'array' are written to, but never read">array</warning> = {1, 2, 4};
         assert array.length == 3;
     }
 

@@ -19,6 +19,7 @@ import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Objects;
 
 import static java.lang.Math.ceil;
 
@@ -94,7 +95,7 @@ public class ColorIcon extends EmptyIcon {
 
     if (myBorder != icon.myBorder) return false;
     if (myColorSize != icon.myColorSize) return false;
-    if (myColor != null ? !myColor.equals(icon.myColor) : icon.myColor != null) return false;
+    if (!Objects.equals(myColor, icon.myColor)) return false;
 
     return true;
   }

@@ -109,7 +109,7 @@ public class BinaryMergeTool implements MergeTool {
       components.statusPanel = init.statusPanel;
       components.toolbarActions = init.toolbarActions;
 
-      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, false);
 
       return components;
     }
@@ -118,7 +118,7 @@ public class BinaryMergeTool implements MergeTool {
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
       if (result == MergeResult.RESOLVED) return null;
-      return MergeUtil.createSimpleResolveAction(result, myMergeRequest, myMergeContext, this);
+      return MergeUtil.createSimpleResolveAction(result, myMergeRequest, myMergeContext, this, false);
     }
 
     @Override

@@ -17,12 +17,7 @@ import java.util.Map;
  * @author Gregory.Shrago
  */
 public class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
-  /**
-   * @noinspection FieldCanBeLocal
-   */
 
-  /**
-   */
   private final static Map<String, DefaultConsoleHistoryModel> ourModels =
     ConcurrentFactoryMap.createMap(key -> new DefaultConsoleHistoryModel(null),
                                    ContainerUtil::createConcurrentWeakValueMap);
@@ -50,7 +45,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
   public void resetEntries(@NotNull List<String> entries) {
     synchronized (myLock) {
       myEntries.clear();
-      myEntries.addAll(entries.subList(0, Math.min(entries.size(), getMaxHistorySize())));
+      myEntries.addAll(ContainerUtil.getFirstItems(entries, getMaxHistorySize()));
       incModificationCount();
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -58,15 +58,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String FRAME_ELEMENT = "frame";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
-
-  static {
-    try {
-      System.loadLibrary("jawt");
-    }
-    catch (Throwable t) {
-      LOG.info("jawt failed to load", t);
-    }
-  }
 
   private Boolean myAlphaModeSupported;
 
@@ -436,26 +427,31 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   // this method is called when there is some opened project (IDE will not open Welcome Frame, but project)
   public void showFrame() {
-    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager, ApplicationManager.getApplication());
+    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager);
     myProjectToFrame.put(null, frame);
 
-    Rectangle frameBounds = myDefaultFrameInfo.getBounds();
+    Rectangle frameBounds = validateFrameBounds(myDefaultFrameInfo.getBounds());
+    myDefaultFrameInfo.setBounds(frameBounds);
     // set bounds even if maximized because on unmaximize we must restore previous frame bounds
-    // avoid situations when IdeFrame is out of all screens
-    if (frameBounds == null || !ScreenUtil.isVisible(frameBounds)) {
-      frameBounds = ScreenUtil.getMainScreenBounds();
-      int xOff = frameBounds.width / 8;
-      int yOff = frameBounds.height / 8;
-      //noinspection UseDPIAwareInsets
-      JBInsets.removeFrom(frameBounds, new Insets(yOff, xOff, yOff, xOff));
-      myDefaultFrameInfo.setBounds(frameBounds);
-    }
     frame.setBounds(frameBounds);
 
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     addFrameStateListener(frame);
     IdeMenuBar.installAppMenuIfNeeded(frame);
+  }
+
+  @NotNull
+  private static Rectangle validateFrameBounds(@Nullable Rectangle frameBounds) {
+    Rectangle bounds = frameBounds != null ? frameBounds.getBounds() : null;
+    if (bounds == null || !ScreenUtil.isVisible(bounds)) {
+      bounds = ScreenUtil.getMainScreenBounds();
+      int xOff = bounds.width / 8;
+      int yOff = bounds.height / 8;
+      //noinspection UseDPIAwareInsets
+      JBInsets.removeFrom(bounds, new Insets(yOff, xOff, yOff, xOff));
+    }
+    return bounds;
   }
 
   @Override
@@ -464,7 +460,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     IdeFrameImpl frame = myProjectToFrame.remove(null);
     if (frame == null) {
-      frame = new IdeFrameImpl(myActionManager, myDataManager, ApplicationManager.getApplication());
+      frame = new IdeFrameImpl(myActionManager, myDataManager);
     }
 
     final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();
@@ -472,8 +468,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     if (frameInfo != null && frameInfo.getBounds() != null) {
       // update default frame info - newly created project frame should be the same as last opened
       myDefaultFrameInfo.copyFrom(frameInfo);
-      Rectangle rawBounds = frameInfo.getBounds();
-      myDefaultFrameInfo.setBounds(FrameBoundsConverter.convertFromDeviceSpace(rawBounds));
+      Rectangle frameBounds = FrameBoundsConverter.convertFromDeviceSpace(frameInfo.getBounds());
+      myDefaultFrameInfo.setBounds(validateFrameBounds(frameBounds));
     }
 
     if (!(FrameState.isMaximized(frame.getExtendedState()) || FrameState.isFullScreen(frame)) ||
@@ -484,11 +480,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         frame.setBounds(bounds);
       }
     }
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.setProject(project);
     myProjectToFrame.put(project, frame);
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.addWindowListener(myActivationListener);
     if (addComponentListener) {
@@ -637,7 +633,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     Project project = projects[0];
-    FrameInfo frameInfo = ProjectFrameBoundsKt.getFrameInfoInDeviceSpace(this, project);
+    FrameInfo frameInfo = ProjectFrameBoundsKt.getFrameInfoInDeviceSpace(this, project, null);
     if (frameInfo == null) {
       return null;
     }

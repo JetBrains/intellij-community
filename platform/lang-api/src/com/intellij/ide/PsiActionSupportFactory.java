@@ -31,7 +31,7 @@ public abstract class PsiActionSupportFactory {
     return ServiceManager.getService(PsiActionSupportFactory.class);
   }
 
-  public static interface PsiElementSelector {
+  public interface PsiElementSelector {
     @NotNull
     PsiElement[] getSelectedElements();
   }

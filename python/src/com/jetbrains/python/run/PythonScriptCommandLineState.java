@@ -109,6 +109,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       final ProcessHandler processHandler = startProcess(processStarter, patchers);
 
       TerminalExecutionConsole executeConsole = new TerminalExecutionConsole(myConfig.getProject(), processHandler);
+      executeConsole.withEnterKeyDefaultCodeEnabled(true);
 
       executeConsole.addMessageFilter(myConfig.getProject(), new PythonTracebackFilter(myConfig.getProject()));
       executeConsole.addMessageFilter(myConfig.getProject(), new UrlFilter());
@@ -146,7 +147,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       ((ConsoleView)console).addMessageFilter(new Filter() {
         @Nullable
         @Override
-        public Result applyFilter(String line, int entireLength) {
+        public Result applyFilter(@NotNull String line, int entireLength) {
           int position = line.indexOf(INPUT_FILE_MESSAGE);
           if (position >= 0) {
             VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));
@@ -279,9 +280,16 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     sb.append("runfile('").append(escape(scriptPath)).append("'");
 
-    String scriptParameters = myConfig.getScriptParameters();
-    if (!scriptParameters.isEmpty()) {
-      sb.append(", args='").append(escape(scriptParameters)).append("'");
+    final String[] scriptParameters = ParametersList.parse(myConfig.getScriptParameters());
+    if (scriptParameters.length != 0) {
+      sb.append(", args=[");
+      for (int i = 0; i < scriptParameters.length; i++) {
+        if (i != 0) {
+          sb.append(", ");
+        }
+        sb.append("'").append(escape(scriptParameters[i])).append("'");
+      }
+      sb.append("]");
     }
 
     if (!workingDir.isEmpty()) {

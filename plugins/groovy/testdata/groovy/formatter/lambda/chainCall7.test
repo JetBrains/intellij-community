@@ -1,0 +1,12 @@
+<option>KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE=false</option>
+bar.
+foo( (a)->{ closure }).
+bar( (b)->{ closure })
+-----
+bar.
+    foo((a) -> {
+      closure
+    }).
+    bar((b) -> {
+      closure
+    })

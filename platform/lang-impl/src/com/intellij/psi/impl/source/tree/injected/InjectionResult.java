@@ -1,22 +1,35 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.injection.ReferenceInjector;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class InjectionResult implements ModificationTracker {
-  final List<? extends PsiFile> files;
-  final List<? extends Pair<ReferenceInjector, Place>> references;
+class InjectionResult implements Getter<InjectionResult> {
+  @Nullable final List<? extends PsiFile> files;
+  @Nullable final List<? extends Pair<ReferenceInjector, Place>> references;
+  private final long myModificationCount;
 
-  InjectionResult(List<? extends PsiFile> files, List<? extends Pair<ReferenceInjector, Place>> references) {
+  InjectionResult(@NotNull PsiFile hostFile,
+                  @Nullable List<? extends PsiFile> files,
+                  @Nullable List<? extends Pair<ReferenceInjector, Place>> references) {
     this.files = files;
     this.references = references;
-    if (files == null && references == null) throw new IllegalArgumentException("At least one argument must not be null");
+    myModificationCount = calcModCount(hostFile);
+  }
+
+  @Override
+  public InjectionResult get() {
+    return this;
+  }
+
+  boolean isEmpty() {
+    return files == null && references == null;
   }
 
   boolean isValid() {
@@ -25,7 +38,7 @@ class InjectionResult implements ModificationTracker {
         if (!file.isValid()) return false;
       }
     }
-    else {
+    else if (references != null) {
       for (Pair<ReferenceInjector, Place> pair : references) {
         Place place = pair.getSecond();
         if (!place.isValid()) return false;
@@ -34,28 +47,11 @@ class InjectionResult implements ModificationTracker {
     return true;
   }
 
-  // for CachedValue
-  @Override
-  public long getModificationCount() {
-    long modCount = 0;
-    if (files != null) {
-      for (PsiFile file : files) {
-        if (!file.isValid()) return -1;
-        modCount += file.getModificationStamp();
-      }
-    }
-    if (references != null) {
-      for (Pair<ReferenceInjector, Place> pair : references) {
-        Place place = pair.getSecond();
-        if (!place.isValid()) return -1;
-        for (PsiLanguageInjectionHost.Shred shred : place) {
-          PsiLanguageInjectionHost host = shred.getHost();
-          if (host == null || !host.isValid()) return -1;
-          PsiFile file = host.getContainingFile();
-          modCount += file.getModificationStamp();
-        }
-      }
-    }
-    return modCount;
+  boolean isModCountUpToDate(@NotNull PsiFile hostPsiFile) {
+    return myModificationCount == calcModCount(hostPsiFile);
+  }
+
+  private static long calcModCount(@NotNull PsiFile hostPsiFile) {
+    return (hostPsiFile.getModificationStamp() << 32) + hostPsiFile.getManager().getModificationTracker().getModificationCount();
   }
 }

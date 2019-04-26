@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -173,11 +173,11 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   @Override
   public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
-    final PsiElement current = patternNodes.current();
     if (!patternNodes.hasNext()) {
       while (matchNodes.current() instanceof PsiComment) matchNodes.advance();
       return !matchNodes.hasNext();
     }
+    final PsiElement current = patternNodes.current();
     return matchContext.getPattern().getHandler(current).matchSequentially(patternNodes, matchNodes, matchContext);
   }
 

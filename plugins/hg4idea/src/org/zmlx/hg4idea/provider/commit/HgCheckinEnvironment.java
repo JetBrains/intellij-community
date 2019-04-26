@@ -57,8 +57,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
@@ -90,11 +90,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myCloseBranch = false;
     myMqNewPatch = false;
     myRepos = null;
-  }
-
-  @Override
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    return null;
   }
 
   @Override
@@ -144,7 +139,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
             //abort
             return exceptions;
           }
-          //firstly selected changes marked dirty in CommitHelper -> postRefresh, so we need to mark others
+          //firstly selected changes marked dirty in SingleChangeListCommitter -> doPostRefresh, so we need to mark others
           VcsDirtyScopeManager dirtyManager = VcsDirtyScopeManager.getInstance(myProject);
           for (HgFile hgFile : changedFilesNotInCommit) {
             dirtyManager.fileDirty(hgFile.toFilePath());
@@ -350,7 +345,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void refresh() {
       myAmend.refresh();
-      restoreState();
+      myNextCommitAmend = false;
+      myShouldCommitSubrepos = false;
     }
 
     @Override
@@ -361,8 +357,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void restoreState() {
-      myNextCommitAmend = false;
-      myShouldCommitSubrepos = false;
+      refresh();
     }
 
     @Override
@@ -384,7 +379,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
       @NotNull
       @Override
-      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
+      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> filePaths) {
         return HgUtil.hgRoots(myProject, filePaths);
       }
 

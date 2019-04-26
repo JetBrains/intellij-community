@@ -111,12 +111,11 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertNotNull("Unexpected null", element);
   }
 
-  public void testNavigateToEnumClass() {
+  public void testGotoDeclarationOnEnumConstantDoesntNavigateToEnumClass() {
     configureFromFileText("A.java", "enum A {<caret>G();}");
     final PsiReference reference = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
     assertNotNull(reference);
     final Collection<PsiElement> candidates = TargetElementUtil.getInstance().getTargetCandidates(reference);
-    assertEquals(candidates.toString(), 1, candidates.size());
-    assertInstanceOf(ContainerUtil.getFirstItem(candidates), PsiClass.class);
+    assertEmpty(candidates);
   }
 }

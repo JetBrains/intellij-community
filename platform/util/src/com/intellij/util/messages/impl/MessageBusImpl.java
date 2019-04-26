@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -28,12 +27,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
-  private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = new Comparator<MessageBusImpl>() {
-    @Override
-    public int compare(MessageBusImpl bus1, MessageBusImpl bus2) {
-      return ContainerUtil.compareLexicographically(bus1.myOrder, bus2.myOrder);
-    }
-  };
+  private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR =
+    (bus1, bus2) -> ContainerUtil.compareLexicographically(bus1.myOrder, bus2.myOrder);
   @SuppressWarnings("SSBasedInspection") private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
   /**
@@ -58,6 +53,7 @@ public class MessageBusImpl implements MessageBus {
 
   private static final Object NA = new Object();
   private MessageBusImpl myParentBus;
+  protected RootBus myRootBus;
 
   //is used for debugging purposes
   private final String myOwner;
@@ -67,6 +63,7 @@ public class MessageBusImpl implements MessageBus {
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     this(owner);
     myParentBus = (MessageBusImpl)parentBus;
+    myRootBus = myParentBus.myRootBus;
     myParentBus.onChildBusCreated(this);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
     LOG.assertTrue(myOrder != null);
@@ -75,28 +72,12 @@ public class MessageBusImpl implements MessageBus {
   private MessageBusImpl(Object owner) {
     myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
-    myOrder = new ArrayList<Integer>();
+    myOrder = new ArrayList<>();
   }
 
   @Override
   public MessageBus getParent() {
     return myParentBus;
-  }
-
-  @NotNull
-  private RootBus getRootBus() {
-    return myParentBus != null ? myParentBus.getRootBus() : asRoot();
-  }
-
-  private MessageBusImpl rootBus() { // return MessageBusImpl instead of RootBus to save one cast when accessing MessageBusImpl's private members
-    return getRootBus();
-  }
-
-  private RootBus asRoot() {
-    if (this instanceof RootBus) {
-      return (RootBus)this;
-    }
-    throw new AssertionError("Accessing disposed message bus " + this);
   }
 
   @Override
@@ -128,13 +109,13 @@ public class MessageBusImpl implements MessageBus {
       if (lastChildIndex == Integer.MAX_VALUE) {
         LOG.error("Too many child buses");
       }
-      List<Integer> childOrder = new ArrayList<Integer>(myOrder.size() + 1);
+      List<Integer> childOrder = new ArrayList<>(myOrder.size() + 1);
       childOrder.addAll(myOrder);
       childOrder.add(lastChildIndex + 1);
       childBus.myOrder = childOrder;
     }
 
-    rootBus().clearSubscriberCache();
+    myRootBus.clearSubscriberCache();
   }
 
   private void onChildBusDisposed(final MessageBusImpl childBus) {
@@ -142,9 +123,9 @@ public class MessageBusImpl implements MessageBus {
     synchronized (myChildBuses) {
       removed = myChildBuses.remove(childBus);
     }
-    Map<MessageBusImpl, Integer> map = getRootBus().myWaitingBuses.get();
+    Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
     if (map != null) map.remove(childBus);
-    rootBus().clearSubscriberCache();
+    myRootBus.clearSubscriberCache();
     LOG.assertTrue(removed);
   }
 
@@ -181,9 +162,9 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  @SuppressWarnings("unchecked")
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
+    //noinspection unchecked
     L publisher = (L)myPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
@@ -197,8 +178,9 @@ public class MessageBusImpl implements MessageBus {
           return NA;
         }
       };
-      publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, publisher);
+      Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
+      //noinspection unchecked
+      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, newInstance);
     }
     return publisher;
   }
@@ -223,8 +205,10 @@ public class MessageBusImpl implements MessageBus {
       myParentBus = null;
     }
     else {
-      asRoot().myWaitingBuses.remove();
+      myRootBus.myWaitingBuses.remove();
     }
+
+    myRootBus = null;
   }
 
   @Override
@@ -234,6 +218,7 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   public boolean hasUndeliveredEvents(@NotNull Topic<?> topic) {
+    if (myDisposed) return false;
     if (!isDispatchingAnything()) return false;
 
     for (MessageBusConnectionImpl connection : getTopicSubscribers(topic)) {
@@ -245,7 +230,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private boolean isDispatchingAnything() {
-    SortedMap<MessageBusImpl, Integer> waitingBuses = getRootBus().myWaitingBuses.get();
+    SortedMap<MessageBusImpl, Integer> waitingBuses = myRootBus.myWaitingBuses.get();
     return waitingBuses != null && !waitingBuses.isEmpty();
   }
 
@@ -290,18 +275,22 @@ public class MessageBusImpl implements MessageBus {
   private List<MessageBusConnectionImpl> getTopicSubscribers(Topic topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
     if (topicSubscribers == null) {
-      topicSubscribers = new SmartList<MessageBusConnectionImpl>();
+      topicSubscribers = new SmartList<>();
       calcSubscribers(topic, topicSubscribers);
       mySubscriberCache.put(topic, topicSubscribers);
+
+      if (myRootBus.myClearedSubscribersCache) {
+        myRootBus.myClearedSubscribersCache = false;
+      }
     }
     return topicSubscribers;
   }
 
   private void notifyPendingJobChange(int delta) {
-    ThreadLocal<SortedMap<MessageBusImpl, Integer>> ref = getRootBus().myWaitingBuses;
+    ThreadLocal<SortedMap<MessageBusImpl, Integer>> ref = myRootBus.myWaitingBuses;
     SortedMap<MessageBusImpl, Integer> map = ref.get();
     if (map == null) {
-      ref.set(map = new TreeMap<MessageBusImpl, Integer>(MESSAGE_BUS_COMPARATOR));
+      ref.set(map = new TreeMap<>(MESSAGE_BUS_COMPARATOR));
     }
     Integer countObject = map.get(this);
     int count = countObject == null ? 0 : countObject;
@@ -331,13 +320,13 @@ public class MessageBusImpl implements MessageBus {
       myParentBus.pumpMessages();
     }
     else {
-      final Map<MessageBusImpl, Integer> map = asRoot().myWaitingBuses.get();
+      final Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
       if (map != null && !map.isEmpty()) {
         List<MessageBusImpl> liveBuses = null;
         for (MessageBusImpl bus : map.keySet()) {
           if (ensureAlive(map, bus)) {
             if (liveBuses == null) {
-              liveBuses = new SmartList<MessageBusImpl>();
+              liveBuses = new SmartList<>();
             }
             liveBuses.add(bus);
           }
@@ -362,7 +351,7 @@ public class MessageBusImpl implements MessageBus {
 
   private static List<Throwable> appendExceptions(List<Throwable> exceptions, List<? extends Throwable> busExceptions) {
     if (!busExceptions.isEmpty()) {
-      if (exceptions == null) exceptions = new SmartList<Throwable>();
+      if (exceptions == null) exceptions = new SmartList<>();
       exceptions.addAll(busExceptions);
     }
     return exceptions;
@@ -398,13 +387,13 @@ public class MessageBusImpl implements MessageBus {
       }
       catch (Throwable e) {
         if (exceptions == null) {
-          exceptions = new SmartList<Throwable>();
+          exceptions = new SmartList<>();
         }
         exceptions.add(e);
       }
     }
     while (true);
-    return exceptions == null ? Collections.<Throwable>emptyList() : exceptions;
+    return exceptions == null ? Collections.emptyList() : exceptions;
   }
 
   void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic<?> topic) {
@@ -416,10 +405,11 @@ public class MessageBusImpl implements MessageBus {
     }
 
     topicSubscribers.add(connection);
-    rootBus().clearSubscriberCache();
+
+    myRootBus.clearSubscriberCache();
   }
 
-  private void clearSubscriberCache() {
+  void clearSubscriberCache() {
     mySubscriberCache.clear();
     for (MessageBusImpl bus : myChildBuses) {
       bus.clearSubscriberCache();
@@ -431,7 +421,7 @@ public class MessageBusImpl implements MessageBus {
       topicSubscribers.remove(connection);
     }
     if (myDisposed) return;
-    rootBus().clearSubscriberCache();
+    myRootBus.clearSubscriberCache();
 
     final Iterator<DeliveryJob> i = myMessageQueue.get().iterator();
     while (i.hasNext()) {
@@ -453,12 +443,7 @@ public class MessageBusImpl implements MessageBus {
 
   @NotNull
   static <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
-    return new ThreadLocal<Queue<T>>() {
-      @Override
-      protected Queue<T> initialValue() {
-        return new ConcurrentLinkedQueue<T>();
-      }
-    };
+    return ThreadLocal.withInitial(ArrayDeque::new);
   }
 
   public static class RootBus extends MessageBusImpl {
@@ -469,10 +454,20 @@ public class MessageBusImpl implements MessageBus {
      * <p>
      * Used to avoid traversing the whole hierarchy when there are no messages to be sent in most of it
      */
-    private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<SortedMap<MessageBusImpl, Integer>>();
+    private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<>();
+
+    volatile boolean myClearedSubscribersCache;
+
+    @Override
+    void clearSubscriberCache() {
+      if (myClearedSubscribersCache) return;
+      super.clearSubscriberCache();
+      myClearedSubscribersCache = true;
+    }
 
     public RootBus(@NotNull Object owner) {
       super(owner);
+      myRootBus = this;
     }
   }
 }

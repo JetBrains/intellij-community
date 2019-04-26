@@ -135,7 +135,7 @@ public class MockPsiDirectory extends MockPsiElement implements PsiDirectory {
   }
 
   @Override
-  public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(@NotNull final PsiElementProcessor<PsiFileSystemItem> processor) {
     throw new UnsupportedOperationException("Method processChildren is not yet implemented in " + getClass().getName());
   }
 

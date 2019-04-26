@@ -30,24 +30,28 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.components.JBLoadingPanel;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ThreesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
   @NotNull protected final ThreesideContentPanel myContentPanel;
+  @NotNull protected final JBLoadingPanel myLoadingPanel;
 
   @NotNull private final List<T> myHolders;
 
@@ -62,7 +66,10 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myFocusTrackerSupport = new FocusTrackerSupport.Threeside(myHolders);
     myContentPanel = new ThreesideContentPanel(myHolders, titlePanel);
 
-    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
+    myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);
+
+    myPanel = new SimpleDiffPanel(myLoadingPanel, this, context);
   }
 
   @Override
@@ -196,39 +203,46 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     @NotNull protected final ThreeSide mySide1;
     @NotNull protected final ThreeSide mySide2;
 
-    public ShowPartialDiffAction(@NotNull PartialDiffMode mode) {
+    public ShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
       String id;
+      Icon icon = null;
       switch (mode) {
         case LEFT_MIDDLE:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Left";
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
           break;
         case RIGHT_MIDDLE:
           mySide1 = ThreeSide.RIGHT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Right";
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
           break;
         case MIDDLE_LEFT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.LEFT;
           id = "Diff.ComparePartial.Base.Left";
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
           break;
         case MIDDLE_RIGHT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Base.Right";
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
           break;
         case LEFT_RIGHT:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Left.Right";
+          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftRight;
           break;
         default:
           throw new IllegalArgumentException();
       }
       String text = ActionsBundle.message("action.Diff.ComparePartial.Generic", mySide1.getIndex(), mySide2.getIndex());
       getTemplatePresentation().setText(text);
+      getTemplatePresentation().setIcon(icon);
 
       ActionUtil.mergeFrom(this, id);
     }

@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefJavaElement;
-import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
@@ -24,6 +23,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     super(toolWrapper, context);
   }
 
+  @NotNull
   @Override
   public RefFilter getFilter() {
     return myFilter;
@@ -40,7 +40,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
 
   @Override
   protected String getSeverityDelegateName() {
-    return UnusedDeclarationInspection.SHORT_NAME;
+    return UnusedDeclarationInspectionBase.SHORT_NAME;
   }
 
   private class MoveEntriesToSuspicious extends QuickFixAction {
@@ -84,12 +84,10 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   }
 
   @Override
-  public void createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
-                                       @NotNull InspectionRVContentProvider provider,
-                                       @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure,
-                                       boolean groupByStructure) {
-    myToolNode = node;
+  public void patchToolNode(@NotNull InspectionTreeNode node,
+                            @NotNull InspectionRVContentProvider provider,
+                            boolean showStructure,
+                            boolean groupByStructure) {
   }
 
   @Override

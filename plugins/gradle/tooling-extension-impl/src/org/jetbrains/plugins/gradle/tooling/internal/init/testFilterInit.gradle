@@ -14,7 +14,7 @@ gradle.addBuildListener(new BuildListener() {
         "Unable to run unit tests",
         "Unable to run unit tests, since there is no 'test' task configured in the project." +
         "\n<br>You can add the following into the project gradle script: apply plugin: 'java'" +
-        "\n<br><br>See <a href='http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.testing.Test.html'>Gradle Test task</a> for details",
+        "\n<br><br>See <a href='https://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.testing.Test.html'>Gradle Test task</a> for details",
         false
       )
     }

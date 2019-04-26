@@ -3,7 +3,8 @@ package com.intellij.ui.paint;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.TestScaleHelper;
 import com.intellij.util.ui.UIUtil;
 import org.junit.Assert;
@@ -13,8 +14,8 @@ import org.junit.rules.ExternalResource;
 
 import java.awt.*;
 
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**

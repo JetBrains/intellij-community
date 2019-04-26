@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
@@ -91,7 +77,7 @@ public class VfsData {
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
   public VfsData() {
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionFinished(@NotNull Object action) {
         // after top-level write action is finished, all the deletion listeners should have processed the deleted files
@@ -100,7 +86,7 @@ public class VfsData {
           killInvalidatedFiles();
         }
       }
-    });
+    }, ApplicationManager.getApplication());
   }
 
   private void killInvalidatedFiles() {
@@ -134,8 +120,8 @@ public class VfsData {
     }
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
-      FSRecords.getInstance().invalidateCaches();
-      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getInstance().getParent(id));
+      FSRecords.invalidateCaches();
+      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
     }
 
     return o instanceof DirectoryData ? persistentFS.getOrCacheDir(id, segment, (DirectoryData)o, parent)
@@ -177,13 +163,12 @@ public class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      final FSRecords fsRecords = FSRecords.getInstance();
-      fsRecords.invalidateCaches();
-      int parent = fsRecords.getParent(id);
+      FSRecords.invalidateCaches();
+      int parent = FSRecords.getParent(id);
       String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
       if (parent > 0) {
-        msg += "; parent.name=" + fsRecords.getName(parent);
-        msg += "; parent.children=" + Arrays.toString(fsRecords.listAll(id));
+        msg += "; parent.name=" + FSRecords.getName(parent);
+        msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
       }
       throw new FileAlreadyCreatedException(msg);
     }
@@ -191,7 +176,7 @@ public class VfsData {
   }
 
   CharSequence getNameByFileId(int id) {
-    return FSRecords.getInstance().getFileNameCache().getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
+    return FileNameCache.getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
   }
 
   boolean isFileValid(int id) {
@@ -221,9 +206,10 @@ public class VfsData {
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
 
+    @NotNull
     final VfsData vfsData;
 
-    Segment(VfsData vfsData) {
+    Segment(@NotNull VfsData vfsData) {
       this.vfsData = vfsData;
     }
 
@@ -301,17 +287,20 @@ public class VfsData {
     @NotNull
     volatile int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
 
-    private static final AtomicFieldUpdater<DirectoryData, Set> MY_ADOPTED_NAMES_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, Set.class);
-    // assigned under lock(this) only; modified under lock(myAdoptedNames)
+    // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
     private volatile Set<CharSequence> myAdoptedNames;
 
     @NotNull
-    VirtualFileSystemEntry[] getFileChildren(int fileId, @NotNull VirtualDirectoryImpl parent) {
-      assert fileId > 0;
+    VirtualFileSystemEntry[] getFileChildren(@NotNull VirtualDirectoryImpl parent) {
       int[] ids = myChildrenIds;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
       for (int i = 0; i < ids.length; i++) {
-        children[i] = assertNotNull(parent.mySegment.vfsData.getFileById(ids[i], parent));
+        int childId = ids[i];
+        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent);
+        if (child == null) {
+          throw new AssertionError("No file for id " + childId + ", parentId = " + parent.myId);
+        }
+        children[i] = child;
       }
       return children;
     }
@@ -333,6 +322,8 @@ public class VfsData {
     /**
      * must call removeAdoptedName() before adding new child with the same name
      * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
+     *
+     * Must be called in synchronized(VfsData)
      */
     void removeAdoptedName(@NotNull CharSequence name) {
       Set<CharSequence> adopted = myAdoptedNames;
@@ -342,12 +333,14 @@ public class VfsData {
       synchronized (adopted) {
         boolean removed = adopted.remove(name);
         if (removed && adopted.isEmpty()) {
-          // if failed then somebody's nulled it already, no need to retry
-          MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, adopted, null);
+          myAdoptedNames = null;
         }
       }
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void addAdoptedName(@NotNull CharSequence name, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
@@ -356,25 +349,28 @@ public class VfsData {
       }
     }
 
-    @NotNull
-    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
-      Set<CharSequence> adopted;
-      while (true) {
-        adopted = myAdoptedNames;
-        if (adopted != null) break;
-        adopted = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
-        if (MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, null, adopted)) {
-          break;
-        }
-      }
-      return adopted;
-    }
-
+    /**
+     * Optimization: faster than call {@link #addAdoptedName(CharSequence, boolean)} one by one
+     * Must be called in synchronized(VfsData)
+     */
     void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
       synchronized (adopted) {
         adopted.addAll(names);
       }
+    }
+
+    /**
+     * Must be called in synchronized(VfsData)
+     */
+    @NotNull
+    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        myAdoptedNames = adopted =
+          new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+      }
+      return adopted;
     }
 
     @NotNull
@@ -386,6 +382,9 @@ public class VfsData {
       }
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void clearAdoptedNames() {
       myAdoptedNames = null;
     }

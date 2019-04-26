@@ -12,7 +12,6 @@ import java.util.List;
  * Represents the occurrence of an index pattern in the comments of a source code file.
  *
  * @author yole
- * @since 5.1
  * @see com.intellij.psi.search.searches.IndexPatternSearch
  * @see IndexPatternProvider
  */

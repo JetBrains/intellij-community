@@ -25,9 +25,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface RecentTestRunner {
   enum Mode {
@@ -97,15 +95,11 @@ class RecentTestRunnerImpl implements RecentTestRunner {
       return;
     }
 
-    DataContext data = new DataContext() {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        if (Location.DATA_KEY.is(dataId)) {
-          return location;
-        }
-        return null;
+    DataContext data = dataId -> {
+      if (Location.DATA_KEY.is(dataId)) {
+        return location;
       }
+      return null;
     };
 
     myCurrentAction.actionPerformed(AnActionEvent.createFromAnAction(myCurrentAction, null, "", data));

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -7,9 +7,11 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -18,6 +20,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
@@ -254,10 +257,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   public XSourcePosition getSourcePosition(@NotNull XBreakpoint<JavaLineBreakpointProperties> breakpoint) {
     Integer ordinal = getLambdaOrdinal(breakpoint);
     if (ordinal != null && ordinal > -1) {
-      SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
-      if (linePosition != null) {
-        return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, ordinal));
-      }
+      return ReadAction.compute(() -> {
+        SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
+        if (linePosition != null) {
+          return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, ordinal));
+        }
+        return null;
+      });
     }
     return null;
   }
@@ -308,5 +314,14 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       }
       return true;
     });
+  }
+
+  @Nullable
+  @Override
+  public XBreakpointCustomPropertiesPanel<XLineBreakpoint<JavaLineBreakpointProperties>> createCustomPropertiesPanel(@NotNull Project project) {
+    if (Registry.is("debugger.call.tracing")) {
+      return new CallTracingPropertiesPanel(project);
+    }
+    return null;
   }
 }

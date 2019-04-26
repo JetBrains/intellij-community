@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,9 +14,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ui.EmptyIcon;
+import org.intellij.lang.regexp.psi.RegExpProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,6 +65,9 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
       final ElementPattern<PsiElement> propertyPattern = psiElement().withText("\\\\p");
       extend(CompletionType.BASIC, psiElement().afterLeaf(propertyPattern), new PropertyCompletionProvider());
+      
+      extend(CompletionType.BASIC, psiElement().inside(RegExpProperty.class).afterLeaf(psiElement(RegExpTT.EQ)),
+             new PropertyValueCompletionProvider());
     }
 
     {
@@ -170,6 +176,22 @@ public final class RegExpCompletionContributor extends CompletionContributor {
         }
         ProgressManager.checkCanceled();
       });
+    }
+  }
+
+  private static class PropertyValueCompletionProvider extends CompletionProvider<CompletionParameters> {
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+      RegExpProperty property = ObjectUtils.tryCast(parameters.getPosition().getParent(), RegExpProperty.class);
+      ASTNode propertyNameNode = property != null ? property.getCategoryNode() : null;
+      if (propertyNameNode == null) {
+        return;
+      }
+      for (String[] value : RegExpLanguageHosts.getInstance().getAllPropertyValues(property, propertyNameNode.getText())) {
+        addLookupElement(result, value[0], value.length > 1 ? value[1] : null, null);
+      }
     }
   }
 }

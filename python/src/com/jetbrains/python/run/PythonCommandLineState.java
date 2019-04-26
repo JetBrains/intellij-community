@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.ProcessControlWithMappings;
-import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
@@ -323,7 +322,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static GeneralCommandLine generalCommandLine(boolean runWithPty) {
-    return runWithPty ? new PtyCommandLine() : new GeneralCommandLine();
+    return runWithPty ? new PtyCommandLine().withConsoleMode(false) : new GeneralCommandLine();
   }
 
   /**
@@ -368,17 +367,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
     Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
-    if (Registry.is("python.activate.virtualenv.on.run") && sdk != null &&
-        (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
-
-      Map<String, String> environment = sdk.getUserData(PythonSdkType.ENVIRONMENT_KEY);
-
-      if (environment == null) {
-        environment = PythonSdkType.activateVirtualEnv(sdkHome);
-
-        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY, environment);
-      }
-
+    if (sdk != null &&
+        (Registry.is("python.activate.virtualenv.on.run") && PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
+      Map<String, String> environment = PythonSdkType.activateVirtualEnv(sdk);
       env.putAll(environment);
 
       for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {

@@ -6,7 +6,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.ui.JBInsets;
@@ -69,7 +68,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a search icon in one of the four states or {@code null} to hide it
    */
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return AllIcons.Actions.Search;
+    return clickable ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
   }
 
   /**
@@ -91,7 +90,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a clear icon in one of the four states or {@code null} to hide it
    */
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+    return !clickable ? null : hovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
   }
 
   /**
@@ -117,7 +116,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return (component != null) && !isEmpty(component.getText());
   }
 
-  protected void updateIconsLayout(Rectangle bounds) {
+  private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
     Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null || UIUtil.getParentOfType(JSpinner.class, c) != null ?
                     JBUI.emptyInsets() : getDefaultMargins();
@@ -128,20 +127,20 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     for (IconHolder holder : icons.values()) {
       int gap = holder.extension.getIconGap();
       if (holder.extension.isIconBeforeText()) {
-        int offset = holder.extension.getBeforeIconOffset();
-        bounds.x += offset;
-        bounds.width -= offset;
+        int offset = holder.extension.getAfterIconOffset();
         holder.bounds.x = bounds.x;
-        bounds.width -= holder.bounds.width + gap;
-        bounds.x += holder.bounds.width + gap;
 
-        margin.left += offset + holder.bounds.width + gap;
+        int extensionWidth = holder.bounds.width + gap + offset;
+        bounds.x += extensionWidth;
+        bounds.width -= extensionWidth;
+        margin.left += extensionWidth;
       }
       else {
-        bounds.width -= holder.bounds.width + gap;
-        holder.bounds.x = bounds.x + bounds.width + gap;
+        holder.bounds.x = bounds.x + bounds.width - holder.bounds.width;
 
-        margin.right += holder.bounds.width + gap;
+        int extensionWidth = holder.bounds.width + gap;
+        bounds.width -= extensionWidth;
+        margin.right += extensionWidth;
       }
       int top = (bounds.height - holder.bounds.height) / 2;
       if (top > gap) {
@@ -164,8 +163,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   /**
-     * Adds listeners to the current text component and sets its variant.
-     */
+   * Adds listeners to the current text component and sets its variant.
+   */
   @Override
   protected void installListeners() {
     JTextComponent component = getComponent();
@@ -336,6 +335,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
+    public void mouseExited(MouseEvent e) {
+      if (!icons.isEmpty()) {
+        handleMouse(e, false);
+      }
+    }
+
+    @Override
     public void mouseClicked(MouseEvent e) {
       if (!icons.isEmpty()) {
         handleMouse(e, true);
@@ -395,11 +401,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected void updatePreferredSize(JComponent c, Dimension size) {
-    if (!(c.getParent() instanceof JComboBox)) {
+    if (!isUnderComboBox(c)) {
       JBInsets.addTo(size, ((JTextComponent)c).getMargin());
       size.height = Math.max(size.height, getMinimumHeight(size.height));
       size.width = Math.max(size.width, MINIMUM_WIDTH.get());
     }
+  }
+
+  private static boolean isUnderComboBox(JComponent c) {
+    Component parent = c.getParent();
+    return parent instanceof JComboBox || (parent != null && parent.getParent() instanceof JComboBox);
   }
 
   protected int getMinimumHeight(int textHeight) {
@@ -410,7 +421,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return JBUI.emptyInsets();
   }
 
-    @Override
+  @Override
   protected Rectangle getVisibleEditorRect() {
     JTextComponent c = getComponent();
     Rectangle bounds = new Rectangle(c.getSize());
@@ -524,10 +535,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         }
       }
       else if ("search".equals(variant)) {
+        Object extension = getComponent().getClientProperty("search.extension");
+        if (extension instanceof Extension) {
+          addExtension((Extension)extension);
+        }
         addExtension(new SearchExtension());
         addExtension(new ClearExtension());
       }
-
     }
     updateIconsLayout(new Rectangle(getComponent().getSize())); // Effectively update margins
   }
@@ -592,7 +606,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
-    public int getBeforeIconOffset() {
+    public int getAfterIconOffset() {
       Integer gap = (Integer)getComponent().getClientProperty("JTextField.Search.Gap");
       return gap == null ? 0 : gap;
     }
@@ -600,11 +614,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public int getIconGap() {
       return getSearchIconGap();
-    }
-
-    @Override
-    public int getPreferredSpace() {
-      return getSearchIconPreferredSpace();
     }
 
     @Override
@@ -626,9 +635,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public String getTooltip() {
       String prefix = null;
-      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY ) != null) prefix = "Recent Search";
+      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY) != null) prefix = "Recent Search";
       if (getActionOnClick() != null) prefix = "Search History";
-      return (prefix == null) ? null : prefix + " (" + KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) + ")";
+      return (prefix == null) ? null : prefix + " (" + KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory") + ")";
     }
 
     @Override
@@ -646,11 +655,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public int getIconGap() {
       return getClearIconGap();
-    }
-
-    @Override
-    public int getPreferredSpace() {
-      return getClearIconPreferredSpace();
     }
 
     @Override

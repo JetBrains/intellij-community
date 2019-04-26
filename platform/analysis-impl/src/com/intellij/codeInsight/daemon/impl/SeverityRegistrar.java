@@ -1,14 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +31,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SeverityRegistrar implements Comparator<HighlightSeverity> {
+public class SeverityRegistrar implements Comparator<HighlightSeverity>, ModificationTracker {
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
@@ -40,6 +44,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   private final Map<String, SeverityBasedTextAttributes> myMap = ContainerUtil.newConcurrentMap();
   private final Map<String, Color> myRendererColors = ContainerUtil.newConcurrentMap();
   static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = Topic.create("SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
+  private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = Topic.create("STANDARD_SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_CHILDREN);
   @NotNull private final MessageBus myMessageBus;
 
   private volatile OrderMap myOrderMap;
@@ -47,8 +52,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = ContainerUtil.newConcurrentMap();
 
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
+
   public SeverityRegistrar(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
+    messageBus.connect().subscribe(STANDARD_SEVERITIES_CHANGED_TOPIC, () -> myOrderMap = null);
   }
 
   static {
@@ -62,6 +70,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
     STANDARD_SEVERITIES.put(highlightSeverity.getName(), highlightInfoType);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
 
   @NotNull
@@ -69,6 +78,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return project == null
            ? InspectionProfileManager.getInstance().getSeverityRegistrar()
            : InspectionProfileManager.getInstance(project).getCurrentProfile().getProfileManager().getSeverityRegistrar();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myModificationTracker.getModificationCount();
   }
 
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
@@ -83,10 +97,13 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   private void severitiesChanged() {
+    myModificationTracker.incModificationCount();
     myMessageBus.syncPublisher(SEVERITIES_CHANGED_TOPIC).run();
   }
 
-  public SeverityBasedTextAttributes unregisterSeverity(@NotNull HighlightSeverity severity){
+  // called only by SeverityEditorDialog and after that setOrder is called, so, severitiesChanged is not called here
+  public SeverityBasedTextAttributes unregisterSeverity(@NotNull HighlightSeverity severity) {
+    severitiesChanged();
     return myMap.remove(severity.getName());
   }
 
@@ -203,7 +220,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   @NotNull
-  private List<HighlightSeverity> getSortedSeverities(OrderMap map) {
+  private static List<HighlightSeverity> getSortedSeverities(OrderMap map) {
     return Arrays.stream(map.keys())
                  .map(o -> (HighlightSeverity)o)
                  .sorted((o1, o2) -> compare(o1, o2, map))
@@ -227,11 +244,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   int getSeverityMaxIndex() {
-    int[] values = getOrderMap().getValues();
-    int max = values[0];
-    for(int i = 1; i < values.length; ++i) if (values[i] > max) max = values[i];
-
-    return max;
+    return ArrayUtil.max(getOrderMap().getValues());
   }
 
   @Nullable
@@ -262,9 +275,9 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return compare(s1, s2, getOrderMap());
   }
 
-  private int compare(@NotNull HighlightSeverity s1,
-                      @NotNull HighlightSeverity s2,
-                      @NotNull OrderMap orderMap) {
+  private static int compare(@NotNull HighlightSeverity s1,
+                             @NotNull HighlightSeverity s2,
+                             @NotNull OrderMap orderMap) {
     int o1 = orderMap.getOrder(s1);
     int o2 = orderMap.getOrder(s2);
     return o1 - o2;
@@ -426,9 +439,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
       final SeverityBasedTextAttributes that = (SeverityBasedTextAttributes)o;
 
       if (!myAttributes.equals(that.myAttributes)) return false;
-      if (!myType.equals(that.myType)) return false;
-
-      return true;
+      return myType.equals(that.myType);
     }
 
     @Override

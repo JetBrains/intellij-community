@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,12 +41,18 @@ import java.util.Set;
 public class FoldingDescriptor {
   public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
 
+  private static final byte FLAG_NEVER_EXPANDS = 1;
+  private static final byte FLAG_COLLAPSED_BY_DEFAULT_DEFINED = 1 << 1;
+  private static final byte FLAG_COLLAPSED_BY_DEFAULT = 1 << 2;
+  private static final byte FLAG_CAN_BE_REMOVED_WHEN_COLLAPSED = 1 << 3;
+  private static final byte FLAG_GUTTER_MARK_ENABLED_FOR_SINGLE_LINE = 1 << 4;
+
   private final ASTNode myElement;
   private final TextRange myRange;
   @Nullable private final FoldingGroup myGroup;
   private final Set<Object> myDependencies;
-  private final boolean myNeverExpands;
-  private boolean myCanBeRemovedWhenCollapsed;
+  private String myPlaceholderText;
+  private byte myFlags;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -54,7 +60,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range) {
     this(node, range, null);
@@ -70,7 +76,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
@@ -83,7 +89,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param dependencies folding dependencies: other files or elements that could change
    * folding description, see <a href="#Dependencies">Dependencies</a>
@@ -98,7 +104,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param dependencies folding dependencies: other files or elements that could change, see <a href="#Dependencies">Dependencies</a>
    * @param neverExpands shall be true for fold regions that must not be ever expanded.
@@ -108,13 +114,94 @@ public class FoldingDescriptor {
                            @Nullable FoldingGroup group,
                            Set<Object> dependencies,
                            boolean neverExpands) {
+    this(node, range, group, dependencies, neverExpands, null, null);
+  }
+
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param e  PSI element to which the folding region is related.
+   * @param start Folded text range's start offset in file
+   * @param end Folded text range's end offset in file
+   * @param group Regions with the same group instance expand and collapse together.
+   * @param placeholderText Text displayed instead of folded text, when the region is collapsed
+   */
+  public FoldingDescriptor(@NotNull PsiElement e,
+                           int start,
+                           int end,
+                           @Nullable FoldingGroup group,
+                           @NotNull String placeholderText) {
+    this(e.getNode(), new TextRange(start, end), group, placeholderText);
+  }
+
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param node  The node to which the folding region is related. The node is then passed to
+   *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
+   * @param range The folded text range in file
+   * @param group Regions with the same group instance expand and collapse together.
+   * @param placeholderText Text displayed instead of folded text, when the region is collapsed
+   */
+  public FoldingDescriptor(@NotNull ASTNode node,
+                           @NotNull TextRange range,
+                           @Nullable FoldingGroup group,
+                           @NotNull String placeholderText) {
+    this(node, range, group, Collections.emptySet(), false, placeholderText, null);
+  }
+
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param node  The node to which the folding region is related. The node is then passed to
+   *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
+   * @param range The folded text range in file
+   * @param group Regions with the same group instance expand and collapse together.
+   * @param placeholderText Text displayed instead of folded text, when the region is collapsed
+   * @param collapsedByDefault Whether the region should be collapsed for newly opened files
+   * @param dependencies folding dependencies: other files or elements that could change, see <a href="#Dependencies">Dependencies</a>
+   */
+  public FoldingDescriptor(@NotNull ASTNode node,
+                           @NotNull TextRange range,
+                           @Nullable FoldingGroup group,
+                           @NotNull String placeholderText,
+                           @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault,
+                           @NotNull Set<Object> dependencies) {
+    this(node, range, group, dependencies, false, placeholderText, collapsedByDefault);
+  }
+
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param node  The node to which the folding region is related. The node is then passed to
+   *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
+   *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
+   * @param range The folded text range in file
+   * @param group Regions with the same group instance expand and collapse together.
+   * @param dependencies folding dependencies: other files or elements that could change, see <a href="#Dependencies">Dependencies</a>
+   * @param neverExpands shall be true for fold regions that must not be ever expanded.
+   * @param placeholderText Text displayed instead of folded text, when the region is collapsed
+   * @param collapsedByDefault Whether the region should be collapsed for newly opened files
+   */
+  public FoldingDescriptor(@NotNull ASTNode node,
+                           @NotNull TextRange range,
+                           @Nullable FoldingGroup group,
+                           @NotNull Set<Object> dependencies,
+                           boolean neverExpands,
+                           @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
+                           @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault) {
     assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
     myElement = node;
     myRange = range;
     myGroup = group;
     myDependencies = dependencies;
     assert !myDependencies.contains(null);
-    myNeverExpands = neverExpands;
+    myPlaceholderText = placeholderText;
+    setFlag(FLAG_NEVER_EXPANDS, neverExpands);
+    if (collapsedByDefault != null) {
+      setFlag(FLAG_COLLAPSED_BY_DEFAULT_DEFINED, true);
+      setFlag(FLAG_COLLAPSED_BY_DEFAULT, collapsedByDefault);
+    }
   }
 
   /**
@@ -141,17 +228,21 @@ public class FoldingDescriptor {
 
   @Nullable
   public String getPlaceholderText() {
-    final PsiElement psiElement = myElement.getPsi();
-    if (psiElement == null) return null;
+    return myPlaceholderText == null ? calcPlaceholderText() : myPlaceholderText;
+  }
 
-    final Language lang = psiElement.getLanguage();
-    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
-    if (foldingBuilder != null) {
-      return foldingBuilder instanceof FoldingBuilderEx
-             ? ((FoldingBuilderEx)foldingBuilder).getPlaceholderText(myElement, myRange)
-             : foldingBuilder.getPlaceholderText(myElement);
-    }
-    return null;
+  public void setPlaceholderText(@Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText) {
+    myPlaceholderText = placeholderText;
+  }
+
+  private String calcPlaceholderText() {
+    PsiElement psiElement = myElement.getPsi();
+    if (psiElement == null) return null;
+    FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiElement.getLanguage());
+    if (foldingBuilder == null) return null;
+    return foldingBuilder instanceof FoldingBuilderEx
+           ? ((FoldingBuilderEx)foldingBuilder).getPlaceholderText(myElement, myRange)
+           : foldingBuilder.getPlaceholderText(myElement);
   }
 
   @NotNull
@@ -160,11 +251,16 @@ public class FoldingDescriptor {
   }
 
   public boolean isNonExpandable() {
-    return myNeverExpands;
+    return getFlag(FLAG_NEVER_EXPANDS);
   }
 
   public boolean canBeRemovedWhenCollapsed() {
-    return myCanBeRemovedWhenCollapsed;
+    return getFlag(FLAG_CAN_BE_REMOVED_WHEN_COLLAPSED);
+  }
+
+  @Nullable
+  public Boolean isCollapsedByDefault() {
+    return getFlag(FLAG_COLLAPSED_BY_DEFAULT_DEFINED) ? getFlag(FLAG_COLLAPSED_BY_DEFAULT) : null;
   }
 
   /**
@@ -172,7 +268,31 @@ public class FoldingDescriptor {
    * This method allows to override default behaviour for specific regions.
    */
   public void setCanBeRemovedWhenCollapsed(boolean canBeRemovedWhenCollapsed) {
-    myCanBeRemovedWhenCollapsed = canBeRemovedWhenCollapsed;
+    setFlag(FLAG_CAN_BE_REMOVED_WHEN_COLLAPSED, canBeRemovedWhenCollapsed);
+  }
+
+  /**
+   * @see #setGutterMarkEnabledForSingleLine(boolean)
+   */
+  public boolean isGutterMarkEnabledForSingleLine() {
+    return getFlag(FLAG_GUTTER_MARK_ENABLED_FOR_SINGLE_LINE);
+  }
+
+  /**
+   * See javadoc for {@link com.intellij.openapi.editor.FoldRegion#setGutterMarkEnabledForSingleLine(boolean)}.
+   *
+   * @see #isGutterMarkEnabledForSingleLine()
+   */
+  public void setGutterMarkEnabledForSingleLine(boolean value) {
+    setFlag(FLAG_GUTTER_MARK_ENABLED_FOR_SINGLE_LINE, value);
+  }
+
+  private boolean getFlag(byte mask) {
+    return BitUtil.isSet(myFlags, mask);
+  }
+
+  private void setFlag(byte mask, boolean value) {
+    myFlags = BitUtil.set(myFlags, mask, value);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

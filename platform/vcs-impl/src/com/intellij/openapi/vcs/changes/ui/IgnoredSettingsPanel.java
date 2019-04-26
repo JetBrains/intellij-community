@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.IgnoreSettingsType;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,9 +35,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     myList.setCellRenderer(new MyCellRenderer());
     myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
 
-    new ListSpeedSearch<>(myList, (Function<IgnoredFileBean, String>)bean -> {
-      return getBeanTextPresentation(bean);
-    });
+    new ListSpeedSearch<>(myList, (Function<IgnoredFileBean, String>)bean -> getBeanTextPresentation(bean));
     myProject = project;
     myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
   }
@@ -112,7 +110,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(myChangeListManager.getFilesToIgnore(), getItems());
+    return !Arrays.equals(myChangeListManager.getFilesToIgnore(), getItems());
   }
 
   @Override

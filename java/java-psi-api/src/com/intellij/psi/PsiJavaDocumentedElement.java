@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A valid target element for a Javadoc comment (class member, module declaration etc.)
- *
- * @since 2016.3
  */
 public interface PsiJavaDocumentedElement extends PsiElement {
   /**

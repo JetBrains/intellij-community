@@ -41,7 +41,7 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
       return false;
     }
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile)) && !projectFileIndex.isInSourceContent(vFile);
+    return projectFileIndex.isInLibrary(vFile) && !projectFileIndex.isInSourceContent(vFile);
   }
 
   @Override

@@ -228,12 +228,12 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameField);
     myNamePanel.add(myNameField, BorderLayout.SOUTH);
 
-    createVisibilityPanel();
+    JPanel visibilityPanel = createVisibilityPanel();
 
     if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
       ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
-      myVisibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
-      panel.add(myVisibilityPanel, gbc);
+      visibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
+      panel.add(visibilityPanel, gbc);
       gbc.gridx++;
     }
 

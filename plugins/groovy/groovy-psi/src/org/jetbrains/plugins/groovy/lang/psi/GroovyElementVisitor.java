@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -58,11 +57,31 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    visitStatement(closure);
+    visitFunctionalExpression(closure);
+  }
+
+  public void visitFunctionalExpression(@NotNull GrFunctionalExpression expression) {
+    visitExpression(expression);
   }
 
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     visitElement(block);
+  }
+
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    visitFunctionalExpression(expression);
+  }
+
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    visitLambdaBody(body);
+  }
+
+  public void visitExpressionLambdaBody(@NotNull GrExpressionLambdaBody body) {
+    visitLambdaBody(body);
+  }
+
+  public void visitLambdaBody(@NotNull GrLambdaBody body) {
+    visitElement(body);
   }
 
   public void visitEnumConstants(@NotNull GrEnumConstantList enumConstantsSection) {
@@ -446,7 +465,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitRangeExpression(@NotNull GrRangeExpression range) {
-    visitBinaryExpression(range);
+    visitExpression(range);
   }
 
   public void visitGStringInjection(@NotNull GrStringInjection injection) {

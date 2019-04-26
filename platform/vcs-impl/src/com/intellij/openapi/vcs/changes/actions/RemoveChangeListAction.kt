@@ -1,14 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
@@ -21,23 +18,20 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ThreeState
 import java.util.*
 
-class RemoveChangeListAction : AnAction(), DumbAware {
+class RemoveChangeListAction : AbstractChangeListAction() {
   private val LOG = logger<RemoveChangeListAction>()
 
   override fun update(e: AnActionEvent) {
     val changeListsArray = e.getData(VcsDataKeys.CHANGE_LISTS)
     val changeLists = changeListsArray?.asList() ?: emptyList()
-
-    val hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES))
     val enabled = canRemoveChangeLists(e.project, changeLists)
 
-    val presentation = e.presentation
-    presentation.isEnabled = enabled
-    if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
-      presentation.isVisible = enabled
-    }
+    updateEnabledAndVisible(e, enabled)
 
+    val presentation = e.presentation
     presentation.text = ActionsBundle.message("action.ChangesView.RemoveChangeList.text.template", changeLists.size)
+
+    val hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES))
     if (hasChanges) {
       val containsActiveChangelist = changeLists.any { it is LocalChangeList && it.isDefault }
       presentation.description = ActionsBundle.message("action.ChangesView.RemoveChangeList.description.template",

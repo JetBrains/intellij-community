@@ -1,6 +1,9 @@
+import java.io.BufferedReader
+import java.io.FileReader
+
 public class TryWithResources {
     public fun foo() : void {
-        try (final var br: BufferedReader = BufferedReader(FileReader(path))){
+        try (final var br: java.io.BufferedReader = BufferedReader(FileReader(path))){
             return br.readLine()
         }
 

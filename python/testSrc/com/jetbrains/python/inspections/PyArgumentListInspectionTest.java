@@ -357,6 +357,11 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
 
+  // PY-29929
+  public void testInitializingImportedDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
   // PY-25497
   public void testObjectMethodInPossiblyInheritanceChain() {
     doTest();

@@ -15,19 +15,26 @@ public class TagComponent extends LinkComponent {
   private static final Color EAP_BACKGROUND = JBColor.namedColor("Plugins.eapTagBackground", new JBColor(0xF2D2CF, 0xF2D2CF));
   private static final Color FOREGROUND = JBColor.namedColor("Plugins.tagForeground", new JBColor(0x787878, 0x999999));
 
-  private final Color myColor;
+  private Color myColor;
 
-  public TagComponent(@NotNull String name) {
-    boolean eap = "EAP".equals(name);
-    myColor = eap ? EAP_BACKGROUND : BACKGROUND;
-    setText(name);
-    if (eap) {
-      setToolTipText("The EAP version does not guarantee the stability\nand availability of the plugin.");
-    }
+  public TagComponent() {
     setForeground(FOREGROUND);
     setPaintUnderline(false);
     setOpaque(false);
     setBorder(JBUI.Borders.empty(1, 8));
+  }
+
+  public TagComponent(@NotNull String name) {
+    this();
+    setText(name);
+  }
+
+  @Override
+  public void setText(@NotNull String name) {
+    boolean eap = "EAP".equals(name);
+    myColor = eap ? EAP_BACKGROUND : BACKGROUND;
+    super.setText(name);
+    setToolTipText(eap ? "The EAP version does not guarantee the stability\nand availability of the plugin." : null);
   }
 
   @Override

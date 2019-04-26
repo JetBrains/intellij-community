@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * Represents a resource expression of enhanced try-with-resources statement introduced in JDK 9.
  *
  * @see PsiResourceList
- * @since 15
  */
 public interface PsiResourceExpression extends PsiResourceListElement {
   @NotNull

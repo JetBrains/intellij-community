@@ -2,16 +2,16 @@ class C {
   void foo(int n) {
     switch (n) {
       case 1:
-        <weak_warning descr="Duplicate branch in 'switch' statement">bar("A");</weak_warning>
+        bar("A");
         break;
       case 2:
         bar("B");
         break;
       case 3:
-        <weak_warning descr="Duplicate branch in 'switch' statement">bar("A");</weak_warning>
+        <weak_warning descr="Duplicate branch in 'switch'">bar("A");</weak_warning>
         break;
-      default:
-        <weak_warning descr="Duplicate branch in 'switch' statement">bar("A");</weak_warning>
+      case 4:
+        <weak_warning descr="Duplicate branch in 'switch'">bar("A");</weak_warning>
         break;
     }
   }

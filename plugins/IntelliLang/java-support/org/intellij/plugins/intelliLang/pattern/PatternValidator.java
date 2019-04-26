@@ -59,12 +59,6 @@ public class PatternValidator extends LocalInspectionTool {
 
   public boolean CHECK_NON_CONSTANT_VALUES = true;
 
-  private final Configuration myConfiguration;
-
-  public PatternValidator() {
-    myConfiguration = Configuration.getInstance();
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -176,7 +170,8 @@ public class PatternValidator extends LocalInspectionTool {
             final PsiModifierListOwner element;
             if (isAnnotationValue) {
               final PsiAnnotation psiAnnotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class);
-              if (psiAnnotation != null && myConfiguration.getAdvancedConfiguration().getSubstAnnotationClass().equals(psiAnnotation.getQualifiedName())) {
+              if (psiAnnotation != null && Configuration.getInstance()
+                .getAdvancedConfiguration().getSubstAnnotationClass().equals(psiAnnotation.getQualifiedName())) {
                 element = PsiTreeUtil.getParentOfType(expression, PsiModifierListOwner.class);
               }
               else {
@@ -187,7 +182,7 @@ public class PatternValidator extends LocalInspectionTool {
               element = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
             }
             if (element != null && PsiUtilEx.isLanguageAnnotationTarget(element)) {
-              PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(element, myConfiguration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
+              PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(element, Configuration.getInstance().getAdvancedConfiguration().getPatternAnnotationPair(), true);
               checkExpression(expression, annotations, holder);
             }
           }
@@ -224,8 +219,9 @@ public class PatternValidator extends LocalInspectionTool {
     if (pattern == null) return;
 
     List<PsiExpression> nonConstantElements = new SmartList<>();
+    Configuration configuration = Configuration.getInstance();
     final Object result = new SubstitutedExpressionEvaluationHelper(expression.getProject()).computeExpression(
-      expression, myConfiguration.getAdvancedConfiguration().getDfaOption(), false, nonConstantElements);
+      expression, configuration.getAdvancedConfiguration().getDfaOption(), false, nonConstantElements);
     final String o = result == null ? null : String.valueOf(result);
     if (o != null) {
       if (!pattern.matcher(o).matches()) {
@@ -259,13 +255,13 @@ public class PatternValidator extends LocalInspectionTool {
         final PsiModifierListOwner owner = e instanceof PsiModifierListOwner? (PsiModifierListOwner)e : null;
         LocalQuickFix quickFix;
         if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
-          PsiAnnotation[] resolvedAnnos = AnnotationUtilEx.getAnnotationFrom(owner, myConfiguration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
+          PsiAnnotation[] resolvedAnnos = AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
           if (resolvedAnnos.length == 2 && annotations.length == 2 && Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
             // both target and source annotated indirectly with the same anno
             return;
           }
 
-          final String classname = myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().first;
+          final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
           quickFix = AnnotateFix.canApplyOn(owner) ? new AnnotateFix(classname) : new IntroduceVariableFix();
         }
         else {

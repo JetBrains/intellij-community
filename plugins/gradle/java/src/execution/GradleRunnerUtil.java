@@ -40,6 +40,10 @@ import java.util.List;
  */
 public class GradleRunnerUtil {
 
+  public static boolean isGradleModule(@NotNull Module module) {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
+  }
+
   @Nullable
   public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
     Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
@@ -58,7 +62,7 @@ public class GradleRunnerUtil {
   public static Location<PsiMethod> getTestMethod(final Location<?> location) {
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final Location<PsiMethod> methodLocation = iterator.next();
-      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement())) return methodLocation;
+      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement(), false)) return methodLocation;
     }
     return null;
   }
@@ -147,10 +151,9 @@ public class GradleRunnerUtil {
       }
       GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsSettings.getInstance(project).getExtensionsFor(module);
       if (extensionsData != null) {
-        for (GradleExtensionsSettings.GradleTask task : extensionsData.tasks) {
-          if (taskNameCandidate.equals(task.name)) {
-            return Collections.singletonList(taskNameCandidate);
-          }
+        GradleExtensionsSettings.GradleTask gradleTask = extensionsData.tasksMap.get(taskNameCandidate);
+        if (gradleTask != null) {
+          return Collections.singletonList(taskNameCandidate);
         }
       }
     }

@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -41,6 +42,10 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
 
@@ -88,7 +93,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myDisabledTextActions = new HashSet<>();
     for (KeyStroke eachListStroke : listKeys) {
       final String listActionID = (String)listMap.get(eachListStroke);
-      if ("selectNextRow".equals(listActionID) || "selectPreviousRow".equals(listActionID)) {
+      if (ListActions.Down.ID.equals(listActionID) || ListActions.Up.ID.equals(listActionID)) {
         final Object textActionID = field.getInputMap().get(eachListStroke);
         if (textActionID != null) {
           final Action textAction = field.getActionMap().get(textActionID);
@@ -168,6 +173,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private void processTextChanged() {
     if (myAutopopup && !isPathUpdating()) {
+      // Hide current popup as early as we can
+      hideCurrentPopup();
       suggestCompletion(false, false);
     }
 
@@ -387,9 +394,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           myPathTextField.setSelectionStart(caret);
           myPathTextField.setSelectionEnd(caret);
           myPathTextField.setFocusTraversalKeysEnabled(true);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(getField(), true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getField(), true));
           return Boolean.TRUE;
         }).setItemChoosenCallback(() -> processChosenFromCompletion(false)).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
           createPopup();
@@ -770,21 +775,21 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     final Object action = getAction(e, myList);
 
-    if ("selectNextRow".equals(action)) {
+    if (ListActions.Down.ID.equals(action)) {
       if (ensureSelectionExists()) {
         ScrollingUtil.moveDown(myList, e.getModifiersEx());
         e.consume();
       }
     }
-    else if ("selectPreviousRow".equals(action)) {
+    else if (ListActions.Up.ID.equals(action)) {
       ScrollingUtil.moveUp(myList, e.getModifiersEx());
       e.consume();
     }
-    else if ("scrollDown".equals(action)) {
+    else if (ListActions.PageDown.ID.equals(action)) {
       ScrollingUtil.movePageDown(myList);
       e.consume();
     }
-    else if ("scrollUp".equals(action)) {
+    else if (ListActions.PageUp.ID.equals(action)) {
       ScrollingUtil.movePageUp(myList);
       e.consume();
     }

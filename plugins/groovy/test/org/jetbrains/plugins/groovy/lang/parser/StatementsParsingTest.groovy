@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
 /**
@@ -18,6 +18,58 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testBlocks$clos5() throws Throwable { doTest() }
 
   void testBlocks$clos6() throws Throwable { doTest() }
+
+  void testBlocks$nested1() throws Throwable { doTest() }
+
+  void testBlocks$nested2() throws Throwable { doTest() }
+
+  void testBlocks$nested3() throws Throwable { doTest() }
+
+  void testBlocks$nested4() throws Throwable { doTest() }
+
+  void testBlocks$nested5() throws Throwable { doTest() }
+
+  void testBlocks$nested6() throws Throwable { doTest() }
+
+  void testBlocks$nested7() throws Throwable { doTest() }
+
+  void testBlocks$nested8() throws Throwable { doTest() }
+
+  void testBlocks$nested9() throws Throwable { doTest() }
+
+  void testBlocks$nested10() throws Throwable { doTest() }
+
+  void testBlocks$nested11() throws Throwable { doTest() }
+
+  void testBlocks$nested12() throws Throwable { doTest() }
+
+  void testBlocks$nested13() throws Throwable { doTest() }
+
+  void testBlocks$nested14() throws Throwable { doTest() }
+
+  void testBlocks$nested15() throws Throwable { doTest() }
+
+  void testBlocks$nested16() throws Throwable { doTest() }
+
+  void testBlocks$nested17() throws Throwable { doTest() }
+
+  void testBlocks$nested18() throws Throwable { doTest() }
+
+  //IDEA-209352
+  void _testBlocks$nested19() throws Throwable { doTest() }
+
+  void testBlocks$nested20() throws Throwable { doTest() }
+
+  //IDEA-209353
+  void _testBlocks$nested21() throws Throwable { doTest() }
+
+  void testBlocks$nested22() throws Throwable { doTest() }
+
+  void testBlocks$nested23() throws Throwable { doTest() }
+
+  void testBlocks$nested24() throws Throwable { doTest() }
+
+  void testBlocks$closureWithCall() throws Throwable { doTest() }
 
   void testBlocks$form() throws Throwable { doTest() }
 
@@ -201,6 +253,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testImports$imp8() throws Throwable { doTest() }
 
+  void testImports$typeArguments() { doTest() }
+
   void testKing_regex$king1() throws Throwable { doTest() }
 
   void testKing_regex$king2() throws Throwable { doTest() }
@@ -226,6 +280,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testLoop$while6() throws Throwable { doTest() }
 
   void testLoop$while7() throws Throwable { doTest() }
+
+  void testLoop$whileEmptyBody() { doTest() }
 
   void testLoop$dowhile0() { doTest() }
 
@@ -284,7 +340,7 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testSwitch$identifierWithin() { doTest() }
 
   void testSyn$syn1() throws Throwable { doTest() }
-  
+
   void testSyn$newLineBeforeBlock() { doTest() }
 
   void testTop_methods$method1() throws Throwable { doTest() }

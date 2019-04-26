@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.performance
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import gnu.trove.TIntArrayList
 
 /**
  * @author yole
@@ -17,19 +20,30 @@ class LatencyRecorderImpl : LatencyRecorder {
 }
 
 class LatencyRecord {
-  var totalKeysTyped: Int = 0
   var totalLatency: Long = 0L
-  var maxLatency: Long = 0L
+  var maxLatency: Int = 0
+  val samples = TIntArrayList()
+  var samplesSorted = false
 
-  fun update(latencyInMS: Long) {
-    totalKeysTyped++
+  fun update(latencyInMS: Int) {
+    samplesSorted = false
+    samples.add(latencyInMS)
     totalLatency += latencyInMS
     if (latencyInMS > maxLatency) {
       maxLatency = latencyInMS
     }
   }
 
-  val averageLatency: Long get() = totalLatency / totalKeysTyped
+  val averageLatency: Long get() = totalLatency / samples.size()
+
+  fun percentile(n: Int): Int {
+    if (!samplesSorted) {
+      samples.sort()
+      samplesSorted = true
+    }
+    val index = (samples.size() * n / 100).coerceAtMost(samples.size() - 1)
+    return samples[index]
+  }
 }
 
 data class LatencyDistributionRecordKey(val name: String) {
@@ -38,9 +52,9 @@ data class LatencyDistributionRecordKey(val name: String) {
 
 class LatencyDistributionRecord(val key: LatencyDistributionRecordKey) {
   val totalLatency: LatencyRecord = LatencyRecord()
-  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf<String, LatencyRecord>()
+  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf()
 
-  fun update(action: String, latencyInMS: Long) {
+  fun update(action: String, latencyInMS: Int) {
     totalLatency.update(latencyInMS)
     actionLatencyRecords.getOrPut(action) { LatencyRecord() }.update(latencyInMS)
   }
@@ -50,15 +64,24 @@ val latencyMap: MutableMap<LatencyDistributionRecordKey, LatencyDistributionReco
 
 var currentLatencyRecordKey: LatencyDistributionRecordKey? = null
 
-fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
-  val key = currentLatencyRecordKey ?: run {
-    val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
-    LatencyDistributionRecordKey(fileType.name)
+val latencyRecorderProperties: MutableMap<String, String> = mutableMapOf()
+
+class LatenciometerListener : LatencyListener {
+
+  init {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(LatencyListener.TOPIC, this)
   }
-  val latencyRecord = latencyMap.getOrPut(key) {
-    LatencyDistributionRecord(key)
+
+  override fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
+    val key = currentLatencyRecordKey ?: run {
+      val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
+      LatencyDistributionRecordKey(fileType.name)
+    }
+    val latencyRecord = latencyMap.getOrPut(key) {
+      LatencyDistributionRecord(key)
+    }
+    latencyRecord.update(getActionKey(action), latencyInMS.toInt())
   }
-  latencyRecord.update(getActionKey(action), latencyInMS)
 }
 
 fun getActionKey(action: String): String =

@@ -4,28 +4,27 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.Stream;
 
 public abstract class InspectionProfileSchemesModel implements SchemesModel<InspectionProfileModifiableModel> {
+  private static final Logger LOG = Logger.getInstance(InspectionProfileSchemesModel.class);
   private final List<SingleInspectionProfilePanel> myProfilePanels = new ArrayList<>();
   private final List<InspectionProfileImpl> myDeletedProfiles = new SmartList<>();
 
   private final InspectionProfileManager myApplicationProfileManager;
   private final InspectionProfileManager myProjectProfileManager;
 
-  protected InspectionProfileSchemesModel(@NotNull InspectionProfileManager appProfileManager,
-                                          @NotNull InspectionProfileManager projectProfileManager) {
+  InspectionProfileSchemesModel(@NotNull InspectionProfileManager appProfileManager,
+                                @NotNull InspectionProfileManager projectProfileManager) {
     myApplicationProfileManager = appProfileManager;
     myProjectProfileManager = projectProfileManager;
   }
@@ -88,11 +87,11 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
 
   protected abstract void onProfileRemoved(@NotNull SingleInspectionProfilePanel profilePanel);
 
-  void addProfile(InspectionProfileModifiableModel profile) {
+  void addProfile(@NotNull InspectionProfileModifiableModel profile) {
     myProfilePanels.add(createPanel(profile));
   }
 
-  void removeProfile(InspectionProfileImpl profile) {
+  private void removeProfile(@NotNull InspectionProfileImpl profile) {
     for (SingleInspectionProfilePanel panel : myProfilePanels) {
       if (panel.getProfile().equals(profile)) {
         myProfilePanels.remove(panel);
@@ -131,14 +130,11 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
           return new InspectionProfileModifiableModel(source);
         }
         catch (Exception e) {
-          //noinspection ConstantConditions,InstanceofCatchParameter
-          if (e instanceof JDOMException) {
-            return null;
-          } else {
-            throw new RuntimeException(e);
-          }
+          LOG.error("'" + source.getName() + "' profile is corrupted (project profile = " + source.isProjectLevel() + ")", e);
+          return null;
         }
       })
+      .filter(Objects::nonNull)
       .forEach(this::addProfile);
   }
 
@@ -149,13 +145,14 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     myProfilePanels.clear();
   }
 
-  public SingleInspectionProfilePanel getProfilePanel(InspectionProfileImpl profile) {
+  SingleInspectionProfilePanel getProfilePanel(InspectionProfileImpl profile) {
     return myProfilePanels.stream().filter(panel -> panel.getProfile().equals(profile)).findFirst().orElse(null);
   }
 
-  protected abstract SingleInspectionProfilePanel createPanel(InspectionProfileModifiableModel model);
+  @NotNull
+  protected abstract SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel model);
 
-  boolean hasName(@NotNull final String name, boolean shared) {
+  private boolean hasName(@NotNull final String name, boolean shared) {
     final boolean hasName = myProfilePanels.stream().map(SingleInspectionProfilePanel::getProfile).anyMatch(p -> name.equals(p.getName()) && p.isProjectLevel() == shared);
     if (hasName) return true;
     return myProfilePanels.stream().anyMatch(p -> {
@@ -164,6 +161,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     });
   }
 
+  @NotNull
   List<SingleInspectionProfilePanel> getProfilePanels() {
     return myProfilePanels;
   }
@@ -191,9 +189,10 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
                              Arrays.toString(myProfilePanels.stream().map(p -> p.getProfile().getName()).toArray(String[]::new)));
   }
 
-  public static List<InspectionProfileImpl> getSortedProfiles(InspectionProfileManager appManager,
-                                                              InspectionProfileManager projectManager) {
-    return ContainerUtil.concat(ContainerUtil.sorted(appManager.getProfiles()),
-                                ContainerUtil.sorted(projectManager.getProfiles()));
+  @NotNull
+  public static List<InspectionProfileImpl> getSortedProfiles(@NotNull InspectionProfileManager appManager,
+                                                              @NotNull InspectionProfileManager projectManager) {
+    return ContainerUtil.notNullize(ContainerUtil.concat(ContainerUtil.sorted(appManager.getProfiles()),
+                                                         ContainerUtil.sorted(projectManager.getProfiles())));
   }
 }

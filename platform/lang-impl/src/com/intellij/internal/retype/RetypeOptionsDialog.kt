@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.retype
 
 import com.intellij.ide.util.propComponentProperty
@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.CheckBox
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
+import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JRadioButton
@@ -16,78 +18,61 @@ import javax.swing.JTextField
 /**
  * @author yole
  */
-class RetypeOptionsDialog(project: Project, private val editor: Editor?) : DialogWrapper(project) {
+
+class RetypeOptions(val project: Project) {
   var retypeDelay: Int by propComponentProperty(project, 400)
-    private set
   var threadDumpDelay: Int by propComponentProperty(project, 100)
-    private set
-  var fileCount: Int by propComponentProperty(project, 10)
-    private set
-  var retypeExtension: String by propComponentProperty(project, "")
-    private set
+  var enableLargeIndexing: Boolean by propComponentProperty(project, false)
+  var largeIndexFilesCount: Int by propComponentProperty(project, 50_000)
   var recordScript: Boolean by propComponentProperty(project, true)
-    private set
+  var fileCount: Int by propComponentProperty(project, 10)
+  var retypeExtension: String by propComponentProperty(project, "")
+  var restoreOriginalText: Boolean by propComponentProperty(project, true)
+  var retypeCurrentFile = false
+}
 
-  private val typeDelaySpinner = JBIntSpinner(retypeDelay,0, 5000, 50)
-  private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay,50, 5000, 50)
-  private val retypeCurrentFile = JRadioButton(if (editor?.selectionModel?.hasSelection() == true) "Retype selected text" else "Retype current file")
-  private val retypeRandomFiles = JRadioButton("Retype")
-  private val fileCountSpinner = JBIntSpinner(fileCount, 1, 5000)
-  private val extensionTextField = JTextField(retypeExtension,5)
-  private val recordCheckBox = CheckBox("Record script for performance testing plugin",true)
-
+class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOptions, private val editor: Editor?) : DialogWrapper(project) {
   init {
     init()
     title = "Retype Options"
   }
 
   override fun createCenterPanel(): JComponent {
-    retypeCurrentFile.isEnabled = editor != null
-    if (editor != null) {
-      retypeCurrentFile.isSelected = true
-    }
-    else {
-      retypeRandomFiles.isSelected = true
-    }
-    updateEnabledState()
+    retypeOptions.retypeCurrentFile = editor != null
+
     return panel {
-      row(label = JLabel("Typing delay:")) {
-        typeDelaySpinner()
+      row(label = "Typing delay (ms):") {
+        spinner(retypeOptions::retypeDelay, 0, 5000, 50)
       }
-      row(label = JLabel("Thread dump capture delay:")) {
-        threadDumpDelaySpinner()
+      row(label = "Thread dump capture delay (ms):") {
+        spinner(retypeOptions::threadDumpDelay, 50, 5000, 50)
       }
-      buttonGroup(::updateEnabledState) {
+      row {
+        val c = checkBox("Create", retypeOptions::enableLargeIndexing).actsAsLabel()
+        spinner(retypeOptions::largeIndexFilesCount, 100, 1_000_000, 1_000)
+          .enableIf(c.selected)
+        label("files to start background indexing")
+      }
+      buttonGroup(retypeOptions::retypeCurrentFile) {
         row {
-          retypeCurrentFile()
+          radioButton(if (editor?.selectionModel?.hasSelection() == true) "Retype selected text" else "Retype current file", true)
+            .enabled(editor != null)
         }
         row {
-          retypeRandomFiles()
-          fileCountSpinner()
+          val r = radioButton("Retype", false)
+          spinner(retypeOptions::fileCount, 1, 5000)
+            .enableIf(r.selected)
           label("files with different sizes and extension")
-          extensionTextField()
+          textField(retypeOptions::retypeExtension, 5)
+            .enableIf(r.selected)
         }
       }
       row {
-        recordCheckBox()
+        checkBox("Record script for performance testing plugin", retypeOptions::recordScript)
+      }
+      row {
+        checkBox("Restore original text after retype", retypeOptions::restoreOriginalText)
       }
     }
   }
-
-  private fun updateEnabledState() {
-    fileCountSpinner.isEnabled = retypeRandomFiles.isSelected
-    extensionTextField.isEnabled = retypeRandomFiles.isSelected
-  }
-
-  override fun doOKAction() {
-    retypeDelay = typeDelaySpinner.number
-    threadDumpDelay = threadDumpDelaySpinner.number
-    fileCount = fileCountSpinner.number
-    retypeExtension = extensionTextField.text
-    recordScript = recordCheckBox.isSelected
-
-    super.doOKAction()
-  }
-
-  val isRetypeCurrentFile get() = retypeCurrentFile.isSelected
 }

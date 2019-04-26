@@ -37,13 +37,7 @@ public class FontMapper {
 
   static {
     try {
-      Object fontManager = null;
-      try {
-        fontManager = Class.forName("sun.font.FontManagerFactory").getMethod("getInstance").invoke(null);
-      }
-      catch (ClassNotFoundException e) {
-        // expected for JRE 1.6. FontManager.findFont2D method is static there, so leaving fontManager value as null will work
-      }
+      Object fontManager = Class.forName("sun.font.FontManagerFactory").getMethod("getInstance").invoke(null);
       Method findFontMethod = Class.forName("sun.font.FontManager").getMethod("findFont2D", String.class, int.class, int.class);
       for (String logicalFont : logicalFontsToMap) {
         Object font2D = findFontMethod.invoke(fontManager, logicalFont, Font.PLAIN, 0);
@@ -65,7 +59,7 @@ public class FontMapper {
       }
     }
     catch (Throwable e) {
-      LOG.warn("Failed to determine logical to physical font mappings");
+      LOG.warn("Failed to determine logical to physical font mappings", e);
     }
   }
 

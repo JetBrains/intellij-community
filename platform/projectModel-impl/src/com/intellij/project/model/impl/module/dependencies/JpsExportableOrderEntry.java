@@ -29,7 +29,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
  * @author nik
  */
 public abstract class JpsExportableOrderEntry<E extends JpsDependencyElement> extends JpsOrderEntry<E> implements ExportableOrderEntry {
-  public JpsExportableOrderEntry(JpsRootModel rootModel, E dependencyElement) {
+  public JpsExportableOrderEntry(@NotNull JpsRootModel rootModel, @NotNull E dependencyElement) {
     super(rootModel, dependencyElement);
   }
 

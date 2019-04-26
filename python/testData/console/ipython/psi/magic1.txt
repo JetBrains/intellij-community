@@ -1,0 +1,4 @@
+PyFile:magic1.py
+  PyEmptyExpression
+    PsiElement(Py:PERC)('%')
+    PsiElement(Py:IDENTIFIER)('xmode')

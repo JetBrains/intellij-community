@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -57,9 +57,7 @@ public class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem
       return;
     }
 
-    PsiManager psiManager = PsiManager.getInstance(project);
-
-    PsiElement fileOrDir = file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
+    PsiElement fileOrDir = PsiUtilCore.findFileSystemItem(project, file);
     if (fileOrDir != null) {
       renderer.setIcon(fileOrDir.getIcon(0));
     }

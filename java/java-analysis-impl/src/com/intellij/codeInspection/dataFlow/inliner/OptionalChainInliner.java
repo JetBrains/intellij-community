@@ -19,8 +19,9 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
-import static com.intellij.codeInspection.dataFlow.DfaOptionalSupport.GUAVA_OPTIONAL;
+import static com.intellij.codeInspection.util.OptionalUtil.*;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
@@ -44,9 +45,6 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
  * {@code Optional.of(xyz).map(lambda).filter(lambda).flatMap(lambda).orElseGet(lambda)}
  */
 public class OptionalChainInliner implements CallInliner {
-  private static final String OPTIONAL_INT = "java.util.OptionalInt";
-  private static final String OPTIONAL_LONG = "java.util.OptionalLong";
-  private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
 
   private static final CallMatcher OPTIONAL_OR_ELSE = anyOf(
     instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1),
@@ -166,7 +164,7 @@ public class OptionalChainInliner implements CallInliner {
     BiConsumer<CFGBuilder, PsiMethodCallExpression> terminalInliner = TERMINAL_MAPPER.mapFirst(call);
     if (terminalInliner != null) {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), call, NullabilityProblemKind.callNPE)) {
+      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), null)) {
         return false;
       }
       terminalInliner.accept(builder, call);
@@ -174,11 +172,13 @@ public class OptionalChainInliner implements CallInliner {
     }
     DfaValueFactory factFactory = builder.getFactory();
     if (pushIntermediateOperationValue(builder, call)) {
-      builder.ifNotNull()
-        .push(DfaOptionalSupport.getOptionalValue(factFactory, true))
-        .elseBranch()
-        .push(DfaOptionalSupport.getOptionalValue(factFactory, false))
-        .end();
+      DfaVariableValue result = builder.createTempVariable(call.getType());
+      builder
+        .assign(result, builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL)) // stack: ...value opt
+        .push(SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), result)) // stack: ...value opt opt.value
+        .splice(3, 1, 0, 2)
+        .assign()
+        .pop();
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {
@@ -209,8 +209,8 @@ public class OptionalChainInliner implements CallInliner {
     return parameters[0];
   }
 
-  private static <T extends PsiElement> boolean pushOptionalValue(CFGBuilder builder, PsiExpression expression,
-                                                                  T dereferenceContext, NullabilityProblemKind<T> problem) {
+  private static boolean pushOptionalValue(CFGBuilder builder, PsiExpression expression,
+                                           NullabilityProblemKind<? super PsiExpression> problem) {
     PsiType optionalElementType = getOptionalElementType(expression, true);
     if (optionalElementType == null) return false;
     if (expression instanceof PsiMethodCallExpression) {
@@ -224,16 +224,9 @@ public class OptionalChainInliner implements CallInliner {
         return true;
       }
     }
-    DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
     builder
-      .pushExpression(expression)
-      .checkNotNull(dereferenceContext, problem)
-      .push(presentOptional)
-      .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
-      .push(builder.getFactory().createTypeValue(optionalElementType, Nullability.NOT_NULL))
-      .elseBranch()
-      .pushNull()
-      .end()
+      .pushExpression(expression, problem)
+      .unwrap(SpecialField.OPTIONAL_VALUE)
       .assignTo(builder.createTempVariable(optionalElementType));
     return true;
   }
@@ -248,7 +241,7 @@ public class OptionalChainInliner implements CallInliner {
     if (intermediateInliner == null) return false;
     PsiExpression argument = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-    if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), call, NullabilityProblemKind.callNPE)) {
+    if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), null)) {
       return false;
     }
     intermediateInliner.accept(builder, argument);
@@ -264,7 +257,7 @@ public class OptionalChainInliner implements CallInliner {
       PsiExpression lambdaBody = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       if (parameters.length == argCount && lambdaBody != null) {
         StreamEx.ofReversed(parameters).forEach(p -> builder.assignTo(p).pop());
-        if (pushOptionalValue(builder, lambdaBody, lambdaBody, NullabilityProblemKind.nullableFunctionReturn)) {
+        if (pushOptionalValue(builder, lambdaBody, NullabilityProblemKind.nullableFunctionReturn)) {
           return;
         }
         // Restore stack for common invokeFunction
@@ -289,16 +282,17 @@ public class OptionalChainInliner implements CallInliner {
 
   private static void inlineOf(CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
     PsiExpression argument = qualifierCall.getArgumentList().getExpressions()[0];
-    builder
-      .pushExpression(argument)
-      .boxUnbox(argument, optionalElementType);
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
-      builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter)
+      builder
+        .pushExpression(argument, NullabilityProblemKind.passingToNotNullParameter)
+        .boxUnbox(argument, optionalElementType)
         .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
         .pop();
     }
     else {
       builder
+        .pushExpression(argument)
+        .boxUnbox(argument, optionalElementType)
         .dup()
         .ifNull()
           .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false), qualifierCall)

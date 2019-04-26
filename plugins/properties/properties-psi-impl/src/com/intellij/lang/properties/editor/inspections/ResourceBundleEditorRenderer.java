@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor.inspections;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -66,7 +67,7 @@ public class ResourceBundleEditorRenderer extends NodeRenderer {
     return false;
   }
 
-  public interface TextAttributesPresentation extends ItemPresentation {
+  public interface TextAttributesPresentation extends ColoredItemPresentation {
     TextAttributes getTextAttributes(EditorColorsScheme colorsScheme);
   }
 }

@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
  * Determines methods whose calls could block the execution thread.
  * <p>
  * Frameworks could implement this EP to provide such information based on framework-specific heuristics or markers.
- *
- * @since 2018.3
  */
 @ApiStatus.Experimental
 public interface BlockingMethodChecker {

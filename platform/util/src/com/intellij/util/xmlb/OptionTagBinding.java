@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
@@ -53,7 +54,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
     Converter<Object> converter = getConverter();
     if (converter == null) {
       if (myBinding == null) {
-        targetElement.setAttribute(myValueAttribute, XmlSerializerImpl.removeControlChars(XmlSerializerImpl.convertToString(value)));
+        targetElement.setAttribute(myValueAttribute, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
       }
       else if (myBinding instanceof BeanBinding && myValueAttribute.isEmpty()) {
         ((BeanBinding)myBinding).serializeInto(value, targetElement, filter);
@@ -68,7 +69,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
     else {
       String text = converter.toString(value);
       if (text != null) {
-        targetElement.setAttribute(myValueAttribute, XmlSerializerImpl.removeControlChars(text));
+        targetElement.setAttribute(myValueAttribute, JDOMUtil.removeControlChars(text));
       }
     }
     return targetElement;

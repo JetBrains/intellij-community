@@ -1,1 +1,4 @@
+deprecated: mavenLogo.svg -> icons.OpenapiIcons@/icons/repositoryLibraryLogo.svg; to be removed in IDEA 2020 - use OpenapiIcons.RepositoryLibraryLogo
 deprecated: offlineMode.png -> com.intellij.icons.AllIcons@/actions/offlineMode.svg; to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode
+deprecated: phase.png -> icons.ExternalSystemIcons@/icons/task.svg; to be removed in IDEA 2020 - use ExternalSystemIcons.Task
+deprecated: phasesClosed.png -> icons.ExternalSystemIcons@/icons/taskGroup.svg; to be removed in IDEA 2020 - use ExternalSystemIcons.TaskGroup

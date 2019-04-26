@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.openapi.util.Condition;
@@ -32,7 +18,6 @@ import static com.intellij.ui.JBColor.namedColor;
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = namedColor("VersionControl.Log.Commit.currentBranchBackground",
                                                               new JBColor(new Color(228, 250, 255), new Color(63, 71, 73)));
-  private static final String HEAD = "HEAD";
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUi myLogUi;
   @NotNull private final Map<VirtualFile, Boolean> myIsHighlighted = ContainerUtil.newHashMap();
@@ -59,7 +44,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
     String singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
     myIsHighlighted.clear();
-    boolean isHeadFilter = HEAD.equals(singleFilteredBranch);
+    boolean isHeadFilter = VcsLogUtil.HEAD.equals(singleFilteredBranch);
     for (VirtualFile root : dataPack.getLogProviders().keySet()) {
       String currentBranch = dataPack.getLogProviders().get(root).getCurrentBranch(root);
       myIsHighlighted.put(root, !isHeadFilter && currentBranch != null && !(currentBranch.equals(singleFilteredBranch)));

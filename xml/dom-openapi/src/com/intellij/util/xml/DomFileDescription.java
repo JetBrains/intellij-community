@@ -43,6 +43,9 @@ import java.util.*;
  * @see com.intellij.util.xml.MergingFileDescription
  */
 public class DomFileDescription<T> {
+  /**
+   * @deprecated use "com.intellij.dom.fileMetaData" extension instead
+   */
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
   private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
@@ -131,7 +134,9 @@ public class DomFileDescription<T> {
    * described by this description or vice versa, so that the
    * {@link com.intellij.util.xml.DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
    * index is rebuilt correctly.
+   * @deprecated use "domVersion" attribute of "com.intellij.dom.fileMetaData" extension instead
    */
+  @Deprecated
   public int getVersion() {
     return myRootTagName.hashCode();
   }
@@ -266,14 +271,20 @@ public class DomFileDescription<T> {
 
   /**
    * @see Stubbed
-   * @return false
+   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
    */
+  @Deprecated
   public boolean hasStubs() {
     return false;
   }
 
+  /**
+   * @see Stubbed
+   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
+   */
+  @Deprecated
   public int getStubVersion() {
-    return 0;
+    throw new UnsupportedOperationException("define \"stubVersion\" of \"com.intellij.dom.fileMetaData\" extension instead");
   }
 
   @Override

@@ -93,12 +93,7 @@ public class LowMemoryWatcherManager implements Disposable {
 
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = myExecutorService.submit(new Runnable() {
-              @Override
-              public void run() {
-                myJanitor.consume(afterGc);
-              }
-            });
+            mySubmitted = myExecutorService.submit(() -> myJanitor.consume(afterGc));
           }
         }
       }

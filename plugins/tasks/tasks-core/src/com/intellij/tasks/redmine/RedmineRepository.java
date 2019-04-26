@@ -10,7 +10,6 @@ import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -55,7 +54,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
         return "-- from all projects --";
       }
 
-      @Nullable
+      @NotNull
       @Override
       public String getIdentifier() {
         return getName();
@@ -159,7 +158,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
         result = ContainerUtil.append(result, found);
       }
     }
-    return ArrayUtil.toObjectArray(result, Task.class);
+    return result.toArray(Task.EMPTY_ARRAY);
   }
 
   public List<RedmineIssue> fetchIssues(String query, int offset, int limit, boolean withClosed) throws Exception {

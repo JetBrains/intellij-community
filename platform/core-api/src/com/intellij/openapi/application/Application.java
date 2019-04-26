@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -16,21 +16,29 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * Provides access to core application-wide functionality and methods for working with the IDEA
- * thread model. The thread model defines two main types of actions which can access the PSI and other
- * IDEA data structures: read actions (which do not modify the data) and write actions (which modify
- * some data).<p>
+ * Provides access to core application-wide functionality and methods for working with the IDE's
+ * thread model.
+ * <p>
+ * The thread model defines two main types of actions which can access the PSI and other
+ * IDE data structures: read actions (which do not modify the data) and write actions (which modify
+ * some data).
+ * <p>
  * You can call methods requiring read access from the Swing event-dispatch thread without using
  * {@link #runReadAction} method. If you need to invoke such methods from another thread you have to use
  * {@link #runReadAction}. Multiple read actions can run at the same time without locking each other.
  * <p>
  * Write actions can be called only from the Swing thread using {@link #runWriteAction} method.
  * If there are read actions running at this moment {@code runWriteAction} is blocked until they are completed.
+ * <p>
+ * See also <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
+
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
-   * if no write action is currently running, or blocked until the currently running write action completes.
+   * if no write action is currently running, or blocked until the currently running write action completes.<p></p>
+   * <p>
+   * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run.
    */
@@ -39,7 +47,9 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * completes.<p></p>
+   * <p>
+   * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
@@ -49,17 +59,21 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * completes.<p></p>
+   * <p>
+   * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @exception E re-frown from ThrowableComputable
+   * @throws E re-frown from ThrowableComputable
    */
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
+   * immediately if no read actions are currently running, or blocked until all read actions complete.<p></p>
+   * <p>
+   * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run
    */
@@ -68,7 +82,9 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.
+   * or blocked until all read actions and write actions complete.<p></p>
+   * <p>
+   * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
@@ -78,11 +94,13 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.
+   * or blocked until all read actions and write actions complete.<p></p>
+   * <p>
+   * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
-   * @exception E re-frown from ThrowableComputable
+   * @throws E re-frown from ThrowableComputable
    */
   <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
@@ -110,25 +128,29 @@ public interface Application extends ComponentManager {
   void assertIsDispatchThread();
 
   /**
+   * @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead
    * Adds an {@link ApplicationListener}.
    *
    * @param listener the listener to add
    */
+  @Deprecated
   void addApplicationListener(@NotNull ApplicationListener listener);
 
   /**
    * Adds an {@link ApplicationListener}.
    *
    * @param listener the listener to add
-   * @param parent the parent disposable which dispose will trigger this listener removal
+   * @param parent   the parent disposable which dispose will trigger this listener removal
    */
   void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent);
 
   /**
+   * @deprecated Instead, just call {@code Disposer.dispose(disposable);} on disposable you've passed to {@link #addApplicationListener(ApplicationListener, Disposable)}
    * Removes an {@link ApplicationListener}.
    *
    * @param listener the listener to remove
    */
+  @Deprecated
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /**
@@ -142,15 +164,6 @@ public interface Application extends ComponentManager {
   void saveSettings();
 
   /**
-   * Saves application settings.
-   * If `isForce` is `false`, non-roamable component configuration will be saved only if more than 4 minutes have been passed after the last save.
-   * @param isForce Whether to force save non-roamable component configuration.
-   */
-  default void saveSettings(boolean isForce) {
-    saveSettings();
-  }
-
-  /**
    * Exits the application, showing the exit confirmation prompt if it is enabled.
    */
   void exit();
@@ -162,7 +175,7 @@ public interface Application extends ComponentManager {
    * @see #assertWriteAccessAllowed()
    * @see #runWriteAction(Runnable)
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   boolean isWriteAccessAllowed();
 
   /**
@@ -172,7 +185,7 @@ public interface Application extends ComponentManager {
    * @see #assertReadAccessAllowed()
    * @see #runReadAction(Runnable)
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   boolean isReadAccessAllowed();
 
   /**
@@ -180,7 +193,7 @@ public interface Application extends ComponentManager {
    *
    * @return true if the current thread is the Swing dispatch thread, false otherwise.
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   boolean isDispatchThread();
 
   /**
@@ -193,7 +206,7 @@ public interface Application extends ComponentManager {
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread, with {@link ModalityState#defaultModalityState()} modality state. This will happen after all
    * pending AWT events have been processed.<p/>
-   *
+   * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
    *
@@ -206,7 +219,7 @@ public interface Application extends ComponentManager {
    * AWT event dispatching thread - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state
    * (or a state with less modal dialogs open).<p/>
-   *
+   * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
    *
@@ -219,12 +232,12 @@ public interface Application extends ComponentManager {
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
    * state (or a state with less modal dialogs open).
-   *
+   * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
-   * @param state the state in which the runnable will be executed.
+   * @param state    the state in which the runnable will be executed.
    */
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
@@ -233,12 +246,12 @@ public interface Application extends ComponentManager {
    * AWT event dispatching thread, when IDEA is in the specified modality
    * state(or a state with less modal dialogs open) - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed.
-   *
+   * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
-   * @param state the state in which the runnable will be executed.
+   * @param state    the state in which the runnable will be executed.
    * @param expired  condition to check before execution.
    */
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
@@ -251,11 +264,11 @@ public interface Application extends ComponentManager {
    *
    * <p>If current thread is an event dispatch thread then {@code runnable.run()}
    * is executed immediately regardless of the modality state.</p>
-   *
+   * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeAndWait(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
    *
-   * @param runnable the runnable to execute.
+   * @param runnable      the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.
    * @throws ProcessCanceledException when the current thread is interrupted
    */
@@ -267,69 +280,61 @@ public interface Application extends ComponentManager {
   void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException;
 
   /**
-   * Returns current modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
+   * Please use {@link ModalityState#current()} instead.
    *
    * @return the current modality state.
-   * @see ModalityState#current()
    */
   @NotNull
   ModalityState getCurrentModalityState();
 
   /**
-   * Returns the modality state for the dialog to which the specified component belongs.
+   * Please use {@link ModalityState#stateForComponent(Component)} instead.
    *
-   * @param c the component for which the modality state is requested.
-   * @return the modality state.
-   * @see ModalityState#stateForComponent(Component)
+   * @return the modality state for the dialog to which the specified component belongs.
    */
   @NotNull
   ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
-   * When invoked on AWT thread, returns {@link #getCurrentModalityState()} ()}. When invoked in the thread of some modal progress, returns modality state
-   * corresponding to that progress' dialog. Otherwise, returns {@link #getNoneModalityState()}.
+   * Please use {@link ModalityState#defaultModalityState()} instead.
    *
    * @return the modality state for the current thread.
-   * @see ModalityState#defaultModalityState()
    */
   @NotNull
   ModalityState getDefaultModalityState();
 
   /**
-   * Returns the modality state representing the state when no modal dialogs
-   * are active.
+   * Please use {@link ModalityState#NON_MODAL} instead.
    *
    * @return the modality state for no modal dialogs.
-   * @see ModalityState#NON_MODAL
    */
   @NotNull
   ModalityState getNoneModalityState();
 
   /**
-   * Returns modality state which is active anytime. Please don't use it unless absolutely needed for the reasons described in
-   * {@link ModalityState} documentation.
-   * @return modality state
-   * @see ModalityState#any()
+   * Please use {@link ModalityState#any()} instead, and only if you absolutely must, after carefully reading its documentation.
+   *
+   * @return modality state which is always applicable
    */
   @NotNull
   ModalityState getAnyModalityState();
 
   /**
-   * Returns the time of IDEA start, in milliseconds since midnight, January 1, 1970 UTC.
+   * Returns the time of IDE start, in milliseconds since midnight, January 1, 1970 UTC.
    *
-   * @return the IDEA start time.
+   * @return the IDE's start time.
    */
   long getStartTime();
 
   /**
-   * Returns the time in milliseconds during which IDEA received no input events.
+   * Returns the time in milliseconds during which IDE received no input events.
    *
-   * @return the idle time of IDEA.
+   * @return the idle time of IDE.
    */
   long getIdleTime();
 
   /**
-   * Checks if IDEA is currently running unit tests. No UI should be shown when unit
+   * Checks if IDE is currently running unit tests. No UI should be shown when unit
    * tests are being executed.
    *
    * @return true if IDEA is running unit tests, false otherwise
@@ -337,10 +342,10 @@ public interface Application extends ComponentManager {
   boolean isUnitTestMode();
 
   /**
-   * Checks if IDEA is running as a command line applet or in unit test mode.
-   * No UI should be shown when IDEA is running in this mode.
+   * Checks if IDE is running as a command line applet or in unit test mode.
+   * No UI should be shown when IDE is running in this mode.
    *
-   * @return true if IDEA is running in UI-less mode, false otherwise
+   * @return true if IDE is running in UI-less mode, false otherwise
    */
   boolean isHeadlessEnvironment();
 
@@ -349,20 +354,23 @@ public interface Application extends ComponentManager {
   boolean hasUI();
 
   /**
-   * Checks if IDEA is running as a command line applet or in unit test mode.
+   * Checks if IDE is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)
    *
-   * @return true if IDEA is running in command line  mode, false otherwise
+   * @return true if IDE is running in command line  mode, false otherwise
    */
   boolean isCommandLine();
 
   /**
    * Requests pooled thread to execute the action.
-   * This pool is an<ul>
+   * <p>
+   * This pool is an
+   * <ul>
    * <li>Unbounded.</li>
    * <li>Application-wide, always active, non-shutdownable singleton.</li>
    * </ul>
    * You can use this pool for long-running and/or IO-bound tasks.
+   *
    * @param action to be executed
    * @return future result
    */
@@ -371,11 +379,14 @@ public interface Application extends ComponentManager {
 
   /**
    * Requests pooled thread to execute the action.
-   * This pool is<ul>
+   * <p>
+   * This pool is an
+   * <ul>
    * <li>Unbounded.</li>
    * <li>Application-wide, always active, non-shutdownable singleton.</li>
    * </ul>
    * You can use this pool for long-running and/or IO-bound tasks.
+   *
    * @param action to be executed
    * @return future result
    */
@@ -388,29 +399,26 @@ public interface Application extends ComponentManager {
   boolean isDisposeInProgress();
 
   /**
-   * Checks if IDEA is capable of restarting itself on the current platform and with the current execution mode.
+   * Checks if IDE is capable of restarting itself on the current platform and with the current execution mode.
    *
-   * @return true if IDEA can restart itself, false otherwise.
-   * @since 8.1
+   * @return true if IDE can restart itself, false otherwise.
    */
   boolean isRestartCapable();
 
   /**
-   * Exits and restarts IDEA. If the current platform is not restart capable, only exits.
-   *
-   * @since 8.1
+   * Exits and restarts IDE. If the current platform is not restart capable, only exits.
    */
   void restart();
 
   /**
-   * Checks if the application is active
+   * Checks if the application is active.
+   *
    * @return true if one of application windows is focused, false -- otherwise
-   * @since 9.0
    */
   boolean isActive();
 
   /**
-   * Use {@link #runReadAction(Runnable)} instead
+   * @deprecated Use {@link #runReadAction(Runnable)} instead
    */
   @NotNull
   @Deprecated
@@ -418,6 +426,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Returns lock used for write operations, should be closed in finally block
+   *
    * @see #runWriteAction
    * @see WriteAction#run(ThrowableRunnable)
    * @see WriteAction#compute(ThrowableComputable)

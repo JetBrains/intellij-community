@@ -37,6 +37,7 @@ import java.util.Comparator;
 
 public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

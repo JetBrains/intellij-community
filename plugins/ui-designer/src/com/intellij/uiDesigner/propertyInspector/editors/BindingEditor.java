@@ -55,11 +55,9 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       public void actionPerformed(@NotNull final AnActionEvent e) {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance()
-              .requestFocus(getInstance(getInstance(project).getActiveFormEditor())
-                              .getPropertyInspector(), true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance()
+            .requestFocus(getInstance(getInstance(project).getActiveFormEditor())
+                            .getPropertyInspector(), true));
         }
       }
     }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myCbx);

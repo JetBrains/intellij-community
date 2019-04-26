@@ -94,7 +94,7 @@ public class ConversionResultImpl implements ConversionResult {
     }
   }
 
-  private static boolean containsFilesUnderVcs(List<VirtualFile> files, Project project) {
+  private static boolean containsFilesUnderVcs(List<? extends VirtualFile> files, Project project) {
     for (VirtualFile file : files) {
       if (ChangesUtil.getVcsForFile(file, project) != null) {
         return true;
@@ -103,7 +103,7 @@ public class ConversionResultImpl implements ConversionResult {
     return false;
   }
 
-  private static List<VirtualFile> findVirtualFiles(Collection<File> ioFiles) {
+  private static List<VirtualFile> findVirtualFiles(Collection<? extends File> ioFiles) {
     List<VirtualFile> files = new ArrayList<>();
     for (File file : ioFiles) {
       ContainerUtil.addIfNotNull(files, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));

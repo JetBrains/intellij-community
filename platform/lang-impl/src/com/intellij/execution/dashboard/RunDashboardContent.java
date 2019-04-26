@@ -19,9 +19,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.services.ServiceViewTreeLinkMouseListener;
 import com.intellij.execution.ui.RunContentManagerImpl;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -45,10 +44,10 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -60,8 +59,9 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
-import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
+import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
  * @author konstantin.aleev
@@ -69,8 +69,8 @@ import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 public class RunDashboardContent extends JPanel implements TreeContent, Disposable {
   public static final DataKey<RunDashboardContent> KEY = DataKey.create("runDashboardContent");
   @NonNls private static final String PLACE_TOOLBAR = "RunDashboardContent#Toolbar";
-  @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
-  @NonNls private static final String RUN_DASHBOARD_TREE_TOOLBAR = "RunDashboardTreeToolbar";
+  @NonNls static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
+  @NonNls static final String RUN_DASHBOARD_TREE_TOOLBAR = "RunDashboardTreeToolbar";
   @NonNls private static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
   @NonNls private static final String RUN_DASHBOARD_STOP_ACTION_ID = "RunDashboard.Stop";
 
@@ -87,7 +87,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private final RunDashboardTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
-  private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<? extends RunDashboardGrouper> myGroupers;
@@ -113,12 +112,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
-    myTree.setLineStyleAngled();
 
     myTree.setCellRenderer(new RunDashboardTreeCellRenderer());
-    RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
+    ServiceViewTreeLinkMouseListener mouseListener = new ServiceViewTreeLinkMouseListener(myTree);
     mouseListener.installOn(myTree);
     RowsDnDSupport.install(myTree, myTreeModel);
+    UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);
 
     final RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
 
@@ -197,34 +196,34 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         return nodeDescriptor.getValue();
       }
     });
-    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        if (KEY.getName().equals(dataId)) {
-          return RunDashboardContent.this;
-        }
-        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-          return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
-        }
-        Content content = myContentManager.getSelectedContent();
-        if (content != null && content.getComponent() != null) {
-          DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
-          if (dataProvider != null) {
-            return dataProvider.getData(dataId);
-          }
-        }
-        return null;
+    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
+      if (KEY.getName().equals(dataId)) {
+        return this;
       }
+      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
+      }
+      else if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+        return myBuilder.getSelectedElements().toArray();
+      }
+      Content content = myContentManager.getSelectedContent();
+      if (content != null && content.getComponent() != null) {
+        DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
+        if (dataProvider != null) {
+          return dataProvider.getData(dataId);
+        }
+      }
+      return null;
     });
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
         if (myLastSelection instanceof RunDashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
           RunDashboardRunConfigurationNode node = (RunDashboardRunConfigurationNode)myLastSelection;
-          RunDashboardContributor contributor = node.getContributor();
-          if (contributor != null) {
-            return contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
+          for (RunDashboardCustomizer customizer : node.getCustomizers()) {
+            if (customizer.handleDoubleClick(event, node)) {
+              return true;
+            }
           }
         }
         return false;
@@ -255,7 +254,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private void setTreeVisible(boolean visible) {
     myTreePanel.setVisible(visible);
-    myToolbar.setBorder(visible ? null : BorderFactory.createMatteBorder(0, 0, 0, 1, CONTRAST_BORDER_COLOR));
+    myToolbar.setBorder(visible ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
     if (!visible && myContentManager.getContentCount() > 0) {
       showContentPanel();
     }
@@ -325,31 +324,20 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void onContentAdded(Content content) {
-    RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
-    if (descriptor == null) {
-      return;
-    }
-    RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
-    if (!(layoutUi instanceof RunnerLayoutUiImpl)) {
-      return;
-    }
-    RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
-    layoutUiImpl.setLeftToolbarVisible(false);
-    layoutUiImpl.setContentToolbarBefore(false);
-    List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
+    RunnerLayoutUiImpl ui = getRunnerLayoutUi(RunContentManagerImpl.getRunContentDescriptorByContent(content));
+    if (ui == null) return;
+
+    List<AnAction> leftToolbarActions = ui.getActions();
     myContentActions.put(content, leftToolbarActions);
     updateContentToolbar(content);
   }
 
   private void onContentSelectionChanged(Content content) {
-    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, new TreeVisitor<RunDashboardNode>() {
-      @Override
-      public boolean visit(@NotNull RunDashboardNode node) {
-        if (node.getContent() == content) {
-          myBuilder.select(node);
-        }
-        return false;
+    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, (TreeVisitor<RunDashboardNode>)node -> {
+      if (node.getContent() == content) {
+        myBuilder.select(node);
       }
+      return false;
     }));
     showContentPanel();
   }
@@ -393,7 +381,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     };
     myBuilder.initRootNode();
     Disposer.register(this, myBuilder);
-    myAnimator = new RunDashboardAnimatorImpl(myBuilder);
   }
 
   private JComponent createToolbar() {
@@ -421,7 +408,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private JComponent createTreeToolBar() {
     JPanel toolBarPanel = new JPanel(new BorderLayout());
-    toolBarPanel.setBorder( BorderFactory.createMatteBorder(0, 1, 1, 0, CONTRAST_BORDER_COLOR));
+    toolBarPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
 
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
@@ -477,12 +464,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         // Remove nodes not presented in the tree from collapsed node values set.
         // Children retrieving is quick since grouping and run configuration nodes are already constructed.
         Set<Object> nodes = new HashSet<>();
-        myBuilder.accept(AbstractTreeNode.class, new TreeVisitor<AbstractTreeNode>() {
-          @Override
-          public boolean visit(@NotNull AbstractTreeNode node) {
-            nodes.add(node.getValue());
-            return false;
-          }
+        myBuilder.accept(AbstractTreeNode.class, (TreeVisitor<AbstractTreeNode>)node -> {
+          nodes.add(node.getValue());
+          return false;
         });
         myCollapsedTreeNodeValues.retainAll(nodes);
       });
@@ -493,11 +477,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   @NotNull
   public AbstractTreeBuilder getBuilder() {
     return myBuilder;
-  }
-
-  @NotNull
-  public RunDashboardAnimator getAnimator() {
-    return myAnimator;
   }
 
   public float getContentProportion() {

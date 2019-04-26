@@ -29,7 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.EditorComboBox;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -115,12 +115,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             }
         });
         myComboBox = new EditorComboBox(myDocument, project, XPathFileType.XPATH);
-        myComboBox.setRenderer(new ListCellRendererWrapper<HistoryElement>() {
-            @Override
-            public void customize(JList list, HistoryElement value, int index, boolean selected, boolean hasFocus) {
-                setText(value != null ? value.expression : "");
-            }
-        });
+        myComboBox.setRenderer(SimpleListCellRenderer.<HistoryElement>create("", value -> value.expression));
         myComboBox.setModel(myModel);
 
         myComboBox.setEditable(true);

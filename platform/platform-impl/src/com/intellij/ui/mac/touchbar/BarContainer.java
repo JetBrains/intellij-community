@@ -82,7 +82,7 @@ class BarContainer {
   void setComponent(Component component) {
     myMain.setComponent(component);
     if (myKeyMask2Alt != null)
-      myKeyMask2Alt.values().forEach(tb -> { tb.setComponent(component); });
+      myKeyMask2Alt.values().forEach(tb -> tb.setComponent(component));
   }
 
   void setOptionalContextActions(@Nullable ActionGroup actions, @NotNull String contextName) {

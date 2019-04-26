@@ -24,7 +24,6 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -32,25 +31,26 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorPopupHandler;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
+import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
 import static com.intellij.util.containers.ContainerUtil.list;
 
 public class TextDiffViewerUtil {
@@ -79,7 +79,7 @@ public class TextDiffViewerUtil {
     if (settings == null) {
       settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
       context.putUserData(TextDiffSettings.KEY, settings);
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
+      if (isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
         settings.setIgnorePolicy(IgnorePolicy.DEFAULT);
       }
     }
@@ -88,17 +88,21 @@ public class TextDiffViewerUtil {
 
   @NotNull
   public static boolean[] checkForceReadOnly(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
-    int contentCount = request.getContents().size();
+    List<DiffContent> contents = request.getContents();
+    int contentCount = contents.size();
     boolean[] result = new boolean[contentCount];
 
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.FORCE_READ_ONLY, request, context)) {
-      Arrays.fill(result, true);
-      return result;
+    boolean[] data = request.getUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS);
+    if (data != null && data.length != contentCount) {
+      LOG.warn("Invalid FORCE_READ_ONLY_CONTENTS key value: " + request);
+      data = null;
     }
 
-    boolean[] data = request.getUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS);
-    if (data != null && data.length == contentCount) {
-      return data;
+    for (int i = 0; i < contents.size(); i++) {
+      if (isUserDataFlagSet(DiffUserDataKeys.FORCE_READ_ONLY, contents.get(i), request, context) ||
+          data != null && data[i]) {
+        result[i] = true;
+      }
     }
 
     return result;
@@ -107,7 +111,7 @@ public class TextDiffViewerUtil {
   public static void installDocumentListeners(@NotNull DocumentListener listener,
                                               @NotNull List<? extends Document> documents,
                                               @NotNull Disposable disposable) {
-    for (Document document : ContainerUtil.newHashSet(documents)) {
+    for (Document document : new HashSet<>((Collection<? extends Document>)documents)) {
       document.addDocumentListener(listener, disposable);
     }
   }
@@ -157,7 +161,7 @@ public class TextDiffViewerUtil {
     });
 
     if (properties.size() < 2) return true;
-    return ContainerUtil.newHashSet(properties).size() == 1;
+    return new HashSet<>(properties).size() == 1;
   }
 
   //
@@ -270,7 +274,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull HighlightPolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.highlight.policy." + option.name());
+      DiffUsageTriggerCollector.trigger("toggle.highlight.policy", option);
       mySettings.setHighlightPolicy(option);
     }
 
@@ -311,7 +315,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull IgnorePolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.ignore.policy." + option.name());
+      DiffUsageTriggerCollector.trigger("toggle.ignore.policy", option);
       mySettings.setIgnorePolicy(option);
     }
 
@@ -363,7 +367,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings) {
-      super("Collapse unchanged fragments", AllIcons.Actions.Collapseall);
+      super("Collapse Unchanged Fragments", AllIcons.Actions.Collapseall);
       mySettings = settings;
     }
 
@@ -393,7 +397,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ReadOnlyLockAction(@NotNull DiffContext context) {
-      super("Disable editing", null, AllIcons.Nodes.Padlock);
+      super("Disable Editing", null, AllIcons.Diff.Lock);
       myContext = context;
       mySettings = getTextSettings(context);
     }
@@ -440,6 +444,20 @@ public class TextDiffViewerUtil {
     protected abstract void doApply(boolean readOnly);
 
     protected abstract boolean canEdit();
+
+    protected void putEditorHint(@NotNull EditorEx editor, boolean readOnly) {
+      if (readOnly) {
+        EditorModificationUtil.setReadOnlyHint(editor, EditorBundle.message("editing.viewer.hint") + ". <a href=\"\">Enable editing</a>",
+                                               (e) -> {
+                                                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                   setSelected(false);
+                                                 }
+                                               });
+      }
+      else {
+        EditorModificationUtil.setReadOnlyHint(editor, null);
+      }
+    }
   }
 
   public static class EditorReadOnlyLockAction extends ReadOnlyLockAction {
@@ -455,6 +473,7 @@ public class TextDiffViewerUtil {
     protected void doApply(boolean readOnly) {
       for (EditorEx editor : myEditableEditors) {
         editor.setViewer(readOnly);
+        putEditorHint(editor, readOnly);
       }
     }
 
@@ -509,7 +528,7 @@ public class TextDiffViewerUtil {
     }
   }
 
-  public static class EditorActionsPopup extends EditorPopupHandler {
+  public static class EditorActionsPopup {
     @NotNull private final List<? extends AnAction> myEditorPopupActions;
 
     public EditorActionsPopup(@NotNull List<? extends AnAction> editorPopupActions) {
@@ -517,18 +536,12 @@ public class TextDiffViewerUtil {
     }
 
     public void install(@NotNull List<? extends EditorEx> editors) {
+      EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
+        myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)
+      );
       for (EditorEx editor : editors) {
-        editor.addEditorMouseListener(this);
-        editor.setContextMenuGroupId(null); // disabling default context menu
+        editor.installPopupHandler(handler);
       }
-    }
-
-    @Override
-    public void invokePopup(final EditorMouseEvent event) {
-      if (myEditorPopupActions.isEmpty()) return;
-      ActionGroup group = new DefaultActionGroup(myEditorPopupActions);
-      EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);
-      handler.invokePopup(event);
     }
   }
 }

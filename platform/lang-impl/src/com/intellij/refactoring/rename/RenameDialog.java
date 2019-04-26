@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
+import com.intellij.find.FindBundle;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,10 +11,13 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
@@ -21,6 +26,7 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -52,6 +58,8 @@ public class RenameDialog extends RefactoringDialog {
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private final Map<AutomaticRenamerFactory, JCheckBox> myAutoRenamerFactories = new HashMap<>();
   private String myOldName;
+
+  private ScopeChooserCombo myScopeCombo;
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext, Editor editor) {
     super(project, true);
@@ -172,6 +180,12 @@ public class RenameDialog extends RefactoringDialog {
     return myNameSuggestionsField.getEnteredName().trim();
   }
 
+  @NotNull
+  public SearchScope getRefactoringScope() {
+    SearchScope scope = myScopeCombo.getSelectedScope();
+    return scope != null ? scope : GlobalSearchScope.projectScope(myProject);
+  }
+
   public boolean isSearchInComments() {
     return myCbSearchInComments.isSelected();
   }
@@ -220,7 +234,15 @@ public class RenameDialog extends RefactoringDialog {
     panel.add(myNameSuggestionsField.getComponent(), gbConstraints);
 
     createCheckboxes(panel, gbConstraints);
-
+    JComponent scopePanel = createSearchScopePanel();
+    if (scopePanel != null) {
+      gbConstraints.insets = JBUI.insetsBottom(8);
+      gbConstraints.gridx = 0;
+      gbConstraints.gridy = GridBagConstraints.RELATIVE;
+      gbConstraints.gridwidth = 2;
+      gbConstraints.fill = GridBagConstraints.BOTH;
+      panel.add(scopePanel, gbConstraints);
+    }
     return panel;
   }
 
@@ -245,7 +267,7 @@ public class RenameDialog extends RefactoringDialog {
     myCbSearchTextOccurrences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
     myCbSearchTextOccurrences.setSelected(true);
     panel.add(myCbSearchTextOccurrences, gbConstraints);
-    if (!TextOccurrencesUtil.isSearchTextOccurencesEnabled(myPsiElement)) {
+    if (!TextOccurrencesUtil.isSearchTextOccurrencesEnabled(myPsiElement)) {
       myCbSearchTextOccurrences.setEnabled(false);
       myCbSearchTextOccurrences.setSelected(false);
       myCbSearchTextOccurrences.setVisible(false);
@@ -266,6 +288,18 @@ public class RenameDialog extends RefactoringDialog {
         myAutoRenamerFactories.put(factory, checkBox);
       }
     }
+  }
+
+  @Nullable
+  protected JComponent createSearchScopePanel() {
+    JPanel optionsPanel = new JPanel(new BorderLayout());
+    String scope = "Project Files";
+    myScopeCombo = new ScopeChooserCombo(myProject, false, true, scope);
+    Disposer.register(myDisposable, myScopeCombo);
+    optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
+    JComponent separator = SeparatorFactory.createSeparator(FindBundle.message("find.scope.label"), myScopeCombo.getComboBox());
+    optionsPanel.add(separator, BorderLayout.NORTH);
+    return optionsPanel;
   }
 
   @Override
@@ -303,7 +337,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   protected RenameProcessor createRenameProcessor(String newName) {
-    return new RenameProcessor(getProject(), myPsiElement, newName, isSearchInComments(), isSearchInNonJavaFiles());
+    return new RenameProcessor(getProject(), myPsiElement, newName, getRefactoringScope(), isSearchInComments(), isSearchInNonJavaFiles());
   }
 
   @Override

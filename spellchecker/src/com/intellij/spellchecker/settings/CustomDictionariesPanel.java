@@ -91,7 +91,7 @@ public class CustomDictionariesPanel extends JPanel {
     this.add(decorator.createPanel(), BorderLayout.CENTER);
   }
 
-  private void doChooseFiles(@NotNull Project project, @NotNull Consumer<List<VirtualFile>> consumer) {
+  private void doChooseFiles(@NotNull Project project, @NotNull Consumer<? super List<VirtualFile>> consumer) {
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {

@@ -108,9 +108,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
       @Override
       public void focusGained(FocusEvent e) {
         if (!e.isTemporary() && myEditor != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myEditor, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor, true));
         }
       }
 

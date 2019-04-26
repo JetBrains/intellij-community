@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -24,6 +10,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import junit.framework.TestCase;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -61,7 +48,7 @@ public class UpdateableZipTest extends TestCase {
       assertEntryWithContentExists(jbZip, "/second", "second");
 
       JBZipEntry newEntry = jbZip.getOrCreateEntry("/third");
-      newEntry.setData("third".getBytes());
+      newEntry.setData("third".getBytes(StandardCharsets.UTF_8));
     }
 
     try (ZipFile utilZip = new ZipFile(zipFile)) {
@@ -79,7 +66,7 @@ public class UpdateableZipTest extends TestCase {
       assertEntryWithContentExists(jbZip, "/second", "second");
 
       JBZipEntry newEntry = jbZip.getOrCreateEntry("/second");
-      newEntry.setData("Content Replaced".getBytes());
+      newEntry.setData("Content Replaced".getBytes(StandardCharsets.UTF_8));
     }
 
     try (ZipFile utilZip = new ZipFile(zipFile)) {
@@ -179,7 +166,7 @@ public class UpdateableZipTest extends TestCase {
 
   private void createOrReplaceEntryData(JBZipFile jbZip, String name, String data) throws IOException {
     JBZipEntry newEntry = jbZip.getOrCreateEntry(name);
-    newEntry.setData(data.getBytes(CharsetToolkit.UTF8_CHARSET));
+    newEntry.setData(data.getBytes(StandardCharsets.UTF_8));
   }
 
   /*
@@ -207,8 +194,8 @@ public class UpdateableZipTest extends TestCase {
     File zipFile = FileUtil.createTempFile("test", ".zip");
     try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)))) {
 
-      appendEntry(zos, "/first", "first".getBytes());
-      appendEntry(zos, "/second", "second".getBytes());
+      appendEntry(zos, "/first", "first".getBytes(StandardCharsets.UTF_8));
+      appendEntry(zos, "/second", "second".getBytes(StandardCharsets.UTF_8));
     }
     return zipFile;
   }

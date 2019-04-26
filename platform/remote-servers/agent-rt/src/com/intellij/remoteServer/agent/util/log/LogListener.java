@@ -22,10 +22,16 @@ public interface LogListener {
 
   void lineLogged(String line);
 
+  void close();
+
   LogListener NULL = new LogListener() {
 
     public void lineLogged(String line) {
+      //
+    }
 
+    public void close() {
+      //
     }
   };
 }

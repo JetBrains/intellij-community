@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -62,7 +62,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   @Override
   @Nullable
   public PsiJavaDocumentedElement getContainer(final PsiElement context) {
-    if (context == null || !ScratchFileService.isInProjectOrScratch(context)) {
+    if (context == null || !BaseIntentionAction.canModify(context)) {
       return null;
     }
     final PsiFile containingFile = context.getContainingFile();

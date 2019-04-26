@@ -59,7 +59,8 @@ class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<
 
   override fun getSortWeight(): Int = REPOSITORY_SORT_WEIGHT
 
-  override fun compareUserObjects(o2: Repository): Int = getShortRepositoryName(getUserObject()).compareTo(getShortRepositoryName(o2), true)
+  override fun compareUserObjects(o2: Repository): Int =
+    compareFileNames(getShortRepositoryName(getUserObject()), getShortRepositoryName(o2))
 
   override fun getTextPresentation(): String = getShortRepositoryName(getUserObject())
 

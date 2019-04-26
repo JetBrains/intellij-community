@@ -1157,7 +1157,7 @@ public class PsiClassImplUtil {
     final PsiFile original1 = file1.getUserData(PsiFileFactory.ORIGINAL_FILE);
     final PsiFile original2 = file2.getUserData(PsiFileFactory.ORIGINAL_FILE);
     if (original1 == original2 && original1 != null || original1 == file2 || original2 == file1 || file1 == file2) {
-      return compareClassSeqNumber(aClass, (PsiClass)another);
+      return true;
     }
 
     final FileIndexFacade fileIndex = ServiceManager.getService(file1.getProject(), FileIndexFacade.class);
@@ -1177,28 +1177,6 @@ public class PsiClassImplUtil {
       throw new IllegalStateException("No containing file for " + aClass.getLanguage() + " " + aClass.getClass());
     }
     return file.getOriginalFile();
-  }
-
-  private static boolean compareClassSeqNumber(@NotNull PsiClass aClass, @NotNull PsiClass another) {
-    // there may be several classes in one file, they must not be equal
-    int index1 = getSeqNumber(aClass);
-    if (index1 == -1) return true;
-    int index2 = getSeqNumber(another);
-    return index1 == index2;
-  }
-
-  private static int getSeqNumber(@NotNull PsiClass aClass) {
-    // sequence number of this class among its parent' child classes named the same
-    PsiElement parent = aClass.getParent();
-    if (parent == null) return -1;
-    int seqNo = 0;
-    for (PsiElement child : parent.getChildren()) {
-      if (child == aClass) return seqNo;
-      if (child instanceof PsiClass && Comparing.strEqual(aClass.getName(), ((PsiClass)child).getName())) {
-        seqNo++;
-      }
-    }
-    return -1;
   }
 
   public static boolean isFieldEquivalentTo(@NotNull PsiField field, PsiElement another) {

@@ -13,6 +13,7 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTy
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY;
 
 public interface TokenSets {
 
@@ -147,7 +148,8 @@ public interface TokenSets {
 
   TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT, GROOVY_DOC_COMMENT);
 
-  TokenSet STRING_LITERAL_SET = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL));
+  TokenSet STRING_LITERAL_SET =
+    TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL));
 
   TokenSet LEFT_BRACES = TokenSet.create(mLBRACK, mLPAREN, mLCURLY);
   TokenSet RIGHT_BRACES = TokenSet.create(mRBRACK, mRPAREN, mRCURLY);
@@ -194,20 +196,21 @@ public interface TokenSets {
 
   TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT);
 
-  TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, ENUM_BODY, CLASS_BODY);
+  TokenSet BLOCK_SET =
+    TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY);
 
-  TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
+  TokenSet METHOD_DEFS = TokenSet.create(METHOD, CONSTRUCTOR, ANNOTATION_METHOD);
 
   TokenSet VARIABLES = TokenSet.create(VARIABLE, FIELD);
 
   TokenSet TYPE_ELEMENTS = TokenSet.create(CLASS_TYPE_ELEMENT, ARRAY_TYPE, BUILT_IN_TYPE, TYPE_ARGUMENT, DISJUNCTION_TYPE_ELEMENT);
 
   TokenSet TYPE_DEFINITIONS = TokenSet.create(
-    CLASS_DEFINITION,
-    ENUM_DEFINITION,
-    INTERFACE_DEFINITION,
-    ANNOTATION_DEFINITION,
-    TRAIT_DEFINITION
+    CLASS_TYPE_DEFINITION,
+    ENUM_TYPE_DEFINITION,
+    INTERFACE_TYPE_DEFINITION,
+    ANNOTATION_TYPE_DEFINITION,
+    TRAIT_TYPE_DEFINITION
   );
 
   TokenSet METHOD_IDENTIFIERS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mIDENT));

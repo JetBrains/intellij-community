@@ -53,11 +53,13 @@ private fun run(laf: LookAndFeel) {
 //          val panel = visualPaddingsPanelOnlyTextField()
 //          val panel = visualPaddingsPanelOnlyLabeledScrollPane()
 //          val panel = labelRowShouldNotGrow()
-          val panel = spannedCheckbox()
+//          val panel = titledRow()
+//          val panel = titledRows()
 //          val panel = alignFieldsInTheNestedGrid()
 //          val panel = visualPaddingsPanel()
 //          val panel = withVerticalButtons()
 //    val panel = createLafTestPanel()
+    val panel = checkBoxFollowedBySpinner()
 
     val dialog = dialog(
       title = "",

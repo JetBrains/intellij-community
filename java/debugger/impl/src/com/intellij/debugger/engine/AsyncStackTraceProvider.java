@@ -3,6 +3,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -14,5 +15,5 @@ public interface AsyncStackTraceProvider {
   ExtensionPointName<AsyncStackTraceProvider> EP = ExtensionPointName.create("com.intellij.debugger.asyncStackTraceProvider");
 
   @Nullable
-  List<StackFrameItem> getAsyncStackTrace(JavaStackFrame stackFrame, SuspendContextImpl suspendContext);
+  List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext);
 }

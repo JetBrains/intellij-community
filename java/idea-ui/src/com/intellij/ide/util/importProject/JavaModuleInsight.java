@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -276,9 +276,8 @@ public class JavaModuleInsight extends ModuleInsight {
     @Override
     public void visitRequiresStatement(PsiRequiresStatement statement) {
       super.visitRequiresStatement(statement);
-      PsiJavaModuleReferenceElement referenceElement = statement.getReferenceElement();
-      if (referenceElement != null) {
-        String referenceText = referenceElement.getReferenceText();
+      String referenceText = statement.getModuleName();
+      if (referenceText != null) {
         myInfo.requiresModules.add(referenceText);
       }
     }

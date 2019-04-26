@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.codeInsight;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
@@ -27,8 +12,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -58,26 +41,15 @@ import java.util.regex.Pattern;
 /**
  * @author Vladislav.Soroka
  */
-public class UseDistributionWithSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements
+public final class UseDistributionWithSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements
                                                                                                                           DumbAware {
   public static final Pattern GRADLE_SRC_DISTRIBUTION_PATTERN;
   private static final Logger LOG = Logger.getInstance(UseDistributionWithSourcesNotificationProvider.class);
   private static final Key<EditorNotificationPanel> KEY = Key.create("gradle.notifications.use.distribution.with.sources");
   private static final String ALL_ZIP_DISTRIBUTION_URI_SUFFIX = "-all.zip";
-  private final Project myProject;
 
   static {
     GRADLE_SRC_DISTRIBUTION_PATTERN = Pattern.compile("https?\\\\?://services\\.gradle\\.org.*" + ALL_ZIP_DISTRIBUTION_URI_SUFFIX);
-  }
-
-  public UseDistributionWithSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
-    myProject = project;
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        notifications.updateAllNotifications();
-      }
-    });
   }
 
   @NotNull
@@ -87,12 +59,12 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     try {
       if (GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getName()) ||
           GradleConstants.SETTINGS_FILE_NAME.equals(file.getName())) {
 
-        final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
+        final Module module = ModuleUtilCore.findModuleForFile(file, project);
         if (module == null) return null;
         final String rootProjectPath = getRootProjectPath(module);
         if (rootProjectPath == null) return null;

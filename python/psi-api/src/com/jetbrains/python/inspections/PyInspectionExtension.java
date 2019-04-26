@@ -44,8 +44,22 @@ public abstract class PyInspectionExtension {
     return null;
   }
 
+  /**
+   * @deprecated Use {@link PyInspectionExtension#ignoreMethodParameters(PyFunction, TypeEvalContext)} instead.
+   * This method will be removed in 2019.2.
+   */
+  @Deprecated
   public boolean ignoreMethodParameters(@NotNull PyFunction function) {
     return false;
+  }
+
+  /**
+   * @param function function that is inspecting in {@link com.jetbrains.python.inspections.PyMethodParametersInspection}
+   * @param context  type evaluation context
+   * @return true if the passed function could be ignored
+   */
+  public boolean ignoreMethodParameters(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return ignoreMethodParameters(function);
   }
 
   public boolean ignorePackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
@@ -87,6 +101,26 @@ public abstract class PyInspectionExtension {
   }
 
   public boolean ignoreInitNewSignatures(@NotNull PyFunction original, @NotNull PyFunction complementary) {
+    return false;
+  }
+
+  /**
+   * Checks whether statement that probably has no effect should not be treated as violation.
+   *
+   * @param expressionStatement statement being analyzed
+   * @return true if no effect statement should be ignored
+   */
+  public boolean ignoreNoEffectStatement(@NotNull PyExpressionStatement expressionStatement) {
+    return false;
+  }
+
+  /**
+   * Checks whether statement with trailing semicolon should not be treated as violation.
+   *
+   * @param statement statement being analyzed
+   * @return true if trailing semicolon should be ignored
+   */
+  public boolean ignoreTrailingSemicolon(@NotNull PyStatement statement) {
     return false;
   }
 }

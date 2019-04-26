@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -43,7 +42,6 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
-import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -414,11 +412,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
       nestedRange.push(elementRange);
       nestedInfos.push(infosForThisRange);
-      if (parent == null || !Comparing.equal(elementRange, parent.getTextRange())) {
+      if (parent == null || !hasSameRangeAsParent(parent, element)) {
         myHighlightInfoProcessor.allHighlightsForRangeAreProduced(myHighlightingSession, elementRange, infosForThisRange);
       }
     }
     advanceProgress(elements.size() - (nextLimit-chunkSize));
+  }
+
+  private static boolean hasSameRangeAsParent(PsiElement parent, PsiElement element) {
+    return element.getStartOffsetInParent() == 0 && element.getTextLength() == parent.getTextLength();
   }
 
   private static final int POST_UPDATE_ALL = 5;
@@ -484,16 +486,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))
       );
       String description = joiner.toString();
-      String tooltip = XmlStringUtil.escapeString(StringUtil.shortenPathWithEllipsis(description, 1024)).replace("\n", "<br>");
 
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
-      addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributes, description, tooltip, textRange);
+      addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributes, description, textRange);
       if (!additionalRanges.isEmpty()) {
         TextAttributes attributesForAdditionalLines = attributes.clone();
         attributesForAdditionalLines.setErrorStripeColor(null);
         for (TextRange range: additionalRanges) {
-          addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributesForAdditionalLines, description,
-                      tooltip, range);
+          addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributesForAdditionalLines, description, range);
         }
       }
     }
@@ -505,13 +505,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                   @NotNull Collection<? super HighlightInfo> insideResult,
                                   @NotNull Collection<? super HighlightInfo> outsideResult,
                                   @NotNull TextAttributes attributes,
-                                  @NotNull String description, @NotNull String tooltip, @NotNull TextRange range) {
+                                  @NotNull String description, @NotNull TextRange range) {
     if (range.getStartOffset() >= restrictEndOffset || range.getEndOffset() <= restrictStartOffset) return;
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO)
                                       .range(range)
                                       .textAttributes(attributes)
                                       .description(description)
-                                      .escapedToolTip(tooltip)
                                       .createUnconditionally();
     Collection<? super HighlightInfo> result = priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult;
     result.add(info);

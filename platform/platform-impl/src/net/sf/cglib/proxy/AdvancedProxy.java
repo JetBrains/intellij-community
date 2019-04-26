@@ -182,10 +182,9 @@ public class AdvancedProxy {
 
       final ProxyDescription that = (ProxyDescription)o;
 
-      if (!Arrays.equals(myInterfaces, that.myInterfaces)) return false;
       if (mySuperClass != null ? !mySuperClass.equals(that.mySuperClass) : that.mySuperClass != null) return false;
 
-      return true;
+      return Arrays.equals(myInterfaces, that.myInterfaces);
     }
 
     @Override

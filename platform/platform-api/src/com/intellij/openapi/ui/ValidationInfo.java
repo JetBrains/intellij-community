@@ -68,6 +68,11 @@ public final class ValidationInfo {
     return this;
   }
 
+  public ValidationInfo forComponent(@Nullable JComponent component) {
+    ValidationInfo result = new ValidationInfo(message, component);
+    return warning ? result.asWarning() : result;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

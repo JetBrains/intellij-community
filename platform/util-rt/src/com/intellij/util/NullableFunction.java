@@ -31,5 +31,10 @@ public interface NullableFunction<Param, Result> extends Function<Param, Result>
     public Object fun(final Object o) {
       return null;
     }
+
+    @Override
+    public String toString() {
+      return "NullableFunction.NULL";
+    }
   };
 }

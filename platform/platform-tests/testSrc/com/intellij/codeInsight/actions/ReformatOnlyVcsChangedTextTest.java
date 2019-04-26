@@ -112,7 +112,11 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
       LanguageImportStatements.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer);
 
       TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       myRealChangeListManager = null;
       myRealCodeStyleManger = null;
       myRealVcsContextFactory = null;

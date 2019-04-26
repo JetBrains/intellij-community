@@ -223,7 +223,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testSymlinkDeletion() {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "lnk_del_test_1");
     IoTestUtil.createTestFile(targetDir, "file");
@@ -255,7 +255,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testToCanonicalPathSymLinksAware() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File rootDir = IoTestUtil.createTestDir(myTempDirectory, "root");
     assertTrue(new File(rootDir, "dir1/dir2/dir3/dir4").mkdirs());

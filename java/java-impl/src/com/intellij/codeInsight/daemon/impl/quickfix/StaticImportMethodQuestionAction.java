@@ -50,10 +50,10 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
   private final List<? extends T> myCandidates;
   private final SmartPsiElementPointer<? extends PsiElement> myRef;
 
-  public StaticImportMethodQuestionAction(Project project,
-                                          Editor editor,
-                                          List<? extends T> candidates,
-                                          SmartPsiElementPointer<? extends PsiElement> ref) {
+  StaticImportMethodQuestionAction(@NotNull Project project,
+                                   Editor editor,
+                                   @NotNull List<? extends T> candidates,
+                                   @NotNull SmartPsiElementPointer<? extends PsiElement> ref) {
     myProject = project;
     myEditor = editor;
     myCandidates = candidates;
@@ -98,7 +98,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass()));
   }
 
-  private void chooseAndImport(final Editor editor, final Project project) {
+  private void chooseAndImport(@NotNull Editor editor, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       doImport(myCandidates.get(0));
       return;
@@ -131,7 +131,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
             });
           }
 
-          return AddImportAction.getExcludesStep(PsiUtil.getMemberQualifiedName(selectedValue), project);
+          return AddImportAction.getExcludesStep(project, PsiUtil.getMemberQualifiedName(selectedValue));
         }
 
         @Override

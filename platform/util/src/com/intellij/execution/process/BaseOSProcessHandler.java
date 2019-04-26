@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
@@ -84,23 +83,20 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
           @SuppressWarnings("deprecation") final BaseDataReader stdOutReader = createOutputDataReader(options.policy());
           @SuppressWarnings("deprecation") final BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader(options.policy()) : null;
 
-          myWaitFor.setTerminationCallback(new Consumer<Integer>() {
-            @Override
-            public void consume(Integer exitCode) {
-              try {
-                // tell readers that no more attempts to read process' output should be made
-                if (stdErrReader != null) stdErrReader.stop();
-                stdOutReader.stop();
+          myWaitFor.setTerminationCallback(exitCode -> {
+            try {
+              // tell readers that no more attempts to read process' output should be made
+              if (stdErrReader != null) stdErrReader.stop();
+              stdOutReader.stop();
 
-                try {
-                  if (stdErrReader != null) stdErrReader.waitFor();
-                  stdOutReader.waitFor();
-                }
-                catch (InterruptedException ignore) { }
+              try {
+                if (stdErrReader != null) stdErrReader.waitFor();
+                stdOutReader.waitFor();
               }
-              finally {
-                onOSProcessTerminated(exitCode);
-              }
+              catch (InterruptedException ignore) { }
+            }
+            finally {
+              onOSProcessTerminated(exitCode);
             }
           });
         }

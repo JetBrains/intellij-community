@@ -279,8 +279,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return (archiveFile != null && index.getContentRootForFile(archiveFile, false) != null) ||
            index.getContentRootForFile(file, false) != null ||
-           index.isInLibraryClasses(file) ||
-           index.isInLibrarySource(file) ||
+           index.isInLibrary(file) ||
            Comparing.equal(file.getParent(), project.getBaseDir()) ||
            ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(file);
   }

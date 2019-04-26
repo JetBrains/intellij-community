@@ -43,7 +43,7 @@ public class TopAnomaliesAction extends ActionGroup {
   private static final int LIMIT = 10;
 
   private static final ResettableAction TOP_PARENTS = new ResettableAction("Parents") {
-    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
+    final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
     TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
@@ -91,7 +91,7 @@ public class TopAnomaliesAction extends ActionGroup {
   };
 
   private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction("ClientProperties") {
-    TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
+    final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
     TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override

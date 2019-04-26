@@ -197,7 +197,7 @@ public class XmlParsingTest extends ParsingTestCase {
       lexer.advance();
       count++;
     }
-    System.out.println("Plain lexing took " + (System.currentTimeMillis() - time) + "ms lexems count:" + count);
+    LOG.debug("Plain lexing took " + (System.currentTimeMillis() - time) + "ms lexems count:" + count);
   }
 
   private static void transformAllChildren(final ASTNode file) {
@@ -211,7 +211,7 @@ public class XmlParsingTest extends ParsingTestCase {
     long time = System.currentTimeMillis();
     final PsiFile file = createFile("test.xml", text);
     transformAllChildren(file.getNode());
-    System.out.println("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
+    LOG.debug("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
     int index = 0;
     while (index++ < 10) {
       newParsing(text);
@@ -222,7 +222,7 @@ public class XmlParsingTest extends ParsingTestCase {
       index++;
     }
     while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
-    System.out.println("For " + index + " lexems");
+    LOG.debug("For " + index + " lexems");
   }
 
   public void _testReparsePerformance() throws Exception {
@@ -240,7 +240,7 @@ public class XmlParsingTest extends ParsingTestCase {
           final long tm = System.currentTimeMillis();
           doc.insertString(0, "<additional root=\"tag\"/>");
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          System.out.println("Reparsed for: " + (System.currentTimeMillis() - tm));
+          LOG.debug("Reparsed for: " + (System.currentTimeMillis() - tm));
         }
       }).useLegacyScaling().assertTiming());
   }
@@ -250,7 +250,7 @@ public class XmlParsingTest extends ParsingTestCase {
     long time = System.currentTimeMillis();
     final PsiFile file = createFile("test.xml", text);
     transformAllChildren(file.getNode());
-    System.out.println("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
+    LOG.debug("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
     int index = 0;
     while (index++ < 10) {
       newParsing(text);
@@ -261,7 +261,7 @@ public class XmlParsingTest extends ParsingTestCase {
       index++;
     }
     while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
-    System.out.println("For " + index + " lexems");
+    LOG.debug("For " + index + " lexems");
   }
 
   private static void newParsing(final String text) {
@@ -269,7 +269,7 @@ public class XmlParsingTest extends ParsingTestCase {
 
     ASTFactory.lazy(XmlElementType.XML_FILE, text).getFirstChildNode(); // ensure parsed
 
-    System.out.println("parsed for " + (System.currentTimeMillis() - time) + "ms");
+    LOG.debug("parsed for " + (System.currentTimeMillis() - time) + "ms");
   }
 
   public void testXmlDecl() throws Exception {

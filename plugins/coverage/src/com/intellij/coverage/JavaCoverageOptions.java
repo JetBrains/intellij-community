@@ -1,36 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class JavaCoverageOptions extends CoverageOptions {
-
+class JavaCoverageOptions extends CoverageOptions {
   private final JavaCoverageOptionsProvider myCoverageOptionsProvider;
   private JavaCoverageOptionsEditor myEditor;
 
-  public JavaCoverageOptions(JavaCoverageOptionsProvider coverageOptionsProvider) {
-    myCoverageOptionsProvider = coverageOptionsProvider;
+  JavaCoverageOptions(@NotNull Project project) {
+    myCoverageOptionsProvider = JavaCoverageOptionsProvider.getInstance(project);
   }
 
   @Override
-  public JComponent getComponent() {
+  public JComponent createComponent() {
     myEditor = new JavaCoverageOptionsEditor();
     return myEditor.getComponent();
   }
@@ -54,7 +41,7 @@ public class JavaCoverageOptions extends CoverageOptions {
   public void disposeUIResources() {
     myEditor = null;
   }
-  
+
   private static class JavaCoverageOptionsEditor {
 
     private final JPanel myPanel = new JPanel(new VerticalFlowLayout());

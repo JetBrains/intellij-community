@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalcu
 class ReferenceExpressionTypeCalculator : GrTypeCalculator<GrReferenceExpression> {
 
   override fun getType(expression: GrReferenceExpression): PsiType? {
-    val resolved = expression.resolve()
+    val resolved = expression.rValueReference?.resolve()
     for (calculator in GrExpressionTypeCalculator.EP_NAME.extensions) {
       val type = calculator.calculateType(expression, resolved)
       if (type != null) return type

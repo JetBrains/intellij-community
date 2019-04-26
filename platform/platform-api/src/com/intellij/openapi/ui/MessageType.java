@@ -27,19 +27,19 @@ import java.awt.*;
 public class MessageType {
 
   public static final MessageType ERROR = new MessageType(AllIcons.General.NotificationError,
-                                                          JBColor.namedColor("Notification.ToolWindowError.background", new JBColor(0xffcccc, 0x704745)),
-                                                          JBColor.namedColor("Notification.ToolWindowError.foreground", UIUtil.getToolTipForeground()),
-                                                          JBColor.namedColor("Notification.ToolWindowError.borderColor", new JBColor(0xd69696, 0x998a8a)));
+                                                          JBColor.namedColor("Notification.ToolWindow.errorBackground", new JBColor(0xffcccc, 0x704745)),
+                                                          JBColor.namedColor("Notification.ToolWindow.errorForeground", UIUtil.getToolTipForeground()),
+                                                          JBColor.namedColor("Notification.ToolWindow.errorBorderColor", new JBColor(0xd69696, 0x998a8a)));
 
   public static final MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
-                                                         JBColor.namedColor("Notification.ToolWindowInfo.background", new JBColor(0xbaeeba, 0x33412E)),
-                                                         JBColor.namedColor("Notification.ToolWindowInfo.foreground", UIUtil.getToolTipForeground()),
-                                                         JBColor.namedColor("Notification.ToolWindowInfo.borderColor", new JBColor(0xa0bf9d, 0x85997a)));
+                                                         JBColor.namedColor("Notification.ToolWindow.informativeBackground", new JBColor(0xbaeeba, 0x33412E)),
+                                                         JBColor.namedColor("Notification.ToolWindow.informativeForeground", UIUtil.getToolTipForeground()),
+                                                         JBColor.namedColor("Notification.ToolWindow.informativeBorderColor", new JBColor(0xa0bf9d, 0x85997a)));
 
   public static final MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
-                                                            JBColor.namedColor("Notification.ToolWindowWarning.background", new JBColor(0xf9f78e, 0x5a5221)),
-                                                            JBColor.namedColor("Notification.ToolWindowWarning.foreground", UIUtil.getToolTipForeground()),
-                                                            JBColor.namedColor("Notification.ToolWindowWarning.borderColor", new JBColor(0xbab824, 0xa69f63)));
+                                                            JBColor.namedColor("Notification.ToolWindow.warningBackground", new JBColor(0xf9f78e, 0x5a5221)),
+                                                            JBColor.namedColor("Notification.ToolWindow.warningForeground", UIUtil.getToolTipForeground()),
+                                                            JBColor.namedColor("Notification.ToolWindow.warningBorderColor", new JBColor(0xbab824, 0xa69f63)));
 
   private final Icon myDefaultIcon;
   private final Color myPopupBackground;

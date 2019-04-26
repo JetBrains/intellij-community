@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -38,8 +39,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class MavenTestCase extends UsefulTestCase {
@@ -102,26 +104,25 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      MavenServerManager.getInstance().shutdown(true);
-      MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
-      myProject = null;
-      EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures());
-
-      MavenIndicesManager.getInstance().clear();
-    }
-    finally {
-      super.tearDown();
-      FileUtil.delete(myDir);
-      // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
-      // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
-      if (myDir.exists()) {
-        System.err.println("Cannot delete " + myDir);
-        //printDirectoryContent(myDir);
-        myDir.deleteOnExit();
-      }
-      resetClassFields(getClass());
-    }
+    new RunAll(
+      () -> MavenServerManager.getInstance().shutdown(true),
+      () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
+      () -> myProject = null,
+      () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
+      () -> MavenIndicesManager.getInstance().clear(),
+      () -> super.tearDown(),
+      () -> {
+        FileUtil.delete(myDir);
+        // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
+        // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
+        if (myDir.exists()) {
+          System.err.println("Cannot delete " + myDir);
+          //printDirectoryContent(myDir);
+          myDir.deleteOnExit();
+        }
+      },
+      () -> resetClassFields(getClass())
+    ).run();
   }
 
   private void ensureTempDirCreated() throws IOException {
@@ -478,10 +479,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     try {
       WriteAction.runAndWait(() -> {
         if (advanceStamps) {
-          file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 4000);
+          file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8), -1, file.getTimeStamp() + 4000);
         }
         else {
-          file.setBinaryContent(content.getBytes(), file.getModificationStamp(), file.getTimeStamp());
+          file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8), file.getModificationStamp(), file.getTimeStamp());
         }
       });
     }

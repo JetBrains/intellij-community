@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Irina.Chernushina on 4/22/2015.
  */
 public interface SchemeFactory<T extends Scheme> {
+  @NotNull
   T createNewScheme(@Nullable String name);
 }

@@ -28,7 +28,8 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class XsltIncludeIndex {
 
@@ -74,7 +75,7 @@ public class XsltIncludeIndex {
 
   private static boolean _process(VirtualFile[] files, Project project, Processor<? super XmlFile> processor) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, (NullableFunction<VirtualFile, PsiFile>)file -> psiManager.findFile(file));
+    final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFile>)file -> psiManager.findFile(file));
     for (final PsiFile psiFile : psiFiles) {
       if (XsltSupport.isXsltFile(psiFile)) {
         if (!processor.process((XmlFile)psiFile)) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -28,15 +14,16 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
@@ -51,6 +38,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -160,6 +148,7 @@ public class PythonTask {
 
   /**
    * Runs command using env vars from facet
+   *
    * @param consoleView console view to be used for command or null to create new
    * @throws ExecutionException failed to execute command
    */
@@ -246,8 +235,8 @@ public class PythonTask {
    */
   public void run(@Nullable final Map<String, String> env, @Nullable final ConsoleView consoleView) throws ExecutionException {
     final ProcessHandler process = createProcess(env);
-    stopProcessWhenAppClosed(process);
     final Project project = myModule.getProject();
+    stopProcessWhenAppClosed(process, project);
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
       .withConsole(consoleView)
@@ -277,47 +266,60 @@ public class PythonTask {
    * Adds process listener that kills process on application shutdown.
    * Listener is removed from process stopped to prevent leak
    */
-  private void stopProcessWhenAppClosed(@NotNull final ProcessHandler process) {
-
-    final ApplicationListener processStopper = new ApplicationAdapter() {
-      @Override
-      public void applicationExiting() {
-        super.applicationExiting();
-        process.destroyProcess();
-      }
-    };
-
-    final Application app = ApplicationManager.getApplication();
+  private void stopProcessWhenAppClosed(@NotNull final ProcessHandler process, @NotNull Project project) {
+    final Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myModule, disposable);
     process.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
-        super.processTerminated(event);
-        app.removeApplicationListener(processStopper);
+        Disposer.dispose(disposable);
       }
     }, myModule);
-    app.addApplicationListener(processStopper);
+    project.getMessageBus().connect(disposable).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appWillBeClosed(boolean isRestart) {
+        process.destroyProcess();
+      }
+    });
   }
-
 
   /**
    * Runs task with out console
+   *
    * @return stdout
    * @throws ExecutionException in case of error. Consider using {@link com.intellij.execution.util.ExecutionErrorDialog}
    */
   @NotNull
   public final String runNoConsole() throws ExecutionException {
-
-    final ProcessHandler process = createProcess(new HashMap<>());
-    final OutputListener listener = new OutputListener();
-    process.addProcessListener(listener);
-    process.startNotify();
-    process.waitFor(TIMEOUT_TO_WAIT_FOR_TASK);
-    final Output output = listener.getOutput();
+    final ProgressManager manager = ProgressManager.getInstance();
+    final Output output;
+    if (SwingUtilities.isEventDispatchThread()) {
+      output = manager.runProcessWithProgressSynchronously(new ThrowableComputable<Output, ExecutionException>() {
+        @Override
+        public Output compute() throws ExecutionException {
+          return getOutputInternal();
+        }
+      }, myRunTabTitle, false, myModule.getProject());
+    }
+    else {
+      output = getOutputInternal();
+    }
     final int exitCode = output.getExitCode();
     if (exitCode == 0) {
       return output.getStdout();
     }
     throw new ExecutionException(String.format("Error on python side. " +
                                                "Exit code: %s, err: %s out: %s", exitCode, output.getStderr(), output.getStdout()));
+  }
+
+  @NotNull
+  private Output getOutputInternal() throws ExecutionException {
+    assert !SwingUtilities.isEventDispatchThread();
+    final ProcessHandler process = createProcess(new HashMap<>());
+    final OutputListener listener = new OutputListener();
+    process.addProcessListener(listener);
+    process.startNotify();
+    process.waitFor(TIMEOUT_TO_WAIT_FOR_TASK);
+    return listener.getOutput();
   }
 }

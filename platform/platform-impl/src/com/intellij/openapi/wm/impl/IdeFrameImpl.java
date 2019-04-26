@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,13 +17,13 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -39,10 +38,13 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -53,9 +55,7 @@ import org.jetbrains.io.PowerSupplyKit;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
+import java.awt.event.*;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -67,6 +67,7 @@ import java.util.Set;
 public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
+  public static final String NORMAL_STATE_BOUNDS = "normalBounds";
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   private static boolean ourUpdatingTitle;
@@ -82,8 +83,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private IdeFrameDecorator myFrameDecorator;
   private boolean myRestoreFullScreen;
   private final LafManagerListener myLafListener;
+  private final ComponentListener resizedListener;
 
-  public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
+  public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
 
     myRootPane = createRootPane(actionManager, dataManager);
@@ -92,11 +94,23 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
     AppUIUtil.updateWindowIcon(this);
 
+    resizedListener = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        if (getExtendedState() == Frame.NORMAL) {
+          getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
+        }
+      }
+    };
+
+    myRootPane.addComponentListener(resizedListener);
+
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
     size.height= Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
+    setMinimumSize(new Dimension(340, getMinimumSize().height));
 
     if (Registry.is("suppress.focus.stealing") &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
@@ -215,7 +229,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     PowerSupplyKit.checkPowerSupply();
   }
 
-  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
+  @NotNull
+  private IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
     return new IdeRootPane(actionManager, dataManager, this);
   }
 
@@ -254,29 +269,30 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     super.setMaximizedBounds(null);
   }
 
+  @Override
+  public void setExtendedState(int state) {
+    if (getExtendedState() == Frame.NORMAL && (state & Frame.MAXIMIZED_BOTH) != 0) {
+      getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
+    }
+    super.setExtendedState(state);
+  }
+
   private void setupCloseAction() {
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    addWindowListener(
-      new WindowAdapter() {
-        @Override
-        public void windowClosing(@NotNull final WindowEvent e) {
-          if (isTemporaryDisposed())
-            return;
+    CloseProjectWindowHelper helper = new CloseProjectWindowHelper();
+    addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(@NotNull final WindowEvent e) {
+        if (isTemporaryDisposed() || LaterInvocator.isInModalContext()) {
+          return;
+        }
 
-          final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-          if (openProjects.length > 1 || openProjects.length == 1 && SystemInfo.isMacSystemMenu) {
-            if (myProject != null && myProject.isOpen()) {
-              ProjectUtil.closeAndDispose(myProject);
-            }
-            ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
-            WelcomeFrame.showIfNoProjectOpened();
-          }
-          else {
-            ApplicationManagerEx.getApplicationEx().exit();
-          }
+        Application app = ApplicationManager.getApplication();
+        if (app != null && (!app.isDisposeInProgress() && !app.isDisposed())) {
+          helper.windowClosing(myProject);
         }
       }
-    );
+    });
   }
 
   @Override
@@ -327,16 +343,20 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     try {
       ourUpdatingTitle = true;
 
+      if(IdeFrameDecorator.isCustomDecoration()) {
+        frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
+      }
+
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
         frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
       }
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
       }
       else if (!SystemInfo.isMac || builder.isEmpty()) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
       }
       frame.setTitle(builder.toString());
     }
@@ -508,6 +528,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         myRootPane.removeNotify();
       }
+      myRootPane.removeComponentListener(resizedListener);
       setRootPane(new JRootPane());
       Disposer.dispose(myRootPane);
       myRootPane = null;
@@ -531,40 +552,19 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
-  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Windows.Shadow.Top,
-                                                                          AllIcons.Windows.Shadow.TopRight,
-                                                                          AllIcons.Windows.Shadow.Right,
-                                                                          AllIcons.Windows.Shadow.BottomRight,
-                                                                          AllIcons.Windows.Shadow.Bottom,
-                                                                          AllIcons.Windows.Shadow.BottomLeft,
-                                                                          AllIcons.Windows.Shadow.Left,
-                                                                          AllIcons.Windows.Shadow.TopLeft);
+  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
+                                                                          AllIcons.Ide.Shadow.TopRight,
+                                                                          AllIcons.Ide.Shadow.Right,
+                                                                          AllIcons.Ide.Shadow.BottomRight,
+                                                                          AllIcons.Ide.Shadow.Bottom,
+                                                                          AllIcons.Ide.Shadow.BottomLeft,
+                                                                          AllIcons.Ide.Shadow.Left,
+                                                                          AllIcons.Ide.Shadow.TopLeft);
 
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
     super.paint(g);
-    if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
-      final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());
-      g.drawImage(shadow, 0, 0, null);
-    }
-  }
-
-  @Override
-  public Color getBackground() {
-    return IdeRootPane.isFrameDecorated() ? Gray.x00.withAlpha(0) : super.getBackground();
-  }
-
-  @Override
-  public void doLayout() {
-    super.doLayout();
-    if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
-      final int leftSide = AllIcons.Windows.Shadow.Left.getIconWidth();
-      final int rightSide = AllIcons.Windows.Shadow.Right.getIconWidth();
-      final int top = AllIcons.Windows.Shadow.Top.getIconHeight();
-      final int bottom = AllIcons.Windows.Shadow.Bottom.getIconHeight();
-      getRootPane().setBounds(leftSide, top, getWidth() - leftSide - rightSide, getHeight() - top - bottom);
-    }
   }
 
   @Override

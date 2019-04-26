@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -56,6 +56,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JPanel myParameterHintsSettingsPanel;
   private JBCheckBox myShowParameterNameHints;
   private JButton myConfigureParameterHintsButton;
+  private JBCheckBox myFocusModeCheckBox;
 
   //private JCheckBox myUseLCDRendering;
 
@@ -69,6 +70,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
 
     myCbBlinkCaret.addActionListener((e) -> myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected()));
     myCbShowWhitespaces.addActionListener((e) -> updateWhitespaceCheckboxesState());
+
+    myFocusModeCheckBox.setVisible(ApplicationManager.getApplication().isInternal());
 
     initInlaysPanel();
   }
@@ -112,6 +115,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myInnerWhitespacesCheckBox.setSelected(editorSettings.isInnerWhitespacesShown());
     myTrailingWhitespacesCheckBox.setSelected(editorSettings.isTrailingWhitespacesShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
+    myFocusModeCheckBox.setSelected(editorSettings.isFocusMode());
     myCbShowIntentionBulbCheckBox.setSelected(editorSettings.isShowIntentionBulb());
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
@@ -142,6 +146,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setInnerWhitespacesShown(myInnerWhitespacesCheckBox.isSelected());
     editorSettings.setTrailingWhitespacesShown(myTrailingWhitespacesCheckBox.isSelected());
     editorSettings.setIndentGuidesShown(myShowVerticalIndentGuidesCheckBox.isSelected());
+    editorSettings.setFocusMode(myFocusModeCheckBox.isSelected());
     editorSettings.setShowIntentionBulb(myCbShowIntentionBulbCheckBox.isSelected());
     setParameterNameHintsSettings(editorSettings);
 
@@ -197,6 +202,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myInnerWhitespacesCheckBox, editorSettings.isInnerWhitespacesShown());
     isModified |= isModified(myTrailingWhitespacesCheckBox, editorSettings.isTrailingWhitespacesShown());
     isModified |= isModified(myShowVerticalIndentGuidesCheckBox, editorSettings.isIndentGuidesShown());
+    isModified |= isModified(myFocusModeCheckBox, editorSettings.isFocusMode());
     isModified |= isModified(myCbShowIntentionBulbCheckBox, editorSettings.isShowIntentionBulb());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     //isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;

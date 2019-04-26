@@ -93,13 +93,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       public void visitFile(PsiFile file) {
         fileCount[0]++;
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (progressIndicator != null) {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null) {
-            progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
-          }
-          progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+          progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
         }
+        progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
         if (!(file instanceof PsiJavaFile)) return;
         final Module module = ModuleUtilCore.findModuleForPsiElement(file);
         if (module != null && processed.add(module)) {

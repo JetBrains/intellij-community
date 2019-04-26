@@ -45,7 +45,7 @@ import java.lang.reflect.Field;
 
 public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComponent {
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
-  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", (Color)null);
+  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
 
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
@@ -95,7 +95,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
     ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
       }
     });
@@ -189,7 +189,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
       if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return;
     }
 
-    if (!isTooltipDefined(comp, me)) return;
+    if (!isTooltipDefined(comp, me)) {
+      hideCurrent(null);
+      return;
+    }
 
     boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
     boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
@@ -568,9 +571,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
-        if (!isShowing() && layeredPane != null) {
-          AppUIUtil.targetToDevice(this, layeredPane);
-        }
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
           JLayeredPane lp = layeredPane;
           if (lp == null) {
@@ -582,6 +582,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
           Dimension size;
           if (lp != null) {
+            AppUIUtil.targetToDevice(this, lp);
             size = lp.getSize();
             prefSizeWasComputed[0] = true;
           }

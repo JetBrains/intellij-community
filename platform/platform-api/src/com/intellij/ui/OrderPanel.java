@@ -110,9 +110,7 @@ public abstract class OrderPanel<T> extends JPanel {
   }
 
   public void moveSelectedItemsUp() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myEntryTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEntryTable, true));
     try {
       myInsideMove++;
       TableUtil.moveSelectedItemsUp(myEntryTable);
@@ -126,9 +124,7 @@ public abstract class OrderPanel<T> extends JPanel {
   }
 
   public void moveSelectedItemsDown() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myEntryTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEntryTable, true));
     try {
       myInsideMove++;
       TableUtil.moveSelectedItemsDown(myEntryTable);

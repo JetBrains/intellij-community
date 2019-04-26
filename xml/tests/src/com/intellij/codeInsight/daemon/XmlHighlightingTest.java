@@ -1953,7 +1953,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     XmlTag tag = PsiTreeUtil.getParentOfType(at.getElement(), XmlTag.class);
     XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)tag.getDescriptor();
     XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
-    System.out.println(Arrays.asList(descriptors));
+    LOG.debug(String.valueOf(Arrays.asList(descriptors)));
 
     doDoTest(true, false);
 
@@ -1972,7 +1972,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       XmlTag tag = PsiTreeUtil.getParentOfType(at.getElement(), XmlTag.class);
       XmlElementDescriptor descriptor = tag.getDescriptor();
       XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
-      System.out.println(Arrays.asList(descriptors));
+      LOG.debug(String.valueOf(Arrays.asList(descriptors)));
     }
     finally {
       DumbServiceImpl.getInstance(myProject).setDumb(false);
@@ -1983,6 +1983,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testQualifiedAttributeReference() {
     configureByFiles(null, BASE_PATH + "qualified.xml", BASE_PATH + "qualified.xsd");
+    doDoTest(true, false);
+  }
+
+  public void testUnqualifiedElement() {
+    configureByFiles(null, BASE_PATH + "UnqualifiedElement.xml", BASE_PATH + "UnqualifiedElement.xsd");
     doDoTest(true, false);
   }
 
@@ -2102,6 +2107,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testRedefineGroup() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "RedefineGroup/test.xml"),
+        getVirtualFile(BASE_PATH + "RedefineGroup/originalschema.xsd"),
+        getVirtualFile(BASE_PATH + "RedefineGroup/redefinedschema.xsd"),
+      },
+      true, false
+    );
+  }
+
   public void testMultipleImports() throws Exception {
     doTest(
       new VirtualFile[] {
@@ -2199,6 +2215,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(myOldDoctype, getProject());
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
@@ -2208,6 +2225,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   protected void tearDown() throws Exception {
     try {
       XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = old;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

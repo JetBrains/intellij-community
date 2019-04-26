@@ -4,10 +4,10 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,10 +23,14 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 
 public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCoordinatesConverter {
   @Override
@@ -58,9 +62,10 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
   }
 
   @Override
-  protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager) {
+  protected Set<String> doGetVariants(MavenId id, DependencySearchService searchService) {
     if (StringUtil.isEmptyOrSpaces(id.getGroupId())) return Collections.emptySet();
-    return manager.getArtifactIds(id.getGroupId());
+    return searchService.findArtifactCandidates(id, SearchParameters.DEFAULT).stream().map(s -> s.getArtifactId())
+      .collect(Collectors.toSet());
   }
 
   private static class MavenArtifactInsertHandler implements InsertHandler<LookupElement> {
@@ -76,7 +81,7 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
       context.commitDocument();
 
       PsiFile contextFile = context.getFile();
-      if(!(contextFile instanceof XmlFile)) return;
+      if (!(contextFile instanceof XmlFile)) return;
 
       XmlFile xmlFile = (XmlFile)contextFile;
 
@@ -94,47 +99,22 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
       String artifactId = item.getLookupString();
 
       String groupId = dependency.getGroupId().getStringValue();
+      OffsetKey startRef = context.trackOffset(context.getStartOffset(), false);
+      int len = context.getTailOffset() - context.getStartOffset();
       if (StringUtil.isEmpty(groupId)) {
-        String g = getUniqueGroupIdOrNull(context.getProject(), artifactId);
-        if (g != null) {
-          dependency.getGroupId().setStringValue(g);
-          groupId = g;
+        XmlTag groupIdTag = dependency.getGroupId().getXmlTag();
+        if (groupIdTag == null) {
+          dependency.getGroupId().setStringValue("");
         }
-        else {
-          if (groupId == null) {
-            dependency.getGroupId().setStringValue("");
-          }
-
-          XmlTag groupIdTag = dependency.getGroupId().getXmlTag();
-          context.getEditor().getCaretModel().moveToOffset(groupIdTag.getValue().getTextRange().getStartOffset());
-
-          MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.SMART);
-
-          return;
-        }
+        context.getEditor().getCaretModel().moveToOffset(groupIdTag.getValue().getTextRange().getStartOffset());
+        MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.SMART);
+        return;
       }
+      int offset = context.getOffset(startRef);
+      context.getDocument().replaceString(offset, offset + len, artifactId);
+      context.commitDocument();
 
       MavenDependencyCompletionUtil.addTypeAndClassifierAndVersion(context, dependency, groupId, artifactId);
     }
-
-    private static String getUniqueGroupIdOrNull(@NotNull Project project, @NotNull String artifactId) {
-      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(project);
-
-      String res = null;
-
-      for (String groupId : manager.getGroupIds()) {
-        if (manager.getArtifactIds(groupId).contains(artifactId)) {
-          if (res == null) {
-            res = groupId;
-          }
-          else {
-            return null; // There are more then one appropriate groupId.
-          }
-        }
-      }
-
-      return res;
-    }
   }
-
 }

@@ -32,20 +32,23 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
 
       if (isSmallComboButton(c) && c.isFocusable() && c.hasFocus()) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
         float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(0, 0, width, height, arc + lw, arc + lw), false);
-        border.append(new RoundRectangle2D.Float(lw*2, lw*2, width - lw*4, height - lw*4, arc, arc), false);
+        border.append(new RoundRectangle2D.Float(lw * 2, lw * 2, width - lw * 4, height - lw * 4, arc, arc), false);
 
         g2.setColor(JBUI.CurrentTheme.Focus.focusColor());
         g2.fill(border);
-      } else {
+      }
+      else {
         DarculaUIUtil.paintFocusBorder(g2, width, height, arc, true);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

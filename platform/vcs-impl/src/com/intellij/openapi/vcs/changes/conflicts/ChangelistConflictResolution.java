@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -37,14 +36,14 @@ public enum ChangelistConflictResolution {
 
   SHELVE {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());
       return CommitChangeListDialog.commitChanges(project, changes, changeList, new ShelveChangesCommitExecutor(project), null);
     }},
 
   MOVE {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
       ChangeListManagerImpl manager = getManager(project);
       Set<ChangeList> changeLists = new HashSet<>();
       for (Change change : changes) {
@@ -59,7 +58,7 @@ public enum ChangelistConflictResolution {
       }
       MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, selected);
       if (dialog.showAndGet()) {
-        manager.moveChangesTo(manager.getDefaultChangeList(), ArrayUtil.toObjectArray(dialog.getIncludedChanges(), Change.class));
+        manager.moveChangesTo(manager.getDefaultChangeList(), dialog.getIncludedChanges().toArray(new Change[0]));
         return true;
       }
       return false;
@@ -67,7 +66,7 @@ public enum ChangelistConflictResolution {
 
   SWITCH {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());
       assert changeList != null;
       getManager(project).setDefaultChangeList(changeList);
@@ -76,7 +75,7 @@ public enum ChangelistConflictResolution {
 
   IGNORE {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
       ChangeListManagerImpl manager = getManager(project);
       for (Change change : changes) {
         VirtualFile file = change.getVirtualFile();
@@ -87,7 +86,7 @@ public enum ChangelistConflictResolution {
       return true;
     }};
 
-  public abstract boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected);
+  public abstract boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected);
 
   private static ChangeListManagerImpl getManager(Project project) {
     return ChangeListManagerImpl.getInstanceImpl(project);

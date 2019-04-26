@@ -5,8 +5,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.actions.BackAction;
 import com.intellij.ide.actions.ForwardAction;
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsageTriggerCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,22 +15,17 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
 
-public class VcsBackForwardUsageTriggerCollector extends ApplicationUsageTriggerCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "statistics.vcs.back.forward.trigger";
-  }
+public class VcsBackForwardUsageTriggerCollector {
 
   public static class Trigger implements ApplicationInitializedListener {
     @Override
     public void componentsInitialized() {
       ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
-        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent e) {
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent e) {
           if (action instanceof BackAction ||
               action instanceof ForwardAction) {
-            FUSApplicationUsageTrigger.getInstance().trigger(VcsBackForwardUsageTriggerCollector.class, getContextName(e));
+            FUCounterUsageLogger.getInstance().logEvent("vcs.back.forward.trigger", getContextName(e));
           }
         }
       });

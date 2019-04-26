@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
@@ -105,5 +106,18 @@ public abstract class PersistentFS extends ManagingFS {
       return Win32LocalFileSystem.getWin32Instance();
     }
     return fs;
+  }
+
+  // true if FS persisted at least one child or it has never been queried for children
+  public abstract boolean mayHaveChildren(int id);
+
+  @NotNull
+  public static FileAttributes toFileAttributes(int attributes) {
+    final boolean isDirectory = isSet(attributes, IS_DIRECTORY_FLAG);
+    final boolean isSpecial = isSet(attributes, IS_SPECIAL);
+    final boolean isSymlink = isSet(attributes, IS_SYMLINK);
+    final boolean isHidden = isSet(attributes, IS_HIDDEN);
+    final boolean isWritable = !isSet(attributes, IS_READ_ONLY);
+    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, -1, -1, isWritable);
   }
 }

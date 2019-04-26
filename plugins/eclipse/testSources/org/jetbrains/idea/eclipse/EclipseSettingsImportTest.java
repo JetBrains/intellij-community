@@ -4,7 +4,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleImportWorker;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStylePropertiesImporter;
 
@@ -19,7 +19,7 @@ import static org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData.CO
 /**
  * @author Rustam Vishnyakov
  */
-public class EclipseSettingsImportTest extends PlatformTestCase {
+public class EclipseSettingsImportTest extends LightPlatformTestCase {
   
   private static String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("eclipse") + "/testData/import/settings/";

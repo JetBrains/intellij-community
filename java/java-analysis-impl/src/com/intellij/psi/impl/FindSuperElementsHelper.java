@@ -88,7 +88,7 @@ public class FindSuperElementsHelper {
     Map<PsiMethod, SiblingInfo> result = null;
     for (PsiClass psiClass : byClass.keySet()) {
       SiblingInheritorSearcher searcher = new SiblingInheritorSearcher(byClass.get(psiClass), psiClass);
-      ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true, true, false).forEach(searcher);
+      ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true, true, false).allowParallelProcessing().forEach(searcher);
       Map<PsiMethod, SiblingInfo> searcherResult = searcher.getResult();
       if (!searcherResult.isEmpty()) {
         if (result == null) result = new HashMap<>();

@@ -11,6 +11,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.BaseSyncScrollable;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
@@ -303,6 +304,12 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       @Override
       public int transfer(@NotNull Side side, int line) {
         return line;
+      }
+
+      @NotNull
+      @Override
+      public Range getRange(@NotNull Side baseSide, int line) {
+        return BaseSyncScrollable.idRange(line);
       }
     };
   }

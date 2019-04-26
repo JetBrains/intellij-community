@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -26,16 +12,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 
 /**
- * {@link com.intellij.codeInsight.completion.CompletionResultSet}s feed on {@link com.intellij.codeInsight.lookup.LookupElement}s,
+ * {@link CompletionResultSet}s feed on {@link LookupElement}s,
  * match them against specified
- * {@link com.intellij.codeInsight.completion.PrefixMatcher} and give them to special {@link com.intellij.util.Consumer}
- * (see {@link CompletionService#createResultSet(CompletionParameters, com.intellij.util.Consumer, CompletionContributor)})
+ * {@link PrefixMatcher} and give them to special {@link Consumer}
  * for further processing, which usually means
  * they will sooner or later appear in completion list. If they don't, there must be some {@link CompletionContributor}
  * up the invocation stack that filters them out.
  *
  * If you want to change the matching prefix, use {@link #withPrefixMatcher(PrefixMatcher)} or {@link #withPrefixMatcher(String)}
- * to obtain another {@link com.intellij.codeInsight.completion.CompletionResultSet} and give your lookup elements to that one.
+ * to obtain another {@link CompletionResultSet} and give your lookup elements to that one.
  *
  * @author peter
  */
@@ -71,6 +56,18 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     myConsumer.consume(result);
   }
 
+  public void startBatch() {
+    if (myConsumer instanceof BatchConsumer) {
+      ((BatchConsumer)myConsumer).startBatch();
+    }
+  }
+
+  public void endBatch() {
+    if (myConsumer instanceof BatchConsumer) {
+      ((BatchConsumer)myConsumer).endBatch();
+    }
+  }
+
   /**
    * Adds all elements from the given collection that match the prefix for further processing. The elements are processed in batch,
    * so that they'll appear in lookup all together.<p/>
@@ -82,6 +79,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * instead of {@link #addElement(LookupElement)} helps to avoid that.
    */
   public void addAllElements(@NotNull final Iterable<? extends LookupElement> elements) {
+    startBatch();
     int seldomCounter = 0;
     for (LookupElement element : elements) {
       seldomCounter++;
@@ -90,19 +88,20 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
         ProgressManager.checkCanceled();
       }
     }
+    endBatch();
   }
 
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull PrefixMatcher matcher);
 
   /**
    * Creates a default camel-hump prefix matcher based on given prefix
    */
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull String prefix);
 
   @NotNull
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   public abstract CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
 
   public abstract void addLookupAdvertisement(@NotNull String text);
@@ -111,7 +110,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
    * remain as they are though, so upon insertion the prefix case will be changed.
    */
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   @NotNull public abstract CompletionResultSet caseInsensitive();
 
   @NotNull
@@ -146,7 +145,22 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     if (stop) {
       stopHere();
     }
-    myCompletionService.getVariantsFromContributors(parameters, myContributor, consumer);
+    myCompletionService.getVariantsFromContributors(parameters, myContributor, getPrefixMatcher(), new BatchConsumer<CompletionResult>() {
+      @Override
+      public void startBatch() {
+        CompletionResultSet.this.startBatch();
+      }
+
+      @Override
+      public void endBatch() {
+        CompletionResultSet.this.endBatch();
+      }
+
+      @Override
+      public void consume(CompletionResult result) {
+        consumer.consume(result);
+      }
+    });
   }
 
   /**

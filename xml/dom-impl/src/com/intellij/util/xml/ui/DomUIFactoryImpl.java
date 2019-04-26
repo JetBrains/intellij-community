@@ -149,7 +149,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
                                                                   true, new ProperTextRange(0, document.getTextLength()), null, new DefaultHighlightInfoProcessor());
         LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0,
                                                             document.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                            new DefaultHighlightInfoProcessor());
+                                                            new DefaultHighlightInfoProcessor(), true);
         return new HighlightingPass[]{ghp, lip};
       }
 

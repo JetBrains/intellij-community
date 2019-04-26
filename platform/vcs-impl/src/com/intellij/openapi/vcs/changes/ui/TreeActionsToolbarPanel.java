@@ -14,10 +14,12 @@ import java.util.List;
 public class TreeActionsToolbarPanel extends JPanel {
   public TreeActionsToolbarPanel(@NotNull ActionToolbar toolbar, @NotNull ChangesTree tree) {
     this(toolbar.getComponent(), tree);
+    toolbar.setTargetComponent(tree);
   }
 
   public TreeActionsToolbarPanel(@NotNull ActionToolbar toolbar, @NotNull ActionGroup group, @Nullable JComponent targetComponent) {
     this(toolbar.getComponent(), group, targetComponent);
+    if (targetComponent != null) toolbar.setTargetComponent(targetComponent);
   }
 
   public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ChangesTree tree) {

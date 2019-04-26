@@ -15,9 +15,12 @@
  */
 package com.intellij.execution.dashboard;
 
+import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author konstantin.aleev
  */
 public interface RunDashboardListener {
-  void contentChanged(boolean withStructure);
+  void configurationChanged(@NotNull RunConfiguration configuration, boolean withStructure);
 }

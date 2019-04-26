@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,8 +7,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -53,7 +52,7 @@ public class OverwriteProjectConfigurationTest extends PlatformTestCase {
   }
 
   private Project createProject() {
-    Project project = ((ProjectManagerImpl)ProjectManager.getInstance()).newProject("test", myProjectDir.getAbsolutePath(), true, false);
+    Project project = ProjectManagerEx.getInstanceEx().newProject("test", myProjectDir.getAbsolutePath());
     assertNotNull(project);
     disposeOnTearDown(project);
     return project;

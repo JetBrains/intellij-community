@@ -194,9 +194,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         if (node != null) {
           TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
           if (requestFocus) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
           }
         }
       }
@@ -230,7 +228,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myTree.setCellRenderer(new MyTreeCellRenderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     new TreeSpeedSearch(myTree);

@@ -17,8 +17,10 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -63,7 +66,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
-      if (!LanguageLevel.forElement(node).isPython2()) return;
+      if (!(myAllPythons || LanguageLevel.forElement(node).isPython2())) return;
 
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(node);
       if (charsetString == null) {
@@ -78,13 +81,69 @@ public class PyMandatoryEncodingInspection extends PyInspection {
 
   public String myDefaultEncoding = "utf-8";
   public int myEncodingFormatIndex = 0;
+  public boolean myAllPythons = false;
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComboBox defaultEncoding = new JComboBox(PyEncodingUtil.POSSIBLE_ENCODINGS);
-    defaultEncoding.setSelectedItem(myDefaultEncoding);
+    final JPanel main = new JPanel(new GridBagLayout());
 
-    defaultEncoding.addActionListener(new ActionListener() {
+    main.add(onlyPython2Box(), fixedIn(0));
+    main.add(defaultEncodingLabel(), fixedIn(1));
+    main.add(defaultEncodingBox(), resizableIn(1));
+    main.add(encodingFormatLabel(), fixedIn(2));
+    main.add(encodingFormatBox(), resizableIn(2));
+
+    final JPanel result = new JPanel(new BorderLayout());
+    result.add(main, BorderLayout.NORTH);
+    return result;
+  }
+
+  @NotNull
+  private static GridBagConstraints fixedIn(int y) {
+    final GridBagConstraints c = new GridBagConstraints();
+
+    c.anchor = GridBagConstraints.WEST;
+    c.fill = GridBagConstraints.NONE; // do not resize
+    c.weightx = 0; // do not give extra horizontal space
+    c.gridx = 0;
+    c.gridy = y;
+
+    return c;
+  }
+
+  @NotNull
+  private static GridBagConstraints resizableIn(int y) {
+    final GridBagConstraints c = new GridBagConstraints();
+
+    c.anchor = GridBagConstraints.WEST;
+    c.fill = GridBagConstraints.HORIZONTAL; // resize horizontally
+    c.weightx = 1; // give extra horizontal space
+    c.gridx = 1;
+    c.gridy = y;
+
+    return c;
+  }
+
+  @NotNull
+  private JPanel onlyPython2Box() {
+    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    panel.add(new CheckBox("Enable in Python 3+", this, "myAllPythons"));
+    return panel;
+  }
+
+  @NotNull
+  private static JPanel defaultEncodingLabel() {
+    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    panel.add(new JLabel("Select default encoding: "));
+    return panel;
+  }
+
+  @NotNull
+  private JComboBox<String> defaultEncodingBox() {
+    final JComboBox<String> box = new ComboBox<>(PyEncodingUtil.POSSIBLE_ENCODINGS);
+
+    box.setSelectedItem(myDefaultEncoding);
+    box.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         JComboBox cb = (JComboBox)e.getSource();
@@ -92,10 +151,22 @@ public class PyMandatoryEncodingInspection extends PyInspection {
       }
     });
 
-    final JComboBox encodingFormat = new JComboBox(PyEncodingUtil.ENCODING_FORMAT);
+    return box;
+  }
 
-    encodingFormat.setSelectedIndex(myEncodingFormatIndex);
-    encodingFormat.addActionListener(new ActionListener() {
+  @NotNull
+  private static JPanel encodingFormatLabel() {
+    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    panel.add(new JLabel("Encoding comment format:"));
+    return panel;
+  }
+
+  @NotNull
+  private JComboBox<String> encodingFormatBox() {
+    final JComboBox<String> box = new ComboBox<>(PyEncodingUtil.ENCODING_FORMAT, 250);
+
+    box.setSelectedIndex(myEncodingFormatIndex);
+    box.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         JComboBox cb = (JComboBox)e.getSource();
@@ -103,6 +174,6 @@ public class PyMandatoryEncodingInspection extends PyInspection {
       }
     });
 
-    return PyEncodingUtil.createEncodingOptionsPanel(defaultEncoding, encodingFormat);
+    return box;
   }
 }

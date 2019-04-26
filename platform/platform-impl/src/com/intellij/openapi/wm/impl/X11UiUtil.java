@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -20,6 +19,7 @@ import java.awt.*;
 import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -138,7 +138,7 @@ public class X11UiUtil {
     @Nullable
     private String getUtfStringProperty(long window, long name) throws Exception {
       byte[] bytes = getWindowProperty(window, name, UTF8_STRING, FORMAT_BYTE);
-      return bytes != null ? new String(bytes, CharsetToolkit.UTF8_CHARSET) : null;
+      return bytes != null ? new String(bytes, StandardCharsets.UTF_8) : null;
     }
 
     @Nullable
@@ -164,7 +164,7 @@ public class X11UiUtil {
             else if (format == FORMAT_LONG) {
               long[] values = newLongArray(length);
               for (int i = 0; i < length; i++) {
-                values[i] = SystemInfo.is64Bit ? unsafe.getLong(pointer + 8 * i) : unsafe.getInt(pointer + 4 * i);
+                values[i] = SystemInfo.is64Bit ? unsafe.getLong(pointer + 8L * i) : unsafe.getInt(pointer + 4L * i);
               }
               return (T)values;
             }
@@ -199,7 +199,7 @@ public class X11UiUtil {
           unsafe.putInt(event + 20, (int)type);
           unsafe.putInt(event + 24, FORMAT_LONG);
           for (int i = 0; i < data.length; i++) {
-            unsafe.putInt(event + 28 + 4 * i, (int)data[i]);
+            unsafe.putInt(event + 28 + 4L * i, (int)data[i]);
           }
         }
         else {
@@ -208,7 +208,7 @@ public class X11UiUtil {
           unsafe.putLong(event + 40, NET_WM_STATE);
           unsafe.putInt(event + 48, FORMAT_LONG);
           for (int i = 0; i < data.length; i++) {
-            unsafe.putLong(event + 56 + 8 * i, data[i]);
+            unsafe.putLong(event + 56 + 8L * i, data[i]);
           }
         }
 

@@ -6,6 +6,9 @@
                     interface="com.intellij.openapi.vcs.VcsCheckoutProcessor"/>
     <extensionPoint name="vcsRootChecker"
                     interface="com.intellij.openapi.vcs.VcsRootChecker"/>
+    <extensionPoint name="vcsIgnoreChecker"
+                    interface="com.intellij.openapi.vcs.VcsIgnoreChecker"
+                    area="IDEA_PROJECT"/>
     <extensionPoint name="checkoutListener"
                     interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
     <extensionPoint name="vcsAwareCheckoutListener"
@@ -98,5 +101,8 @@
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
     <extensionPoint name="vcsRepositoryInitializer" interface="com.intellij.vcs.VcsRepositoryInitializer"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.vcsPreservingExecutor"
+                    interface="com.intellij.openapi.vcs.changes.VcsPreservingExecutor"/>
+
   </extensionPoints>
 </idea-plugin>

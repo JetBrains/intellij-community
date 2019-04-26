@@ -19,8 +19,8 @@ package com.jetbrains.python.testing.pytestLegacy;
  * User : catherine
  */
 public interface PyTestRunConfigurationParams {
-  public boolean useParam();
-  public void useParam(boolean useParam);
-  public boolean useKeyword();
-  public void useKeyword(boolean useKeyword);
+  boolean useParam();
+  void useParam(boolean useParam);
+  boolean useKeyword();
+  void useKeyword(boolean useKeyword);
 }

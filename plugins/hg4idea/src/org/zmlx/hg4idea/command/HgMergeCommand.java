@@ -34,7 +34,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
+import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgMergeCommand {
 

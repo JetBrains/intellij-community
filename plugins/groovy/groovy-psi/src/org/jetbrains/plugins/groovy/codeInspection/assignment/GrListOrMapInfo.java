@@ -1,23 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
-import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -91,16 +86,6 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
   @Override
   public GrListOrMap getCall() {
     return myListOrMap;
-  }
-
-  @Override
-  public GroovyResolveResult[] multiResolveClass() {
-    PsiClassType type = myReference.getConstructedClassType();
-    if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-    final GroovyResolveResult result = GroovyResolveResultImpl.from(type.resolveGenerics());
-    if (result == EmptyGroovyResolveResult.INSTANCE) return GroovyResolveResult.EMPTY_ARRAY;
-    return new GroovyResolveResult[]{result};
   }
 
   @NotNull

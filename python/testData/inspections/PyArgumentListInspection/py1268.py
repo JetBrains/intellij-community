@@ -19,7 +19,7 @@ def f2(a, b, c=1, *d):
 f2(c=3, *(1,2))
 f2(1,2,3, *(1,2))
 f2(*(1,2), c=20)
-f2(*(1,2), <error descr="Python versions < 3.5 do not allow positional arguments after *expression">20</error>) # fail: positional past *
+f2(*(1,2), <error descr="Python version 3.4 does not allow positional arguments after *expression">20</error>) # fail: positional past *
 
 def f3(a=1, b=2, c=3, *d):
   return a,b,c,d

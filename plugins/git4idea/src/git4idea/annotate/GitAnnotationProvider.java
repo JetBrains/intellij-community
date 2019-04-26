@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
@@ -45,6 +44,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class GitAnnotationProvider implements AnnotationProviderEx {
@@ -145,7 +145,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                        @NotNull final VirtualFile file) throws VcsException {
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
-    VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
+    VirtualFile root = GitUtil.getRepositoryForFile(myProject, repositoryFilePath).getRoot();
     GitBinaryHandler h = new GitBinaryHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t");
@@ -170,7 +170,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     }
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
-    String output = new String(h.run(), CharsetToolkit.UTF8_CHARSET);
+    String output = new String(h.run(), StandardCharsets.UTF_8);
 
     GitFileAnnotation fileAnnotation = parseAnnotations(revision, file, root, output);
 
@@ -203,26 +203,24 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
 
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
     List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
-      () -> {
-        return BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-          try {
-            VirtualFile file = fileAnnotation.getFile();
-            FilePath filePath = VcsUtil.getFilePath(file);
-            VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
+      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+        try {
+          VirtualFile file = fileAnnotation.getFile();
+          FilePath filePath = VcsUtil.getFilePath(file);
+          VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
 
-            if (file.isInLocalFileSystem() || currentRevision == null) {
-              return loadFileHistory(filePath);
-            }
-            else {
-              return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
-            }
+          if (file.isInLocalFileSystem() || currentRevision == null) {
+            return loadFileHistory(filePath);
           }
-          catch (VcsException e) {
-            LOG.error(e);
-            return null;
+          else {
+            return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
           }
-        });
-      },
+        }
+        catch (VcsException e) {
+          LOG.error(e);
+          return null;
+        }
+      }),
       (revisions) -> {
         if (revisions == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -369,7 +367,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                              @NotNull VirtualFile file,
                                              @Nullable VcsRevisionNumber revisionNumber,
                                              @NotNull CachedData data) throws VcsException {
-    VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
+    VirtualFile root = GitUtil.getRepositoryForFile(myProject, repositoryFilePath).getRoot();
     GitFileAnnotation fileAnnotation = new GitFileAnnotation(myProject, file, revisionNumber, data.lines);
 
     loadFileHistoryInBackground(fileAnnotation);

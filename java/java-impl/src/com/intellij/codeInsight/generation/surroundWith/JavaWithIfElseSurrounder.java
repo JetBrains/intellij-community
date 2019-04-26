@@ -47,7 +47,7 @@ public class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
     ifStatement = (PsiIfStatement)codeStyleManager.reformat(ifStatement);
 
-    ifStatement = (PsiIfStatement)container.addAfter(ifStatement, statements[statements.length - 1]);
+    ifStatement = (PsiIfStatement)addAfter(ifStatement, container, statements);
 
     PsiStatement thenBranch = ifStatement.getThenBranch();
     if (!(thenBranch instanceof PsiBlockStatement)) {
@@ -55,7 +55,7 @@ public class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
     }
     PsiCodeBlock thenBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(thenBlock, statements);
-    thenBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(thenBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
     ifStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifStatement);
     PsiExpression condition = ifStatement.getCondition();

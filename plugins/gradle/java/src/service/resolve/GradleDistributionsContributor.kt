@@ -13,9 +13,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
  * @author Vladislav.Soroka
- * *
- * @since 8/30/13
- */
+ * */
 class GradleDistributionsContributor : GradleMethodContextContributor {
 
   companion object {

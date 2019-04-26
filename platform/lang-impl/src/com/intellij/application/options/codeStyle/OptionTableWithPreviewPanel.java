@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -228,10 +215,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       @Override
       public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
         TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-        UIUtil.setLineStyleAngled(tableRenderer);
         tableRenderer.setRootVisible(false);
         tableRenderer.setShowsRootHandles(true);
-
         return tableRenderer;
       }
 
@@ -938,7 +923,11 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+    TableCellEditor editor = myTreeTable.getCellEditor();
+    if (editor != null && !editor.stopCellEditing()) {
+      throw new ConfigurationException("Editing cannot be stopped");
+    }
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     applyNode(root, settings);
@@ -946,6 +935,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
+    TableCellEditor editor = myTreeTable.getCellEditor();
+    if (editor != null) {
+      return true; // to allow stop editing in #apply
+    }
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     if (isModified(root, settings)) {
@@ -967,6 +960,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
+  @NotNull
   @Override
   public Set<String> processListOptions() {
     Set<String> options = new HashSet<>();

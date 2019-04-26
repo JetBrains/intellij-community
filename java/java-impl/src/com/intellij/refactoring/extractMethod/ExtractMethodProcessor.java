@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.controlFlow.ControlFlow;
@@ -944,7 +945,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     LOG.assertTrue(myElements[0].isValid());
 
     PsiCodeBlock body = newMethod.getBody();
-    myMethodCall = generateMethodCall(null, true);
+    myMethodCall = generateMethodCall(null, true, myExpression);
 
     LOG.assertTrue(myElements[0].isValid());
 
@@ -1053,14 +1054,12 @@ public class ExtractMethodProcessor implements MatchProvider {
       final PsiType paramType = psiParameter.getType();
       for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body))){
         final PsiElement element = reference.getElement();
-        if (element != null) {
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiTypeCastExpression) {
-            final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-            final PsiTypeElement castType = typeCastExpression.getCastType();
-            if (castType != null && Comparing.equal(castType.getType(), paramType)) {
-              RemoveRedundantCastUtil.removeCast(typeCastExpression);
-            }
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiTypeCastExpression) {
+          final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+          final PsiTypeElement castType = typeCastExpression.getCastType();
+          if (castType != null && Comparing.equal(castType.getType(), paramType)) {
+            RemoveRedundantCastUtil.removeCast(typeCastExpression);
           }
         }
       }
@@ -1340,7 +1339,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
-    final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false);
+    final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false, match.getMatchStart());
 
     ArrayList<VariableData> datas = new ArrayList<>();
     for (final VariableData variableData : myVariableDatum) {
@@ -1636,16 +1635,32 @@ public class ExtractMethodProcessor implements MatchProvider {
       throwsList.add(JavaPsiFacade.getElementFactory(myManager.getProject()).createReferenceElementByType(exception));
     }
 
-    if (myTargetClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiMethod.class, false);
-      if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-        PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
-      }
-      PsiUtil.setModifierProperty(newMethod, PsiModifier.PUBLIC, false);
-      PsiUtil.setModifierProperty(newMethod, PsiModifier.PRIVATE, false);
-      PsiUtil.setModifierProperty(newMethod, PsiModifier.PROTECTED, false);
+    if (myTargetClass.isInterface()) {
+      updateModifiersInInterface(newMethod);
     }
     return (PsiMethod)myStyleManager.reformat(newMethod);
+  }
+
+  private void updateModifiersInInterface(PsiMethod newMethod) {
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(myTargetClass);
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      if (!isStatic()) {
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiMethod.class, false);
+        if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+          if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+            PsiUtil.setModifierProperty(newMethod, PsiModifier.PRIVATE, true); // don't increase the API surface
+          }
+          else {
+            PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
+          }
+        }
+      }
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.PUBLIC, false);
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.PROTECTED, false);
+      if (isStatic() || !languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+        PsiUtil.setModifierProperty(newMethod, PsiModifier.PRIVATE, false);
+      }
+    }
   }
 
   protected boolean defineVariablesForUnselectedParameters() {
@@ -1779,7 +1794,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @NotNull
-  protected PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier, final boolean generateArgs) throws IncorrectOperationException {
+  protected PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier, final boolean generateArgs, PsiElement context) {
     @NonNls StringBuilder buffer = new StringBuilder();
 
     final boolean skipInstanceQualifier;
@@ -1831,7 +1846,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     buffer.append(")");
     String text = buffer.toString();
 
-    PsiMethodCallExpression expr = (PsiMethodCallExpression)myElementFactory.createExpressionFromText(text, null);
+    PsiMethodCallExpression expr = (PsiMethodCallExpression)myElementFactory.createExpressionFromText(text, context);
     expr = (PsiMethodCallExpression)myStyleManager.reformat(expr);
     if (!skipInstanceQualifier) {
       PsiExpression qualifierExpression = expr.getMethodExpression().getQualifierExpression();

@@ -20,6 +20,7 @@ public class RedundantAssignment {
     arr[1] = 2;
     arr[2] = 3;
     <warning descr="Variable is already assigned to this value">arr[0]</warning> = 1;
+    <warning descr="Variable update does nothing">arr[4]</warning> += 0;
   }
 
   void withTest(int x) {
@@ -39,7 +40,15 @@ public class RedundantAssignment {
       <warning descr="Variable is already assigned to this value">a</warning> = b;
     }
   }
-
+  
+  void testOneMinusOne(int a) {
+    int b = 0;
+    if(a < 1 && a > -1) {
+      <warning descr="Variable is already assigned to this value">b</warning> = a;
+    }
+    System.out.println(b);
+  }
+  
   class X {
     int a;
     int b;
@@ -57,5 +66,13 @@ class A {
     for (int index = 0; index < 10; index++) {
       <warning descr="Variable is already assigned to this value">type<caret>Path</warning> = typePath.append(Integer.valueOf(index));
     }
+  }
+}
+class TestConstant {
+  static final byte NONE = 0;
+  byte x;
+  
+  TestConstant() {
+    x = NONE;
   }
 }

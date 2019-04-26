@@ -3,7 +3,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.reference.SoftReference;
@@ -13,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +28,6 @@ import java.util.Set;
  */
 public class DynamicGenericInfo extends DomGenericInfoEx {
   private static final Key<SoftReference<WeakInterner<ChildrenDescriptionsHolder>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("dynamicGenericInfo");
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private volatile boolean myInitialized;
@@ -49,18 +46,13 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public Invocation createInvocation(final JavaMethod method) {
-    return myStaticGenericInfo.createInvocation(method);
-  }
-
-  @Override
   public final boolean checkInitialized() {
     if (myInitialized) return true;
     myStaticGenericInfo.buildMethodMaps();
 
     if (!myInvocationHandler.exists()) return true;
 
-    return ourGuard.doPreventingRecursion(myInvocationHandler, false, () -> {
+    return RecursionManager.doPreventingRecursion(myInvocationHandler, false, () -> {
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
       synchronized (myInvocationHandler) {

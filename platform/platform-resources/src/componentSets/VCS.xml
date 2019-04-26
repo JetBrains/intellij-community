@@ -3,9 +3,6 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>
@@ -89,4 +86,25 @@
       <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
     </component>
   </project-components>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory
+        implementation="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileTypeFactory"/>
+    <psi.referenceContributor language="IgnoreLang"
+                              implementation="com.intellij.openapi.vcs.changes.ignore.reference.IgnoreReferenceContributor"/>
+
+    <lang.elementManipulator
+        forClass="com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntryManipulator"/>
+
+    <lang.parserDefinition language="IgnoreLang"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+
+    <localInspection
+        bundle="messages.VcsBundle"
+        enabledByDefault="true"
+        groupKey="ignore.codeInspection.group"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInspection.IgnoreDuplicateEntryInspection"
+        key="ignore.codeInspection.duplicateEntry"
+        level="WARNING"/>
+  </extensions>
 </idea-plugin>

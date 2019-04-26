@@ -53,6 +53,12 @@ public class ReplaceConfiguration extends Configuration {
   }
 
   @Override
+  public void removeUnusedVariables() {
+    myReplaceOptions.removeUnusedVariables();
+    myReplaceOptions.getMatchOptions().removeUnusedVariables();
+  }
+
+  @Override
   public void readExternal(Element element) {
     super.readExternal(element);
     myReplaceOptions.readExternal(element);

@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
   @NonNls static final String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
   @NonNls private static final String ARRAY_PREFIX = "[L";
-  private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
   @Override
   public PsiType fromString(final String s, final ConvertContext context) {
@@ -82,7 +81,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
     }
     final boolean isPrimitiveType = type instanceof PsiPrimitiveType;
 
-    return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
+    return new JavaClassReferenceSet(trimmed, element, offset, false, new JavaClassReferenceProvider()) {
       @Override
       @NotNull
       protected JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {

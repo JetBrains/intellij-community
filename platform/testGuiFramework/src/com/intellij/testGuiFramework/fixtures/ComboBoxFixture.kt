@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
@@ -44,10 +45,12 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
 
   //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
   fun selectItem(itemName: String, timeout: Timeout = Timeouts.defaultTimeout): ComboBoxFixture {
-    waitUntil("item '$itemName' will be appeared in dropdown list", timeout) {
-      doSelectItem { super.selectItem(itemName) }
+    return step("select '$itemName' in combobox") {
+      waitUntil("item '$itemName' will be appeared in dropdown list", timeout) {
+        doSelectItem { super.selectItem(itemName) }
+      }
+      return@step this
     }
-    return this
   }
 
   //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes

@@ -87,7 +87,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
       PsiTestUtil.addContentRoot(myModule, moduleDir);
       PsiTestUtil.addSourceRoot(myModule, srcDir);
       IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
-      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(myModuleOutputDir.getAbsolutePath())), false);
+      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(myModuleOutputDir.getAbsolutePath()), false);
     });
   }
 
@@ -105,7 +105,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 

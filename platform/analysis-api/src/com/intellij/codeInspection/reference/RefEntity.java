@@ -26,7 +26,6 @@ import java.util.List;
  * Base class for nodes in the reference graph built during the global inspection pass.
  *
  * @author anna
- * @since 6.0
  * @see RefManager
  */
 public interface RefEntity extends UserDataHolder {

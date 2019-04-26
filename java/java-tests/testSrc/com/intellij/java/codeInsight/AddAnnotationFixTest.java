@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -22,6 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -47,6 +49,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.psi.impl.DebugUtil.sleep;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author anna
@@ -74,7 +77,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myModule = builder.getFixture().getModule();
     myProject = myFixture.getProject();
 
-    JavaCodeStyleSettings.getInstance(myProject).USE_EXTERNAL_ANNOTATIONS = true;
+    JavaCodeStyleSettings javaCodeStyleSettings = JavaCodeStyleSettings.getInstance(myProject);
+    javaCodeStyleSettings.USE_EXTERNAL_ANNOTATIONS = true;
+    Disposer.register(getTestRootDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        javaCodeStyleSettings.USE_EXTERNAL_ANNOTATIONS = false;
+      }
+    });
   }
 
   @Override
@@ -82,12 +92,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myModule = null;
       myProject = null;
       myBusConnection = null;
-
       super.tearDown();
     }
   }
@@ -229,7 +241,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   private void assertNotAvailable(String shortName) {
     AnnotateIntentionAction action = new AnnotateIntentionAction();
-    assertFalse(action.selectSingle(myFixture.getEditor(), myFixture.getFile(), shortName));
+    assertThat(action.selectSingle(myFixture.getEditor(), myFixture.getFile(), shortName)).isFalse();
   }
 
   public void testAnnotated() {

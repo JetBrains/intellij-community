@@ -64,8 +64,9 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       public void visitExpressionImpl(PsiExpression expression) {
-        if (ComplexityCalculator.isDefinitelySimple(expression, complexityThreshold) ||
-            SideEffectCalculator.isDefinitelyWithSideEffect(expression)) {
+        if (ComplexityCalculator.isDefinitelySimple(expression) ||
+            SideEffectCalculator.isDefinitelyWithSideEffect(expression) ||
+            expression instanceof PsiLambdaExpression) {
           return;
         }
         DuplicateExpressionsContext context = DuplicateExpressionsContext.getOrCreateContext(expression, session);

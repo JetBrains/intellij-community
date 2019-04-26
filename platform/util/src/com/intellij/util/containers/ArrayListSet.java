@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ArrayListSet<E> extends AbstractSet<E> {
-  private final List<E> myList = new ArrayList<E>();
+  private final List<E> myList = new ArrayList<>();
 
   @NotNull
   @Override

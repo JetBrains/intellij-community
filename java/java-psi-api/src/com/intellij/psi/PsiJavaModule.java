@@ -9,8 +9,6 @@ import java.util.Set;
 
 /**
  * Represents a Java module declaration.
- *
- * @since 2016.3
  */
 public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierOwner, PsiModifierListOwner, PsiJavaDocumentedElement {
   String MODULE_INFO_CLASS = "module-info";

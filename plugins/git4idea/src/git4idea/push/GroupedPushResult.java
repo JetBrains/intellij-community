@@ -48,17 +48,19 @@ class GroupedPushResult {
       GitRepository repository = entry.getKey();
       GitPushRepoResult result = entry.getValue();
 
-      if (result.getType() == GitPushRepoResult.Type.REJECTED_NO_FF) {
-        rejected.put(repository, result);
-      }
-      else if (result.getType() == GitPushRepoResult.Type.ERROR) {
-        errors.put(repository, result);
-      }
-      else if (result.getType() == GitPushRepoResult.Type.REJECTED_OTHER) {
-        customRejected.put(repository, result);
-      }
-      else {
-        successful.put(repository, result);
+      switch (result.getType()) {
+        case REJECTED_NO_FF:
+          rejected.put(repository, result);
+          break;
+        case ERROR:
+          errors.put(repository, result);
+          break;
+        case REJECTED_STALE_INFO:
+        case REJECTED_OTHER:
+          customRejected.put(repository, result);
+          break;
+        default:
+          successful.put(repository, result);
       }
     }
     return new GroupedPushResult(successful, errors, rejected, customRejected);

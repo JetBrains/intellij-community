@@ -212,7 +212,12 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
           return;
         }
       }
-      else if (!"java.io.FileReader".equals(qName) && !"java.io.FileWriter".equals(qName)) {
+      else if ("java.io.FileReader".equals(qName) || "java.io.FileWriter".equals(qName)) {
+        if (count > 1 && hasCharsetType(parameters[1])) {
+          return;
+        }
+      }
+      else {
         return;
       }
       registerNewExpressionError(expression, expression);

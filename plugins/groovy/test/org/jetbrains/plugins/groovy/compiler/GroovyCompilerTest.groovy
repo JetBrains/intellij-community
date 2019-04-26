@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -51,7 +36,8 @@ import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes 
+import org.jetbrains.org.objectweb.asm.Opcodes
+
 /**
  * @author peter
  */
@@ -749,13 +735,8 @@ public class Main {
     setFileText(foo, 'class Foo implements Runnabl {}')
 
     def compilerTempRoot = BuildManager.instance.getProjectSystemDirectory(project).absolutePath
-    try {
-      VfsRootAccess.allowRootAccess(compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
-      shouldFail { make() }
-    }
-    finally {
-      VfsRootAccess.disallowRootAccess(compilerTempRoot)
-    }
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
+    shouldFail { make() }
 
     setFileText(foo, 'class Foo {}')
 
@@ -975,7 +956,7 @@ class BuildContextImpl extends BuildContext {
 '''
     def sub = myFixture.addFileToProject('BuildContextImpl.groovy', subText)
     assertEmpty(make())
-    
+
     setFileText(sub, subText + ' ')
     assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
     def fileMessages = compileFiles(sub.virtualFile)
@@ -989,7 +970,7 @@ class BuildContextImpl extends BuildContext {
   void "test report real compilation errors"() {
     addModule('another', true)
 
-    myFixture.addClass('class Foo {}');
+    myFixture.addClass('class Foo {}')
     myFixture.addFileToProject('a.groovy', 'import goo.Goo; class Bar { }')
     shouldFail { compileModule(myModule) }
   }
@@ -1067,24 +1048,5 @@ class Bar {}'''
     protected List<String> chunkRebuildMessage(String builder) {
       return ['Builder "' + builder + '" requested rebuild of module chunk "mainModule"']
     }
-
-  }
-
-  static class EclipseTest extends GroovyCompilerTest {
-    @Override
-    protected void setUp() {
-      super.setUp()
-
-      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).defaultCompiler = new GreclipseIdeaCompiler(project)
-
-      def jarPath = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Groovy-Eclipse-Batch")[0]
-
-      GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
-    }
-
-    protected List<String> chunkRebuildMessage(String builder) {
-      return []
-    }
-
   }
 }

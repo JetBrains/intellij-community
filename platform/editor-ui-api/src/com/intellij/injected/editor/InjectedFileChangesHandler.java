@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * Handles host language specific communications between <b>fragment editor</b> and the host-document.
  *
  * Could be implemented for better injected fragment editing in raw string literals or concatenated strings.
- *
- * @since 2018.3
  */
 @ApiStatus.Experimental
 public interface InjectedFileChangesHandler extends Disposable {

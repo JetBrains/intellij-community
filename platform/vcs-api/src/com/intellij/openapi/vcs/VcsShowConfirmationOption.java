@@ -30,7 +30,6 @@ public interface VcsShowConfirmationOption {
       return String.valueOf(ordinal());
     }
 
-    @Deprecated
     public static Value fromString(@NotNull String s){
       if (s.equals("1")) return DO_NOTHING_SILENTLY;
       if (s.equals("2")) return DO_ACTION_SILENTLY;

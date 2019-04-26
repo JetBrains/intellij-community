@@ -338,7 +338,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * Returns the interface for selecting file version numbers.
    *
    * @return the revision selector implementation, or null if none is provided.
-   * @since 5.0.2
    */
   @Nullable
   public RevisionSelector getRevisionSelector() {

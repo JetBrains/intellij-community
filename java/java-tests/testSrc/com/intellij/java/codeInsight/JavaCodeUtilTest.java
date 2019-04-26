@@ -29,7 +29,7 @@ public class JavaCodeUtilTest extends LightCodeInsightTestCase {
     assertEquals("int i = 0;", variable1.getText());
   }
 
-  public void testReplaceDoesnotTruncateTrailingWhitespace() {
+  public void testReplaceDoesNotTruncateTrailingWhitespace() {
     configureFromFileText("a.java",
                           "class Foo {\n" +
                           "    void foo(){\n" +

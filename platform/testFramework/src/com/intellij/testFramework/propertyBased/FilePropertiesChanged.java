@@ -31,7 +31,7 @@ public class FilePropertiesChanged extends ActionOnFile {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    env.logMessage(toString());
+    env.logMessage("FilePropertiesChanged " + getVirtualFile().getPath());
     PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(getVirtualFile(), Conditions.alwaysTrue());
   }
 

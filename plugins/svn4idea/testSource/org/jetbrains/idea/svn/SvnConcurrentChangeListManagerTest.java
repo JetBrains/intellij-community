@@ -30,7 +30,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     changeListManager.moveChangesTo(list, changeListManager.getChange(file));
@@ -44,7 +44,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     checkFilesAreInList(newName, file);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(newName, file);
   }
 
@@ -69,7 +69,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     check.run();
     myScheme.doTest(check);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     check.run();
 
     editFileInCommand(tree.myS1File, "1234543534543 3543 ");
@@ -84,7 +84,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     };
     myScheme.doTest(check2);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     check2.run();
   }
 
@@ -93,7 +93,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final String listName = "test";
     final LocalChangeList list = changeListManager.addChangeList(listName, null);
@@ -116,7 +116,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     LocalChangeList changedList = changeListManager.findChangeList(listName);
     assert finalText.equals(changedList.getComment());
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     changedList = changeListManager.findChangeList(listName);
     assert finalText.equals(changedList.getComment());
   }
@@ -126,7 +126,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     final LocalChangeList target = changeListManager.addChangeList("target", null);
@@ -139,7 +139,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     checkFilesAreInList(target.getName(), file);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(target.getName(), file);
   }
 
@@ -148,7 +148,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     final LocalChangeList target = changeListManager.addChangeList("target", null);
@@ -161,7 +161,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
   }
 
@@ -171,7 +171,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     changeListManager.moveChangesTo(list, changeListManager.getChange(file));
@@ -185,7 +185,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     assert changeListManager.findChangeList(list.getName()) == null;
     checkFilesAreInList(myDefaulListName, file, fileB);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     assert changeListManager.findChangeList(list.getName()) == null;
     checkFilesAreInList(myDefaulListName, file, fileB);
   }
@@ -195,7 +195,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     final LocalChangeList target = changeListManager.addChangeList("target", null);
@@ -211,7 +211,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     checkFilesAreInList(target2.getName(), file);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(target2.getName(), file);
   }
 
@@ -220,7 +220,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     final LocalChangeList target = changeListManager.addChangeList("target", null);
@@ -235,7 +235,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     checkFilesAreInList(list.getName(), file);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(list.getName(), file);
   }
 
@@ -244,7 +244,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand("a.txt", "old content");
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     changeListManager.moveChangesTo(list, changeListManager.getChange(file));
@@ -259,7 +259,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     checkFilesAreInList(targetName, file);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(targetName, file);
   }
 
@@ -289,7 +289,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final LocalChangeList toBeDeletedList = changeListManager.addChangeList("toBeDeletedList", null);
     changeListManager.moveChangesTo(list, changeListManager.getChange(file), changeListManager.getChange(fileB));
     changeListManager.moveChangesTo(toBeDeletedList, changeListManager.getChange(fileC), changeListManager.getChange(fileD));
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
 
     final String targetName = "target";
     final String finalName = "final list name";
@@ -310,7 +310,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     checkFilesAreInList(finalName, file, fileB, fileC);
     checkFilesAreInList(myDefaulListName, fileD);
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(finalName, file, fileB, fileC);
     checkFilesAreInList(myDefaulListName, fileD);
   }

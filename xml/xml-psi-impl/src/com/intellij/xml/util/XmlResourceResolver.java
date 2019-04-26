@@ -40,6 +40,7 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -225,21 +226,16 @@ public class XmlResourceResolver implements XMLEntityResolver {
                   xmlResourceIdentifier.getLiteralSystemId():
                   xmlResourceIdentifier.getNamespace();
 
-    if (publicId != null) {
+    if (publicId != null && publicId.startsWith("file:")) {
+      Path basePath = new File(URI.create(xmlResourceIdentifier.getBaseSystemId())).getParentFile().toPath();
       try {
-        String userDir = new File(System.getProperty("user.dir")).toURI().getPath();
-        String publicIdPath = new URI(publicId).getPath();
-        if (publicIdPath.startsWith(userDir)) {
-          publicId = publicIdPath.substring(publicIdPath.indexOf(userDir) + userDir.length());
-        }
+        Path publicIdPath = new File(URI.create(publicId)).toPath();
+        publicId = basePath.relativize(publicIdPath).toString().replace(File.separatorChar, '/');
       }
-      catch (Exception e) {
+      catch (Exception ignore) {
       }
     }
     PsiFile psiFile = resolve(xmlResourceIdentifier.getBaseSystemId(), publicId);
-    if (psiFile == null && xmlResourceIdentifier.getBaseSystemId() != null) {
-        psiFile = ExternalResourceManager.getInstance().getResourceLocation(xmlResourceIdentifier.getBaseSystemId(), myFile, null);
-    }
     if (psiFile==null && xmlResourceIdentifier.getLiteralSystemId()!=null && xmlResourceIdentifier.getNamespace()!=null) {
       psiFile = resolve(
         xmlResourceIdentifier.getBaseSystemId(),
@@ -274,6 +270,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
       }
     }
     source.setPublicId(publicId);
+    source.setBaseSystemId(null);
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
     return source;

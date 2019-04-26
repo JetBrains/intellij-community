@@ -50,7 +50,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -77,12 +76,7 @@ public final class ExecutionHandler {
     );
     if (result != null) {
       try {
-        long l = System.currentTimeMillis();
-        try {
-          return result.get();
-        } finally {
-          new Throwable(EventQueue.isDispatchThread() + ": " + (System.currentTimeMillis() - l)).printStackTrace(System.out);
-        }
+        return result.get();
       }
       catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         LOG.warn(e);
@@ -234,6 +228,7 @@ public final class ExecutionHandler {
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
+    handler.putUserData(AntRunProfileState.MESSAGE_VIEW, errorView);
     handler.addProcessListener(new ProcessAdapter() {
       private final StringBuilder myUnprocessedStdErr = new StringBuilder();
 

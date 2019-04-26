@@ -153,7 +153,7 @@ public class BreakpointManager {
   }
 
   public void setBreakpointDefaults(Key<? extends Breakpoint> category, BreakpointDefaults defaults) {
-    Class typeCls = null;
+    Class<? extends XBreakpointType> typeCls = null;
     if (LineBreakpoint.CATEGORY.toString().equals(category.toString())) {
       typeCls = JavaLineBreakpointType.class;
     }
@@ -555,6 +555,10 @@ public class BreakpointManager {
   private static <T extends EventRequest> void applyFilter(@NotNull List<T> requests, Consumer<? super T> setter) {
     for (T request : requests) {
       try {
+        // skip synthetic
+        if (RequestManagerImpl.findRequestor(request) instanceof SyntheticLineBreakpoint) {
+          continue;
+        }
         boolean wasEnabled = request.isEnabled();
         if (wasEnabled) {
           request.disable();

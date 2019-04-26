@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Factory
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,7 +27,6 @@ import com.intellij.psi.search.*
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.*
 import com.intellij.util.Processor
-import com.intellij.util.loadElement
 import com.intellij.util.xmlb.XmlSerializationException
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.idea.devkit.util.PsiUtil
@@ -59,7 +59,7 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
     val renamingScheme = try {
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
         File(VfsUtil.virtualToIoFile(project.baseDir), "module-renaming-scheme.xml"))?.let {
-        XmlSerializer.deserialize(loadElement(it.inputStream), ModuleRenamingHistoryState::class.java).oldToNewName
+        XmlSerializer.deserialize(JDOMUtil.load(it.inputStream), ModuleRenamingHistoryState::class.java).oldToNewName
       }
     }
     catch (e: XmlSerializationException) {

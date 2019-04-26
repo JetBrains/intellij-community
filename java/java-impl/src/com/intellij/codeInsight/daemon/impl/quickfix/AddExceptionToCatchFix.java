@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,11 +118,10 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       addTryBlock(tryStatement, factory);
     }
 
-    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(tryStatement.getProject());
-    String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exceptionType).names[0];
-    name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
+    String name = new VariableNameGenerator(tryStatement, VariableKind.PARAMETER).byType(exceptionType)
+      .byName("e", "ex", "exception").generate(false);
 
-    PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, file);
+    PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, tryStatement);
 
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock == null) {

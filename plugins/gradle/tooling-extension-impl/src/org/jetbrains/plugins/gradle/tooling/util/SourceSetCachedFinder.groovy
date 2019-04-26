@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull
 
 /**
  * @author Vladislav.Soroka
- * @since 5/19/2016
  */
 @CompileStatic
 class SourceSetCachedFinder {
@@ -103,11 +102,13 @@ class SourceSetCachedFinder {
     myArtifactsMap[artifactPath]
   }
 
+  static SourceSetContainer getSourceSetContainer(Project p) {
+    JavaPluginUtil.getJavaPluginConvention(p)?.sourceSets
+  }
+}
+
+public class JavaPluginUtil {
   static JavaPluginConvention getJavaPluginConvention(Project p) {
     p.convention.findPlugin(JavaPluginConvention)
-  }
-
-  static SourceSetContainer getSourceSetContainer(Project p) {
-    getJavaPluginConvention(p)?.sourceSets
   }
 }

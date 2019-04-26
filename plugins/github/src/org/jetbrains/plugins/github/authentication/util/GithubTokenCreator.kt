@@ -8,8 +8,11 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthorization
+import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import java.io.IOException
+import java.util.*
 
 /**
  * Handy helper for creating OAuth token
@@ -31,22 +34,51 @@ class GithubTokenCreator(private val server: GithubServerPath,
       if (e.error != null && e.error!!.containsErrorCode("already_exists")) {
         // with new API we can't reuse old token, so let's just create new one
         // we need to change note as well, because it should be unique
-
-        //TODO: handle better
-        val current = executor.execute(indicator, GithubApiRequests.Auth.get(server))
-        for (i in 1..99) {
-          val newNote = note + "_" + i
-          if (current.find { authorization -> newNote.equals(authorization.note, true) } == null) {
-            return executor.execute(indicator, GithubApiRequests.Auth.create(server, scopes, newNote))
-          }
-        }
+        val newNote = createUniqueNote(note)
+        return executor.execute(indicator, GithubApiRequests.Auth.create(server, scopes, newNote))
       }
       throw e
     }
   }
 
+  private fun createUniqueNote(note: String): String {
+    val existingNotes = GithubApiPagesLoader
+      .loadAll(executor, indicator, GithubApiRequests.Auth.pages(server, GithubRequestPagination()))
+      .mapNotNull { it.note }
+
+    val index = findNextDeduplicationIndex(note, existingNotes)
+    return if (index == 0) note else note + "_$index"
+  }
+
   companion object {
     private val MASTER_SCOPES = listOf("repo", "gist")
     const val DEFAULT_CLIENT_NAME = "Github Integration Plugin"
+
+    @JvmStatic
+    internal fun findNextDeduplicationIndex(note: String, existingNotes: List<String>): Int {
+
+      val existingIndices = TreeSet<Int>()
+      //extract numerical index if possible and put it into sorted set
+      for (existingNote in existingNotes) {
+        if (!existingNote.startsWith(note, true)) continue
+
+        val indexPart = existingNote.substring(note.length)
+        val index: Int
+        if (indexPart.isEmpty()) index = 0
+        else if (!indexPart.startsWith('_')) continue
+        else index = indexPart.substring(1).toIntOrNull() ?: continue
+
+        existingIndices.add(index)
+      }
+
+      if (existingIndices.isEmpty()) return 0
+
+      var lastIndex = -1
+      for (index in existingIndices) {
+        if (index - lastIndex > 1) return lastIndex + 1
+        else lastIndex = index
+      }
+      return existingIndices.last() + 1
+    }
   }
 }

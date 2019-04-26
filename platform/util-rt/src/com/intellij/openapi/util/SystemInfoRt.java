@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package com.intellij.openapi.util;
 import java.util.Locale;
 
 /**
- * Stripped-down version of {@code com.intellij.openapi.util.SystemInfo}.
+ * Stripped-down version of {@link com.intellij.openapi.util.SystemInfo}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
 public class SystemInfoRt {
   public static final String OS_NAME = System.getProperty("os.name");

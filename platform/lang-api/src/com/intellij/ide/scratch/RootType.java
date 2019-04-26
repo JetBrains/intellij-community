@@ -27,13 +27,13 @@ public abstract class RootType {
   public static final ExtensionPointName<RootType> ROOT_EP = ExtensionPointName.create("com.intellij.scratch.rootType");
 
   @NotNull
-  public static List<RootType> getAllRootIds() {
+  public static List<RootType> getAllRootTypes() {
     return ROOT_EP.getExtensionList();
   }
 
   @NotNull
   public static RootType findById(@NotNull String id) {
-    for (RootType type : getAllRootIds()) {
+    for (RootType type : getAllRootTypes()) {
       if (id.equals(type.getId())) return type;
     }
     throw new AssertionError(id);

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -73,10 +74,10 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
       Binding binding = serializer.getBinding(itemType);
       Class<?>[] elementTypes = getElementTypes();
       if (elementTypes.length == 0) {
-        itemBindings = binding == null ? Collections.<Binding>emptyList() : Collections.singletonList(binding);
+        itemBindings = binding == null ? Collections.emptyList() : Collections.singletonList(binding);
       }
       else {
-        itemBindings = new SmartList<Binding>();
+        itemBindings = new SmartList<>();
         if (binding != null) {
           itemBindings.add(binding);
         }
@@ -115,7 +116,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
     String tagName = isSurroundWithTag() ? getCollectionTagName(object) : null;
     if (tagName == null) {
-      List<Object> result = new SmartList<Object>();
+      List<Object> result = new SmartList<>();
       if (!ContainerUtil.isEmpty(collection)) {
         for (Object item : collection) {
           ContainerUtil.addAllNotNull(result, serializeItem(item, result, filter));
@@ -156,7 +157,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
     assert elements.size() == 1;
     Element element = elements.get(0);
-    return doDeserializeList(context == null && element.getName().equals(Constants.SET) ? new HashSet<Object>() : context, element.getChildren());
+    return doDeserializeList(context == null && element.getName().equals(Constants.SET) ? new HashSet<>() : context, element.getChildren());
   }
 
   @NotNull
@@ -185,7 +186,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
         }
       }
       else {
-        serializedItem.setAttribute(attributeName, XmlSerializerImpl.removeControlChars(serialized));
+        serializedItem.setAttribute(attributeName, JDOMUtil.removeControlChars(serialized));
       }
       return serializedItem;
     }

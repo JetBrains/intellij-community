@@ -24,13 +24,11 @@ public class XPathHighlightingTest extends TestBase {
         super.setUp();
       new XPathSupportLoader();
       //noinspection unchecked
-      myFixture.enableInspections(new Class[]{
-        CheckNodeTest.class,
-        ImplicitTypeConversion.class,
-        RedundantTypeConversion.class,
-        IndexZeroPredicate.class,
-        HardwiredNamespacePrefix.class,
-      });
+      myFixture.enableInspections(CheckNodeTest.class,
+                                  ImplicitTypeConversion.class,
+                                  RedundantTypeConversion.class,
+                                  IndexZeroPredicate.class,
+                                  HardwiredNamespacePrefix.class);
     }
 
     public void testPathTypeMismatch() {

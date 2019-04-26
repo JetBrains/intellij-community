@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @Deprecated
   protected SelectFilesDialog(Project project,
-                              @NotNull List<VirtualFile> files,
+                              @NotNull List<? extends VirtualFile> files,
                               @Nullable String prompt,
                               @Nullable VcsShowConfirmationOption confirmationOption,
                               boolean selectableFiles,
@@ -40,7 +39,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   }
 
   protected SelectFilesDialog(Project project,
-                              @NotNull List<VirtualFile> files,
+                              @NotNull List<? extends VirtualFile> files,
                               @Nullable String prompt,
                               @Nullable VcsShowConfirmationOption confirmationOption,
                               boolean selectableFiles,
@@ -53,7 +52,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull
   @Deprecated
   public static SelectFilesDialog init(Project project,
-                                       @NotNull List<VirtualFile> originalFiles,
+                                       @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
@@ -64,7 +63,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @NotNull
   public static SelectFilesDialog init(Project project,
-                                       @NotNull List<VirtualFile> originalFiles,
+                                       @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
@@ -76,7 +75,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @NotNull
   public static SelectFilesDialog init(Project project,
-                                       @NotNull List<VirtualFile> originalFiles,
+                                       @NotNull List<? extends VirtualFile> originalFiles,
                                        @Nullable String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
@@ -125,7 +124,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   public static class VirtualFileList extends ChangesTreeImpl.VirtualFiles {
     @Nullable private final DeleteProvider myDeleteProvider;
 
-    public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<VirtualFile> files) {
+    public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<? extends VirtualFile> files) {
       super(project, selectableFiles, true, files);
       myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
     }
@@ -137,7 +136,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
         return myDeleteProvider;
       }
       else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return ArrayUtil.toObjectArray(getSelectedChanges(), VirtualFile.class);
+        return getSelectedChanges().toArray(VirtualFile.EMPTY_ARRAY);
       }
 
       return super.getData(dataId);

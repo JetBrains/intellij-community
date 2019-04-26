@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -10,11 +10,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -123,7 +124,7 @@ public abstract class GitHandler {
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
       .withExePath(myPathToExecutable)
-      .withCharset(CharsetToolkit.UTF8_CHARSET);
+      .withCharset(StandardCharsets.UTF_8);
 
     for (String parameter : getConfigParameters(project, configParameters)) {
       myCommandLine.addParameters("-c", parameter);
@@ -131,7 +132,7 @@ public abstract class GitHandler {
     myCommandLine.addParameter(command.name());
 
     myStdoutSuppressed = true;
-    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
+    mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
   }
 
   @NotNull
@@ -141,6 +142,9 @@ public abstract class GitHandler {
     }
 
     List<String> toPass = new ArrayList<>();
+    boolean shouldResetCredentialHelper = Registry.is("git.reset.credential.helper") &&
+                                          GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(project);
+    if (shouldResetCredentialHelper) toPass.add("credential.helper=");
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
@@ -189,15 +193,18 @@ public abstract class GitHandler {
     myListeners.addListener(listener);
   }
 
-  /***
+  /**
    * Execute process with lower priority
-   *
-   * @param isLowPriority whether to use lower or normal priority
    */
-  public void setWithLowPriority(boolean isLowPriority) {
-    if (isLowPriority) {
-      ExecUtil.setupLowPriorityExecution(myCommandLine);
-    }
+  public void withLowPriority() {
+    ExecUtil.setupLowPriorityExecution(myCommandLine);
+  }
+
+  /**
+   * Detach git process from IDE TTY session
+   */
+  public void withNoTty() {
+    ExecUtil.setupNoTtyExecution(myCommandLine);
   }
 
   /**
@@ -493,7 +500,7 @@ public abstract class GitHandler {
     }
     catch (Throwable t) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
+        LOG.warn(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
       }
       myListeners.getMulticaster().startFailed(t);
     }
@@ -533,7 +540,7 @@ public abstract class GitHandler {
   @Deprecated
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
   @Deprecated
-  private final int LAST_OUTPUT_SIZE = 5;
+  private static final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
   private boolean myProgressParameterAllowed = false;
   @Deprecated

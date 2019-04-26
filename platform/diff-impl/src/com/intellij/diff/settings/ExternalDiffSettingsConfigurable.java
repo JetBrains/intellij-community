@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.settings;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +49,7 @@ public class ExternalDiffSettingsConfigurable implements SearchableConfigurable 
     if (mySettingsPane == null) {
       mySettingsPane = new ExternalDiffSettingsPanel();
     }
-    return mySettingsPane.getPanel();
+    return mySettingsPane.createComponent();
   }
 
   @Override

@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -726,7 +727,7 @@ abstract class TerminalOperation extends Operation {
 
     @NotNull
     static TemplateBasedOperation summing(PsiType type) {
-      String defValue = type.equals(PsiType.DOUBLE) ? "0.0" : type.equals(PsiType.LONG) ? "0L" : "0";
+      String defValue = TypeUtils.getDefaultValue(type);
       return new TemplateBasedOperation("sum", type, defValue, "{acc}+={item};");
     }
 

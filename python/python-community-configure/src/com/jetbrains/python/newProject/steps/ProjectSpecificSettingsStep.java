@@ -48,7 +48,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   @Nullable private PyAddSdkGroupPanel myInterpreterPanel;
 
   public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator<T> projectGenerator,
-                                     @NotNull final AbstractNewProjectStep.AbstractCallback callback) {
+                                     @NotNull final AbstractNewProjectStep.AbstractCallback<T> callback) {
     super(projectGenerator, callback);
   }
 

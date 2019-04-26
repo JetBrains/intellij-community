@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -13,35 +13,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-/**
- * extended by fabrique
- */
-public class ButtonToolbarImpl extends JPanel {
-
+class ButtonToolbarImpl extends JPanel {
   private final DataManager myDataManager;
   private final String myPlace;
   private final PresentationFactory myPresentationFactory;
   private final ArrayList<ActionJButton> myActions = new ArrayList<>();
 
-  public ButtonToolbarImpl(final String place,
-                           @NotNull ActionGroup actionGroup,
-                           DataManager dataManager,
-                           ActionManagerEx actionManager) {
+  ButtonToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup) {
     super(new GridBagLayout());
     myPlace = place;
     myPresentationFactory = new PresentationFactory();
-    myDataManager = dataManager;
+    myDataManager = DataManager.getInstance();
 
     initButtons(actionGroup);
 
     updateActions();
-    //
-    actionManager.addTimerListener(500, new WeakTimerListener(actionManager, new MyTimerListener()));
-    enableEvents(MouseEvent.MOUSE_MOTION_EVENT_MASK | MouseEvent.MOUSE_EVENT_MASK);
-
+    ActionManagerEx.getInstanceEx().addTimerListener(500, new WeakTimerListener(new MyTimerListener()));
+    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
   private void initButtons(@NotNull ActionGroup actionGroup) {
@@ -54,16 +44,13 @@ public class ButtonToolbarImpl extends JPanel {
       add(// left strut
                 Box.createHorizontalGlue(),
                 new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                                        new Insets(8, 0, 0, 0), 0, 0));
+      JPanel buttonsPanel = createButtons(actions);
+      //noinspection UnusedAssignment
+      add(buttonsPanel,
+                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                        new Insets(8, 0, 0, 0), 0, 0));
-      if (actions.length > 0) {
-        JPanel buttonsPanel = createButtons(actions);
-        //noinspection UnusedAssignment
-        add(buttonsPanel,
-                  new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                         new Insets(8, 0, 0, 0), 0, 0));
-      }
     }
-
   }
 
   private JPanel createButtons(AnAction[] actions) {
@@ -94,7 +81,7 @@ public class ButtonToolbarImpl extends JPanel {
         public void actionPerformed(ActionEvent e) {
           AnActionEvent event = new AnActionEvent(
             null,
-            ((DataManagerImpl)myDataManager).getDataContextTest(ButtonToolbarImpl.this),
+            ((DataManagerImpl)DataManager.getInstance()).getDataContextTest(ButtonToolbarImpl.this),
             myPlace,
             myPresentationFactory.getPresentation(action),
             ActionManager.getInstance(),
@@ -160,10 +147,8 @@ public class ButtonToolbarImpl extends JPanel {
     }
   }
 
-  public void updateActions() {
-
+  private void updateActions() {
     final DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
-
     for (ActionJButton action : myActions) {
       action.updateAction(dataContext);
     }

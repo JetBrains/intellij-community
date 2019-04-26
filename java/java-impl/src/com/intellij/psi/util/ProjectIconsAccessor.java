@@ -28,8 +28,6 @@ import java.util.Locale;
 
 /**
  * Resolve small icons located in project for use in UI (e.g. gutter preview icon, lookups).
- *
- * @since 15
  */
 public class ProjectIconsAccessor {
 

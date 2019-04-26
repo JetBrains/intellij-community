@@ -18,7 +18,7 @@ import java.util.Set;
  * @author yole
  */
 class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
-  private PopupChooserBuilder myBuilder;
+  private final PopupChooserBuilder myBuilder;
   private final JTree myTree;
 
   PopupTreeAdapter(PopupChooserBuilder builder, JTree tree) {

@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Range;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class BasicStepMethodFilter implements NamedMethodFilter {
   private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);
+  private static final String PROXY_CALL_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
 
   @NotNull
   protected final JVMName myDeclaringClassName;
@@ -43,22 +30,39 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   @Nullable
   protected final JVMName myTargetMethodSignature;
   private final Range<Integer> myCallingExpressionLines;
+  private final int myOrdinal;
+  private final boolean myCheckCaller;
 
   public BasicStepMethodFilter(@NotNull PsiMethod psiMethod, Range<Integer> callingExpressionLines) {
+    this(psiMethod, 0, callingExpressionLines);
+  }
+
+  public BasicStepMethodFilter(@NotNull PsiMethod psiMethod, int ordinal, Range<Integer> callingExpressionLines) {
     this(JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass()),
          JVMNameUtil.getJVMMethodName(psiMethod),
          JVMNameUtil.getJVMSignature(psiMethod),
-         callingExpressionLines);
+         ordinal,
+         callingExpressionLines,
+         checkCaller(psiMethod));
   }
 
   protected BasicStepMethodFilter(@NotNull JVMName declaringClassName,
                                   @NotNull String targetMethodName,
                                   @Nullable JVMName targetMethodSignature,
-                                  Range<Integer> callingExpressionLines) {
+                                  int ordinal,
+                                  Range<Integer> callingExpressionLines,
+                                  boolean checkCaller) {
     myDeclaringClassName = declaringClassName;
     myTargetMethodName = targetMethodName;
     myTargetMethodSignature = targetMethodSignature;
     myCallingExpressionLines = callingExpressionLines;
+    myOrdinal = ordinal;
+    myCheckCaller = checkCaller;
+  }
+
+  private static boolean checkCaller(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    return aClass != null && aClass.hasAnnotation("java.lang.FunctionalInterface");
   }
 
   @Override
@@ -69,51 +73,107 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
 
   @Override
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
-    return locationMatches(process, location, () -> null);
+    return locationMatches(process, location, null, false);
   }
 
   @Override
-  public boolean locationMatches(DebugProcessImpl process, Location location, @NotNull EvaluatingComputable<ObjectReference> thisProvider)
+  public boolean locationMatches(DebugProcessImpl process, @NotNull StackFrameProxyImpl frameProxy) throws EvaluateException {
+    return locationMatches(process, frameProxy.location(), frameProxy, false);
+  }
+
+  private boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl stackFrame, boolean caller)
     throws EvaluateException {
     Method method = location.method();
     String name = method.name();
     if (!myTargetMethodName.equals(name)) {
-      if (DebuggerUtilsEx.isLambdaName(name)) {
-        SourcePosition position = process.getPositionManager().getSourcePosition(location);
-        return ReadAction.compute(() -> {
-          PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
-          if (psiMethod instanceof PsiLambdaExpression) {
-            PsiType type = ((PsiLambdaExpression)psiMethod).getFunctionalInterfaceType();
-            PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
-            if (type != null && interfaceMethod != null && myTargetMethodName.equals(interfaceMethod.getName())) {
-              try {
-                return InheritanceUtil.isInheritor(type, myDeclaringClassName.getName(process).replace('$', '.'));
-              }
-              catch (EvaluateException e) {
-                LOG.info(e);
-              }
-            }
-          }
-          return false;
-        });
+      if (isLambdaCall(process, name, location) || isProxyCall(process, method, stackFrame)) {
+        return true;
+      }
+      if (!caller && myCheckCaller) {
+        int index = stackFrame.getFrameIndex();
+        StackFrameProxyImpl callerFrame = stackFrame.threadProxy().frame(index + 1);
+        if (callerFrame != null) {
+          return locationMatches(process, callerFrame.location(), callerFrame, true);
+        }
       }
       return false;
     }
     if (myTargetMethodSignature != null && !signatureMatches(method, myTargetMethodSignature.getName(process))) {
       return false;
     }
-    if (method.isBridge()) { // skip bridge methods
+    if (!caller && RequestHint.isProxyMethod(method)) {
       return false;
     }
     String declaringClassNameName = myDeclaringClassName.getName(process);
     boolean res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, location.declaringType());
-    if (!res && !method.isStatic()) {
-      ObjectReference thisObject = thisProvider.compute();
+    if (!res && !method.isStatic() && stackFrame != null) {
+      ObjectReference thisObject = stackFrame.thisObject();
       if (thisObject != null) {
         res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, thisObject.referenceType());
       }
     }
     return res;
+  }
+
+  private boolean isLambdaCall(DebugProcessImpl process, String name, Location location) {
+    if (DebuggerUtilsEx.isLambdaName(name)) {
+      SourcePosition position = process.getPositionManager().getSourcePosition(location);
+      return ReadAction.compute(() -> {
+        PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
+        if (psiMethod instanceof PsiLambdaExpression) {
+          PsiType type = ((PsiLambdaExpression)psiMethod).getFunctionalInterfaceType();
+          PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
+          if (type != null && interfaceMethod != null && myTargetMethodName.equals(interfaceMethod.getName())) {
+            try {
+              return InheritanceUtil.isInheritor(type, myDeclaringClassName.getName(process).replace('$', '.'));
+            }
+            catch (EvaluateException e) {
+              LOG.info(e);
+            }
+          }
+        }
+        return false;
+      });
+    }
+    return false;
+  }
+
+  private boolean isProxyCall(DebugProcessImpl process, Method method, @Nullable StackFrameProxyImpl stackFrame) {
+    try {
+      if (stackFrame != null && PROXY_CALL_SIGNATURE.equals(method.signature())) {
+        if ("invoke".equals(method.name())) {
+          ReferenceType type = method.declaringType();
+          if (!(type instanceof ClassType) ||
+              ((ClassType)type).interfaces().stream().map(InterfaceType::name).noneMatch("java.lang.reflect.InvocationHandler"::equals)) {
+            return false;
+          }
+        }
+        else if (!DebuggerUtilsEx.isLambdaName(method.name())) {
+          return false;
+        }
+        List<Value> argumentValues = stackFrame.getArgumentValues();
+        if (argumentValues.size() == 3) {
+          Value proxyValue = argumentValues.get(0);
+          if (proxyValue != null) {
+            Type proxyType = proxyValue.type();
+            if (proxyType instanceof ReferenceType &&
+                DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), (ReferenceType)proxyType)) {
+              Value methodValue = argumentValues.get(1);
+              if (methodValue instanceof ObjectReference) {
+                // TODO: no signature check for now
+                ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
+                return myTargetMethodName.equals(
+                  ((StringReference)((ObjectReference)methodValue).getValue(methodType.fieldByName("name"))).value());
+              }
+            }
+          }
+        }
+      }
+    }
+    catch (EvaluateException e) {
+      LOG.info(e);
+    }
+    return false;
   }
 
   private static boolean signatureMatches(Method method, final String expectedSignature) throws EvaluateException {
@@ -133,5 +193,10 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   @Override
   public Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
+  }
+
+  @Override
+  public int getSkipCount() {
+    return myOrdinal;
   }
 }

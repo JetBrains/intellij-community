@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -32,7 +32,7 @@ public class StringToConstraintsTransformer {
   private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
-  public static void transformCriteria(String criteria, MatchOptions options) {
+  public static void transformCriteria(@NotNull String criteria, MatchOptions options) {
     final StringBuilder pattern = new StringBuilder();
     int anonymousTypedVarsCount = 0;
     boolean targetFound = false;
@@ -283,7 +283,7 @@ public class StringToConstraintsTransformer {
     }
     final String regexp = criteria.substring(index, endIndex);
 
-    if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty() && !constraint.getRegExp().equals(regexp)) {
+    if (!constraint.getRegExp().isEmpty() && !constraint.getRegExp().equals(regexp)) {
       throw new MalformedPatternException(SSRBundle.message("error.two.different.type.constraints"));
     }
     else {

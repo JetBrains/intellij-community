@@ -25,6 +25,7 @@ import com.intellij.util.xml.converters.values.ClassArrayConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ClassArrayConverterImpl extends ClassArrayConverter {
@@ -66,10 +67,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
   }
 
   private static void createReference(final PsiElement element, final String s, final int offset, List<? super PsiReference> list) {
-    final PsiReference[] references = REFERENCE_PROVIDER.getReferencesByString(s, element, offset);
-    //noinspection ManualArrayToCollectionCopy
-    for (PsiReference ref: references) {
-      list.add(ref);
-    }
+    PsiReference[] references = REFERENCE_PROVIDER.getReferencesByString(s, element, offset);
+    list.addAll(Arrays.asList(references));
   }
 }

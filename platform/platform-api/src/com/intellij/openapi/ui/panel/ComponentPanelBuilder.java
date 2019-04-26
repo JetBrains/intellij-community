@@ -1,13 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.TextComponent;
+import com.intellij.ui.EditorTextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.SystemProperties;
@@ -21,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
@@ -201,10 +205,18 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       if (component instanceof JRadioButton || component instanceof JCheckBox) {
         top = 0;
-        left = isMacDefault ? 26 : isWin10 ? 17 : 23;
         bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+        if (component instanceof JCheckBox) {
+          left = UIUtil.getCheckBoxTextHorizontalOffset((JCheckBox)component); // the value returned from this method is already scaled
+
+          //noinspection UseDPIAwareInsets
+          return new Insets(top, left, JBUI.scale(bottom), 0);
+        }
+        else {
+          left = isMacDefault ? 26 : isWin10 ? 17 : 23;
+        }
       }
-      else if (component instanceof JTextField || component instanceof TextComponent ||
+      else if (component instanceof JTextField || component instanceof EditorTextComponent ||
                component instanceof JComboBox || component instanceof ComponentWithBrowseButton) {
         top = isWin10 ? 3 : 4;
         left = isWin10 ? 2 : isMacDefault ? 5 : 4;
@@ -223,7 +235,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       if (component instanceof JRadioButton || component instanceof JCheckBox) {
         left = isMacDefault ? 8 : 13;
       }
-      else if (component instanceof JTextField || component instanceof TextComponent ||
+      else if (component instanceof JTextField || component instanceof EditorTextComponent ||
                component instanceof JComboBox || component instanceof ComponentWithBrowseButton) {
         left = isMacDefault ? 13 : 14;
       }
@@ -373,12 +385,49 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                                  ContextHelpLabel.create(myHTDescription);
           JBUI.Borders.emptyLeft(7).wrap(lbl);
           componentPanel.add(lbl);
+
+          ComponentValidator.getInstance(myComponent).ifPresent(v -> {
+              JLabel iconLabel = new JLabel();
+              JBUI.Borders.emptyLeft(7).wrap(iconLabel);
+              iconLabel.setVisible(false);
+              componentPanel.add(iconLabel);
+
+              iconLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                  myComponent.dispatchEvent(convertMouseEvent(e));
+                  e.consume();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                  myComponent.dispatchEvent(convertMouseEvent(e));
+                  e.consume();
+                }
+              });
+
+              myComponent.addPropertyChangeListener("JComponent.outline", evt -> {
+                if (evt.getNewValue() == null) {
+                  iconLabel.setVisible(false);
+                  lbl.setVisible(true);
+                } else if ("warning".equals(evt.getNewValue())) {
+                  iconLabel.setIcon(AllIcons.General.BalloonWarning);
+                  iconLabel.setVisible(true);
+                  lbl.setVisible(false);
+                } else if ("error".equals(evt.getNewValue())) {
+                  iconLabel.setIcon(AllIcons.General.BalloonError);
+                  iconLabel.setVisible(true);
+                  lbl.setVisible(false);
+                }
+                componentPanel.revalidate();
+                componentPanel.repaint();
+              });
+            });
         }
         else if (!myCommentBelow) {
           comment.setBorder(getCommentBorder());
           componentPanel.add(comment);
         }
-
         panel.add(componentPanel, gc);
       } else {
         panel.add(myComponent, gc);
@@ -399,6 +448,14 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);
       gc.gridy++;
+    }
+
+    private MouseEvent convertMouseEvent(MouseEvent e) {
+      Point p = e.getPoint();
+      SwingUtilities.convertPoint(e.getComponent(), p, myComponent);
+      return new MouseEvent(myComponent, e.getID(), e.getWhen(), e.getModifiers(),
+                            p.x, p.y, e.getXOnScreen(), e.getYOnScreen(),
+                            e.getClickCount(), e.isPopupTrigger(), e.getButton());
     }
   }
 }

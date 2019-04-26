@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -58,6 +59,7 @@ public class JavaAnalysisScope extends AnalysisScope {
         for (final PsiClass aClass : classes) {
           if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
             onlyPackLocalClasses = false;
+            break;
           }
         }
         if (onlyPackLocalClasses) {
@@ -98,18 +100,20 @@ public class JavaAnalysisScope extends AnalysisScope {
     return super.getDisplayName();
   }
 
+  @NotNull
   @Override
-  protected void initFilesSet() {
+  protected Set<VirtualFile> createFilesSet() {
     if (myType == PACKAGE) {
-      myFilesSet = new HashSet<>();
-      accept(createFileSearcher());
-      return;
+      CompactVirtualFileSet fileSet = new CompactVirtualFileSet();
+      accept(createFileSearcher(fileSet));
+      fileSet.freeze();
+      return fileSet;
     }
-    super.initFilesSet();
+    return super.createFilesSet();
   }
 
   @Override
-  public boolean accept(@NotNull Processor<VirtualFile> processor) {
+  public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
     if (myElement instanceof PsiPackage) {
       final PsiPackage pack = (PsiPackage)myElement;
       final Set<PsiDirectory> dirs = new HashSet<>();

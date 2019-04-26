@@ -31,7 +31,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDependency> implements ModuleSourceOrderEntry {
-  public JpsModuleSourceOrderEntry(JpsRootModel rootModel, JpsModuleSourceDependency dependencyElement) {
+  public JpsModuleSourceOrderEntry(@NotNull JpsRootModel rootModel, @NotNull JpsModuleSourceDependency dependencyElement) {
     super(rootModel, dependencyElement);
   }
 
@@ -74,6 +74,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
   }
 
   @Override
+  @NotNull
   public ModuleRootModel getRootModel() {
     return myRootModel;
   }

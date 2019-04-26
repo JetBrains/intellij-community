@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
@@ -151,7 +151,7 @@ public final class StringEditorDialog extends DialogWrapper{
           }
         }
         final ReadonlyStatusHandler.OperationStatus operationStatus =
-          ReadonlyStatusHandler.getInstance(module.getProject()).ensureFilesWritable(propFile.getVirtualFile());
+          ReadonlyStatusHandler.getInstance(module.getProject()).ensureFilesWritable(Collections.singletonList(propFile.getVirtualFile()));
         if (operationStatus.hasReadonlyFiles()) {
           return null;
         }
@@ -225,7 +225,7 @@ public final class StringEditorDialog extends DialogWrapper{
   public static boolean saveCreatedProperty(final PropertiesFile bundle, final String name, final String value,
                                             final PsiFile formFile) {
     final ReadonlyStatusHandler.OperationStatus operationStatus =
-      ReadonlyStatusHandler.getInstance(bundle.getProject()).ensureFilesWritable(bundle.getVirtualFile());
+      ReadonlyStatusHandler.getInstance(bundle.getProject()).ensureFilesWritable(Collections.singletonList(bundle.getVirtualFile()));
     if (operationStatus.hasReadonlyFiles()) {
       return false;
     }

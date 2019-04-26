@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.classMembers;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,8 +31,11 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
     mySourceReferenceList = sourceReferenceList;
     if (member instanceof GrMethod) {
       GrMethod method = (GrMethod)member;
-      displayName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
-                                               PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER);
+      displayName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
+                                                                             PsiFormatUtilBase.SHOW_TYPE |
+                                                                             PsiFormatUtilBase.TYPE_AFTER |
+                                                                             PsiFormatUtilBase.SHOW_PARAMETERS,
+                                               PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER);
       PsiMethod[] superMethods = method.findSuperMethods();
       if (superMethods.length > 0) {
         overrides = !superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT);
@@ -59,7 +49,7 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
     else if (member instanceof GrField) {
       GrField field = (GrField)member;
       displayName = PsiFormatUtil
-        .formatVariable(field, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER, PsiSubstitutor.EMPTY);
+        .formatVariable(field, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER, PsiSubstitutor.EMPTY);
       isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       overrides = null;
     }

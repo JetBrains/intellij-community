@@ -10,9 +10,11 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestCase
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.VcsUser
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
@@ -105,6 +107,14 @@ fun createRepository(project: Project, root: String, makeInitialCommit: Boolean)
   return registerRepo(project, root)
 }
 
+fun GitRepository.createSubRepository(name: String): GitRepository {
+  val childRoot = File(this.root.path, name)
+  PlatformTestCase.assertTrue(childRoot.mkdir())
+  val repo = createRepository(this.project, childRoot.path)
+  this.tac(".gitignore", name)
+  return repo
+}
+
 fun registerRepo(project: Project, root: String): GitRepository {
   val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
   vcsManager.setDirectoryMapping(root, GitVcs.NAME)
@@ -133,6 +143,13 @@ fun GitPlatformTest.makeCommit(file: String): String {
   append(file, "some content")
   addCommit("some message")
   return last()
+}
+
+fun GitPlatformTest.makeCommit(author: VcsUser, file: String): String {
+  setupUsername(project, author.name, author.email)
+  val commit = modify(file)
+  setupDefaultUsername(project)
+  return commit
 }
 
 fun findGitLogProvider(project: Project): GitLogProvider {

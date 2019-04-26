@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.Paths;
@@ -26,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -66,7 +53,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> r) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> r) throws Throwable {
     if (getName().equals("testRefreshingAsynchronously")) {
       // this method waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
@@ -132,7 +119,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       public void fileCreated(@NotNull VirtualFileEvent e) {
         try {
           if (!e.getFile().getPath().equals(path)) return;
-          content[0] = new String(e.getFile().contentsToByteArray(), CharsetToolkit.UTF8_CHARSET);
+          content[0] = new String(e.getFile().contentsToByteArray(), StandardCharsets.UTF_8);
         }
         catch (IOException ex) {
           throw new RuntimeException(ex);
@@ -160,7 +147,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
   public void testCreationOfExcludedDirWithFilesDuringRefreshShouldNotThrowException() throws Exception {
     // there was a problem with the DirectoryIndex - the files that were created during the refresh
-    // were not correctly excluded, thereby causing the LocalHistory to fail during addition of 
+    // were not correctly excluded, thereby causing the LocalHistory to fail during addition of
     // files under the excluded dir.
 
     File targetDir = createTargetDir();

@@ -29,5 +29,5 @@ import java.util.List;
 public interface PathChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_EXPLICIT = DataKey.create("prefer.last.over.explicit");
 
-  void choose(@Nullable VirtualFile toSelect, @NotNull final Consumer<List<VirtualFile>> callback);
+  void choose(@Nullable VirtualFile toSelect, @NotNull final Consumer<? super List<VirtualFile>> callback);
 }

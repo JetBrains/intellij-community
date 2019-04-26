@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
@@ -8,7 +8,8 @@ import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -24,7 +25,7 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
   private static final Logger LOG = Logger.getInstance(GrAnnotationArgumentListImpl.class);
 
   public GrAnnotationArgumentListImpl(@NotNull EmptyStub stub) {
-    super(stub, GroovyElementTypes.ANNOTATION_ARGUMENTS);
+    super(stub, GroovyEmptyStubElementTypes.ANNOTATION_ARGUMENT_LIST);
   }
 
   public GrAnnotationArgumentListImpl(@NotNull ASTNode node) {
@@ -44,13 +45,13 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
   @Override
   @NotNull
   public GrAnnotationNameValuePair[] getAttributes() {
-    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR, GrAnnotationNameValuePair.EMPTY_ARRAY);
+    return getStubOrPsiChildren(GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR, GrAnnotationNameValuePair.EMPTY_ARRAY);
   }
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first.getElementType() == GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR && last.getElementType() ==
-                                                                                     GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
+    if (first.getElementType() == GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR && last.getElementType() ==
+                                                                                         GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
       ASTNode lparenth = getNode().getFirstChildNode();
       ASTNode rparenth = getNode().getLastChildNode();
       if (lparenth == null) {

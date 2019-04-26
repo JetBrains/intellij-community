@@ -79,6 +79,16 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     if (expected != null) checkDiffChanges(fragments, expected)
   }
 
+  private fun doCharRawTest(text: Couple<Document>, matchings: Couple<BitSet>?, expected: List<Couple<IntPair>>?) {
+    val before = text.first
+    val after = text.second
+    val iterable = ByChar.compare(before.charsSequence, after.charsSequence, INDICATOR)
+    val fragments = ComparisonManagerImpl.convertIntoDiffFragments(iterable)
+    checkConsistency(fragments, before, after)
+    if (matchings != null) checkDiffMatching(fragments, matchings)
+    if (expected != null) checkDiffChanges(fragments, expected)
+  }
+
   private fun doSplitterTest(text: Couple<Document>,
                              squash: Boolean,
                              trim: Boolean,
@@ -175,7 +185,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   //
 
   internal enum class TestType {
-    LINE, LINE_INNER, WORD, CHAR, SPLITTER
+    LINE, LINE_INNER, WORD, CHAR, CHAR_SMART, CHAR_RAW, SPLITTER
   }
 
   internal inner class TestBuilder(private val type: TestType) {
@@ -209,7 +219,16 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
               doWordTest(text, matchings, changes, policy)
             }
             TestType.WORD -> doWordTest(text, matchings, changes, policy)
-            TestType.CHAR -> doCharTest(text, matchings, changes, policy)
+            TestType.CHAR -> {
+              doCharTest(text, matchings, changes, policy)
+              if (policy == ComparisonPolicy.DEFAULT) doCharRawTest(text, matchings, changes)
+            }
+            TestType.CHAR_SMART -> {
+              doCharTest(text, matchings, changes, policy)
+            }
+            TestType.CHAR_RAW -> {
+              if (policy == ComparisonPolicy.DEFAULT) doCharRawTest(text, matchings, changes)
+            }
             TestType.SPLITTER -> {
               assertNull(matchings)
               doSplitterTest(text, shouldSquash, shouldTrim, changes, policy)
@@ -247,7 +266,6 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     }
 
     fun testTrim() {
-      if (type == TestType.CHAR) return // not supported
       run(ComparisonPolicy.TRIM_WHITESPACES)
     }
 
@@ -285,47 +303,53 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       }
 
       fun default() {
+        assertNull(matchings.default)
         matchings.default = parseMatching(before, after, base)
       }
 
       fun trim() {
+        assertNull(matchings.trim)
         matchings.trim = parseMatching(before, after, base)
       }
 
       fun ignore() {
+        assertNull(matchings.ignore)
         matchings.ignore = parseMatching(before, after, base)
       }
 
       private fun parseMatching(before: String, after: String, base: String?): Data<BitSet> {
+        val builder = this@TestBuilder
         if (type == TestType.LINE) {
-          val builder = this@TestBuilder
           return Data(parseLineMatching(before, builder.text.before!!),
                       if (base != null) parseLineMatching(base, builder.text.base!!) else null,
                       parseLineMatching(after, builder.text.after!!))
         }
         else {
-          return Data(parseMatching(before),
-                      if (base != null) parseMatching(base) else null,
-                      parseMatching(after))
+          return Data(parseMatching(before, builder.text.before!!),
+                      if (base != null) parseMatching(base, builder.text.base!!) else null,
+                      parseMatching(after, builder.text.after!!))
         }
       }
     }
 
 
-    fun default(vararg expected: Couple<IntPair>): Unit {
+    fun default(vararg expected: Couple<IntPair>) {
+      assertNull(changes.default)
       changes.default = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
     }
 
-    fun trim(vararg expected: Couple<IntPair>): Unit {
+    fun trim(vararg expected: Couple<IntPair>) {
+      assertNull(changes.trim)
       changes.trim = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
     }
 
-    fun ignore(vararg expected: Couple<IntPair>): Unit {
+    fun ignore(vararg expected: Couple<IntPair>) {
+      assertNull(changes.ignore)
       changes.ignore = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
     }
 
 
-    fun postprocess(squash: Boolean, trim: Boolean): Unit {
+    fun postprocess(squash: Boolean, trim: Boolean) {
       shouldSquash = squash
       shouldTrim = trim
     }
@@ -339,11 +363,15 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
   internal fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
 
-  internal fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
-    doTest(TestType.SPLITTER, {
+  internal fun chars_raw(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR_RAW, f)
+
+  internal fun chars_smart(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR_SMART, f)
+
+  internal fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit) {
+    doTest(TestType.SPLITTER) {
       postprocess(squash, trim)
       f()
-    })
+    }
   }
 
   private fun doTest(type: TestType, f: TestBuilder.() -> Unit) {

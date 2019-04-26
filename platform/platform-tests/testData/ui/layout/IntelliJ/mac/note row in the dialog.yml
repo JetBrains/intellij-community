@@ -31,7 +31,7 @@ columnConstraints:
   - {}
   count: 2
 componentConstrains:
-  Profiler requires access to the kernel-level API. Enter the sudo password to allow this.:
+  Profiler requires access to the kernel-level API. Enter the sudo password to allow this. [label]:
     spanX: 2097051
     vertical:
       gapAfter:
@@ -41,7 +41,7 @@ componentConstrains:
         min: &id006 {horizontal: false, value: 10.0}
         preferred: *id006
     wrap: true
-  'Sudo password:': {}
+  Sudo password [label]: {}
   'JPasswordField #2': {spanX: 2097051, wrap: true}
   !!binary "G1JlbWVtYmVy": {skip: 1, spanX: 2097051, wrap: true}
   'SimpleColoredComponent #4':
@@ -61,9 +61,8 @@ cellBounds:
 - [104, 91, 376, 14]
 - [0, 115, 480, 42]
 componentBounds:
-  Profiler requires access to the kernel-level API. Enter the sudo password to allow this.: [
-    0, 10, 292, 30]
-  'Sudo password:': [0, 63, 98, 15]
+  Profiler requires access to the kernel-level API. Enter the sudo password to allow this. [label]: [0, 10, 292, 30]
+  Sudo password [label]: [0, 63, 98, 15]
   'JPasswordField #2': [101, 57, 256, 27]
   !!binary "G1JlbWVtYmVy": [100, 87, 95, 22]
   'SimpleColoredComponent #4': [0, 127, 300, 20]

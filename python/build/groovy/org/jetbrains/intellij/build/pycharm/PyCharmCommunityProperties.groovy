@@ -66,6 +66,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       {
         icoPath = "$projectHome/python/resources/PyCharmCore.ico"
         icoPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.ico"
+        include32BitLauncher = false
         installerImagesPath = "$projectHome/python/build/resources"
         fileAssociations = ["py"]
       }

@@ -79,15 +79,12 @@ class WrapLayout : FlowLayout {
       //  Each row must fit with the width allocated to the containter.
       //  When the container width = 0, the preferred width of the container
       //  has not yet been calculated so lets ask for the maximum.
-      var targetWidth = target.size.width
       var container = target
-
       while (container.size.width == 0 && container.parent != null) {
         container = container.parent
       }
 
-      targetWidth = container.size.width
-
+      var targetWidth = container.size.width
       if (targetWidth == 0) {
         targetWidth = Integer.MAX_VALUE
       }
@@ -112,7 +109,7 @@ class WrapLayout : FlowLayout {
           val d = if (preferred) m.preferredSize else m.minimumSize
 
           //  Can't add the component to current row. Start a new row.
-          if (rowWidth + d.width > maxWidth) {
+          if (rowWidth + hgap + d.width > maxWidth) {
             addRow(dim, rowWidth, rowHeight)
             rowWidth = 0
             rowHeight = 0

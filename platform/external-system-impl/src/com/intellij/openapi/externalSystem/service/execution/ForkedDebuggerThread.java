@@ -259,12 +259,12 @@ class ForkedDebuggerThread extends Thread {
         String debuggerAttachedStatusMessage =
           ExternalSystemBundle.message("debugger.status.connected", myProcessName, addressDisplayName) + ". " + linkText + '\n';
 
-        int contentSize = mainConsoleView.getContentSize();
         mainConsoleView.print(debuggerAttachedStatusMessage, ConsoleViewContentType.SYSTEM_OUTPUT);
         mainConsoleView.performWhenNoDeferredOutput(() -> {
           EditorHyperlinkSupport hyperlinkSupport = mainConsoleView.getHyperlinks();
-          int startOffset = contentSize + debuggerAttachedStatusMessage.indexOf(linkText) - 1;
-          myHyperlink = hyperlinkSupport.createHyperlink(startOffset, startOffset + linkText.length(), null, project -> {
+          int messageOffset = mainConsoleView.getText().indexOf(debuggerAttachedStatusMessage);
+          int linkStartOffset = messageOffset + debuggerAttachedStatusMessage.indexOf(linkText);
+          myHyperlink = hyperlinkSupport.createHyperlink(linkStartOffset, linkStartOffset + linkText.length(), null, project -> {
             // open tab
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
             ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();

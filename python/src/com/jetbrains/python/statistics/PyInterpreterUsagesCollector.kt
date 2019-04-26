@@ -3,6 +3,7 @@ package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -16,35 +17,37 @@ import com.jetbrains.python.sdk.pipenv.isPipEnv
 object PyInterpreterUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
     project.sdks
-      .map { sdk -> UsageDescriptor(listOf(sdk.version, sdk.remoteType, sdk.interpreterType).joinToString(".")) }.toSet()
+      .map { sdk -> UsageDescriptor(listOf(sdk.version, sdk.executionType, sdk.interpreterType).joinToString(".")) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter"
+  override fun getGroupId() = "python.interpreter"
 }
 
 object PyInterpreterVersionUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
     project.sdks.map { sdk -> UsageDescriptor(sdk.version) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter.version"
+  override fun getGroupId() = "python.interpreter.version"
 }
 
 object PyInterpreterTypeUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
     project.sdks.map { sdk -> UsageDescriptor(sdk.interpreterType) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter.type"
+  override fun getGroupId() = "python.interpreter.type"
 }
 
 object PyInterpreterRemoteUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
-    project.sdks.map { sdk -> UsageDescriptor(sdk.remoteType) }.toSet()
+    project.sdks.map { sdk -> UsageDescriptor(sdk.executionType) }.toSet()
 
-  override fun getGroupId() = "statistics.python.interpreter.remote"
+  override fun getGroupId() = "python.interpreter.remote"
+
+  override fun getVersion(): Int = 2
 }
 
 private val Project.sdks get() = ModuleManager.getInstance(this).modules.mapNotNull(PythonSdkType::findPythonSdk)
 private val Sdk.version get() = PythonSdkType.getLanguageLevelForSdk(this).version.toString()
-private val Sdk.remoteType get() = if (PythonSdkType.isRemote(this)) remoteSuffix.replace(' ', '_') else "local"
+private val Sdk.executionType get(): String = (sdkAdditionalData as? PyRemoteSdkAdditionalDataBase)?.executionType ?: "local"
 private val Sdk.interpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
@@ -54,8 +57,11 @@ private val Sdk.interpreterType
     else -> "regular"
   }
 
-private val Sdk.remoteSuffix
-  get() =
-    sdkAdditionalData?.let { if (it is PyRemoteSdkAdditionalDataBase) "Remote_" + it.remoteConnectionType.name else null }
-    ?: ""
-
+private val PyRemoteSdkAdditionalDataBase.executionType: String
+  get() = remoteConnectionType.let { type ->
+    when {
+      type == null -> "Remote_null"
+      getPluginInfo(type.javaClass).isDevelopedByJetBrains() -> "Remote_${type.name?.replace(' ', '_')}"
+      else -> "third_party"
+    }
+  }

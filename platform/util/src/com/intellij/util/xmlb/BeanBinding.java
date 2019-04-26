@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.*;
 
 public class BeanBinding extends NotNullDeserializeBinding {
-  private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
+  private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.newConcurrentMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -127,10 +127,15 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @Override
   @NotNull
-  public Object deserialize(@Nullable Object context, @NotNull Element element) {
-    Object instance = ReflectionUtil.newInstance(myBeanClass);
+  public final Object deserialize(@Nullable Object context, @NotNull Element element) {
+    Object instance = newInstance();
     deserializeInto(instance, element);
     return instance;
+  }
+
+  @NotNull
+  protected Object newInstance() {
+    return ReflectionUtil.newInstance(myBeanClass, false);
   }
 
   final boolean equalByFields(@NotNull Object currentValue, @NotNull Object defaultValue, @NotNull SkipDefaultsSerializationFilter filter) {
@@ -145,7 +150,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   public final TObjectFloatHashMap<String> computeBindingWeights(@NotNull LinkedHashSet<String> accessorNameTracker) {
-    TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<String>(accessorNameTracker.size());
+    TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<>(accessorNameTracker.size());
     float weight = 0;
     float step = (float)myBindings.length / (float)accessorNameTracker.size();
     for (String name : accessorNameTracker) {
@@ -166,15 +171,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   public final void sortBindings(@NotNull final TObjectFloatHashMap<? super String> weights) {
-    Arrays.sort(myBindings, new Comparator<Binding>() {
-      @Override
-      public int compare(@NotNull Binding o1, @NotNull Binding o2) {
-        String n1 = o1.getAccessor().getName();
-        String n2 = o2.getAccessor().getName();
-        float w1 = weights.get(n1);
-        float w2 = weights.get(n2);
-        return (int)(w1 - w2);
-      }
+    Arrays.sort(myBindings, (o1, o2) -> {
+      String n1 = o1.getAccessor().getName();
+      String n2 = o2.getAccessor().getName();
+      float w1 = weights.get(n1);
+      float w2 = weights.get(n2);
+      return (int)(w1 - w2);
     });
   }
 
@@ -287,7 +289,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return accessors;
     }
 
-    accessors = new ArrayList<MutableAccessor>();
+    accessors = new ArrayList<>();
 
     Map<String, Couple<Method>> nameToAccessors;
     // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
@@ -350,7 +352,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
-    final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
+    final Map<String, Couple<Method>> candidates = new TreeMap<>(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
         continue;

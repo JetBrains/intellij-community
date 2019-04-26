@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions;
 
 import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import one.util.streamex.StreamEx;
@@ -38,14 +39,11 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
   @NotNull private final GithubGitHelper myGitHelper;
   @NotNull private final GithubHttpAuthDataProvider myAuthDataProvider;
 
-  public GithubRepositoryHostingService(@NotNull GithubAuthenticationManager manager,
-                                        @NotNull GithubApiRequestExecutorManager executorManager,
-                                        @NotNull GithubGitHelper gitHelper,
-                                        @NotNull GithubHttpAuthDataProvider authDataProvider) {
-    myAuthenticationManager = manager;
-    myExecutorManager = executorManager;
-    myGitHelper = gitHelper;
-    myAuthDataProvider = authDataProvider;
+  public GithubRepositoryHostingService() {
+    myAuthenticationManager = GithubAuthenticationManager.getInstance();
+    myExecutorManager = GithubApiRequestExecutorManager.getInstance();
+    myGitHelper = GithubGitHelper.getInstance();
+    myAuthDataProvider = GitHttpAuthDataProvider.EP_NAME.findExtensionOrFail(GithubHttpAuthDataProvider.class);
   }
 
   @NotNull
@@ -117,7 +115,7 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
             );
           }
           catch (Exception e) {
-            exceptions.add(new RepositoryListLoadingException("Cannot load repositories from Github", e));
+            exceptions.add(new RepositoryListLoadingException("Cannot load repositories from GitHub", e));
           }
         }
         return new Result(urls, exceptions);

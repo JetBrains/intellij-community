@@ -21,6 +21,11 @@ public class RegExMacroTest {
     assertEquals("DummyClass", macro.calculateResult(createParams("DummyClassTest", "(.*)Test", "$1"), null, false).toString());
   }
 
+  @Test
+  public void testTooFewParameters() {
+    assertNull(new RegExMacro().calculateResult(new Expression[]{new TextExpression("one"), new TextExpression("two")}, null, false));
+  }
+
   @NotNull
   private static Expression[] createParams(String value, String pattern, String replacement) {
     return new Expression[]{createExpression(value), createExpression(pattern), createExpression(replacement)};

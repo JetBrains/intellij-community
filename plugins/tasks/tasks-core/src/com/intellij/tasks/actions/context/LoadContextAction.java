@@ -124,8 +124,7 @@ public class LoadContextAction extends BaseTaskAction {
     final Ref<Boolean> shiftPressed = Ref.create(false);
     boolean today = true;
     Calendar now = Calendar.getInstance();
-    for (int i = 0, historySize = Math.min(MAX_ROW_COUNT, infos.size()); i < historySize; i++) {
-      final ContextHolder info = infos.get(i);
+    for (final ContextHolder info : infos) {
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(info.getDate());
       if (today &&

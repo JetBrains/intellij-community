@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
@@ -23,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternal
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor;
@@ -40,9 +27,10 @@ import static org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
  * @author Denis Zhdanov
  */
 public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
-
-  public GradleJavaProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
-    super(builder);
+  @NotNull
+  @Override
+  protected GradleProjectImportBuilder doGetBuilder() {
+    return ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(GradleProjectImportBuilder.class);
   }
 
   @NotNull
@@ -52,7 +40,7 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
   }
 
   @Override
-  public boolean canOpenProject(VirtualFile file) {
+  public boolean canOpenProject(@NotNull VirtualFile file) {
     if (GradleProjectOpenProcessor.canOpenFile(file)) {
       return true;
     }
@@ -60,7 +48,7 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
   }
 
   @Override
-  protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
+  protected boolean doQuickImport(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
     final GradleProjectImportProvider projectImportProvider = new GradleProjectImportProvider(getBuilder());
     getBuilder().setFileToImport(file.getPath());
     getBuilder().prepare(wizardContext);

@@ -21,6 +21,7 @@ import static com.intellij.psi.PsiBinaryExpression.BOOLEAN_OPERATION_TOKENS;
  */
 class ComplexityCalculator {
   private static final int IDENTIFIER = 10;
+  private static final int QUALIFIER = 6;
   private static final int CONSTANT = 1;
   private static final int OPERATOR = 10;
   private static final int SIMPLE_OPERATOR = 2;
@@ -51,17 +52,18 @@ class ComplexityCalculator {
   }
 
   private int calculateComplexity(@NotNull PsiExpression e) {
-    if (e instanceof PsiThisExpression) {
-      return 0;
-    }
     if (e instanceof PsiLiteralExpression) {
       return CONSTANT;
     }
     if (e instanceof PsiInstanceOfExpression ||
-        e instanceof PsiTypeCastExpression ||
-        e instanceof PsiClassObjectAccessExpression ||
-        e instanceof PsiQualifiedExpression) {
+        e instanceof PsiTypeCastExpression) {
       return IDENTIFIER;
+    }
+    if (e instanceof PsiClassObjectAccessExpression) {
+      return QUALIFIER;
+    }
+    if (e instanceof PsiQualifiedExpression) {
+      return ((PsiQualifiedExpression)e).getQualifier() != null ? QUALIFIER : 0;
     }
     if (e instanceof PsiParenthesizedExpression) {
       return getComplexity(((PsiParenthesizedExpression)e).getExpression());
@@ -107,6 +109,9 @@ class ComplexityCalculator {
     if (e instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
       PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiClass) {
+        return QUALIFIER;
+      }
       int w = REFERENCE;
       if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
         w = IDENTIFIER;
@@ -172,12 +177,16 @@ class ComplexityCalculator {
   /**
    * Quick check to filter out the obvious things early
    */
-  static boolean isDefinitelySimple(@Nullable PsiExpression expression, int threshold) {
+  static boolean isDefinitelySimple(@Nullable PsiExpression expression) {
     if (expression instanceof PsiLiteral) {
-      return CONSTANT < threshold;
+      return true;
     }
-    if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).getQualifierExpression() == null) {
-      return REFERENCE < threshold;
+    if (expression instanceof PsiReferenceExpression) {
+      PsiElement qualifier = ((PsiReferenceExpression)expression).getQualifier();
+      if (qualifier instanceof PsiQualifiedExpression || !(qualifier instanceof PsiExpression)) {
+        PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+        return resolved instanceof PsiVariable || resolved instanceof PsiClass;
+      }
     }
     return false;
   }

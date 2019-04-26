@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.util.objectTree;
 
@@ -20,9 +20,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.PlatformIcons;
@@ -51,22 +51,22 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.DisposerDebugger");
 
   private JComponent myComponent;
-  private JBTabsImpl myTreeTabs;
+  private JBTabs myTreeTabs;
 
   private void initUi() {
     myComponent = new JPanel();
 
-    myTreeTabs = new JBTabsImpl(null, null, this);
+    myTreeTabs = JBTabsFactory.createTabs(null, this);
 
     final Splitter splitter = new Splitter(true);
 
-    final JBTabsImpl bottom = new JBTabsImpl(null, null, this);
+    final JBTabs bottom = JBTabsFactory.createTabs(null, this);
     final AllocationPanel allocations = new AllocationPanel(myTreeTabs);
     bottom.addTab(new TabInfo(allocations).setText("Allocation")).setActions(allocations.getActions(), ActionPlaces.UNKNOWN);
 
 
-    splitter.setFirstComponent(myTreeTabs);
-    splitter.setSecondComponent(bottom);
+    splitter.setFirstComponent(myTreeTabs.getComponent());
+    splitter.setSecondComponent(bottom.getComponent());
 
     myComponent.setLayout(new BorderLayout());
     myComponent.add(splitter, BorderLayout.CENTER);
@@ -219,7 +219,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
       tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-      myTreeBuilder = new FilteringTreeBuilder(tree, DisposerTree.this, structure, AlphaComparator.INSTANCE) {
+      myTreeBuilder = new FilteringTreeBuilder(tree, this, structure, AlphaComparator.INSTANCE) {
         @Override
         public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
           return structure.getRootElement() == getOriginalNode(nodeDescriptor);
@@ -298,7 +298,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   }
 
 
-  private static final ObjectNode ROOT = new ObjectNode(Disposer.getTree(), null, new Object(), -1);
+  private static final ObjectNode<Disposable> ROOT = new ObjectNode<>(Disposer.getTree(), null, Disposer.newDisposable(), -1);
   private static class DisposerStructure extends AbstractTreeStructureBase {
     private final DisposerNode myRoot;
 
@@ -341,10 +341,10 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     public Collection<? extends AbstractTreeNode> getChildren() {
       final ObjectNode value = getValue();
       if (value != ROOT) {
-        final Collection subnodes = value.getChildren();
-        final ArrayList<DisposerNode> children = new ArrayList<>(subnodes.size());
-        for (Object subnode : subnodes) {
-          children.add(new DisposerNode(myTree, (ObjectNode)subnode));
+        Collection<ObjectNode> subnodes = value.getChildren();
+        List<DisposerNode> children = new ArrayList<>(subnodes.size());
+        for (ObjectNode subnode : subnodes) {
+          children.add(new DisposerNode(myTree, subnode));
         }
         return children;
       }
@@ -361,7 +361,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
     @Nullable
     public Throwable getAllocation() {
-      return getValue() != null ? getValue().getAllocation() : null;
+      return getValue() != null ? getValue().getTrace() : null;
     }
 
     @Override

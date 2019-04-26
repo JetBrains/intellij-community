@@ -16,13 +16,14 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.awt.event.ItemListener;
 public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   private @Nullable JComboBox myInitializerCombo;
   private JComboBox myVisibilityCombo;
-  private DefaultComboBoxModel myInitialisersPlaceModel;
+  private DefaultComboBoxModel<BaseExpressionToFieldHandler.InitializationPlace> myInitialisersPlaceModel;
 
   public IntroduceFieldPopupPanel(PsiClass parentClass,
                                   PsiExpression initializerExpression,
@@ -110,7 +111,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     if (myInitializerCombo != null) {
       return (BaseExpressionToFieldHandler.InitializationPlace)myInitializerCombo.getSelectedItem();
     }
-    return (BaseExpressionToFieldHandler.InitializationPlace)myInitialisersPlaceModel.getElementAt(0);
+    return myInitialisersPlaceModel.getElementAt(0);
   }
 
   @Override
@@ -130,7 +131,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              JBUI.emptyInsets(), 0, 0);
 
-    myInitialisersPlaceModel = new DefaultComboBoxModel();
+    myInitialisersPlaceModel = new DefaultComboBoxModel<>();
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
@@ -144,19 +145,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       gridBagConstraints.insets.left = 5;
       gridBagConstraints.anchor = GridBagConstraints.WEST;
       groupPanel.add(initLabel, gridBagConstraints);
-      JComboBox initializersCombo = new JComboBox(myInitialisersPlaceModel);
+      ComboBox<BaseExpressionToFieldHandler.InitializationPlace> initializersCombo = new ComboBox<>(myInitialisersPlaceModel);
       KeyboardComboSwitcher.setupActions(initializersCombo, myParentClass.getProject());
       initLabel.setLabelFor(initializersCombo);
-      initializersCombo.setRenderer(new ListCellRendererWrapper<BaseExpressionToFieldHandler.InitializationPlace>() {
-        @Override
-        public void customize(JList list,
-                              BaseExpressionToFieldHandler.InitializationPlace value,
-                              int index,
-                              boolean selected,
-                              boolean hasFocus) {
-          setText(getPresentableText(value));
-        }
-      });
+      initializersCombo.setRenderer(SimpleListCellRenderer.create("", IntroduceFieldPopupPanel::getPresentableText));
       initializersCombo.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {

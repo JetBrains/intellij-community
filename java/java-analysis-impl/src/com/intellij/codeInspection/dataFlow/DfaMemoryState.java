@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +67,15 @@ public interface DfaMemoryState {
    * @throws java.util.EmptyStackException if stack is empty
    */
   boolean castTopOfStack(@NotNull DfaPsiType type);
+
+  /**
+   * Returns a relation between given values within this state, if known
+   * @param left first value
+   * @param right second value
+   * @return a relation (EQ, NE, GT, LT), or null if not known.
+   */
+  @Nullable
+  DfaRelationValue.RelationType getRelation(DfaValue left, DfaValue right);
 
   boolean applyCondition(DfaValue dfaCond);
 

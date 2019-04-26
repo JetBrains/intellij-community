@@ -89,10 +89,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       }
 
       if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.mayHaveSideEffects(expression)) {
-        final CompletionService service = CompletionService.getCompletionService();
-        if (parameters.getInvocationCount() < 2) {
-          service.setAdvertisementText("Invoke completion once more to see runtime type variants");
-        }
+        CompletionService.getCompletionService().setAdvertisementText("Invoke completion once more to see runtime type variants");
         return null;
       }
 

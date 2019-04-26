@@ -11,6 +11,18 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 
 public class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
+  public static final JsonLikePsiWalker WALKER_INSTANCE = new JsonOriginalPsiWalker() {
+    @Override
+    public boolean requiresNameQuotes() {
+      return false;
+    }
+
+    @Override
+    public boolean allowsSingleQuotes() {
+      return true;
+    }
+  };
+
   @Override
   public boolean handles(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
@@ -21,16 +33,6 @@ public class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
   @NotNull
   @Override
   public JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject) {
-    return new JsonOriginalPsiWalker() {
-      @Override
-      public boolean isNameQuoted() {
-        return false;
-      }
-
-      @Override
-      public boolean onlyDoubleQuotesForStringLiterals() {
-        return false;
-      }
-    };
+    return WALKER_INSTANCE;
   }
 }

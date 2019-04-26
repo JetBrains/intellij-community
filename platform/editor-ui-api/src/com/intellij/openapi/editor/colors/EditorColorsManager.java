@@ -84,4 +84,12 @@ public abstract class EditorColorsManager {
     Color bg = getGlobalScheme().getDefaultBackground();
     return ColorUtil.isDark(bg);
   }
+
+  /**
+   * Resolves a temporary link to a bundled scheme using bundled scheme's name.
+   * @param scheme The scheme with unresolved parent. The call will be ignored for other schemes.
+   * @throws com.intellij.openapi.util.InvalidDataException If a referenced scheme doesn't exist or is not read-only.
+   */
+  public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
+  }
 }

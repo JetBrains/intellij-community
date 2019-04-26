@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -86,10 +86,8 @@ public abstract class CompiledPattern {
   @NotNull
   public String getTypedVarString(PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    if (profile == null) {
-      return element.getText();
-    }
-    return profile.getTypedVarString(element);
+    String typedVarString = (profile == null) ? element.getText() : profile.getTypedVarString(element);
+    return typedVarString.trim();
   }
 
   public MatchingHandler getHandlerSimple(PsiElement node) {

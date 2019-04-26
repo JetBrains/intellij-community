@@ -13,10 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.ui.components.panels.StatelessCardLayout;
@@ -68,7 +65,7 @@ public class InspectionNodeInfo extends JPanel {
     description.setEditable(false);
     description.setOpaque(false);
     description.setBackground(UIUtil.getLabelBackground());
-    description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    description.addHyperlinkListener(SingleInspectionProfilePanel.createSettingsHyperlinkListener(project));
     String descriptionText = toolWrapper.loadDescription();
     if (descriptionText == null) {
       InspectionEP extension = toolWrapper.getExtension();
@@ -85,15 +82,19 @@ public class InspectionNodeInfo extends JPanel {
     add(StatelessCardLayout.wrap(pane),
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(0, 10, 0, 0), 0, 0));
-    JButton enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        InspectionsConfigTreeTable.setToolEnabled(!enabled, currentProfile, toolWrapper.getShortName(), project);
-        tree.getContext().getView().profileChanged();
-        return true;
-      }
-    }.installOn(enableButton);
+
+    JButton enableButton = null;
+    if (currentProfile.getSingleTool() != null) {
+      enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+          InspectionsConfigTreeTable.setToolEnabled(!enabled, currentProfile, toolWrapper.getShortName(), project);
+          tree.getContext().getView().profileChanged();
+          return true;
+        }
+      }.installOn(enableButton);
+    }
 
     JButton runInspectionOnButton = new JButton(InspectionsBundle.message("run.inspection.on.file.intention.text"));
     new ClickListener() {
@@ -106,7 +107,9 @@ public class InspectionNodeInfo extends JPanel {
 
     JPanel buttons = new JPanel();
     buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
-    buttons.add(enableButton);
+    if (enableButton != null) {
+      buttons.add(enableButton);
+    }
     buttons.add(Box.createHorizontalStrut(JBUI.scale(3)));
     buttons.add(runInspectionOnButton);
 

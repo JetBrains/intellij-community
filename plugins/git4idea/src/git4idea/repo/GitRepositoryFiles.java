@@ -54,6 +54,7 @@ public class GitRepositoryFiles {
   private static final String REBASE_MERGE = "rebase-merge";
   private static final String PACKED_REFS = "packed-refs";
   private static final String REFS = "refs";
+  private static final String REVERT_HEAD = "REVERT_HEAD";
   private static final String HEADS = "heads";
   private static final String TAGS = "tags";
   private static final String REMOTES = "remotes";
@@ -72,6 +73,7 @@ public class GitRepositoryFiles {
   private final String myIndexFilePath;
   private final String myMergeHeadPath;
   private final String myCherryPickHeadPath;
+  private final String myRevertHeadPath;
   private final String myOrigHeadPath;
   private final String myRebaseApplyPath;
   private final String myRebaseMergePath;
@@ -86,7 +88,6 @@ public class GitRepositoryFiles {
   private final String myExcludePath;
   private final String myHooksDirPath;
   private final String myShallow;
-  private final String myGitIgnorePath;
 
   private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myMainDir = mainDir;
@@ -103,14 +104,13 @@ public class GitRepositoryFiles {
     myExcludePath = mainPath + slash(INFO_EXCLUDE);
     myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
-    VirtualFile repoDir = mainDir.getParent();
-    myGitIgnorePath = repoDir.getPath() + slash(GITIGNORE);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
     myIndexFilePath = worktreePath + slash(INDEX);
     myMergeHeadPath = worktreePath + slash(MERGE_HEAD);
     myCherryPickHeadPath = worktreePath + slash(CHERRY_PICK_HEAD);
+    myRevertHeadPath = worktreePath + slash(REVERT_HEAD);
     myOrigHeadPath = worktreePath + slash(ORIG_HEAD);
     myCommitMessagePath = worktreePath + slash(COMMIT_EDITMSG);
     myMergeMessagePath = worktreePath + slash(MERGE_MSG);
@@ -213,6 +213,11 @@ public class GitRepositoryFiles {
   @NotNull
   public File getCherryPickHead() {
     return file(myCherryPickHeadPath);
+  }
+
+  @NotNull
+  public File getRevertHead() {
+    return file(myRevertHeadPath);
   }
 
   @NotNull
@@ -343,31 +348,19 @@ public class GitRepositoryFiles {
   }
 
   /**
-   * Refresh all .git repository files asynchronously and recursively.
-   *
-   * @see #refreshNonTrackedData() if you need the "main" data (branches, HEAD, etc.) to be updated synchronously.
-   */
-  public void refresh() {
-    VfsUtil.markDirtyAndRefresh(true, true, false, myMainDir, myWorktreeDir);
-  }
-
-  /**
    * Refresh that part of .git repository files, which is not covered by {@link GitRepository#update()}, e.g. the {@code refs/tags/} dir.
    *
    * The call to this method should be probably be done together with a call to update(): thus all information will be updated,
    * but some of it will be updated synchronously, the rest - asynchronously.
    */
-  public void refreshNonTrackedData() {
+  public void refreshTagsFiles() {
     VirtualFile tagsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myRefsTagsPath);
-    VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir);
+    VirtualFile packedRefsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myPackedRefsPath);
+    VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir, packedRefsFile);
   }
 
   @NotNull
   Collection<VirtualFile> getRootDirs() {
     return ContainerUtil.newHashSet(myMainDir, myWorktreeDir);
-  }
-
-  public boolean isGitIgnore(@NotNull String filePath) {
-    return filePath.equals(myGitIgnorePath);
   }
 }

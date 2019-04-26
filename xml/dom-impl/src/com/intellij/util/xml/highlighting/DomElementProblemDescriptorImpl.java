@@ -162,8 +162,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
         return DomUtil.getProblemRange((XmlTag)element);
       }
 
-      int length = element.getTextRange().getLength();
-      TextRange range = TextRange.from(0, length);
+      TextRange range = TextRange.from(0, element.getTextLength());
       if (element instanceof XmlAttributeValue) {
         final String value = ((XmlAttributeValue)element).getValue();
         if (StringUtil.isNotEmpty(value)) {

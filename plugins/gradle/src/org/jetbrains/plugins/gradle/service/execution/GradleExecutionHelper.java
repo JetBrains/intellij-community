@@ -1,21 +1,25 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.util.OutputWrapper;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
@@ -39,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -99,7 +104,7 @@ public class GradleExecutionHelper {
                              @NotNull ProjectConnection connection,
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError) {
-    Set<String> jvmArgs = settings.getVmOptions();
+    List<String> jvmArgs = settings.getJvmArguments();
     BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, null);
 
     String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
@@ -130,23 +135,36 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
-        settings.withArgument("--info");
+      if (!settings.getArguments().contains("--quiet")) {
+        if (!settings.getArguments().contains("--debug")){
+          settings.withArgument("--info");
+        }
+        settings.withArgument("--stacktrace");
       }
-      settings.withArgument("--recompile-scripts");
     }
 
+    List<String> filteredArgs = ContainerUtil.newArrayList();
     if (!settings.getArguments().isEmpty()) {
       String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
       LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
 
-      // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s);
-
+      // filter nulls, empty strings and '--args' arguments
+      for (Iterator<String> iterator = settings.getArguments().iterator(); iterator.hasNext(); ) {
+        String arg = iterator.next();
+        if(StringUtil.isEmpty(arg)) continue;
+        if("--args".equals(arg) && iterator.hasNext()) {
+          iterator.next();
+        } else {
+          filteredArgs.add(arg);
+        }
+      }
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
-      operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
+    filteredArgs.add("-Didea.active=true");
+    filteredArgs.add("-Didea.version=" + getIdeaVersion());
+    operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
+
     setupEnvironment(operation, settings, gradleVersion, id, listener);
 
     final String javaHome = settings.getJavaHome();
@@ -261,7 +279,7 @@ public class GradleExecutionHelper {
         final File scriptFile = new File(wrapperFilesLocation, "gradlew");
         final File pathToProperties = new File(wrapperFilesLocation, "path.tmp");
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation)));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation), "GradleExecutionHelper cleanup"));
         final String[] lines = {
           "",
           "gradle.projectsEvaluated { gr ->",
@@ -306,28 +324,80 @@ public class GradleExecutionHelper {
     }
   }
 
-  private static List<String> mergeJvmArgs(String serviceDirectory, List<String> jvmArgs, Set<String> jvmArgsFromIdeSettings) {
+  @ApiStatus.Experimental
+  static List<String> mergeJvmArgs(String serviceDirectory, List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
     File gradleUserHomeDir = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
     LOG.debug("Gradle home: " + gradleUserHomeDir);
     NativeServices.initialize(gradleUserHomeDir);
-    Map<String, String> mergedArgs = new LinkedHashMap<>();
+    JvmOptions jvmOptions = new JvmOptions(null);
+    List<String> mergedJvmArgs = mergeJvmArgs(jvmArgs, jvmArgsFromIdeSettings);
+    jvmOptions.setAllJvmArgs(mergedJvmArgs);
+    return jvmOptions.getAllJvmArgs();
+  }
+
+  @ApiStatus.Experimental
+  static List<String> mergeJvmArgs(List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
+    MultiMap<String, String> argumentsMap = MultiMap.createLinkedSet();
+    String lastKey = null;
     for (String jvmArg : ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings)) {
-      int i = jvmArg.indexOf('=');
-      if (i <= 0) {
-        mergedArgs.put(jvmArg, "");
+      if (jvmArg.startsWith("-")) {
+        argumentsMap.putValue(jvmArg, "");
+        lastKey = jvmArg;
       }
       else {
-        mergedArgs.put(jvmArg.substring(0, i), jvmArg.substring(i));
+        if (lastKey != null) {
+          argumentsMap.putValue(lastKey, jvmArg);
+          lastKey = null;
+        }
+        else {
+          argumentsMap.putValue(jvmArg, "");
+        }
       }
     }
 
-    List<String> mergedList = new ArrayList<>();
-    for (Map.Entry<String, String> entry : mergedArgs.entrySet()) {
-      mergedList.add(entry.getKey() + entry.getValue());
+    Map<String, String> mergedKeys = new LinkedHashMap<>();
+    Set<String> argKeySet = new LinkedHashSet<>(argumentsMap.keySet());
+    for (String argKey : argKeySet) {
+      Collection<String> values = argumentsMap.getModifiable(argKey);
+      if (values.size() == 1 && values.iterator().next().isEmpty()) {
+        Couple<String> couple = splitArg(argKey);
+        mergedKeys.put(couple.first, couple.second);
+      }
+      else {
+        mergedKeys.put(argKey, "");
+        Map<String, String> mergedArgs = new LinkedHashMap<>();
+        for (String jvmArg : values) {
+          if (jvmArg.isEmpty()) continue;
+          Couple<String> couple = splitArg(jvmArg);
+          mergedArgs.put(couple.first, couple.second);
+        }
+        values.clear();
+        mergedArgs.forEach((key, value) -> values.add(key + value));
+      }
     }
-    JvmOptions jvmOptions = new JvmOptions(null);
-    jvmOptions.setAllJvmArgs(mergedList);
-    return jvmOptions.getAllJvmArgs();
+
+    List<String> mergedArgs = new SmartList<>();
+    mergedKeys.forEach((s1, s2) -> mergedArgs.add(s1 + s2));
+    argKeySet.stream().filter(argKey -> !mergedArgs.contains(argKey)).forEach(argumentsMap::remove);
+
+    // remove `--add-opens` options, because same options will be added by gradle producing the option duplicates.
+    // And the daemon will become uncompilable with the CLI invocations.
+    // see https://github.com/gradle/gradle/blob/v5.1.1/subprojects/launcher/src/main/java/org/gradle/launcher/daemon/configuration/DaemonParameters.java#L125
+    argumentsMap.remove("--add-opens");
+
+    List<String> result = new SmartList<>();
+    argumentsMap.keySet().forEach(key -> argumentsMap.get(key).forEach(val -> {
+      result.add(key);
+      if (StringUtil.isNotEmpty(val)) {
+        result.add(val);
+      }
+    }));
+    return result;
+  }
+
+  private static Couple<String> splitArg(String arg) {
+    int i = arg.indexOf('=');
+    return i <= 0 ? Couple.of(arg, "") : Couple.of(arg.substring(0, i), arg.substring(i));
   }
 
   /**
@@ -358,7 +428,7 @@ public class GradleExecutionHelper {
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory, projectDir);
           }
           break;
       }
@@ -429,7 +499,7 @@ public class GradleExecutionHelper {
   }
 
   public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
-    byte[] contentBytes = content.getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
     int contentLength = contentBytes.length;
     return FileUtil.findSequentFile(new File(FileUtil.getTempDirectory()), filePrefix, GradleConstants.EXTENSION, file -> {
       try {
@@ -439,7 +509,7 @@ public class GradleExecutionHelper {
           return true;
         }
         if (contentLength != file.length()) return false;
-        return content.equals(FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET));
+        return content.equals(FileUtil.loadFile(file, StandardCharsets.UTF_8));
       }
       catch (IOException ignore) {
         // Skip file with access issues. Will attempt to check the next file
@@ -543,7 +613,8 @@ public class GradleExecutionHelper {
       buf.append('[');
       for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
         String pattern = iterator.next();
-        buf.append('\'').append(pattern).append('\'');
+        String groovyPattern = toGroovyString(pattern);
+        buf.append('\'').append(groovyPattern).append('\'');
         if (iterator.hasNext()) {
           buf.append(',');
         }
@@ -555,6 +626,26 @@ public class GradleExecutionHelper {
         ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
       }
     }
+  }
+
+  @NotNull
+  public static String toGroovyString(@NotNull String string) {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (char ch : string.toCharArray()) {
+      if (ch == '\\') {
+        stringBuilder.append("\\\\");
+      }
+      else if (ch == '\'') {
+        stringBuilder.append("\\'");
+      }
+      else if (ch == '"') {
+        stringBuilder.append("\\\"");
+      }
+      else {
+        stringBuilder.append(ch);
+      }
+    }
+    return stringBuilder.toString();
   }
 
   @Nullable
@@ -704,5 +795,10 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardError) {
     settings.withArguments(commandLineArgs).withVmOptions(extraJvmArgs);
     prepare(operation, id, settings, listener, connection, standardOutput, standardError);
+  }
+
+  private static String getIdeaVersion() {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
 }

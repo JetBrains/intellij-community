@@ -310,7 +310,7 @@ public class InferenceIncorporationPhase {
       for (PsiType eqBound : eqBounds) {
         if (eqBound == null || PsiType.NULL.equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
         if (Registry.is("javac.unchecked.subtyping.during.incorporation", true)) {
-          if (TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
+          if (TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound, mySession)) {
             if (PsiUtil.resolveClassInType(eqBound) instanceof PsiTypeParameter && !mySession.isProperType(upperBound)) {
               mySession.setErased();
             }
@@ -319,7 +319,7 @@ public class InferenceIncorporationPhase {
 
           if (!mySession.isProperType(upperBound) &&
               eqBound instanceof PsiCapturedWildcardType && 
-              TypeCompatibilityConstraint.isUncheckedConversion(upperBound, ((PsiCapturedWildcardType)eqBound).getUpperBound())) {
+              TypeCompatibilityConstraint.isUncheckedConversion(upperBound, ((PsiCapturedWildcardType)eqBound).getUpperBound(), mySession)) {
             mySession.setErased();
             continue;
           }

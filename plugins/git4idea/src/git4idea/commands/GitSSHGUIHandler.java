@@ -39,20 +39,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.credentialStore.CredentialAttributesKt.*;
+import static git4idea.commands.GitAuthenticationMode.FULL;
 
 /**
  * Swing GUI handler for the SSH events
  */
 public class GitSSHGUIHandler {
   @Nullable private final Project myProject;
-  private final boolean myIgnoreAuthenticationRequest;
+  @NotNull private final GitAuthenticationMode myAuthenticationMode;
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
 
   GitSSHGUIHandler(@Nullable Project project,
                    @NotNull GitAuthenticationGate authenticationGate,
-                   boolean ignoreAuthenticationRequest) {
+                   @NotNull GitAuthenticationMode authenticationMode) {
     myProject = project;
-    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
+    myAuthenticationMode = authenticationMode;
     myAuthenticationGate = authenticationGate;
   }
 
@@ -81,7 +82,7 @@ public class GitSSHGUIHandler {
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     return myAuthenticationGate.waitAndCompute(() -> {
       String error = processLastError(resetPassword, lastError);
-      return askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, error);
+      return askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode, error);
     });
   }
 
@@ -89,8 +90,9 @@ public class GitSSHGUIHandler {
   static String askPassphrase(@Nullable Project project,
                               @NotNull String keyPath,
                               boolean resetPassword,
-                              boolean ignoreAuthenticationRequest,
+                              @NotNull GitAuthenticationMode authenticationMode,
                               @Nullable String lastError) {
+    if (authenticationMode == GitAuthenticationMode.NONE) return null;
     CredentialAttributes oldAttributes = oldCredentialAttributes("PASSPHRASE:" + keyPath);
     CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
@@ -98,7 +100,7 @@ public class GitSSHGUIHandler {
       String password = credentials.getPasswordAsString();
       if (password != null && !password.isEmpty()) return password;
     }
-    if (ignoreAuthenticationRequest) return null;
+    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project, GitBundle.getString("ssh.ask.passphrase.title"),
                                               GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
                                               newAttributes, true, lastError);
@@ -165,7 +167,7 @@ public class GitSSHGUIHandler {
                                          final Vector<String> prompt,
                                          final Vector<Boolean> echo,
                                          final String lastError) {
-    if (myIgnoreAuthenticationRequest) return null;
+    if (myAuthenticationMode != FULL) return null;
     return myAuthenticationGate.waitAndCompute(() -> {
       final AtomicReference<Vector<String>> rc = new AtomicReference<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -191,7 +193,7 @@ public class GitSSHGUIHandler {
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     return myAuthenticationGate.waitAndCompute(() -> {
       String error = processLastError(resetPassword, lastError);
-      return askPassword(myProject, username, resetPassword, myIgnoreAuthenticationRequest, error);
+      return askPassword(myProject, username, resetPassword, myAuthenticationMode, error);
     });
   }
 
@@ -199,8 +201,9 @@ public class GitSSHGUIHandler {
   static String askPassword(@Nullable Project project,
                             @NotNull String username,
                             boolean resetPassword,
-                            boolean ignoreAuthenticationRequest,
+                            @NotNull GitAuthenticationMode authenticationMode,
                             @Nullable String error) {
+    if(authenticationMode == GitAuthenticationMode.NONE) return null;
     CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
     CredentialAttributes newAttributes = passwordCredentialAttributes(username);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
@@ -208,7 +211,7 @@ public class GitSSHGUIHandler {
       String password = credentials.getPasswordAsString();
       if (password != null) return password;
     }
-    if (ignoreAuthenticationRequest) return null;
+    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
                                               GitBundle.getString("ssh.password.title"),
                                               GitBundle.message("ssh.password.message", username),

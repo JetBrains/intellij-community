@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -212,15 +213,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   protected Color getBackgroundColor() {
-    return UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
+    return ColorUtil.darker(UIUtil.getPanelBackground(), 1);
   }
 
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
-    g.setColor(getBackgroundColor());
-    if (mainToolbarVisible) {
-      g.fillRect(0, 0, r.width, r.height);
-    }
   }
 
   @Override

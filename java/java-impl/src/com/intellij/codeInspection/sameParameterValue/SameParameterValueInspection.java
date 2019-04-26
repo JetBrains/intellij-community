@@ -27,7 +27,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.uast.UastVisitorAdapter;
@@ -319,16 +318,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         }
         paramsToInline.put(psiParameter, refsToInline);
       }
-      if (!conflicts.isEmpty()) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
-            throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
-          }
-        }
-        else if (!new ConflictsDialog(project, conflicts).showAndGet()) {
-          return;
-        }
-      }
+      if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         for (Map.Entry<PsiParameter, Collection<PsiReference>> entry : paramsToInline.entrySet()) {

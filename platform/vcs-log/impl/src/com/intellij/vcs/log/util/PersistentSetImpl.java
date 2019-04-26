@@ -45,7 +45,7 @@ public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implement
   }
 
   @Override
-  public void process(@NotNull Processor<T> processor) throws IOException {
+  public void process(@NotNull Processor<? super T> processor) throws IOException {
     processAllDataObject(processor, null);
   }
 

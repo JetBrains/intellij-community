@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
-import com.intellij.psi.impl.source.PsiJavaModuleReference
 import com.intellij.psi.util.PsiUtil
 
 /**
@@ -94,7 +93,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
         var isRoot = !targetName.startsWith("java.") || inAddedModules(module, targetName) || hasUpgrade(module, targetName, packageName, place)
         if (!isRoot) {
-          val root = PsiJavaModuleReference.resolve(place, "java.se", false)
+          val root = JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
           isRoot = root == null || JavaModuleGraphUtil.reads(root, targetModule)
         }
         if (!isRoot) {

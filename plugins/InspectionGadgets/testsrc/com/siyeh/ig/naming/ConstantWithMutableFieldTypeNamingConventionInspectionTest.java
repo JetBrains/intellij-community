@@ -3,11 +3,10 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConstantWithMutableFieldTypeNamingConventionInspectionTest extends LightInspectionTestCase {
+public class ConstantWithMutableFieldTypeNamingConventionInspectionTest extends AbstractFieldNamingConventionInspectionTest {
 
   public void testConstantWithMutableFieldTypeNamingConvention() {
     doTest();

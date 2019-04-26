@@ -26,18 +26,15 @@ import java.awt.*;
  *
  * @see InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
  * @see InlayModel#addBlockElement(int, boolean, boolean, int, EditorCustomElementRenderer)
+ * @see InlayModel#addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)
  * @see Inlay#getRenderer()
- *
- * @since 2016.3
  */
 public interface EditorCustomElementRenderer {
   /**
    * Renderer implementation should override this to define width of custom element (in pixels). Returned value will define the result of
    * {@link Inlay#getWidthInPixels()} and the width of {@code targetRegion} parameter passed to renderer's
-   * {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method. For block elements the returned value has no other impact currently.
-   * For inline elements it, obviously, impacts the layout of surrounding text, and should always be a positive value.
-   *
-   * @since 2018.3
+   * {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method. For inline and after-line-end elements it should always be
+   * a positive value.
    */
   default int calcWidthInPixels(@NotNull Inlay inlay) {
     return calcWidthInPixels(inlay.getEditor());
@@ -56,8 +53,6 @@ public interface EditorCustomElementRenderer {
    * element's height will be equal to editor's line height. Returned value will define the result of {@link Inlay#getWidthInPixels()} and
    * the height of {@code targetRegion} parameter passed to renderer's {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method.
    * Returned value is currently not used for inline elements.
-   *
-   * @since 2018.3
    */
   default int calcHeightInPixels(@NotNull Inlay inlay) {
     return inlay.getEditor().getLineHeight();
@@ -69,9 +64,7 @@ public interface EditorCustomElementRenderer {
    * @param targetRegion region where painting should be performed, location of this rectangle is calculated by editor implementation,
    *                     dimensions of the rectangle match element's width and height (provided by {@link #calcWidthInPixels(Inlay)}
    *                     and {@link #calcHeightInPixels(Inlay)})
-   * @param textAttributes for inline elements - attributes of surrounding text, for block elements - empty attributes
-   *
-   * @since 2018.3
+   * @param textAttributes attributes of surrounding text
    */
   default void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
     paint(inlay.getEditor(), g, targetRegion, textAttributes);
@@ -88,8 +81,6 @@ public interface EditorCustomElementRenderer {
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.
    * If {@code null} is returned, standard editor's context menu will be displayed upon corresponding mouse event.
-   *
-   * @since 2018.3
    */
   @Nullable
   default String getContextMenuGroupId(@NotNull Inlay inlay) {

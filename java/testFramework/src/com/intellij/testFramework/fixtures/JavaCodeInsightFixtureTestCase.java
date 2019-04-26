@@ -53,9 +53,11 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-
       super.tearDown();
     }
   }

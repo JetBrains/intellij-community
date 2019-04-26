@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
@@ -11,22 +12,24 @@ import java.util.Set;
  * which the user can enter in the Goto Action/Search Everywhere popups.
  *
  * @author Konstantin Bulenkov
- * @since 13
  */
 public abstract class AbbreviationManager {
   public static AbbreviationManager getInstance() {
     return ServiceManager.getService(AbbreviationManager.class);
   }
 
+  @NotNull
   public abstract Set<String> getAbbreviations();
 
-  public abstract Set<String> getAbbreviations(String actionId);
+  @NotNull
+  public abstract Set<String> getAbbreviations(@NotNull String actionId);
 
-  public abstract List<String> findActions(String abbreviation);
+  @NotNull
+  public abstract List<String> findActions(@NotNull String abbreviation);
 
-  public abstract void register(String abbreviation, String actionId);
+  public abstract void register(@NotNull String abbreviation, @NotNull String actionId);
 
-  public abstract void remove(String abbreviation, String actionId);
+  public abstract void remove(@NotNull String abbreviation, @NotNull String actionId);
 
-  public abstract void removeAllAbbreviations(String actionId);
+  public abstract void removeAllAbbreviations(@NotNull String actionId);
 }

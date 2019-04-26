@@ -86,9 +86,6 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
 
     if (existingLibrary == library) {
       myRemovedLibraries.add(library);
-    } else {
-      // dispose uncommitted library
-      Disposer.dispose(library);
     }
   }
 

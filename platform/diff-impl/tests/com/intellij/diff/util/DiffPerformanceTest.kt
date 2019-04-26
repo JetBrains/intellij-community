@@ -28,7 +28,7 @@ class DiffPerformanceTest : TestCase() {
     private var needWarmUp = true
   }
 
-  private val interner: StringInterner = StringInterner();
+  private val interner: StringInterner = StringInterner()
 
   val data = generateData(2000000)
   private val arr_200000 = data.take(200000).toTypedArray()

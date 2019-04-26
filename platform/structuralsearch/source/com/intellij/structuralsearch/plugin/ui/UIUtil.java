@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -23,10 +25,9 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.ui.EditorTextField;
@@ -253,5 +254,31 @@ public class UIUtil {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
     return fileType;
+  }
+
+  public static FileType detectFileType(@NotNull SearchContext searchContext) {
+    final PsiFile file = searchContext.getFile();
+    PsiElement context = file;
+
+    final Editor editor = searchContext.getEditor();
+    if (editor != null && context != null) {
+      final int offset = editor.getCaretModel().getOffset();
+      context = InjectedLanguageManager.getInstance(searchContext.getProject()).findInjectedElementAt(file, offset);
+      if (context == null) {
+        context = file.findElementAt(offset);
+      }
+      if (context != null) {
+        context = context.getParent();
+      }
+    }
+    if (context != null) {
+      final Language language = context.getLanguage();
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
+      if (profile != null) {
+        final FileType fileType = profile.detectFileType(context);
+        return fileType != null ? fileType : language.getAssociatedFileType();
+      }
+    }
+    return StructuralSearchUtil.getDefaultFileType();
   }
 }

@@ -29,8 +29,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.jaxen.DefaultNavigator;
-import org.jaxen.FunctionCallException;
-import org.jaxen.UnsupportedAxisException;
 import org.jaxen.XPath;
 import org.jaxen.saxpath.SAXPathException;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +50,9 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    public Iterator getChildAxisIterator(Object contextNode) throws UnsupportedAxisException {
+    public Iterator getChildAxisIterator(Object contextNode) {
         if (!(contextNode instanceof XmlElement)) {
-            return Collections.emptyList().iterator();
+            return Collections.emptyIterator();
         }
         return new PsiChildAxisIterator(contextNode);
     }
@@ -63,7 +61,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     @Override
     public Iterator getParentAxisIterator(Object contextNode) {
         if (!(contextNode instanceof XmlElement)) {
-            return Collections.emptyList().iterator();
+            return Collections.emptyIterator();
         }
 
         return new NodeIterator((XmlElement)contextNode) {
@@ -147,12 +145,12 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    public Object getParentNode(Object contextNode) throws UnsupportedAxisException {
+    public Object getParentNode(Object contextNode) {
         return ((PsiElement)contextNode).getParent();
     }
 
     @Override
-    public Object getDocument(String url) throws FunctionCallException {
+    public Object getDocument(String url) {
         final VirtualFile virtualFile = VfsUtilCore.findRelativeFile(url, file.getVirtualFile());
         if (virtualFile != null) {
             final PsiFile file = this.file.getManager().findFile(virtualFile);
@@ -168,7 +166,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         if (isElement(contextNode)) {
             return new AttributeIterator((XmlElement)contextNode);
         } else {
-            return Collections.emptyList().iterator();
+            return Collections.emptyIterator();
         }
     }
 

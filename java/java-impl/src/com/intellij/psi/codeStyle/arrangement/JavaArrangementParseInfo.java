@@ -203,9 +203,7 @@ public class JavaArrangementParseInfo {
     if (methods == null) {
       myMethodDependencies.put(caller, methods = new LinkedHashSet<>());
     }
-    if (!methods.contains(callee)) {
-      methods.add(callee);
-    }
+    methods.add(callee);
     myRebuildMethodDependencies = true;
   }
 

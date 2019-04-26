@@ -2,15 +2,14 @@ package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -85,7 +84,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     if (list == null) {
       return ContainerUtil.emptyList();
     }
-    return ContainerUtil.map2List(list, (Function<Object, Object>)o -> o.toString()).subList(0, Math.min(list.size(), max));
+    return ContainerUtil.getFirstItems(ContainerUtil.map2List(list, o -> o.toString()), max);
   }
 
   @Nullable

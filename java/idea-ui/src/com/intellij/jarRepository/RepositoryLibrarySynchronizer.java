@@ -15,7 +15,6 @@
  */
 package com.intellij.jarRepository;
 
-import com.google.common.base.Predicate;
 import com.intellij.ProjectTopics;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -26,7 +25,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -46,6 +44,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author gregsh
@@ -69,21 +68,21 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
     return false;
   }
 
-  public static Set<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<? super Library> predicate) {
+  public static Set<Library> collectLibraries(@NotNull final Project project, @NotNull final Predicate<? super Library> predicate) {
     final Set<Library> result = new LinkedHashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       if (project.isDisposed()) return;
       
       for (final Module module : ModuleManager.getInstance(project).getModules()) {
         OrderEnumerator.orderEntries(module).withoutSdk().forEachLibrary(library -> {
-          if (predicate.apply(library)) {
+          if (predicate.test(library)) {
             result.add(library);
           }
           return true;
         });
       }
       for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
-        if (predicate.apply(library)) {
+        if (predicate.test(library)) {
           result.add(library);
         }
       }
@@ -145,37 +144,35 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    final Runnable syncTask = () -> {
-      final Collection<Library> toSync = collectLibraries(project, library -> {
-        if (library instanceof LibraryEx) {
-          final LibraryEx libraryEx = (LibraryEx)library;
-          return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
-                 isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
-        }
-        return false;
-      });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final Runnable syncTask = () -> {
+        final Collection<Library> toSync = collectLibraries(project, library -> {
+          if (library instanceof LibraryEx) {
+            final LibraryEx libraryEx = (LibraryEx)library;
+            return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
+                   isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
+          }
+          return false;
+        });
 
-      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
-        for (Library library : toSync) {
-          if (LibraryTableImplUtil.isValidLibrary(library)) {
-            RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          for (Library library : toSync) {
+            if (LibraryTableImplUtil.isValidLibrary(library)) {
+              RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
+            }
+          }
+        }, project.getDisposed());
+      };
+      project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+        @Override
+        public void rootsChanged(@NotNull final ModuleRootEvent event) {
+          if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(syncTask, 300L);
           }
         }
-      }, project.getDisposed());
-    };
-
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-      @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
-        if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(syncTask, 300L);
-        }
-      }
-    });
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      });
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         removeDuplicatedUrlsFromRepositoryLibraries(project);
         syncTask.run();

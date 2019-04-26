@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +41,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     NotNullLazyValue.createValue(() -> TemplateContextType.EP_NAME.getPoint(null));
 
   private final Project myProject;
-  private boolean myTemplateTesting;
+  private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
   private final TemplateManagerListener myEventPublisher;
@@ -69,10 +70,14 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   @TestOnly
+  @Deprecated
   public static void setTemplateTesting(Project project, Disposable parentDisposable) {
-    final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);
-    instance.myTemplateTesting = true;
-    Disposer.register(parentDisposable, () -> instance.myTemplateTesting = false);
+    setTemplateTesting(parentDisposable);
+  }
+
+  @TestOnly
+  public static void setTemplateTesting(Disposable parentDisposable) {
+    TestModeFlags.set(ourTemplateTesting, true, parentDisposable);
   }
 
   @Override
@@ -179,7 +184,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   public boolean shouldSkipInTests() {
-    return ApplicationManager.getApplication().isUnitTestMode() && !myTemplateTesting;
+    return ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(ourTemplateTesting);
   }
 
   @Override
@@ -241,24 +246,20 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (file == null || file instanceof PsiCompiledElement) return null;
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
-
     List<CustomLiveTemplate> customCandidates = ContainerUtil.findAll(CustomLiveTemplate.EP_NAME.getExtensions(), customLiveTemplate ->
       shortcutChar == customLiveTemplate.getShortcut() &&
-      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)));
+      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)) &&
+      isApplicable(customLiveTemplate, editor, file));
     if (!customCandidates.isEmpty()) {
       int caretOffset = editor.getCaretModel().getOffset();
-      PsiFile fileCopy = insertDummyIdentifierWithCache(file, caretOffset, caretOffset, "").getFile();
-      Document document = editor.getDocument();
-
-      for (final CustomLiveTemplate customLiveTemplate : customCandidates) {
-        if (isApplicable(customLiveTemplate, editor, fileCopy)) {
-          final String key = customLiveTemplate.computeTemplateKey(new CustomTemplateCallback(editor, fileCopy));
-          if (key != null) {
-            int offsetBeforeKey = caretOffset - key.length();
-            CharSequence text = document.getImmutableCharSequence();
-            if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-              return () -> customLiveTemplate.expand(key, new CustomTemplateCallback(editor, file));
-            }
+      CustomTemplateCallback templateCallback = new CustomTemplateCallback(editor, file);
+      for (CustomLiveTemplate customLiveTemplate : customCandidates) {
+        String key = customLiveTemplate.computeTemplateKey(templateCallback);
+        if (key != null) {
+          int offsetBeforeKey = caretOffset - key.length();
+          CharSequence text = editor.getDocument().getImmutableCharSequence();
+          if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
+            return () -> customLiveTemplate.expand(key, templateCallback);
           }
         }
       }
@@ -611,14 +612,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     Document document = offsetMap.getFile().getViewProvider().getDocument();
     assert document != null;
-    if (replacement.isEmpty() && startOffset == endOffset) {
-      PsiDocumentManager pdm = PsiDocumentManager.getInstance(offsetMap.getFile().getProject());
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        pdm.commitDocument(document);
-      }
-      if (pdm.isCommitted(document)) {
-        return offsetMap;
-      }
+    if (replacement.isEmpty() &&
+        startOffset == endOffset &&
+        PsiDocumentManager.getInstance(offsetMap.getFile().getProject()).isCommitted(document)) {
+      return offsetMap;
     }
 
     OffsetsInFile hostOffsets = offsetMap.toTopLevelFile();

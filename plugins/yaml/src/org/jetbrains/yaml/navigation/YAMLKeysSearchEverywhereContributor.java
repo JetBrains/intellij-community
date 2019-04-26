@@ -8,11 +8,11 @@ import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Contract;
@@ -33,14 +34,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereContributor<Language> {
-  @Nullable
+public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereContributor<YAMLKeyNavigationItem, Language> {
   final Project myProject;
 
-  public YAMLKeysSearchEverywhereContributor(@Nullable Project project) {
+  public YAMLKeysSearchEverywhereContributor(Project project) {
     myProject = project;
   }
 
@@ -74,9 +73,12 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   @Override
-  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Language> filter,
-                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
-    if (myProject == null || DumbService.getInstance(myProject).isDumb() || pattern.isEmpty()) {
+  public void fetchElements(@NotNull String pattern,
+                            boolean everywhere,
+                            @Nullable SearchEverywhereContributorFilter<Language> filter,
+                            @NotNull ProgressIndicator progressIndicator,
+                            @NotNull Processor<? super YAMLKeyNavigationItem> consumer) {
+    if (myProject == null || pattern.isEmpty()) {
       return;
     }
 
@@ -91,7 +93,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   @Override
-  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
+  public boolean processSelectedItem(@NotNull YAMLKeyNavigationItem selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof Navigatable) {
       ((Navigatable)selected).navigate(true);
     }
@@ -100,22 +102,23 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
   @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+  public ListCellRenderer<? super Object> getElementsRenderer() {
     return new NavigationItemListCellRenderer();
   }
 
   @Override
-  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
+  public Object getDataForItem(@NotNull YAMLKeyNavigationItem element, @NotNull String dataId) {
     return null;
   }
 
-  private void findKeys(@NotNull Function<Object, Boolean> consumer,
+  private void findKeys(@NotNull Processor<? super YAMLKeyNavigationItem> consumer,
                         @NotNull String pattern,
                         boolean everywhere,
                         ProgressIndicator progressIndicator) {
-    if (myProject == null) {
+    if (ActionUtil.isDumbMode(myProject)) {
       return;
     }
+    assert myProject != null;
 
     Collection<String> allKeys = FileBasedIndex.getInstance().getAllKeys(YAMLKeysIndex.KEY, myProject);
 
@@ -145,7 +148,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
         }
         for (int pos : positions) {
           Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, pos);
-          if (!consumer.apply(new YAMLKeyNavigationItem(navigatable, name, file))) {
+          if (!consumer.process(new YAMLKeyNavigationItem(navigatable, name, file))) {
             return;
           }
         }
@@ -200,16 +203,16 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     return count;
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Language> {
+  public static class Factory implements SearchEverywhereContributorFactory<YAMLKeyNavigationItem, Language> {
     @NotNull
     @Override
-    public SearchEverywhereContributor<Language> createContributor(AnActionEvent initEvent) {
+    public SearchEverywhereContributor<YAMLKeyNavigationItem, Language> createContributor(@NotNull AnActionEvent initEvent) {
       return new YAMLKeysSearchEverywhereContributor(initEvent.getProject());
     }
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Language> createFilter(AnActionEvent initEvent) {
+    public SearchEverywhereContributorFilter<Language> createFilter(@NotNull AnActionEvent initEvent) {
       return null;
     }
   }

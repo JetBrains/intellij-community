@@ -43,7 +43,6 @@ import java.util.Set;
  * is provided as a sample of using the {@link CheckinHandler} API.
  *
  * @author lesya
- * @since 5.1
  */
 public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
@@ -141,7 +140,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   @NotNull
   private ReturnResult runCodeAnalysis(@Nullable CommitExecutor commitExecutor) {
     final List<VirtualFile> files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject);
-    if (Registry.is("vcs.code.analysis.before.checkin.show.only.new", false)) {
+    if (files.size() <= Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)) {
       return runCodeAnalysisNew(commitExecutor, files);
     }
     return runCodeAnalysisOld(commitExecutor, files);
@@ -149,7 +148,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult runCodeAnalysisNew(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<VirtualFile> files) {
+                                          @NotNull List<? extends VirtualFile> files) {
     Ref<List<CodeSmellInfo>> codeSmells = Ref.create();
     Ref<Exception> exception = Ref.create();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -160,7 +159,10 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
           assert myProject != null;
           indicator.setIndeterminate(true);
           codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator));
+          indicator.setText(VcsBundle.getString("before.checkin.waiting.for.smart.mode"));
+          DumbService.getInstance(myProject).waitForSmartMode();
         } catch (ProcessCanceledException e) {
+          LOG.info("Code analysis canceled", e);
           exception.set(e);
         }
         catch (Exception e) {
@@ -180,7 +182,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult runCodeAnalysisOld(@Nullable CommitExecutor commitExecutor,
-                                          @NotNull List<VirtualFile> files) {
+                                          @NotNull List<? extends VirtualFile> files) {
     final List<CodeSmellInfo> codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files);
     if (!codeSmells.isEmpty()) {
       return processFoundCodeSmells(codeSmells, commitExecutor);

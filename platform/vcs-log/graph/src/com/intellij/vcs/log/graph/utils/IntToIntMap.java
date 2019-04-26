@@ -26,7 +26,6 @@ public interface IntToIntMap {
   int getLongIndex(int shortIndex); // must be very fast
 
   /**
-   * @param longIndex
    * @return max shortIndex, witch getLongIndex(shortIndex) <= longIndex or 0
    */
   int getShortIndex(int longIndex);

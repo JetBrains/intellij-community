@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -10,12 +10,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Stripped-down version of {@code com.intellij.openapi.util.text.StringUtil}.
+ * Stripped-down version of {@link com.intellij.openapi.util.text.StringUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
 public class StringUtilRt {
+  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
+  public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
+    if (s1 == s2) return true;
+    if (s1 == null || s2 == null) return false;
+
+    if (s1.length() != s2.length()) return false;
+
+    if (caseSensitive) {
+      for (int i = 0; i < s1.length(); i++) {
+        if (s1.charAt(i) != s2.charAt(i)) {
+          return false;
+        }
+      }
+    }
+    else {
+      for (int i = 0; i < s1.length(); i++) {
+        if (!charsEqualIgnoreCase(s1.charAt(i), s2.charAt(i))) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
@@ -233,6 +256,19 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int l1 = text.length();
+    int l2 = suffix.length();
+    if (l1 < l2) return false;
+
+    for (int i = l1 - 1; i >= l1 - l2; i--) {
+      if (text.charAt(i) != suffix.charAt(i + l2 - l1)) return false;
+    }
+
+    return true;
+  }
+
+  @Contract(pure = true)
   public static boolean startsWithIgnoreCase(@NotNull String str, @NotNull String prefix) {
     int stringLength = str.length();
     int prefixLength = prefix.length();
@@ -346,6 +382,9 @@ public class StringUtilRt {
     return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
   }
 
+  /**
+   * @return true if the string starts and ends with quote (") or apostrophe (')
+   */
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
     return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);

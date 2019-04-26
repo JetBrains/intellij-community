@@ -3,10 +3,12 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper.Mode;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
 
 public class WindowWrapperBuilder {
@@ -27,6 +27,7 @@ public class WindowWrapperBuilder {
   @Nullable private Computable<JComponent> myPreferredFocusedComponent;
   @Nullable private String myDimensionServiceKey;
   @Nullable private Runnable myOnShowCallback;
+  @Nullable private BooleanGetter myOnCloseHandler;
 
   public WindowWrapperBuilder(@NotNull Mode mode, @NotNull JComponent component) {
     myMode = mode;
@@ -76,6 +77,12 @@ public class WindowWrapperBuilder {
   }
 
   @NotNull
+  public WindowWrapperBuilder setOnCloseHandler(@NotNull BooleanGetter handler) {
+    myOnCloseHandler = handler;
+    return this;
+  }
+
+  @NotNull
   public WindowWrapper build() {
     switch (myMode) {
       case FRAME:
@@ -90,13 +97,7 @@ public class WindowWrapperBuilder {
 
   private static void installOnShowCallback(@Nullable Window window, @Nullable final Runnable onShowCallback) {
     if (window == null || onShowCallback == null) return;
-    window.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowOpened(WindowEvent e) {
-        onShowCallback.run();
-        e.getWindow().removeWindowListener(this);
-      }
-    });
+    UIUtil.runWhenWindowOpened(window, onShowCallback);
   }
 
   private static class DialogWindowWrapper implements WindowWrapper {
@@ -114,7 +115,7 @@ public class WindowWrapperBuilder {
       myDialog = builder.myParent != null
                  ? new MyDialogWrapper(builder.myParent, builder.myComponent)
                  : new MyDialogWrapper(builder.myProject, builder.myComponent);
-      myDialog.setParameters(builder.myDimensionServiceKey, builder.myPreferredFocusedComponent);
+      myDialog.setParameters(builder.myDimensionServiceKey, builder.myPreferredFocusedComponent, builder.myOnCloseHandler);
 
       installOnShowCallback(myDialog.getWindow(), builder.myOnShowCallback);
 
@@ -185,6 +186,7 @@ public class WindowWrapperBuilder {
       @NotNull private final JComponent myComponent;
       @Nullable private String myDimensionServiceKey;
       @Nullable private Computable<? extends JComponent> myPreferredFocusedComponent;
+      @Nullable private BooleanGetter myOnCloseHandler;
 
       MyDialogWrapper(@Nullable Project project, @NotNull JComponent component) {
         super(project, true);
@@ -197,9 +199,11 @@ public class WindowWrapperBuilder {
       }
 
       public void setParameters(@Nullable String dimensionServiceKey,
-                                @Nullable Computable<? extends JComponent> preferredFocusedComponent) {
+                                @Nullable Computable<? extends JComponent> preferredFocusedComponent,
+                                @Nullable BooleanGetter onCloseHandler) {
         myDimensionServiceKey = dimensionServiceKey;
         myPreferredFocusedComponent = preferredFocusedComponent;
+        myOnCloseHandler = onCloseHandler;
       }
 
       @Nullable
@@ -238,6 +242,12 @@ public class WindowWrapperBuilder {
         if (myPreferredFocusedComponent != null) return myPreferredFocusedComponent.compute();
         return super.getPreferredFocusedComponent();
       }
+
+      @Override
+      public void doCancelAction() {
+        if (myOnCloseHandler != null && !myOnCloseHandler.get()) return;
+        super.doCancelAction();
+      }
     }
   }
 
@@ -258,6 +268,7 @@ public class WindowWrapperBuilder {
 
       myFrame = new MyFrameWrapper(builder.myProject, builder.myDimensionServiceKey);
       myFrame.setParameters(builder.myPreferredFocusedComponent);
+      myFrame.setOnCloseHandler(builder.myOnCloseHandler);
 
       myOnShowCallback = builder.myOnShowCallback;
 

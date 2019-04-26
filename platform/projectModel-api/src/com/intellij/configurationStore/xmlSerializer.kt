@@ -1,14 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.IntArrayList
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
 import gnu.trove.THashMap
@@ -20,8 +17,6 @@ import java.net.URL
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.isAccessible
 
 private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SerializationFilter>>()
 
@@ -203,98 +198,3 @@ fun clearBindingCache() {
 }
 
 private data class BindingCacheKey(val type: Type, val accessor: MutableAccessor?)
-
-private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAccessor? = null) : BeanBinding(beanClass, accessor) {
-  override fun deserialize(context: Any?, element: Element): Any {
-    val instance = newInstance()
-    deserializeInto(instance, element)
-    return instance
-  }
-
-  // only for accessor, not field
-  private fun findBindingIndex(name: String): Int {
-    // accessors sorted by name
-    val index = ObjectUtils.binarySearch(0, myBindings.size) { index -> myBindings[index].accessor.name.compareTo(name) }
-    if (index >= 0) {
-      return index
-    }
-
-    for ((i, binding) in myBindings.withIndex()) {
-      val accessor = binding.accessor
-      if (accessor is PropertyAccessor && accessor.getterName == name) {
-        return i
-      }
-    }
-
-    return -1
-  }
-
-  override fun serializeInto(o: Any, element: Element?, filter: SerializationFilter?): Element? {
-    return when (o) {
-      is BaseState -> serializeBaseStateInto(o, element, filter)
-      else -> super.serializeInto(o, element, filter)
-    }
-  }
-
-  private fun serializeBaseStateInto(o: BaseState, _element: Element?, filter: SerializationFilter?): Element? {
-    var element = _element
-    // order of bindings must be used, not order of properties
-    var bindingIndices: IntArrayList? = null
-    for (property in o.__getProperties()) {
-      if (property.isEqualToDefault()) {
-        continue
-      }
-
-      val propertyBindingIndex = findBindingIndex(property.name!!)
-      if (propertyBindingIndex < 0) {
-        logger<BaseState>().debug("cannot find binding for property ${property.name}")
-        continue
-      }
-
-      if (bindingIndices == null) {
-        bindingIndices = IntArrayList()
-      }
-      bindingIndices.add(propertyBindingIndex)
-    }
-
-    if (bindingIndices != null) {
-      bindingIndices.sort()
-      for (i in 0 until bindingIndices.size()) {
-        element = serializePropertyInto(myBindings[bindingIndices.getQuick(i)], o, element, filter, false)
-      }
-    }
-    return element
-  }
-
-  private fun newInstance(): Any {
-    val clazz = myBeanClass
-    try {
-      val constructor = clazz.getDeclaredConstructor()
-      try {
-        constructor.isAccessible = true
-      }
-      catch (ignored: SecurityException) {
-        return clazz.newInstance()
-      }
-      return constructor.newInstance()
-    }
-    catch (e: RuntimeException) {
-      return createUsingKotlin(clazz) ?: throw e
-    }
-    catch (e: NoSuchMethodException) {
-      return createUsingKotlin(clazz) ?: throw e
-    }
-  }
-
-  private fun createUsingKotlin(clazz: Class<*>): Any? {
-    // if cannot create data class
-    val kClass = clazz.kotlin
-    val kFunction = kClass.primaryConstructor ?: kClass.constructors.first()
-    try {
-      kFunction.isAccessible = true
-    }
-    catch (ignored: SecurityException) {
-    }
-    return kFunction.callBy(emptyMap())
-  }
-}

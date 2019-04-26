@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 
 object GuiTestOptions {
@@ -26,21 +27,29 @@ object GuiTestOptions {
 
   private const val NO_NEED_TO_FILTER_TESTS: String = "NO_NEED_TO_FILTER_TESTS"
 
-  val configPath: String by lazy { getSystemProperty("idea.config.path", configDefaultPath) }
+  val configPath: String by lazy {
+    val configDir = File(getSystemProperty("idea.config.path", configDefaultPath))
+    if (!configDir.exists()) {
+      configDir.mkdir()
+    }
+    configDir.absolutePath
+  }
   val systemPath: String by lazy { getSystemProperty("idea.system.path", systemDefaultPath) }
+  val guiTestLogFile: String by lazy { javaClass.classLoader.getResource("gui-test-log.xml").file }
   val guiTestRootDirPath: String? by lazy { System.getProperty("idea.gui.tests.root.dir.path", null) }
   val isGradleRunner: Boolean by lazy { getSystemProperty("idea.gui.tests.gradle.runner", false) }
 
   val isDebug: Boolean by lazy { getSystemProperty("idea.debug.mode", false) }
   val isPassPrivacyPolicy: Boolean by lazy { getSystemProperty("idea.pass.privacy.policy", true) }
   val isPassDataSharing: Boolean by lazy { getSystemProperty("idea.pass.data.sharing", true) }
-  val suspendDebug: String by lazy { if (isDebug) "y" else "n" }
+  val suspendDebug: String by lazy { getSystemProperty("idea.debug.suspend", "n") }
   val isInternal: Boolean by lazy { getSystemProperty("idea.is.internal", true) }
   val useAppleScreenMenuBar: Boolean by lazy { getSystemProperty("apple.laf.useScreenMenuBar", false) }
   val debugPort: Int by lazy { getSystemProperty("idea.gui.test.debug.port", 5009) }
   val bootClasspath: String by lazy { getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/intellij.platform.boot") }
   val encoding: String by lazy { getSystemProperty("idea.gui.test.encoding", "UTF-8") }
-  val xmxSize: Int by lazy { getSystemProperty("idea.gui.test.xmx", 512) }
+  val xmxSize: Int by lazy { getSystemProperty("idea.gui.test.xmx", 2048) }
+  val xssSize: Int by lazy { getSystemProperty("idea.gui.test.xss", 0) }
 
   //used for restarted and resumed test to qualify from what point to start
   val resumeInfo: String by lazy { getSystemProperty(RESUME_LABEL, "DEFAULT") }
@@ -53,6 +62,13 @@ object GuiTestOptions {
   val screenRecorderJarDirPath: String? by lazy { System.getenv("SCREENRECORDER_JAR_DIR") }
   val testsToRecord: List<String> by lazy { System.getenv("SCREENRECOREDER_TESTS_TO_RECORD")?.split(";") ?: emptyList() }
   val videoDuration: Long by lazy { System.getenv("SCREENRECORDER_VIDEO_DURATION")?.toLong() ?: 3 }
+
+  // PyCharm Tests needs global projects folder
+  val projectsDir: File by lazy {
+    // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
+    // EditorFixture seems to require a canonical path when opening the file.
+    FileUtil.generateRandomTemporaryPath().canonicalFile
+  }
 
   private val configDefaultPath: String by lazy {
     try {

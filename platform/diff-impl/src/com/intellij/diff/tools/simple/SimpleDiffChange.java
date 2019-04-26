@@ -18,8 +18,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -27,7 +26,10 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -319,17 +321,17 @@ public class SimpleDiffChange {
       text = "Accept";
     }
 
-    return createIconRenderer(side, text, icon, () -> {
-      myViewer.replaceChange(this, side);
-    });
+    String actionId = side.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide");
+    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    String shortcutsText = StringUtil.nullize(KeymapUtil.getShortcutsText(shortcuts));
+    String tooltipText = DiffUtil.createTooltipText(text, shortcutsText);
+
+    return createIconRenderer(side, tooltipText, icon, () -> myViewer.replaceChange(this, side));
   }
 
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> {
-      DiffUsageTriggerCollector.trigger("action.SimpleDiffChange.append");
-      myViewer.appendChange(this, side);
-    });
+    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> myViewer.appendChange(this, side));
   }
 
   @Nullable
@@ -340,9 +342,9 @@ public class SimpleDiffChange {
     if (!DiffUtil.isEditable(myViewer.getEditor(sourceSide.other()))) return null;
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(@NotNull AnActionEvent e) {
+      protected void handleMouseClick() {
         if (!myIsValid) return;
-        final Project project = e.getProject();
+        final Project project = myViewer.getProject();
         final Document document = myViewer.getEditor(sourceSide.other()).getDocument();
         DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
       }

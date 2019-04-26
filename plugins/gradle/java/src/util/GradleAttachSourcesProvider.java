@@ -101,7 +101,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
         try {
           sourcesLocationFile = new File(FileUtil.createTempDirectory("sources", "loc"), "path.tmp");
           sourcesLocationFilePath = StringUtil.escapeBackSlashes(sourcesLocationFile.getCanonicalPath());
-          Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(sourcesLocationFile)));
+          Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(sourcesLocationFile), "GradleAttachSourcesProvider cleanup"));
         }
         catch (IOException e) {
           GradleLog.LOG.warn(e);

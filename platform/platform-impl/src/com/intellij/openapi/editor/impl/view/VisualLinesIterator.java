@@ -164,7 +164,7 @@ public class VisualLinesIterator {
       int foldIndex = myLocation.foldRegion;
       while (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getEndOffset() <= inlayOffset) foldIndex++;
       if (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getStartOffset() <= inlayOffset) continue;
-      (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.ABOVE_LINE ? myInlaysAbove : myInlaysBelow).add(inlay);
+      (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE ? myInlaysAbove : myInlaysBelow).add(inlay);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.impl;
 
@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.graph.*;
@@ -103,14 +104,18 @@ public class ConversionServiceImpl extends ConversionService {
 
   @NotNull
   @Override
-  public ConversionResult convert(@NotNull String projectPath) {
+  public ConversionResult convert(@NotNull VirtualFile projectPath) {
     try {
-      if (!new File(projectPath).exists() ||
-          (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir()) || !isConversionNeeded(projectPath)) {
+      if (!projectPath.isValid() ||
+          (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir())) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 
-      final ConversionContextImpl context = new ConversionContextImpl(projectPath);
+      final ConversionContextImpl context = new ConversionContextImpl(projectPath.getPath());
+      if (!isConversionNeeded(context)) {
+        return ConversionResultImpl.CONVERSION_NOT_NEEDED;
+      }
+
       final List<ConversionRunner> converters = getConversionRunners(context);
       ConvertProjectDialog dialog = new ConvertProjectDialog(context, converters);
       dialog.show();
@@ -155,9 +160,12 @@ public class ConversionServiceImpl extends ConversionService {
     return converters;
   }
 
-  public static boolean isConversionNeeded(String projectPath) {
+  private static boolean isConversionNeeded(String projectPath) throws CannotConvertException {
+    return isConversionNeeded(new ConversionContextImpl(projectPath));
+  }
+
+  private static boolean isConversionNeeded(@NotNull ConversionContextImpl context ) {
     try {
-      final ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> runners = getSortedConverters(context);
       if (runners.isEmpty()) {
         return false;

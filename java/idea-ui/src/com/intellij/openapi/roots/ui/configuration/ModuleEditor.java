@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -17,7 +17,6 @@ import com.intellij.openapi.options.ModuleConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.navigation.History;
@@ -132,13 +131,12 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myModifiableRootModel;
   }
 
+  @NotNull
   public OrderEntry[] getOrderEntries() {
     if (myModifiableRootModel == null) { // do not clone all model if not necessary
       return ModuleRootManager.getInstance(getModule()).getOrderEntries();
     }
-    else {
-      return myModifiableRootModel.getOrderEntries();
-    }
+    return myModifiableRootModel.getOrderEntries();
   }
 
   public ModifiableRootModel getModifiableRootModelProxy() {
@@ -190,7 +188,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       reportDeprecatedModuleEditor(moduleConfigurable.getClass());
       myEditors.add(new ModuleConfigurableWrapper(moduleConfigurable));
     }
-    for(ModuleConfigurableEP extension : module.getExtensions(MODULE_CONFIGURABLES)) {
+    for(ModuleConfigurableEP extension : MODULE_CONFIGURABLES.getExtensionList(module)) {
       if (extension.canCreateConfigurable()) {
         Configurable configurable = extension.createConfigurable();
         if (configurable != null) {
@@ -207,12 +205,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private static final Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
-  private static void reportDeprecatedModuleEditor(Class<?> aClass) {
+  private static void reportDeprecatedModuleEditor(@NotNull Class<?> aClass) {
     if (ourReportedDeprecatedClasses.add(aClass)) {
       LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
     }
   }
 
+  @NotNull
   private static ModuleConfigurationEditorProvider[] collectProviders(@NotNull Module module) {
     List<ModuleConfigurationEditorProvider> result =
       new ArrayList<>(ServiceKt.getComponents(module, ModuleConfigurationEditorProvider.class));
@@ -223,6 +222,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return result.toArray(new ModuleConfigurationEditorProvider[0]);
   }
 
+  @NotNull
   public ModuleConfigurationState createModuleConfigurationState() {
     return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
       @Override
@@ -237,6 +237,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     };
   }
 
+  @NotNull
   private JPanel createPanel() {
     getModifiableRootModel(); //initialize model if needed
     getModifiableRootModelProxy();
@@ -254,6 +255,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myGenericSettingsPanel;
   }
 
+  @NotNull
   public JPanel getPanel() {
     if (myGenericSettingsPanel == null) {
       myGenericSettingsPanel = createPanel();
@@ -343,6 +345,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -354,7 +357,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
                     "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType",
                     "rearrangeOrderEntries"));
 
-    ModifiableRootModelInvocationHandler(ModifiableRootModel model) {
+    ModifiableRootModelInvocationHandler(@NotNull ModifiableRootModel model) {
       myDelegateModel = model;
     }
 
@@ -389,7 +392,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     private final LibraryTable myDelegateTable;
     @NonNls private final Set<String> myCheckedNames = new THashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
 
-    LibraryTableInvocationHandler(LibraryTable table) {
+    LibraryTableInvocationHandler(@NotNull LibraryTable table) {
       myDelegateTable = table;
     }
 
@@ -402,8 +405,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
           return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{result instanceof LibraryEx ? LibraryEx.class : Library.class},
                                         new LibraryInvocationHandler((Library)result));
         }
-        else if (result instanceof LibraryTable.ModifiableModel) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTableBase.ModifiableModel.class},
+        if (result instanceof LibraryTable.ModifiableModel) {
+          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTable.ModifiableModel.class},
                                         new LibraryTableModelInvocationHandler((LibraryTable.ModifiableModel)result));
         }
         if (result instanceof Library[]) {
@@ -436,7 +439,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private class LibraryInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final Library myDelegateLibrary;
 
-    LibraryInvocationHandler(Library delegateLibrary) {
+    LibraryInvocationHandler(@NotNull Library delegateLibrary) {
       myDelegateLibrary = delegateLibrary;
     }
 
@@ -464,7 +467,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private class LibraryModifiableModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final Library.ModifiableModel myDelegateModel;
 
-    LibraryModifiableModelInvocationHandler(Library.ModifiableModel delegateModel) {
+    LibraryModifiableModelInvocationHandler(@NotNull Library.ModifiableModel delegateModel) {
       myDelegateModel = delegateModel;
     }
 
@@ -493,7 +496,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private class LibraryTableModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable.ModifiableModel myDelegateModel;
 
-    LibraryTableModelInvocationHandler(LibraryTable.ModifiableModel delegateModel) {
+    LibraryTableModelInvocationHandler(@NotNull LibraryTable.ModifiableModel delegateModel) {
       myDelegateModel = delegateModel;
     }
 
@@ -565,7 +568,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return selectedEditor != null ? selectedEditor.getHelpTopic() : null;
   }
 
-  public void setModuleName(final String name) {
+  public void setModuleName(@NotNull String name) {
     myName = name;
   }
 

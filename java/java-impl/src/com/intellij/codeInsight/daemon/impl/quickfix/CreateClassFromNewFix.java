@@ -67,9 +67,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       CommandProcessor.getInstance().executeCommand(newExpression.getProject(), () ->
         psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null), getText(), getText());
 
-      WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> {
-        setupClassFromNewExpression(psiClass[0], newExpression);
-      });
+      WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> setupClassFromNewExpression(psiClass[0], newExpression));
     });
   }
 

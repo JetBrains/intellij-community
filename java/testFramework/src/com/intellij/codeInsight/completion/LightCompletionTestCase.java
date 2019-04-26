@@ -38,16 +38,19 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   protected void tearDown() throws Exception {
     try {
       myItems = null;
-      LookupManager.getInstance(getProject()).hideActiveLookup();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
+
       super.tearDown();
     }
   }
 
   @Override
-  protected void configureByFile(@NotNull String filePath) {
-    super.configureByFile(filePath);
+  protected void configureByFile(@NotNull String relativePath) {
+    super.configureByFile(relativePath);
 
     complete();
   }

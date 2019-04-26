@@ -36,7 +36,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
@@ -188,7 +186,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
   }
 
-  private TreeModel buildTreeModel(final List<CommittedChangeList> filteredChangeLists) {
+  private TreeModel buildTreeModel(final List<? extends CommittedChangeList> filteredChangeLists) {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
     Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
@@ -354,7 +352,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return TreeUtil.collectSelectedObjectsOfType(myChangesTree, CommittedChangeList.class);
   }
 
-  public void setTableContextMenu(final ActionGroup group, final List<AnAction> auxiliaryActions) {
+  public void setTableContextMenu(final ActionGroup group, final List<? extends AnAction> auxiliaryActions) {
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(group);
     for (AnAction action : auxiliaryActions) {
@@ -392,7 +390,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, @Nullable final ActionGroup tailGroup,
-                                                final List<AnAction> extra) {
+                                                final List<? extends AnAction> extra) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(leadGroup);
     toolbarGroup.addSeparator();
@@ -559,13 +557,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
 
     public void invalidateNodeSizes() {
-      TreeUI ui = getUI();
-
-      if (ui instanceof WideSelectionTreeUI) {
-        ((WideSelectionTreeUI)ui).invalidateNodeSizes();
-      }
-
-      repaint();
+      TreeUtil.invalidateCacheAndRepaint(getUI());
     }
   }
 

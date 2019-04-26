@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.ImageLoader
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUIScale
 import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
@@ -18,7 +18,7 @@ class GithubImageResizer(private val progressManager: ProgressManager) : Disposa
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub Image Resizer", getThreadPoolSize())
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
 
-  fun requestImageResize(image: Image, size: Int, scaleContext: JBUI.ScaleContext): CompletableFuture<Image> {
+  fun requestImageResize(image: Image, size: Int, scaleContext: JBUIScale.ScaleContext): CompletableFuture<Image> {
     val indicator = progressIndicator
 
     return CompletableFuture.supplyAsync(Supplier {

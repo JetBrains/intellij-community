@@ -97,7 +97,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       // If not debug at all
       return false;
     }
-    /**
+    /*
      * Any python configuration is debuggable unless it explicitly declares itself as DebugAwareConfiguration and denies it
      * with canRunUnderDebug == false
      */

@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
@@ -18,7 +18,6 @@ import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  public static final String GROUP_ID = "Color Schemes";
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
     "Obsidian",
@@ -82,12 +81,12 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.ui.editor.color.schemes";
+    return "ui.editor.color.schemes";
   }
 
   @Nullable
   @Override
-  public FUSUsageContext getContext() {
-    return FUSUsageContext.OS_CONTEXT;
+  public FeatureUsageData getData() {
+    return new FeatureUsageData().addOS();
   }
 }

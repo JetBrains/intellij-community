@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
@@ -45,7 +44,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   public GrTypeParameterImpl(GrTypeParameterStub stub) {
-    super(stub, GroovyElementTypes.TYPE_PARAMETER);
+    super(stub, GroovyStubElementTypes.TYPE_PARAMETER);
   }
 
   @Override
@@ -128,7 +127,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   @Override
   @NotNull
   public PsiReferenceList getExtendsList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_EXTENDS_BOUND_LIST);
+    return getRequiredStubOrPsiChild(GroovyStubElementTypes.TYPE_PARAMETER_BOUNDS_LIST);
   }
 
   @Override

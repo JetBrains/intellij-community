@@ -28,10 +28,12 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.*;
+import gnu.trove.TIntHashSet;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.*;
 
 /**
@@ -188,7 +190,7 @@ public class LiveVariablesAnalyzer {
       if (instruction instanceof FinishElementInstruction) {
         BitSet currentlyLive = liveVars.get(instruction);
         if (currentlyLive == null) {
-          return new BitSet(); // an instruction unreachable from the end?
+          currentlyLive = new BitSet();
         }
         int index = 0;
         while (true) {
@@ -209,7 +211,7 @@ public class LiveVariablesAnalyzer {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
         // Do not flush special values and this value as they could be used implicitly
-        values.removeIf(var -> var.getSource() instanceof SpecialField || var.getSource() instanceof DfaExpressionFactory.ThisSource);
+        values.removeIf(var -> var.getDescriptor() instanceof SpecialField || var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor);
         instruction.getVarsToFlush().addAll(values);
       }
     }
@@ -231,10 +233,10 @@ public class LiveVariablesAnalyzer {
       queue.addLast(new InstructionState(i, new BitSet()));
     }
 
-    int limit = myForwardMap.size() * 20;
-    Set<InstructionState> processed = ContainerUtil.newHashSet();
+    int limit = myForwardMap.size() * 100;
+    Map<BitSet, TIntHashSet> processed = new HashMap<>();
+    int steps = 0;
     while (!queue.isEmpty()) {
-      int steps = processed.size();
       if (steps > limit) {
         return false;
       }
@@ -246,9 +248,12 @@ public class LiveVariablesAnalyzer {
       Collection<Instruction> nextInstructions = forward ? myForwardMap.get(instruction) : myBackwardMap.get(instruction);
       BitSet nextVars = handleState.fun(instruction, state.second);
       for (Instruction next : nextInstructions) {
-        InstructionState nextState = new InstructionState(next, nextVars);
-        if (processed.add(nextState)) {
-          queue.addLast(nextState);
+        TIntHashSet instructionSet = processed.computeIfAbsent(nextVars, k -> new TIntHashSet());
+        int index = next.getIndex() + 1;
+        if (!instructionSet.contains(index)) {
+          instructionSet.add(index);
+          queue.addLast(new InstructionState(next, nextVars));
+          steps++;
         }
       }
     }

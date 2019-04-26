@@ -33,7 +33,6 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
@@ -47,17 +46,13 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
-      GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-      List<String> result = new ArrayList<>();
-      Processor<String> processor = Processors.cancelableCollectProcessor(result);
+    GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+    List<String> result = new ArrayList<>();
+    Processor<String> processor = Processors.cancelableCollectProcessor(result);
 
-      processNames(processor, scope, IdFilter.getProjectIdFilter(project, includeNonProjectItems));
+    processNames(processor, scope, IdFilter.getProjectIdFilter(project, includeNonProjectItems));
 
-      return ArrayUtil.toStringArray(result);
-    }
-
-    return PsiShortNamesCache.getInstance(project).getAllClassNames();
+    return ArrayUtil.toStringArray(result);
   }
 
   @Override

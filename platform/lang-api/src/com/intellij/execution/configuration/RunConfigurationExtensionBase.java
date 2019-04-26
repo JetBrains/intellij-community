@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,6 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param element          the element into which the settings should be persisted,
    */
   protected void writeExternal(@NotNull T runConfiguration, @NotNull Element element) {
-    throw new WriteExternalException();
   }
 
   /**
@@ -99,6 +98,25 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
                                            @Nullable RunnerSettings runnerSettings,
                                            @NotNull final GeneralCommandLine cmdLine,
                                            @NotNull final String runnerId) throws ExecutionException;
+
+  /**
+   * Patches the command line of the process about to be started by the underlying run configuration.
+   *
+   * @param configuration  the underlying run configuration.
+   * @param runnerSettings the runner-specific settings.
+   * @param cmdLine        the command line of the process about to be started.
+   * @param runnerId       the ID of the {@link com.intellij.execution.runners.ProgramRunner} used to start the process.
+   * @param executor       the executor which is using to run the configuration
+   * @throws ExecutionException if there was an error configuring the command line and the execution should be canceled.
+   */
+  protected void patchCommandLine(@NotNull final T configuration,
+                                           @Nullable RunnerSettings runnerSettings,
+                                           @NotNull final GeneralCommandLine cmdLine,
+                                           @NotNull final String runnerId,
+                                           @NotNull final Executor executor) throws ExecutionException {
+    patchCommandLine(configuration, runnerSettings, cmdLine, runnerId);
+  }
+
 
   /**
    * Attaches the extension to a process that has been started.

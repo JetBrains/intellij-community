@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.uast.*
 
 class GrUClass(val grElement: GrTypeDefinition,
-               parentProvider: () -> UElement?) : UClassTypeSpecific, JvmDeclarationUElement, UAnchorOwner, UDeclarationEx, PsiClass by grElement {
+               parentProvider: () -> UElement?) : UClass, UAnchorOwner, UDeclarationEx, PsiClass by grElement {
 
   override val sourcePsi: GrTypeDefinition = grElement
 
@@ -52,7 +52,7 @@ class GrUClass(val grElement: GrTypeDefinition,
 
 
 class GrUMethod(val grElement: GrMethod,
-                parentProvider: () -> UElement?) : UMethodTypeSpecific, JvmDeclarationUElement, UAnchorOwner, UDeclarationEx, PsiMethod by grElement {
+                parentProvider: () -> UElement?) : UMethod, UAnchorOwner, UDeclarationEx, PsiMethod by grElement {
   override val uastParent: UElement? by lazy(parentProvider)
 
   override val sourcePsi: PsiElement = grElement
@@ -63,8 +63,6 @@ class GrUMethod(val grElement: GrMethod,
   override val uastBody: UExpression? = null //not implemented
 
   override val uastParameters: List<UParameter> by lazy { grElement.parameters.map { GrUParameter(it, { this }) } }
-
-  override val isOverride: Boolean by lazy { psi.modifierList.hasAnnotation("java.lang.Override") }
 
   override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
@@ -78,7 +76,7 @@ class GrUMethod(val grElement: GrMethod,
 }
 
 class GrUParameter(val grElement: GrParameter,
-                   parentProvider: () -> UElement?) : UParameterEx, JvmDeclarationUElement, UAnchorOwner, PsiParameter by grElement {
+                   parentProvider: () -> UElement?) : UParameterEx, UAnchorOwner, PsiParameter by grElement {
   override val uastParent: UElement? by lazy(parentProvider)
 
   override val sourcePsi: PsiElement = grElement

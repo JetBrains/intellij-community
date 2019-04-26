@@ -67,7 +67,7 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
   }
 
   @Override
-  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists) {
     return new SvnChangeList(lists, new SvnRepositoryLocation(group.toPresentableString()));
   }
 

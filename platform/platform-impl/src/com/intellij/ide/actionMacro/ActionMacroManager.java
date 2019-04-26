@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.icons.AllIcons;
@@ -78,7 +78,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     myActionManager = actionManager;
     messageBus.connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, final AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull final AnActionEvent event) {
         String id = actionManager.getId(action);
         if (id == null) return;
         //noinspection HardCodedStringLiteral
@@ -483,8 +483,13 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(!getInstance().isPlaying());
+    }
+
+    @Nullable
+    @Override
+    public String getTemplateText() {
+      return "Invoke Macro";
     }
   }
 

@@ -46,6 +46,7 @@ public class AssociateFileTypeAction extends AnAction {
       haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence()) == FileTypes.UNKNOWN &&
                      !(file.getFileSystem() instanceof NonPhysicalFileSystem) &&
                      !ScratchRootType.getInstance().containsFile(file);
+      haveSmthToDo |= ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     }
     presentation.setVisible(haveSmthToDo || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     presentation.setEnabled(haveSmthToDo);

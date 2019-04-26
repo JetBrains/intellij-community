@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
  * and unregistered in {@link com.intellij.openapi.vcs.AbstractVcs#deactivate()}
  *
  * @author lesya
- * @since 5.1
  */
 public abstract class CheckinHandlerFactory implements BaseCheckinHandlerFactory {
   public static final ExtensionPointName<CheckinHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.checkinHandlerFactory");

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.debugger.impl.DebuggerManagerImpl;
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.ExecuteRunConfigurationTask;
 import org.jetbrains.annotations.NotNull;
@@ -181,12 +180,12 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
             JavaParameters parameters = new JavaParameters();
             parameters.setJdk(JavaParametersUtil.createProjectJdk(getProject(), myApplicationConfiguration.getAlternativeJrePath()));
             RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(
-              parameters, false, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
+              parameters, false, DebuggerSettings.getInstance().getTransport(), "", false);
 
             ParametersList programParametersList = javaParameters.getProgramParametersList();
 
             String execArgsPrefix = "-Dexec.args=";
-            int execArgsIndex = indexOf(programParametersList.getList(), (Condition<String>)s -> s.startsWith(execArgsPrefix));
+            int execArgsIndex = indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
             String execArgsStr = programParametersList.get(execArgsIndex);
 
             ParametersList execArgs = new ParametersList();

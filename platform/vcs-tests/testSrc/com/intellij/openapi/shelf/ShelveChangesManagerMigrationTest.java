@@ -68,7 +68,7 @@ public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
     assert (beforeXmlInfo.exists());
     Element element = JDOMUtil.load(beforeXmlInfo);
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
-    shelveChangesManager.readExternal(element);
+    shelveChangesManager.loadState(element);
     if (migrateResources) {
       shelveChangesManager.checkAndMigrateOldPatchResourcesToNewSchemeStorage();
     }

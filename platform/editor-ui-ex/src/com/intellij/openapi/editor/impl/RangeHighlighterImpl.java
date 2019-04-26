@@ -65,7 +65,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
                        TextAttributes textAttributes,
                        boolean greedyToLeft,
                        boolean greedyToRight) {
-    super((DocumentEx)model.getDocument(), start, end,false);
+    super((DocumentEx)model.getDocument(), start, end, false, false);
     myTextAttributes = textAttributes;
     setFlag(TARGET_AREA_IS_EXACT_MASK, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;

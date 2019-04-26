@@ -45,6 +45,9 @@ public abstract class EclipseVarsTest extends IdeaTestCase {
       PathMacros.getInstance().removeMacro(VARIABLE);
       PathMacros.getInstance().removeMacro(SRCVARIABLE);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

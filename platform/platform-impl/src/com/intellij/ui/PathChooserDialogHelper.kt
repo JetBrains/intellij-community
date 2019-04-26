@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.core.CoreFileTypeRegistry
+import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
@@ -19,9 +20,11 @@ internal class PathChooserDialogHelper(private val descriptor: FileChooserDescri
   init {
     if (FileTypeRegistry.ourInstanceGetter == null) {
       val registry = CoreFileTypeRegistry()
-      registry.registerFileType(FileTypes.ARCHIVE, "zip")
-      registry.registerFileType(FileTypes.ARCHIVE, "jar")
-      FileTypeRegistry.ourInstanceGetter = Getter { registry }
+      registry.registerFileType(ArchiveFileType.INSTANCE, "zip")
+      registry.registerFileType(ArchiveFileType.INSTANCE, "jar")
+      FileTypeRegistry.ourInstanceGetter = Getter {
+        registry
+      }
     }
   }
 

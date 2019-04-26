@@ -141,7 +141,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
       String pattern = "*" + string;
       NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
       String separators = "";
-      myMatcher = myMatchAllOccurrences ? new AllOccurrencesMatcher(pattern, caseSensitivity, separators)
+      myMatcher = myMatchAllOccurrences ? AllOccurrencesMatcher.create(pattern, caseSensitivity, separators)
                                         : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
     catch (Exception e) {

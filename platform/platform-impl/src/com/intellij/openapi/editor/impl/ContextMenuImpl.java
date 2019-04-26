@@ -1,10 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -99,11 +97,6 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   private void toggleContextToolbar(final boolean show) {
-    myActionToolbar.updateActionsImmediately();
-    if (((Container)myActionToolbar).getComponentCount() == 0) {
-      return;
-    }
-
     if (myShow != show) {
       myShow = show;
       restartTimer();
@@ -121,6 +114,12 @@ public class ContextMenuImpl extends JPanel implements Disposable {
         if (myDisposed) return;
 
         if (myTimer != null && myTimer.isRunning()) myTimer.stop();
+
+        myActionToolbar.updateActionsImmediately();
+        if (((Container)myActionToolbar).getComponentCount() == 0) {
+          myShow = false;
+          return;
+        }
 
         myTimer = UIUtil.createNamedTimer("Restart context menu now", 50, new ActionListener() {
           @Override
@@ -146,8 +145,6 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
                 scheduleHide();
               }
-
-              repaint();
             }
             else {
               if (!myVisible) {
@@ -162,9 +159,8 @@ public class ContextMenuImpl extends JPanel implements Disposable {
                 myLayeredPane.remove(ContextMenuImpl.this);
                 myLayeredPane.repaint();
               }
-
-              repaint();
             }
+            repaint();
           }
         });
 
@@ -219,8 +215,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   private JComponent createComponent() {
-    myActionToolbar = new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, myActionGroup, true,
-                                            DataManager.getInstance(), ActionManagerEx.getInstanceEx(), KeymapManagerEx.getInstanceEx());
+    myActionToolbar = new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, myActionGroup, true, KeymapManagerEx.getInstanceEx());
     myActionToolbar.setTargetComponent(myEditor.getContentComponent());
     myActionToolbar.setMinimumButtonSize(new Dimension(22, 22));
     myActionToolbar.setReservePlaceAutoPopupIcon(false);

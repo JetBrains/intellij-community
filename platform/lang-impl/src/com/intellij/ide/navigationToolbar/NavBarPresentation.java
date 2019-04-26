@@ -81,15 +81,19 @@ public class NavBarPresentation {
   }
 
   @NotNull
-  protected String getPresentableText(final Object object) {
+  protected String getPresentableText(Object object) {
+    String text = calcPresentableText(object);
+    return text.length() > 50 ? text.substring(0, 47) + "..." : text;
+  }
+
+  @NotNull
+  public static String calcPresentableText(Object object) {
     if (!NavBarModel.isValid(object)) {
       return IdeBundle.message("node.structureview.invalid");
     }
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       String text = modelExtension.getPresentableText(object);
-      if (text != null) {
-        return text.length() > 50 ? text.substring(0, 47) + "..." : text;
-      }
+      if (text != null) return text;
     }
     return object.toString();
   }

@@ -112,7 +112,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public String getAnnotatedContent() {
     try {
-      ContentRevision revision = GitContentRevision.createRevision(myFilePath, myBaseRevision, myProject, null);
+      ContentRevision revision = GitContentRevision.createRevision(myFilePath, myBaseRevision, myProject);
       return revision.getContent();
     }
     catch (VcsException e) {
@@ -230,9 +230,7 @@ public class GitFileAnnotation extends FileAnnotation {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         LineInfo info = myLines.get(lineNum);
 
-        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, () -> {
-          return getRevisionsChangesProvider().getChangesIn(lineNum);
-        });
+        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, () -> getRevisionsChangesProvider().getChangesIn(lineNum));
       }
     }
   }

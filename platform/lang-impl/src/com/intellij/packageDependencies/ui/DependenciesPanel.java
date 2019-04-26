@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.packageDependencies.ui;
 
@@ -99,8 +99,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myExcluded = excluded;
     final DependenciesBuilder main = myBuilders.get(0);
     myForward = !main.isBackward();
-    myScopeOfInterest = main.getScopeOfInterest();
-    myTransitiveBorder = main.getTransitiveBorder();
+    myScopeOfInterest = main instanceof BackwardDependenciesBuilder ? ((BackwardDependenciesBuilder)main).getScopeOfInterest() : null;
+    myTransitiveBorder = main instanceof ForwardDependenciesBuilder ? ((ForwardDependenciesBuilder)main).getTransitiveBorder() : 0;
     myDependencies = new HashMap<>();
     myIllegalDependencies = new HashMap<>();
     for (DependenciesBuilder builder : builders) {
@@ -323,7 +323,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(tree);
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
@@ -812,7 +811,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(!getSelectedScope(myLeftTree).isEmpty());
     }
 
@@ -836,7 +834,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(getScope() != null);
     }
 

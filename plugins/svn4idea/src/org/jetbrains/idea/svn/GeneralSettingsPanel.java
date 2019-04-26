@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -64,11 +64,11 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   @Override
   public void reset(@NotNull SvnConfiguration configuration) {
     String path = configuration.getConfigurationDirectory();
-    if (configuration.isUseDefaultConfiguation() || path == null) {
+    if (configuration.isUseDefaultConfiguration() || path == null) {
       path = USER_CONFIGURATION_PATH.getValue().toString();
     }
     myConfigurationDirectoryText.setText(path);
-    myUseCustomConfigurationDirectory.setSelected(!configuration.isUseDefaultConfiguation());
+    myUseCustomConfigurationDirectory.setSelected(!configuration.isUseDefaultConfiguration());
 
     boolean enabled = myUseCustomConfigurationDirectory.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);
@@ -81,7 +81,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   @Override
   public boolean isModified(@NotNull SvnConfiguration configuration) {
-    if (configuration.isUseDefaultConfiguation() == myUseCustomConfigurationDirectory.isSelected()) {
+    if (configuration.isUseDefaultConfiguration() == myUseCustomConfigurationDirectory.isSelected()) {
       return true;
     }
     if (configuration.isRunUnderTerminal() != myRunUnderTerminal.isSelected()) return true;

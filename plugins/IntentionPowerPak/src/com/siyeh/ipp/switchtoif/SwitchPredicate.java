@@ -58,7 +58,7 @@ class SwitchPredicate implements PsiElementPredicate {
     }
     final PsiStatement[] statements = body.getStatements();
     for (PsiStatement statement : statements) {
-      if (statement instanceof PsiSwitchLabelStatement && !((PsiSwitchLabelStatement)statement).isDefaultCase()) {
+      if (statement instanceof PsiSwitchLabelStatementBase && !((PsiSwitchLabelStatementBase)statement).isDefaultCase()) {
         return true;
       }
     }

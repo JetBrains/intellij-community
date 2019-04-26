@@ -30,6 +30,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
   public static final String FORMATTED_SAMPLE = "<a>\n    <b></b>\n</a>";
 
   public void testSimpleNoExclusions() throws IOException {
+    PsiTestUtil.addContentRoot(myModule, getProject().getBaseDir());
     VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
     VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
     formatProjectFiles(false, false);
@@ -38,6 +39,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
   }
 
   public void testPatternExclusions() throws IOException {
+    PsiTestUtil.addContentRoot(myModule, getProject().getBaseDir());
     addPatternExclusions("*2.xml", "test/*");
     VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
     VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);

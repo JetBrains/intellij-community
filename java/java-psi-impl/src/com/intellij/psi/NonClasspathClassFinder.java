@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         clearCache();
       }
     });
-    LowMemoryWatcher.register(() -> clearCache(), project);
+    LowMemoryWatcher.register(() -> myCache = null, project);
   }
 
   @NotNull
@@ -65,16 +64,15 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         roots = ContainerUtil.filter(roots, VirtualFile::isValid);
         LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
       }
-      myCache = cache = createCache(roots);
+      myCache = cache = PackageDirectoryCache.createCache(roots);
     }
     return cache;
   }
 
   @NotNull
+  @Deprecated
   protected static PackageDirectoryCache createCache(@NotNull final List<? extends VirtualFile> roots) {
-    final MultiMap<String, VirtualFile> map = MultiMap.create();
-    map.putValues("", roots);
-    return new PackageDirectoryCache(map);
+    return PackageDirectoryCache.createCache(roots);
   }
 
   public void clearCache() {
@@ -198,7 +196,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @NotNull
   public static GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
     List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
-    for (PsiElementFinder finder : EP_NAME.getExtensions(project)) {
+    for (PsiElementFinder finder : EP.getExtensions(project)) {
       if (finder instanceof NonClasspathClassFinder) {
         nonClasspathScopes.add(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
       }

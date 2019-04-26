@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,15 @@ public class PyTypingTest extends PyTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    setLanguageLevel(null);
-    super.tearDown();
+    try {
+      setLanguageLevel(null);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testClassType() {
@@ -1415,6 +1422,56 @@ public class PyTypingTest extends PyTestCase {
                              "\n" +
                              "expr: MyType = ...\n" +
                              "\n");
+  }
+
+  // PY-34478
+  public void testTrivialTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("str",
+                             "from other import alias\n" +
+                             "\n" +
+                             "expr: alias");
+  }
+
+  // PY-34478
+  public void testTrivialUnresolvedTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("Any",
+                             "from other import alias\n" +
+                             "\n" +
+                             "expr: alias");
+  }
+
+  // PY-34478
+  public void testTrivialRecursiveTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("Any",
+                             "from other import alias\n" +
+                             "\n" +
+                             "expr: alias");
+  }
+
+  public void testGenericSubstitutionInDeepHierarchy() {
+    doTest("int",
+           "from typing import Generic, TypeVar\n" +
+           "\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "\n" +
+           "class Root(Generic[T1, T2]):\n" +
+           "    def m(self) -> T2:\n" +
+           "        pass\n" +
+           "\n" +
+           "class Base3(Root[T1, int]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class Base2(Base3[T1]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class Base1(Base2[T1]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class Sub(Base1[T1]):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = Sub().m()\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

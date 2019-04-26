@@ -64,6 +64,7 @@ public class JavaCompletionSorting {
     ContainerUtil.addIfNotNull(afterProximity, PreferMostUsedWeigher.create(position));
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
     afterProximity.add(new PreferShorter(expectedTypes));
+    afterProximity.add(new DispreferTechnicalOverloads(position));
 
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
@@ -141,7 +142,9 @@ public class JavaCompletionSorting {
       @NotNull
       @Override
       public Comparable weigh(@NotNull LookupElement element) {
-        final Object o = element.getObject();
+        JavaConstructorCallElement call = element.as(JavaConstructorCallElement.class);
+        Object o = call != null ? call.getConstructedClass() : element.getObject();
+
         if (o instanceof PsiKeyword) return -3;
         if (!(o instanceof PsiMember) || element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
           return 0;
@@ -605,6 +608,42 @@ public class JavaCompletionSorting {
         return NameUtil.nameToWords(name).length - 1000;
       }
       return 0;
+    }
+  }
+
+  /**
+   * Sometimes there's core vararg method and a couple of overloads of fixed arity to avoid runtime invocation costs of varargs.
+   * We prefer the vararg method then.
+   */
+  private static class DispreferTechnicalOverloads extends LookupElementWeigher {
+    private final PsiElement myPlace;
+
+    DispreferTechnicalOverloads(PsiElement place) {
+      super("technicalOverloads");
+      myPlace = place;
+    }
+
+    @NotNull
+    @Override
+    public Comparable weigh(@NotNull LookupElement element) {
+      Object object = element.getObject();
+      if (object instanceof PsiMethod && element.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) == null) {
+        PsiMethod method = (PsiMethod)object;
+        PsiClass containingClass = method.getContainingClass();
+        if (!method.isVarArgs() &&
+            containingClass != null &&
+            ContainerUtil.exists(containingClass.findMethodsByName(method.getName(), false), m -> isPurelyVarargOverload(method, m))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private boolean isPurelyVarargOverload(PsiMethod original, PsiMethod candidate) {
+      return candidate.hasModifierProperty(PsiModifier.STATIC) == original.hasModifierProperty(PsiModifier.STATIC) &&
+             candidate.isVarArgs() &&
+             candidate.getParameterList().getParametersCount() == 1 &&
+             PsiResolveHelper.SERVICE.getInstance(candidate.getProject()).isAccessible(candidate, myPlace, null);
     }
   }
 

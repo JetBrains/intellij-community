@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.MutableErrorTreeView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +120,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
           }
         }
       }
-      return ArrayUtil.toObjectArray(children, ErrorTreeElement.class);
+      return children.toArray(ErrorTreeElement.EMPTY_ARRAY);
     }
     
     if (element instanceof GroupingElement) {
@@ -137,9 +136,9 @@ public class ErrorViewStructure extends AbstractTreeStructure {
               }
               filtered.add(navigatableMessageElement);
             }
-            return ArrayUtil.toObjectArray(filtered, ErrorTreeElement.class);
+            return filtered.toArray(ErrorTreeElement.EMPTY_ARRAY);
           }
-          return ArrayUtil.toObjectArray(children, NavigatableMessageElement.class);
+          return children.toArray(new NavigatableMessageElement[0]);
         }
       }
     }

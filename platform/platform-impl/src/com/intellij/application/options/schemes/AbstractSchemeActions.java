@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.schemes;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.WriteAction;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,6 +59,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
+  @NotNull
   protected final AbstractSchemesPanel<T, ?> mySchemesPanel;
 
   protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
@@ -65,7 +68,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     mySchemeExporterNames = getSchemeExporterNames();
   }
   
-    
+
+  @NotNull
   protected Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (SchemeImporterEP<T> importerEP : SchemeImporterEP.getExtensions(getSchemeType())) {
@@ -73,7 +77,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
     return importersNames;
   }
-  
+
+  @NotNull
   private Collection<String> getSchemeExporterNames() {
     List<String> exporterNames = new ArrayList<>();
     for (SchemeExporterEP<T> exporterEP : SchemeExporterEP.getExtensions(getSchemeType())) {
@@ -82,6 +87,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return exporterNames;
   }
 
+  @NotNull
   public final Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
     if (mySchemesPanel.supportsProjectSchemes()) {
@@ -250,26 +256,27 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       boolean isEnabled = scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme);
       if (mySchemesPanel.hideDeleteActionIfUnavailable()) {
         p.setEnabledAndVisible(isEnabled);
-      }  else {
+      }
+      else {
         p.setEnabled(isEnabled);
       }
     }
   }
 
+  @NotNull
   private static AnAction createImportExportAction(@NotNull String groupName,
                                                    @NotNull Collection<String> actionNames,
                                                    @NotNull BiFunction<? super String, ? super String, ? extends AnAction> createActionByName) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
-    } else {
-      return new ImportExportActionGroup(groupName, actionNames) {
-        @NotNull
-        @Override
-        protected AnAction createAction(@NotNull String actionName) {
-          return createActionByName.apply(actionName, actionName);
-        }
-      };
     }
+    return new ImportExportActionGroup(groupName, actionNames) {
+      @NotNull
+      @Override
+      protected AnAction createAction(@NotNull String actionName) {
+        return createActionByName.apply(actionName, actionName);
+      }
+    };
   }
 
   private abstract static class ImportExportActionGroup extends ActionGroup {
@@ -323,7 +330,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
-        exportScheme(currentScheme, myExporterName);
+        Project project = e.getProject();
+        exportScheme(project, currentScheme, myExporterName);
       }
     }
   }
@@ -358,13 +366,21 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    *
    * @param scheme The scheme to delete.
    */
-  protected void deleteScheme(@NotNull T scheme) {
+  private void deleteScheme(@NotNull T scheme) {
     if (Messages.showOkCancelDialog(
       "Do you want to delete \"" + scheme.getName() + "\" " + StringUtil.toLowerCase(mySchemesPanel.getSchemeTypeName()) + "?",
-      "Delete " + mySchemesPanel.getSchemeTypeName(),
+      "Delete " + mySchemesPanel.getSchemeTypeName(), "Delete", CommonBundle.getCancelButtonText(),
       Messages.getQuestionIcon()) == Messages.OK) {
       mySchemesPanel.getModel().removeScheme(scheme);
     }
+  }
+
+  /**
+   * @deprecated Use {@link #exportScheme(Project, Scheme, String)} instead.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
   }
 
   /**
@@ -375,7 +391,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    * @see SchemeExporter
    * @see SchemeExporterEP
    */
-  protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
+  protected void exportScheme(@Nullable Project project, @NotNull T scheme, @NotNull String exporterName) {
     SchemeExporter<T> exporter = SchemeExporterEP.getExporter(exporterName, getSchemeType());
     if (exporter != null) {
       Object config = null;
@@ -391,7 +407,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
             ext), getSchemesPanel());
-      VirtualFileWrapper target = saver.save(null, SchemeManager.getDisplayName(scheme) + "." + ext);
+      VirtualFileWrapper target = saver.save(exporter.getDefaultDir(project), exporter.getDefaultFileName(SchemeManager.getDisplayName(scheme)) + "." + ext);
       if (target != null) {
         VirtualFile targetFile = target.getVirtualFile(true);
         String message;
@@ -405,7 +421,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
                   //noinspection unchecked
                   ((ConfigurableSchemeExporter)exporter).exportScheme(scheme, outputStream, finalConfig);
                 }
-                exporter.exportScheme(scheme, outputStream);
+                exporter.exportScheme(project, scheme, outputStream);
               }
             });
             message = ApplicationBundle
@@ -473,8 +489,10 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   /**
    * @return The actual scheme type.
    */
+  @NotNull
   protected abstract Class<T> getSchemeType();
 
+  @NotNull
   public final AbstractSchemesPanel<T, ?> getSchemesPanel() {
     return mySchemesPanel;
   }

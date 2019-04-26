@@ -38,19 +38,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.BooleanRunnable;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -172,6 +178,7 @@ public class InjectedLanguageUtil {
   /**
    * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
+  @Contract("null,_->null;!null,_->!null")
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
 
@@ -252,6 +259,7 @@ public class InjectedLanguageUtil {
   /**
    * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
+  @Contract("null,_,_->null;!null,_,_->!null")
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
     PsiFile injectedFile = findInjectedPsiNoCommit(file, offset);
@@ -318,29 +326,29 @@ public class InjectedLanguageUtil {
     return viewProvider.findElementAt(offset, baseLanguage);
   }
 
-  private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
   // list of injected fragments injected into this psi element (can be several if some crazy injector calls startInjecting()/doneInjecting()/startInjecting()/doneInjecting())
-  private static final Key<ParameterizedCachedValue<InjectionResult, PsiElement>> INJECTED_PSI = Key.create("INJECTED_PSI");
+  private static final Key<Getter<InjectionResult>> INJECTED_PSI = Key.create("INJECTED_PSI");
 
   private static void probeElementsUp(@NotNull PsiElement element,
                                       @NotNull PsiFile hostPsiFile,
                                       boolean probeUp,
                                       @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
-    PsiManager psiManager = hostPsiFile.getManager();
-    final Project project = psiManager.getProject();
-    InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
-    InjectionResult result = null;
-    PsiElement current = element;
+    element = skipNonInjectablePsi(element, probeUp);
+    if (element == null) return;
 
-    while (current != null && current != hostPsiFile && !(current instanceof PsiDirectory)) {
+    InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(hostPsiFile.getProject());
+    InjectionResult result = null;
+    PsiElement current;
+
+    for (current = element; current != null && current != hostPsiFile && !(current instanceof PsiDirectory); ) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
-      ParameterizedCachedValue<InjectionResult, PsiElement> data = current.getUserData(INJECTED_PSI);
-      if (data == null || (result = data.getValue(current)) == null || !result.isValid()) {
-        result = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
+      result = SoftReference.deref(current.getUserData(INJECTED_PSI));
+      if (result == null || !result.isModCountUpToDate(hostPsiFile) || !result.isValid()) {
+        result = injectedManager.processInPlaceInjectorsFor(hostPsiFile, current);
       }
 
-      current = current.getParent(); // cache no injection for current
+      current = current.getParent();
 
       if (result != null) {
         if (result.files != null) {
@@ -376,25 +384,45 @@ public class InjectedLanguageUtil {
       }
     }
 
-    if (probeUp) {
-      // cache only if we walked all parents
-      for (PsiElement e = element; e != current && e != null && e != hostPsiFile; e = e.getParent()) {
-        ProgressManager.checkCanceled();
-        if (result == null) {
-          e.putUserData(INJECTED_PSI, null);
-        }
-        else {
-          PsiParameterizedCachedValue<InjectionResult, PsiElement> cachedValue =
-            (PsiParameterizedCachedValue<InjectionResult, PsiElement>)
-            CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+    if (element != current && (probeUp || result != null)) {
+      cacheResults(element, current, hostPsiFile, result);
+    }
+  }
 
-          CachedValueProvider.Result<InjectionResult> cachedResult = CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, result);
-          cachedValue.setValue(cachedResult);
+  private static void cacheResults(@NotNull PsiElement from, @Nullable PsiElement upUntil, @NotNull PsiFile hostFile, @Nullable InjectionResult result) {
+    Getter<InjectionResult> cachedRef = result == null || result.isEmpty() ? getEmptyInjectionResult(hostFile) : new SoftReference<>(result);
+    for (PsiElement e = from; e != upUntil; e = e.getParent()) {
+      ProgressManager.checkCanceled();
+      e.putUserData(INJECTED_PSI, cachedRef);
+    }
+  }
 
-          e.putUserData(INJECTED_PSI, cachedValue);
-        }
+  @NotNull
+  private static InjectionResult getEmptyInjectionResult(@NotNull PsiFile host) {
+    return CachedValuesManager.getCachedValue(host, () ->
+      CachedValueProvider.Result.createSingleDependency(new InjectionResult(host, null, null),
+                                                        PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  /**
+   * We can only inject into injection hosts or their ancestors, so if we're sure there are no PsiLanguageInjectionHost descendants,
+   * we can skip that PSI safely.
+   */
+  @Nullable
+  private static PsiElement skipNonInjectablePsi(@NotNull PsiElement element, boolean probeUp) {
+    if (!stopLookingForInjection(element) && element.getFirstChild() == null) {
+      if (!probeUp) return null;
+
+      element = element.getParent();
+      while (element != null && !stopLookingForInjection(element) && element.getFirstChild() == element.getLastChild()) {
+        element = element.getParent();
       }
     }
+    return element;
+  }
+
+  private static boolean stopLookingForInjection(@NotNull PsiElement element) {
+    return element instanceof PsiFileSystemItem || element instanceof PsiLanguageInjectionHost;
   }
 
   private static boolean intersects(@NotNull PsiElement hostElement, @NotNull Place place) {
@@ -555,8 +583,7 @@ public class InjectedLanguageUtil {
   public static PsiFile getTopLevelFile(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(containingFile);
-    if (document instanceof DocumentWindow) {
+    if (containingFile.getViewProvider() instanceof InjectedFileViewProvider) {
       PsiElement host = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (host != null) containingFile = host.getContainingFile();
     }
@@ -757,9 +784,8 @@ public class InjectedLanguageUtil {
       .getCachedInjectedDocumentsInRange(containingFile, element.getTextRange())
       .stream()
       .map(documentWindow -> PsiDocumentManager.getInstance(containingFile.getProject()).getPsiFile(documentWindow))
-      .filter(file -> file != null && file.getLanguage() == LanguageSubstitutors.INSTANCE.substituteLanguage(language, file.getVirtualFile(),
-                                                                                                             file.getProject()))
-      .findFirst()
+      .filter(file -> file != null && file.getLanguage() == LanguageSubstitutors.INSTANCE.substituteLanguage(language, file.getVirtualFile(), file.getProject()))
+      .max(Comparator.comparingInt(PsiElement::getTextLength))
       .orElse(null);
   }
 

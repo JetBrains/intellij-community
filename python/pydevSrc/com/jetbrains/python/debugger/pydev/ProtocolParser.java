@@ -67,7 +67,7 @@ public class ProtocolParser {
       throw new PyDebuggerException("Expected <threading_event> or <asyncio_event>, found " + reader.getNodeName());
     }
 
-    final Long time = Long.parseLong(readString(reader, "time", ""));
+    final long time = Long.parseLong(readString(reader, "time", ""));
     final String name = readString(reader, "name", "");
     final String thread_id = readString(reader, "thread_id", "");
     final String type = readString(reader, "type", "");
@@ -222,7 +222,7 @@ public class ProtocolParser {
     final String file = readString(reader, "file", null);
     final int line = readInt(reader, "line", 0);
 
-    return new PyStackFrameInfo(threadId, id, name, positionConverter.create(file, line));
+    return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));
   }
 
   @NotNull
@@ -395,6 +395,12 @@ public class ProtocolParser {
     }
 
     return values;
+  }
+
+  public static String parseWarning(final String text) throws PyDebuggerException {
+    final XppReader reader = openReader(text, true);
+    reader.moveDown();
+    return readString(reader, "id", null);
   }
 
   private static XppReader openReader(final String text, final boolean checkForContent) throws PyDebuggerException {

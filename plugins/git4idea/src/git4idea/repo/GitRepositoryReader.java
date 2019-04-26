@@ -149,6 +149,9 @@ class GitRepositoryReader {
     if (!headInfo.isBranch) {
       return Repository.State.DETACHED;
     }
+    if (isCherryPickInProgress() || isRevertInProgress()) {
+      return Repository.State.GRAFTING;
+    }
     return Repository.State.NORMAL;
   }
 
@@ -184,6 +187,14 @@ class GitRepositoryReader {
 
   private boolean isRebaseInProgress() {
     return myGitFiles.getRebaseApplyDir().exists() || myGitFiles.getRebaseMergeDir().exists();
+  }
+
+  private boolean isCherryPickInProgress() {
+    return myGitFiles.getCherryPickHead().exists();
+  }
+
+  private boolean isRevertInProgress() {
+    return myGitFiles.getRevertHead().exists();
   }
 
   @NotNull

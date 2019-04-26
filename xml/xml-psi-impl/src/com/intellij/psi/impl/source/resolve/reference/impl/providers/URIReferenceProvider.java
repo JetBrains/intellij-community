@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 public class URIReferenceProvider extends PsiReferenceProvider {
 

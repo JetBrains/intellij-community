@@ -132,7 +132,7 @@ public abstract class ActionGroup extends AnAction {
   @NotNull
   public abstract AnAction[] getChildren(@Nullable AnActionEvent e);
 
-  final void setAsPrimary(AnAction action, boolean isPrimary) {
+  final void setAsPrimary(@NotNull AnAction action, boolean isPrimary) {
     if (isPrimary) {
       if (mySecondaryActions != null) {
         mySecondaryActions.remove(action);

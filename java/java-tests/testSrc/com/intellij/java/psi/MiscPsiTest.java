@@ -33,7 +33,7 @@ import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -81,9 +81,9 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     fileCopy = (PsiFile) fileCopy.setName("NewTest.xxx");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
     if (!(newFile instanceof PsiBinaryFile)) {
-      System.out.println(newFile.getVirtualFile().getFileType());
-      System.out.println(newFile.getFileType());
-      System.out.println(newFile.getText());
+      System.err.println(newFile.getVirtualFile().getFileType());
+      System.err.println(newFile.getFileType());
+      System.err.println(newFile.getText());
     }
     assertInstanceOf(newFile, PsiBinaryFile.class);
 
@@ -283,7 +283,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", text);
     PsiElement leaf = file.findElementAt(5);
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(file.getViewProvider().getDocument()).tryGc();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> VfsUtil.saveText(file.getVirtualFile(), text + "   "));
@@ -293,14 +293,14 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertNotSame(leaf, file.findElementAt(5));
   }
 
-  public void testPsiModificationsWithNoDocumentDocument() {
+  public void testPsiModificationsWithNoDocument() {
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{}");
 
     PsiClass aClass = file.getClasses()[0];
-    aClass.getNode();
+    assertNotNull(aClass.getNode());
     assertNotNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
-    
-    GCUtil.tryGcSoftlyReachableObjects();
+
+    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file)).tryGc();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     aClass.add(JavaPsiFacade.getElementFactory(getProject()).createMethodFromText("void foo(){}", null));
@@ -316,9 +316,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{public static void foo() { }}");
 
     PsiClass aClass = file.getClasses()[0];
-    //noinspection ResultOfMethodCallIgnored
-    aClass.getNode();
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(aClass.getNode()).tryGc();
 
     PsiKeyword kw = assertInstanceOf(aClass.getMethods()[0].getModifierList().getFirstChild(), PsiKeyword.class);
     kw.delete();

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class CyclicDependenciesBuilder{
+  @NotNull
   private final Project myProject;
   private final AnalysisScope myScope;
   private final Map<String, PsiPackage> myPackages = new HashMap<>();
@@ -45,7 +46,7 @@ public class CyclicDependenciesBuilder{
 
   private String myRootNodeNameInUsageView;
 
-  public CyclicDependenciesBuilder(final Project project, final AnalysisScope scope) {
+  public CyclicDependenciesBuilder(@NotNull Project project, final AnalysisScope scope) {
     myProject = project;
     myScope = scope;
     myForwardBuilder = new ForwardDependenciesBuilder(myProject, myScope){
@@ -69,6 +70,7 @@ public class CyclicDependenciesBuilder{
     myRootNodeNameInUsageView = rootNodeNameInUsageView;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -249,7 +251,7 @@ public class CyclicDependenciesBuilder{
       public Iterator<PsiPackage> getIn(PsiPackage psiPack) {
         final Set<PsiPackage> psiPackages = myPackageDependencies.get(psiPack);
         if (psiPackages == null) {     //for packs without java classes
-          return new HashSet<PsiPackage>().iterator();
+          return Collections.emptyIterator();
         }
         return psiPackages.iterator();
       }

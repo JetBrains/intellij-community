@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +38,10 @@ import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.Git;
-import git4idea.config.*;
+import git4idea.config.GitExecutableManager;
+import git4idea.config.GitExecutableValidator;
+import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersion;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
@@ -53,6 +56,7 @@ import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -85,7 +89,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitHistoryProvider myHistoryProvider;
   @NotNull private final Git myGit;
   private final GitVcsConsoleWriter myVcsConsoleWriter;
-  private final Configurable myConfigurable;
   private final RevisionSelector myRevSelector;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
 
@@ -109,10 +112,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                 @NotNull final GitDiffProvider gitDiffProvider,
                 @NotNull final GitHistoryProvider gitHistoryProvider,
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
-                @NotNull final GitVcsApplicationSettings gitSettings,
                 @NotNull final GitVcsSettings gitProjectSettings,
-                @NotNull GitExecutableManager executableManager,
-                @NotNull GitSharedSettings sharedSettings) {
+                @NotNull GitExecutableManager executableManager) {
     super(project, NAME);
     myGit = git;
     myVcsConsoleWriter = vcsConsoleWriter;
@@ -124,7 +125,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myRollbackEnvironment = gitRollbackEnvironment;
     myExecutableManager = executableManager;
     myRevSelector = new GitRevisionSelector();
-    myConfigurable = new GitVcsConfigurable(gitSettings, myProject, gitProjectSettings, sharedSettings, executableManager);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
@@ -228,7 +228,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
     if (path != null) {
       try {
-        VirtualFile root = GitUtil.getGitRoot(path);
+        VirtualFile root = GitUtil.getRepositoryForFile(myProject, path).getRoot();
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {
@@ -285,10 +285,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  @NotNull
+
   @Override
-  public synchronized Configurable getConfigurable() {
-    return myConfigurable;
+  public Configurable getConfigurable() {
+    return null;
   }
 
   @Override
@@ -423,11 +423,16 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public CheckoutProvider getCheckoutProvider() {
-    return new GitCheckoutProvider(Git.getInstance());
+    return new GitCheckoutProvider();
   }
 
   @Override
   public boolean arePartialChangelistsSupported() {
     return true;
+  }
+
+  @TestOnly
+  public GitVFSListener getVFSListener() {
+    return myVFSListener;
   }
 }

@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.dataflow.scope;
 
-import com.intellij.codeInsight.controlflow.ControlFlow;
-import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.StubElement;
@@ -30,11 +28,11 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyListCompExpressionNavigator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
 import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
@@ -158,21 +156,15 @@ public class ScopeUtil {
   }
 
   @NotNull
-  public static Collection<PsiElement> getReadWriteElements(@NotNull String name, @NotNull ScopeOwner scopeOwner, boolean isReadAccess,
-                                                            boolean isWriteAccess) {
-    ControlFlow flow = ControlFlowCache.getControlFlow(scopeOwner);
-    Collection<PsiElement> result = new ArrayList<>();
-    for (Instruction instr : flow.getInstructions()) {
-      if (instr instanceof ReadWriteInstruction) {
-        ReadWriteInstruction rw = (ReadWriteInstruction)instr;
-        if (name.equals(rw.getName())) {
-          ReadWriteInstruction.ACCESS access = rw.getAccess();
-          if ((isReadAccess && access.isReadAccess()) || (isWriteAccess && access.isWriteAccess())) {
-            result.add(rw.getElement());
-          }
-        }
-      }
-    }
-    return result;
+  public static List<PsiElement> getElementsOfAccessType(@NotNull String name,
+                                                         @NotNull ScopeOwner scopeOwner,
+                                                         @NotNull ReadWriteInstruction.ACCESS type) {
+    return StreamEx
+      .of(ControlFlowCache.getControlFlow(scopeOwner).getInstructions())
+      .select(ReadWriteInstruction.class)
+      .filter(i -> name.equals(i.getName()) && type == i.getAccess())
+      .map(ReadWriteInstruction::getElement)
+      .nonNull()
+      .toImmutableList();
   }
 }

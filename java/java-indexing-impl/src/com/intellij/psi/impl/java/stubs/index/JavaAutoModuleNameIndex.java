@@ -31,7 +31,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 2 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
+    return 4;
   }
 
   @NotNull

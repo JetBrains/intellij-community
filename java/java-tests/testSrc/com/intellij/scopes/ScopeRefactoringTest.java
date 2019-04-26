@@ -75,7 +75,7 @@ public class ScopeRefactoringTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(value);
     valueText = value.getText();
     assertEquals(oldPattern, valueText);
-    validationManager.setScopes(new NamedScope[0]);
+    validationManager.setScopes(NamedScope.EMPTY_ARRAY);
   }
 
   public void testRenameModule() throws IOException {

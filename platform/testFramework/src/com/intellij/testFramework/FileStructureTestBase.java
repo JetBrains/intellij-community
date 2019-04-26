@@ -32,6 +32,9 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
       Disposer.dispose(myPopupFixture);
       myPopupFixture = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

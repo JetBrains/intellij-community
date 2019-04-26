@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -8,6 +9,7 @@ import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -47,7 +49,8 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
       if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return FileIncludeInfo.EMPTY;
       infos = new ArrayList<>();
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(content.getContentAsText()), new RngBuilderAdapter(infos));
-    } else if (content.getFileType() == RncFileType.getInstance()) {
+    }
+    else if (content.getFileType() == RncFileType.getInstance()) {
       infos = new ArrayList<>();
       content.getPsiFile().acceptChildren(new RncElementVisitor() {
         @Override
@@ -69,7 +72,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     return infos.toArray(FileIncludeInfo.EMPTY);
   }
 
-  private static class RngBuilderAdapter extends NanoXmlUtil.IXMLBuilderAdapter {
+  private static class RngBuilderAdapter implements NanoXmlBuilder {
     boolean isRNG;
     boolean isInclude;
     private final ArrayList<FileIncludeInfo> myInfos;
@@ -82,10 +85,11 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
       boolean isRngTag = ApplicationLoader.RNG_NAMESPACE.equals(nsURI);
       if (!isRNG) { // analyzing start tag
-        if (!isRngTag) {
-          stop();
-        } else {
+        if (isRngTag) {
           isRNG = true;
+        }
+        else {
+          throw NanoXmlUtil.ParserStoppedXmlException.INSTANCE;
         }
       }
       isInclude = isRngTag && "include".equals(name);

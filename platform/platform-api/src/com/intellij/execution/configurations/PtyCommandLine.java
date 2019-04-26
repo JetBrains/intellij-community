@@ -96,6 +96,10 @@ public class PtyCommandLine extends GeneralCommandLine {
     return this;
   }
 
+  public boolean isConsoleMode() {
+    return myConsoleMode;
+  }
+
   public PtyCommandLine withInitialColumns(int initialColumns) {
     myInitialColumns = initialColumns;
     return this;
@@ -212,7 +216,8 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setConsole(myConsoleMode)
       .setCygwin(cygwin)
       .setLogFile(getPtyLogFile())
-      .setRedirectErrorStream(isRedirectErrorStream());
+      .setRedirectErrorStream(isRedirectErrorStream())
+      .setWindowsAnsiColorEnabled(!"true".equals(System.getProperty("pty4j.win.disable.ansi.in.console.mode")));
     return builder.start();
   }
 }

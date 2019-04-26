@@ -73,9 +73,7 @@ public class MigrateToNewDiffUtil {
     String windowTitle = request.getWindowTitle();
     List<String> titles = Arrays.asList(request.getContentTitles());
 
-    Consumer<MergeResult> callback = result -> {
-      request.setResult(result == MergeResult.CANCEL ? DialogWrapper.CANCEL_EXIT_CODE : DialogWrapper.OK_EXIT_CODE);
-    };
+    Consumer<MergeResult> callback = result -> request.setResult(result == MergeResult.CANCEL ? DialogWrapper.CANCEL_EXIT_CODE : DialogWrapper.OK_EXIT_CODE);
 
     return DiffRequestFactory.getInstance().createMergeRequest(request.getProject(), mergeContent.getContentType(), document, contents,
                                                                windowTitle, titles, callback);

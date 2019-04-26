@@ -1,29 +1,29 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.remoteServer.util.ApplicationActionUtils.getDeploymentTarget;
 
 /**
  * @author michael.golubev
  */
-public class UndeployAction extends ServersTreeAction<DeploymentNode> {
-
-  public UndeployAction() {
-    super("Undeploy", "Undeploy the selected item", AllIcons.Nodes.Undeploy);
+public class UndeployAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    DeploymentNode node = getDeploymentTarget(e);
+    boolean visible = node != null;
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && node.isUndeployActionEnabled());
   }
 
   @Override
-  protected Class<DeploymentNode> getTargetNodeClass() {
-    return DeploymentNode.class;
-  }
-
-  @Override
-  protected boolean isEnabled4(DeploymentNode node) {
-    return node.isUndeployActionEnabled();
-  }
-
-  @Override
-  protected void doActionPerformed(DeploymentNode node) {
-    node.undeploy();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    DeploymentNode node = getDeploymentTarget(e);
+    if (node != null) {
+      node.undeploy();
+    }
   }
 }

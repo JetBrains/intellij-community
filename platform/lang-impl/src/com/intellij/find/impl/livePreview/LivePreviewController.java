@@ -32,7 +32,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   private final Alarm myLivePreviewAlarm;
   protected SearchResults mySearchResults;
   private LivePreview myLivePreview;
-  private final boolean myReplaceDenied = false;
+  private static final boolean myReplaceDenied = false;
   private boolean mySuppressUpdate;
 
   private boolean myTrackingDocument;

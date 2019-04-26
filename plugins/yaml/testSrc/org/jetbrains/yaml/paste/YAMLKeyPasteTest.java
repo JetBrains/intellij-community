@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -46,6 +47,22 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("next.subKey");
   }
 
+  public void testPasteKeysAtEOF1() {
+    doTest("next.subKey");
+  }
+
+  public void testPasteKeysAtEOF2() {
+    doTest("next.subKey");
+  }
+
+  public void testPasteKeysAtEOF3() {
+    doTest("next.subKey");
+  }
+
+  public void testPasteKeysAtEOF4() {
+    doTest("next.subKey");
+  }
+
   public void testDoNotPasteKeysInPlainScalar() {
     doTest("next.subKey");
   }
@@ -56,6 +73,27 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testDoNotPasteKeysWithBadPattern() {
     doTest("some strange text");
+  }
+
+  public void testDoNotPasteKeysWithBadPattern2() {
+    doTest("some. strange. text", "simple.before.yml");
+  }
+
+  // Ambiguity in dot splitting
+  public void testDoNotPasteKeysWithBadPattern3() {
+    doTest("some.strange..text", "simple.before.yml");
+  }
+
+  public void testDoNotPasteKeysWithBadPattern4() {
+    doTest("'quoted.string'", "simple.before.yml");
+  }
+
+  public void testDoNotPasteKeysWithBadPattern5() {
+    doTest("\"quoted.string\"", "simple.before.yml");
+  }
+
+  public void testDoNotPasteArrayAsKeys() {
+    doTest("[x.y]", "simple.before.yml");
   }
 
   // It is disputable behaviour
@@ -75,6 +113,10 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("next.subKey");
   }
 
+  public void testPasteKeysWithStringKeys() {
+    doTest("'|'.\">\"", "simple.before.yml");
+  }
+
   // It is disputable behaviour
   public void testPasteKeysInEmptyKeyValue() {
     doTest("next.subKey");
@@ -85,10 +127,24 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("next.subKey");
   }
 
+  // It is disputable behaviour
+  public void testPasteKeysWithStrangeSymbols1() {
+    doTest("workspace{w1}/next.^sub[Key]*(%magic%)");
+  }
+
+  // It is disputable behaviour
+  public void testPasteKeysWithLeadingDot() {
+    doTest(".leading.subKey");
+  }
+
   private void doTest(@NotNull String pasteText) {
+    doTest(pasteText, null);
+  }
+
+  private void doTest(@NotNull String pasteText, @Nullable String inputName) {
     String testName = getTestName(true);
     String fileName = ObjectUtils.notNull(StringUtil.substringBefore(testName, "_"), testName);
-    myFixture.configureByFile(fileName + ".before.yml");
+    myFixture.configureByFile(StringUtil.notNullize(inputName, fileName + ".before.yml"));
     CopyPasteManager.getInstance().setContents(new StringSelection(pasteText));
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
     myFixture.checkResultByFile(fileName + ".after.yml");

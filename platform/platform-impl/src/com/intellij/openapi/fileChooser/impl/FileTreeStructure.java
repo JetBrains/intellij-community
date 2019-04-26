@@ -117,7 +117,8 @@ public class FileTreeStructure extends AbstractTreeStructure {
       final FileElement fileElement = (FileElement)element;
 
       final VirtualFile elementFile = getValidFile(fileElement);
-      if (elementFile != null && myRootElement.getFile() != null && myRootElement.getFile().equals(elementFile)) {
+      VirtualFile rootElementFile = myRootElement.getFile();
+      if (rootElementFile != null && rootElementFile.equals(elementFile)) {
         return null;
       }
 
@@ -138,7 +139,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
         parent = LocalFileSystem.getInstance().findFileByPath(localPath);
       }
 
-      if (parent != null && parent.isValid() && parent.equals(myRootElement.getFile())) {
+      if (parent != null && parent.isValid() && parent.equals(rootElementFile)) {
         return myRootElement;
       }
 

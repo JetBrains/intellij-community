@@ -15,60 +15,58 @@
  */
 package com.intellij.diff.merge;
 
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.List;
 
-import static com.intellij.util.ArrayUtil.toObjectArray;
-
-public class MergeWindow {
+public abstract class MergeWindow {
   private static final Logger LOG = Logger.getInstance(MergeWindow.class);
 
   @Nullable private final Project myProject;
-  @NotNull private final MergeRequest myMergeRequest;
+  @NotNull private final DiffDialogHints myHints;
 
-  private MyDialog myWrapper;
+  private MergeRequestProcessor myProcessor;
+  private WindowWrapper myWrapper;
 
-  public MergeWindow(@Nullable Project project, @NotNull MergeRequest mergeRequest) {
+  public MergeWindow(@Nullable Project project, @NotNull DiffDialogHints hints) {
     myProject = project;
-    myMergeRequest = mergeRequest;
+    myHints = hints;
   }
 
   protected void init() {
-    MergeRequestProcessor processor = new MergeRequestProcessor(myProject, myMergeRequest) {
-      @Override
-      public void closeDialog() {
-        myWrapper.doCancelAction();
-      }
+    if (myWrapper != null) return;
 
-      @Override
-      protected void setWindowTitle(@NotNull String title) {
-        myWrapper.setTitle(title);
-      }
+    myProcessor = createProcessor();
 
-      @Override
-      protected void rebuildSouthPanel() {
-        myWrapper.rebuildSouthPanel();
-      }
-    };
+    String dialogGroupKey = myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY);
+    if (dialogGroupKey == null) dialogGroupKey = "MergeDialog";
 
-    myWrapper = new MyDialog(processor);
-    myWrapper.init();
+    myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(myHints), new MyPanel(myProcessor.getComponent()))
+      .setProject(myProject)
+      .setParent(myHints.getParent())
+      .setDimensionServiceKey(dialogGroupKey)
+      .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
+      .setOnShowCallback(() -> initProcessor(myProcessor))
+      .setOnCloseHandler(() -> myProcessor.checkCloseAction())
+      .build();
+    myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS);
+    Disposer.register(myWrapper, myProcessor);
+
+    Consumer<WindowWrapper> wrapperHandler = myHints.getWindowConsumer();
+    if (wrapperHandler != null) wrapperHandler.consume(myWrapper);
   }
 
   public void show() {
@@ -80,105 +78,29 @@ public class MergeWindow {
     myWrapper.show();
   }
 
-  // TODO: use WindowWrapper
-  private static class MyDialog extends DialogWrapper {
-    @NotNull private final MergeRequestProcessor myProcessor;
-    @NotNull private final Wrapper mySouthPanel = new Wrapper();
-
-    MyDialog(@NotNull MergeRequestProcessor processor) {
-      super(processor.getProject(), true);
-      myProcessor = processor;
-    }
-
-    @Override
-    public void init() {
-      super.init();
-      Disposer.register(getDisposable(), myProcessor);
-      getWindow().addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowOpened(WindowEvent e) {
-          e.getWindow().removeWindowListener(this);
-          myProcessor.init();
-        }
-      });
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      return new MyPanel(myProcessor.getComponent());
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createSouthPanel() {
-      rebuildSouthPanel();
-      return mySouthPanel;
-    }
-
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myProcessor.getPreferredFocusedComponent();
-    }
-
-    @Nullable
-    @Override
-    protected String getDimensionServiceKey() {
-      return StringUtil.notNullize(myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY), "MergeDialog");
-    }
-
-    @NotNull
-    @Override
-    protected Action[] createActions() {
-      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
-      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(bottomActions.resolveAction, bottomActions.cancelAction));
-      if (bottomActions.resolveAction != null) {
-        bottomActions.resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+  @NotNull
+  private MergeRequestProcessor createProcessor() {
+    return new MergeRequestProcessor(myProject) {
+      @Override
+      public void closeDialog() {
+        myWrapper.close();
       }
-      return toObjectArray(actions, Action.class);
-    }
 
-    @NotNull
-    @Override
-    protected Action[] createLeftSideActions() {
-      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
-      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(bottomActions.applyLeft, bottomActions.applyRight));
-      return toObjectArray(actions, Action.class);
-    }
+      @Override
+      protected void setWindowTitle(@NotNull String title) {
+        myWrapper.setTitle(title);
+      }
 
-    @NotNull
-    @Override
-    protected Action getOKAction() {
-      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
-      if (bottomActions.resolveAction != null) return bottomActions.resolveAction;
-      return super.getOKAction();
-    }
-
-    @NotNull
-    @Override
-    protected Action getCancelAction() {
-      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
-      if (bottomActions.cancelAction != null) return bottomActions.cancelAction;
-      return super.getCancelAction();
-    }
-
-    @Nullable
-    @Override
-    protected String getHelpId() {
-      return myProcessor.getHelpId();
-    }
-
-    @Override
-    public void doCancelAction() {
-      if (!myProcessor.checkCloseAction()) return;
-      super.doCancelAction();
-    }
-
-    public void rebuildSouthPanel() {
-      mySouthPanel.setContent(super.createSouthPanel());
-    }
+      @Nullable
+      @Override
+      protected JRootPane getRootPane() {
+        RootPaneContainer container = ObjectUtils.tryCast(myWrapper.getWindow(), RootPaneContainer.class);
+        return container != null ? container.getRootPane() : null;
+      }
+    };
   }
+
+  protected abstract void initProcessor(@NotNull MergeRequestProcessor processor);
 
   private static class MyPanel extends JPanel {
     MyPanel(@NotNull JComponent content) {
@@ -191,6 +113,36 @@ public class MergeWindow {
       Dimension windowSize = DiffUtil.getDefaultDiffWindowSize();
       Dimension size = super.getPreferredSize();
       return new Dimension(Math.max(windowSize.width, size.width), Math.max(windowSize.height, size.height));
+    }
+  }
+
+  public static class ForRequest extends MergeWindow {
+    @NotNull private final MergeRequest myMergeRequest;
+
+    public ForRequest(@Nullable Project project, @NotNull MergeRequest mergeRequest, @NotNull DiffDialogHints hints) {
+      super(project, hints);
+      myMergeRequest = mergeRequest;
+    }
+
+
+    @Override
+    protected void initProcessor(@NotNull MergeRequestProcessor processor) {
+      processor.init(myMergeRequest);
+    }
+  }
+
+  public static class ForProducer extends MergeWindow {
+    @NotNull private final MergeRequestProducer myMergeRequestProducer;
+
+    public ForProducer(@Nullable Project project, @NotNull MergeRequestProducer mergeRequestProducer, @NotNull DiffDialogHints hints) {
+      super(project, hints);
+      myMergeRequestProducer = mergeRequestProducer;
+    }
+
+
+    @Override
+    protected void initProcessor(@NotNull MergeRequestProcessor processor) {
+      processor.init(myMergeRequestProducer);
     }
   }
 }

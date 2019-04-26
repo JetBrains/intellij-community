@@ -16,101 +16,96 @@ public final class UIDesignerIcons {
 
 
   @SuppressWarnings("unused")
-  public static final Icon Button = load("/com/intellij/uiDesigner/icons/button.png"); // 16x16
-  public static final Icon ButtonGroup = load("/com/intellij/uiDesigner/icons/buttonGroup.png"); // 16x16
+  /** 16x16 */ public static final Icon Button = load("/com/intellij/uiDesigner/icons/button.svg");
+  /** 16x16 */ public static final Icon ButtonGroup = load("/com/intellij/uiDesigner/icons/buttonGroup.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon CheckBox = load("/com/intellij/uiDesigner/icons/checkBox.png"); // 16x16
-  public static final Icon ChooseLocale = load("/com/intellij/uiDesigner/icons/chooseLocale.png"); // 16x16
-  public static final Icon CollapseNode = load("/com/intellij/uiDesigner/icons/collapseNode.png"); // 9x9
+  /** 16x16 */ public static final Icon CheckBox = load("/com/intellij/uiDesigner/icons/checkBox.svg");
+  /** 9x9 */ public static final Icon CollapseNode = load("/com/intellij/uiDesigner/icons/collapseNode.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon ComboBox = load("/com/intellij/uiDesigner/icons/comboBox.png"); // 16x16
-  public static final Icon DataBindingWizard = load("/com/intellij/uiDesigner/icons/dataBindingWizard.png"); // 16x16
-  public static final Icon DeleteCell = load("/com/intellij/uiDesigner/icons/deleteCell.png"); // 7x7
-  public static final Icon Drag = load("/com/intellij/uiDesigner/icons/drag.png"); // 11x11
+  /** 16x16 */ public static final Icon ComboBox = load("/com/intellij/uiDesigner/icons/comboBox.svg");
+  /** 11x11 */ public static final Icon Drag = load("/com/intellij/uiDesigner/icons/drag.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon EditorPane = load("/com/intellij/uiDesigner/icons/editorPane.png"); // 16x16
-  public static final Icon Empty = load("/com/intellij/uiDesigner/icons/empty.png"); // 16x16
-  public static final Icon ExpandNode = load("/com/intellij/uiDesigner/icons/expandNode.png"); // 9x9
+  /** 16x16 */ public static final Icon EditorPane = load("/com/intellij/uiDesigner/icons/editorPane.svg");
+  /** 9x9 */ public static final Icon ExpandNode = load("/com/intellij/uiDesigner/icons/expandNode.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon FormattedTextField = load("/com/intellij/uiDesigner/icons/formattedTextField.png"); // 16x16
+  /** 16x16 */ public static final Icon FormattedTextField = load("/com/intellij/uiDesigner/icons/formattedTextField.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Hspacer = load("/com/intellij/uiDesigner/icons/hspacer.png"); // 16x16
-  public static final Icon InsertColumnLeft = load("/com/intellij/uiDesigner/icons/insertColumnLeft.png"); // 7x7
-  public static final Icon InsertColumnRight = load("/com/intellij/uiDesigner/icons/insertColumnRight.png"); // 7x7
-  public static final Icon InsertRowAbove = load("/com/intellij/uiDesigner/icons/insertRowAbove.png"); // 7x7
-  public static final Icon InsertRowBelow = load("/com/intellij/uiDesigner/icons/insertRowBelow.png"); // 7x7
-  public static final Icon InspectionSuppression = load("/com/intellij/uiDesigner/icons/inspectionSuppression.png"); // 16x16
+  /** 16x16 */ public static final Icon Hspacer = load("/com/intellij/uiDesigner/icons/hspacer.svg");
+  /** 16x16 */ public static final Icon InsertColumnLeft = load("/com/intellij/uiDesigner/icons/insertColumnLeft.svg");
+  /** 16x16 */ public static final Icon InsertColumnRight = load("/com/intellij/uiDesigner/icons/insertColumnRight.svg");
+  /** 16x16 */ public static final Icon InsertRowAbove = load("/com/intellij/uiDesigner/icons/insertRowAbove.svg");
+  /** 16x16 */ public static final Icon InsertRowBelow = load("/com/intellij/uiDesigner/icons/insertRowBelow.svg");
+  /** 16x16 */ public static final Icon InspectionSuppression = load("/com/intellij/uiDesigner/icons/inspectionSuppression.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Label = load("/com/intellij/uiDesigner/icons/label.png"); // 16x16
+  /** 17x16 */ public static final Icon Label = load("/com/intellij/uiDesigner/icons/label.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon List = load("/com/intellij/uiDesigner/icons/list.png"); // 16x16
-  public static final Icon Listener = load("/com/intellij/uiDesigner/icons/listener.png"); // 16x16
+  /** 17x16 */ public static final Icon List = load("/com/intellij/uiDesigner/icons/list.svg");
+  /** 16x16 */ public static final Icon Listener = load("/com/intellij/uiDesigner/icons/listener.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Panel = load("/com/intellij/uiDesigner/icons/panel.png"); // 16x16
+  /** 16x16 */ public static final Icon Panel = load("/com/intellij/uiDesigner/icons/panel.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon PasswordField = load("/com/intellij/uiDesigner/icons/passwordField.png"); // 16x16
+  /** 16x16 */ public static final Icon PasswordField = load("/com/intellij/uiDesigner/icons/passwordField.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Progressbar = load("/com/intellij/uiDesigner/icons/progressbar.png"); // 16x16
+  /** 16x16 */ public static final Icon Progressbar = load("/com/intellij/uiDesigner/icons/progressbar.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon RadioButton = load("/com/intellij/uiDesigner/icons/radioButton.png"); // 16x16
+  /** 16x16 */ public static final Icon RadioButton = load("/com/intellij/uiDesigner/icons/radioButton.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Scrollbar = load("/com/intellij/uiDesigner/icons/scrollbar.png"); // 16x16
+  /** 16x16 */ public static final Icon Scrollbar = load("/com/intellij/uiDesigner/icons/scrollbar.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon ScrollPane = load("/com/intellij/uiDesigner/icons/scrollPane.png"); // 16x16
+  /** 16x16 */ public static final Icon ScrollPane = load("/com/intellij/uiDesigner/icons/scrollPane.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Separator = load("/com/intellij/uiDesigner/icons/separator.png"); // 16x16
+  /** 16x16 */ public static final Icon Separator = load("/com/intellij/uiDesigner/icons/separator.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Slider = load("/com/intellij/uiDesigner/icons/slider.png"); // 16x16
+  /** 16x16 */ public static final Icon Slider = load("/com/intellij/uiDesigner/icons/slider.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Spinner = load("/com/intellij/uiDesigner/icons/spinner.png"); // 16x16
-  public static final Icon SplitColumn = load("/com/intellij/uiDesigner/icons/splitColumn.png"); // 7x7
+  /** 16x16 */ public static final Icon Spinner = load("/com/intellij/uiDesigner/icons/spinner.svg");
+  /** 16x16 */ public static final Icon SplitColumn = load("/com/intellij/uiDesigner/icons/splitColumn.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon SplitPane = load("/com/intellij/uiDesigner/icons/splitPane.png"); // 16x16
-  public static final Icon SplitRow = load("/com/intellij/uiDesigner/icons/splitRow.png"); // 7x7
+  /** 16x16 */ public static final Icon SplitPane = load("/com/intellij/uiDesigner/icons/splitPane.svg");
+  /** 16x16 */ public static final Icon SplitRow = load("/com/intellij/uiDesigner/icons/splitRow.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon TabbedPane = load("/com/intellij/uiDesigner/icons/tabbedPane.png"); // 16x16
+  /** 16x16 */ public static final Icon TabbedPane = load("/com/intellij/uiDesigner/icons/tabbedPane.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Table = load("/com/intellij/uiDesigner/icons/table.png"); // 16x16
+  /** 16x16 */ public static final Icon Table = load("/com/intellij/uiDesigner/icons/table.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon TextArea = load("/com/intellij/uiDesigner/icons/textArea.png"); // 16x16
+  /** 16x16 */ public static final Icon TextArea = load("/com/intellij/uiDesigner/icons/textArea.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon TextField = load("/com/intellij/uiDesigner/icons/textField.png"); // 16x16
+  /** 16x16 */ public static final Icon TextField = load("/com/intellij/uiDesigner/icons/textField.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon TextPane = load("/com/intellij/uiDesigner/icons/textPane.png"); // 16x16
+  /** 16x16 */ public static final Icon TextPane = load("/com/intellij/uiDesigner/icons/textPane.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Toolbar = load("/com/intellij/uiDesigner/icons/toolbar.png"); // 16x16
+  /** 16x16 */ public static final Icon Toolbar = load("/com/intellij/uiDesigner/icons/toolbar.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon ToolbarSeparator = load("/com/intellij/uiDesigner/icons/toolbarSeparator.png"); // 16x16
+  /** 16x16 */ public static final Icon ToolbarSeparator = load("/com/intellij/uiDesigner/icons/toolbarSeparator.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Tree = load("/com/intellij/uiDesigner/icons/tree.png"); // 16x16
-  public static final Icon Unknown_small = load("/com/intellij/uiDesigner/icons/unknown-small.png"); // 16x16
-  public static final Icon Unknown = load("/com/intellij/uiDesigner/icons/unknown.png"); // 16x16
+  /** 16x16 */ public static final Icon Tree = load("/com/intellij/uiDesigner/icons/tree.svg");
+  /** 16x16 */ public static final Icon Unknown = load("/com/intellij/uiDesigner/icons/unknown.svg");
 
   @SuppressWarnings("unused")
-  public static final Icon Vspacer = load("/com/intellij/uiDesigner/icons/vspacer.png"); // 16x16
+  /** 16x16 */ public static final Icon Vspacer = load("/com/intellij/uiDesigner/icons/vspacer.svg");
 }

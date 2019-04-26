@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CommandLineUtil;
@@ -64,7 +64,7 @@ import java.util.*;
  * @see com.intellij.execution.process.OSProcessHandler
  */
 public class GeneralCommandLine implements UserDataHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
+  private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
 
   /**
    * Determines the scope of a parent environment passed to a child process.
@@ -392,16 +392,12 @@ public class GeneralCommandLine implements UserDataHolder {
 
     String exePath = myExePath;
     if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
-      String systemPath = System.getenv("PATH");
-      String shellPath = EnvironmentUtil.getValue("PATH");
+      String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
-        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, systemPath, null);
-        if (exeFile == null) {
-          exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
-          if (exeFile != null) {
-            LOG.debug(exePath + " => " + exeFile);
-            exePath = exeFile.getPath();
-          }
+        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
+        if (exeFile != null) {
+          LOG.info(exePath + " => " + exeFile);
+          exePath = exeFile.getPath();
         }
       }
     }
@@ -434,6 +430,9 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   protected Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Building process with commands: " + escapedCommands);
+    }
     ProcessBuilder builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.context;
 
@@ -15,14 +15,7 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-public class ProjectViewContextProvider extends WorkingContextProvider {
-
-  private final AbstractProjectViewPane[] myPanes;
-
-  public ProjectViewContextProvider(Project project) {
-    myPanes = AbstractProjectViewPane.EP_NAME.getExtensions(project);
-  }
-
+final class ProjectViewContextProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getId() {
@@ -36,8 +29,8 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void saveContext(Element toElement) throws WriteExternalException {
-    for (AbstractProjectViewPane pane : myPanes) {
+  public void saveContext(@NotNull Project project, @NotNull Element toElement) throws WriteExternalException {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensionList(project)) {
       Element paneElement = new Element(pane.getId());
       pane.writeExternal(paneElement);
       toElement.addContent(paneElement);
@@ -45,8 +38,8 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void loadContext(Element fromElement) throws InvalidDataException {
-    for (AbstractProjectViewPane pane : myPanes) {
+  public void loadContext(@NotNull Project project, @NotNull Element fromElement) throws InvalidDataException {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensionList(project)) {
       Element paneElement = fromElement.getChild(pane.getId());
       if (paneElement != null) {
         pane.readExternal(paneElement);
@@ -58,8 +51,8 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void clearContext() {
-    for (AbstractProjectViewPane pane : myPanes) {
+  public void clearContext(@NotNull Project project) {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensionList(project)) {
       JTree tree = pane.getTree();
       if (tree != null) {
         TreeUtil.collapseAll(tree, 0);

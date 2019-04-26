@@ -1,16 +1,5 @@
 <idea-plugin>
   <application-components>
-
-    <component>
-      <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.formatting.FormatterEx</interface-class>
-      <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexImpl</implementation-class>
@@ -53,7 +42,6 @@
       <loadForDefaultProject/>
     </component>
     <component>
-      <interface-class>com.intellij.psi.impl.file.impl.PsiVFSListener</interface-class>
       <implementation-class>com.intellij.psi.impl.file.impl.PsiVFSListener</implementation-class>
     </component>
     <component>
@@ -78,7 +66,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</interface-class>
       <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</implementation-class>
     </component>
 
@@ -101,7 +88,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.pom.tree.TreeAspect</interface-class>
       <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
       <loadForDefaultProject/>
     </component>
@@ -181,12 +167,10 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
     </component>
 
     <component>
-      <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
       <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
       <loadForDefaultProject/>
     </component>
@@ -217,11 +201,6 @@
       <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerComponent</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ModuleServiceManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.facet.FacetManager</interface-class>
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>

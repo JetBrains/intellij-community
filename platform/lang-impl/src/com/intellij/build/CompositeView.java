@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
@@ -55,7 +41,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     mySwitchViewAction = new SwitchViewAction();
   }
 
-  public void addView(T view, String viewName, boolean enable) {
+  public void addView(@NotNull T view, @NotNull String viewName, boolean enable) {
     T oldView = getView(viewName);
     if (oldView != null) {
       remove(oldView.getComponent());
@@ -73,17 +59,23 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   }
 
   public void enableView(@NotNull String viewName) {
+    enableView(viewName, true);
+  }
+
+  public void enableView(@NotNull String viewName, boolean requestFocus) {
     if (!StringUtil.equals(viewName, myEnabledViewRef.get())) {
       myEnabledViewRef.set(viewName);
       CardLayout cl = (CardLayout)(getLayout());
       cl.show(this, viewName);
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      ComponentContainer view = getView(viewName);
-      if (view != null) {
-        IdeFocusManager.getGlobalInstance().requestFocus(view.getPreferredFocusableComponent(), true);
-      }
-    });
+    if (requestFocus) {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        ComponentContainer view = getView(viewName);
+        if (view != null) {
+          IdeFocusManager.getGlobalInstance().requestFocus(view.getPreferredFocusableComponent(), true);
+        }
+      });
+    }
   }
 
   public boolean isViewEnabled(String viewName) {
@@ -162,10 +154,10 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       if (myViewMap.size() <= 1) {
-        presentation.setEnabled(false);
+        presentation.setEnabledAndVisible(false);
       }
       else {
-        presentation.setEnabled(true);
+        presentation.setEnabledAndVisible(true);
         presentation.putClientProperty(SELECTED_PROPERTY, isSelected(e));
       }
     }

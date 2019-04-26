@@ -28,6 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+/**
+ * @deprecated Use {@link OutputEventSplitter}, remove in 2020
+ */
+@Deprecated
 public abstract class OutputLineSplitter {
   public static final int SM_MESSAGE_PREFIX = 105;
 
@@ -145,8 +149,8 @@ public abstract class OutputLineSplitter {
           String chunkText = chunk.getText();
           if (USE_CYCLE_BUFFER) {
             StringBuilder builder = lastChunk.myBuilder;
-            if (builder != null && 
-                builder.length() + chunkText.length() > myCurrentCyclicBufferSize && 
+            if (builder != null &&
+                builder.length() + chunkText.length() > myCurrentCyclicBufferSize &&
                 myCurrentCyclicBufferSize > 2 * SM_MESSAGE_PREFIX) {
               builder.delete(SM_MESSAGE_PREFIX, Math.min(builder.length(), myCurrentCyclicBufferSize - SM_MESSAGE_PREFIX));
             }

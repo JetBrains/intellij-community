@@ -46,9 +46,11 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder>
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-
       super.tearDown();
     }
   }

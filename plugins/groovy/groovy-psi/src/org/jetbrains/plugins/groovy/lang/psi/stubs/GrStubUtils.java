@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -112,7 +112,7 @@ public class GrStubUtils {
 
   public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {
     StubElement<?> modifierOwner = stub instanceof GrMethodStub ? stub : stub.getParentStub();
-    GrModifierListStub type = modifierOwner.findChildStubByType(GroovyElementTypes.MODIFIERS);
+    GrModifierListStub type = modifierOwner.findChildStubByType(GroovyStubElementTypes.MODIFIER_LIST);
     if (type == null) {
       return false;
     }

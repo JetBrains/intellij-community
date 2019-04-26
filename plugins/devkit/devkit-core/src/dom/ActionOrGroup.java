@@ -19,9 +19,6 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 
-/**
- * @since 15
- */
 public interface ActionOrGroup extends DomElement {
 
   @NotNull

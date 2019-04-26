@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
 
 import java.awt.*;
 
@@ -34,10 +35,7 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     }
 
     if (changes && myIsBase) {
-      final LayeredIcon icon = new LayeredIcon(2);
-      icon.setIcon(getIcon(), 0);
-      icon.setIcon(AllIcons.Actions.Forward, 1, -AllIcons.Actions.Forward.getIconWidth() / 2, 0);
-      setIcon(icon);
+      setIcon(getBaseMarkerIcon(getIcon()));
     }
 
     final PsiElement psiElement = getPsiClass();

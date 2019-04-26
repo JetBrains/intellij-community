@@ -28,9 +28,9 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.semantic.SemElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.stubs.FileStub;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -110,9 +110,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey(), false);
 
     FileStub stub = null;
-    if (description.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed()) {
+    DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(description);
+    if (meta != null && meta.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed()) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
-      if (!XmlUtil.isStubBuilding()) {
+      if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
         ObjectStubTree stubTree = StubTreeLoader.getInstance().readFromVFile(myXmlFile.getProject(), file);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();

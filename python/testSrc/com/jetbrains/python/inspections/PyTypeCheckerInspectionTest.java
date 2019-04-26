@@ -683,6 +683,18 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                  "f(A)");
   }
 
+  // PY-32205
+  public void testRightShift() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("class Bin:\n" +
+                         "    def __rshift__(self, other: int):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "Bin() >> 1")
+    );
+  }
+
   // PY-32313
   public void testMatchingAgainstMultipleBoundTypeVar() {
     runWithLanguageLevel(
@@ -706,6 +718,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "f(A, 1)\n" +
                          "f(B, 2)\n" +
                          "f(<warning descr=\"Expected type 'Type[T]', got 'Type[C]' instead\">C</warning>, 3)")
+    );
+  }
+
+  // PY-32375
+  public void testMatchingReturnAgainstBoundedTypeVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import TypeVar\n" +
+                         "\n" +
+                         "F = TypeVar('F', bound=int)\n" +
+                         "\n" +
+                         "def deco(func: F) -> F:\n" +
+                         "    return <warning descr=\"Expected type 'F', got 'str' instead\">\"\"</warning>")
     );
   }
 }

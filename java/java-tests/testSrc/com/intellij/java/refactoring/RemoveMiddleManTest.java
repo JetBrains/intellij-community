@@ -17,40 +17,33 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.removemiddleman.DelegationUtils;
 import com.intellij.refactoring.removemiddleman.RemoveMiddlemanProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class RemoveMiddleManTest extends MultiFileTestCase {
+public class RemoveMiddleManTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/removemiddleman/";
   }
-
-  @NotNull
-  @Override
   protected String getTestRoot() {
     return "/refactoring/removemiddleman/";
   }
 
   private void doTest(final String conflict) {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(getProject()));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass("Test");
 
-      if (aClass == null) aClass = myJavaFacade.findClass("p.Test", GlobalSearchScope.allScope(getProject()));
+      if (aClass == null) aClass = myFixture.findClass("p.Test");
       assertNotNull("Class Test not found", aClass);
 
       final PsiField field = aClass.findFieldByName("myField", false);
@@ -65,8 +58,6 @@ public class RemoveMiddleManTest extends MultiFileTestCase {
       try {
         RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos);
         processor.run();
-        LocalFileSystem.getInstance().refresh(false);
-        FileDocumentManager.getInstance().saveAllDocuments();
         if (conflict != null) fail("Conflict expected");
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {

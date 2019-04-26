@@ -5,16 +5,18 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 public class ReorderingUtilsTest extends LightCodeInsightTestCase {
   private static final String PREFIX = "import java.util.Optional;\n" +
                                        "import java.util.List;\n" +
                                        "/** @noinspection all*/\n" +
                                        "class X {Object test(Object obj, String str, int x, int y, String[] arr, " +
-                                       "Optional<String> opt, List<String> list) { return ";
-  @SuppressWarnings("UnnecessarySemicolon") 
+                                       "Optional<String> opt, List<String> list, Integer boxed) { return ";
   private static final String SUFFIX = ";} static Object nullNull(Object obj) {return obj == null ? null : obj.hashCode();}}";
   private static final String SELECTION_START = "/*<*/";
   private static final String SELECTION_END = "/*>*/";
@@ -33,6 +35,8 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("obj != null && /*<*/obj.hashCode() > 10/*>*/", ThreeState.NO);
     checkCanBeReordered("obj == null || /*<*/obj.hashCode() > 10/*>*/", ThreeState.NO);
     checkCanBeReordered("arr != null && /*<*/obj.hashCode() > 10/*>*/", ThreeState.UNSURE);
+    checkCanBeReordered("boxed != null && /*<*/boxed > 10/*>*/", ThreeState.NO);
+    checkCanBeReordered("x != null && /*<*/x > 10/*>*/", ThreeState.YES); // compilation error at null-check actually
   }
 
   public void testCast() {
@@ -63,6 +67,7 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("y >= 0 && /*<*/str.charAt(x) == 'a'/*>*/", ThreeState.UNSURE);
     checkCanBeReordered("x < str.length() && /*<*/str.charAt(x) == 'a'/*>*/", ThreeState.NO);
     checkCanBeReordered("x <= str.length() && /*<*/str.substring(x) == 'a'/*>*/", ThreeState.NO);
+    checkCanBeReordered("x <= str.charAt(100) && /*<*/str.substring(x) == 'a'/*>*/", ThreeState.UNSURE);
     // Not supported
     checkCanBeReordered("x < str.length() && /*<*/str.substring(x) == 'a'/*>*/", ThreeState.UNSURE);
   }
@@ -83,6 +88,12 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("str != null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.NO);
     checkCanBeReordered("str != null ? \"\" : /*<*/str.trim()/*>*/", ThreeState.UNSURE);
     checkCanBeReordered("str == null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.UNSURE);
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
   }
 
   private static void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,

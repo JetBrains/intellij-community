@@ -75,6 +75,8 @@ public abstract class GradleSettingsControlProvider {
           .dropStoreExternallyCheckBox()
           // hide java-specific option
           .dropResolveModulePerSourceSetCheckBox()
+          .dropDelegateBuildCombobox()
+          .dropTestRunnerCombobox()
           // hide this confusing option
           .dropCustomizableWrapperButton()
           // Hide bundled distribution option for a while

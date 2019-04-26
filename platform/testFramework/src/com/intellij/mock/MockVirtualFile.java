@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.*;
@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -126,6 +127,16 @@ public class MockVirtualFile extends VirtualFile {
     return VfsUtilCore.toVirtualFileArray(myChildren);
   }
 
+  @Override
+  public final boolean equals(Object o) {
+    return super.equals(o);
+  }
+
+  @Override
+  public final int hashCode() {
+    return super.hashCode();
+  }
+
   @NotNull
   @Override
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
@@ -150,7 +161,7 @@ public class MockVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public byte[] contentsToByteArray() {
-    return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes(CharsetToolkit.UTF8_CHARSET);
+    return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override

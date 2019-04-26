@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -27,7 +27,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -46,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -80,12 +84,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         }
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myEditor = null;
       super.tearDown();
     }
   }
 
+  @NotNull
   @Override
   protected PsiTestData createData() {
     return new CodeInsightTestData();
@@ -118,11 +126,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  private void allowRootAccess(final String filePath) {
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), filePath);
-  }
-
-  protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {
+  protected VirtualFile configureByFile(@NotNull String filePath, @Nullable String projectRoot) throws Exception {
     VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
@@ -141,14 +145,12 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       final File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
       final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-          fileTypeManager.associateExtension(fileType, extension);
-        });
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> fileTypeManager.associateExtension(fileType, extension));
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
       WriteAction.runAndWait(() -> {
-        vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+        vFile.setCharset(StandardCharsets.UTF_8);
         VfsUtil.saveText(vFile, text);
       });
 
@@ -500,7 +502,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   @NotNull
   protected VirtualFile findVirtualFile(@NotNull String filePath) {
     String absolutePath = getTestDataPath() + filePath;
-    allowRootAccess(absolutePath);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
     return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
   }
 
@@ -583,7 +585,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return aPackage;
   }
 
-  protected void setLanguageLevel(LanguageLevel level) {
+  protected void setLanguageLevel(@NotNull LanguageLevel level) {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 }

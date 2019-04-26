@@ -23,9 +23,12 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   void "test inspection outside source root"() {
@@ -53,7 +56,7 @@ class SomeClass {
 """)
 
     def wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection())
-    def context = InspectionManager.getInstance(project).createNewGlobalContext(false)
+    def context = InspectionManager.getInstance(project).createNewGlobalContext()
     assertEmpty InspectionEngine.runInspectionOnFile(file, wrapper, context)
   }
 

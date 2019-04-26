@@ -24,12 +24,13 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class StorageTest extends StorageTestBase {
   public void testSmoke() throws Exception {
     final int record = myStorage.createNewRecord();
-    myStorage.writeBytes(record, new ByteArraySequence("Hello".getBytes()), false);
-    assertEquals("Hello", new String(myStorage.readBytes(record)));
+    myStorage.writeBytes(record, new ByteArraySequence("Hello".getBytes(StandardCharsets.UTF_8)), false);
+    assertEquals("Hello", new String(myStorage.readBytes(record), StandardCharsets.UTF_8));
   }
 
   public void testStress() throws Exception {
@@ -45,12 +46,12 @@ public class StorageTest extends StorageTestBase {
 
     for (int i = 0; i < count; i++) {
       final int record = myStorage.createNewRecord();
-      myStorage.writeBytes(record, new ByteArraySequence(hello.getBytes()), true);  // fixed size optimization is mor than 50 percents here!
+      myStorage.writeBytes(record, new ByteArraySequence(hello.getBytes(StandardCharsets.UTF_8)), true);  // fixed size optimization is mor than 50 percents here!
       records[i] = record;
     }
 
     for (int record : records) {
-      assertEquals(hello, new String(myStorage.readBytes(record)));
+      assertEquals(hello, new String(myStorage.readBytes(record), StandardCharsets.UTF_8));
     }
 
     long timedelta = System.currentTimeMillis() - start;

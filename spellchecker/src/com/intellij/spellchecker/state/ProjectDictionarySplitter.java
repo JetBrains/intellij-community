@@ -26,6 +26,7 @@ import java.util.List;
  * @author shkate@jetbrains.com
  */
 public class ProjectDictionarySplitter extends StateSplitterEx {
+  @NotNull
   @Override
   public List<Pair<Element, String>> splitState(@NotNull Element state) {
     return splitState(state, DictionaryState.NAME_ATTRIBUTE);

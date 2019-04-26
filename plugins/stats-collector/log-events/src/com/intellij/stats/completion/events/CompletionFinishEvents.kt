@@ -2,10 +2,7 @@
 
 package com.intellij.stats.completion.events
 
-import com.intellij.stats.completion.Action
-import com.intellij.stats.completion.ElementPositionHistory
-import com.intellij.stats.completion.LogEventVisitor
-import com.intellij.stats.completion.LookupEntryInfo
+import com.intellij.stats.completion.*
 
 
 class CompletionCancelledEvent(userId: String, sessionId: String, timestamp: Long)
@@ -19,19 +16,15 @@ class CompletionCancelledEvent(userId: String, sessionId: String, timestamp: Lon
 class ExplicitSelectEvent(
         userId: String,
         sessionId: String,
-        newCompletionListItems: List<LookupEntryInfo>,
-        selectedPosition: Int,
+        lookupState: LookupState,
         @JvmField var selectedId: Int,
-        @JvmField var completionList: List<LookupEntryInfo>,
         @JvmField var history: Map<Int, ElementPositionHistory>,
         timestamp: Long
 ) : LookupStateLogData(
         userId,
         sessionId,
         Action.EXPLICIT_SELECT,
-        completionList.map { it.id },
-        newCompletionListItems,
-        selectedPosition,
+        lookupState,
         timestamp
 ) {
 
@@ -48,13 +41,11 @@ class ExplicitSelectEvent(
 class TypedSelectEvent(
         userId: String,
         sessionId: String,
-        newCompletionListItems: List<LookupEntryInfo>,
+        lookupState: LookupState,
         @JvmField var selectedId: Int,
-        @JvmField var completionList: List<LookupEntryInfo>,
         @JvmField var history: Map<Int, ElementPositionHistory>,
         timestamp: Long
-) : LookupStateLogData(userId, sessionId, Action.TYPED_SELECT, newCompletionListItems.map { it.id },
-        newCompletionListItems, 0, timestamp) {
+) : LookupStateLogData(userId, sessionId, Action.TYPED_SELECT, lookupState, timestamp) {
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)

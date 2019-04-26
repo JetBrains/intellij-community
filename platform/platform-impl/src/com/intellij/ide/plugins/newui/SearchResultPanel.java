@@ -44,12 +44,25 @@ public abstract class SearchResultPanel {
   }
 
   @NotNull
+  public PluginsGroupComponent getPanel() {
+    return myPanel;
+  }
+
+  @NotNull
   public JComponent createScrollPane() {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
     if (isProgressMode()) {
       myVerticalScrollBar = pane.getVerticalScrollBar();
     }
+    return pane;
+  }
+
+  @NotNull
+  public JComponent createVScrollPane() {
+    JBScrollPane pane = (JBScrollPane)createScrollPane();
+    pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     return pane;
   }
 
@@ -113,7 +126,9 @@ public abstract class SearchResultPanel {
 
           if (!myGroup.descriptors.isEmpty()) {
             myGroup.titleWithCount();
+            PluginLogo.startBatchMode();
             myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
+            PluginLogo.endBatchMode();
           }
 
           myPanel.initialSelection(false);

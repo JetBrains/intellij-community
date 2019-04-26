@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -180,7 +181,7 @@ public class PerformanceWatcher implements Disposable {
   @NotNull
   public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
-    String trace = headerMsg + ": "+thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
+    String trace = headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n";
     for (final StackTraceElement stackTraceElement : stackTrace) {
       trace += " at "+stackTraceElement +"\n";
     }
@@ -270,7 +271,7 @@ public class PerformanceWatcher implements Disposable {
           myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
         }
         else {
-          updateStacktraceCommonPart(edtStack);
+          myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
         }
       }
 
@@ -300,15 +301,16 @@ public class PerformanceWatcher implements Disposable {
     System.err.println(ThreadDumper.dumpThreadsToString());
   }
 
-  private void updateStacktraceCommonPart(final StackTraceElement[] stackTraceElements) {
-    for(int i=0; i < myStacktraceCommonPart.size() && i < stackTraceElements.length; i++) {
-      StackTraceElement el1 = myStacktraceCommonPart.get(myStacktraceCommonPart.size()-i-1);
-      StackTraceElement el2 = stackTraceElements [stackTraceElements.length-i-1];
+  static List<StackTraceElement> getStacktraceCommonPart(final List<StackTraceElement> commonPart,
+                                                         final StackTraceElement[] stackTraceElements) {
+    for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
+      StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
+      StackTraceElement el2 = stackTraceElements[stackTraceElements.length - i - 1];
       if (!el1.equals(el2)) {
-        myStacktraceCommonPart = myStacktraceCommonPart.subList(myStacktraceCommonPart.size() - i, myStacktraceCommonPart.size());
-        break;
+        return commonPart.subList(commonPart.size() - i, commonPart.size());
       }
     }
+    return commonPart;
   }
 
   private class SwingThreadRunnable implements Runnable {
@@ -322,7 +324,11 @@ public class PerformanceWatcher implements Disposable {
     public void run() {
       myEdtRequestsQueued.decrementAndGet();
       myLastEdtAlive = System.currentTimeMillis();
-      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, System.currentTimeMillis() - myCreationMillis);
+      final long latency = System.currentTimeMillis() - myCreationMillis;
+      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
+      final Application application = ApplicationManager.getApplication();
+      if (application.isDisposed()) return;
+      application.getMessageBus().syncPublisher(IdePerformanceListener.TOPIC).uiResponded(latency);
     }
   }
 
@@ -338,7 +344,6 @@ public class PerformanceWatcher implements Disposable {
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
                "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot));
     }
-
   }
 
   @NotNull

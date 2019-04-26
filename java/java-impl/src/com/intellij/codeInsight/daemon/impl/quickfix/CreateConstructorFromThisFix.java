@@ -20,7 +20,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -49,7 +48,7 @@ public class CreateConstructorFromThisFix extends CreateConstructorFromThisOrSup
     do {
       e = PsiTreeUtil.getParentOfType(e, PsiClass.class);
     } while (e instanceof PsiTypeParameter);
-    if (e != null && e.isValid() && ScratchFileService.isInProjectOrScratch(e)) {
+    if (e != null && e.isValid() && canModify(e)) {
       return Collections.singletonList((PsiClass)e);
     }
     else {

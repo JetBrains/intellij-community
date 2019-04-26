@@ -67,7 +67,7 @@ class GroovyUastPlugin : UastLanguagePlugin {
 
 }
 
-class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, JvmDeclarationUElement {
+class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression {
   override val value: Any? get() = grElement.value
   override fun evaluate(): Any? = value
   override val uastParent: UElement? by lazy(parentProvider)
@@ -75,7 +75,7 @@ class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) 
   override val annotations: List<UAnnotation> = emptyList() //not implemented
 }
 
-class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentProvider: () -> UElement?) : UNamedExpression, JvmDeclarationUElement {
+class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentProvider: () -> UElement?) : UNamedExpression {
   override val name: String?
     get() = grElement.name
   override val expression: UExpression
@@ -95,7 +95,7 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
 }
 
 class GrUAnnotation(val grElement: GrAnnotation,
-                    val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement, UAnchorOwner, UMultiResolvable {
+                    val parentProvider: () -> UElement?) : UAnnotationEx, UAnchorOwner, UMultiResolvable {
 
   override val javaPsi: PsiAnnotation = grElement
 
@@ -125,7 +125,7 @@ class GrUAnnotation(val grElement: GrAnnotation,
 
 }
 
-class GrUnknownUExpression(override val psi: PsiElement?, override val uastParent: UElement?) : UExpression, JvmDeclarationUElement {
+class GrUnknownUExpression(override val psi: PsiElement?, override val uastParent: UElement?) : UExpression {
 
   override fun asLogString(): String = "GrUnknownUExpression(grElement)"
 

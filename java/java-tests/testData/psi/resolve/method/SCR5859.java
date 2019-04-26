@@ -22,6 +22,6 @@ class Server {
 class Client {
   {
     Derived arg = null;
-    Server.<ref>sub(arg, arg);
+    Server.<caret>sub(arg, arg);
   }
 }

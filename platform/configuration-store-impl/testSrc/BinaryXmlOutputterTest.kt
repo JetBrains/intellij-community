@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -78,7 +77,7 @@ class BinaryXmlOutputterTest {
   private fun test(xml: String) {
     val byteOut = BufferExposingByteArrayOutputStream()
     byteOut.use {
-      serializeElementToBinary(loadElement(xml), it)
+      serializeElementToBinary(JDOMUtil.load(xml), it)
     }
 
     val xmlAfter = JDOMUtil.writeElement(byteOut.toByteArray().inputStream().use { deserializeElementFromBinary(it) })

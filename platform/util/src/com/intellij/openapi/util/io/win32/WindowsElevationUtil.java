@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class WindowsElevationUtil {
-  private static Logger LOG = Logger.getInstance(WindowsElevationUtil.class);
+  private static final Logger LOG = Logger.getInstance(WindowsElevationUtil.class);
 
   private WindowsElevationUtil() {
   }
@@ -79,6 +79,6 @@ public class WindowsElevationUtil {
       return FIELDS;
     }
 
-    private static List<String> FIELDS = createFieldsOrder("TokenIsElevated");
+    private static final List<String> FIELDS = createFieldsOrder("TokenIsElevated");
   }
 }

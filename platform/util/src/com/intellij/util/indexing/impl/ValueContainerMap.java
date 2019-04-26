@@ -33,7 +33,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
+    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
@@ -81,7 +81,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
     @NotNull
     @Override
     public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
-      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
+      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
 
       valueContainer.readFrom((DataInputStream)in, myValueExternalizer);
       return valueContainer;

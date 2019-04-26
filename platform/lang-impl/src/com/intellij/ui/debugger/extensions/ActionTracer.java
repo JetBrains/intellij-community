@@ -56,7 +56,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
   }
 
   @Override
-  public void afterActionPerformed(AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+  public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     StringBuilder out = new StringBuilder(String.format("%1$tF %1$tT,%1$tL ", System.currentTimeMillis()));
     final ActionManager actionManager = ActionManager.getInstance();
     final String id = actionManager.getId(action);

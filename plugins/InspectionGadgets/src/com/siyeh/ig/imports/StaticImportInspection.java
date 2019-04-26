@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -149,7 +150,8 @@ public class StaticImportInspection extends BaseInspection {
       final Map<PsiJavaCodeReferenceElement, PsiMember> referenceTargetMap = new HashMap<>();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement target = reference.resolve();
-        if (target instanceof PsiEnumConstant && reference.getParent() instanceof PsiSwitchLabelStatement) continue;
+        if (target instanceof PsiEnumConstant &&
+            reference instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)reference) != null) continue;
         if (target instanceof PsiMember) {
           final PsiMember member = (PsiMember)target;
           referenceTargetMap.put(reference, member);
@@ -291,24 +293,10 @@ public class StaticImportInspection extends BaseInspection {
   private class StaticImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      final PsiElement parent = aClass.getParent();
-      if (!(parent instanceof PsiJavaFile)) {
-        return;
-      }
-      final PsiJavaFile file = (PsiJavaFile)parent;
-      if (!file.getClasses()[0].equals(aClass)) {
-        return;
-      }
-      final PsiImportList importList = file.getImportList();
-      if (importList == null) {
-        return;
-      }
-      final PsiImportStaticStatement[] importStatements = importList.getImportStaticStatements();
-      for (PsiImportStaticStatement importStatement : importStatements) {
-        if (shouldReportImportStatement(importStatement)) {
-          registerError(importStatement, importStatement);
-        }
+    public void visitImportStaticStatement(PsiImportStaticStatement statement) {
+      super.visitImportStaticStatement(statement);
+      if (shouldReportImportStatement(statement)) {
+        registerError(statement, statement);
       }
     }
 

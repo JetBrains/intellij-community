@@ -253,6 +253,8 @@ public class YAMLParserTest extends ParsingTestCase {
     doTest(true);
   }
 
+  public void testAliasInKey() { doTest(true); }
+
   public void testPlainMultilineScalarRuby21788() {
     doTest(true);
   }

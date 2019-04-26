@@ -48,6 +48,9 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
     try {
       Disposer.dispose(myDisposable);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myDisposable = null;
       super.tearDown();
@@ -65,7 +68,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
     final AnAction[] mergedActions = duplexConsoleView.createConsoleActions();
     assertEquals(actions1.length, actions2.length);
     assertEquals(actions1.length, mergedActions.length - 1);
-    assertHasActions(mergedActions, "Up", "Down", "Soft Wraps", "Scroll", "Clear", "Print");
+    assertHasActions(mergedActions, "Up", "Down", "Soft-Wrap", "Scroll", "Clear", "Print");
   }
 
   public void testMergeReversedConsoles() {
@@ -79,7 +82,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
     final AnAction[] mergedActions = duplexConsoleView.createConsoleActions();
     assertEquals(actions1.length, actions2.length);
     assertEquals(actions1.length, mergedActions.length - 1);
-    assertHasActions(mergedActions, "Up", "Down", "Soft Wraps", "Scroll", "Clear", "Print");
+    assertHasActions(mergedActions, "Up", "Down", "Soft-Wrap", "Scroll", "Clear", "Print");
   }
   
   public void testMergedClear() {

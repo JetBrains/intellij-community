@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private CodeStyleSettings mySettings;
-  private final String myText = "public class T {\n" +
-                                "\tvoid run() {\n" +
-                                "\t\tint t = 1 + <caret>2;\n" +
-                                "\t}\n" +
-                                "}";
+  private static final String myText = "public class T {\n" +
+                                       "\tvoid run() {\n" +
+                                       "\t\tint t = 1 + <caret>2;\n" +
+                                       "\t}\n" +
+                                       "}";
 
   @Override
   public void setUp() throws Exception {
@@ -49,12 +49,19 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
 
   @Override
   public void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
-    if (optionsProvider != null) {
-      optionsProvider.setEnabledInTest(false);
+    try {
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+      DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
+      if (optionsProvider != null) {
+        optionsProvider.setEnabledInTest(false);
+      }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testWhenTabsDetected_SetIndentSizeToTabSize() {

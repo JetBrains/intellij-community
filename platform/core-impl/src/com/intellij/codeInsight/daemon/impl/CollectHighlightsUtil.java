@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CollectHighlightsUtil {
-  public static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+  private static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil");
 
@@ -52,11 +52,14 @@ public class CollectHighlightsUtil {
 
   private static final int STARTING_TREE_HEIGHT = 100;
 
+  static class FiltersHolder {
+    static final Condition<PsiElement>[] FILTERS = EP_NAME.getExtensions();
+  }
   @NotNull
   private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement parent, final int startOffset, final int endOffset) {
     final List<PsiElement> result = new ArrayList<>();
     final int currentOffset = parent.getTextRange().getStartOffset();
-    final List<Condition<PsiElement>> filters = EP_NAME.getExtensionList();
+    final Condition<PsiElement>[] filters = FiltersHolder.FILTERS;
 
     int offset = currentOffset;
 

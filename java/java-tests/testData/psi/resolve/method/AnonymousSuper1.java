@@ -6,7 +6,7 @@ public class Test1 {
     public static void main(String[] args){
         new A(){
             protected void foo(){
-                super.<ref>foo();
+                super.<caret>foo();
             }
         };
     }

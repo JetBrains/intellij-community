@@ -117,24 +117,19 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
       if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
-        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
-          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
-        }));
+        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false)));
         return;
       }
     }
 
-
-    fileAnnotation.setCloser(() -> {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (project.isDisposed()) return;
-        editor.getGutter().closeAllAnnotations();
-      });
-    });
+    fileAnnotation.setCloser(() -> UIUtil.invokeLaterIfNeeded(() -> {
+      if (project.isDisposed()) return;
+      closeVcsAnnotations(editor);
+    }));
 
     fileAnnotation.setReloader(newFileAnnotation -> {
       if (project.isDisposed()) return;
-      if (editor.getGutter().isAnnotationsShown()) {
+      if (hasVcsAnnotations(editor)) {
         if (newFileAnnotation != null) {
           assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
           doAnnotate(editor, project, newFileAnnotation, vcs, upToDateLineNumbers, false);
@@ -148,7 +143,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
             provider.perform(event, true);
           }
           else {
-            editor.getGutter().closeAllAnnotations();
+            closeVcsAnnotations(editor);
           }
         }
       }
@@ -176,7 +171,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       });
     }
 
-    editor.getGutter().closeAllAnnotations();
+    closeVcsAnnotations(editor);
 
     final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
@@ -238,24 +233,33 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     }
   }
 
-  @Nullable
-  private static AnnotationFieldGutter getAnnotationFieldGutter(@NotNull Editor editor) {
+  @NotNull
+  static List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
     List<TextAnnotationGutterProvider> annotations = ((EditorGutterComponentEx)editor.getGutter()).getTextAnnotations();
+    return ContainerUtil.filterIsInstance(annotations, ActiveAnnotationGutter.class);
+  }
+
+  static boolean hasVcsAnnotations(@NotNull Editor editor) {
+    return !getVcsAnnotations(editor).isEmpty();
+  }
+
+  static void closeVcsAnnotations(@NotNull Editor editor) {
+    List<ActiveAnnotationGutter> vcsAnnotations = getVcsAnnotations(editor);
+    ((EditorGutterComponentEx)editor.getGutter()).closeTextAnnotations(vcsAnnotations);
+  }
+
+  @Nullable
+  static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
+    List<ActiveAnnotationGutter> annotations = getVcsAnnotations(editor);
     for (TextAnnotationGutterProvider annotation : annotations) {
       if (annotation instanceof AnnotationGutterLineConvertorProxy) {
         annotation = ((AnnotationGutterLineConvertorProxy)annotation).getDelegate();
       }
       if (annotation instanceof AnnotationFieldGutter) {
-        return ((AnnotationFieldGutter)annotation);
+        return ((AnnotationFieldGutter)annotation).getPresentation();
       }
     }
     return null;
-  }
-
-  @Nullable
-  static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
-    AnnotationFieldGutter gutter = getAnnotationFieldGutter(editor);
-    return gutter != null ? gutter.getPresentation() : null;
   }
 
   @Nullable
@@ -291,7 +295,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     return numbers.size() < 2 ? null : numbers;
   }
 
-  @Nullable
+  @NotNull
   private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
     Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
     Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
@@ -367,13 +371,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
       setText(VcsBundle.message("annotation.wrong.line.number.notification.text", vcs.getDisplayName()));
 
-      createActionLabel("Display anyway", () -> {
-        showAnnotations();
-      });
-
-      createActionLabel("Hide", () -> {
-        hideNotification();
-      }).setToolTipText("Hide this notification");
+      createActionLabel("Display anyway", () -> showAnnotations());
+      createActionLabel("Hide", () -> hideNotification()).setToolTipText("Hide this notification");
     }
 
     public void showAnnotations() {

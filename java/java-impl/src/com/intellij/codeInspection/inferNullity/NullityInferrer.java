@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.inferNullity;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.project.Project;
@@ -468,6 +470,14 @@ public class NullityInferrer {
     return myNullableSet.contains(pointer);
   }
 
+  private boolean hasNullability(@NotNull PsiModifierListOwner owner) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
+    if (info != null && !info.isInferred() && info.getNullability() != Nullability.UNKNOWN) return true;
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
+    return myNotNullSet.contains(pointer) || myNullableSet.contains(pointer);
+  }
+
   private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor{
 
     @Override
@@ -488,7 +498,7 @@ public class NullityInferrer {
         registerNotNullAnnotation(method);
         return;
       }
-      if (isNotNull(method) || isNullable(method)) {
+      if (hasNullability(method)) {
         return;
       }
       final PsiCodeBlock body = method.getBody();
@@ -555,8 +565,7 @@ public class NullityInferrer {
     @Override
     public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
-      if (parameter.getType() instanceof PsiPrimitiveType ||
-          isNotNull(parameter) || isNullable(parameter)) {
+      if (parameter.getType() instanceof PsiPrimitiveType || hasNullability(parameter)) {
         return;
       }
       final PsiElement grandParent = parameter.getDeclarationScope();

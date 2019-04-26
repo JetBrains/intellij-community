@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.find.FindManager;
@@ -18,7 +18,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -160,7 +159,8 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }
 
-    private static VirtualFile[] getFiles(PsiFile file, MavenDomProjectModel model) {
+    @NotNull
+    private static List<VirtualFile> getFiles(PsiFile file, MavenDomProjectModel model) {
       Set<VirtualFile> virtualFiles = new HashSet<>();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
@@ -173,7 +173,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         if (vf != null) virtualFiles.add(vf);
       }
 
-      return VfsUtilCore.toVirtualFileArray(virtualFiles);
+      return new ArrayList<>(virtualFiles);
     }
 
     private static void createMavenProperty(@NotNull MavenDomProjectModel model,
@@ -248,7 +248,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       @Override
       public UsageSearcher create() {
         return new UsageSearcher() {
-          Set<UsageInfo> usages = new HashSet<>();
+          final Set<UsageInfo> usages = new HashSet<>();
 
           @Override
           public void generate(@NotNull final Processor<Usage> processor) {

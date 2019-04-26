@@ -133,6 +133,9 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     try {
       flushDescriptors();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

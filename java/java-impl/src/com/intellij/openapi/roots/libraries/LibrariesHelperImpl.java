@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -38,7 +39,7 @@ public class LibrariesHelperImpl extends LibrariesHelper {
 
   @Nullable
   @Override
-  public VirtualFile findRootByClass(List<VirtualFile> roots, String fqn) {
+  public VirtualFile findRootByClass(@NotNull List<? extends VirtualFile> roots, String fqn) {
     for (VirtualFile file : roots) {
       if (findInFile(file, new StringTokenizer(fqn, "."))) return file;
     }

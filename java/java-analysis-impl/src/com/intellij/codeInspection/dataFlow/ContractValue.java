@@ -49,7 +49,6 @@ public abstract class ContractValue {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     DfaValue[] argValues = new DfaValue[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
       DfaValue argValue = null;
       if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
         argValue = factory.createValue(args[i]);
@@ -109,10 +108,6 @@ public abstract class ContractValue {
     return value ? IndependentValue.TRUE : IndependentValue.FALSE;
   }
 
-  public static ContractValue optionalValue(boolean present) {
-    return present ? IndependentValue.OPTIONAL_PRESENT : IndependentValue.OPTIONAL_ABSENT;
-  }
-
   public static ContractValue nullValue() {
     return IndependentValue.NULL;
   }
@@ -161,7 +156,7 @@ public abstract class ContractValue {
 
     @Override
     public String toString() {
-      return "arg#" + myIndex;
+      return "param" + (myIndex + 1);
     }
   }
 
@@ -179,10 +174,6 @@ public abstract class ContractValue {
         return other == TRUE;
       }
     };
-    static final IndependentValue OPTIONAL_PRESENT =
-      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, true), "present");
-    static final IndependentValue OPTIONAL_ABSENT =
-      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, false), "empty");
     static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
     private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
@@ -228,7 +219,7 @@ public abstract class ContractValue {
 
     @Override
     public String toString() {
-      return myQualifier + "." + myField.getMethodName() + "()";
+      return myQualifier + "." + myField + "()";
     }
   }
 

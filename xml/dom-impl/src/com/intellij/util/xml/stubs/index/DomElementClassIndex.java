@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @see com.intellij.util.xml.StubbedOccurrence
- * @since 13
  */
 public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
 

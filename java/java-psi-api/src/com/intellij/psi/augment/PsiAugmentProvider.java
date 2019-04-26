@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.augment;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +47,6 @@ public abstract class PsiAugmentProvider {
   /**
    * Extends {@link PsiTypeElement#getType()} so that a type could be retrieved from external place
    * (e.g. inferred from a variable initializer).
-   *
-   * @since 14.1
    */
   @Nullable
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
@@ -55,8 +55,6 @@ public abstract class PsiAugmentProvider {
 
   /**
    * Intercepts {@link PsiModifierList#hasModifierProperty(String)}, so that plugins can add imaginary modifiers or hide existing ones.
-   *
-   * @since 2016.2
    */
   @NotNull
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {
@@ -86,6 +84,15 @@ public abstract class PsiAugmentProvider {
     forEach(typeElement.getProject(), provider -> {
       PsiType type = provider.inferType(typeElement);
       if (type != null) {
+        try {
+          PsiUtil.ensureValidType(type);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          throw PluginException.createByClass(e, provider.getClass());
+        }
         result.set(type);
         return false;
       }

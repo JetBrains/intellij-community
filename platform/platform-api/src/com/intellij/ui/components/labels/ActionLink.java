@@ -35,7 +35,7 @@ import java.awt.event.InputEvent;
 /**
  * @author Konstantin Bulenkov
  */
-public class ActionLink extends LinkLabel implements DataProvider {
+public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
   private final AnAction myAction;
   private final String myPlace = ActionPlaces.UNKNOWN;
@@ -54,7 +54,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
 
   public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable final Runnable onDone) {
     super(text, icon);
-    setListener(new LinkListener() {
+    setListener(new LinkListener<Object>() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         ActionUtil.invokeAction(myAction, ActionLink.this, myPlace, myEvent, onDone);
@@ -109,8 +109,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
     if (PlatformDataKeys.CONTEXT_MENU_POINT.is(dataId)) {
       return SwingUtilities.convertPoint(this, 0, getHeight(), UIUtil.getRootPane(this));
     }
-
-    return null;
+    return myAction instanceof DataProvider ? ((DataProvider)myAction).getData(dataId) : null;
   }
 
   @TestOnly

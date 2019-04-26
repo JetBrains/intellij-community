@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import java.util.LinkedList;
+import java.util.List;
 import static java.util.Collections.emptyList;
 
 public class External {

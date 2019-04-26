@@ -36,4 +36,10 @@ public class JsonPointerUtil {
   public static String normalizeSlashes(@NotNull String ref) {
     return StringUtil.trimStart(ref.replace('\\', '/'), "/");
   }
+
+  @NotNull
+  public static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
+  }
 }

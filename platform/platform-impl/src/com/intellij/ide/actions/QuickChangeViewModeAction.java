@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +27,6 @@ public class QuickChangeViewModeAction extends QuickSwitchSchemeAction {
     AnAction[] actions = a instanceof DefaultActionGroup
                          ? ((DefaultActionGroup)a).getChildActionsOrStubs()
                          : a instanceof ActionGroup ? ((ActionGroup)a).getChildren(null) : EMPTY_ARRAY;
-    return ArrayUtil.toObjectArray(ContainerUtil.filter(actions, not(instanceOf(Separator.class))), AnAction.class);
+    return ContainerUtil.filter(actions, not(instanceOf(Separator.class))).toArray(AnAction.EMPTY_ARRAY);
   }
 }

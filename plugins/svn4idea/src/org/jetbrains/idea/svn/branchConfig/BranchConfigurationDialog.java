@@ -24,8 +24,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.lang.Math.min;
 import static java.util.Comparator.comparing;
 import static org.jetbrains.idea.svn.SvnBundle.message;
@@ -33,14 +33,7 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class BranchConfigurationDialog extends DialogWrapper {
-  public static final ListCellRenderer<Url> DECODED_URL_RENDERER = new ListCellRendererWrapper<Url>() {
-    @Override
-    public void customize(JList list, Url value, int index, boolean selected, boolean hasFocus) {
-      if (value != null) {
-        setText(value.toDecodedString());
-      }
-    }
-  };
+  public static final ListCellRenderer<Url> DECODED_URL_RENDERER = SimpleListCellRenderer.create("", Url::toDecodedString);
 
   private JPanel myTopPanel;
   private TextFieldWithBrowseButton myTrunkLocationTextField;
@@ -167,7 +160,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
       return;
     }
 
-    RootUrlInfo wcRoot = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
+    RootUrlInfo wcRoot = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
     if (wcRoot == null) {
       return;
     }

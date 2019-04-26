@@ -120,7 +120,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
   @Override
   public void invoke(@NotNull final Project project,
                      @NotNull final PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
+                     @Nullable Editor editor,
                      @NotNull final PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (isAvailable(project, null, file)) {

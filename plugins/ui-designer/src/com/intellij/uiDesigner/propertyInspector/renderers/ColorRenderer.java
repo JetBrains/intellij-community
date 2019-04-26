@@ -1,13 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
-import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +33,7 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
   private void prepareComponent(final ColorDescriptor value, final boolean selected) {
     myColorDescriptor = value;
     clear();
-    setIcon(UIDesignerIcons.Empty);
+    setIcon(AllIcons.Nodes.EmptyNode);
     setBackground(selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
     if (myColorDescriptor != null) {
       append(myColorDescriptor.toString(),

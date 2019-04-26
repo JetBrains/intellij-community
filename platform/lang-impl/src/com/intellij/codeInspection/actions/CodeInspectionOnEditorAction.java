@@ -48,7 +48,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final AnalysisScope scope = new AnalysisScope(psiFile);
-    final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext(false);
+    final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext();
     inspectionContext.setCurrentScope(scope);
     inspectionContext.setExternalProfile(InspectionProjectProfileManager.getInstance(project).getCurrentProfile());
     inspectionContext.doInspections(scope);

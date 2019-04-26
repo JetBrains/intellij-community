@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,16 +20,14 @@ public class BreadcrumbsUtilEx {
   }
 
   @Nullable
-  static BreadcrumbsProvider findProvider(@NotNull Editor editor, VirtualFile file) {
-    Project project = editor.getProject();
-    return project == null ? null : findProvider(editor, findViewProvider(file, project));
+  static BreadcrumbsProvider findProvider(VirtualFile file, @Nullable Project project, @Nullable Boolean forcedShown) {
+    return project == null ? null : findProvider(findViewProvider(file, project), forcedShown);
   }
 
   @Nullable
-  public static BreadcrumbsProvider findProvider(@NotNull Editor editor, @Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsProvider findProvider(@Nullable FileViewProvider viewProvider, @Nullable Boolean forceShown) {
     if (viewProvider == null) return null;
 
-    Boolean forceShown = BreadcrumbsForceShownSettings.getForcedShown(editor);
     if (forceShown == null) {
       return findProvider(true, viewProvider);
     }
@@ -43,17 +40,34 @@ public class BreadcrumbsUtilEx {
     if (checkSettings && !settings.isBreadcrumbsShown()) return null;
 
     Language baseLang = viewProvider.getBaseLanguage();
-    if (checkSettings && !settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
+    if (checkSettings && !isBreadcrumbsShownFor(baseLang)) return null;
 
     BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(baseLang);
     if (provider == null) {
       for (Language language : viewProvider.getLanguages()) {
-        if (!checkSettings || settings.isBreadcrumbsShownFor(language.getID())) {
+        if (!checkSettings || isBreadcrumbsShownFor(language)) {
           provider = BreadcrumbsUtil.getInfoProvider(language);
           if (provider != null) break;
         }
       }
     }
     return provider;
+  }
+
+  public static boolean isBreadcrumbsShownFor(Language language) {
+    String id = findLanguageWithBreadcrumbSettings(language);
+    return EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(id);
+  }
+
+  public static String findLanguageWithBreadcrumbSettings(Language language) {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    Language base = language;
+    while (base != null) {
+      if (settings.hasBreadcrumbSettings(base.getID())) {
+        return base.getID();
+      }
+      base = base.getBaseLanguage();
+    }
+    return language.getID();
   }
 }

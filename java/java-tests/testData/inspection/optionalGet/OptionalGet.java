@@ -366,7 +366,8 @@ class CtorTest {
   CtorTest() {
     System.out.println(test.get());
     something();
-    System.out.println(test.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+    // Conservatively skip the warning: people rarely do this
+    System.out.println(test.get());
   }
 
   <error descr="Missing method body, or declare abstract">CtorTest(String noBody);</error>
@@ -427,5 +428,20 @@ class FinallyTest
     if (a.isPresent()) {
       System.out.println(a.getAsInt());
     }
+  }
+
+  class X {
+    private String value;
+    public Optional<String> getValue() {
+      return Optional.ofNullable(value);
+    }
+  }
+
+  void testStream() {
+    // IDEA-208770
+    Stream.of(new X(), new X()).filter(x -> x.getValue().isPresent()).map(x -> x.getValue().get());
+    Stream.of(new X()).filter(x -> x.getValue().isPresent()).map(x -> x.getValue().get());
+    X xx = new X();
+    Stream.of(xx).filter(x -> x.getValue().isPresent()).map(x -> x.getValue().get());
   }
 }

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameIdea");
@@ -70,7 +71,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                        boolean everywhere,
                                        @NotNull ProgressIndicator indicator,
                                        @Nullable PsiElement context,
-                                       @Nullable Producer<String[]> allNamesProducer,
+                                       @Nullable Supplier<String[]> allNamesProducer,
                                        @NotNull Processor<Object> consumer) {
     if (base.getProject() != null) base.getProject().putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, pattern);
 
@@ -91,7 +92,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                                                  @NotNull String pattern,
                                                                  boolean everywhere,
                                                                  @NotNull ProgressIndicator indicator,
-                                                                 @Nullable Producer<String[]> allNamesProducer,
+                                                                 @Nullable Supplier<String[]> allNamesProducer,
                                                                  String namePattern, boolean preferStartMatches) {
     String matchingPattern = convertToMatchingPattern(base, namePattern);
     if (matchingPattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
@@ -120,7 +121,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                                   @NotNull String pattern,
                                                   boolean everywhere,
                                                   @NotNull ProgressIndicator indicator,
-                                                  @Nullable Producer<String[]> allNamesProducer,
+                                                  @Nullable Supplier<String[]> allNamesProducer,
                                                   String namePattern, boolean preferStartMatches) {
     List<MatchResult> namesList = getAllNames(base, pattern, everywhere, indicator, allNamesProducer, namePattern);
 
@@ -141,7 +142,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                                @NotNull String fullPattern,
                                                boolean everywhere,
                                                @NotNull ProgressIndicator indicator,
-                                               @Nullable Producer<String[]> allNamesProducer,
+                                               @Nullable Supplier<String[]> allNamesProducer,
                                                String namePattern) {
     List<MatchResult> namesList = new ArrayList<>();
 
@@ -168,7 +169,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       if (allNamesProducer == null) {
         throw new IllegalArgumentException("Need to specify allNamesProducer when using a model which isn't a ChooseByNameModelEx");
       }
-      String[] names = allNamesProducer.produce();
+      String[] names = allNamesProducer.get();
       long started = System.currentTimeMillis();
       processNamesByPattern(base, names, namePattern, indicator, collect);
       if (LOG.isDebugEnabled()) {
@@ -199,7 +200,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     ChooseByNameModel model = base.getModel();
     Comparator<Object> weightComparator = new Comparator<Object>() {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings("unchecked") final
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
                                            new PathProximityComparator(context);
 
@@ -248,15 +249,23 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static MinusculeMatcher getFullMatcher(FindSymbolParameters parameters, ChooseByNameViewModel base) {
-    String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), base.transformPattern(parameters.getCompletePattern()));
-    for (String separator : base.getModel().getSeparators()) {
-      fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*");
-    }
-    return NameUtil.buildMatcher(fullPattern, NameUtil.MatchingCaseSensitivity.NONE);
+    String fullRawPattern = buildFullPattern(base, parameters.getCompletePattern());
+    String fullNamePattern = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()));
+
+    return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   @NotNull
-  private static String getNamePattern(@NotNull ChooseByNameViewModel base, String pattern) {
+  private static String buildFullPattern(ChooseByNameViewModel base, String pattern) {
+    String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), pattern);
+    for (String separator : base.getModel().getSeparators()) {
+      fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*");
+    }
+    return fullPattern;
+  }
+
+  @NotNull
+  private static String getNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     String transformedPattern = base.transformPattern(pattern);
     return getNamePattern(base.getModel(), transformedPattern);
   }
@@ -276,7 +285,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Nullable
-  private static MatchResult matchQualifiedName(ChooseByNameModel model, MinusculeMatcher fullMatcher, Object element) {
+  private static MatchResult matchQualifiedName(ChooseByNameModel model, MinusculeMatcher fullMatcher, @NotNull Object element) {
     String fullName = model.getFullName(element);
     if (fullName == null) return null;
     

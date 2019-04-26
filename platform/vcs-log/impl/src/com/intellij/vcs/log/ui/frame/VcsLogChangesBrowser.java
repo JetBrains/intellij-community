@@ -5,6 +5,8 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -21,8 +23,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -30,11 +35,10 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.history.FileHistoryKt;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.MergedChange;
-import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.history.FileHistoryUtil;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -45,19 +49,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
 
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
-  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
+  private static final Logger LOG = Logger.getInstance(VcsLogChangesBrowser.class);
+  @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
@@ -66,8 +75,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull private final Set<VirtualFile> myRoots = ContainerUtil.newHashSet();
   @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
+  @Nullable private Collection<FilePath> myAffectedPaths;
   @NotNull private final Wrapper myToolbarWrapper;
-  @Nullable private Runnable myModelUpdateListener;
+  @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -81,7 +91,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myListener = new VcsLogUiProperties.PropertiesChangeListener() {
       @Override
       public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-        if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
+        if (SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
           myViewer.rebuildTree();
         }
       }
@@ -114,8 +124,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myToolbarWrapper.setVerticalSizeReferent(referent);
   }
 
-  public void setModelUpdateListener(@Nullable Runnable runnable) {
-    myModelUpdateListener = runnable;
+  public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   @Override
@@ -147,60 +157,111 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myRoots.clear();
     myViewer.setEmptyText("");
     myViewer.rebuildTree();
-    if (myModelUpdateListener != null) myModelUpdateListener.run();
+    myDispatcher.getMulticaster().onModelUpdated();
   }
 
-  public void setSelectedDetails(@NotNull List<VcsFullCommitDetails> detailsList) {
+  public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
+    myAffectedPaths = paths;
+    myViewer.rebuildTree();
+  }
+
+  public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
+    setSelectedDetails(detailsList, false);
+  }
+
+  private void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList, boolean showBigCommits) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
 
-    myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
-
     if (detailsList.isEmpty()) {
       myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     }
-    else if (detailsList.size() == 1) {
-      VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
-      myChanges.addAll(detail.getChanges());
-
-      if (detail.getParents().size() > 1) {
-        for (int i = 0; i < detail.getParents().size(); i++) {
-          THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
-          myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
-        }
-      }
-
-      if (myChanges.isEmpty() && detail.getParents().size() > 1) {
-        myViewer.getEmptyText().setText("No merged conflicts.").
-          appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
-                              e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+    else {
+      int maxSize = VcsLogUtil.getMaxSize(detailsList);
+      if (maxSize > VcsLogUtil.getShownChangesLimit() && !showBigCommits) {
+        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
+        String sizeText = getSizeText(maxSize);
+        myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
+          appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
       }
       else {
-        myViewer.setEmptyText("");
+        myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
+
+        if (detailsList.size() == 1) {
+          VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
+          myChanges.addAll(detail.getChanges());
+
+          if (detail.getParents().size() > 1) {
+            for (int i = 0; i < detail.getParents().size(); i++) {
+              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+              myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
+            }
+          }
+
+          if (myChanges.isEmpty() && detail.getParents().size() > 1) {
+            myViewer.getEmptyText().setText("No merged conflicts.").
+              appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
+                                  e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+          }
+          else {
+            myViewer.setEmptyText("");
+          }
+        }
+        else {
+          myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
+          myViewer.setEmptyText("");
+        }
       }
-    }
-    else {
-      myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-      myViewer.setEmptyText("");
     }
 
     myViewer.rebuildTree();
-    if (myModelUpdateListener != null) myModelUpdateListener.run();
+    myDispatcher.getMulticaster().onModelUpdated();
+  }
+
+  @NotNull
+  private static String getSizeText(int maxSize) {
+    if (maxSize < 1000) {
+      return String.valueOf(maxSize);
+    }
+    DecimalFormat format = new DecimalFormat("#.#");
+    format.setRoundingMode(RoundingMode.FLOOR);
+    if (maxSize < 10_000) {
+      return format.format(maxSize / 1000.0) + "K";
+    }
+    else if (maxSize < 1_000_000) {
+      return (maxSize / 1000) + "K";
+    }
+    else if (maxSize < 10_000_000) {
+      return format.format(maxSize / 1_000_000.0) + "M";
+    }
+    return (maxSize / 1_000_000) + "M";
+  }
+
+  @NotNull
+  @Override
+  protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    return new MyChangesTree(project, showCheckboxes, highlightProblems);
   }
 
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    MyTreeModelBuilder builder = new MyTreeModelBuilder();
-    builder.setChanges(myChanges, null);
+    Collection<Change> changes = collectAffectedChanges(myChanges);
+    Map<CommitId, Collection<Change>> changesToParents = ContainerUtil.newHashMap();
+    for (Map.Entry<CommitId, Set<Change>> entry : myChangesToParents.entrySet()) {
+      changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
+    }
 
-    if (isShowChangesFromParents() && !myChangesToParents.isEmpty()) {
-      if (myChanges.isEmpty()) {
+    MyTreeModelBuilder builder = new MyTreeModelBuilder();
+    builder.setChanges(changes, null);
+
+    if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
+      if (changes.isEmpty()) {
         builder.addEmptyTextNode("No merged conflicts");
       }
-      for (CommitId commitId : myChangesToParents.keySet()) {
-        Collection<Change> changesFromParent = myChangesToParents.get(commitId);
+      for (CommitId commitId : changesToParents.keySet()) {
+        Collection<Change> changesFromParent = changesToParents.get(commitId);
         if (!changesFromParent.isEmpty()) {
           builder.addChangesFromParentNode(changesFromParent, commitId);
         }
@@ -210,9 +271,28 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     return builder.build();
   }
 
+  @NotNull
+  private Collection<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
+    if (!isShowOnlyAffected() || myAffectedPaths == null) return changes;
+    return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
+      if (filePath.isDirectory()) {
+        return FileHistoryUtil.affectsDirectory(change, filePath);
+      }
+      else {
+        return FileHistoryUtil.affectsFile(change, filePath, false) ||
+               FileHistoryUtil.affectsFile(change, filePath, true);
+      }
+    }));
+  }
+
   private boolean isShowChangesFromParents() {
     return myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
            myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
+  }
+
+  private boolean isShowOnlyAffected() {
+    return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
+           myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }
 
   @NotNull
@@ -237,6 +317,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       AbstractVcs vcs = getVcs();
       if (vcs == null) return null;
       return vcs.getKeyInstanceMethod();
+    }
+    else if (HAS_AFFECTED_FILES.is(dataId)) {
+      return myAffectedPaths != null;
     }
     return super.getData(dataId);
   }
@@ -365,7 +448,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       myModel.insertNodeInto(textNode, myRoot, myRoot.getChildCount());
     }
 
-    public void addChangesFromParentNode(@NotNull Collection<Change> changes, @NotNull CommitId commitId) {
+    public void addChangesFromParentNode(@NotNull Collection<? extends Change> changes, @NotNull CommitId commitId) {
       ChangesBrowserNode parentNode = new ChangesBrowserParentNode(commitId);
       parentNode.markAsHelperNode();
 
@@ -398,6 +481,10 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     return text;
   }
 
+  public interface Listener extends EventListener {
+    void onModelUpdated();
+  }
+
   private static class RootTag {
     @NotNull private final Hash myCommit;
     @NotNull private final String myText;
@@ -423,6 +510,28 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     @Override
     public int hashCode() {
       return Objects.hash(myCommit);
+    }
+  }
+
+  protected class MyChangesTree extends ChangesBrowserTreeList {
+    MyChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+      super(VcsLogChangesBrowser.this, project, showCheckboxes, highlightProblems);
+    }
+
+    @Override
+    protected void resetTreeState() {
+      long start = System.currentTimeMillis();
+      if (isShowChangesFromParents()) {
+        TreeUtil.expand(this, path -> {
+          if (path.getLastPathComponent() instanceof ChangesBrowserParentNode) return TreeVisitor.Action.SKIP_CHILDREN;
+          return TreeVisitor.Action.CONTINUE;
+        }, path -> {
+        });
+      }
+      else {
+        TreeUtil.expandAll(this);
+      }
+      LOG.debug("Resetting changes tree state took " + StopWatch.formatTime(System.currentTimeMillis() - start));
     }
   }
 }

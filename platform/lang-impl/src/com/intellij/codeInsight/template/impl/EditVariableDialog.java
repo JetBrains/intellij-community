@@ -88,7 +88,7 @@ class EditVariableDialog extends DialogWrapper {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
-    Predicate<Macro> isAcceptableInContext = macro -> myContextTypes.stream().anyMatch(macro::isAcceptableInContext);
+    Predicate<Macro> isAcceptableInContext = macro -> myContextTypes.isEmpty() || myContextTypes.stream().anyMatch(macro::isAcceptableInContext);
     Stream<String> availableMacroNames = Arrays.stream(MacroFactory.getMacros()).filter(isAcceptableInContext).map(Macro::getPresentableName).sorted();
     Set<String> uniqueNames = availableMacroNames.collect(Collectors.toCollection(LinkedHashSet::new));
 

@@ -16,7 +16,6 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -30,12 +29,7 @@ public class ConcurrentInstanceMap {
 
   @NotNull
   public static <T> Map<Class<? extends T>,T> create() {
-    return ConcurrentFactoryMap.createMap(new Function<Class<? extends T>, T>() {
-      @Override
-      public T fun(Class<? extends T> key) {
-        return calculate(key);
-      }
-    });
+    return ConcurrentFactoryMap.createMap(ConcurrentInstanceMap::calculate);
   }
 
   @NotNull
@@ -43,10 +37,7 @@ public class ConcurrentInstanceMap {
     try {
       return key.newInstance();
     }
-    catch (InstantiationException e) {
-      throw new RuntimeException("Couldn't instantiate " + key, e);
-    }
-    catch (IllegalAccessException e) {
+    catch (InstantiationException | IllegalAccessException e) {
       throw new RuntimeException("Couldn't instantiate " + key, e);
     }
   }

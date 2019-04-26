@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,17 @@ public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixture
 
   @Override
   public void tearDown() throws Exception {
-    EditorActionManager.getInstance().setActionHandler(SAMPLE_ACTION, mySavedHandler);
-    myTracker = null;
-    mySavedHandler = null;
-    
-    super.tearDown();
+    try {
+      EditorActionManager.getInstance().setActionHandler(SAMPLE_ACTION, mySavedHandler);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myTracker = null;
+      mySavedHandler = null;
+      super.tearDown();
+    }
   }
 
   public void testLastActionIsAvailable() {

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.search.RelaxedDirectInheritorChecker;
-import com.intellij.psi.impl.search.StubHierarchyInheritorSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -59,8 +58,7 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
     DumbService dumbService = DumbService.getInstance(project);
     List<PsiClass> candidates = dumbService.runReadActionInSmartMode(() -> {
       if (!clazz.isValid()) return Collections.emptyList();
-      GlobalSearchScope restrictedScope = StubHierarchyInheritorSearcher.restrictScope(globalSearchScope);
-      return getDerivingClassCandidates(clazz, restrictedScope, queryParameters.includeAnonymous());
+      return getDerivingClassCandidates(clazz, globalSearchScope, queryParameters.includeAnonymous());
     });
 
     if (!candidates.isEmpty()) {

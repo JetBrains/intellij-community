@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -23,11 +24,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -36,12 +35,10 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomPerformanceTest extends DomHardCoreTestCase{
-
+@HardwareAgentRequired
+public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
     final MyElement element = createElement("<root xmlns=\"adsf\" targetNamespace=\"adsf\"/>", MyElement.class);
-
-    MetaRegistry.bindDataToElement(DomUtil.getFile(element).getDocument(), new XmlNSDescriptorImpl());
 
     final MyElement child = element.addChildElement();
     child.getAttr().setValue("239");
@@ -71,7 +68,6 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
             element.acceptChildren(this);
           }
         });
-
       }
     }).assertTiming();
   }
@@ -132,6 +128,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
   public interface MyNamespacedElement extends DomElement {
 
   }
+
   public interface MyChildElement extends DomElement {
     @Attribute
     @Required
@@ -175,7 +172,6 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
     @SubTagsList(value = {"child-element", "abstract-element"}, tagName = "abstract-element")
     MyBarConcreteElement addBarComposite();
-
   }
 
   public interface MyAbstractElement extends MyElement {
@@ -186,6 +182,4 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
   public interface MyBarConcreteElement extends MyAbstractElement {
   }
-
-
 }

@@ -20,7 +20,6 @@ import com.jetbrains.python.buildout.config.lexer._BuildoutCfgFlexLexer;
 import junit.framework.TestCase;
 
 import java.io.IOException;
-import java.io.Reader;
 
 /**
  * @author traff
@@ -106,7 +105,7 @@ public class BuildoutCfgLexerTest extends TestCase {
   }
 
   public static _BuildoutCfgFlexLexer createLexer(String text) {
-    _BuildoutCfgFlexLexer lexer = new _BuildoutCfgFlexLexer((Reader)null);
+    _BuildoutCfgFlexLexer lexer = new _BuildoutCfgFlexLexer(null);
     lexer.reset(text, 0, text.length(), _BuildoutCfgFlexLexer.YYINITIAL);
     return lexer;
   }

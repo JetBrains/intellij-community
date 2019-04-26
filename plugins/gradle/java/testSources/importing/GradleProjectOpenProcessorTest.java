@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -17,7 +18,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -25,10 +25,13 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.testFramework.EdtTestUtilKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
@@ -46,7 +49,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
  * @author Vladislav.Soroka
  */
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
-
   private final List<Sdk> removedSdks = new SmartList<>();
 
   /**
@@ -76,13 +78,16 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     try {
       WriteAction.runAndWait(() -> {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
-              .filter(sdk -> !GRADLE_JDK_NAME.equals(sdk.getName()))
-              .forEach(ProjectJdkTable.getInstance()::removeJdk);
+          .filter(sdk -> !GRADLE_JDK_NAME.equals(sdk.getName()))
+          .forEach(ProjectJdkTable.getInstance()::removeJdk);
         for (Sdk sdk : removedSdks) {
           SdkConfigurationUtil.addSdk(sdk);
         }
         removedSdks.clear();
       });
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -161,6 +166,36 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
       assert semaphore.waitFor(TimeUnit.SECONDS.toMillis(10));
       assertTrue("The module has not been linked",
                  ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, getModule(fooProject, "foo")));
+    }
+    finally {
+      edt(() -> closeProject(fooProject));
+    }
+    assertFalse(fooProject.isOpen());
+    assertTrue(fooProject.isDisposed());
+  }
+
+  @Test
+  public void testDefaultGradleSettings() throws IOException {
+    VirtualFile foo = createProjectSubDir("foo");
+    createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
+    createProjectSubFile("foo/settings.gradle", "");
+    Project fooProject = executeOnEdt(() -> ProjectUtil.openOrImport(foo.getPath(), null, true));
+
+    try {
+      assertTrue(fooProject.isOpen());
+      edt(() -> UIUtil.dispatchAllInvocationEvents());
+      assertTrue("The module has not been linked",
+                 ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, getModule(fooProject, "foo")));
+      assertTrue(ExternalStorageConfigurationManager.getInstance(fooProject).isEnabled());
+      GradleProjectSettings fooSettings = GradleSettings.getInstance(fooProject).getLinkedProjectSettings(foo.getPath());
+      assertTrue(fooSettings.isResolveModulePerSourceSet());
+      assertFalse(fooSettings.isResolveExternalAnnotations());
+      assertEquals(ThreeState.YES, fooSettings.getStoreProjectFilesExternally());
+      assertEquals(ThreeState.UNSURE, fooSettings.getDelegatedBuild());
+      assertNull(fooSettings.getTestRunner());
+      assertFalse(fooSettings.isUseAutoImport());
+      assertFalse(fooSettings.isCreateEmptyContentRootDirectories());
+      assertTrue(fooSettings.isUseQualifiedModuleNames());
     }
     finally {
       edt(() -> closeProject(fooProject));
@@ -251,8 +286,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
   private static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
-      ProjectManager.getInstance().closeProject(project);
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
   }
 }

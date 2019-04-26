@@ -25,7 +25,6 @@ import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
       descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.annotations.color.n", i + 1), colorKeys.get(i), ColorDescriptor.Kind.BACKGROUND));
     }
 
-    return ArrayUtil.toObjectArray(descriptors, ColorDescriptor.class);
+    return descriptors.toArray(ColorDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull

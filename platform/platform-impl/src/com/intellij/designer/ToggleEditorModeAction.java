@@ -31,7 +31,8 @@ public abstract class ToggleEditorModeAction extends ToggleAction {
   private final ToolWindowAnchor myAnchor;
 
   public ToggleEditorModeAction(LightToolWindowManager manager, Project project, ToolWindowAnchor anchor) {
-    super(StringUtil.capitalize(anchor.toString()), "Pin/unpin tool window to " + anchor + " side UI Designer Editor", null);
+    super(anchor != null ? StringUtil.capitalize(anchor.toString()) : "None",
+          anchor != null ? "Pin tool window to " + anchor + " side UI Designer Editor" : "Unpin tool window from Designer Editor", null);
     myManager = manager;
     myProject = project;
     myAnchor = anchor;

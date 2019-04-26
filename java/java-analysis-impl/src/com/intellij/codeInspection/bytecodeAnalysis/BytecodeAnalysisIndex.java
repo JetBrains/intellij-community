@@ -3,14 +3,8 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.gist.GistManager;
-import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -25,7 +19,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.*;
-import java.util.function.BinaryOperator;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
@@ -33,18 +26,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
-  private static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
-  private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
-
-  private static final int VERSION = 11; // change when inference algorithm changes
-  private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
-  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
-
-  private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
-    "BytecodeAnalysisIndex", FINAL_VERSION, new EquationsExternalizer(), new ClassDataIndexer());
-  // Hash collision is possible: resolve it just flushing all the equations for colliding methods (unless equations are the same)
-  static final BinaryOperator<Equations> MERGER =
-    (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
+  static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
   @NotNull
   @Override
@@ -98,7 +80,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   @NotNull
   @Override
   public KeyDescriptor<HMember> getKeyDescriptor() {
-    return KEY_DESCRIPTOR;
+    return HKeyDescriptor.INSTANCE;
   }
 
   @Override
@@ -122,17 +104,11 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     return 10;
   }
 
-  @NotNull
-  static List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
-    Project project = ProjectManager.getInstance().getDefaultProject(); // the data is project-independent
-    return ContainerUtil.mapNotNull(FileBasedIndex.getInstance().getContainingFiles(NAME, key, scope),
-                                    file -> ourGist.getFileData(project, file).get(key));
-  }
-
   /**
    * Externalizer for primary method keys.
    */
   private static class HKeyDescriptor implements KeyDescriptor<HMember>, DifferentSerializableBytesImplyNonEqualityPolicy {
+    static final HKeyDescriptor INSTANCE = new HKeyDescriptor();
 
     @Override
     public void save(@NotNull DataOutput out, HMember value) throws IOException {
@@ -164,15 +140,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     @Override
     public void save(@NotNull DataOutput out, Map<HMember, Equations> value) throws IOException {
       DataInputOutputUtilRt.writeSeq(out, value.entrySet(), entry -> {
-        KEY_DESCRIPTOR.save(out, entry.getKey());
+        HKeyDescriptor.INSTANCE.save(out, entry.getKey());
         saveEquations(out, entry.getValue());
       });
     }
 
     @Override
     public Map<HMember, Equations> read(@NotNull DataInput in) throws IOException {
-      return StreamEx.of(DataInputOutputUtilRt.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in)))).
-        toMap(p -> p.getFirst(), p -> p.getSecond(), MERGER);
+      return StreamEx.of(DataInputOutputUtilRt.readSeq(in, () -> Pair.create(HKeyDescriptor.INSTANCE.read(in), readEquations(in)))).
+        toMap(p -> p.getFirst(), p -> p.getSecond(), ClassDataIndexer.MERGER);
     }
 
     private static void saveEquations(@NotNull DataOutput out, Equations eqs) throws IOException {

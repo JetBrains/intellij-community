@@ -20,18 +20,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.HighlightUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class MakeCallChainIntoCallSequenceIntention extends Intention {
 
@@ -45,8 +49,16 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   public void processIntention(@NotNull PsiElement element) {
     final List<String> callTexts = new ArrayList<>();
     PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
+    if (call == null) return;
+    call = RefactoringUtil.ensureCodeBlock(call);
+    if (call == null) return;
+    final PsiStatement appendStatement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(call, false), PsiStatement.class);
+    if (appendStatement == null) return;
+    PsiExpression toReplace = call;
     PsiExpression root = MethodCallChainPredicate.getCallChainRoot(call);
     if (root == null) return;
+    PsiType callType = call.getType();
+    if (callType == null) return;
     CommentTracker tracker = new CommentTracker();
     while (call != null && call != root) {
       callTexts.add(call.getMethodExpression().getReferenceName() + tracker.text(call.getArgumentList()));
@@ -54,126 +66,114 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     }
     final PsiType rootType = root.getType();
     if (rootType == null) return;
-    final String targetText;
-    final PsiStatement appendStatement;
-    @NonNls final String firstStatement;
-    final String variableDeclaration;
-    final boolean showRenameTemplate;
-    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
-    if (parent instanceof PsiExpressionStatement) {
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(toReplace.getParent());
+    
+    // By default we introduce new variable and assign it to builder 
+    String targetText = "x";
+    boolean introduceVariable = true;
+    boolean keepLastStatement = true;
+    final String variableText = rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
+    @NonNls String firstStatement = (JavaCodeStyleSettings.getInstance(toReplace.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "") 
+                                    + variableText;
+    // In some cases we can omit new variable reusing the existing one instead
+    if (isSimpleReference(root)) {
       targetText = root.getText();
-      appendStatement = (PsiStatement)parent;
       firstStatement = null;
-      variableDeclaration = null;
-      showRenameTemplate = false;
+      introduceVariable = false;
     }
-    else {
-      final PsiElement grandParent = parent.getParent();
-      appendStatement = (PsiStatement)grandParent;
-      if (parent instanceof PsiAssignmentExpression && grandParent instanceof PsiExpressionStatement) {
-        final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
-        final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
-        if (!(lhs instanceof PsiReferenceExpression)) {
-          return;
-        }
+    else if (parent instanceof PsiAssignmentExpression && parent.getParent() instanceof PsiExpressionStatement &&
+             ((PsiAssignmentExpression)parent).getOperationTokenType().equals(JavaTokenType.EQ)) {
+      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
+      if (lhs instanceof PsiReferenceExpression) {
         final PsiReferenceExpression expression = (PsiReferenceExpression)lhs;
         final PsiElement target = expression.resolve();
-        if (!(target instanceof PsiVariable)) {
-          return;
-        }
-        final PsiVariable variable = (PsiVariable)target;
-        final PsiType variableType = variable.getType();
-        if (variableType.equals(rootType)) {
-          targetText = tracker.text(lhs);
-          final PsiJavaToken token = assignment.getOperationSign();
-          firstStatement = targetText + token.getText() + root.getText() + ';';
-          showRenameTemplate = false;
-          variableDeclaration = null;
-        }
-        else {
-          targetText = "x";
-          showRenameTemplate = true;
-          final String firstAssignment = rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
-          firstStatement = (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "") +
-                           firstAssignment;
-          variableDeclaration = tracker.text(lhs) + '=';
-        }
-      }
-      else {
-        final PsiDeclarationStatement declaration = (PsiDeclarationStatement)appendStatement;
-        final PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
-        final PsiType variableType = variable.getType();
-        if (variableType.equals(rootType)) {
-          targetText = variable.getName();
-          if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-            firstStatement = "final " + variableType.getCanonicalText() + ' ' + variable.getName() + '=' + root.getText() + ';';
-          }
-          else {
-            firstStatement = variableType.getCanonicalText() + ' ' + variable.getName() + '=' + root.getText() + ';';
-          }
-          variableDeclaration = null;
-          showRenameTemplate = false;
-        }
-        else {
-          if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-            variableDeclaration = "final " + variableType.getCanonicalText() + ' ' + variable.getName() + '=';
-          }
-          else {
-            variableDeclaration = variableType.getCanonicalText() + ' ' + variable.getName() + '=';
-          }
-          targetText = "x";
-          showRenameTemplate = true;
-          if (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS) {
-            firstStatement = "final " + rootType.getCanonicalText() + " x=" + root.getText() + ';';
-          }
-          else {
-            firstStatement = rootType.getCanonicalText() + " x=" + root.getText() + ';';
+        if (target instanceof PsiVariable) {
+          final PsiVariable variable = (PsiVariable)target;
+          final PsiType variableType = variable.getType();
+          if (variableType.equals(rootType)) {
+            targetText = tracker.text(lhs);
+            firstStatement = targetText + '=' + root.getText() + ';';
+            keepLastStatement = introduceVariable = false;
           }
         }
       }
     }
+    else if (parent instanceof PsiLocalVariable) {
+      final PsiLocalVariable variable = (PsiLocalVariable)parent;
+      final PsiType variableType = variable.getType();
+      if (variableType.equals(rootType)) {
+        targetText = variable.getName();
+        PsiLocalVariable varCopy = (PsiLocalVariable)variable.copy();
+        varCopy.setInitializer(root);
+        firstStatement = varCopy.getText();
+        keepLastStatement = introduceVariable = false;
+      }
+    }
+    if (parent instanceof PsiExpressionStatement) {
+      keepLastStatement = false;
+    }
+    if (keepLastStatement && !callType.equals(rootType)) {
+      callTexts.remove(0);
+      toReplace = Objects.requireNonNull(((PsiMethodCallExpression)toReplace).getMethodExpression().getQualifierExpression());
+    }
+    String replacementBlock = generateReplacementBlock(callTexts, targetText, firstStatement);
+    final PsiElement appendStatementParent = appendStatement.getParent();
+    PsiVariable variable = appendStatements(appendStatement, tracker, introduceVariable, replacementBlock);
+    if (keepLastStatement) {
+      tracker.replaceAndRestoreComments(toReplace, targetText);
+    } else {
+      tracker.deleteAndRestoreComments(appendStatement);
+    }
+    if (variable != null) {
+      HighlightUtil.showRenameTemplate(appendStatementParent, variable);
+    }
+  }
+
+  @Nullable
+  private static PsiVariable appendStatements(PsiStatement anchor,
+                                              CommentTracker tracker,
+                                              boolean introduceVariable,
+                                              String replacementBlock) {
+    PsiElement parent = anchor.getParent();
+    Project project = anchor.getProject();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    PsiBlockStatement codeBlock = (PsiBlockStatement)factory.createStatementFromText(replacementBlock, anchor);
+    PsiStatement[] statements = codeBlock.getCodeBlock().getStatements();
+    PsiVariable variable = null;
+    for (int i = 0, length = statements.length; i < length; i++) {
+      final PsiElement insertedStatement = parent.addBefore(tracker.markUnchanged(statements[i]), anchor);
+      if (i == 0 && introduceVariable) {
+        variable = (PsiVariable)((PsiDeclarationStatement)insertedStatement).getDeclaredElements()[0];
+      }
+      codeStyleManager.reformat(insertedStatement);
+    }
+    return variable;
+  }
+
+  @NotNull
+  private static String generateReplacementBlock(List<String> calls, String target, String firstStatement) {
     final StringBuilder builder = new StringBuilder("{\n");
     if (firstStatement != null) {
       builder.append(firstStatement);
     }
-    Collections.reverse(callTexts);
-    for (int i = 0, size = callTexts.size(); i < size; i++) {
-      final String callText = callTexts.get(i);
-      if (i == size - 1 && variableDeclaration != null) {
-        builder.append(variableDeclaration);
-      }
-      builder.append(targetText).append('.').append(callText).append(";\n");
+    Collections.reverse(calls);
+    for (final String callText : calls) {
+      builder.append(target).append('.').append(callText).append(";\n");
     }
     builder.append('}');
-    final PsiManager manager = element.getManager();
-    final Project project = manager.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiElement appendStatementParent = appendStatement.getParent();
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
-    PsiBlockStatement codeBlock = (PsiBlockStatement)factory.createStatementFromText(builder.toString(), appendStatement);
-    if (appendStatementParent instanceof PsiLoopStatement || appendStatementParent instanceof PsiIfStatement) {
-      PsiElement insertedCodeBlock = tracker.replaceAndRestoreComments(appendStatement, codeBlock);
-      PsiBlockStatement reformattedCodeBlock = (PsiBlockStatement)codeStyleManager.reformat(insertedCodeBlock);
-      if (showRenameTemplate) {
-        PsiStatement[] statements = reformattedCodeBlock.getCodeBlock().getStatements();
-        PsiVariable variable = (PsiVariable)((PsiDeclarationStatement)statements[0]).getDeclaredElements()[0];
-        HighlightUtil.showRenameTemplate(appendStatementParent, variable);
-      }
+    return builder.toString();
+  }
+
+  @Contract("null -> false")
+  private static boolean isSimpleReference(PsiExpression expression) {
+    if (!(expression instanceof PsiReferenceExpression)) return false;
+    PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+    PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) {
+      if (!(qualifier instanceof PsiQualifiedExpression) || ((PsiQualifiedExpression)qualifier).getQualifier() != null) return false; 
     }
-    else {
-      PsiStatement[] statements = codeBlock.getCodeBlock().getStatements();
-      PsiVariable variable = null;
-      for (int i = 0, length = statements.length; i < length; i++) {
-        final PsiElement insertedStatement = appendStatementParent.addBefore(tracker.markUnchanged(statements[i]), appendStatement);
-        if (i == 0 && showRenameTemplate) {
-          variable = (PsiVariable)((PsiDeclarationStatement)insertedStatement).getDeclaredElements()[0];
-        }
-        codeStyleManager.reformat(insertedStatement);
-      }
-      tracker.deleteAndRestoreComments(appendStatement);
-      if (variable != null) {
-        HighlightUtil.showRenameTemplate(appendStatementParent, variable);
-      }
-    }
+    return ref.resolve() instanceof PsiVariable;
   }
 }

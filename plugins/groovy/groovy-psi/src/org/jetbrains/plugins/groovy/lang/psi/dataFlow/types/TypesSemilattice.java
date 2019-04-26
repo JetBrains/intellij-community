@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
@@ -38,12 +24,22 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     myManager = manager;
   }
 
+  @Override
+  @NotNull
+  public TypeDfaState initial() {
+    return new TypeDfaState();
+  }
+
   @NotNull
   @Override
   public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
     if (ins.isEmpty()) return new TypeDfaState();
 
     TypeDfaState result = new TypeDfaState(ins.get(0));
+    if (ins.size() == 1) {
+      return result;
+    }
+
     for (int i = 1; i < ins.size(); i++) {
       result.joinState(ins.get(i), myManager);
     }
@@ -57,7 +53,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 }
 
 class TypeDfaState {
-  private final Map<String, DFAType> myVarTypes;
+  private final Map<VariableDescriptor, DFAType> myVarTypes;
 
   TypeDfaState() {
     myVarTypes = ContainerUtil.newHashMap();
@@ -65,6 +61,10 @@ class TypeDfaState {
 
   TypeDfaState(TypeDfaState another) {
     myVarTypes = ContainerUtil.newHashMap(another.myVarTypes);
+  }
+
+  Map<VariableDescriptor, DFAType> getVarTypes() {
+    return myVarTypes;
   }
 
   TypeDfaState mergeWith(TypeDfaState another) {
@@ -77,16 +77,16 @@ class TypeDfaState {
   }
 
   void joinState(TypeDfaState another, PsiManager manager) {
-    for (Map.Entry<String, DFAType> entry : another.myVarTypes.entrySet()) {
-      final String name = entry.getKey();
+    for (Map.Entry<VariableDescriptor, DFAType> entry : another.myVarTypes.entrySet()) {
+      final VariableDescriptor descriptor = entry.getKey();
       final DFAType t1 = entry.getValue();
-      if (myVarTypes.containsKey(name)) {
-        final DFAType t2 = myVarTypes.get(name);
+      if (myVarTypes.containsKey(descriptor)) {
+        final DFAType t2 = myVarTypes.get(descriptor);
         if (t1 != null && t2 != null) {
-          myVarTypes.put(name, DFAType.create(t1, t2, manager));
+          myVarTypes.put(descriptor, DFAType.create(t1, t2, manager));
         }
         else {
-          myVarTypes.put(name, null);
+          myVarTypes.put(descriptor, null);
         }
       }
     }
@@ -97,33 +97,35 @@ class TypeDfaState {
   }
 
   @Nullable
-  DFAType getVariableType(String variableName) {
-    return myVarTypes.get(variableName);
+  DFAType getVariableType(VariableDescriptor descriptor) {
+    return myVarTypes.get(descriptor);
   }
 
-  Map<String, PsiType> getBindings(Instruction instruction) {
-    HashMap<String,PsiType> map = ContainerUtil.newHashMap();
-    for (Map.Entry<String, DFAType> entry : myVarTypes.entrySet()) {
-      DFAType value = entry.getValue();
-      map.put(entry.getKey(), value == null ? null : value.negate(instruction).getResultType());
-    }
-    return map;
+  @Contract("_ -> new")
+  @NotNull
+  DFAType getOrCreateVariableType(VariableDescriptor descriptor) {
+    DFAType result = getVariableType(descriptor);
+    return result == null ? DFAType.create(null) : result.copy();
   }
 
-  void putType(String variableName, @Nullable DFAType type) {
-    myVarTypes.put(variableName, type);
+  Map<VariableDescriptor, DFAType> getBindings() {
+    return new HashMap<>(myVarTypes);
+  }
+
+  void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
+    myVarTypes.put(descriptor, type);
   }
 
   @Override
   public String toString() {
-    return "TypeDfaState{" + myVarTypes + '}';
+    return myVarTypes.toString();
   }
 
-  public boolean containsVariable(@NotNull String variableName) {
-    return myVarTypes.containsKey(variableName);
+  public boolean containsVariable(@NotNull VariableDescriptor descriptor) {
+    return myVarTypes.containsKey(descriptor);
   }
 
-  public void removeBinding(String variableName) {
-    myVarTypes.remove(variableName);
+  public void removeBinding(VariableDescriptor descriptor) {
+    myVarTypes.remove(descriptor);
   }
 }

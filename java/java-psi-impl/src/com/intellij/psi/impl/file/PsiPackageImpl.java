@@ -45,6 +45,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -270,11 +271,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiClass[] allClasses = getCachedClassesByName(name, scope);
     if (allClasses.length == 0) return allClasses;
     if (allClasses.length == 1) {
-      return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses : PsiClass.EMPTY_ARRAY;
+      return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses.clone() : PsiClass.EMPTY_ARRAY;
     }
-    PsiClass[] array = ContainerUtil.findAllAsArray(allClasses, aClass -> PsiSearchScopeUtil.isInScope(scope, aClass));
-    Arrays.sort(array, PsiClassUtil.createScopeComparator(scope));
-    return array;
+    return StreamEx.of(allClasses)
+      .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass))
+      .sorted(PsiClassUtil.createScopeComparator(scope))
+      .toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -289,7 +291,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    GlobalSearchScope scope = PsiUtil.isInsideJavadocComment(place) ? allScope() : place.getResolveScope();
+    GlobalSearchScope scope = place.getResolveScope();
 
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
@@ -301,11 +303,21 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       if (providedName != null) {
-        final PsiClass[] classes = findClassByShortName(providedName, scope);
+        PsiClass[] classes = findClassByShortName(providedName, scope);
+        if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
+          //extend scope for javadoc references when no classes are found in the resolve scope:
+
+          //always replacing the scope works bad for the case when multiple classes with the same FQName exist, because index return them in unpredictable order, 
+          //so class not accessible from `place` may be used instead of another accessible class
+          classes = findClassByShortName(providedName, allScope());
+        }
         if (!processClasses(processor, state, classes, Conditions.alwaysTrue())) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
+        if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
+          classes = getClasses(allScope());
+        }
         if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Conditions.alwaysTrue())) return false;
       }
     }

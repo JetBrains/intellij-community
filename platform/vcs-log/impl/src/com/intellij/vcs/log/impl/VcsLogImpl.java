@@ -63,7 +63,7 @@ public class VcsLogImpl implements VcsLog {
   }
 
   @Override
-  public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer) {
+  public void requestSelectedDetails(@NotNull Consumer<? super List<VcsFullCommitDetails>> consumer) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
     myLogData.getCommitDetailsGetter().loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer,
                                                        Consumer.EMPTY_CONSUMER, null);
@@ -108,7 +108,7 @@ public class VcsLogImpl implements VcsLog {
   }
 
   @NotNull
-  private <T> List<T> getSelectedDataFromTable(@NotNull BiFunction<GraphTableModel, Integer, T> dataGetter) {
+  private <T> List<T> getSelectedDataFromTable(@NotNull BiFunction<? super GraphTableModel, ? super Integer, ? extends T> dataGetter) {
     final int[] rows = myUi.getTable().getSelectedRows();
     return new AbstractList<T>() {
       @NotNull

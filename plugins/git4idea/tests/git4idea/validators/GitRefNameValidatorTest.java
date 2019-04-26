@@ -85,10 +85,7 @@ public class GitRefNameValidatorTest {
   }
 
   public static Object[][] createInvalidControlCharsData() {
-    return populateWithIllegalChars(CONTROL_CHARS, s -> {
-      Character c = s.charAt(0);
-      return "\\u00" + Integer.toHexString(c);
-    });
+    return populateWithIllegalChars(CONTROL_CHARS, s -> "\\u00" + Integer.toHexString(s.charAt(0)));
   }
 
   private static Object[][] populateWithIllegalChars(String[] illegalChars, Function<String, String> toString) {

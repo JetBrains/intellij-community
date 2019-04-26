@@ -41,7 +41,7 @@ public class PropertiesFileStructureViewComponent extends PropertiesGroupingStru
       return myPropertiesFile.getVirtualFile();
     }
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return myPropertiesFile;
+      return myPropertiesFile.getContainingFile();
     }
     return super.getData(dataId);
   }

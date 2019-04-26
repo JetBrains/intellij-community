@@ -13,11 +13,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.action.HgCompareWithBranchAction;
-import org.zmlx.hg4idea.log.HgCommit;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -42,9 +42,7 @@ public class HgBranchWorker {
                       @NotNull final HgRepository selectedRepository) {
     try {
       final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository);
-      });
+      ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
     }
     catch (VcsException e) {
       VcsNotifier.getInstance(myProject).notifyError("Can't Compare with Branch", e.getMessage());
@@ -81,8 +79,8 @@ public class HgBranchWorker {
   private CommitCompareInfo loadCommitsToCompare(List<HgRepository> repositories, String branchName) throws VcsException {
     CommitCompareInfo compareInfo = new CommitCompareInfo();
     for (HgRepository repository : repositories) {
-      List<HgCommit> headToBranch = loadCommitsBetween(repository, CURRENT_REVISION, branchName);
-      List<HgCommit> branchToHead = loadCommitsBetween(repository, branchName, CURRENT_REVISION);
+      List<VcsFullCommitDetails> headToBranch = loadCommitsBetween(repository, CURRENT_REVISION, branchName);
+      List<VcsFullCommitDetails> branchToHead = loadCommitsBetween(repository, branchName, CURRENT_REVISION);
       compareInfo.put(repository, headToBranch, branchToHead);
       compareInfo.putTotalDiff(repository, loadTotalDiff(repository, branchName));
     }
@@ -90,7 +88,7 @@ public class HgBranchWorker {
   }
 
   @NotNull
-  private List<HgCommit> loadCommitsBetween(HgRepository repository, String fromRev, String toRev) throws VcsException {
+  private List<VcsFullCommitDetails> loadCommitsBetween(HgRepository repository, String fromRev, String toRev) throws VcsException {
     List<String> parameters = Arrays.asList("-r", "reverse(\"" + toRev + "\"%\"" + fromRev + "\")");
     return HgHistoryUtil.history(myProject, repository.getRoot(), -1, parameters, true);
   }

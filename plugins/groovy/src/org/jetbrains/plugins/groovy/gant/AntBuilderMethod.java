@@ -6,13 +6,13 @@ import com.intellij.lang.ant.dom.AntDomExtender;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import icons.JetgroovyIcons;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 
@@ -30,8 +30,8 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
     myPlace = place;
     myAntClass = antClass;
     setModifiers(PsiModifier.PUBLIC);
-    addParameter("args", GrMapType.create(place.getResolveScope()));
-    setBaseIcon(JetgroovyIcons.Groovy.Ant_task);
+    addParameter("args", GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP);
+    setBaseIcon(AntIcons.Task);
     addParameter(new GrLightParameter("singleArg", stringType, this).setOptional(true));
     addParameter(new GrLightParameter("body", closureType, this).setOptional(true));
     setMethodReturnType(() -> PsiType.getJavaLangObject(getManager(), getResolveScope()));

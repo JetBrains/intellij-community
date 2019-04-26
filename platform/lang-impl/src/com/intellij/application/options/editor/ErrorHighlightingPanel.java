@@ -3,11 +3,9 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider;
-import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -19,11 +17,9 @@ public class ErrorHighlightingPanel {
   private JPanel myPanel;
   private JPanel myErrorsPanel;
   private JCheckBox myNextErrorGoesToErrorsFirst;
-  private final List<ErrorOptionsProvider> myExtensions;
 
-  public ErrorHighlightingPanel() {
-    myExtensions = ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME);
-    for (ErrorOptionsProvider optionsProvider : myExtensions) {
+  public ErrorHighlightingPanel(@NotNull final List<ErrorOptionsProvider> configurables) {
+    for (ErrorOptionsProvider optionsProvider : configurables) {
       myErrorsPanel.add(optionsProvider.createComponent());
     }
   }
@@ -34,26 +30,13 @@ public class ErrorHighlightingPanel {
 
     myMarkMinHeight.setText(Integer.toString(settings.getErrorStripeMarkMinHeight()));
     myNextErrorGoesToErrorsFirst.setSelected(settings.isNextErrorActionGoesToErrorsFirst());
-
-    for (ErrorOptionsProvider optionsProvider : myExtensions) {
-      optionsProvider.reset();
-    }
   }
 
   public void apply() throws ConfigurationException {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-
     settings.setAutoReparseDelay(getAutoReparseDelay());
-
     settings.setErrorStripeMarkMinHeight(getErrorStripeMarkMinHeight());
-
     settings.setNextErrorActionGoesToErrorsFirst(myNextErrorGoesToErrorsFirst.isSelected());
-
-
-    for (ErrorOptionsProvider optionsProvider : myExtensions) {
-      optionsProvider.apply();
-    }
-    UISettings.getInstance().fireUISettingsChanged();
   }
 
   public JPanel getPanel(){
@@ -67,21 +50,9 @@ public class ErrorHighlightingPanel {
   public boolean isModified() {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     boolean isModified = settings.getAutoReparseDelay() != getAutoReparseDelay();
-
     isModified |= getErrorStripeMarkMinHeight() != settings.getErrorStripeMarkMinHeight();
     isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.isNextErrorActionGoesToErrorsFirst();
-    for (ErrorOptionsProvider optionsProvider : myExtensions) {
-      isModified |= optionsProvider.isModified();
-    }
-    if (isModified) return true;
-    return false;
-  }
-
-
-  public void disposeUIResources() {
-    for (ErrorOptionsProvider optionsProvider : myExtensions) {
-      optionsProvider.disposeUIResources();
-    }
+    return isModified;
   }
 
   private int getAutoReparseDelay() {

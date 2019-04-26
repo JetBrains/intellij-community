@@ -380,13 +380,14 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private class EditedSdkModificator implements SdkModificator {
+    @NotNull
     @Override
     public String getName() {
       return mySdk.getName();
     }
 
     @Override
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
       ((ProjectJdkImpl)mySdk).setName(name);
     }
 

@@ -55,7 +55,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
   @NotNull
   @Override
   public Icon getScriptIcon() {
-    return GradleIcons.Gradle;
+    return GradleIcons.GradleFile;
   }
 
   @Override

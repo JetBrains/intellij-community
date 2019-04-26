@@ -21,7 +21,8 @@ public final class SimpleTextAttributes {
 
   @MagicConstant(flags = {
     STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE,
-    STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE, STYLE_CLICKABLE})
+    STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE,
+    STYLE_CLICKABLE, STYLE_HOVERED})
   public @interface StyleAttributeConstant { }
 
   public static final int STYLE_PLAIN = Font.PLAIN;
@@ -36,6 +37,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_SMALLER = STYLE_SEARCH_MATCH << 1;
   public static final int STYLE_OPAQUE = STYLE_SMALLER << 1;
   public static final int STYLE_CLICKABLE = STYLE_OPAQUE << 1;
+  public static final int STYLE_HOVERED = STYLE_CLICKABLE << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
@@ -51,6 +53,7 @@ public final class SimpleTextAttributes {
 
   public static final SimpleTextAttributes GRAY_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, Color.GRAY);
   public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
+  public static final SimpleTextAttributes GRAY_SMALL_ATTRIBUTES = new SimpleTextAttributes(STYLE_SMALLER, Color.GRAY);
 
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
   public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, new JBColor(Gray._0, Gray._187));
@@ -82,7 +85,7 @@ public final class SimpleTextAttributes {
     this(null, fgColor, waveColor, style);
   }
 
-  public SimpleTextAttributes(@Nullable final Color bgColor, final Color fgColor, @Nullable final Color waveColor, @StyleAttributeConstant int style) {
+  public SimpleTextAttributes(@Nullable Color bgColor, Color fgColor, @Nullable Color waveColor, @StyleAttributeConstant int style) {
     if ((~(STYLE_PLAIN |
            STYLE_BOLD |
            STYLE_ITALIC |
@@ -93,7 +96,8 @@ public final class SimpleTextAttributes {
            STYLE_SEARCH_MATCH |
            STYLE_SMALLER |
            STYLE_OPAQUE |
-           STYLE_CLICKABLE) & style) != 0) {
+           STYLE_CLICKABLE |
+           STYLE_HOVERED) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -169,6 +173,10 @@ public final class SimpleTextAttributes {
 
   public boolean isClickable() {
     return BitUtil.isSet(myStyle, STYLE_CLICKABLE);
+  }
+
+  public boolean isHovered() {
+    return BitUtil.isSet(myStyle, STYLE_HOVERED);
   }
 
   @NotNull

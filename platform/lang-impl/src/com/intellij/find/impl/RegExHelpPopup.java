@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
 /**
@@ -51,7 +50,7 @@ public class RegExHelpPopup extends JPanel {
 
     myEditorPane = new JEditorPane();
     myEditorPane.setEditable(false);
-    myEditorPane.setEditorKit(new HTMLEditorKit());
+    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
     myEditorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     myEditorPane.setBackground(HintUtil.getInformationColor());
 
@@ -322,7 +321,9 @@ public class RegExHelpPopup extends JPanel {
                          "     <td headers=\"matches\"><i>X</i>, as an independent, non-capturing group</td></tr> \n" +
                          " \n" +
                          " </table> \n" +
-                         " <p>More on Regular Expressions: <a href=\"http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/Pattern.html\">Full Java Regular Expressions syntax description</a>, <a href=\"http://www.regular-expressions.info/java.html\">Using Regular Expressions in Java</a>." +
+                         " <p>More on Regular Expressions: " +
+                         "<a href=\"http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/Pattern.html\">Full Java Regular Expressions syntax description</a>, " +
+                         "<a href=\"http://www.regular-expressions.info/java.html\">Using Regular Expressions in Java</a>." +
                          " </html>");
 
 
@@ -342,8 +343,8 @@ public class RegExHelpPopup extends JPanel {
   }
 
   @NotNull
-  public static LinkLabel createRegExLink(@NotNull String title, @Nullable final Component owner, @Nullable final Logger logger) {
-    final Runnable action = createRegExLinkRunnable(owner, logger);
+  public static LinkLabel createRegExLink(@NotNull String title, @Nullable Component owner, @Nullable Logger logger) {
+    Runnable action = createRegExLinkRunnable(owner);
     return new LinkLabel<>(title, null, new LinkListener<Object>() {
 
       @Override
@@ -354,33 +355,38 @@ public class RegExHelpPopup extends JPanel {
   }
 
   @NotNull
-  public static Runnable createRegExLinkRunnable(@Nullable final Component owner, @Nullable final Logger logger) {
+  public static Runnable createRegExLinkRunnable(@Nullable Component owner) {
     return new Runnable() {
       JBPopup helpPopup;
 
       @Override
       public void run() {
-          if (helpPopup != null && !helpPopup.isDisposed() && helpPopup.isVisible()) {
-            return;
-          }
+        if (helpPopup != null && !helpPopup.isDisposed() && helpPopup.isVisible()) {
+          return;
+        }
         RegExHelpPopup content = new RegExHelpPopup();
-        final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(content, content);
-          helpPopup = builder.setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(true).setFocusable(true).setRequestFocus(true)
-            .setMovable(true).setResizable(true)
-            .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
-            .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
-          Disposer.register(helpPopup, new Disposable() {
-            @Override
-            public void dispose() {
-              destroyPopup();
-            }
-          });
-          if (owner != null) {
-            helpPopup.showInCenterOf(owner);
+        ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(content, content);
+        helpPopup = builder
+          .setCancelOnClickOutside(false)
+          .setBelongsToGlobalPopupStack(true)
+          .setFocusable(true)
+          .setRequestFocus(true)
+          .setMovable(true)
+          .setResizable(true)
+          .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
+          .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
+        Disposer.register(helpPopup, new Disposable() {
+          @Override
+          public void dispose() {
+            destroyPopup();
           }
-          else {
-            helpPopup.showInFocusCenter();
-          }
+        });
+        if (owner != null) {
+          helpPopup.showInCenterOf(owner);
+        }
+        else {
+          helpPopup.showInFocusCenter();
+        }
       }
 
       private void destroyPopup() {

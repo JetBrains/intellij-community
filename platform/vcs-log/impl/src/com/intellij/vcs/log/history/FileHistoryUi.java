@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.FilePath;
@@ -10,7 +9,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,8 +35,6 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -56,9 +52,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
-  @Nullable private final FileHistoryDiffPreview myDiffPreview;
-  @Nullable private final OnePixelSplitter myDiffPreviewSplitter;
-  @NotNull private final JComponent myMainComponent;
   @NotNull private final Set<String> myHighlighterIds;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
   @NotNull private final History myHistory;
@@ -81,27 +74,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
-
-    if (!myPath.isDirectory()) {
-      myDiffPreview = new FileHistoryDiffPreview(myProject, () -> getSelectedChange(), this);
-      ListSelectionListener selectionListener = e -> {
-        int[] selection = getTable().getSelectedRows();
-        ApplicationManager.getApplication()
-          .invokeLater(() -> myDiffPreview.updatePreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)),
-                       o -> !Arrays.equals(selection, getTable().getSelectedRows()));
-      };
-      getTable().getSelectionModel().addListSelectionListener(selectionListener);
-
-      myDiffPreviewSplitter = new OnePixelSplitter(false, "vcs.history.diff.splitter.proportion", 0.7f);
-      myDiffPreviewSplitter.setFirstComponent(myFileHistoryPanel);
-      showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
-      myMainComponent = myDiffPreviewSplitter;
-    }
-    else {
-      myDiffPreview = null;
-      myDiffPreviewSplitter = null;
-      myMainComponent = myFileHistoryPanel;
-    }
 
     myHighlighterIds = myRevision == null
                        ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
@@ -127,7 +99,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   public boolean hasDiffPreview() {
-    return myDiffPreview != null;
+    return myFileHistoryPanel.hasDiffPreview();
   }
 
   @Nullable
@@ -215,27 +187,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
   }
 
-  public void jumpToNearestCommit(@NotNull Hash hash) {
-    jumpTo(hash, (model, h) -> {
-      if (!myLogData.getStorage().containsCommit(new CommitId(h, myRoot))) return GraphTableModel.COMMIT_NOT_FOUND;
-      int commitIndex = myLogData.getCommitIndex(h, myRoot);
-      Integer rowIndex = myVisiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
-      if (rowIndex == null) {
-        rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
-      }
-      return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
-    }, SettableFuture.create());
-  }
-
   public boolean matches(@NotNull FilePath targetPath, @Nullable Hash targetRevision) {
     return myPath.equals(targetPath) && Objects.equals(myRevision, targetRevision);
-  }
-
-  private void showDiffPreview(boolean state) {
-    if (myDiffPreview != null) {
-      myDiffPreview.updatePreview(state);
-      myDiffPreviewSplitter.setSecondComponent(state ? myDiffPreview.getComponent() : null);
-    }
   }
 
   @NotNull
@@ -252,9 +205,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   protected void onVisiblePackUpdated(boolean permGraphChanged) {
     myFileHistoryPanel.updateDataPack(myVisiblePack, permGraphChanged);
-    if (myDiffPreview != null) {
-      myDiffPreview.updatePreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
-    }
   }
 
   @NotNull
@@ -266,7 +216,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull
   @Override
   public Component getMainComponent() {
-    return myMainComponent;
+    return myFileHistoryPanel;
   }
 
   @Nullable
@@ -313,7 +263,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
       }
       else if (CommonUiProperties.SHOW_DIFF_PREVIEW.equals(property)) {
-        showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+        myFileHistoryPanel.showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
       }
     }
   }

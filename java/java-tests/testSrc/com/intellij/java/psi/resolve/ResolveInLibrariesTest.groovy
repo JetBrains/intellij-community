@@ -20,18 +20,21 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.impl.JavaPsiFacadeEx
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.stubs.StubTreeLoader
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
@@ -262,4 +265,50 @@ class TestCase {
     assert specificOuter.canonicalText == 'pkg.ParameterizedTypes<java.lang.Number>'
   }
 
+  void "test extending inner types of parameterised classes in external jars"() {
+    def classesDir = myFixture.tempDirFixture.findOrCreateDir("classes")
+    PsiTestUtil.addLibrary(myModule, classesDir.path)
+    def libSrc = myFixture.addFileToProject("Child.java", """package p;
+class Parent<T> {
+
+    protected class InnerBase {
+        public final T t;
+
+        public InnerBase(T t) {
+            this.t = t;
+        }
+    }
+}
+
+public abstract class Child<T> extends Parent<T> {
+    public abstract void evaluate(InnerImpl market);
+
+    public final class InnerImpl extends InnerBase {
+        public InnerImpl(T t) {
+            super(t);
+        }
+    }
+}
+""").virtualFile
+    IdeaTestUtil.compileFile(VfsUtil.virtualToIoFile(libSrc), VfsUtil.virtualToIoFile(classesDir))
+    VfsUtil.markDirtyAndRefresh(false, true, true, classesDir)
+    
+    WriteAction.run { libSrc.delete() }
+
+    assert myFixture.findClass("p.Parent")
+    assert myFixture.findClass("p.Child")
+
+    myFixture.configureByText "p/a.java", """
+package p;
+
+class MyChild extends Child<String> {
+    @Override
+    public void evaluate(InnerImpl impl) {
+        String s = impl.<caret>t;
+    }
+}
+"""
+    myFixture.checkHighlighting()
+    assert (myFixture.getReferenceAtCaretPosition() as PsiReferenceExpression).type.equalsToText(String.name)
+  }
 }

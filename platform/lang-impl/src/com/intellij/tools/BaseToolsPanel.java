@@ -16,7 +16,6 @@
 
 package com.intellij.tools;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
@@ -81,32 +80,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
 
   protected BaseToolsPanel() {
     myTree = new CheckboxTree(
-      new CheckboxTree.CheckboxTreeCellRenderer() {
-        @Override
-        public void customizeRenderer(final JTree tree,
-                                      final Object value,
-                                      final boolean selected,
-                                      final boolean expanded,
-                                      final boolean leaf,
-                                      final int row,
-                                      final boolean hasFocus) {
-          if (!(value instanceof CheckedTreeNode)) return;
-          Object object = ((CheckedTreeNode)value).getUserObject();
-
-          if (object instanceof ToolsGroup) {
-            final String groupName = ((ToolsGroup)object).getName();
-            if (groupName != null) {
-              getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            }
-            else {
-              getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            }
-          }
-          else if (object instanceof Tool) {
-            getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          }
-        }
-      },
+      getTreeCellRenderer(),
       new CheckedTreeNode(null)) {
       @Override
       protected void onDoubleClick(final CheckedTreeNode node) {
@@ -141,9 +115,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         if (dlg.showAndGet()) {
           insertNewTool(dlg.getData(), true);
         }
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       }
     }).setRemoveAction(new AnActionButtonRunnable() {
       @Override
@@ -154,9 +126,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       @Override
       public void run(AnActionButton button) {
         editSelected();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       }
     }).setMoveUpAction(new AnActionButtonRunnable() {
       @Override
@@ -183,9 +153,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           if (dlg.showAndGet()) {
             insertNewTool(dlg.getData(), true);
           }
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
         }
       }
     }).createPanel(), BorderLayout.CENTER);
@@ -229,6 +197,38 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   }
 
   protected abstract BaseToolManager<T> getToolManager();
+
+  protected CheckboxTree.CheckboxTreeCellRenderer getTreeCellRenderer() {
+    return new MyCheckboxTreeCellRenderer();
+  }
+
+  protected static class MyCheckboxTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+    @Override
+    public void customizeRenderer(final JTree tree,
+                                  final Object value,
+                                  final boolean selected,
+                                  final boolean expanded,
+                                  final boolean leaf,
+                                  final int row,
+                                  final boolean hasFocus) {
+      if (!(value instanceof CheckedTreeNode)) return;
+      Object object = ((CheckedTreeNode)value).getUserObject();
+
+      if (object instanceof ToolsGroup) {
+        final String groupName = ((ToolsGroup)object).getName();
+        if (groupName != null) {
+          getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+        else {
+          getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+      }
+      else if (object instanceof Tool) {
+        getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+    }
+  }
+
 
   @NotNull
   private CheckedTreeNode insertNewGroup(@NotNull ToolsGroup<T> groupCopy) {
@@ -292,9 +292,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         TreePath path = new TreePath(node.getPath());
         myTree.getSelectionModel().setSelectionPath(path);
         myTree.expandPath(path);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       }
     }
   }
@@ -411,7 +409,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       int result = Messages.showYesNoDialog(
         this,
         ToolsBundle.message("tools.delete.confirmation"),
-        CommonBundle.getWarningTitle(),
+        "Delete Tool",
         Messages.getWarningIcon()
       );
       if (result != Messages.YES) {
@@ -431,9 +429,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         removeNodeFromParent(node);
       }
       update();
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
   }
 

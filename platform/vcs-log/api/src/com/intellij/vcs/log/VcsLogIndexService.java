@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 /**
  * Provides information about Vcs Log index features that are required for the plugin.
  */
+@Deprecated
 public interface VcsLogIndexService {
   ExtensionPointName<VcsLogIndexService> VCS_LOG_INDEX_SERVICE_EP = ExtensionPointName.create("com.intellij.vcsLogIndexService");
 

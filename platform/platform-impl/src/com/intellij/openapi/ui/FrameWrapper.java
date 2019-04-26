@@ -14,15 +14,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.GlobalMenuLinux;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -52,6 +48,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private String myTitle = "";
   private List<Image> myImages = null;
   private boolean myCloseOnEsc = false;
+  private BooleanGetter myOnCloseHandler;
   private Window myFrame;
   private final Map<String, Object> myDataMap = ContainerUtil.newHashMap();
   private Project myProject;
@@ -120,10 +117,17 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     if (frame instanceof JFrame) {
-      ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    } else {
-      ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     }
+    else {
+      ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    }
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        close();
+      }
+    });
 
     UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
 
@@ -172,6 +176,8 @@ public class FrameWrapper implements Disposable, DataProvider {
       loadFrameState();
     }
 
+    IdeMenuBar.bindAppMenuOfParent(frame, WindowManager.getInstance().getIdeFrame(myProject));
+
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
     myShown = true;
@@ -179,6 +185,13 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void close() {
+    if (myOnCloseHandler != null && !myOnCloseHandler.get()) return;
+
+    // if you remove this line problems will start happen on Mac OS X
+    // 2 projects opened, call Cmd+D on the second opened project and then Esc.
+    // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
+    // App is unusable until Cmd+Tab, Cmd+tab
+    FrameWrapper.this.myFrame.setVisible(false);
     Disposer.dispose(this);
   }
 
@@ -239,11 +252,6 @@ public class FrameWrapper implements Disposable, DataProvider {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (!PopupUtil.handleEscKeyEvent()) {
-          // if you remove this line problems will start happen on Mac OS X
-          // 2 projects opened, call Cmd+D on the second opened project and then Esc.
-          // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
-          // App is unusable until Cmd+Tab, Cmd+tab
-          FrameWrapper.this.myFrame.setVisible(false);
           close();
         }
       }
@@ -312,6 +320,10 @@ public class FrameWrapper implements Disposable, DataProvider {
     myImages = images;
   }
 
+  public void setOnCloseHandler(BooleanGetter onCloseHandler) {
+    myOnCloseHandler = onCloseHandler;
+  }
+
   protected void loadFrameState() {
     final Window frame = getFrame();
     if (myDimensionKey != null && !WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
@@ -352,7 +364,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfo.isMac || GlobalMenuLinux.isAvailable();
+      final boolean setMenuOnFrame = SystemInfo.isMac;
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
@@ -360,7 +372,6 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
-      setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
     @Override
@@ -451,7 +462,6 @@ public class FrameWrapper implements Disposable, DataProvider {
       setBackground(UIUtil.getPanelBackground());
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
-      setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
     @Override

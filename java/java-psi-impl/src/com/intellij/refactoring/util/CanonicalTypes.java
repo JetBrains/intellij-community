@@ -206,7 +206,7 @@ public class CanonicalTypes {
     private final Map<String, Type> mySubstitutor;
 
     private ClassType(@NotNull PsiType original, @NotNull String classQName, @NotNull Map<String, Type> substitutor) {
-      super(original.getAnnotationProvider());
+      super(TypeAnnotationProvider.Static.create(original.getAnnotations()));
       myPresentableText = original.getPresentableText();
       myClassQName = classQName;
       mySubstitutor = substitutor;

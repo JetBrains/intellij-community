@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.GeneralSettings;
@@ -36,6 +36,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -231,7 +232,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       String newName = "new_temp_file";
       VirtualFile copy = WriteAction.compute(() -> fileToCopy.copy(this, toVDir, newName));
       assertEquals(newName, copy.getName());
-      assertArrayEquals(copy.contentsToByteArray(), byteContent);
+      assertArrayEquals(byteContent, copy.contentsToByteArray());
     });
   }
 
@@ -326,19 +327,24 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileLength() throws IOException {
-    File file = FileUtil.createTempFile("test", "txt");
-    FileUtil.writeToFile(file, "hello");
-    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
-    assertNotNull(virtualFile);
-    String s = VfsUtilCore.loadText(virtualFile);
-    assertEquals("hello", s);
-    assertEquals(5, virtualFile.getLength());
+    File file = File.createTempFile("test", "txt");
+    try {
+      FileUtil.writeToFile(file, "hello");
+      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
+      assertNotNull(virtualFile);
+      String s = VfsUtilCore.loadText(virtualFile);
+      assertEquals("hello", s);
+      assertEquals(5, virtualFile.getLength());
 
-    FileUtil.writeToFile(file, "new content");
-    ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
-    s = VfsUtilCore.loadText(virtualFile);
-    assertEquals("new content", s);
-    assertEquals(11, virtualFile.getLength());
+      FileUtil.writeToFile(file, "new content");
+      ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
+      s = VfsUtilCore.loadText(virtualFile);
+      assertEquals("new content", s);
+      assertEquals(11, virtualFile.getLength());
+    }
+    finally {
+      FileUtil.delete(file);
+    }
   }
 
   @Test
@@ -346,7 +352,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     GeneralSettings settings = GeneralSettings.getInstance();
     boolean safeWrite = settings.isUseSafeWrite();
     SafeWriteRequestor requestor = new SafeWriteRequestor() { };
-    byte[] testData = "hello".getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] testData = "hello".getBytes(StandardCharsets.UTF_8);
 
     try {
       settings.setUseSafeWrite(false);
@@ -377,10 +383,10 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testWindowsHiddenDirectory() {
-    assumeTrue(SystemInfo.isWindows);
+    assumeTrue("Windows expected", SystemInfo.isWindows);
 
     File file = new File("C:\\Documents and Settings\\desktop.ini");
-    assumeTrue(file.exists());
+    assumeTrue("Documents and Settings assumed to exist", file.exists());
 
     String parent = FileUtil.toSystemIndependentName(file.getParent());
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), parent);
@@ -430,8 +436,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBadFileName() throws IOException {
-    assumeTrue(SystemInfo.isUnix);
+  public void testBadFileNameUnderUnix() throws IOException {
+    assumeTrue("Unix expected", SystemInfo.isUnix);
 
     File file = tempDir.newFile("test\\file.txt");
     VirtualFile vDir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
@@ -498,7 +504,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileCaseChange() throws IOException {
-    assumeFalse(SystemInfo.isFileSystemCaseSensitive);
+    assumeFalse("Case-insensitive FS expected", SystemInfo.isFileSystemCaseSensitive);
 
     File file = tempDir.newFile("file.txt");
 
@@ -571,7 +577,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testSymlinkTargetBlink() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File target = tempDir.newFolder("target");
     File link = new File(tempDir.getRoot(), "link");
@@ -655,7 +661,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
       RefreshWorker.setCancellingCondition(null);
       topDir.refresh(false, true);
-      assertEquals(processed, files);
+      assertEquals(files, processed);
     }
     finally {
       connection.disconnect();
@@ -700,7 +706,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBrokenSymlinkMove() {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     runInEdtAndWait(() -> {
       File srcDir = tempDir.newFolder("src");

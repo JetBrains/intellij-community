@@ -30,23 +30,23 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public SchemesPanel(ColorAndFontOptions options) {
+  public SchemesPanel(@NotNull ColorAndFontOptions options) {
     this(options, DEFAULT_VGAP);
   }
 
-  public SchemesPanel(ColorAndFontOptions options, int vGap) {
+  SchemesPanel(@NotNull ColorAndFontOptions options, int vGap) {
     super(vGap);
     myOptions = options;
   }
 
-  private boolean myListLoaded = false;
+  private boolean myListLoaded;
 
   public boolean areSchemesLoaded() {
     return myListLoaded;
   }
 
 
-  public void resetSchemesCombo(final Object source) {
+  void resetSchemesCombo(final Object source) {
     if (this != source) {
       setListLoaded(false);
       EditorColorsScheme selectedSchemeBackup = myOptions.getSelectedScheme();
@@ -62,15 +62,14 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     myListLoaded = b;
   }
 
-  public void addListener(ColorAndFontSettingsListener listener) {
+  public void addListener(@NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @NotNull
   @Override
   protected AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
-    return
-      new ColorSchemeActions(this) {
-
+    return new ColorSchemeActions(this) {
         @NotNull
         @Override
         protected ColorAndFontOptions getOptions() {

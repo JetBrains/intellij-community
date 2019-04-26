@@ -13,6 +13,9 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  * &lt;/extensions&gt;
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
+ *
+ * If you need to add a section of code completion options, your UnnamedConfigurable should implement
+ * {@link CodeCompletionOptionsCustomSection}
  */
 public class CodeCompletionConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
 }

@@ -15,17 +15,21 @@
  */
 package com.intellij.util.ui.tree;
 
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.TreeExpandCollapse;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Assertion;
+import com.intellij.util.ExceptionUtil;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
+import java.awt.EventQueue;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class TreeUtilTest extends PlatformTestCase {
+public class TreeUtilTest extends TestCase {
   private final Assertion CHECK = new Assertion();
 
   public void testFindNodeWithObject() {
@@ -39,6 +43,10 @@ public class TreeUtilTest extends PlatformTestCase {
   }
 
   public void testRemoveSelected() {
+    waitForTestOnEDT(TreeUtilTest::implRemoveSelected);
+  }
+
+  private static void implRemoveSelected() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultTreeModel model = new DefaultTreeModel(root);
     DefaultMutableTreeNode child1 = new DefaultMutableTreeNode("1");
@@ -66,6 +74,10 @@ public class TreeUtilTest extends PlatformTestCase {
   }
 
   public void testMultiLevelRemove() {
+    waitForTestOnEDT(TreeUtilTest::implMultiLevelRemove);
+  }
+
+  private static void implMultiLevelRemove() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultTreeModel model = new DefaultTreeModel(root) {
         @Override
@@ -86,6 +98,10 @@ public class TreeUtilTest extends PlatformTestCase {
   }
 
   public void testRemoveLast() {
+    waitForTestOnEDT(TreeUtilTest::implRemoveLast);
+  }
+
+  private static void implRemoveLast() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultTreeModel model = new DefaultTreeModel(root);
     model.insertNodeInto(new DefaultMutableTreeNode("1"), root, 0);
@@ -118,7 +134,7 @@ public class TreeUtilTest extends PlatformTestCase {
     TreePath path2a = new TreePath(new Object[]{e1, e2});
     TreePath path3 = new TreePath("d");
     TreePath[] maximals = TreeUtil.selectMaximals(new TreePath[]{path1, path2, path3});
-    CHECK.compareUnordered(maximals, new TreePath[]{path2, path3});
+    Assertion.compareUnordered(maximals, new TreePath[]{path2, path3});
     assertEquals(1, TreeUtil.selectMaximals(new TreePath[]{path2, path2a}).length);
   }
 
@@ -138,7 +154,7 @@ public class TreeUtilTest extends PlatformTestCase {
     DefaultMutableTreeNode node1_1 = new DefaultMutableTreeNode("1_1");
     node1.add(node1_1);
     DefaultTreeModel model = new DefaultTreeModel(root);
-    TreeUtil.sort(model, (o1, o2) -> o1.toString().compareTo(o2.toString()));
+    TreeUtil.sort(model, Comparator.comparing(Object::toString));
     assertEquals(node1, root.getChildAt(0));
     assertEquals(node2, root.getChildAt(1));
     assertEquals(node1_1, node1.getChildAt(0));
@@ -167,5 +183,22 @@ public class TreeUtilTest extends PlatformTestCase {
     CHECK.compareAll(new String[]{"0", "00", "000", "001","01"}, order);
   }
 
-
+  public static void waitForTestOnEDT(@NotNull Runnable test) {
+    if (EventQueue.isDispatchThread()) {
+      test.run();
+    }
+    else {
+      try {
+        EventQueue.invokeAndWait(test);
+      }
+      catch (InterruptedException exception) {
+        throw new AssertionError(exception);
+      }
+      catch (InvocationTargetException exception) {
+        Throwable target = exception.getTargetException();
+        ExceptionUtil.rethrowUnchecked(target);
+        throw new AssertionError(target != null ? target : exception);
+      }
+    }
+  }
 }

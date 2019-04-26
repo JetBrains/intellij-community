@@ -122,7 +122,9 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
 
   @Throws(Exception::class)
   fun testGetLastRevisionForNonExistingFile() {
-    git("remote add origin git://example.com/repo.git")
+    val child = repo.createSubRepository("child")
+
+    git("remote add origin file://${child.root.path}.git")
     git("config branch.master.remote origin")
     git("config branch.master.merge refs/heads/master")
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.ToolExtensionPoints;
@@ -166,8 +166,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (AnnotationUtil.isAnnotated(owner, EXCLUDE_ANNOS, 0)) {
       return false;
     }
-    for (final Object extension : Extensions.getExtensions(ToolExtensionPoints.EMPTY_METHOD_TOOL)) {
-      if (((Condition<RefMethod>) extension).value(refMethod)) {
+
+    for (final Condition<RefMethod> extension : Extensions.getRootArea().<Condition<RefMethod>>getExtensionPoint(ToolExtensionPoints.EMPTY_METHOD_TOOL).getExtensions()) {
+      if (extension.value(refMethod)) {
         return false;
       }
     }
@@ -258,7 +259,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
+  private static LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
     return new DeleteMethodQuickFix(processor, needToDeleteHierarchy);
   }
 
@@ -288,7 +289,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     return panel;
   }
 
-  private class DeleteMethodIntention implements LocalQuickFix {
+  private static class DeleteMethodIntention implements LocalQuickFix {
     private final String myHint;
 
     DeleteMethodIntention(final String hint) {
@@ -323,7 +324,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
 
-  private class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
     private final ProblemDescriptionsProcessor myProcessor;
     private final boolean myNeedToDeleteHierarchy;
 
@@ -343,7 +344,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
        applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<>(), null);
     }
 
-    private void deleteHierarchy(RefMethod refMethod, List<? super PsiElement> result) {
+    private static void deleteHierarchy(RefMethod refMethod, List<? super PsiElement> result) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
       RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[0]);
       for (RefMethod refDerived : refMethods) {
@@ -352,7 +353,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       deleteMethod(refMethod, result);
     }
 
-    private void deleteMethod(RefMethod refMethod, List<? super PsiElement> result) {
+    private static void deleteMethod(RefMethod refMethod, List<? super PsiElement> result) {
       PsiElement psiElement = refMethod.getPsiElement();
       if (psiElement == null) return;
       if (!result.contains(psiElement)) result.add(psiElement);

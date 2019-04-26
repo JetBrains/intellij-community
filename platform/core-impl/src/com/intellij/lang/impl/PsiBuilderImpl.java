@@ -371,6 +371,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void done(@NotNull IElementType type) {
+      if (type == TokenType.ERROR_ELEMENT) {
+        LOG.warn("Error elements with empty message are discouraged. Please use builder.error() instead", new RuntimeException());
+      }
       myType = type;
       myBuilder.processDone(this, null, null);
     }
@@ -383,6 +386,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before) {
+      if (type == TokenType.ERROR_ELEMENT) {
+        LOG.warn("Error elements with empty message are discouraged. Please use builder.errorBefore() instead", new RuntimeException());
+      }
       myType = type;
       myBuilder.processDone(this, null, (StartMarker)before);
     }
@@ -677,7 +683,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     if (myCachedTokenType != null) return myCachedTokenType;
     if (myRemapper != null) {
       remapCurrentToken(myRemapper.filter(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme],
-                                          myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence()));
+                                          myLexStarts[myCurrentLexeme + 1], myText));
     }
     return myLexTypes[myCurrentLexeme];
   }

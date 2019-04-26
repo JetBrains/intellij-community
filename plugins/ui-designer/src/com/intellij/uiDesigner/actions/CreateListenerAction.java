@@ -106,7 +106,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     return true;
   }
 
-  private class MyCreateListenerAction extends AnAction {
+  private static class MyCreateListenerAction extends AnAction {
     private final List<? extends RadComponent> mySelection;
     private final EventSetDescriptor myDescriptor;
     @NonNls private static final String LISTENER_SUFFIX = "Listener";

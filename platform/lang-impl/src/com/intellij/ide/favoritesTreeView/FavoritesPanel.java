@@ -26,8 +26,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.JBIterable;
@@ -255,13 +255,9 @@ public class FavoritesPanel {
     List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      if (vFile != null) {
-        final PsiFileSystemItem psiFile = vFile.isDirectory()
-                                          ? PsiManager.getInstance(myProject).findDirectory(vFile)
-                                          : PsiManager.getInstance(myProject).findFile(vFile);
-        if (psiFile != null) {
-          sourceFiles.add(psiFile);
-        }
+      PsiFileSystemItem psiFile = PsiUtilCore.findFileSystemItem(myProject, vFile);
+      if (psiFile != null) {
+        sourceFiles.add(psiFile);
       }
     }
     return sourceFiles.toArray(new PsiFileSystemItem[0]);

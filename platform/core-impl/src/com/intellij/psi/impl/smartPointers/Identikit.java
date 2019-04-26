@@ -86,8 +86,7 @@ public abstract class Identikit {
       Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
       PsiFile actualLanguagePsi = file.getViewProvider().getPsi(actualLanguage);
       if (actualLanguagePsi == null) {
-        LOG.error("getPsi("+actualLanguage+")=null; file="+file+"; myLanguage="+myFileLanguage+"; baseLanguage="+file.getViewProvider().getBaseLanguage());
-        return null;
+        return null; // the file has changed its language or dialect, so we can't restore
       }
       return findInside(actualLanguagePsi, startOffset, endOffset);
     }

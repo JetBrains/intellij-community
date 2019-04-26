@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -54,7 +40,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +156,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myTree.expandRow(0);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new NodeRenderer());
-    UIUtil.setLineStyleAngled(myTree);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
@@ -300,7 +284,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     // Select element in the tree
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBuilder != null) {
-        myBuilder.select(file, file.getVirtualFile(), true);
+        myBuilder.selectAsync(file, file.getVirtualFile(), true);
       }
     }, ModalityState.stateForComponent(getWindow()));
   }
@@ -354,7 +338,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     private final int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
     @Override
     @NotNull
-    public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
+    public Object[] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
       GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
       final PsiFile[] psiFiles = FilenameIndex.getFilesByName(myProject, name, scope);
       return filterFiles(psiFiles);
@@ -371,11 +355,13 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
 
+    @NotNull
     @Override
     public String getNotInMessage() {
       return "";
     }
 
+    @NotNull
     @Override
     public String getNotFoundMessage() {
       return "";
@@ -390,6 +376,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     public void saveInitialCheckBoxState(final boolean state) {
     }
 
+    @NotNull
     @Override
     public PsiElementListCellRenderer getListCellRenderer() {
       return new GotoFileCellRenderer(myMaxSize);
@@ -408,11 +395,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         fileNames = FilenameIndex.getAllFilenames(myProject);
       }
       final Set<String> array = new THashSet<>();
-      for (String fileName : fileNames) {
-        if (!array.contains(fileName)) {
-          array.add(fileName);
-        }
-      }
+      Collections.addAll(array, fileNames);
 
       final String[] result = ArrayUtil.toStringArray(array);
       Arrays.sort(result);
@@ -425,14 +408,14 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     @Override
-    public String getElementName(final Object element) {
+    public String getElementName(@NotNull final Object element) {
       if (!(element instanceof PsiFile)) return null;
       return ((PsiFile)element).getName();
     }
 
     @Override
     @Nullable
-    public String getFullName(final Object element) {
+    public String getFullName(@NotNull final Object element) {
       if (element instanceof PsiFile) {
         final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
         return virtualFile != null ? virtualFile.getPath() : null;

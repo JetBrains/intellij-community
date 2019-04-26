@@ -40,7 +40,7 @@ class ActivityMonitorAction extends DumbAwareAction {
     CompilationMXBean jitBean = ManagementFactory.getCompilationMXBean();
     ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
       final TLongLongHashMap lastThreadTimes = new TLongLongHashMap();
-      TObjectLongHashMap<String> subsystemToSamples = new TObjectLongHashMap<>();
+      final TObjectLongHashMap<String> subsystemToSamples = new TObjectLongHashMap<>();
       long lastGcTime = totalGcTime();
       long lastJitTime = jitBean.getTotalCompilationTime();
       long lastUiUpdate = System.currentTimeMillis();
@@ -85,20 +85,19 @@ class ActivityMonitorAction extends DumbAwareAction {
           return "<Activity Monitor>";
         }
 
-        int depth = 50;
-        ThreadInfo info = threadBean.getThreadInfo(threadId, depth);
+        ThreadInfo info = threadBean.getThreadInfo(threadId);
         if (info == null) return "<unidentified: thread finished>";
 
         if (info.getThreadState() == Thread.State.RUNNABLE) {
+          info = threadBean.getThreadInfo(threadId, Integer.MAX_VALUE);
+          if (info == null) return "<unidentified: thread finished>";
+
           StackTraceElement[] trace = info.getStackTrace();
           for (StackTraceElement element : trace) {
             String className = element.getClassName();
             if (!isInfrastructureClass(className)) {
               return classToSubsystem.get(className);
             }
-          }
-          if (trace.length == depth) {
-            return "<unidentified: too deep stack trace>";
           }
           return "<infrastructure: " + getCommonThreadName(info) + ">";
         }

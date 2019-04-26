@@ -126,7 +126,7 @@ public class CommittedListsSequencesZipperTest {
 
     @Override
     @NotNull
-    public CommittedChangeList zip(@Nullable RepositoryLocationGroup group, @NotNull List<CommittedChangeList> lists) {
+    public CommittedChangeList zip(@Nullable RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
       return create(lists.get(0).getNumber(), String.valueOf(lists.size()));
     }
 

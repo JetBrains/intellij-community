@@ -19,7 +19,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.openapi.util.IconLoader.MenuBarIconProvider;
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,7 @@ import static java.lang.Math.floor;
 /**
  * @author peter
  */
-public class SizedIcon extends JBUI.CachingScalableJBIcon implements MenuBarIconProvider, DarkIconProvider, RetrievableIcon {
+public class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvider, DarkIconProvider, RetrievableIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;

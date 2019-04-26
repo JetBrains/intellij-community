@@ -19,7 +19,6 @@ package com.intellij.openapi.util;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("fieldCache");
   private final ReentrantReadWriteLock.ReadLock r;
   private final ReentrantReadWriteLock.WriteLock w;
 
@@ -45,7 +44,7 @@ public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
       try {
         result = getValue(owner, a);
         if (result == null) {
-          RecursionGuard.StackStamp stamp = ourGuard.markStack();
+          RecursionGuard.StackStamp stamp = RecursionManager.markStack();
           result = compute(owner, p);
           if (stamp.mayCacheNow()) {
             putValue(result, owner, a);

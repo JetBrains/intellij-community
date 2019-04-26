@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
+import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -16,7 +17,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -80,7 +80,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static final Color TEXT_COLOR = JBColor.namedColor("Notification.foreground", DEFAULT_TEXT_COLOR);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
-  private static final Color LINK_COLOR = JBColor.namedColor("Notification.Link.foreground", JBUI.CurrentTheme.Link.linkColor());
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -134,9 +133,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
-      final Runnable runnable = (DumbAwareRunnable)() -> showNotification(notification, project);
+      Runnable runnable = () -> showNotification(notification, project);
       if (project == null) {
-        UIUtil.invokeLaterIfNeeded(runnable);
+        GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
@@ -289,13 +288,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
       callback.run();
     }
     else {
-      FrameStateManager.getInstance().addListener(new FrameStateListener() {
+      Topics.subscribe(FrameStateListener.TOPIC, balloon, new FrameStateListener() {
         @Override
         public void onFrameActivated() {
           FrameStateManager.getInstance().removeListener(this);
           callback.run();
         }
-      }, balloon);
+      });
     }
   }
 
@@ -352,7 +351,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       layoutData.borderColor = BORDER_COLOR;
     }
 
-    boolean actions = !notification.getActions().isEmpty();
+    boolean actions = !notification.getActions().isEmpty() || notification.getContextHelpAction() != null;
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationFullContent;
 
     final JEditorPane text = new JEditorPane() {
@@ -372,7 +371,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
     };
     HTMLEditorKit kit = new UIUtil.JBWordWrapHtmlEditorKit();
-    kit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(LINK_COLOR) + "}");
+    kit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
     text.setEditorKit(kit);
     text.setForeground(layoutData.textColor);
 

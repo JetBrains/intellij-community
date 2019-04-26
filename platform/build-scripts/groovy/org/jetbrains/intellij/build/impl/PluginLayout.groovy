@@ -18,6 +18,8 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.PluginPublishingSpec
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.util.function.Function
@@ -33,6 +35,8 @@ class PluginLayout extends BaseLayout {
   private boolean doNotCreateSeparateJarForLocalizableResources
   Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
   boolean directoryNameSetExplicitly
+  PluginPublishingSpec defaultPublishingSpec
+  PluginBundlingRestrictions bundlingRestrictions
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -68,6 +72,7 @@ class PluginLayout extends BaseLayout {
     if (layout.doNotCreateSeparateJarForLocalizableResources) {
       layout.localizableResourcesJars.clear()
     }
+    layout.bundlingRestrictions = spec.bundlingRestrictions
     return layout
   }
 
@@ -93,6 +98,7 @@ class PluginLayout extends BaseLayout {
     private String mainJarName
     private boolean mainJarNameSetExplicitly
     private boolean directoryNameSetExplicitly
+    private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
 
     /**
      * @deprecated use {@link #withCustomVersion(java.util.function.Function)} instead
@@ -135,6 +141,13 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
+     * Returns {@link PluginBundlingRestrictions} instance which can be used to exclude the plugin from some distributions.
+     */
+    PluginBundlingRestrictions getBundlingRestrictions() {
+      return bundlingRestrictions
+    }
+
+    /**
      * @param resourcePath path to resource file or directory relative to the plugin's main module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      */
@@ -170,6 +183,9 @@ class PluginLayout extends BaseLayout {
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
      * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
      * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
+     *
+     * @deprecated if a module is not included into the plugin in some IDE, it may cause problems if a plugin it optionally depends on is installed
+     * as a custom plugin, so it isn't recommended to use optional dependencies. Use {@link #withModule(java.lang.String, java.lang.String)} instead.
      */
     void withOptionalModule(String moduleName, String relativeJarPath) {
       layout.optionalModules << moduleName
@@ -179,6 +195,9 @@ class PluginLayout extends BaseLayout {
     /**
      * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
+     *
+     * @deprecated if a module is not included into the plugin in some IDE, it may cause problems if a plugin it optionally depends on is installed
+     * as a custom plugin, so it isn't recommended to use optional dependencies. Use  {@link #withModule(java.lang.String)} instead.
      */
     void withOptionalModule(String moduleName) {
       layout.optionalModules << moduleName
@@ -211,6 +230,14 @@ class PluginLayout extends BaseLayout {
      */
     void doNotCopyModuleLibrariesAutomatically(List<String> moduleNames) {
       layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
+    }
+
+    /**
+     * Specifies {@link PluginPublishingSpec} which should be used by default in all IDEs which include this plugin.
+     * {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginPublishingSpec} can be used to override this for a particular product.
+     */
+    void setDefaultPublishingSpec(PluginPublishingSpec publishingSpec) {
+      layout.defaultPublishingSpec = publishingSpec
     }
   }
 }

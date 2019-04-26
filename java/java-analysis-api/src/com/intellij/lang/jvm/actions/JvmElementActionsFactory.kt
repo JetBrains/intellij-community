@@ -13,8 +13,6 @@ import com.intellij.lang.jvm.JvmModifiersOwner
  * If method returns empty list this means that operation on given elements is not supported or not yet implemented for a language.
  *
  * Every new added method should return empty list by default and then be overridden in implementations for each language if it is possible.
- *
- * @since 2017.3
  */
 abstract class JvmElementActionsFactory {
 

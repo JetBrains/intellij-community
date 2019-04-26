@@ -540,7 +540,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
         return ExpressionUtils.isOffsetArrayAccess(rhs, variable);
       }
       else {
-        return VariableAccessUtils.evaluatesToVariable(rhs, variable2);
+        return ExpressionUtils.isReferenceTo(rhs, variable2);
       }
     }
 

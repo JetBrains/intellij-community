@@ -10,13 +10,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 
 class ExternalSystemSettingsCollector() : ProjectUsagesCollector() {
-  override fun getGroupId() = "statistics.build.tools.state"
+  override fun getGroupId() = "build.tools.state"
 
   override fun getUsages(project: Project): Set<UsageDescriptor> {
     val usages = mutableSetOf<UsageDescriptor>()
 
     for (manager in ExternalSystemApiUtil.getAllManagers()) {
-      val context = FUSUsageContext.create(escapeSystemId(manager.getSystemId()))
+      val context = FUSUsageContext.create(getAnonymizedSystemId(manager.getSystemId()))
       for (projectsSetting in manager.getSettingsProvider().`fun`(project).getLinkedProjectsSettings()) {
         usages.add(addContext(getBooleanUsage("autoImport", projectsSetting.isUseAutoImport), context))
         usages.add(addContext(getBooleanUsage("useQualifiedModuleNames", projectsSetting.isUseQualifiedModuleNames), context))

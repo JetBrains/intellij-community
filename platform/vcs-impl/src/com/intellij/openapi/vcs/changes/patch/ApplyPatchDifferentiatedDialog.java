@@ -30,7 +30,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -506,11 +509,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), getRootPane());
       group.add(diffAction);
 
-      group.add(new MapDirectory());
-      group.add(new StripUp());
-      group.add(new StripDown());
-      group.add(new ResetStrip());
-      group.add(new ZeroStrip());
+      ActionGroup mapDirectoryActionGroup = new ActionGroup("Change Directory Paths", null, AllIcons.Vcs.Folders) {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          return new AnAction[]{
+            new MapDirectory(), new StripUp("Remove Leading Directory"), new ZeroStrip(),
+            new StripDown("Restore Leading Directory"), new ResetStrip()};
+        }
+      };
+      mapDirectoryActionGroup.setPopup(true);
+      group.add(mapDirectoryActionGroup);
+
       if (myCanChangePatchFile) {
         group.add(new DumbAwareAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
           @Override
@@ -578,7 +588,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(@NotNull List<AbstractFilePatchInProgress.PatchChange> changes) {
+    protected DefaultTreeModel buildTreeModel(@NotNull List<? extends AbstractFilePatchInProgress.PatchChange> changes) {
       return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, myChangeNodeDecorator);
     }
 
@@ -593,7 +603,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @NotNull
-    private List<AbstractFilePatchInProgress.PatchChange> getOnlyValidChanges(@NotNull Collection<AbstractFilePatchInProgress.PatchChange> changes) {
+    private List<AbstractFilePatchInProgress.PatchChange> getOnlyValidChanges(@NotNull Collection<? extends AbstractFilePatchInProgress.PatchChange> changes) {
       return ContainerUtil.filter(changes, AbstractFilePatchInProgress.PatchChange::isValid);
     }
 
@@ -620,7 +630,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
-      super("Map base directory", "Map base directory", AllIcons.Vcs.MapBase);
+      super("Map Base Directory...");
       myNewBaseSelector = new NewBaseSelector();
     }
 
@@ -649,7 +659,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private static boolean sameBase(final List<AbstractFilePatchInProgress.PatchChange> selectedChanges) {
+  private static boolean sameBase(final List<? extends AbstractFilePatchInProgress.PatchChange> selectedChanges) {
     VirtualFile base = null;
     for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
       final VirtualFile changeBase = change.getPatchInProgress().getBase();
@@ -715,7 +725,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private Collection<AbstractFilePatchInProgress.PatchChange> getIncluded(boolean doInitCheck,
-                                                                          List<AbstractFilePatchInProgress.PatchChange> changes) {
+                                                                          List<? extends AbstractFilePatchInProgress.PatchChange> changes) {
     final NamedLegendStatuses totalNameStatuses = new NamedLegendStatuses();
     final NamedLegendStatuses includedNameStatuses = new NamedLegendStatuses();
 
@@ -795,7 +805,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private static List<AbstractFilePatchInProgress> changes2patches(final List<AbstractFilePatchInProgress.PatchChange> selectedChanges) {
+  private static List<AbstractFilePatchInProgress> changes2patches(final List<? extends AbstractFilePatchInProgress.PatchChange> selectedChanges) {
     return map(selectedChanges, AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
   }
 
@@ -1008,92 +1018,62 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     runExecutor(myCallback);
   }
 
-  private class ZeroStrip extends DumbAwareAction {
-    private ZeroStrip() {
-      super("Remove Directories", "Remove Directories", AllIcons.Vcs.StripNull);
+  private class ZeroStrip extends StripUp {
+    ZeroStrip() {
+      super("Remove All Leading Directories");
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
-        change.getPatchInProgress().setZero();
-      }
+      myChangesTreeList.getSelectedChanges().forEach(change -> change.getPatchInProgress().setZero());
       updateTree(false);
     }
   }
 
   private class StripDown extends DumbAwareAction {
-    private StripDown() {
-      super("Restore Directory", "Restore Directory", AllIcons.Vcs.StripDown);
+    StripDown(@Nullable String text) {
+      super(text);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(isEnabled());
+      boolean isEnabled = ContainerUtil.exists(myChangesTreeList.getSelectedChanges(), change -> change.getPatchInProgress().canDown());
+      e.getPresentation().setEnabled(isEnabled);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!isEnabled()) return;
-      final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
-        change.getPatchInProgress().down();
-      }
+      myChangesTreeList.getSelectedChanges().forEach(change -> change.getPatchInProgress().down());
       updateTree(false);
-    }
-
-    private boolean isEnabled() {
-      final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      if (selectedChanges.isEmpty()) return false;
-      for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
-        if (!change.getPatchInProgress().canDown()) return false;
-      }
-      return true;
     }
   }
 
   private class StripUp extends DumbAwareAction {
-    private StripUp() {
-      super("Strip Directory", "Strip Directory", AllIcons.Vcs.StripUp);
+    StripUp(@Nullable String text) {
+      super(text);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(isEnabled());
+      boolean isEnabled = ContainerUtil.exists(myChangesTreeList.getSelectedChanges(), change -> change.getPatchInProgress().canUp());
+      e.getPresentation().setEnabled(isEnabled);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!isEnabled()) return;
-      final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
-        change.getPatchInProgress().up();
-      }
+      myChangesTreeList.getSelectedChanges().forEach(change -> change.getPatchInProgress().up());
       updateTree(false);
-    }
-
-    private boolean isEnabled() {
-      final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      if (selectedChanges.isEmpty()) return false;
-      for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
-        if (!change.getPatchInProgress().canUp()) return false;
-      }
-      return true;
     }
   }
 
-  private class ResetStrip extends DumbAwareAction {
-    private ResetStrip() {
-      super("Reset Directories", "Reset Directories", AllIcons.Vcs.ResetStrip);
+  private class ResetStrip extends StripDown {
+    ResetStrip() {
+      super("Restore All Leading Directories");
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
-        change.getPatchInProgress().reset();
-      }
+      myChangesTreeList.getSelectedChanges().forEach(change -> change.getPatchInProgress().reset());
       updateTree(false);
     }
   }

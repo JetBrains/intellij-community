@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -45,11 +46,11 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
   }
 
   @Override
-  public boolean delete(final VirtualFile file) throws IOException {
+  public boolean delete(@NotNull final VirtualFile file) throws IOException {
     return processDeletedFile(file);
   }
 
-  private boolean processDeletedFile(final VirtualFile file) throws IOException {
+  private boolean processDeletedFile(@NotNull VirtualFile file) throws IOException {
     if (myInternalDelete) return false;
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
     if (vcs != CvsVcs2.getInstance(myProject)) return false;
@@ -82,18 +83,18 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
   }
 
   @Override
-  public boolean move(final VirtualFile file, final VirtualFile toDir) throws IOException {
+  public boolean move(@NotNull final VirtualFile file, @NotNull final VirtualFile toDir) throws IOException {
     return doMoveRename(file, toDir, file.getName());
   }
 
   @Override
   @Nullable
-  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) {
+  public File copy(@NotNull final VirtualFile file, @NotNull final VirtualFile toDir, @NotNull final String copyName) {
     return null;
   }
 
   @Override
-  public boolean rename(final VirtualFile file, final String newName) throws IOException {
+  public boolean rename(@NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
     return doMoveRename(file, file.getParent(), newName);
   }
 
@@ -129,15 +130,15 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
   }
 
   @Override
-  public boolean createFile(final VirtualFile dir, final String name) {
+  public boolean createFile(@NotNull final VirtualFile dir, @NotNull final String name) {
     return false;
   }
 
   @Override
-  public boolean createDirectory(final VirtualFile dir, final String name) {
+  public boolean createDirectory(@NotNull final VirtualFile dir, @NotNull final String name) {
     return false;
   }
 
   @Override
-  public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {}
+  public void afterDone(@NotNull final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {}
 }

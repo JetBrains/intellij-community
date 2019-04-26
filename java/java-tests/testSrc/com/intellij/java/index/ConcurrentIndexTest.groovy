@@ -31,7 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.ref.GCUtil
+import com.intellij.util.ref.GCWatcher
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -108,7 +108,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       WriteCommandAction.runWriteCommandAction(project) {
         ((PsiJavaFile) file).importList.add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand("foo.bar$i"))
       }
-      GCUtil.tryGcSoftlyReachableObjects()
+      GCWatcher.tracking(file.node).tryGc()
       assert !file.contentsLoaded
 
       List<Future> futuresToWait = []
@@ -151,7 +151,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       WriteCommandAction.runWriteCommandAction(project) {
         ((PsiJavaFile) file).importList.add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand("foo.bar$i"))
       }
-      GCUtil.tryGcSoftlyReachableObjects()
+      GCWatcher.tracking(file.node).tryGc()
       assert !file.contentsLoaded
 
       myFixture.addFileToProject("Foo" + i + ".java", "class Foo" + i + " {" + ("public void foo() {}\n") * 1000 + "}")
@@ -192,7 +192,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
     text = "class Foo {{ " + text * 200 + "}}"
 
-    def file = myFixture.addFileToProject('a.java', text)
+    def file = myFixture.addFileToProject('a.java', text) as PsiFileImpl
     def document = file.viewProvider.document
     for (i in 1..5) {
       WriteCommandAction.runWriteCommandAction project, {
@@ -200,7 +200,8 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         document.insertString(document.text.indexOf('(null') + 1, ' ')
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
-      GCUtil.tryGcSoftlyReachableObjects()
+      GCWatcher.tracking(file.node).tryGc()
+      assert !file.contentsLoaded
 
       assert file.node.lighterAST instanceof FCTSBackedLighterAST
       List<Future> futures = []

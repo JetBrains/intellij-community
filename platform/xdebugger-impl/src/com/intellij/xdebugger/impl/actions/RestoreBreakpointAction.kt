@@ -24,7 +24,7 @@ class RestoreBreakpointAction : DumbAwareAction() {
     val project = e.project
     if (project != null) {
       e.presentation.isEnabledAndVisible =
-        (XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl).lastRemovedBreakpoint != null
+        (XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl).canRestoreLastRemovedBreakpoint()
     }
   }
 }

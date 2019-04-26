@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
@@ -20,7 +20,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.LockToken;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -838,7 +837,7 @@ public class AbstractTreeUi {
   private Promise<Boolean> update(@NotNull final NodeDescriptor nodeDescriptor, boolean now) {
     Promise<Boolean> promise;
     if (now || isPassthroughMode()) {
-      promise = Promise.resolve(update(nodeDescriptor));
+      promise = Promises.resolvedPromise(update(nodeDescriptor));
     }
     else {
       final AsyncPromise<Boolean> result = new AsyncPromise<>();
@@ -1411,11 +1410,11 @@ public class AbstractTreeUi {
         }
       })
       .onError(new TreeConsumer<Throwable>("AbstractTreeUi.updateNodeChildrenNow: on reject processExistingNodes") {
-      @Override
-      public void perform() {
-        removeFromUpdatingChildren(node);
-        processNodeActionsIfReady(node);
-      }
+        @Override
+        public void perform() {
+          removeFromUpdatingChildren(node);
+          processNodeActionsIfReady(node);
+        }
     });
   }
 
@@ -2960,7 +2959,7 @@ public class AbstractTreeUi {
 
     Promise<Boolean> update;
     if (parentPreloadedChildren != null && parentPreloadedChildren.getDescriptor(oldElement) == childDescriptor) {
-      update = Promise.resolve(parentPreloadedChildren.isUpdated(oldElement));
+      update = Promises.resolvedPromise(parentPreloadedChildren.isUpdated(oldElement));
     }
     else {
       update = update(childDescriptor, false);
@@ -2978,7 +2977,7 @@ public class AbstractTreeUi {
         final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getElementFromDescriptor(childDesc.get()));
         Promise<Boolean> promise;
         if (index == null) {
-          promise = Promise.resolve(false);
+          promise = Promises.resolvedPromise(false);
         }
         else {
           final Object elementFromMap = elementToIndexMap.getKey(index);
@@ -3006,11 +3005,11 @@ public class AbstractTreeUi {
               // todo why we don't process promise here?
             }
             else {
-              promise = Promise.resolve(changes.get());
+              promise = Promises.resolvedPromise(changes.get());
             }
           }
           else {
-            promise = Promise.resolve(changes.get());
+            promise = Promises.resolvedPromise(changes.get());
           }
 
           promise
@@ -4729,9 +4728,10 @@ public class AbstractTreeUi {
   }
 
   private void removeChildren(@NotNull DefaultMutableTreeNode node) {
-    EnumerationCopy copy = new EnumerationCopy(node.children());
-    while (copy.hasMoreElements()) {
-      disposeNode((DefaultMutableTreeNode)copy.nextElement());
+    //noinspection unchecked
+    Enumeration<DefaultMutableTreeNode> children = node.children();
+    for (DefaultMutableTreeNode child : Collections.list(children)) {
+      disposeNode(child);
     }
     node.removeAllChildren();
     nodeStructureChanged(node);

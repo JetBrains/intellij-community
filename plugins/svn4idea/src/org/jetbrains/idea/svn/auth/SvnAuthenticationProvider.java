@@ -5,16 +5,12 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class SvnAuthenticationProvider implements AuthenticationProvider {
 
   private final Project myProject;
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final AuthenticationProvider mySvnInteractiveAuthenticationProvider;
   private final SvnAuthenticationManager myAuthenticationManager;
-  private static final Set<Thread> ourForceInteractive = new HashSet<>();
 
   public SvnAuthenticationProvider(final SvnVcs svnVcs,
                                    final AuthenticationProvider provider,
@@ -33,7 +29,7 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
     final SvnAuthenticationNotifier.AuthenticationRequest obj =
       new SvnAuthenticationNotifier.AuthenticationRequest(myProject, kind, url, realm);
     final Url wcUrl = myAuthenticationNotifier.getWcUrl(obj);
-    if (wcUrl == null || ourForceInteractive.contains(Thread.currentThread())) {
+    if (wcUrl == null) {
       // outside-project url
       return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, canCache);
     } else {
@@ -42,14 +38,6 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
       }
     }
     return null;
-  }
-
-  public static void forceInteractive() {
-    ourForceInteractive.add(Thread.currentThread());
-  }
-
-  public static void clearInteractive() {
-    ourForceInteractive.remove(Thread.currentThread());
   }
 
   @Override

@@ -16,19 +16,16 @@
 package com.intellij.execution.filters;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -38,6 +35,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class UrlFilter implements Filter, DumbAware {
+  private static final String FILE_URL_PROTOCOL = "file://";
   private final Project myProject;
 
   public UrlFilter() {
@@ -50,7 +48,7 @@ public class UrlFilter implements Filter, DumbAware {
 
   @Nullable
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     if (!URLUtil.canContainUrl(line)) return null;
 
     int textStartOffset = entireLength - line.length();
@@ -82,20 +80,17 @@ public class UrlFilter implements Filter, DumbAware {
 
   @Nullable
   private HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
-    if (myProject != null && url.startsWith("file://")) {
-      try {
-        VirtualFile file = VfsUtil.findFileByURL(new URL(url));
-        if (file != null && file.isValid()) {
-          return new OpenFileHyperlinkInfo(myProject, file, -1);
-        }
-      }
-      catch (MalformedURLException ignored) {
-      }
-      return new HyperlinkInfo() {
+    if (myProject != null && url.startsWith(FILE_URL_PROTOCOL)) {
+      return new LazyFileHyperlinkInfo(myProject, StringUtil.trimStart(url, FILE_URL_PROTOCOL), 0, 0) {
+        @Nullable
         @Override
-        public void navigate(Project project) {
-          Messages.showErrorDialog(project, "Cannot find file " + StringUtil.trimMiddle(url, 150),
-                                   IdeBundle.message("title.cannot.open.file"));
+        public OpenFileDescriptor getDescriptor() {
+          OpenFileDescriptor descriptor = super.getDescriptor();
+          if (descriptor == null) {
+            Messages.showErrorDialog(myProject, "Cannot find file " + StringUtil.trimMiddle(url, 150),
+                                     IdeBundle.message("title.cannot.open.file"));
+          }
+          return descriptor;
         }
       };
     }
@@ -103,6 +98,7 @@ public class UrlFilter implements Filter, DumbAware {
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
+    @NotNull
     @Override
     public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
       return new Filter[]{new UrlFilter(project)};

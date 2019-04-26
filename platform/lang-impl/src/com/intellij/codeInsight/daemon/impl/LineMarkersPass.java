@@ -174,7 +174,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
           throw e;
         }
         catch (Exception e) {
-          LOG.error(e);
+          LOG.error("During querying provider "+provider+" ("+provider.getClass()+")", e);
           continue;
         }
         if (info != null) {

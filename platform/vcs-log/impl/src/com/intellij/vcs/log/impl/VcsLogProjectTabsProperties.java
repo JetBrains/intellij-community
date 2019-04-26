@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -14,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent.BRANCH_FILTER_NAME;
-import static com.intellij.vcs.log.ui.filter.UserFilterPopupComponent.USER_FILER_NAME;
-import static java.util.Comparator.comparingInt;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>, VcsLogTabsProperties {
@@ -38,44 +33,6 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-
-    // to remove after 2018.3 release
-    migrateRecentItems();
-  }
-
-  private void migrateRecentItems() {
-    if (isEmpty(myState.RECENT_FILTERS)) {
-
-      myState.RECENT_FILTERS = newHashMap();
-
-      Multiset<RecentGroup> branchFrequencies = HashMultiset.create();
-      Multiset<RecentGroup> userFrequencies = HashMultiset.create();
-      for (Map.Entry<String, VcsLogUiPropertiesImpl.State> entry : myState.TAB_STATES.entrySet()) {
-        if (entry.getKey().startsWith("EXTERNAL")) continue; // do not migrate recent items for external logs
-        VcsLogUiPropertiesImpl.State s = entry.getValue();
-        branchFrequencies.addAll(map(s.RECENTLY_FILTERED_BRANCH_GROUPS, RecentGroup::new));
-        userFrequencies.addAll(map(s.RECENTLY_FILTERED_USER_GROUPS, RecentGroup::new));
-        s.RECENTLY_FILTERED_BRANCH_GROUPS.clear();
-        s.RECENTLY_FILTERED_USER_GROUPS.clear();
-      }
-
-      List<RecentGroup> sortedBranches = sorted(branchFrequencies.elementSet(), comparingInt(value -> -branchFrequencies.count(value)));
-      List<RecentGroup> sortedUsers = sorted(userFrequencies.elementSet(), comparingInt(value -> -userFrequencies.count(value)));
-
-      myState.RECENT_FILTERS.put(BRANCH_FILTER_NAME, newArrayList(getFirstItems(sortedBranches, RECENTLY_FILTERED_VALUES_LIMIT)));
-      myState.RECENT_FILTERS.put(USER_FILER_NAME, newArrayList(getFirstItems(sortedUsers, RECENTLY_FILTERED_VALUES_LIMIT)));
-    }
-  }
-
-  /**
-   * Method for migrating external log tabs properties to the other storage.
-   * Finds a state by id and removes it.
-   * To be removed after 2018.3 release.
-   */
-  @Deprecated
-  @Nullable
-  public VcsLogUiPropertiesImpl.State removeTabState(@NotNull String id) {
-    return myState.TAB_STATES.remove(id);
   }
 
   @Override
@@ -142,10 +99,6 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
 
     public RecentGroup(@NotNull Collection<String> values) {
       FILTER_VALUES.addAll(values);
-    }
-
-    public RecentGroup(@NotNull VcsLogUiPropertiesImpl.UserGroup oldGroup) {
-      this(oldGroup.users);
     }
 
     @Override

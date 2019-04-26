@@ -1,11 +1,11 @@
-// "Add 'Foo<TypeParamName>' as 1st parameter to method 'Bar'" "true"
+// "Add 'Foo' as 1st parameter to method 'Bar'" "true"
  public class Bar {
-     Bar(Foo<TypeParamName> typeParamNameFoo, String args) {
+     Bar(Foo foo, String args) {
 
      }
  }
 
-class Foo<TypeParamName> {
+class Foo {
     void bar() {
       Bar bar = new Bar(this, "");
     }

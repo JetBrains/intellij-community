@@ -20,6 +20,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -31,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class ProjectLocatorImpl extends ProjectLocator {
-
   @Override
   @Nullable
   public Project guessProjectForFile(@Nullable VirtualFile file) {
@@ -46,15 +46,23 @@ public class ProjectLocatorImpl extends ProjectLocator {
       ProjectManager projectManager = ProjectManager.getInstance();
       if (projectManager == null) return null;
       final Project[] openProjects = projectManager.getOpenProjects();
+      if (openProjects.length == 1) {
+        return openProjects[0];
+      }
       for (Project openProject : openProjects) {
-        if (openProject.isInitialized() &&
-            !openProject.isDisposed() &&
-            ProjectRootManager.getInstance(openProject).getFileIndex().isInContent(file)) {
-          return openProject;
-        }
+        if (isUnder(openProject, file)) return openProject;
       }
       return null;
     });
+  }
+
+  // true if the file is either is in the project content or in some excluded folder of the project
+  private static boolean isUnder(@NotNull Project project, @NotNull VirtualFile file) {
+    if (!project.isInitialized() || project.isDisposed()) {
+      return false;
+    }
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    return fileIndex.isInContent(file) || fileIndex.isExcluded(file);
   }
 
   @Override
@@ -71,7 +79,7 @@ public class ProjectLocatorImpl extends ProjectLocator {
 
     List<Project> result = new SmartList<>();
     for (Project project : openProjects) {
-      if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+      if (isUnder(project, file)) {
         result.add(project);
       }
     }

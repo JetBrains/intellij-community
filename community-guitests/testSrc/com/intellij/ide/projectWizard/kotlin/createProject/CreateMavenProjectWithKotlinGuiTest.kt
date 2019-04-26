@@ -37,7 +37,8 @@ class CreateMavenProjectWithKotlinGuiTest(private val testParameters: TestParame
       projectPath = projectFolder,
       artifact = projectName,
       archetype = testParameters.archetype,
-      kotlinVersion = kotlinVersion)
+      kotlinVersion = kotlinVersion,
+      projectSdk = "1.8")
     waitAMoment()
     mavenReimport()
     // TODO: remove extra mavenReimport after GUI-72 fixing
@@ -81,6 +82,7 @@ class CreateMavenProjectWithKotlinGuiTest(private val testParameters: TestParame
       )
     }
 
+    waitAMoment()
   }
 
   companion object {

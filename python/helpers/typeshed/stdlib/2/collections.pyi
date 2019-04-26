@@ -21,6 +21,7 @@ from typing import (
     ValuesView as ValuesView,
 )
 
+_S = TypeVar('_S')
 _T = TypeVar('_T')
 _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
@@ -53,6 +54,7 @@ class deque(Sized, Iterable[_T], Reversible[_T], Generic[_T]):
     def __setitem__(self, i: int, x: _T) -> None: ...
     def __contains__(self, o: _T) -> bool: ...
     def __reversed__(self) -> Iterator[_T]: ...
+    def __iadd__(self: _S, iterable: Iterable[_T]) -> _S: ...
 
 _CounterT = TypeVar('_CounterT', bound=Counter)
 

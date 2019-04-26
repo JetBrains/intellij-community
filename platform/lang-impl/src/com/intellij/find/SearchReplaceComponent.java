@@ -58,6 +58,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private final DefaultActionGroup mySearchFieldActions;
   private final ActionToolbarImpl mySearchActionsToolbar1;
   private final ActionToolbarImpl mySearchActionsToolbar2;
+  @NotNull
   private final ActionToolbarImpl.PopupStateModifier mySearchToolbar1PopupStateModifier;
 
   private final DefaultActionGroup myReplaceFieldActions;

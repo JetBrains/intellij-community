@@ -127,7 +127,7 @@ public interface DiffCorrection {
   }
 
   class BaseFragmentRunner<ActualRunner extends BaseFragmentRunner> {
-    private final ArrayList<DiffFragment> myItems = new ArrayList<DiffFragment>();
+    private final ArrayList<DiffFragment> myItems = new ArrayList<>();
     private int myIndex = 0;
     private DiffFragment[] myFragments;
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.config.*;
@@ -30,8 +16,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(project != null);
-    presentation.setVisible(project != null);
+    presentation.setEnabledAndVisible(project != null);
   }
 
   @Override
@@ -45,7 +30,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(project);
     for (final AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final String name = buildFile.getPresentableName();
-      DefaultActionGroup subgroup = new DefaultActionGroup();
+      DefaultActionGroup subgroup = DefaultActionGroup.createUserDataAwareGroup(getTemplateText());
       subgroup.getTemplatePresentation().setText(name, false);
       subgroup.setPopup(true);
       fillGroup(buildFile, subgroup, antConfiguration);
@@ -105,5 +90,10 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
       action = new TargetAction(buildFile, displayName, targets, targetDescription);
     }
     return action;
+  }
+
+  @Override
+  public String getTemplateText() {
+    return "Ant Build Group";
   }
 }

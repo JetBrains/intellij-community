@@ -73,7 +73,7 @@ public class GenericPatchApplier {
   }
 
   @Nullable
-  public static AppliedPatch apply(CharSequence text, List<PatchHunk> hunks) {
+  public static AppliedPatch apply(CharSequence text, List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedPatch(patchedText, SUCCESS);
@@ -88,7 +88,7 @@ public class GenericPatchApplier {
   }
 
   @NotNull
-  public static AppliedSomehowPatch applySomehow(CharSequence text, List<PatchHunk> hunks) {
+  public static AppliedSomehowPatch applySomehow(CharSequence text, List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedSomehowPatch(patchedText, SUCCESS, false);
@@ -729,7 +729,7 @@ public class GenericPatchApplier {
       return myDistance;
     }
 
-    public void go(final List<BeforeAfter<List<String>>> steps) {
+    public void go(final List<? extends BeforeAfter<List<String>>> steps) {
       final Consumer<BeforeAfter<List<String>>> stepConsumer = listBeforeAfter -> {
         if (myDistance == 0) {
           // until this point, it all had being doing well
@@ -1118,7 +1118,7 @@ public class GenericPatchApplier {
   }
 
   // indexes are passed inclusive
-  private void iterateTransformations(final Consumer<TextRange> consumerExcluded, final Consumer<TextRange> consumerIncluded) {
+  private void iterateTransformations(final Consumer<? super TextRange> consumerExcluded, final Consumer<? super TextRange> consumerIncluded) {
     if (myTransformations.isEmpty()) {
       consumerExcluded.consume(new UnfairTextRange(0, myLines.size() - 1));
     } else {
@@ -1222,8 +1222,8 @@ public class GenericPatchApplier {
       return result;
     }
     
-    private static int readOne(final List<PatchLine> lines, final List<String> contextBefore, final List<String> contextAfter, 
-                               final List<BeforeAfter<List<String>>> steps, final int startI) {
+    private static int readOne(final List<? extends PatchLine> lines, final List<? super String> contextBefore, final List<? super String> contextAfter,
+                               final List<? super BeforeAfter<List<String>>> steps, final int startI) {
       int i = startI;
       for (; i < lines.size(); i++) {
         final PatchLine patchLine = lines.get(i);

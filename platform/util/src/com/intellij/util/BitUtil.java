@@ -74,4 +74,8 @@ public class BitUtil {
   private static void assertOneBitMask(long mask) {
     assert (mask & mask - 1) == 0 : "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
+
+  public static boolean isPowerOfTwo(int i) {
+    return (i & (i - 1)) == 0;
+  }
 }

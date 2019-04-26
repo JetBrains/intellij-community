@@ -15,6 +15,8 @@ class IMapIterator(Iterable[Any]):
     def __iter__(self) -> Iterator[Any]: ...
     def next(self, timeout: Optional[float] = ...) -> Any: ...
 
+class IMapUnorderedIterator(IMapIterator): ...
+
 class Pool(ContextManager[Pool]):
     def __init__(self, processes: Optional[int] = ...,
                  initializer: Optional[Callable[..., None]] = ...,
@@ -25,10 +27,10 @@ class Pool(ContextManager[Pool]):
               args: Iterable[Any] = ...,
               kwds: Dict[str, Any] = ...) -> Any: ...
     def apply_async(self,
-                func: Callable[..., Any],
-                args: Iterable[Any] = ...,
-                kwds: Dict[str, Any] = ...,
-                callback: Optional[Callable[..., None]] = ...) -> AsyncResult: ...
+                    func: Callable[..., Any],
+                    args: Iterable[Any] = ...,
+                    kwds: Dict[str, Any] = ...,
+                    callback: Optional[Callable[..., None]] = ...) -> AsyncResult: ...
     def map(self,
             func: Callable[..., Any],
             iterable: Iterable[Any] = ...,

@@ -153,7 +153,9 @@ public class ValidateXmlActionHandler {
 
   public void doParse() {
     try {
-      myParser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
+      InputSource inputSource = new InputSource(new StringReader(myFile.getText()));
+      inputSource.setSystemId(myFile.getVirtualFile().getUrl().replace("file:", "file:/"));
+      myParser.parse(inputSource, new DefaultHandler() {
         @Override
         public void warning(SAXParseException e) throws SAXException {
           if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.WARNING);

@@ -465,7 +465,6 @@ public class ProcessorProfilePanel extends JPanel {
       clear();
       if (!processors.isEmpty()) {
         myRows.addAll(processors);
-        Collections.sort(myRows, String.CASE_INSENSITIVE_ORDER);
         fireTableRowsInserted(0, processors.size()-1);
       }
     }
@@ -479,7 +478,7 @@ public class ProcessorProfilePanel extends JPanel {
     }
 
     public Collection<String> getProcessors() {
-      final Set<String> set = new HashSet<>();
+      final Set<String> set = new LinkedHashSet<>();
       for (String row : myRows) {
         if (row != null) {
           set.add(row.trim());

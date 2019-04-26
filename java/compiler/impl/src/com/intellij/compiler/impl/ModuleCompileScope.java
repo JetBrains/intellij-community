@@ -97,7 +97,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   @Override
-  public boolean belongs(final String url) {
+  public boolean belongs(@NotNull final String url) {
     if (myScopeModules.isEmpty() && myIncludedUnloadedModules.isEmpty()) {
       return false; // optimization
     }

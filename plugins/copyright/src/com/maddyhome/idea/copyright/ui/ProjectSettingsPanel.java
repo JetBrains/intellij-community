@@ -17,7 +17,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.TableView;
@@ -43,7 +43,7 @@ public class ProjectSettingsPanel {
 
   private final TableView<ScopeSetting> myScopeMappingTable;
   private final ListTableModel<ScopeSetting> myScopeMappingModel;
-  private final JComboBox myProfilesComboBox = new ComboBox();
+  private final JComboBox<CopyrightProfile> myProfilesComboBox = new ComboBox<>();
 
   private final HyperlinkLabel myScopesLink = new HyperlinkLabel();
 
@@ -74,17 +74,7 @@ public class ProjectSettingsPanel {
     myScopeMappingTable = new TableView<>(myScopeMappingModel);
 
     reloadCopyrightProfiles();
-    myProfilesComboBox.setRenderer(new ListCellRendererWrapper<CopyrightProfile>() {
-      @Override
-      public void customize(JList list, CopyrightProfile value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          setText("No copyright");
-        }
-        else {
-          setText(value.getName());
-        }
-      }
-    });
+    myProfilesComboBox.setRenderer(SimpleListCellRenderer.create("No copyright", CopyrightProfile::getName));
 
     myScopesLink.setVisible(!myProject.isDefault());
     myScopesLink.setHyperlinkText("Select Scopes to add new scopes or modify existing ones");
@@ -334,7 +324,7 @@ public class ProjectSettingsPanel {
               final NamedScope[] model = super.createModel();
               final ArrayList<NamedScope> filteredScopes = new ArrayList<>(Arrays.asList(model));
               CustomScopesProviderEx.filterNoSettingsScopes(myProject, filteredScopes);
-              return filteredScopes.toArray(new NamedScope[0]);
+              return filteredScopes.toArray(NamedScope.EMPTY_ARRAY);
             }
           };
 

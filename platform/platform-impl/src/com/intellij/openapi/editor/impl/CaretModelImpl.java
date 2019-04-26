@@ -33,6 +33,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private final EditorImpl myEditor;
 
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
+  private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
 
   private TextAttributes myTextAttributes;
 
@@ -46,6 +47,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private volatile CaretImpl myPrimaryCaret;
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
+  private boolean myVisualPositionUpdateScheduled;
 
   int myDocumentUpdateCounter;
 
@@ -78,6 +80,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myDocumentUpdateCounter++;
     if (!myEditor.getDocument().isInBulkUpdate()) {
       doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
+      if (myVisualPositionUpdateScheduled) updateVisualPosition();
     }
   }
 
@@ -89,6 +92,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
     }
     myIsInUpdate = true;
+    myVisualPositionUpdateScheduled = false;
   }
 
   @Override
@@ -338,6 +342,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myCurrentCaret != null) {
       throw new IllegalStateException("Recursive runForEachCaret invocations are not allowed");
     }
+    myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
     doWithCaretMerging(() -> {
       try {
         List<Caret> sortedCarets = getAllCarets();
@@ -353,6 +358,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         myCurrentCaret = null;
       }
     });
+    myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+  }
+
+  @Override
+  public void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable) {
+    myCaretActionListeners.addListener(listener, disposable);
   }
 
   @Override
@@ -583,28 +594,34 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void onAdded(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
-    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
+    Inlay.Placement placement = inlay.getPlacement();
+    if (placement == Inlay.Placement.INLINE) {
       int offset = inlay.getOffset();
       for (CaretImpl caret : myCarets) {
         caret.onInlayAdded(offset);
       }
     }
-    else {
+    else if (placement != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
       updateVisualPosition();
     }
   }
 
   @Override
   public void onRemoved(@NotNull Inlay inlay) {
-    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
-    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
+    if (myEditor.getDocument().isInBulkUpdate()) return;
+    Inlay.Placement placement = inlay.getPlacement();
+    if (myEditor.getDocument().isInEventsHandling()) {
+      if (placement == Inlay.Placement.AFTER_LINE_END) myVisualPositionUpdateScheduled = true;
+      return;
+    }
+    if (placement == Inlay.Placement.INLINE) {
       doWithCaretMerging(() -> {
         for (CaretImpl caret : myCarets) {
-          caret.onInlayRemoved(inlay.getOffset(), ((InlayImpl)inlay).getOrder());
+          caret.onInlayRemoved(inlay.getOffset(), ((InlineInlayImpl)inlay).getOrder());
         }
       });
     }
-    else {
+    else if (placement != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
       updateVisualPosition();
     }
   }
@@ -612,7 +629,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
-    updateVisualPosition();
+    if (inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
+      updateVisualPosition();
+    }
+  }
+
+  private boolean hasCaretInVirtualSpace() {
+    return myEditor.getSettings().isVirtualSpace() && ContainerUtil.exists(myCarets, CaretImpl::isInVirtualSpace);
   }
 
   @TestOnly

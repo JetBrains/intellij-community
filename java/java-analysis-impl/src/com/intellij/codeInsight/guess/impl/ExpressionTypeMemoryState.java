@@ -16,15 +16,16 @@
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.DfaFactMap;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -62,23 +63,37 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       return false;
     }
   };
+  private final boolean myHonorAssignments;
   // may be shared between memory state instances
-  private MultiMap<PsiExpression, PsiType> myStates = MultiMap.createSet(EXPRESSION_HASHING_STRATEGY);
+  private MultiMap<PsiExpression, PsiType> myStates;
 
-  public ExpressionTypeMemoryState(final DfaValueFactory factory) {
+  public ExpressionTypeMemoryState(final DfaValueFactory factory, boolean honorAssignments) {
     super(factory);
+    myHonorAssignments = honorAssignments;
+    myStates = MultiMap.createSet(EXPRESSION_HASHING_STRATEGY);
   }
 
-  private ExpressionTypeMemoryState(DfaMemoryStateImpl toCopy) {
+  private ExpressionTypeMemoryState(ExpressionTypeMemoryState toCopy) {
     super(toCopy);
+    myHonorAssignments = toCopy.myHonorAssignments;
+    myStates = toCopy.myStates;
+  }
+
+  @Override
+  protected DfaFactMap filterFactsOnAssignment(DfaVariableValue var, @NotNull DfaFactMap facts) {
+    if (myHonorAssignments) return facts;
+    if (ControlFlowAnalyzer.isTempVariable(var) || 
+        var.getPsiVariable() instanceof PsiParameter && var.getPsiVariable().getParent().getParent() instanceof PsiLambdaExpression) {
+      // Pass type normally for synthetic lambda parameter assignment
+      return facts;
+    }
+    return facts.with(DfaFactType.TYPE_CONSTRAINT, null);
   }
 
   @NotNull
   @Override
   public DfaMemoryStateImpl createCopy() {
-    final ExpressionTypeMemoryState copy = new ExpressionTypeMemoryState(this);
-    copy.myStates = myStates;
-    return copy;
+    return new ExpressionTypeMemoryState(this);
   }
 
   @Override

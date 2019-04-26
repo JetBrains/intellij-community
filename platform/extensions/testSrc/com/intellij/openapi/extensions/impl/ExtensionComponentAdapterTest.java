@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
@@ -8,7 +8,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.io.IOException;
 
@@ -31,13 +30,12 @@ public class ExtensionComponentAdapterTest {
   public void testUnknownAttributes() throws IOException, JDOMException {
     String name = TestExtensionClassOne.class.getName();
     Element element = JDOMUtil.load("<bean implementation=\"123\"/>");
-    DefaultPicoContainer container = new DefaultPicoContainer();
     DefaultPluginDescriptor descriptor = new DefaultPluginDescriptor("test");
-    new ExtensionComponentAdapter(name, container, descriptor, null, LoadingOrder.ANY, element).getComponentInstance(container);
+    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element).createInstance(null);
   }
 
   @NotNull
   private static ExtensionComponentAdapter createAdapter(@NotNull LoadingOrder order) {
-    return new ExtensionComponentAdapter(Object.class.getName(), null, null, null, order, null);
+    return new XmlExtensionAdapter(Object.class.getName(), null, null, order, null);
   }
 }

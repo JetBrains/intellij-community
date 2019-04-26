@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -26,6 +26,13 @@ public class GenericType {
     this.type = type;
     this.arrayDim = arrayDim;
     this.value = value;
+  }
+
+  private GenericType(GenericType other, int arrayDim) {
+    this(other.type, arrayDim, other.value);
+    enclosingClasses.addAll(other.enclosingClasses);
+    arguments.addAll(other.arguments);
+    wildcards.addAll(other.wildcards);
   }
 
   public GenericType(String signature) {
@@ -197,7 +204,7 @@ public class GenericType {
 
   public GenericType decreaseArrayDim() {
     assert arrayDim > 0 : this;
-    return new GenericType(type, arrayDim - 1, value);
+    return new GenericType(this, arrayDim - 1);
   }
 
   public List<GenericType> getArguments() {

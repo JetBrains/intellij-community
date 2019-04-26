@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,67 +23,87 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
+/**
+ * Common data keys.
+ *
+ * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ */
 public class CommonDataKeys {
+
   public static final DataKey<Project> PROJECT = DataKey.create("project");
-  public static final DataKey<Editor> EDITOR = DataKey.create("editor");
+
   /**
-   * This key can be used to obtain reference to host editor instance, in case {@link #EDITOR} key is referring to an injected editor.
+   * Returns editor instance.
+   *
+   * @see #HOST_EDITOR
+   * @see #EDITOR_EVEN_IF_INACTIVE
+   */
+  public static final DataKey<Editor> EDITOR = DataKey.create("editor");
+
+  /**
+   * Returns reference to host editor instance, in case {@link #EDITOR} key is referring to an injected editor.
    */
   public static final DataKey<Editor> HOST_EDITOR = DataKey.create("host.editor");
+
   /**
-   * A key to retrieve caret instance (in host or injected editor, depending on context).
+   * Returns caret instance (in host or injected editor, depending on context).
    */
   public static final DataKey<Caret> CARET = DataKey.create("caret");
+
   /**
-   * Returns com.intellij.openapi.editor.Editor even if focus currently is in find bar
+   * Returns editor even if focus currently is in find bar.
    */
   public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create("editor.even.if.inactive");
 
   /**
-   * This key can be used to obtain {@link Navigatable} instance.
-   *<br>
+   * Returns {@link Navigatable} instance.
+   * <p/>
    * If {@link DataContext} has a value for {@link #PSI_ELEMENT} key which implements {@link Navigatable} it will automatically
    * return it for this key if explicit value isn't provided.
    */
   public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create("Navigatable");
 
   /**
-   * This key can be used to obtain several navigatables e.g. if several elements are selected in a component.
-   *<br>
+   * Returns several navigatables, e.g. if several elements are selected in a component.
+   * <p/>
    * Note that if {@link DataContext} has a value for {@link #NAVIGATABLE} key it will automatically return single-element array for this
    * key if explicit value isn't provided so there is no need to perform such wrapping by hand.
    */
   public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("NavigatableArray");
 
   /**
-   * This key can be used to obtain {@link VirtualFile} instance.
-   *<br>
+   * Returns {@link VirtualFile} instance.
+   * <p/>
    * Note that if {@link DataContext} has a value for {@link #PSI_FILE} key it will automatically return the corresponding {@link VirtualFile}
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.
    */
   public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create("virtualFile");
 
   /**
-   * This key can be used to obtain several {@link VirtualFile} instances e.g. if several elements are selected in a component.
-   *<br>
+   * Returns several {@link VirtualFile} instances, e.g. if several elements are selected in a component.
+   * <p/>
    * Note that if {@link DataContext} doesn't have an explicit value for this key it will automatically collect {@link VirtualFile} instances
    * corresponding to values provided for {@link #VIRTUAL_FILE}, {@link #PSI_FILE}, {@link #PSI_ELEMENT} and other keys and return the array
    * containing unique instances of the found files.
    */
   public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create("virtualFileArray");
 
+  /**
+   * Returns {@link PsiElement} instance.
+   */
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
 
   /**
-   * This key can be used to obtain several {@link PsiFile} instance.
-   *<br>
+   * Returns currently selected {@link PsiFile} instance.
+   * <p/>
    * Note that if {@link DataContext} has a value for {@link #VIRTUAL_FILE} key it will automatically return the corresponding {@link PsiFile}
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.
    */
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
 
   /**
-   * This key can be used to check if the current context relates to a virtual space in editor.
+   * Returns whether the current location relates to a virtual space in an editor.
+   *
    * @see com.intellij.openapi.editor.EditorSettings#setVirtualSpace(boolean)
    */
   public static final DataKey<Boolean> EDITOR_VIRTUAL_SPACE = DataKey.create("editor.virtual.space");

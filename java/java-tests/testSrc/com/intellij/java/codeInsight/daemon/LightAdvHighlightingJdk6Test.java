@@ -62,5 +62,6 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testStaticOnDemandImportResolvesToClass() { doTest(false); }
   public void testReachableWhileBodyDueToConstantStringComparison() { doTest(false); }
   public void testPrivateClassReferencedInAnnotationOnSibling() { doTest(false); }
+  public void testOrderAlreadyInitializedErrors() { doTest(false); }
   public void testInnerClassImportShouldNotLeadToClassUsage() { enableInspectionTool(new UnusedDeclarationInspection(true)); doTest(true); }
 }

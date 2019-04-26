@@ -130,7 +130,7 @@ public class StringExpressionHelper {
     return Pair.create(expression, sb.toString());
   }
 
-  @Nullable
+  @NotNull
   private static Pair<PsiElement, String> evaluatePsiLiteralExpression(@NotNull PsiElement expression) {
     return Pair.create(expression, ElementManipulators.getValueText(expression));
   }

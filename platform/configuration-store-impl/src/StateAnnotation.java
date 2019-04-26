@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.State;
@@ -17,11 +18,13 @@ public class StateAnnotation implements State {
     storages = new Storage[]{storage};
   }
 
+  @NotNull
   @Override
   public String name() {
     return name;
   }
 
+  @NotNull
   @Override
   public Storage[] storages() {
     return storages;
@@ -55,6 +58,11 @@ public class StateAnnotation implements State {
   @Override
   public boolean reportStatistic() {
     return false;
+  }
+
+  @Override
+  public boolean useLoadedStateAsExisting() {
+    return true;
   }
 
   @Override

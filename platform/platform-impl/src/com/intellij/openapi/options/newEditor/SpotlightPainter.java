@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ComponentHighligtingListener;
@@ -29,10 +15,9 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import java.awt.*;
 import java.util.IdentityHashMap;
-import javax.swing.JComponent;
 
 /**
  * @author Sergey.Malenkov
@@ -44,7 +29,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
   private final JComponent myTarget;
   boolean myVisible;
 
-  SpotlightPainter(JComponent target, Disposable parent) {
+  SpotlightPainter(JComponent target, @NotNull Disposable parent) {
     myQueue = new MergingUpdateQueue("SettingsSpotlight", 200, false, target, parent, target);
     myGlassPanel = new GlassPanel(target);
     myTarget = target;
@@ -87,7 +72,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
       myVisible = !text.isEmpty();
       try {
         SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
-        SearchUtil.lightOptions(searchable, component, text, myGlassPanel).run();
+        SearchUtil.lightOptions(searchable, component, text);
         Runnable search = searchable.enableSearch(text); // execute for empty string too
         if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(configurable))) {
           search.run();

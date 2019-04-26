@@ -228,13 +228,23 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       nodeType = parseScalarValue(minIndent);
     }
     else if (tokenType == STAR) {
+      PsiBuilder.Marker aliasMarker = mark();
       advanceLexer(); // symbol *
       if (getTokenType() == YAMLTokenTypes.ALIAS) {
         advanceLexer(); // alias name
-        nodeType = YAMLElementTypes.ALIAS_NODE;
+        aliasMarker.done(YAMLElementTypes.ALIAS_NODE);
+        if (getTokenType() == COLON) {
+          eolSeen = false;
+          int indentAddition = getShorthandIndentAddition();
+          nodeType = parseSimpleScalarKeyValueFromColon(indent, indentAddition);
+        }
+        else {
+          nodeType = null;
+        }
       }
       else {
         // Should be impossible now (because of lexer rules)
+        aliasMarker.drop();
         nodeType = null;
       }
     }
@@ -441,6 +451,11 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     int indentAddition = getShorthandIndentAddition();
     advanceLexer();
 
+    return parseSimpleScalarKeyValueFromColon(indent, indentAddition);
+  }
+
+  @NotNull
+  private IElementType parseSimpleScalarKeyValueFromColon(int indent, int indentAddition) {
     assert getTokenType() == COLON : "Expected colon";
     advanceLexer();
 

@@ -143,7 +143,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
         }
 
         if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN){
-          return (XmlElement)element;
+          return element;
         }
       }
     }
@@ -159,7 +159,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       }
 
       if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN){
-        return (XmlElement)element;
+        return element;
       }
     }
 

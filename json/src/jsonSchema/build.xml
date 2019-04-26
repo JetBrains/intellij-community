@@ -23,11 +23,11 @@
   </macrodef>
 
   <target name="prettier">
-    <get_schema fromUrl="http://json.schemastore.org/prettierrc-1.8.2"
+    <get_schema fromUrl="http://json.schemastore.org/prettierrc"
                 toFile="${idea.project.home}/contrib/prettierJS/resources/prettierrc-schema.json" />
     <!-- Add schema ID manually -->
     <replaceregexp file="${idea.project.home}/contrib/prettierJS/resources/prettierrc-schema.json"
-                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/prettierrc-1.8.2&quot;,${line.separator}  &quot;definitions&quot;" />
+                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/prettierrc&quot;,${line.separator}  &quot;definitions&quot;" />
   </target>
 
   <target name="tslint">
@@ -78,7 +78,10 @@
                    replace="&quot;eslintConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/eslintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
-                   replace="&quot;prettier&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/prettierrc-1.8.2#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+                   replace="&quot;eslintIgnore&quot; : {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}, &quot;description&quot;: &quot;List of files to be ignored by ESLint&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;prettier&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/prettierrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
                    replace="&quot;stylelint&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/stylelintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
@@ -91,6 +94,9 @@
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
                    replace="&quot;jscsConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/jscsrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;browserslist&quot; : {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}, &quot;description&quot;: &quot;List of Browserslist queries&quot;},${line.separator}  &quot;publishConfig&quot;" />
   </target>
 
   <target name="js_schemas">

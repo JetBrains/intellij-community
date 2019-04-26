@@ -65,6 +65,7 @@ public interface BreadcrumbsProvider {
   }
 
   /**
+   * Reserved for future releases. Not supported yet.
    * @param element that represents a single crumb
    * @return a list of elements to navigate
    */

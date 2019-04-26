@@ -15,8 +15,12 @@
  */
 package com.intellij.packaging.elements;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
- * @author nik
+ * @deprecated this interface was used in the old build infrastructure, it doesn't make sense anymore
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "192.0")
+@Deprecated
 public interface ArtifactIncrementalCompilerContext {
 }

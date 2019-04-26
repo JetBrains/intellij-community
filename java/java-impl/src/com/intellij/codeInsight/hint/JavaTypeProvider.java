@@ -98,7 +98,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
 
   private static <T> String formatFact(@NotNull DfaFactType<T> factType, @NotNull T value, @Nullable PsiType type) {
     String presentationText = factType.getPresentationText(value, type);
-    return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(), StringUtil.escapeXmlEntities(presentationText));
+    return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(value), StringUtil.escapeXmlEntities(presentationText));
   }
 
   private static String makeHtmlRow(@NotNull String titleText, String contentHtml) {

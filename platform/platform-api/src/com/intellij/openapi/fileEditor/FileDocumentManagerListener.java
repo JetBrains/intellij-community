@@ -24,8 +24,6 @@ public interface FileDocumentManagerListener extends EventListener {
    * Fired before processing FileDocumentManager.saveAllDocuments(). Can be used by plugins
    * which need to perform additional save operations when documents, rather than settings,
    * are saved.
-   *
-   * @since 8.0
    */
   default void beforeAllDocumentsSaving() {
   }

@@ -18,17 +18,17 @@ package com.intellij.ui;
 import javax.swing.*;
 import java.util.Map;
 
-public class MappingListCellRenderer extends ListCellRendererWrapper {
+public class MappingListCellRenderer extends SimpleListCellRenderer<Object> {
   private final Map<Object, String> myValueMap;
 
-  public MappingListCellRenderer(final ListCellRenderer original, final Map<Object, String> valueMap) {
+  public MappingListCellRenderer(Map<Object, String> valueMap) {
     super();
     myValueMap = valueMap;
   }
 
   @Override
-  public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-    final String newValue = myValueMap.get(value);
+  public void customize(JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
+    String newValue = myValueMap.get(value);
     if (newValue != null) {
       setText(newValue);
     }

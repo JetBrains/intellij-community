@@ -16,6 +16,7 @@
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -41,6 +42,7 @@ import com.intellij.psi.util.FindClassUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.File;
 import java.util.Collection;
@@ -79,6 +81,20 @@ public class FindClassTest extends PsiTestCase {
   public void testSimple() {
     PsiClass psiClass = myJavaFacade.findClass("p.A");
     assertEquals("p.A", psiClass.getQualifiedName());
+  }
+
+  public void testClassDuplicatedInResourceRoot() {
+    WriteAction.run(() -> {
+      //duplicate class in resource directory
+      VirtualFile resourceDir = createChildDirectory(myPrjDir1, "rSrc1");
+      VirtualFile file1 = createChildData(createChildDirectory(resourceDir, "p"), "A.java");
+      setFileText(file1, "package p; public class A{ public void foo(); }");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiTestUtil.addSourceRoot(myModule, resourceDir, JavaResourceRootType.RESOURCE);
+
+      PsiClass[] classes = myJavaFacade.findClasses("p.A", GlobalSearchScope.allScope(myProject));
+      assertSize(1, classes);
+    });
   }
 
   public void testClassUnderExcludedFolder() {

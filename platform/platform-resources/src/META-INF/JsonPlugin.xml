@@ -18,7 +18,6 @@
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
-    <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
     <statusBarWidgetProvider implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetProvider" />
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
@@ -35,11 +34,11 @@
     <typedHandler implementation="com.intellij.json.editor.JsonTypedHandler" id="JsonTypedHandler"/>
     <copyPastePreProcessor implementation="com.intellij.json.editor.JsonCopyPasteProcessor"/>
     <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable"/>
-    <applicationService serviceInterface="com.intellij.json.editor.JsonEditorOptions"
-                        serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
+    <applicationService serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
+    <focusModeProvider language="JSON" implementationClass="com.intellij.json.editor.JsonFocusModeProvider"/>
     <qualifiedNameProvider implementation="com.intellij.json.navigation.JsonQualifiedNameProvider"/>
     <completion.contributor language="JSON" id="JsonCompletionContributor" order="last" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>
@@ -55,7 +54,6 @@
     <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
     <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
-    <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
 
     <json.jsonLiteralChecker implementation="com.intellij.json.codeinsight.StandardJsonLiteralChecker"/>
     <json.jsonLiteralChecker implementation="com.intellij.json.json5.codeinsight.Json5JsonLiteralChecker"/>
@@ -80,6 +78,10 @@
                      bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaDeprecation"
+                     bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.deprecation.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaDeprecationInspection"/>
     <localInspection language="JSON" shortName="JsonSchemaRefReference"
                      bundle="com.intellij.json.JsonBundle" key="json.schema.ref.refs.inspection.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
@@ -100,11 +102,11 @@
     <lang.documentationProvider language="JSON"
                                 implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
-    <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
-    <statistics.applicationUsagesCollector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector groupId="json.schema" version="1"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
+    <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector"/>
     <lang.lineWrapStrategy language="JSON" implementationClass="com.intellij.json.formatter.JsonLineWrapPositionStrategy"/>
     <gotoDeclarationHandler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
     <copyPastePostProcessor implementation="com.intellij.json.editor.JsonCopyPastePostProcessor"/>

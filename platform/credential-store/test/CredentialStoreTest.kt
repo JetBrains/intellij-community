@@ -8,7 +8,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.*
 
-private const val TEST_SERVICE_NAME = "$SERVICE_NAME_PREFIX Test"
+private val TEST_SERVICE_NAME = generateServiceName("Test", "test")
 
 inline fun macTest(task: () -> Unit) {
   if (SystemInfo.isMacIntel64 && !UsefulTestCase.IS_UNDER_TEAMCITY) {
@@ -58,6 +58,11 @@ internal class CredentialStoreTest {
   @Test
   fun `KeePass - testEmptyAccountName`() {
     testEmptyAccountName(InMemoryCredentialStore())
+  }
+
+  @Test
+  fun `KeePass - testEmptyStrAccountName`() {
+    testEmptyStrAccountName(InMemoryCredentialStore())
   }
 
   @Test
@@ -133,6 +138,19 @@ internal class CredentialStoreTest {
     finally {
       store.set(attributes, null)
     }
+  }
+
+  private fun testEmptyStrAccountName(store: CredentialStore) {
+    val attributes = CredentialAttributes("Test IJ — ${randomString()}", "")
+    try {
+      val credentials = Credentials("", "pass")
+      store.set(attributes, credentials)
+      assertThat(store.get(attributes)).isEqualTo(credentials)
+    }
+    finally {
+      store.set(attributes, null)
+    }
+    assertThat(store.get(attributes)).isNull()
   }
 
   private fun testChangedAccountName(store: CredentialStore) {

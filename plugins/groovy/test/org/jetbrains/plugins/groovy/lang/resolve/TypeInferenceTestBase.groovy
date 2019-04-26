@@ -1,12 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -20,6 +20,7 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     super.setUp()
 
     myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}")
+    NestedContextKt.forbidNestedContext(testRootDisposable)
   }
 
   protected void doTest(String text, @Nullable String type) {
@@ -29,23 +30,23 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     assertType(type, actual)
   }
 
-  protected void doExprTest(@Language("Groovy") String text, @Nullable String expectedType) {
+  protected void doExprTest(String text, @Nullable String expectedType) {
     GroovyFile file = myFixture.configureByText('_.groovy', text) as GroovyFile
     GrStatement lastStatement = file.statements.last()
     assertInstanceOf lastStatement, GrExpression
     assertType(expectedType, (lastStatement as GrExpression).type)
   }
 
-  protected void doCSExprTest(@Language("Groovy") String text, @Nullable String expectedType) {
-    GroovyFile file = myFixture.configureByText('_.groovy', """
-import groovy.transform.CompileStatic
-@CompileStatic 
+  protected void doCSExprTest(String text, @Nullable String expectedType) {
+    GroovyFile file = myFixture.configureByText('_.groovy', """\
+@groovy.transform.CompileStatic 
 def m() {
-  $text<caret>
+  $text
 }
 """) as GroovyFile
-    def ref = file.findReferenceAt(myFixture.editor.caretModel.offset - 1) as GrReferenceExpression
-    def actual = ref.type
+    def lastStatement = file.methods.first().block.statements.last()
+    def expression = assertInstanceOf lastStatement, GrExpression
+    def actual = expression.type
     assertType(expectedType, actual)
   }
 }

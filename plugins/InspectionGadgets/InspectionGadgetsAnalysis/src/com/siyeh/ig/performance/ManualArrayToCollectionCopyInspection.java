@@ -283,7 +283,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpressionStatement)body).getExpression());
       if (!(expression instanceof PsiMethodCallExpression)) return null;
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      return ExpressionUtils.getQualifierOrThis(call.getMethodExpression()).getText();
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+      return qualifier != null ? qualifier.getText() : null;
     }
 
     @Nullable
@@ -590,8 +591,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
           return false;
         }
       }
-      else if (!VariableAccessUtils.evaluatesToVariable(argument,
-                                                        variable)) {
+      else if (!ExpressionUtils.isReferenceTo(argument, variable)) {
         return false;
       }
       final PsiMethod method = methodCallExpression.resolveMethod();

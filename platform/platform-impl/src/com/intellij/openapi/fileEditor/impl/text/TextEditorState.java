@@ -1,14 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @author Vladimir Kondratyev
@@ -23,7 +24,8 @@ public final class TextEditorState implements FileEditorState {
    * This field can be {@code null}.
    */
   private CodeFoldingState myFoldingState;
-  @Nullable private Producer<CodeFoldingState> myDelayedFoldInfoProducer;
+  @Nullable
+  private Supplier<CodeFoldingState> myDelayedFoldInfoProducer;
 
   private static final int MIN_CHANGE_DISTANCE = 4;
 
@@ -39,12 +41,12 @@ public final class TextEditorState implements FileEditorState {
    *
    * @param producer  delayed folding info producer
    */
-  void setDelayedFoldState(@NotNull Producer<CodeFoldingState> producer) {
+  void setDelayedFoldState(@NotNull Supplier<CodeFoldingState> producer) {
     myDelayedFoldInfoProducer = producer;
   }
 
   @Nullable
-  Producer<CodeFoldingState> getDelayedFoldState() {
+  Supplier<CodeFoldingState> getDelayedFoldState() {
     return myDelayedFoldInfoProducer;
   }
 
@@ -52,7 +54,7 @@ public final class TextEditorState implements FileEditorState {
   CodeFoldingState getFoldingState() {
     // Assuming single-thread access here.
     if (myFoldingState == null && myDelayedFoldInfoProducer != null) {
-      myFoldingState = myDelayedFoldInfoProducer.produce();
+      myFoldingState = myDelayedFoldInfoProducer.get();
       if (myFoldingState != null) {
         myDelayedFoldInfoProducer = null;
       }
@@ -77,7 +79,7 @@ public final class TextEditorState implements FileEditorState {
     if (RELATIVE_CARET_POSITION != textEditorState.RELATIVE_CARET_POSITION) return false;
     CodeFoldingState localFoldingState = getFoldingState();
     CodeFoldingState theirFoldingState = textEditorState.getFoldingState();
-    if (localFoldingState == null ? theirFoldingState != null : !localFoldingState.equals(theirFoldingState)) return false;
+    if (!Objects.equals(localFoldingState, theirFoldingState)) return false;
 
     return true;
   }

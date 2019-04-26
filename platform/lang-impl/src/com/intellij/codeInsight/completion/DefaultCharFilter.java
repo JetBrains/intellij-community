@@ -18,6 +18,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.util.containers.ContainerUtil;
 
 public class DefaultCharFilter extends CharFilter {
 
@@ -34,9 +37,18 @@ public class DefaultCharFilter extends CharFilter {
       case '(':
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
 
+      case '-':
+        return ContainerUtil.exists(lookup.getItems(), item -> matchesAfterAppendingChar(lookup, item, c))
+               ? Result.ADD_TO_PREFIX
+               : Result.HIDE_LOOKUP;
+
       default:
         return Result.HIDE_LOOKUP;
     }
   }
 
+  private static boolean matchesAfterAppendingChar(Lookup lookup, LookupElement item, char c) {
+    PrefixMatcher matcher = lookup.itemMatcher(item);
+    return matcher.cloneWithPrefix((matcher.getPrefix() + ((LookupImpl)lookup).getAdditionalPrefix()) + c).prefixMatches(item);
+  }
 }

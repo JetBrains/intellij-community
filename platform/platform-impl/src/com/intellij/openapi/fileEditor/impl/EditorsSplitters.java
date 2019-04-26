@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -35,7 +35,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -831,14 +831,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         if (i == 0) {
           EditorTabbedContainer tabbedPane = window.getTabbedPane();
           if (tabbedPane != null) {
-            try {
-              int limit =
-                Integer.parseInt(parent.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(),
-                                                                           String.valueOf(JBTabsImpl.DEFAULT_MAX_TAB_WIDTH)));
-              UIUtil.putClientProperty(tabbedPane.getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit);
-            }
-            catch (NumberFormatException e) {
-              //ignore
+            String limitValue = parent.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString());
+            if (limitValue != null) {
+              try {
+                int limit = Integer.parseInt(limitValue);
+                UIUtil.invokeAndWaitIfNeeded((Runnable)() -> UIUtil.putClientProperty(tabbedPane.getComponent(),
+                                                                                      JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit));
+              }
+              catch (NumberFormatException ignored) {}
             }
           }
         }

@@ -29,6 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InheritanceUtil {
@@ -57,14 +58,14 @@ public class InheritanceUtil {
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(class2Name)) {
       return true;
     }
-    if (class1.isInheritor(class2, true) || class2.isInheritor(class1, true)) {
+    if ( class1.isInheritor(class2, true) || class2.isInheritor(class1, true) || Objects.equals(class1, class2)) {
       return true;
     }
     final SearchScope scope = GlobalSearchScope.allScope(class1.getProject());
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
     final boolean[] result = new boolean[1];
     search.forEach(new Processor<PsiClass>() {
-      AtomicInteger count = new AtomicInteger(0);
+      final AtomicInteger count = new AtomicInteger(0);
 
       @Override
       public boolean process(PsiClass inheritor) {

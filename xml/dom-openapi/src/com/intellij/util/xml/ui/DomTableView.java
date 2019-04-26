@@ -15,8 +15,9 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
@@ -55,9 +56,7 @@ public class DomTableView extends AbstractTableView<DomElement> {
   @Override
   protected void wrapValueSetting(@NotNull final DomElement domElement, final Runnable valueSetter) {
     if (domElement.isValid()) {
-      WriteCommandAction.writeCommandAction(getProject(), DomUtil.getFile(domElement)).run(() -> {
-        valueSetter.run();
-      });
+      WriteCommandAction.writeCommandAction(getProject(), DomUtil.getFile(domElement)).run(() -> valueSetter.run());
       fireChanged();
     }
   }

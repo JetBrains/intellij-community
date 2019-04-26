@@ -151,8 +151,8 @@ public class PySkeletonGenerator {
     final String parent_dir = new File(binaryPath).getParent();
     List<String> commandLine = buildSkeletonGeneratorCommandLine(modname, modfilename, assemblyRefs, binaryPath, extraSyspath);
 
-    final Map<String, String> extraEnv = PythonSdkType.getVirtualEnvExtraEnv(binaryPath);
-    final Map<String, String> env = new HashMap<>(extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
+    final Map<String, String> extraEnv = PythonSdkType.activateVirtualEnv(binaryPath);
+    final Map<String, String> env = new HashMap<>(!extraEnv.isEmpty() ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
 
     if (myPrebuilt) {
       env.put("IS_PREGENERATED_SKELETONS", "1");
@@ -212,7 +212,7 @@ public class PySkeletonGenerator {
         "-d", mySkeletonsPath, // output dir
         "-b", // for builtins
       },
-      PythonSdkType.getVirtualEnvExtraEnv(binaryPath), MINUTE * 5
+      PythonSdkType.activateVirtualEnv(sdk), MINUTE * 5
     );
     runResult.checkSuccess(LOG);
     LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
@@ -225,7 +225,7 @@ public class PySkeletonGenerator {
     if (homePath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
     final String parentDir = new File(homePath).getParent();
 
-    List<String> cmd = new ArrayList<>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L"));
+    List<String> cmd = new ArrayList<>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L"));
     if (!StringUtil.isEmpty(extraSysPath)) {
       cmd.add("-s");
       cmd.add(extraSysPath);
@@ -233,7 +233,7 @@ public class PySkeletonGenerator {
 
     final ProcessOutput process = getProcessOutput(parentDir,
                                                    ArrayUtil.toStringArray(cmd),
-                                                   PythonSdkType.getVirtualEnvExtraEnv(homePath),
+                                                   PythonSdkType.activateVirtualEnv(sdk),
                                                    MINUTE * 4); // see PY-3898
 
     LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");

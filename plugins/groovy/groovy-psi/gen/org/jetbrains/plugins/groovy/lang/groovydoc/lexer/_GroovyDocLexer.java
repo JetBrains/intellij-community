@@ -149,10 +149,10 @@ public class _GroovyDocLexer implements FlexLexer {
 
   private static final String ZZ_ACTION_PACKED_0 =
     "\14\0\3\1\1\2\1\3\1\4\1\5\1\6\1\2"+
-    "\1\7\1\10\1\11\1\12\1\2\2\13\1\14\1\15"+
-    "\1\16\1\17\1\20\1\13\1\21\1\22\1\23\1\24"+
-    "\1\20\1\25\1\26\1\0\1\27\2\30\1\31\3\30"+
-    "\1\32";
+    "\1\7\1\10\1\1\1\11\1\2\2\12\1\13\1\14"+
+    "\1\15\1\16\1\17\1\12\1\20\1\21\1\22\1\23"+
+    "\1\17\1\24\1\25\1\0\1\26\2\27\1\30\3\27"+
+    "\1\31";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[50];
@@ -577,135 +577,130 @@ public class _GroovyDocLexer implements FlexLexer {
       else {
         switch (zzAction < 0 ? zzAction : ZZ_ACTION[zzAction]) {
           case 1: 
-            { return TokenType.BAD_CHARACTER;
+            { return mGDOC_COMMENT_DATA;
             } 
             // fall through
-          case 27: break;
+          case 26: break;
           case 2: 
             { yybegin(COMMENT_DATA); return mGDOC_COMMENT_DATA;
             } 
             // fall through
-          case 28: break;
+          case 27: break;
           case 3: 
             { return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 29: break;
+          case 28: break;
           case 4: 
             { yybegin(ASTERISKS); return mGDOC_ASTERISKS;
             } 
             // fall through
-          case 30: break;
+          case 29: break;
           case 5: 
             { yybegin(AFTER_BRACE); return mGDOC_INLINE_TAG_START;
             } 
             // fall through
-          case 31: break;
+          case 30: break;
           case 6: 
             { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END;
             } 
             // fall through
-          case 32: break;
+          case 31: break;
           case 7: 
             { yypushback(1); yybegin(AFTER_ASTERISKS);
             } 
             // fall through
-          case 33: break;
+          case 32: break;
           case 8: 
             { return mGDOC_ASTERISKS;
             } 
             // fall through
-          case 34: break;
+          case 33: break;
           case 9: 
-            { return mGDOC_COMMENT_DATA;
-            } 
-            // fall through
-          case 35: break;
-          case 10: 
             { yybegin(TOP_LEVEL); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 36: break;
-          case 11: 
+          case 34: break;
+          case 10: 
             { yypushback(1); yybegin(COMMENT_DATA);
             } 
             // fall through
-          case 37: break;
-          case 12: 
+          case 35: break;
+          case 11: 
             { yybegin(AFTER_TAG_SPACE); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 38: break;
-          case 13: 
+          case 36: break;
+          case 12: 
             { yybegin(TAG_VALUE); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 39: break;
-          case 14: 
+          case 37: break;
+          case 13: 
             { yypushback(1); yybegin(TAG_VALUE);
             } 
             // fall through
-          case 40: break;
-          case 15: 
+          case 38: break;
+          case 14: 
             { yybegin(COMMENT_DATA); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 41: break;
-          case 16: 
+          case 39: break;
+          case 15: 
             { return mGDOC_TAG_VALUE_TOKEN;
             } 
             // fall through
-          case 42: break;
-          case 17: 
+          case 40: break;
+          case 16: 
             { return mGDOC_TAG_VALUE_COMMA;
             } 
             // fall through
-          case 43: break;
-          case 18: 
+          case 41: break;
+          case 17: 
             { yybegin(TAG_VALUE_IN_ANGLES); return mGDOC_TAG_VALUE_LT;
             } 
             // fall through
-          case 44: break;
-          case 19: 
+          case 42: break;
+          case 18: 
             { yybegin(TAG_VALUE_IN_PAREN); return mGDOC_TAG_VALUE_LPAREN;
             } 
             // fall through
-          case 45: break;
-          case 20: 
+          case 43: break;
+          case 19: 
             { return mGDOC_TAG_VALUE_SHARP_TOKEN;
             } 
             // fall through
-          case 46: break;
-          case 21: 
+          case 44: break;
+          case 20: 
             { yybegin(COMMENT_DATA); return mGDOC_TAG_VALUE_GT;
             } 
             // fall through
-          case 47: break;
-          case 22: 
+          case 45: break;
+          case 21: 
             { yybegin(TAG_VALUE); return mGDOC_TAG_VALUE_RPAREN;
             } 
             // fall through
-          case 48: break;
-          case 23: 
+          case 46: break;
+          case 22: 
             { return mGDOC_COMMENT_END;
             } 
             // fall through
-          case 49: break;
-          case 24: 
+          case 47: break;
+          case 23: 
             { yybegin(AFTER_TAG_NAME); return mGDOC_TAG_NAME;
             } 
             // fall through
-          case 50: break;
-          case 25: 
+          case 48: break;
+          case 24: 
             { yybegin(AFTER_ASTERISKS); return mGDOC_COMMENT_START;
             } 
             // fall through
-          case 51: break;
-          case 26: 
+          case 49: break;
+          case 25: 
             { yybegin(AFTER_PARAM_NAME); return mGDOC_TAG_NAME;
             } 
             // fall through
-          case 52: break;
+          case 50: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

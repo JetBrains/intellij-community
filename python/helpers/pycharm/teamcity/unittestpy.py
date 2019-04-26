@@ -201,11 +201,12 @@ class TeamcityTestResult(TestResult):
 
         if is_string(err):
             details = err
-        elif get_class_fullname(err) == "twisted.python.failure.Failure":
-            details = err.getTraceback()
         else:
-            frames_to_skip_from_tail = 2 if diff_failed else 0
-            details = convert_error_to_string(err, frames_to_skip_from_tail)
+            try:
+                details = err.getTraceback()
+            except AttributeError:
+                frames_to_skip_from_tail = 2 if diff_failed else 0
+                details = convert_error_to_string(err, frames_to_skip_from_tail)
 
         subtest_failures = self.get_subtest_failure(test_id)
         if subtest_failures:

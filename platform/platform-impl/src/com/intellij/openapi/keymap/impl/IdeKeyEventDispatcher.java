@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -28,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -75,9 +61,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * This class is automaton with finite number of state.
@@ -88,6 +75,8 @@ import java.util.List;
 public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
+  private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
+  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -174,6 +163,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
+      // remove AltGr modifier to show a shortcut without AltGr in Settings
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
       return false;
     }
     if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
@@ -190,7 +181,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach editor when an action
         // is invoked from main menu via Enter key.
         setState(KeyState.STATE_PROCESSED);
-        return false;
+        return processMenuActions(e, selectedPath[0]);
       }
     }
 
@@ -413,33 +404,25 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
-  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<>(Arrays.asList(
-    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv", "sv"
-  ));
-
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
     boolean isModalContext = myContext.isModalContext();
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
+    if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e)) {
+      myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
+      if (myFirstKeyStroke == null) return false;
+      setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
+      return true;
+    }
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
     if (isCandidateForAltGr) {
       if (Registry.is("actionSystem.force.alt.gr")) {
         return false;
       }
-      final InputContext inputContext = focusOwner.getInputContext();
-      if (inputContext != null) {
-        Locale locale = inputContext.getLocale();
-        if (locale != null) {
-          @NonNls final String language = locale.getLanguage();
-          if (ALT_GR_LAYOUTS.contains(language)) {
-            // don't search for shortcuts
-            return false;
-          }
-        }
-      }
+      if (isAltGrLayout(focusOwner)) return false; // don't search for shortcuts
     }
 
     KeyStroke originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
@@ -610,7 +593,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
-      ShortcutsCollector.record(actionEvent);
 
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
@@ -643,7 +625,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       final AnActionEvent actionEvent =
-        processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
+        processor.createEvent(e, myContext.getDataContext(), ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
 
       try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
         ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, true);
@@ -666,7 +648,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount(), this);
       }
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
-      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(actionEvent.getDataContext());
+      Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
         return true;
       }
@@ -808,6 +790,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut each : shortcuts) {
+      if (each == null) throw new NullPointerException("unexpected shortcut of action: " + action.toString());
       if (!each.isKeyboard()) continue;
 
       if (each.startsWith(sc)) {
@@ -949,4 +932,103 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
   }
+
+  private static final String POPUP_MENU_PREFIX = "PopupMenu-"; // see PlatformActions.xml
+
+  private static boolean processMenuActions(KeyEvent event, MenuElement element) {
+    if (KeyEvent.KEY_PRESSED == event.getID() && Registry.is("ide.popup.navigation.via.actions")) {
+      KeymapManager manager = KeymapManager.getInstance();
+      if (manager != null) {
+        JRootPane pane = getMenuActionsHolder(element.getComponent());
+        if (pane != null) {
+          Keymap keymap = manager.getActiveKeymap();
+          if (keymap != null) {
+            // iterate through actions for the specified event
+            for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
+              if (id.startsWith(POPUP_MENU_PREFIX)) {
+                String actionId = id.substring(POPUP_MENU_PREFIX.length());
+                Action action = pane.getActionMap().get(actionId);
+                if (action != null) {
+                  action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
+                  event.consume();
+                  return true; // notify dispatcher that event is processed
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static JRootPane getMenuActionsHolder(Component component) {
+    if (component instanceof JPopupMenu) {
+      // BasicPopupMenuUI.MenuKeyboardHelper#stateChanged
+      JPopupMenu menu = (JPopupMenu)component;
+      return SwingUtilities.getRootPane(menu.getInvoker());
+    }
+    return SwingUtilities.getRootPane(component);
+  }
+
+  public static boolean removeAltGraph(InputEvent e) {
+    if (e.isAltGraphDown()) {
+      try {
+        Field field = InputEvent.class.getDeclaredField("modifiers");
+        field.setAccessible(true);
+        field.setInt(e, ~InputEvent.ALT_GRAPH_MASK & ~InputEvent.ALT_GRAPH_DOWN_MASK & field.getInt(e));
+        return true;
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return false;
+  }
+
+  public static boolean isAltGrLayout(Component component) {
+    if (component == null) return false;
+    InputContext context = component.getInputContext();
+    if (context == null) return false;
+    Locale locale = context.getLocale();
+    if (locale == null) return false;
+    String language = locale.getLanguage();
+    boolean contains = !"en".equals(language)
+                       ? ALT_GR_LANGUAGES.contains(language)
+                       : ALT_GR_COUNTRIES.contains(locale.getCountry());
+    LOG.debug("AltGr", contains ? "" : " not", " supported for ", locale);
+    return contains;
+  }
+
+  // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
+  @NonNls private static final Set<String> ALT_GR_LANGUAGES = new HashSet<>(Arrays.asList(
+    "da", // Danish
+    "de", // German
+    "es", // Spanish
+    "et", // Estonian
+    "fi", // Finnish
+    "fr", // French
+    "hr", // Croatian
+    "hu", // Hungarian
+    "it", // Italian
+    "lv", // Latvian
+    "mk", // Macedonian
+    "nl", // Dutch
+    "no", // Norwegian
+    "pl", // Polish
+    "pt", // Portuguese
+    "ro", // Romanian
+    "sk", // Slovak
+    "sl", // Slovenian
+    "sr", // Serbian
+    "sv", // Swedish
+    "tr"  // Turkish
+  ));
+  @NonNls private static final Set<String> ALT_GR_COUNTRIES = new HashSet<>(Arrays.asList(
+    "DK", // Denmark
+    "DE", // Germany
+    "FI", // Finland
+    "NL", // Netherlands
+    "SL", // Slovenia
+    "SE"  // Sweden
+  ));
 }

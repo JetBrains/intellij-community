@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 /**
- * @by maxim
+ * @author maxim
  */
 @SuppressWarnings("ConstantConditions")
 public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCase {

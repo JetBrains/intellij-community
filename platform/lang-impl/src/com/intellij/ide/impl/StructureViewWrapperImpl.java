@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -33,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -121,8 +121,16 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if (BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
-          LOG.debug("displayability changed");
-          scheduleRebuild();
+          boolean visible = myToolWindow.isVisible();
+          LOG.debug("displayability changed: " + visible);
+          if (visible) {
+            loggedRun("update file", StructureViewWrapperImpl.this::checkUpdate);
+            scheduleRebuild();
+          }
+          else if (!myProject.isDisposed()) {
+            myFile = null;
+            loggedRun("clear a structure on hide", StructureViewWrapperImpl.this::rebuild);
+          }
         }
       }
     });
@@ -258,6 +266,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     Dimension referenceSize = null;
 
+    Container container = myToolWindow.getComponent();
+    boolean wasFocused = UIUtil.isFocusAncestor(container);
+
     if (myStructureView != null) {
       if (myStructureView instanceof StructureView.Scrollable) {
         referenceSize = ((StructureView.Scrollable)myStructureView).getCurrentSize();
@@ -293,7 +304,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       if (file.isDirectory()) {
         if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
           Module module = ModuleUtilCore.findModuleForFile(file, myProject);
-          if (module != null && !(ModuleType.get(module) instanceof InternalModuleType)) {
+          if (module != null && !ModuleType.isInternal(module)) {
             myModuleStructureComponent = new ModuleStructureComponent(module);
             createSinglePanel(myModuleStructureComponent.getComponent());
             Disposer.register(this, myModuleStructureComponent);
@@ -358,6 +369,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       Runnable selection = myPendingSelection;
       myPendingSelection = null;
       selection.run();
+    }
+
+    if (wasFocused) {
+      FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+      Component component = policy == null ? null : policy.getDefaultComponent(container);
+      if (component != null) IdeFocusManager.getInstance(myProject).requestFocusInProject(component, myProject);
     }
   }
 

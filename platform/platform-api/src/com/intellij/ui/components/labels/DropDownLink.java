@@ -3,9 +3,11 @@ package com.intellij.ui.components.labels;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,28 +26,35 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     init();
   }
 
-  public DropDownLink(@NotNull T initialItem, @NotNull List<T> items, @Nullable Consumer<? super T> itemChosenAction, boolean updateLabel) {
-    super(initialItem.toString(), AllIcons.General.LinkDropTriangle);
-    chosenItem = initialItem;
-    IPopupChooserBuilder<T> popupBuilder = JBPopupFactory.getInstance().createPopupChooserBuilder(items).
-      setRenderer(new LinkCellRenderer<>(this)).
-      setItemChosenCallback(t -> {
-        chosenItem = t;
-        if (updateLabel) {
-          setText(t.toString());
-        }
+  public DropDownLink(@NotNull T value, @NotNull Convertor<? super DropDownLink, ? extends JBPopup> popupBuilder) {
+    super(value.toString(), AllIcons.General.LinkDropTriangle);
+    chosenItem = value;
 
-        if (itemChosenAction != null) {
-          itemChosenAction.consume(t);
-        }
-      });
-
-    setListener((s, d) -> {
+    setListener((linkLabel, d) -> {
+      JBPopup popup = popupBuilder.convert((DropDownLink)linkLabel);
       Point showPoint = new Point(0, getHeight() + JBUI.scale(4));
-      popupBuilder.createPopup().show(new RelativePoint(this, showPoint));
+      popup.show(new RelativePoint(this, showPoint));
     }, null);
 
     init();
+  }
+
+  public DropDownLink(@NotNull T initialItem, @NotNull List<T> items, @Nullable Consumer<? super T> itemChosenAction, boolean updateLabel) {
+    this(initialItem, (linkLabel) -> {
+      IPopupChooserBuilder<T> popupBuilder = JBPopupFactory.getInstance().createPopupChooserBuilder(items).
+        setRenderer(new LinkCellRenderer<>(linkLabel)).
+        setItemChosenCallback(t -> {
+          linkLabel.chosenItem = t;
+          if (updateLabel) {
+            linkLabel.setText(t.toString());
+          }
+
+          if (itemChosenAction != null) {
+            itemChosenAction.consume(t);
+          }
+        });
+      return popupBuilder.createPopup();
+    });
   }
 
   private void init() {

@@ -69,10 +69,7 @@ public class XmlSerializer {
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
       return deserialize(document.getRootElement(), aClass);
     }
-    catch (IOException e) {
-      throw new XmlSerializationException(e);
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       throw new XmlSerializationException(e);
     }
   }

@@ -6,10 +6,10 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.FixedHashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import java.util.*;
  *
  * @see LineLayout
  */
-class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
+class TextLayoutCache implements PrioritizedInternalDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
 
   private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;
@@ -36,11 +36,23 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private ArrayList<LineLayout> myLines = new ArrayList<>();
   private int myDocumentChangeOldEndLine;
 
-  private Map<LineLayout.Chunk, Object> myLaidOutChunks;
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private Map<LineLayout.Chunk, Object> myLaidOutChunks =
+    // using our own LinkedHashMap implementation to avoid IDEA-205735
+    new LinkedHashMap<LineLayout.Chunk, Object>(MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<LineLayout.Chunk, Object> eldest) {
+        if (size() > getChunkCacheSizeLimit()) {
+          if (LOG.isDebugEnabled()) LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
+          eldest.getKey().clearCache();
+          return true;
+        }
+        return false;
+      }
+    };
 
   TextLayoutCache(EditorView view) {
     myView = view;
-    myLaidOutChunks = new FixedHashMap<>(getChunkCacheSizeLimit(), MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true);
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
     myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);
@@ -74,6 +86,13 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
                 new Attachment("editorState.txt", myView.getEditor().dumpState()));
       resetToDocumentSize(true);
     }
+  }
+
+  @Override
+  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
+    int insertedStartLine = myDocument.getLineNumber(base);
+    int insertedEndLine = myDocument.getLineNumber(base + (end - start));
+    invalidateLines(insertedStartLine, insertedEndLine); // range highlighters could have been moved to the inserted range
   }
 
   @Override
@@ -151,7 +170,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   void onChunkAccess(LineLayout.Chunk chunk) {
-    myLaidOutChunks.put(chunk, null);
+    myLaidOutChunks.put(chunk, this); // value doesn't matter, null is not supported by our map implementation
   }
 
   private void removeChunksFromCache(LineLayout layout) {

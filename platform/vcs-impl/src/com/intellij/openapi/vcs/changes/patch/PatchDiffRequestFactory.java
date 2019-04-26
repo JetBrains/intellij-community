@@ -20,6 +20,7 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
@@ -144,7 +145,7 @@ public class PatchDiffRequestFactory {
                                                 @NotNull String baseContent,
                                                 @NotNull String localContent,
                                                 @NotNull String patchedContent,
-                                                @Nullable Consumer<MergeResult> callback)
+                                                @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     List<String> titles = ContainerUtil.list(null, null, null);
     List<String> contents = ContainerUtil.list(localContent, baseContent, patchedContent);
@@ -158,7 +159,7 @@ public class PatchDiffRequestFactory {
                                                    @NotNull VirtualFile file,
                                                    @NotNull String localContent,
                                                    @NotNull AppliedTextPatch textPatch,
-                                                   @Nullable Consumer<MergeResult> callback)
+                                                   @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     return createBadMergeRequest(project, document, file, localContent, textPatch, null, null, null, null, callback);
   }
@@ -170,7 +171,7 @@ public class PatchDiffRequestFactory {
                                                 @NotNull List<String> contents,
                                                 @Nullable String windowTitle,
                                                 @NotNull List<String> titles,
-                                                @Nullable Consumer<MergeResult> callback)
+                                                @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     assert contents.size() == 3;
     assert titles.size() == 3;
@@ -209,8 +210,9 @@ public class PatchDiffRequestFactory {
     if (patchTitle == null) patchTitle = VcsBundle.message("patch.apply.conflict.patch");
 
     DocumentContent resultContent = DiffContentFactory.getInstance().create(project, document, file);
-    return new ApplyPatchMergeRequest(project, resultContent, textPatch, localContent,
-                                      windowTitle, localTitle, resultTitle, patchTitle, callback);
+    ApplyPatchMergeRequest request = new ApplyPatchMergeRequest(project, resultContent, textPatch, localContent,
+                                                                windowTitle, localTitle, resultTitle, patchTitle);
+    return MergeCallback.register(request, callback);
   }
 
   @NotNull

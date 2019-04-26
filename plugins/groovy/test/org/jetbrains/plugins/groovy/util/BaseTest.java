@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
@@ -20,14 +21,13 @@ public interface BaseTest {
   CodeInsightTestFixture getFixture();
 
   @NotNull
-  default GroovyFile getGroovyFile() {
-    return (GroovyFile)getFixture().getFile();
+  default Project getProject() {
+    return getFixture().getProject();
   }
 
   @NotNull
-  default GrExpression getLastExpression() {
-    final GrStatement lastStatement = getLastElement(getGroovyFile().getStatements());
-    return assertInstanceOf(lastStatement, GrExpression.class);
+  default GroovyFile getGroovyFile() {
+    return (GroovyFile)getFixture().getFile();
   }
 
   @NotNull
@@ -37,21 +37,31 @@ public interface BaseTest {
   }
 
   @NotNull
-  default GrExpression configureByExpression(@NotNull String text) {
-    configureByText(text);
-    return getLastExpression();
-  }
-
-  @NotNull
-  default <T extends GrExpression> T configureByExpression(@NotNull String text, @NotNull Class<T> clazz) {
-    configureByText(text);
-    return assertInstanceOf(getLastExpression(), clazz);
-  }
-
-  @NotNull
   default <T extends PsiElement> T elementUnderCaret(@NotNull String text, @NotNull Class<T> clazz) {
-    GroovyFile file = configureByText(text);
-    T element = getParentOfType(file.findElementAt(getFixture().getCaretOffset()), clazz);
+    configureByText(text);
+    return elementUnderCaret(clazz);
+  }
+
+  @NotNull
+  default <T extends PsiElement> T elementUnderCaret(@NotNull Class<T> clazz) {
+    T element = getParentOfType(getFixture().getFile().findElementAt(getFixture().getCaretOffset()), clazz);
     return Objects.requireNonNull(element);
+  }
+
+  @NotNull
+  default <T extends GrExpression> T lastExpression(@NotNull String text, Class<T> clazz) {
+    return clazz.cast(lastExpression(text));
+  }
+
+  @NotNull
+  default GrExpression lastExpression(@NotNull String text) {
+    configureByText(text);
+    return lastExpression();
+  }
+
+  @NotNull
+  default GrExpression lastExpression() {
+    final GrStatement lastStatement = getLastElement(getGroovyFile().getStatements());
+    return assertInstanceOf(lastStatement, GrExpression.class);
   }
 }

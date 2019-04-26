@@ -2,6 +2,16 @@
 import java.util.*;
 
 class Test {
+
+  List<String> testNullable(List<Integer> input) {
+    // suppress for nullable
+    List<String> list = new ArrayList<>();
+    for (var integer : input) {
+      list.add(integer == null ? null : integer.toString());
+    }
+    return Collections.unmodifiableList(list);
+  }
+
   List<String> test(String[] list) {
     List<String> result = new LinkedList<>();
     f<caret>or (int i = 0; i < list.length; i++) {

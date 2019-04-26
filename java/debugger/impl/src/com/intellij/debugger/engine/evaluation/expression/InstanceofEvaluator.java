@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class InstanceofEvaluator
@@ -13,7 +13,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 
 class InstanceofEvaluator implements Evaluator {
@@ -37,7 +36,7 @@ class InstanceofEvaluator implements Evaluator {
     }
     try {
       return context.getDebugProcess().getVirtualMachineProxy().mirrorOf(
-        DebuggerUtilsImpl.instanceOf(((ObjectReference)value).referenceType(), (ReferenceType)myTypeEvaluator.evaluate(context)));
+        DebuggerUtilsImpl.instanceOf(((ObjectReference)value).referenceType(), myTypeEvaluator.evaluate(context)));
     }
     catch (Exception e) {
       LOG.debug(e);

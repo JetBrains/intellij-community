@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -53,7 +53,11 @@ public class ExprTypePredicate extends MatchPredicate {
   }
 
   protected PsiType evalType(PsiExpression match, MatchContext context) {
-    if (match instanceof PsiReferenceExpression) {
+    if (match instanceof PsiFunctionalExpression) {
+      final PsiFunctionalExpression functionalExpression = (PsiFunctionalExpression)match;
+      return functionalExpression.getFunctionalInterfaceType();
+    }
+    else if (match instanceof PsiReferenceExpression) {
       final PsiElement parent = match.getParent();
       if (parent instanceof PsiMethodCallExpression) {
         return ((PsiMethodCallExpression)parent).getType();

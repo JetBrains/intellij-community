@@ -518,7 +518,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (!visibleRect.intersects(rect)) {
         table.scrollRectToVisible(rect);
       }
-      popupMenuPoint = new Point(rect.x, rect.y + rect.height);
+      popupMenuPoint = new Point(rect.x, rect.y + rect.height - 1);
     }
     else if (component instanceof PopupOwner) {
       popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();
@@ -637,10 +637,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     scrolledText.getViewport().setBackground(fillColor);
     textWrapper.add(scrolledText);
     content.add(textWrapper, BorderLayout.CENTER);
-
-    final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
-    north.add(new JLabel(icon), BorderLayout.NORTH);
-    content.add(north, BorderLayout.WEST);
+    if (icon != null) {
+      final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
+      north.add(new JLabel(icon), BorderLayout.NORTH);
+      content.add(north, BorderLayout.WEST);
+    }
 
     content.setBorder(new EmptyBorder(2, 4, 2, 4));
 

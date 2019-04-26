@@ -29,10 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Dmitry Avdeev
- */
 public class ChangelistConflictTracker {
 
   private final Map<String, Conflict> myConflicts = Collections.synchronizedMap(new LinkedHashMap<String, Conflict>());
@@ -50,6 +48,7 @@ public class ChangelistConflictTracker {
   private final FileStatusManager myFileStatusManager;
   private final Set<VirtualFile> myCheckSet;
   private final Object myCheckSetLock;
+  private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
   public ChangelistConflictTracker(@NotNull Project project,
                                    @NotNull ChangeListManager changeListManager,
@@ -81,12 +80,12 @@ public class ChangelistConflictTracker {
     myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
-        if (!myOptions.isTrackingEnabled()) {
+        if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get()) {
           return;
         }
         Document document = e.getDocument();
         VirtualFile file = myDocumentManager.getFile(document);
-        if (ProjectUtil.guessProjectForFile(file) == myProject) {
+        if (file != null && ProjectUtil.guessProjectForFile(file) == myProject) {
           synchronized (myCheckSetLock) {
             myCheckSet.add(file);
           }
@@ -122,7 +121,11 @@ public class ChangelistConflictTracker {
     };
   }
 
-  private void checkFiles(final Collection<VirtualFile> files) {
+  public void setIgnoreModifications(boolean value) {
+    myShouldIgnoreModifications.set(value);
+  }
+
+  private void checkFiles(final Collection<? extends VirtualFile> files) {
     myChangeListManager.invokeAfterUpdate(() -> {
       final LocalChangeList list = myChangeListManager.getDefaultChangeList();
       for (VirtualFile file : files) {
@@ -131,10 +134,9 @@ public class ChangelistConflictTracker {
     }, InvokeAfterUpdateMode.SILENT, null, null);
   }
 
-  private void checkOneFile(VirtualFile file, LocalChangeList defaultList) {
-    if (file == null || !shouldDetectConflictsFor(file)) {
-      return;
-    }
+  private void checkOneFile(@NotNull VirtualFile file, @NotNull LocalChangeList defaultList) {
+    if (!shouldDetectConflictsFor(file)) return;
+
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
     if (changeList == null || Comparing.equal(changeList, defaultList) || ChangesUtil.isInternalOperation(file)) {
       return;
@@ -172,7 +174,7 @@ public class ChangelistConflictTracker {
     return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 
-  private void clearChanges(Collection<Change> changes) {
+  private void clearChanges(Collection<? extends Change> changes) {
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
       if (revision != null) {

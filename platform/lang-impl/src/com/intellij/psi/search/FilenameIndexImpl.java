@@ -27,6 +27,7 @@ import java.util.Collections;
 
 public class FilenameIndexImpl extends ScalarIndexExtension<String> {
   @NonNls static final ID<String, Void> NAME = FilenameIndex.NAME;
+
   @NotNull
   @Override
   public ID<String,Void> getName() {
@@ -63,11 +64,11 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 2 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
+    return 3;
   }
 
   @Override
   public boolean traceKeyHashToVirtualFileMapping() {
-    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    return true;
   }
 }

@@ -63,7 +63,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
   }
 
   @Override
-  public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
+  public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback) {
     if (toSelect != null && toSelect.getParent() != null) {
 
       String directoryName;
@@ -106,9 +106,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myFileDialog);
         if (previousFocusOwner != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            previousFocusOwner.requestFocus();
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> previousFocusOwner.requestFocus());
         }
       }
     }

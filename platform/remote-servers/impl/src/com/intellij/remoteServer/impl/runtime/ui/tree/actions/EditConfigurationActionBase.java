@@ -17,7 +17,10 @@ package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode;
+import org.jetbrains.annotations.ApiStatus;
 
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 public abstract class EditConfigurationActionBase<T extends ServersTreeNode> extends ServersTreeAction<T> {
 
   public EditConfigurationActionBase(String description) {

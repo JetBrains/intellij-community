@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +12,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -34,12 +19,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
  */
 public class AppScheduledExecutorService extends SchedulingWrapper {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
-  private Consumer<? super Thread> newThreadListener;
-  private final AtomicInteger counter = new AtomicInteger();
+  private final MyThreadFactory myCountingThreadFactory;
+
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
+  }
 
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance");
@@ -50,30 +38,38 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     return Holder.INSTANCE;
   }
 
-  AppScheduledExecutorService(@NotNull final String name) {
-    super(new BackendThreadPoolExecutor(), new AppDelayQueue());
-    myName = name;
-    ((BackendThreadPoolExecutor)backendExecutorService).doSetThreadFactory(new ThreadFactory() {
-      @NotNull
-      @Override
-      public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
+  private static class MyThreadFactory extends CountingThreadFactory {
+    private Consumer<? super Thread> newThreadListener;
 
-        thread.setPriority(Thread.NORM_PRIORITY - 1);
+    @NotNull
+    @Override
+    public Thread newThread(@NotNull final Runnable r) {
+      Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
-        Consumer<? super Thread> listener = newThreadListener;
-        if (listener != null) {
-          listener.consume(thread);
-        }
-        return thread;
+      thread.setPriority(Thread.NORM_PRIORITY - 1);
+
+      Consumer<? super Thread> listener = newThreadListener;
+      if (listener != null) {
+        listener.consume(thread);
       }
-    });
+      return thread;
+    }
+
+    void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
+      if (newThreadListener != null) throw new IllegalStateException("Listener was already set: "+newThreadListener);
+      newThreadListener = threadListener;
+    }
+  }
+
+  AppScheduledExecutorService(@NotNull final String name) {
+    super(new BackendThreadPoolExecutor(new MyThreadFactory()), new AppDelayQueue());
+    myName = name;
+    myCountingThreadFactory = (MyThreadFactory)((BackendThreadPoolExecutor)backendExecutorService).getThreadFactory();
     myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
   }
 
   public void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
-    if (newThreadListener != null) throw new IllegalStateException("Listener was already set: "+newThreadListener);
-    newThreadListener = threadListener;
+    myCountingThreadFactory.setNewThreadListener(threadListener);
   }
 
   @NotNull
@@ -113,7 +109,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   @NotNull
   @TestOnly
   public String statistics() {
-    return myName + " threads created counter = " + counter;
+    return myName + " threads created counter = " + myCountingThreadFactory.counter;
   }
 
   @TestOnly
@@ -132,25 +128,27 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
-    BackendThreadPoolExecutor() {
-      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>());
+    BackendThreadPoolExecutor(@NotNull ThreadFactory factory) {
+      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), factory);
     }
 
     @Override
     protected void beforeExecute(Thread t, Runnable r) {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("beforeExecute " + BoundedTaskExecutor.info(r) + " in " + t);
+      Logger logger = getLogger();
+      if (logger.isTraceEnabled()) {
+        logger.trace("beforeExecute " + BoundedTaskExecutor.info(r) + " in " + t);
       }
     }
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("afterExecute  " + BoundedTaskExecutor.info(r) + " in " + Thread.currentThread());
+      Logger logger = getLogger();
+      if (logger.isTraceEnabled()) {
+        logger.trace("afterExecute  " + BoundedTaskExecutor.info(r) + " in " + Thread.currentThread());
       }
 
       if (t != null) {
-        LOG.error("Worker exited due to exception", t);
+        logger.error("Worker exited due to exception", t);
       }
     }
 
@@ -161,10 +159,6 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     @NotNull
     private List<Runnable> doShutdownNow() {
       return super.shutdownNow();
-    }
-
-    private void doSetThreadFactory(@NotNull ThreadFactory threadFactory) {
-      super.setThreadFactory(threadFactory);
     }
 
     // stub out sensitive methods

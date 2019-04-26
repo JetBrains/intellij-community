@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
-import com.intellij.util.JdomKt;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -41,7 +41,7 @@ public final class Properties {
 
     try (InputStream inputStream = Properties.class.getResourceAsStream("/gui-designer-properties.xml")) {
       if (inputStream != null) {
-        loadState(JdomKt.loadElement(inputStream));
+        loadState(JDOMUtil.load(inputStream));
       }
     }
     catch (JDOMException e) {

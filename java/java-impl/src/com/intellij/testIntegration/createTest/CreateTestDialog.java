@@ -346,15 +346,12 @@ public class CreateTestDialog extends DialogWrapper {
     constr.weighty = 1;
     panel.add(ScrollPaneFactory.createScrollPane(myMethodsTable), constr);
 
-    myLibrariesCombo.setRenderer(new ListCellRendererWrapper<TestFramework>() {
-      @Override
-      public void customize(JList list, TestFramework value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-          setText(value.getName());
-          setIcon(value.getIcon());
-        }
+    myLibrariesCombo.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      if (value != null) {
+        label.setText(value.getName());
+        label.setIcon(value.getIcon());
       }
-    });
+    }));
     final boolean hasTestRoots = !ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.TESTS).isEmpty();
     final List<TestFramework> attachedLibraries = new ArrayList<>();
     final String defaultLibrary = getDefaultLibraryName();

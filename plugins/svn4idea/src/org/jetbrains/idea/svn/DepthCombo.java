@@ -15,15 +15,15 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.idea.svn.api.Depth;
 
 import javax.swing.*;
 
-public class DepthCombo extends JComboBox {
+public class DepthCombo extends JComboBox<Depth> {
   public DepthCombo(final boolean forUpdate) {
     super(forUpdate ? ourForUpdate : ourForCheckout);
-    setRenderer(new DepthRenderer());
+    setRenderer(SimpleListCellRenderer.create("", value -> Depth.UNKNOWN.equals(value) ? "working copy" : value.getName()));
     setSelectedItem(forUpdate ? Depth.UNKNOWN : Depth.INFINITY);
     setEditable(false);
     setToolTipText(SvnBundle.message("label.depth.description"));
@@ -35,12 +35,4 @@ public class DepthCombo extends JComboBox {
 
   private final static Depth[] ourForUpdate = {Depth.UNKNOWN, Depth.EMPTY, Depth.FILES, Depth.IMMEDIATES, Depth.INFINITY};
   private final static Depth[] ourForCheckout = {Depth.EMPTY, Depth.FILES, Depth.IMMEDIATES, Depth.INFINITY};
-
-  private static class DepthRenderer extends ListCellRendererWrapper<Depth> {
-
-    @Override
-    public void customize(JList list, Depth value, int index, boolean selected, boolean hasFocus) {
-      setText(Depth.UNKNOWN.equals(value) ? "working copy" : value.getName());
-    }
-  }
 }

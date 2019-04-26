@@ -12,7 +12,6 @@ import java.util.Comparator;
  * Base class for problems returned by local and global inspection tools.
  *
  * @author anna
- * @since 6.0
  * @see InspectionManager#createProblemDescriptor(String, QuickFix[])
  */
 public interface CommonProblemDescriptor {

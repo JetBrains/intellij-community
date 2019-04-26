@@ -9,10 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vcs.ex.RangesBuilder;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -20,13 +17,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 import java.util.List;
+import java.util.function.Function;
 
 class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
@@ -72,7 +69,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<? super VirtualFile, ? extends List<T>> elementsConvertor) {
+                                                           @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     List<T> result = ContainerUtil.newSmartList();
     for (Change change : changes) {
       if (change.getType() == Change.Type.DELETED) continue;
@@ -84,7 +81,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) continue;
 
-      List<T> elements = elementsConvertor.convert(file);
+      List<T> apply = elementsConvertor.apply(file);
+      List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
       if (ContainerUtil.isEmpty(elements)) continue;
 
       BitSet changedLines = getChangedLines(project, document, change);
@@ -127,7 +125,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     if (tracker != null) {
       if (change instanceof ChangeListChange && tracker instanceof PartialLocalLineStatusTracker) {
         String changeListId = ((ChangeListChange)change).getChangeListId();
-        List<PartialLocalLineStatusTracker.LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
+        List<LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
         if (ranges != null) {
           return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
         }

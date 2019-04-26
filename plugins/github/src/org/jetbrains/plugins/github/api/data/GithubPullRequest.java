@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.data.util.GithubLink;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -38,7 +39,7 @@ public class GithubPullRequest {
   @Mandatory private List<GithubUser> assignees;
   @Mandatory private List<GithubUser> requestedReviewers;
   //requestedTeams
-  @Mandatory private List<GithubIssueLabel> labels;
+  private List<GithubIssueLabel> labels;
   //milestone
 
   private Tag head;
@@ -120,7 +121,7 @@ public class GithubPullRequest {
     return requestedReviewers;
   }
 
-  @NotNull
+  @Nullable
   public List<GithubIssueLabel> getLabels() {
     return labels;
   }
@@ -172,6 +173,23 @@ public class GithubPullRequest {
     @Nullable
     public GithubUser getUser() {
       return user;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Tag)) return false;
+      Tag tag = (Tag)o;
+      return Objects.equals(label, tag.label) &&
+             Objects.equals(ref, tag.ref) &&
+             Objects.equals(sha, tag.sha) &&
+             Objects.equals(repo, tag.repo) &&
+             Objects.equals(user, tag.user);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(label, ref, sha, repo, user);
     }
   }
 

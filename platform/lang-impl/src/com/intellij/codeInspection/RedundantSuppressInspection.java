@@ -267,7 +267,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
   private static QuickFix<ProblemDescriptor> createQuickFix(String key) {
     String[] toolAndLang = key.split(";");
-    Language language = Language.findLanguageByID(toolAndLang[1]);
+    Language language = toolAndLang.length < 2 ? null : Language.findLanguageByID(toolAndLang[1]);
     if (language == null) return null;
     InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(language);
     return suppressor instanceof RedundantSuppressionDetector
@@ -308,7 +308,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
   protected GlobalInspectionContextBase createContext(PsiFile file) {
     final InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
-    return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext(false);
+    return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext();
   }
 
   private class LocalRedundantSuppressionInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {

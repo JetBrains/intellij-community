@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -32,6 +18,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Set;
 
@@ -56,7 +43,6 @@ import java.util.Set;
 public class ExtensionsRootType extends RootType {
   static final Logger LOG = Logger.getInstance(ExtensionsRootType.class);
 
-  private static final String HASH_ALGORITHM = "MD5";
   private static final String EXTENSIONS_PATH = "extensions";
   private static final String BACKUP_FILE_EXTENSION = "old";
 
@@ -75,7 +61,7 @@ public class ExtensionsRootType extends RootType {
       private final ExtensionsRootType myRootType = getInstance();
       @Override
       public boolean value(File file) {
-        if (file.isDirectory()) return false;
+        if (file.isDirectory() || file.isHidden()) return false;
         String name = file.getName();
         String extension = FileUtilRt.getExtension(name);
         return !extension.isEmpty() &&
@@ -182,7 +168,9 @@ public class ExtensionsRootType extends RootType {
 
   @Contract("null->null")
   private VirtualFile getPluginResourcesDirectoryFor(@Nullable VirtualFile resource) {
-    VirtualFile root = resource != null ? getRootDirectory() : null;
+    if (resource == null) return null;
+    String rootPath = ScratchFileService.getInstance().getRootPath(this);
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(rootPath);
     if (root == null) return null;
 
     VirtualFile parent = resource;
@@ -192,12 +180,6 @@ public class ExtensionsRootType extends RootType {
       parent = file.getParent();
     }
     return parent != null && file.isDirectory() ? file : null;
-  }
-
-  @Nullable
-  private VirtualFile getRootDirectory() {
-    String path = ScratchFileService.getInstance().getRootPath(this);
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   @NotNull
@@ -265,21 +247,15 @@ public class ExtensionsRootType extends RootType {
     }, IOException.class);
   }
 
-  @Nullable
+  @NotNull
   private static String hash(@NotNull String s) {
-    try {
-      MessageDigest md5 = MessageDigest.getInstance(HASH_ALGORITHM);
-      StringBuilder sb = new StringBuilder();
-      byte[] digest = md5.digest(s.getBytes(CharsetToolkit.UTF8_CHARSET));
-      for (byte b : digest) {
-        sb.append(Integer.toHexString(b));
-      }
-      return sb.toString();
+    MessageDigest md5 = DigestUtil.md5();
+    StringBuilder sb = new StringBuilder();
+    byte[] digest = md5.digest(s.getBytes(StandardCharsets.UTF_8));
+    for (byte b : digest) {
+      sb.append(Integer.toHexString(b));
     }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error("Hash algorithm " + HASH_ALGORITHM + " is not supported", e);
-      return null;
-    }
+    return sb.toString();
   }
 
   private static void renameToBackupCopy(@NotNull File file) throws IOException {

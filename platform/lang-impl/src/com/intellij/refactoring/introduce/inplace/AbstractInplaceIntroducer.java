@@ -9,7 +9,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -505,9 +508,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       return false;
     }
     if (getLocalVariable() != null) {
-      WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
-        getLocalVariable().setName(myLocalName);
-      });
+      WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> getLocalVariable().setName(myLocalName));
     }
 
     if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
@@ -570,20 +571,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
     }
     return myLocalVariable;
-  }
-
-  public void stopIntroduce(Editor editor) {
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    if (templateState != null) {
-      final Runnable runnable = () -> templateState.gotoEnd(true);
-      CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), getCommandName());
-    }
-  }
-
-  @Override
-  protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
-    finish(true);
-    super.navigateToAlreadyStarted(oldDocument, exitCode);
   }
 
   @Override

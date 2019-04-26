@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,7 +9,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
@@ -92,7 +93,8 @@ public class GitUIUtil {
    * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
    * Line separator is also replaced by &lt;br/&gt;
    */
-  public static @NotNull String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
+  @NotNull
+  public static String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
     if (errors == null) {
       return "";
     }
@@ -126,13 +128,12 @@ public class GitUIUtil {
   /**
    * @return a list cell renderer for virtual files (it renders presentable URL)
    */
-  public static ListCellRendererWrapper<VirtualFile> getVirtualFileListCellRenderer() {
-    return new ListCellRendererWrapper<VirtualFile>() {
-      @Override
-      public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
-        setText(file == null ? "(invalid)" : file.getPresentableUrl());
-      }
-    };
+  public static ListCellRenderer<VirtualFile> getVirtualFileListCellRenderer() {
+    return SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl);
+  }
+
+  public static ListCellRenderer<GitRepository> getRepositoryListCellRenderer() {
+    return SimpleListCellRenderer.create("(invalid)", Repository::getPresentableUrl);
   }
 
   /**
@@ -368,5 +369,4 @@ public class GitUIUtil {
   private static String surround(String s, String tag) {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
-
 }

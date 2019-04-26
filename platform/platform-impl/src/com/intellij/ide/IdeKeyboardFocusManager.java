@@ -19,8 +19,21 @@ import com.intellij.openapi.application.AccessToken;
 import sun.awt.AppContext;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.util.function.Consumer;
 
 class IdeKeyboardFocusManager extends DefaultKeyboardFocusManager {
+
+  private Consumer<KeyEvent> onTypeaheadFinished = ke -> {};
+
+  public void setTypeaheadHandler(Consumer<KeyEvent> onTypeaheadFinished) {
+    this.onTypeaheadFinished = onTypeaheadFinished;
+  }
+
+  protected Consumer<KeyEvent> getOnTypeaheadFinishedHandler () {
+    return onTypeaheadFinished;
+  }
+
   @Override
   public boolean dispatchEvent(AWTEvent e) {
     try (AccessToken ignore = (EventQueue.isDispatchThread() ? IdeEventQueue.startActivity(e) : null)) {

@@ -8,6 +8,7 @@ package com.intellij.ui.speedSearch;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
@@ -26,7 +27,7 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 
 public class ListWithFilter<T> extends JPanel implements DataProvider {
-  private final JList<? extends T> myList;
+  private final JList<T> myList;
   private final SearchTextField mySearchField = new SearchTextField(false);
   private final NameFilteringListModel<T> myModel;
   private final JScrollPane myScrollPane;
@@ -52,7 +53,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences);
   }
 
-  private ListWithFilter(@NotNull JList<? extends T> list,
+  private ListWithFilter(@NotNull JList<T> list,
                          @NotNull JScrollPane scrollPane,
                          @Nullable Function<? super T, String> namer,
                          boolean highlightAllOccurrences) {
@@ -77,7 +78,10 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     myList.addKeyListener(mySpeedSearch);
     int selectedIndex = myList.getSelectedIndex();
     int modelSize = myList.getModel().getSize();
-    myModel = new NameFilteringListModel<T>(myList, namer, mySpeedSearch::shouldBeShowing, mySpeedSearch);
+    myModel = new NameFilteringListModel<>(
+      myList.getModel(), namer, mySpeedSearch::shouldBeShowing,
+      () -> StringUtil.notNullize(mySpeedSearch.getFilter()));
+    myList.setModel(myModel);
     if (myModel.getSize() == modelSize) {
       myList.setSelectedIndex(selectedIndex);
     }
@@ -90,9 +94,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   protected void processFocusEvent(FocusEvent e) {
     super.processFocusEvent(e);
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
     }
   }
 
@@ -193,8 +195,6 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
 
   @Override
   public void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
   }
 }

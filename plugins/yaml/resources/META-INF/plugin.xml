@@ -2,7 +2,9 @@
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
   <vendor>JetBrains</vendor>
-  <description>YAML support</description>
+  <description><![CDATA[
+  Adds support for the <a href="https://yaml.org/">YAML</a> language.
+  ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
 
@@ -32,22 +34,24 @@
     <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
     <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
 
-    <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
-
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
     <completion.contributor order="first" language="yaml"
                             implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider" order="first"/>
-
+    <gotoDeclarationHandler implementation="org.jetbrains.yaml.schema.YamlJsonSchemaGotoDeclarationHandler" order="last"/>
     <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
                              implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.yaml.breadcrumbs.YAMLBreadcrumbsInfoProvider"/>
     <elementDescriptionProvider implementation="org.jetbrains.yaml.psi.impl.YAMLElementDescriptionProvider"/>
     <readWriteAccessDetector implementation="org.jetbrains.yaml.resolve.YAMLAnchorReadWriteAccessDetector"/>
+    <renameInputValidator implementation="org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator" order="first"/>
     <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
     <lang.refactoringSupport language="yaml" implementationClass="org.jetbrains.yaml.resolve.YAMLRefactoringSupportProvider"/>
     <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
+    <multiHostInjector implementation="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector"/>
+    <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLSameLineCompositeValueErrorAnnotator"/>
+
     <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLUnresolvedAlias"
                      key="inspections.unresolved.alias.name" level="ERROR"
@@ -76,6 +80,13 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLSchemaDeprecation"
+                     key="inspections.schema.deprecation.name"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

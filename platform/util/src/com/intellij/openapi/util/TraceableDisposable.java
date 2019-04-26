@@ -86,7 +86,7 @@ public class TraceableDisposable {
     @SuppressWarnings("HardCodedStringLiteral")
     @Override
     public void printStackTrace(PrintWriter s) {
-      final List<StackTraceElement> stack = new ArrayList<StackTraceElement>(Arrays.asList(CREATE_TRACE.getStackTrace()));
+      final List<StackTraceElement> stack = new ArrayList<>(Arrays.asList(CREATE_TRACE.getStackTrace()));
       stack.remove(0); // this line is useless it stack
       s.write(ObjectNotDisposedException.class.getCanonicalName() +
               ": See stack trace responsible for creation of unreleased object below \n\tat " +

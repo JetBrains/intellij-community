@@ -193,7 +193,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     return with(new PatternCondition<T>("save") {
       @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        context.put((Key)key, t);
+        context.put(key, t);
         return true;
       }
     });

@@ -163,7 +163,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     final List<Module> modules = new ArrayList<>();
     for (TreeNode sourceNode : sourceNodes) {
       if (sourceNode instanceof DefaultMutableTreeNode) {
-        final Object userObject = AbstractProjectViewPane.extractValueFromNode((DefaultMutableTreeNode)sourceNode);
+        final Object userObject = AbstractProjectViewPane.extractValueFromNode(sourceNode);
         if (userObject instanceof Module) {
           modules.add((Module) userObject);
         }

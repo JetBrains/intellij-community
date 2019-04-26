@@ -13,14 +13,13 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionRootNode;
 import com.intellij.codeInspection.ui.InspectionTree;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
@@ -94,7 +93,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   protected void tearDown() throws Exception {
     try {
       Disposer.dispose(myView);
-
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
@@ -112,8 +113,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     assert files != null;
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<>();
     for (File file : files) {
-      final String problems = FileUtil.loadFile(file);
-      final Map<String, Set<OfflineProblemDescriptor>> descriptors = OfflineViewParseUtil.parse(problems);
+      final Map<String, Set<OfflineProblemDescriptor>> descriptors = OfflineViewParseUtil.parse(file);
       for (Set<OfflineProblemDescriptor> problemDescriptors : descriptors.values()) {
         for (OfflineProblemDescriptor descriptor : problemDescriptors) {
           descriptor.setModule(moduleName);
@@ -131,38 +131,40 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     InspectionTree tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
-    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
-                                           "   -unused\n" +
-                                           "    -Module: 'testOfflineWithInvalid'\n" +
+                                           "   -Unused declaration\n" +
+                                           "    Entry Points\n" +
+                                           "    -testOfflineWithInvalid\n" +
                                            "     -<default>\n" +
                                            "      -Test\n" +
                                            "       -f()\n" +
                                            "        -D\n" +
                                            "         -b()\n" +
+                                           "          Variable 'r' is never used.\n" +
                                            "          -anonymous (Runnable)\n" +
                                            "           -run()\n" +
-                                           "            Variable <code>i</code> is never used.\n" +
-                                           "          Variable <code>r</code> is never used.\n" +
+                                           "            Variable 'i' is never used.\n" +
                                            "       -ff()\n" +
-                                           "        Variable <code>a</code> is never used.\n" +
-                                           "        Variable <code>d</code> is never used.\n" +
+                                           "        Variable 'a' is never used.\n" +
+                                           "        Variable 'd' is never used.\n" +
                                            "       -foo()\n" +
-                                           "        Variable <code>j</code> is never used.\n" +
+                                           "        Variable 'j' is never used.\n" +
                                            "       -main(String[])\n" +
-                                           "        Variable <code>test</code> is never used.\n" +
+                                           "        Variable 'test' is never used.\n" +
                                            "  -Probable bugs\n" +
-                                           "   -EqualsWithItself\n" +
-                                           "    -Module: 'testOfflineWithInvalid'\n" +
+                                           "   -'equals()' called on itself\n" +
+                                           "    -testOfflineWithInvalid\n" +
                                            "     -<default>\n" +
                                            "      -Test\n" +
                                            "       -m()\n" +
                                            "        'equals()' called on itself\n" +
-                                           "      -null\n" +
+                                           "      -element no longer exists\n" +
                                            "       '()' called on itself\n"
                                           );
-    tree.setSelectionRow(28);
+    tree.setSelectionRow(29);
     final ProblemDescriptionNode node = (ProblemDescriptionNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
     assertFalse(node.isValid());
   }
@@ -172,30 +174,32 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     InspectionTree tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
-    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
-                                           "   -unused\n" +
-                                           "    -Module: 'testOfflineView'\n" +
+                                           "   -Unused declaration\n" +
+                                           "    Entry Points\n" +
+                                           "    -testOfflineView\n" +
                                            "     -<default>\n" +
                                            "      -Test\n" +
                                            "       -f()\n" +
                                            "        -D\n" +
                                            "         -b()\n" +
+                                           "          Variable 'r' is never used.\n" +
                                            "          -anonymous (Runnable)\n" +
                                            "           -run()\n" +
-                                           "            Variable <code>i</code> is never used.\n" +
-                                           "          Variable <code>r</code> is never used.\n" +
+                                           "            Variable 'i' is never used.\n" +
                                            "       -ff()\n" +
-                                           "        Variable <code>a</code> is never used.\n" +
-                                           "        Variable <code>d</code> is never used.\n" +
+                                           "        Variable 'a' is never used.\n" +
+                                           "        Variable 'd' is never used.\n" +
                                            "       -foo()\n" +
-                                           "        Variable <code>j</code> is never used.\n" +
+                                           "        Variable 'j' is never used.\n" +
                                            "       -main(String[])\n" +
-                                           "        Variable <code>test</code> is never used.\n" +
+                                           "        Variable 'test' is never used.\n" +
                                            "  -Probable bugs\n" +
-                                           "   -" + myDataFlowToolWrapper + "\n" +
-                                           "    -Module: 'testOfflineView'\n" +
+                                           "   -'equals()' called on itself\n" +
+                                           "    -testOfflineView\n" +
                                            "     -<default>\n" +
                                            "      -Test\n" +
                                            "       -m()\n" +
@@ -208,62 +212,61 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
-    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
-                                           "   -unused\n" +
+                                           "   -Unused declaration\n" +
+                                           "    Entry Points\n" +
                                            "    -Test\n" +
                                            "     -f()\n" +
                                            "      -D\n" +
                                            "       -b()\n" +
+                                           "        Variable 'r' is never used.\n" +
                                            "        -anonymous (Runnable)\n" +
                                            "         -run()\n" +
-                                           "          Variable <code>i</code> is never used.\n" +
-                                           "        Variable <code>r</code> is never used.\n" +
+                                           "          Variable 'i' is never used.\n" +
                                            "     -ff()\n" +
-                                           "      Variable <code>a</code> is never used.\n" +
-                                           "      Variable <code>d</code> is never used.\n" +
+                                           "      Variable 'a' is never used.\n" +
+                                           "      Variable 'd' is never used.\n" +
                                            "     -foo()\n" +
-                                           "      Variable <code>j</code> is never used.\n" +
+                                           "      Variable 'j' is never used.\n" +
                                            "     -main(String[])\n" +
-                                           "      Variable <code>test</code> is never used.\n" +
+                                           "      Variable 'test' is never used.\n" +
                                            "  -Probable bugs\n" +
-                                           "   -EqualsWithItself\n" +
+                                           "   -'equals()' called on itself\n" +
                                            "    -Test\n" +
                                            "     'equals()' called on itself\n" +
                                            "    -Test2\n" +
                                            "     'equals()' called on itself\n"
                                          );
-    TreeUtil.selectNode(tree, tree.getRoot());
-    final InspectionTreeNode root = tree.getRoot();
+    InspectionRootNode root = tree.getInspectionTreeModel().getRoot();
     root.excludeElement();
-    TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
-      assertTrue(((InspectionTreeNode)node).isExcluded());
-      return true;
-    });
+    tree.getInspectionTreeModel().traverse(root).forEach(node -> assertTrue("node = " + node, node.isExcluded()));
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
-    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
+    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n"
                                            + " -Java\n" +
                                            "  -Declaration redundancy\n" +
-                                           "   -unused\n" +
+                                           "   -Unused declaration\n" +
+                                           "    Entry Points\n" +
                                            "    -Test\n" +
                                            "     -f()\n" +
                                            "      -D\n" +
                                            "       -b()\n" +
+                                           "        Variable 'r' is never used.\n" +
                                            "        -anonymous (Runnable)\n" +
                                            "         -run()\n" +
-                                           "          Variable <code>i</code> is never used.\n" +
-                                           "        Variable <code>r</code> is never used.\n" +
+                                           "          Variable 'i' is never used.\n" +
                                            "     -ff()\n" +
-                                           "      Variable <code>a</code> is never used.\n" +
-                                           "      Variable <code>d</code> is never used.\n" +
+                                           "      Variable 'a' is never used.\n" +
+                                           "      Variable 'd' is never used.\n" +
                                            "     -foo()\n" +
-                                           "      Variable <code>j</code> is never used.\n" +
+                                           "      Variable 'j' is never used.\n" +
                                            "     -main(String[])\n" +
-                                           "      Variable <code>test</code> is never used.\n" +
+                                           "      Variable 'test' is never used.\n" +
                                            "  -Probable bugs\n" +
-                                           "   -EqualsWithItself\n" +
+                                           "   -'equals()' called on itself\n" +
                                            "    -Test\n" +
                                            "     'equals()' called on itself\n" +
                                            "    -Test2\n" +
@@ -271,10 +274,11 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                           );
   }
 
-  private InspectionTree updateTree() {
+  private InspectionTree updateTree() throws InterruptedException {
     myView.update();
     final InspectionTree tree = myView.getTree();
     TreeUtil.expandAll(tree);
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     return tree;
   }
 

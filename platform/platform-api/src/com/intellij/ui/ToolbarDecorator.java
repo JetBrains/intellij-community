@@ -470,27 +470,33 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
       }
     };
   }
-  
+
+  @Nullable
   public static AnActionButton findAddButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.ADD);
   }
 
+  @Nullable
   public static AnActionButton findEditButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.EDIT);
   }
 
+  @Nullable
   public static AnActionButton findRemoveButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.REMOVE);
   }
 
+  @Nullable
   public static AnActionButton findUpButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.UP);
   }
 
+  @Nullable
   public static AnActionButton findDownButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.DOWN);
   }
 
+  @Nullable
   private static AnActionButton findButton(JComponent comp, CommonActionsPanel.Buttons type) {
     final CommonActionsPanel panel = UIUtil.findComponentOfType(comp, CommonActionsPanel.class);
     if (panel != null) {

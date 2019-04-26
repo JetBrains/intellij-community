@@ -26,7 +26,7 @@ abstract class NoFormalParamTypeInferenceNeeded {
   {
     map(a -> zip(text ->  text));
     zip(a -> zip(text ->  text));
-    Integer zip = zip(<error descr="no instance(s) of type variable(s)  exist so that Object conforms to Integer">a -> zip(text -> text)</error>);
+    Integer zip = zip(<error descr="no instance(s) of type variable(s) exist so that Object conforms to Integer">a -> zip(text -> text)</error>);
   }
 
 }

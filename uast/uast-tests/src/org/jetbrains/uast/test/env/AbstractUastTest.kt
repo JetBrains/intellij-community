@@ -15,21 +15,17 @@
  */
 package org.jetbrains.uast.test.env
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.UastContext
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.UastVisitor
 
 abstract class AbstractUastFixtureTest : LightCodeInsightFixtureTestCase() {
-  protected val uastContext: UastContext by lazy {
-    ServiceManager.getService(project, UastContext::class.java)
-  }
 
   abstract fun getVirtualFile(testName: String): VirtualFile
   abstract fun check(testName: String, file: UFile)
@@ -38,7 +34,7 @@ abstract class AbstractUastFixtureTest : LightCodeInsightFixtureTestCase() {
     val virtualFile = getVirtualFile(testName)
 
     val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")
-    val uFile = uastContext.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
+    val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
     checkCallback(testName, uFile as UFile)
   }
 }
@@ -48,7 +44,8 @@ fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
   val matchingElements = mutableListOf<T>()
   accept(object : UastVisitor {
     override fun visitElement(node: UElement): Boolean {
-      if (cls.isInstance(node) && node.psi?.text == refText) {
+      if (cls.isInstance(node) && node.sourcePsi?.text == refText) {
+        @Suppress("UNCHECKED_CAST")
         matchingElements.add(node as T)
       }
       return false
@@ -67,7 +64,7 @@ fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
 inline fun <reified T : Any> UElement.findElementByText(refText: String): T = findElementByText(refText, T::class.java)
 
 inline fun <reified T : UElement> UElement.findElementByTextFromPsi(refText: String, strict: Boolean = true): T =
-  (this.psi ?: throw AssertionError("no psi for $this")).findUElementByTextFromPsi(refText, strict)
+  (this.sourcePsi ?: throw AssertionError("no sourcePsi for $this")).findUElementByTextFromPsi(refText, strict)
 
 inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: String, strict: Boolean = true): T {
   val elementAtStart = this.findElementAt(this.text.indexOf(refText))
@@ -76,8 +73,8 @@ inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: 
     .let {
       if (strict) it.dropWhile { !it.text.contains(refText) } else it
     }.mapNotNull { it.toUElementOfType<T>() }.firstOrNull() ?: throw AssertionError("requested text '$refText' not found as ${T::class.java}")
-  if (strict && uElementContainingText.psi != null && uElementContainingText.psi?.text != refText) {
-    throw AssertionError("requested text '$refText' found as '${uElementContainingText.psi?.text}' in $uElementContainingText")
+  if (strict && uElementContainingText.sourcePsi != null && uElementContainingText.sourcePsi?.text != refText) {
+    throw AssertionError("requested text '$refText' found as '${uElementContainingText.sourcePsi?.text}' in $uElementContainingText")
   }
   return uElementContainingText;
 }

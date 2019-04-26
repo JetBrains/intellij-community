@@ -41,6 +41,8 @@ public class JDParser {
   private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
   private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
 
+  private final static String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
+
   public JDParser(@NotNull CodeStyleSettings settings) {
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     myCommonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -272,14 +274,26 @@ public class JDParser {
     boolean first = true;
     int preCount = 0;
     int curPos = 0;
+    int firstLineToKeepIndents = -1;
+    int currLine = 0;
+    int minIndentWhitespaces = Integer.MAX_VALUE;
+
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
       curPos += token.length();
 
+      if (containsTagToKeepIndentsAfter(getLineWithoutAsterisk(token)) && firstLineToKeepIndents < 0) {
+        firstLineToKeepIndents = currLine;
+      }
+
+      if (firstLineToKeepIndents >= 0) {
+        minIndentWhitespaces = Math.min(getIndentWhitespaces(token), minIndentWhitespaces);
+      }
+
       if ("\n".equals(token)) {
         if (!first) {
           list.add("");
-          if (markers != null) markers.add(Boolean.valueOf(preCount > 0));
+          if (markers != null) markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
         }
         first = false;
       }
@@ -288,23 +302,85 @@ public class JDParser {
         if (p2nl) {
           if (isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
             list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
-            markers.add(Boolean.valueOf(preCount > 0));
+            markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
             continue;
           }
         }
-        if (preCount == 0) token = token.trim();
+        if (preCount == 0 && firstLineToKeepIndents < 0) token = token.trim();
 
         list.add(token);
+        currLine ++;
 
         if (markers != null) {
           if (lineHasUnclosedPreTag(token)) preCount++;
-          markers.add(Boolean.valueOf(preCount > 0));
+          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
           if (lineHasClosingPreTag(token)) preCount--;
         }
 
       }
     }
+
+    if (minIndentWhitespaces > 0 && minIndentWhitespaces < Integer.MAX_VALUE) {
+      for (int i = firstLineToKeepIndents; i < list.size(); i ++) {
+        String line = list.get(i);
+        if (!line.trim().isEmpty()) {
+          if (line.length() > minIndentWhitespaces) {
+            list.set(i, line.substring(minIndentWhitespaces));
+          }
+        }
+      }
+    }
     return list;
+  }
+
+  private static boolean containsTagToKeepIndentsAfter(@NotNull String line) {
+    String tag = getStartTag(line);
+    if (tag != null) {
+      for (String keepIndentsTag : TAGS_TO_KEEP_INDENTS_AFTER) {
+        if (keepIndentsTag.equals(tag)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static String getStartTag(@NotNull String line) {
+    if (startsWithTag(line)) {
+      int tagStart = line.indexOf("<");
+      if (tagStart >= 0) {
+        tagStart ++;
+        for (int i = tagStart; i < line.length(); i ++) {
+          if (!Character.isAlphabetic(line.charAt(i))) {
+            return line.substring(tagStart,i);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static int getIndentWhitespaces(@NotNull String line) {
+    int indentWhitespaces = 0;
+    for (int i = 0; i < line.length(); i++) {
+      char c = line.charAt(i);
+      switch (c) {
+        case ' ':
+        case '\t':
+          indentWhitespaces++;
+          break;
+        case '\n':
+          return Integer.MAX_VALUE;
+        default:
+          return indentWhitespaces;
+      }
+    }
+    return Integer.MAX_VALUE;
+  }
+
+  private static String getLineWithoutAsterisk(@NotNull String line) {
+    int asteriskPos = line.indexOf('*');
+    return asteriskPos >= 0 ? line.substring(asteriskPos + 1) : line;
   }
 
   private static boolean isParaTag(String token) {

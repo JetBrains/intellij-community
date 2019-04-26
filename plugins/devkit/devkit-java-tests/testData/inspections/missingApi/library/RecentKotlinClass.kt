@@ -1,0 +1,4 @@
+package library
+
+class RecentKotlinClass {
+}

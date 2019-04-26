@@ -31,7 +31,7 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JLabel label = new JLabel() {
       @Override
       public Font getFont() {

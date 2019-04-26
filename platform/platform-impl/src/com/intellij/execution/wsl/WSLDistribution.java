@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,6 +24,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.execution.wsl.WSLUtil.LOG;
+
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
@@ -32,10 +33,9 @@ import java.util.stream.Collectors;
  * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
-  static final String WSL_MNT_ROOT = "/mnt/";
+  static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
@@ -68,6 +68,7 @@ public class WSLDistribution {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
       final ProcessOutput output = executeOnWsl(10000, "cat", releaseInfo);
+      if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
       if (!output.checkSuccess(LOG)) return null;
       for (String line : output.getStdoutLines(true)) {
         if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
@@ -177,14 +178,14 @@ public class WSLDistribution {
     Map<String, String> additionalEnvs = new THashMap<>(commandLine.getEnvironment());
     commandLine.getEnvironment().clear();
 
-    LOG.info("[" + getId() + "] " +
-             "Patching: " +
-             commandLine.getCommandLineString() +
-             "; working dir: " +
-             remoteWorkingDir +
-             "; envs: " +
-             additionalEnvs.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining(", ")) +
-             (askForSudo ? "; with sudo" : ": without sudo")
+    LOG.debug("[" + getId() + "] " +
+              "Patching: " +
+              commandLine.getCommandLineString() +
+              "; working dir: " +
+              remoteWorkingDir +
+              "; envs: " +
+              additionalEnvs.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining(", ")) +
+              (askForSudo ? "; with sudo" : ": without sudo")
     );
 
     StringBuilder commandLineString = new StringBuilder();
@@ -247,7 +248,7 @@ public class WSLDistribution {
     parametersList.add(getRunCommandLineParameter());
     parametersList.add(commandLineString.toString());
 
-    LOG.info("[" + getId() + "] " + "Patched as: " + commandLine.getCommandLineString());
+    LOG.debug("[" + getId() + "] " + "Patched as: " + commandLine.getCommandLineString());
     return commandLine;
   }
 
@@ -334,7 +335,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWindowsPath(@NotNull String wslPath) {
-    return WSLUtil.getWindowsPath(wslPath);
+    return WSLUtil.getWindowsPath(wslPath, myDescriptor.getMntRoot());
   }
 
   /**
@@ -343,11 +344,18 @@ public class WSLDistribution {
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return WSL_MNT_ROOT +
-             Character.toLowerCase(windowsPath.charAt(0)) +
-             FileUtil.toSystemIndependentName(windowsPath.substring(2));
+      return myDescriptor.getMntRoot() + convertWindowsPath(windowsPath);
     }
     return null;
+  }
+
+  /**
+   * @param windowsAbsolutePath properly formatted windows local absolute path: {@code drive:\path}
+   * @return windows path converted to the linux path according to wsl rules: {@code c:\some\path} => {@code c/some/path}
+   */
+  @NotNull
+  static String convertWindowsPath(@NotNull String windowsAbsolutePath) {
+    return Character.toLowerCase(windowsAbsolutePath.charAt(0)) + FileUtil.toSystemIndependentName(windowsAbsolutePath.substring(2));
   }
 
   @NotNull

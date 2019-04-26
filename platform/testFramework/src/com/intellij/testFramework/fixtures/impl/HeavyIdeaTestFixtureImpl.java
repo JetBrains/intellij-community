@@ -112,7 +112,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     for (File fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
-        List<Throwable> errors = Files.walk(fileToDelete.toPath())
+        List<IOException> errors = Files.walk(fileToDelete.toPath())
           .sorted(Comparator.reverseOrder())
           .map(x -> {
             try {

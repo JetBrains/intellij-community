@@ -21,11 +21,11 @@ import java.awt.*;
 
 /**
  * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeAndWait(Runnable, ModalityState)} to specify
- * that the corresponding runnable is to be executed within the given modality state, i.e. when the same set modal dialogs is present, or its subset.<p/>
+ * that the corresponding runnable is to be executed within the given modality state, i.e., when the same set modal dialogs is present, or its subset.<p/>
  *
  * Modality state is used to prevent the following scenario. Someone does SwingUtilities.invokeAndWait, but there are already other runnables in
- * Swing queue, so they are executed before and show a dialog (e.g. asking a yes/no question). While this dialog is shown, further events are pumped
- * from the queue, including the one scheduled before, which does something very dramatic, e.g. removes a module from the project, deletes some files,
+ * Swing queue, so they are executed before and show a dialog (e.g., asking a yes/no question). While this dialog is shown, further events are pumped
+ * from the queue, including the one scheduled before, which does something very dramatic, e.g., removes a module from the project, deletes some files,
  * invalidates PSI. It's executed, and only then the user closes the dialog. The code that invoked that dialog now has to deal with the completely
  * changed world, where PSI that it worked with might be already invalid, dumb mode (see {@link com.intellij.openapi.project.DumbService})
  * might have unexpectedly begun, etc. But normally clients of yes/no question dialogs aren't prepared to this at all, so exceptions are likely to arise.
@@ -56,7 +56,6 @@ public abstract class ModalityState {
 
   /**
    * @return the modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
-   * @see Application#getCurrentModalityState()
    */
   @NotNull
   public static ModalityState current() {
@@ -64,8 +63,9 @@ public abstract class ModalityState {
   }
 
   /**
-   * @return a special modality state that's equivalent to using no modality state at all in invokeLater. Please don't use it unless absolutely needed.
-   * @see Application#getAnyModalityState()
+   * @return a special modality state that's equivalent to using no modality state at all in invokeLater.
+   * Please don't use it unless absolutely needed. The code under this modality can only perform purely UI operations,
+   * it shouldn't access any PSI, VFS or project model.
    */
   @NotNull
   public static ModalityState any() {
@@ -84,7 +84,6 @@ public abstract class ModalityState {
   /**
    * When invoked on AWT thread, returns {@link #current()}. When invoked in the thread of some modal progress, returns modality state
    * corresponding to that progress' dialog. Otherwise, returns {@link #NON_MODAL}.
-   * @see Application#getDefaultModalityState()
    */
   @NotNull
   public static ModalityState defaultModalityState() {

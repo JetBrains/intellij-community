@@ -21,15 +21,15 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
+import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,22 +40,9 @@ import java.util.List;
  * @author yole
  */
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
-  private Boolean myHidden;
+  private final CachedValue<Boolean> myHidden = new CachedValueImpl<>(
+    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.INSTANCE));
   private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
-
-  public BasePlatformRefactoringAction() {
-    LanguageRefactoringSupport.INSTANCE.addListener(new ExtensionPointListener<RefactoringSupportProvider>() {
-      @Override
-      public void extensionAdded(@NotNull RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
-        myHidden = null;
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
-        myHidden = null;
-      }
-    }, ApplicationManager.getApplication());
-  }
 
   @Override
   protected final RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
@@ -149,10 +136,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected boolean isHidden() {
-    if (myHidden == null) {
-      myHidden = calcHidden();
-    }
-    return myHidden.booleanValue();
+    return myHidden.getValue().booleanValue();
   }
 
   private boolean calcHidden() {

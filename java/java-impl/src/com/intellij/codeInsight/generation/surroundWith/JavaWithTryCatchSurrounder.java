@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
@@ -71,18 +72,17 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
     tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
 
-    tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
+    tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements);
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
-    tryBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(tryBlock, container, statements, true);
 
     PsiCatchSection[] catchSections = tryStatement.getCatchSections();
 
     for (int i = 0; i < exceptions.size(); i++) {
       PsiClassType exception = exceptions.get(i);
-      String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exception).names;
-      String name = codeStyleManager.suggestUniqueVariableName(nameSuggestions[0], tryBlock, false);
+      String name = new VariableNameGenerator(tryBlock, VariableKind.PARAMETER).byType(exception).byName("e", "ex", "exc").generate(false);
       PsiCatchSection catchSection;
       try {
         catchSection = factory.createCatchSection(exception, name, tryBlock);

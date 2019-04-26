@@ -7,6 +7,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.application.AbstractApplicationConfigurationProducer;
 import com.intellij.execution.application.ApplicationConfigurationType;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
@@ -21,8 +22,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 public class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration> {
-  public JavaScratchConfigurationProducer() {
-    super(JavaScratchConfigurationType.getInstance());
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return JavaScratchConfigurationType.getInstance();
   }
 
   @Override

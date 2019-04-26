@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -83,12 +83,12 @@ public abstract class MatchingHandler {
   }
 
   private static void skipComments(NodeIterator matchNodes, PsiElement patternNode) {
-    final boolean skipComment = !(patternNode instanceof PsiComment);
-    while (skipComment && matchNodes.current() instanceof PsiComment) matchNodes.advance();
+    if (patternNode instanceof PsiComment) return;
+    while (matchNodes.current() instanceof PsiComment) matchNodes.advance();
   }
 
   private static void skipIfNecessary(NodeIterator nodes, PsiElement elementToMatchWith, MatchingStrategy strategy) {
-    while (strategy.shouldSkip(nodes.current(), elementToMatchWith)) {
+    while (nodes.hasNext() && strategy.shouldSkip(nodes.current(), elementToMatchWith)) {
       nodes.advance();
     }
   }
@@ -201,7 +201,7 @@ public abstract class MatchingHandler {
   }
 
   protected static boolean validateSatisfactionOfHandlers(NodeIterator patternNodes, MatchContext context) {
-    for (;patternNodes.hasNext(); patternNodes.advance()) {
+    for (; patternNodes.hasNext(); patternNodes.advance()) {
       if (!context.getPattern().getHandler(patternNodes.current()).validate(context, 0)) {
         return false;
       }

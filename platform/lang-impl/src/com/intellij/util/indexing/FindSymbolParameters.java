@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.intellij.ide.scratch.RootType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.HiddenFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FindSymbolParameters {
+  @NotNull
   private final String myCompletePattern;
+  @NotNull
   private final String myLocalPatternName;
   private final GlobalSearchScope mySearchScope;
   private final IdFilter myIdFilter;
@@ -24,15 +25,18 @@ public class FindSymbolParameters {
     myIdFilter = idFilter;
   }
 
+  @NotNull
   public String getCompletePattern() {
     return myCompletePattern;
   }
 
+  @NotNull
   public String getLocalPatternName() {
     return myLocalPatternName;
   }
 
-  public @NotNull GlobalSearchScope getSearchScope() {
+  @NotNull
+  public GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
@@ -49,6 +53,7 @@ public class FindSymbolParameters {
     );
   }
 
+  @NotNull
   public static GlobalSearchScope searchScopeFor(@Nullable Project project, boolean searchInLibraries) {
     GlobalSearchScope baseScope =
       project == null ? new EverythingGlobalScope() :
@@ -57,11 +62,7 @@ public class FindSymbolParameters {
     return baseScope.intersectWith(new EverythingGlobalScope(project) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        if (file.getFileSystem() instanceof HiddenFileSystem) return false;
-        Project project = getProject();
-        RootType rootType = RootType.forFile(file);
-        if (rootType != null && (rootType.isHidden() || project != null && rootType.isIgnored(project, file))) return false;
-        return true;
+        return !(file.getFileSystem() instanceof HiddenFileSystem);
       }
     });
   }

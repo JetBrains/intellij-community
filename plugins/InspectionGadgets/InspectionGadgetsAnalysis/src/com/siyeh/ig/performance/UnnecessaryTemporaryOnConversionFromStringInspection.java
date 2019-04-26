@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.JavaPsiBoxingUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,21 +38,6 @@ import java.util.Map;
 
 public class UnnecessaryTemporaryOnConversionFromStringInspection
   extends BaseInspection {
-
-  /**
-   */
-  @NonNls private static final Map<String, String> s_conversionMap =
-    new HashMap<>(7);
-
-  static {
-    s_conversionMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "valueOf");
-    s_conversionMap.put(CommonClassNames.JAVA_LANG_BYTE, "parseByte");
-    s_conversionMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble");
-    s_conversionMap.put(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat");
-    s_conversionMap.put(CommonClassNames.JAVA_LANG_INTEGER, "parseInt");
-    s_conversionMap.put(CommonClassNames.JAVA_LANG_LONG, "parseLong");
-    s_conversionMap.put(CommonClassNames.JAVA_LANG_SHORT, "parseShort");
-  }
 
   @Override
   @NotNull
@@ -68,7 +54,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String replacementString = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
+    final String replacementString = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker(), false);
     return InspectionGadgetsBundle.message(
       "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
       replacementString);
@@ -76,7 +62,9 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
 
   @Nullable
   @NonNls
-  static String calculateReplacementExpression(PsiMethodCallExpression expression, CommentTracker commentTracker) {
+  static String calculateReplacementExpression(PsiMethodCallExpression expression,
+                                               CommentTracker commentTracker,
+                                               boolean isFullyQualified) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiNewExpression qualifier = ObjectUtils.tryCast(methodExpression.getQualifierExpression(), PsiNewExpression.class);
     if (qualifier == null) return null;
@@ -87,24 +75,18 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     if (type == null) return null;
     final String qualifierType = type.getPresentableText();
     final String canonicalType = type.getCanonicalText();
-    final String conversionName = s_conversionMap.get(canonicalType);
-    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_BOOLEAN, type)) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return qualifierType + '.' + conversionName + '(' + commentTracker.text(arg) + ").booleanValue()";
-      }
-      else {
-        return qualifierType + ".parseBoolean(" + commentTracker.text(arg) + ')';
-      }
+    final String name = isFullyQualified ? canonicalType : qualifierType;
+    final String conversionName = JavaPsiBoxingUtils.getParseMethod(canonicalType);
+    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_BOOLEAN, type) && !PsiUtil.isLanguageLevel5OrHigher(expression)) {
+      return name + '.' + "valueOf" + '(' + commentTracker.text(arg) + ").booleanValue()";
     }
-    else {
-      return qualifierType + '.' + conversionName + '(' + commentTracker.text(arg) + ')';
-    }
+    return name + '.' + conversionName + '(' + commentTracker.text(arg) + ')';
   }
 
   @Override
   @Nullable
   public InspectionGadgetsFix buildFix(Object... infos) {
-    final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
+    final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker(), false);
     if (replacementExpression == null) return null;
     final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacementExpression);
     return new UnnecessaryTemporaryObjectFix(name);
@@ -134,8 +116,8 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
-      CommentTracker commentTracker = new CommentTracker();
-      final String newExpression = calculateReplacementExpression(expression, commentTracker);
+      final CommentTracker commentTracker = new CommentTracker();
+      final String newExpression = calculateReplacementExpression(expression, commentTracker, true);
       if (newExpression == null) return;
       PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }

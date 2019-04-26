@@ -39,8 +39,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class IntentionSettingsTree {
   private JComponent myComponent;
@@ -373,9 +373,7 @@ public abstract class IntentionSettingsTree {
       }
       SwingUtilities.invokeLater(() -> {
         myTree.setSelectionRow(0);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
       });
       TreeUtil.expandAll(myTree);
       if (filter == null || filter.length() == 0) {

@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert field to local variable in method 'someMethod'" "true"
 class TestFieldConversion
 {
   /**

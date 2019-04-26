@@ -30,7 +30,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -45,7 +44,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -148,6 +146,9 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   @Override
   public void markDirty(String projectPath) {
     scheduleUpdate(projectPath);
+    for (Contributor contributor : EP_NAME.getExtensions()) {
+      contributor.markDirty(projectPath);
+    }
   }
 
   public synchronized void start() {
@@ -163,7 +164,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     myRefreshRequestsQueue.activate();
 
     DocumentListener myDocumentListener = new DocumentListener() {
-      private final Map<Document, String> myChangedDocuments = new THashMap<>();
+      private final Map<Document, Pair<String, VirtualFile>> myChangedDocuments = new THashMap<>();
 
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
@@ -174,12 +175,12 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         if (externalProjectPath == null) return;
 
         synchronized (myChangedDocuments) {
-          myChangedDocuments.put(doc, externalProjectPath);
+          myChangedDocuments.put(doc, Pair.create(externalProjectPath, file));
         }
         myChangedDocumentsQueue.queue(new Update(ExternalSystemProjectsWatcherImpl.this) {
           @Override
           public void run() {
-            final Map<Document, String> copy;
+            final Map<Document, Pair<String, VirtualFile>> copy;
 
             synchronized (myChangedDocuments) {
               copy = new THashMap<>(myChangedDocuments);
@@ -187,20 +188,16 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
             }
 
             ExternalSystemUtil.invokeLater(myProject, () -> WriteAction.run(
-              () -> copy.forEach((document, projectPath) -> {
-                PsiDocumentManager.getInstance(myProject).commitDocument(document);
-                FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
-                fileDocumentManager.saveDocumentAsIs(document);
-                Long beforeImport = file.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
-                Long current = file.getUserData(CRC_WITHOUT_SPACES_CURRENT);
+              () -> copy.forEach((document, pair) -> {
+                if (!pair.second.isValid()) return;
+
+                Long beforeImport = pair.second.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
+                Long current = pair.second.getUserData(CRC_WITHOUT_SPACES_CURRENT);
                 if (current != null && current.equals(beforeImport)) {
-                  VirtualFile virtualFile = fileDocumentManager.getFile(document);
-                  if (virtualFile != null) {
-                    Long newCrc = calculateCrc(virtualFile);
-                    virtualFile.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);
-                    if (!current.equals(newCrc)) {
-                      scheduleUpdate(externalProjectPath, false);
-                    }
+                  Long newCrc = calculateCrc(pair.second);
+                  pair.second.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);
+                  if (!current.equals(newCrc)) {
+                    scheduleUpdate(pair.first, false);
                   }
                 }
               })
@@ -726,9 +723,8 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     return canonized == null ? null : FileUtil.toSystemIndependentName(canonized);
   }
 
-  @NotNull
-  private Long calculateCrc(@NotNull VirtualFile file) {
-    return new ConfigurationFileCrcFactory(myProject, file).create();
+  private static long calculateCrc(@NotNull VirtualFile file) {
+    return new ConfigurationFileCrcFactory(file).create();
   }
 
   @ApiStatus.Experimental
@@ -737,5 +733,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     void markDirtyAllExternalProjects(@NotNull Project project);
 
     void markDirty(@NotNull Module module);
+
+    default void markDirty(@NotNull String projectPath) {}
   }
 }

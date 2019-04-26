@@ -32,7 +32,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenIndex;
+import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -95,7 +95,7 @@ class ImportMavenRepositoriesTask {
       psiFileList.add(psiFile);
     }
 
-    final PsiFile[] psiFiles = ArrayUtil.toObjectArray(psiFileList, PsiFile.class);
+    final PsiFile[] psiFiles = psiFileList.toArray(PsiFile.EMPTY_ARRAY);
 
     final Set<MavenRemoteRepository> mavenRemoteRepositories = ReadAction.compute(() -> {
       Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
@@ -127,7 +127,7 @@ class ImportMavenRepositoriesTask {
         .filter(index -> index.getUpdateTimestamp() == -1 &&
                          index.getFailureMessage() == null &&
                          MavenRepositoriesHolder.getInstance(myProject).contains(index.getRepositoryPathOrUrl()))
-        .map(MavenIndex::getRepositoryPathOrUrl)
+        .map(MavenSearchIndex::getRepositoryPathOrUrl)
         .collect(Collectors.toList());
       MavenRepositoriesHolder.getInstance(myProject).updateNotIndexedUrls(repositoriesWithEmptyIndex);
     });
@@ -211,7 +211,7 @@ class ImportMavenRepositoriesTask {
 
     try {
       if (expression instanceof PsiLiteral) {
-        URI uri = new URI(String.valueOf(PsiLiteral.class.cast(expression).getValue()));
+        URI uri = new URI(String.valueOf(((PsiLiteral)expression).getValue()));
         if (uri.getScheme() != null && StringUtil.startsWith(uri.getScheme(), "http")) return uri;
       }
     }

@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
@@ -208,11 +209,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
-  public void testMutabilityJdk() { doTest(); }
+  public void testMutabilityJdk() { ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doTest); }
 
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }
   public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
+  public void testHashMapImplementation() { doTest(); }
 
   public void testOptionalTooComplex() { doTest(); }
 
@@ -243,5 +245,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testObjectsEquals() { doTest(); }
+  public void testManyObjectEquals() { doTest(); }
+  public void testLambdaAfterNullCheck() { doTest(); }
   public void testFlatMapSideEffect() { doTest(); }
+  public void testOptionalValueTracking() { doTest(); }
+  public void testClearZeroesSize() { doTest(); }
+  public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
 }

@@ -55,7 +55,8 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
 
   @Override
   public boolean isValid() {
-    return ReadAction.compute(getOwnerClass()::isValid).booleanValue();
+    RefClass ownerClass = getOwnerClass();
+    return ownerClass != null && ReadAction.compute(ownerClass::isValid).booleanValue();
   }
 
   @NotNull
@@ -90,5 +91,10 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   @Nullable
   public PsiFile getContainingFile() {
     return ((RefClassImpl)getOwnerClass()).getContainingFile();
+  }
+
+  @Override
+  protected void initialize() {
+    throw new AssertionError("Should not be called!");
   }
 }

@@ -90,8 +90,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
         if (myNode.getElementType() == JavaElementType.FIELD
             || myNode.getElementType() == JavaElementType.DECLARATION_STATEMENT
-            || myNode.getElementType() == JavaElementType.LOCAL_VARIABLE)
-        {
+            || myNode.getElementType() == JavaElementType.LOCAL_VARIABLE) {
           alignmentStrategyToUse = myAlignmentStrategy;
         }
 

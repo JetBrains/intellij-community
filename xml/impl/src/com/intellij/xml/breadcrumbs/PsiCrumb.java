@@ -8,6 +8,7 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,6 +37,11 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
     return tooltip;
   }
 
+  @Override
+  public int getAnchorOffset() {
+    PsiElement element = anchor.retrieve();
+    return element != null ? element.getTextOffset() : -1;
+  }
 
   @Override
   public TextRange getHighlightRange() {
@@ -44,11 +50,11 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   }
 
   @Override
-  public void navigate(Editor editor, boolean withSelection) {
-    PsiElement element = anchor.retrieve();
-    if (element == null) return;
-
-    moveEditorCaretTo(editor, element.getTextOffset());
+  public void navigate(@NotNull Editor editor, boolean withSelection) {
+    int offset = getAnchorOffset();
+    if (offset != -1) {
+      moveEditorCaretTo(editor, offset);
+    }
 
     if (withSelection) {
       final TextRange range = getHighlightRange();

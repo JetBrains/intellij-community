@@ -2,7 +2,6 @@
 
 package com.intellij.find.impl;
 
-import com.intellij.BundleBase;
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.icons.AllIcons;
@@ -59,6 +58,7 @@ import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.util.*;
@@ -330,10 +330,19 @@ public class FindInProjectUtil {
   }
 
   @NotNull
+  public static UsageViewPresentation setupViewPresentation(@NotNull FindModel findModel) {
+    return setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
+  }
+
+  @NotNull
   public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull FindModel findModel) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
     setupViewPresentation(presentation, toOpenInNewTab, findModel);
     return presentation;
+  }
+
+  public static void setupViewPresentation(UsageViewPresentation presentation, @NotNull FindModel findModel) {
+    setupViewPresentation(presentation, FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
   }
 
   public static void setupViewPresentation(UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
@@ -342,14 +351,14 @@ public class FindInProjectUtil {
     presentation.setScopeText(scope);
     if (stringToFind.isEmpty()) {
       presentation.setTabText("Files");
-      presentation.setToolwindowTitle(BundleBase.format("Files in {0}", scope));
+      presentation.setToolwindowTitle("Files in " + scope);
       presentation.setUsagesString("files");
     }
     else {
       FindModel.SearchContext searchContext = findModel.getSearchContext();
       String contextText = "";
       if (searchContext != FindModel.SearchContext.ANY) {
-        contextText = FindBundle.message("find.context.presentation.scope.label", FindDialog.getPresentableName(searchContext));
+        contextText = FindBundle.message("find.context.presentation.scope.label", FindInProjectUtil.getPresentableName(searchContext));
       }
       presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind, contextText));
       presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope, contextText));
@@ -374,6 +383,13 @@ public class FindInProjectUtil {
       presentation.setReplacePattern(null);
     }
     presentation.setReplaceMode(findModel.isReplaceState());
+  }
+
+  @NotNull
+  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull final Project project,
+
+                                                                       @NotNull final UsageViewPresentation presentation) {
+    return setupProcessPresentation(project, !FindSettings.getInstance().isSkipResultsWithOneUsage(), presentation);
   }
 
   @NotNull
@@ -612,5 +628,45 @@ public class FindInProjectUtil {
     addSourceDirectoriesFromLibraries(project, directory, result);
     VirtualFile[] array = result.toArray(VirtualFile.EMPTY_ARRAY);
     return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
+  }
+
+  public static void initFileFilter(@NotNull final JComboBox<? super String> fileFilter, @NotNull final JCheckBox useFileFilter) {
+    fileFilter.setEditable(true);
+    String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
+    for(int i=fileMasks.length-1; i >= 0; i--) {
+      fileFilter.addItem(fileMasks[i]);
+    }
+    fileFilter.setEnabled(false);
+
+    useFileFilter.addActionListener(
+      __ -> {
+        if (useFileFilter.isSelected()) {
+          fileFilter.setEnabled(true);
+          fileFilter.getEditor().selectAll();
+          fileFilter.getEditor().getEditorComponent().requestFocusInWindow();
+        }
+        else {
+          fileFilter.setEnabled(false);
+        }
+      }
+    );
+  }
+
+  public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
+    @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
+    if (searchContext == FindModel.SearchContext.ANY) {
+      messageKey = "find.context.anywhere.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS) {
+      messageKey = "find.context.except.comments.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_STRING_LITERALS) {
+      messageKey = "find.context.except.literals.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS) {
+      messageKey = "find.context.except.comments.and.literals.scope.label";
+    } else if (searchContext == FindModel.SearchContext.IN_COMMENTS) {
+      messageKey = "find.context.in.comments.scope.label";
+    } else if (searchContext == FindModel.SearchContext.IN_STRING_LITERALS) {
+      messageKey = "find.context.in.literals.scope.label";
+    }
+    return messageKey != null ? FindBundle.message(messageKey) : searchContext.toString();
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -277,10 +263,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   private void doTestWithJava17() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.JDK_1_7);
+  }
+
+  private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
     LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     LanguageLevel oldLevel = projectExtension.getLanguageLevel();
     try {
-      projectExtension.setLanguageLevel(LanguageLevel.JDK_1_7);
+      projectExtension.setLanguageLevel(languageLevel);
       doTest();
     }
     finally {
@@ -715,7 +705,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testMethod2Interface() throws Exception {
-    doTest();
+    doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
   
   public void testMethod2InterfaceFromStatic() throws Exception {
@@ -947,6 +937,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testParametrizedDuplicateExpression() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");
@@ -970,6 +964,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testExtractUnresolvedLambdaExpression() throws Exception {
+    doTest();
+  }
+
+  public void testNoNPE1() throws Exception {
+    doTest();
+  }
+
+  public void testNoNPE2() throws Exception {
     doTest();
   }
 
@@ -1321,6 +1323,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testOneVariableExpression() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testInterfaceMethodVisibility() throws Exception {
     final String doesNotExist = "foo.bar.baz.DoesNotExist";
     final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(getProject());
@@ -1362,6 +1368,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testCallChainExpression() throws Exception {
+    doTest();
+  }
+
+  public void testFromDefaultMethodInInterface() throws Exception {
+    doTest();
+  }
+
+  public void testFromPrivateMethodInInterface() throws Exception {
+    doTest();
+  }
+
+  public void testFromStaticMethodInInterface() throws Exception {
     doTest();
   }
 

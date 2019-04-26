@@ -63,7 +63,7 @@ public class PatchApplier<Unused> {
   private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
-  @NotNull private final List<FilePatch> myPatches;
+  @NotNull private final List<? extends FilePatch> myPatches;
   private final CommitContext myCommitContext;
   @Nullable private final LocalChangeList myTargetChangeList;
   @NotNull private final List<FilePatch> myRemainingPatches;
@@ -76,7 +76,7 @@ public class PatchApplier<Unused> {
 
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<FilePatch> patches,
+                      @NotNull List<? extends FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext,
                       boolean reverseConflict,
@@ -101,7 +101,7 @@ public class PatchApplier<Unused> {
 
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<FilePatch> patches,
+                      @NotNull List<? extends FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext) {
     this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
@@ -110,16 +110,11 @@ public class PatchApplier<Unused> {
   @Deprecated
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<FilePatch> patches,
+                      @NotNull List<? extends FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CustomBinaryPatchApplier ignored,
                       @Nullable CommitContext commitContext) {
     this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
-  }
-
-  @NotNull
-  public List<FilePatch> getPatches() {
-    return myPatches;
   }
 
   @NotNull
@@ -182,7 +177,7 @@ public class PatchApplier<Unused> {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    return PartialChangesUtil.computeUnderChangeListWithRefresh(project, targetChangeList, "Applying patch...", () -> {
+    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, "Applying patch...", () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
@@ -193,23 +188,21 @@ public class PatchApplier<Unused> {
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
       try {
-        runWithDefaultConfirmations(project, silentAddDelete, () -> {
-          CommandProcessor.getInstance().executeCommand(project, () -> {
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-              applier.addSkippedItems(trigger);
-            }
-            trigger.prepare();
-            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-              refStatus.set(null);
-            }
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-            }
-          }, VcsBundle.message("patch.apply.command"), null);
-        });
+        runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+            applier.addSkippedItems(trigger);
+          }
+          trigger.prepare();
+          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+            refStatus.set(null);
+          }
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
+          }
+        }, VcsBundle.message("patch.apply.command"), null));
       }
       finally {
         VcsFileListenerContextHelper.getInstance(project).clearContext();
@@ -233,7 +226,7 @@ public class PatchApplier<Unused> {
 
       final Set<FilePath> directlyAffected = new HashSet<>();
       final Set<VirtualFile> indirectlyAffected = new HashSet<>();
-      for (PatchApplier applier : group) {
+      for (PatchApplier<?> applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
       }
@@ -241,15 +234,13 @@ public class PatchApplier<Unused> {
       refreshPassedFiles(project, directlyAffected, indirectlyAffected);
 
       return result;
-    });
+    }, true);
   }
 
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, applier -> applier.getFailedPatches());
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
-    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> {
-      return VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName()));
-    });
+    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
 
     final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
     if (undoApplyPatchDialog.showAndGet()) {
@@ -334,7 +325,7 @@ public class PatchApplier<Unused> {
     return isSuccess ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
   }
 
-  private static void markInternalOperation(List<PatchAndFile> textPatches, boolean set) {
+  private static void markInternalOperation(List<? extends PatchAndFile> textPatches, boolean set) {
     for (PatchAndFile patch : textPatches) {
       ChangesUtil.markInternalOperation(patch.getFile(), set);
     }
@@ -350,8 +341,8 @@ public class PatchApplier<Unused> {
 
   @CalledInAwt
   private static void refreshPassedFiles(@NotNull final Project project,
-                                         @NotNull Collection<FilePath> directlyAffected,
-                                         @NotNull Collection<VirtualFile> indirectlyAffected) {
+                                         @NotNull Collection<? extends FilePath> directlyAffected,
+                                         @NotNull Collection<? extends VirtualFile> indirectlyAffected) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
@@ -364,8 +355,8 @@ public class PatchApplier<Unused> {
   }
 
   @Nullable
-  private ApplyPatchStatus actualApply(final List<PatchAndFile> textPatches,
-                                       final List<PatchAndFile> binaryPatches,
+  private ApplyPatchStatus actualApply(final List<? extends PatchAndFile> textPatches,
+                                       final List<? extends PatchAndFile> binaryPatches,
                                        final CommitContext commitContext) {
     final ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     ApplyPatchStatus status;
@@ -384,7 +375,7 @@ public class PatchApplier<Unused> {
     return status;
   }
 
-  private ApplyPatchStatus applyList(final List<PatchAndFile> patches,
+  private ApplyPatchStatus applyList(final List<? extends PatchAndFile> patches,
                                      final ApplyPatchContext context,
                                      ApplyPatchStatus status,
                                      CommitContext commiContext) throws IOException {

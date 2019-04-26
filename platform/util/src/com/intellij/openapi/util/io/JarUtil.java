@@ -52,12 +52,8 @@ public class JarUtil {
   public static boolean containsEntry(File file, String entryPath) {
     if (file.canRead()) {
       try {
-        JarFile jarFile = new JarFile(file);
-        try {
+        try (JarFile jarFile = new JarFile(file)) {
           return jarFile.getEntry(entryPath) != null;
-        }
-        finally {
-          jarFile.close();
         }
       }
       catch (IOException ignored) { }
@@ -87,16 +83,12 @@ public class JarUtil {
   private static String getJarAttributeImpl(@NotNull File file, @Nullable String entryName, @NotNull Attributes.Name attribute) {
     if (file.canRead()) {
       try {
-        JarFile jarFile = new JarFile(file);
-        try {
+        try (JarFile jarFile = new JarFile(file)) {
           Manifest manifest = jarFile.getManifest();
           if (manifest != null) {
             Attributes attributes = entryName != null ? manifest.getAttributes(entryName) : manifest.getMainAttributes();
             return attributes.getValue(attribute);
           }
-        }
-        finally {
-          jarFile.close();
         }
       }
       catch (IOException e) {
@@ -115,17 +107,13 @@ public class JarUtil {
   public static Properties loadProperties(@NotNull File file, @NotNull String entryName) {
     if (file.canRead()) {
       try {
-        ZipFile zipFile = new ZipFile(file);
-        try {
+        try (ZipFile zipFile = new ZipFile(file)) {
           ZipEntry entry = zipFile.getEntry(entryName);
           if (entry != null) {
             Properties properties = new Properties();
             properties.load(zipFile.getInputStream(entry));
             return properties;
           }
-        }
-        finally {
-          zipFile.close();
         }
       }
       catch (IOException e) {

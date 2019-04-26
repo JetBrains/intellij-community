@@ -64,7 +64,7 @@ public abstract class FileIndexFacade {
    */
   public abstract boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child);
 
-  public boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile) {
+  public boolean shouldBeFound(@NotNull GlobalSearchScope scope, @NotNull VirtualFile virtualFile) {
     return scope.isSearchOutsideRootModel() || isInContent(virtualFile) || isInLibrarySource(virtualFile);
   }
 

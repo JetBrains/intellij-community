@@ -21,6 +21,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -179,8 +180,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       Project project = memberFile.getProject();
 
       int level = myVisibilityInspection.getMinVisibilityLevel(member);
-      int minLevel = Math.max(PsiUtil.ACCESS_LEVEL_PRIVATE, level);
-      boolean entryPoint = myDeadCodeInspection.isEntryPoint(member) || 
+      boolean entryPoint = myDeadCodeInspection.isEntryPoint(member) ||
                            member instanceof PsiField && (UnusedSymbolUtil.isImplicitWrite((PsiVariable)member) || UnusedSymbolUtil.isImplicitRead((PsiVariable)member));
       if (entryPoint && level <= 0) {
         log(member.getName() + " is entry point");
@@ -190,6 +190,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       final PsiPackage memberPackage = getPackage(memberFile);
       log(member.getName()+ ": checking effective level for "+member);
 
+      int minLevel = Math.max(PsiUtil.ACCESS_LEVEL_PRIVATE, level);
       AtomicInteger maxLevel = new AtomicInteger(minLevel);
       AtomicBoolean foundUsage = new AtomicBoolean();
       boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
@@ -332,7 +333,9 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
 
     VirtualFile virtualFile1 = file1.getVirtualFile();
     VirtualFile virtualFile2 = file2.getVirtualFile();
-    if (virtualFile1 == null || virtualFile2 == null) return virtualFile1 == virtualFile2;
+    if (virtualFile1 == null || virtualFile2 == null) {
+      return ComparatorUtil.equalsNullable(virtualFile1, virtualFile2);
+    }
 
     Module module1 = ProjectRootManager.getInstance(file1.getProject()).getFileIndex().getModuleForFile(virtualFile1);
     Module module2 = ProjectRootManager.getInstance(file2.getProject()).getFileIndex().getModuleForFile(virtualFile2);

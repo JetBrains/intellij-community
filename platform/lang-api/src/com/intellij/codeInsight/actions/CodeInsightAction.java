@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class CodeInsightAction extends AnAction {
+public abstract class CodeInsightAction extends AnAction implements UpdateInBackground {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -64,7 +64,7 @@ public abstract class CodeInsightAction extends AnAction {
       else {
         action.run();
       }
-    }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()));
+    }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()), editor.getDocument());
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -21,7 +21,7 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
 
   @NotNull
   @Override
-  public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(Callable<T> computation) {
-    return new NonBlockingReadActionImpl<>(null, null, () -> false, computation);
+  public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<T> computation) {
+    return new NonBlockingReadActionImpl<>(computation);
   }
 }

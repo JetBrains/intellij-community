@@ -3,22 +3,20 @@ package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author max
@@ -28,32 +26,27 @@ public class EventDispatcher<T extends EventListener> {
 
   private T myMulticaster;
 
-  private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<T> myListeners = new DisposableWrapperList<>();
   @NotNull private final Class<T> myListenerClass;
   @Nullable private final Map<String, Object> myMethodReturnValues;
 
   @NotNull
   public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
-    return new EventDispatcher<T>(listenerClass, null);
+    return new EventDispatcher<>(listenerClass, null);
   }
 
   @NotNull
   public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
     assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
-    return new EventDispatcher<T>(listenerClass, methodReturnValues);
+    return new EventDispatcher<>(listenerClass, methodReturnValues);
   }
 
   private static void assertNonVoidMethodReturnValuesAreDeclared(@NotNull Map<String, Object> methodReturnValues,
                                                                  @NotNull Class<?> listenerClass) {
-    List<Method> declared = new ArrayList<Method>(ReflectionUtil.getClassPublicMethods(listenerClass));
+    List<Method> declared = new ArrayList<>(ReflectionUtil.getClassPublicMethods(listenerClass));
     for (final Map.Entry<String, Object> entry : methodReturnValues.entrySet()) {
       final String methodName = entry.getKey();
-      Method found = ContainerUtil.find(declared, new Condition<Method>() {
-        @Override
-        public boolean value(Method m) {
-          return methodName.equals(m.getName());
-        }
-      });
+      Method found = ContainerUtil.find(declared, m -> methodName.equals(m.getName()));
       assert found != null : "Method " + methodName + " must be declared in " + listenerClass;
       assert !found.getReturnType().equals(void.class) :
         "Method " + methodName + " must be non-void if you want to specify what its proxy should return";
@@ -158,18 +151,8 @@ public class EventDispatcher<T extends EventListener> {
     myListeners.add(listener);
   }
 
-  /**
-   * CAUTION: do not use in pair with {@link #removeListener(EventListener)}: a memory leak can occur.
-   * In case a listener is removed, it's disposable stays in disposable hierarchy, preventing the listener from being gc'ed.
-   */
-  public void addListener(@NotNull final T listener, @NotNull Disposable parentDisposable) {
-    addListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeListener(listener);
-      }
-    });
+  public void addListener(@NotNull T listener, @NotNull Disposable parentDisposable) {
+    myListeners.add(listener, parentDisposable);
   }
 
   public void removeListener(@NotNull T listener) {
@@ -183,5 +166,12 @@ public class EventDispatcher<T extends EventListener> {
   @NotNull
   public List<T> getListeners() {
     return myListeners;
+  }
+
+  @TestOnly
+  public void neuterMultiCasterWhilePerformanceTestIsRunningUntil(@NotNull Disposable disposable) {
+    T multicaster = myMulticaster;
+    myMulticaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(Collections.emptyList()));
+    Disposer.register(disposable, () -> myMulticaster = multicaster);
   }
 }

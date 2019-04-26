@@ -15,9 +15,11 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author traff
  */
 public interface AsyncProducer<T> {
-  void produce(Consumer<T> consumer);
+  void produce(@NotNull Consumer<? super T> consumer);
 }

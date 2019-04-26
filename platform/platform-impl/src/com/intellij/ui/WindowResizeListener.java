@@ -143,22 +143,29 @@ public class WindowResizeListener extends WindowMouseListener {
   @Override
   void updateBounds(Rectangle bounds, Component view, int dx, int dy) {
     Dimension minimum = getMinimumSize(view);
-    if (myType == NE_RESIZE_CURSOR || myType == E_RESIZE_CURSOR || myType == SE_RESIZE_CURSOR || myType == DEFAULT_CURSOR) {
+    if (myCursorType == NE_RESIZE_CURSOR || myCursorType == E_RESIZE_CURSOR || myCursorType == SE_RESIZE_CURSOR || myCursorType == DEFAULT_CURSOR) {
       bounds.width += fixMinSize(dx, bounds.width, minimum.width);
     }
-    else if (myType == NW_RESIZE_CURSOR || myType == W_RESIZE_CURSOR || myType == SW_RESIZE_CURSOR) {
+    else if (myCursorType == NW_RESIZE_CURSOR || myCursorType == W_RESIZE_CURSOR || myCursorType == SW_RESIZE_CURSOR) {
       dx = fixMinSize(-dx, bounds.width, minimum.width);
       bounds.x -= dx;
       bounds.width += dx;
     }
-    if (myType == SW_RESIZE_CURSOR || myType == S_RESIZE_CURSOR || myType == SE_RESIZE_CURSOR || myType == DEFAULT_CURSOR) {
+    if (myCursorType == SW_RESIZE_CURSOR || myCursorType == S_RESIZE_CURSOR || myCursorType == SE_RESIZE_CURSOR || myCursorType == DEFAULT_CURSOR) {
       bounds.height += fixMinSize(dy, bounds.height, minimum.height);
     }
-    else if (myType == NW_RESIZE_CURSOR || myType == N_RESIZE_CURSOR || myType == NE_RESIZE_CURSOR) {
+    else if (myCursorType == NW_RESIZE_CURSOR || myCursorType == N_RESIZE_CURSOR || myCursorType == NE_RESIZE_CURSOR) {
       dy = fixMinSize(-dy, bounds.height, minimum.height);
       bounds.y -= dy;
       bounds.height += dy;
     }
+  }
+
+  @Override
+  protected void setCursorType(int cursorType) {
+    super.setCursorType(cursorType);
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    ourIsResizing = myCursorType >= SW_RESIZE_CURSOR && myCursorType <= E_RESIZE_CURSOR;
   }
 
   /** Note: default implementation takes Component.getTreeLock() */

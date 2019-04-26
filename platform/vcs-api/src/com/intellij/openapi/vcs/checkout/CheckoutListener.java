@@ -22,7 +22,6 @@ import java.io.File;
 
 /**
  * @author yole
- * @since 7.0
  */
 public interface CheckoutListener {
   ExtensionPointName<CheckoutListener> EP_NAME = ExtensionPointName.create("com.intellij.checkoutListener");

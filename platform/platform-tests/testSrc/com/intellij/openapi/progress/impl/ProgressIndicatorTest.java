@@ -115,7 +115,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       alarm.cancelAllRequests();
     }, "", false, getProject(), null, "");
     long averageDelay = ArrayUtil.averageAmongMedians(times.toNativeArray(), 5);
-    System.out.println("averageDelay = " + averageDelay);
+    LOG.debug("averageDelay = " + averageDelay);
     assertTrue(averageDelay < CoreProgressManager.CHECK_CANCELED_DELAY_MILLIS *3);
   }
 
@@ -391,6 +391,27 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     catch (ProcessCanceledException ignored) {
 
+    }
+  }
+
+  public void testCheckCanceledAfterWrappedIndicatorIsCanceledAndBaseIndicatorIsNotCanceled() {
+    ProgressIndicator base = new EmptyProgressIndicator();
+    ProgressIndicator wrapper = new SensitiveProgressWrapper(base);
+
+    wrapper.cancel();
+    assertTrue(wrapper.isCanceled());
+    assertFalse(base.isCanceled());
+
+    try {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        assertTrue(wrapper.isCanceled());
+
+        ProgressManager.checkCanceled(); // this is the main check
+      }, wrapper);
+
+      fail("should throw ProcessCanceledException");
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 

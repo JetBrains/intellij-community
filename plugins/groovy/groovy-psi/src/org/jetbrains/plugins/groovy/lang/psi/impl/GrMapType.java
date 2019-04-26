@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
@@ -17,6 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.*;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /**
  * @author peter
@@ -47,6 +49,10 @@ public abstract class GrMapType extends GrLiteralClassType {
     super(languageLevel, scope, facade);
   }
 
+  protected GrMapType(@NotNull PsiElement context) {
+    super(LanguageLevel.JDK_1_5, context);
+  }
+
   @NotNull
   @Override
   protected String getJavaClassName() {
@@ -62,10 +68,27 @@ public abstract class GrMapType extends GrLiteralClassType {
   public abstract boolean isEmpty();
 
   @NotNull
-  protected abstract PsiType[] getAllKeyTypes();
+  protected PsiType[] getAllKeyTypes() {
+    Set<PsiType> result = new HashSet<>();
+    if (!getStringEntries().isEmpty()) {
+      result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, getResolveScope()));
+    }
+    for (Couple<PsiType> entry : getOtherEntries()) {
+      result.add(entry.first);
+    }
+    result.remove(null);
+    return result.toArray(createArray(result.size()));
+  }
 
   @NotNull
-  protected abstract PsiType[] getAllValueTypes();
+  protected PsiType[] getAllValueTypes() {
+    Set<PsiType> result = new HashSet<>(getStringEntries().values());
+    for (Couple<PsiType> entry : getOtherEntries()) {
+      result.add(entry.second);
+    }
+    result.remove(null);
+    return result.toArray(createArray(result.size()));
+  }
 
   @NotNull
   protected abstract List<Couple<PsiType>> getOtherEntries();
@@ -105,7 +128,7 @@ public abstract class GrMapType extends GrLiteralClassType {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
     boolean tooMany = components.size() > 2;
-    final List<String> theFirst = components.subList(0, Math.min(2, components.size()));
+    final List<String> theFirst = ContainerUtil.getFirstItems(components, 2);
     return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
   }
 
@@ -120,7 +143,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   }
 
   public static GrMapType merge(GrMapType l, GrMapType r) {
-    final GlobalSearchScope scope = l.getScope().intersectWith(r.getResolveScope());
+    final GlobalSearchScope scope = l.getResolveScope().intersectWith(r.getResolveScope());
 
     final LinkedHashMap<String, PsiType> strings = ContainerUtil.newLinkedHashMap();
     strings.putAll(l.getStringEntries());
@@ -137,13 +160,6 @@ public abstract class GrMapType extends GrLiteralClassType {
                                  GlobalSearchScope scope,
                                  @NotNull LinkedHashMap<String, PsiType> stringEntries,
                                  @NotNull List<Couple<PsiType>> otherEntries) {
-    return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
-  }
-
-  public static GrMapType create(GlobalSearchScope scope) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
-    List<Couple<PsiType>> otherEntries = Collections.emptyList();
-    LinkedHashMap<String, PsiType> stringEntries = ContainerUtil.newLinkedHashMap();
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 

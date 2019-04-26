@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -22,8 +23,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class LoopStatementsThatDontLoopInspection extends BaseInspection {
+
+  public boolean ignoreForeach = true;
 
   @Pattern(VALID_ID_PATTERN)
   @Override
@@ -35,15 +41,19 @@ public class LoopStatementsThatDontLoopInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "loop.statements.that.dont.loop.display.name");
+    return InspectionGadgetsBundle.message("loop.statements.that.dont.loop.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "loop.statements.that.dont.loop.problem.descriptor");
+    return InspectionGadgetsBundle.message("loop.statements.that.dont.loop.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.enhanced.for.loop.statements"), this, "ignoreForeach");
   }
 
   @Override
@@ -56,62 +66,34 @@ public class LoopStatementsThatDontLoopInspection extends BaseInspection {
     return new LoopStatementsThatDontLoopVisitor();
   }
 
-  private static class LoopStatementsThatDontLoopVisitor
-    extends BaseInspectionVisitor {
+  private class LoopStatementsThatDontLoopVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
-        return;
-      }
-      if (ControlFlowUtils.statementIsContinueTarget(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+      checkLoop(statement);
     }
 
     @Override
-    public void visitForeachStatement(
-      @NotNull PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
-        return;
-      }
-      if (ControlFlowUtils.statementIsContinueTarget(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+      if (ignoreForeach) return;
+      checkLoop(statement);
     }
 
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
-        return;
-      }
-      if (ControlFlowUtils.statementIsContinueTarget(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+      checkLoop(statement);
     }
 
     @Override
-    public void visitDoWhileStatement(
-      @NotNull PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
+      checkLoop(statement);
+    }
+
+    private void checkLoop(@NotNull PsiLoopStatement statement) {
       final PsiStatement body = statement.getBody();
       if (body == null) {
         return;

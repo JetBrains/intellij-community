@@ -17,25 +17,21 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ParameterData;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderProcessor;
-import java.util.HashMap;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
+public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/replaceConstructorWithBuilder/";
   }
 
   public void testVarargs() {
@@ -99,9 +95,8 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
                       final Map<String, String> expectedDefaults,
                       final String conflicts,
                       final String packageName) {
-    doTest((rootDir, rootAfter) -> {
-      final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
-      assertNotNull("Class Test not found", aClass);
+    doTest(() -> {
+      final PsiClass aClass = myFixture.findClass("Test");
 
       final LinkedHashMap<String, ParameterData> map = new LinkedHashMap<>();
       final PsiMethod[] constructors = aClass.getConstructors();
@@ -127,15 +122,6 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
           fail("Conflict detected:" + e.getMessage());
         }
       }
-      LocalFileSystem.getInstance().refresh(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
     });
-  }
-
-
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/replaceConstructorWithBuilder/";
   }
 }

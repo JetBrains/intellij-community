@@ -21,13 +21,13 @@ import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier.AppliedSom
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.util.*;
 
-public class GenericApplyPatchTest extends PlatformTestCase {
+public class GenericApplyPatchTest extends TestCase {
   public void testSeveralSteps() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));

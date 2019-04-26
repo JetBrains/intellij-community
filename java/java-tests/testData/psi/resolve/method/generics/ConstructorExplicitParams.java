@@ -4,6 +4,6 @@ class Foo {
     }
 
     static {
-        Foo f = <String>new <ref>Foo();
+        Foo f = <String>new <caret>Foo();
     }
 }

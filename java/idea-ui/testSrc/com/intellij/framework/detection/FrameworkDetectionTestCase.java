@@ -24,6 +24,9 @@ public abstract class FrameworkDetectionTestCase extends PlatformTestCase {
     try {
       FrameworkDetectionManager.getInstance(myProject).doDispose();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

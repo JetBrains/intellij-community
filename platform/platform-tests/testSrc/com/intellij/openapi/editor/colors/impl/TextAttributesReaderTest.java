@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+import static com.intellij.ui.ColorUtil.toHex;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -33,7 +35,7 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertNull(readBackgroundColor(null));
     assertNull(readBackgroundColor(""));
     assertNull(readBackgroundColor("WRONG"));
-    String hex = Integer.toHexString(0xFFFFFF & Color.WHITE.getRGB());
+    String hex = toHex(Color.WHITE);
     assertEquals(Color.WHITE, readBackgroundColor(hex));
     assertEquals(Color.WHITE, readBackgroundColor('#' + hex));
     assertEquals(Color.WHITE, readBackgroundColor("0x" + hex));
@@ -47,7 +49,7 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertNull(readForegroundColor(null));
     assertNull(readForegroundColor(""));
     assertNull(readForegroundColor("WRONG"));
-    String hex = Integer.toHexString(0xFFFFFF & Color.BLACK.getRGB());
+    String hex = toHex(Color.BLACK);
     assertEquals(Color.BLACK, readForegroundColor(hex));
     assertEquals(Color.BLACK, readForegroundColor('#' + hex));
     assertEquals(Color.BLACK, readForegroundColor("0x" + hex));
@@ -61,7 +63,7 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertNull(readErrorStripeColor(null));
     assertNull(readErrorStripeColor(""));
     assertNull(readErrorStripeColor("WRONG"));
-    String hex = Integer.toHexString(0xFFFFFF & Color.RED.getRGB());
+    String hex = toHex(Color.RED);
     assertEquals(Color.RED, readErrorStripeColor(hex));
     assertEquals(Color.RED, readErrorStripeColor('#' + hex));
     assertEquals(Color.RED, readErrorStripeColor("0x" + hex));
@@ -75,7 +77,7 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertNull(readEffectColor(null));
     assertNull(readEffectColor(""));
     assertNull(readEffectColor("WRONG"));
-    String hex = Integer.toHexString(0xFFFFFF & Color.YELLOW.getRGB());
+    String hex = toHex(Color.YELLOW);
     assertEquals(Color.YELLOW, readEffectColor(hex));
     assertEquals(Color.YELLOW, readEffectColor('#' + hex));
     assertEquals(Color.YELLOW, readEffectColor("0x" + hex));

@@ -25,13 +25,11 @@ public class CacheLoader extends Loader {
   @Override
   public void load(@NotNull final RepositoryTreeNode node, @NotNull final Expander expander) {
     SwingUtilities.invokeLater(() -> {
-      final String nodeUrl = node.getURL().toString();
-
-      final List<DirectoryEntry> cached = myCache.getChildren(nodeUrl);
+      final List<DirectoryEntry> cached = myCache.getChildren(node.getURL());
       if (cached != null) {
         refreshNode(node, cached, expander);
       }
-      final String error = myCache.getError(nodeUrl);
+      final String error = myCache.getError(node.getURL());
       if (error != null) {
         refreshNodeError(node, error);
       }

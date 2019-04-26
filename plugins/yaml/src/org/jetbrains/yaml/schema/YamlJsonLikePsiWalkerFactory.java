@@ -17,6 +17,6 @@ public class YamlJsonLikePsiWalkerFactory implements JsonLikePsiWalkerFactory {
   @NotNull
   @Override
   public JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject) {
-    return new YamlJsonPsiWalker();
+    return YamlJsonPsiWalker.INSTANCE;
   }
 }

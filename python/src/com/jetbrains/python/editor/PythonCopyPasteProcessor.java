@@ -111,6 +111,8 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
+    final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
+    
     final String linePrefix = document.getText(TextRange.create(lineStartOffset, caretOffset));
     if (!StringUtil.isEmptyOrSpaces(linePrefix)) return text;
 
@@ -120,26 +122,21 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     text = addLeadingSpacesToNormalizeSelection(file, text);
     final String fragmentIndent = PyIndentUtil.findCommonIndent(text, false);
     final String newIndent = inferBestIndent(file, document, caretOffset, lineNumber, fragmentIndent);
+    String newText = PyIndentUtil.changeIndent(text, false, newIndent);
 
-    final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
-    if (StringUtil.isEmptyOrSpaces(newIndent) && shouldPasteOnPreviousLine(file, text, caretOffset)) {
+    if (!selectionModel.hasSelection() && shouldPasteOnPreviousLine(file, text, caretOffset)) {
       caretModel.moveToOffset(lineStartOffset);
-      editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
-
       if (StringUtil.isEmptyOrSpaces(line)) {
         ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(lineStartOffset, lineEndOffset));
       }
     }
-
-    String newText;
-    if (StringUtil.isEmptyOrSpaces(newIndent)) {
-      newText = PyIndentUtil.changeIndent(text, false, newIndent);
-    }
     else {
-      newText = text;
+      // Don't duplicate the existing whitespace prefix of the line
+      newText = StringUtil.trimStart(newText, linePrefix);
     }
 
     final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
+    // TODO Combine shouldPasteOnPreviousLine() check with addLineBreak() as they really complement each other
     if (addLinebreak(text, line, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd()) {
       newText += "\n";
     }

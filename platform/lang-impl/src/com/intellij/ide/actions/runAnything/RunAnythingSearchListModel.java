@@ -5,7 +5,6 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,22 +81,6 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
 
   public void update() {
     fireContentsChanged(this, 0, getSize() - 1);
-  }
-
-  public void triggerExecCategoryStatistics(@NotNull Project project, int index) {
-    for (int i = index; i >= 0; i--) {
-      String title = getTitle(i);
-      if (title != null) {
-        RunAnythingUsageCollector.Companion
-          .trigger(project, getClass().getSimpleName() + ": " + RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
-        break;
-      }
-    }
-  }
-
-  public void triggerMoreStatistics(@NotNull Project project, @NotNull RunAnythingGroup group) {
-    RunAnythingUsageCollector.Companion
-      .trigger(project, getClass().getSimpleName() + ": " + RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
   }
 
   public static class RunAnythingMainListModel extends RunAnythingSearchListModel {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -25,7 +11,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -41,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -51,23 +37,26 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
+
 /**
  & @author ven
  */
 public class UnusedDefInspection extends GroovyLocalInspectionBase {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection");
 
-  @Override
-  @Nls
   @NotNull
-  public String getDisplayName() {
-    return GroovyInspectionBundle.message("unused.assignment");
+  @Override
+  public String getShortName() {
+    // used to enable inspection in tests
+    // remove when inspection class will match its short name
+    return "GroovyUnusedAssignment";
   }
 
   @Override
   protected void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
+    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, getVarIndexes(owner));
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
     final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();
@@ -87,12 +76,12 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       if (instruction instanceof ReadWriteVariableInstruction) {
         final ReadWriteVariableInstruction varInst = (ReadWriteVariableInstruction) instruction;
         if (!varInst.isWrite()) {
-          final String varName = varInst.getVariableName();
+          final VariableDescriptor descriptor = varInst.getDescriptor();
           DefinitionMap e = dfaResult.get(i);
           e.forEachValue(reaching -> {
             reaching.forEach(defNum -> {
-              final String defName = ((ReadWriteVariableInstruction) flow[defNum]).getVariableName();
-              if (varName.equals(defName)) {
+              final VariableDescriptor defDescriptor = ((ReadWriteVariableInstruction) flow[defNum]).getDescriptor();
+              if (descriptor.equals(defDescriptor)) {
                 unusedDefs.remove(defNum);
               }
               return true;
@@ -206,10 +195,5 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
   private static boolean isLocalVariable(GrVariable var, boolean parametersAllowed) {
     return !(var instanceof GrField || var instanceof GrParameter && !parametersAllowed);
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 }

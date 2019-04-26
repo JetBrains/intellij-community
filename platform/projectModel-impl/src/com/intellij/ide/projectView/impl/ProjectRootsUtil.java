@@ -20,11 +20,11 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectRootsUtil {
   private ProjectRootsUtil() { }
 
-  public static boolean isSourceRoot(final PsiDirectory psiDirectory) {
+  public static boolean isSourceRoot(@NotNull PsiDirectory psiDirectory) {
     return isSourceRoot(psiDirectory.getVirtualFile(), psiDirectory.getProject());
   }
 
-  public static boolean isSourceRoot(final VirtualFile directoryFile, final Project project) {
+  public static boolean isSourceRoot(@NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return directoryFile.equals(fileIndex.getSourceRootForFile(directoryFile));
   }
@@ -79,6 +79,7 @@ public class ProjectRootsUtil {
   }
 
   public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
+    if (project.isDefault()) return null;
     final DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(root);
     if (info.isExcluded(root) && root.equals(info.getContentRoot()) && info.getUnloadedModuleName() != null) {
       return info.getUnloadedModuleName();
@@ -87,6 +88,7 @@ public class ProjectRootsUtil {
   }
 
   public static String findUnloadedModuleByFile(@NotNull final VirtualFile file, @NotNull Project project) {
+    if (project.isDefault()) return null;
     DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(file);
     VirtualFile contentRoot = info.getContentRoot();
     if (info.isExcluded(file) && contentRoot != null) {
@@ -100,8 +102,7 @@ public class ProjectRootsUtil {
     return psiDirectory.getVirtualFile().equals(psiDirectory.getProject().getBaseDir());
   }
 
-  public static boolean isOutsideSourceRoot(@Nullable PsiFile psiFile) {
-    if (psiFile == null) return false;
+  public static boolean isOutsideSourceRoot(@NotNull PsiFile psiFile) {
     if (psiFile instanceof PsiCodeFragment) return false;
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return false;
@@ -111,7 +112,7 @@ public class ProjectRootsUtil {
 
   @Nullable
   public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
-    final ProjectFileIndexImpl index = ((ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex());
+    final ProjectFileIndexImpl index = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     SourceFolder folder = index.getModuleForFile(root) == module ? index.getSourceFolder(root) : null;
     return folder != null && root.equals(folder.getFile()) ? folder : null;
   }

@@ -50,14 +50,22 @@ public class VerticalLayout extends AbstractLayoutManager {
     int width = 0;
     int height = 0;
     int count = parent.getComponentCount();
+    int visibleCount = 0;
 
     for (int i = 0; i < count; i++) {
-      Dimension size = parent.getComponent(i).getPreferredSize();
+      Component component = parent.getComponent(i);
+      if (!component.isVisible()) {
+        continue;
+      }
+      Dimension size = component.getPreferredSize();
       width = Math.max(width, size.width);
       height += size.height;
+      visibleCount++;
     }
 
-    height += (count - 1) * myOffset;
+    if (visibleCount > 1) {
+      height += (visibleCount - 1) * myOffset;
+    }
 
     Dimension size = new Dimension(myWidth > 0 ? myWidth : width, height);
     JBInsets.addTo(size, parent.getInsets());
@@ -73,6 +81,9 @@ public class VerticalLayout extends AbstractLayoutManager {
 
     for (int i = 0; i < count; i++) {
       Component component = parent.getComponent(i);
+      if (!component.isVisible()) {
+        continue;
+      }
       Dimension size = component.getPreferredSize();
       int componentWidth;
       if (myFillComponents.contains(component)) {

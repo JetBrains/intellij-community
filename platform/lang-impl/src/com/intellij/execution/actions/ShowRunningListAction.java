@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -23,7 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
@@ -42,8 +42,7 @@ import java.util.Set;
 
 public class ShowRunningListAction extends AnAction {
   public ShowRunningListAction() {
-    super(ExecutionBundle.message("show.running.list.action.name"), ExecutionBundle.message("show.running.list.action.description"),
-          LayeredIcon.create(AllIcons.Actions.ListFiles, AllIcons.Nodes.RunnableMark));
+    super(ExecutionBundle.message("show.running.list.action.name"), ExecutionBundle.message("show.running.list.action.description"), null);
   }
 
   @Override
@@ -78,7 +77,7 @@ public class ShowRunningListAction extends AnAction {
           .setBlockClicksThroughBalloon(true)
           .setDialogMode(true)
           .setHideOnKeyOutside(false);
-        IdeFrame frame = IdeFrame.KEY.getData(e.getDataContext());
+        IdeFrame frame = e.getData(IdeFrame.KEY);
         if (frame == null) {
           frame = WindowManagerEx.getInstanceEx().getFrame(project);
         }
@@ -97,9 +96,7 @@ public class ShowRunningListAction extends AnAction {
                 Project aProject = (Project)((Trinity)value).first;
                 JFrame aFrame = WindowManager.getInstance().getFrame(aProject);
                 if (aFrame != null && !aFrame.isActive()) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                    IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true);
-                  });
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true));
                 }
                 ExecutionManagerImpl.getInstance(aProject).getContentManager().
                   toFrontRunContent((Executor)((Trinity)value).second, (RunContentDescriptor)((Trinity)value).third);
@@ -144,8 +141,8 @@ public class ShowRunningListAction extends AnAction {
           Icon icon = (processHandler instanceof KillableProcess && processHandler.isProcessTerminating())
                       ? AllIcons.Debugger.KillProcess
                       : executor.getIcon();
-          JLabel label =
-            new JLabel("<html><body><a href=\"\">" + descriptor.getDisplayName() + "</a></body></html>", icon, SwingConstants.LEADING);
+                    HyperlinkLabel label = new HyperlinkLabel(descriptor.getDisplayName());
+          label.setIcon(icon);
           label.setIconTextGap(JBUI.scale(2));
           label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           label.putClientProperty(KEY, Trinity.create(project, executor, descriptor));

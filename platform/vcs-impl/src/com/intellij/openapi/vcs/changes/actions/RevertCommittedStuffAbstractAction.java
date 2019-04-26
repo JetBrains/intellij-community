@@ -78,9 +78,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
           patches.addAll(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), myReverse));
         }
         catch (final VcsException ex) {
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
-            Messages.showErrorDialog(project, errorPrefix + ex.getMessage(), title);
-          }, null, myProject);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(project, errorPrefix + ex.getMessage(), title), null, myProject);
           indicator.cancel();
         }
       }

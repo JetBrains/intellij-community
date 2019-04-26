@@ -16,8 +16,8 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.ide.scratch.RootType;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -105,7 +105,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   private static boolean processChildren(final Project object, final Processor<Object> processor) {
     return ReadAction.compute(() -> {
       for (Module module : ModuleManager.getInstance(object).getModules()) {
-        if (!(ModuleType.get(module) instanceof InternalModuleType) && !processor.process(module)) return false;
+        if (!ModuleType.isInternal(module) && !processor.process(module)) return false;
       }
       return true;
     });
@@ -124,21 +124,18 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     return true;
   }
 
-  private static boolean processChildren(final PsiDirectory object, final Object rootElement, final Processor<Object> processor) {
+  private static boolean processChildren(PsiDirectory directory, @Nullable Object rootElement, Processor<Object> processor) {
     return ReadAction.compute(() -> {
-      final ModuleFileIndex moduleFileIndex =
+      Project project = directory.getProject();
+      RootType scratchRootType = RootType.forFile(PsiUtilCore.getVirtualFile(directory));
+      ModuleFileIndex moduleFileIndex =
         rootElement instanceof Module ? ModuleRootManager.getInstance((Module)rootElement).getFileIndex() : null;
-      final PsiElement[] children = object.getChildren();
-      for (PsiElement child : children) {
-        if (child != null && child.isValid()) {
-          if (moduleFileIndex != null) {
-            final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(child);
-            if (virtualFile != null && !moduleFileIndex.isInContent(virtualFile)) continue;
-          }
-          if (!processor.process(child)) return false;
-        }
-      }
-      return true;
+      return directory.processChildren(child -> {
+        VirtualFile childFile = PsiUtilCore.getVirtualFile(child);
+        if (childFile != null && scratchRootType != null && scratchRootType.isIgnored(project, childFile)) return true;
+        if (childFile != null && moduleFileIndex != null && !moduleFileIndex.isInContent(childFile)) return true;
+        return processor.process(child);
+      });
     });
   }
 

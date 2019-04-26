@@ -103,4 +103,33 @@ class ResolveLocalTest implements ResolveTest {
     resolveTest 'for (e : b) {}; <caret>e', null
     resolveTest 'for (e in b) {}; <caret>e', null
   }
+
+  @Test
+  void 'lambda parameter'() {
+    resolveTest 'def l = a -> <caret>a ', GrParameter
+    resolveTest 'def l = (a) -> <caret>a ', GrParameter
+    resolveTest 'def l = (Integer a, def b) -> {a; <caret>b} ', GrParameter
+    resolveTest 'def l = a -> {<caret>a} ', GrParameter
+  }
+
+  @Test
+  void 'variable after lambda'() {
+    resolveTest 'def l = a -> a; <caret>a ', null
+    resolveTest 'def l = (a) -> a; <caret>a ', null
+    resolveTest 'def l = (Integer a) -> {}; <caret>a ', null
+    resolveTest 'def l = a -> {}; <caret>a ', null
+  }
+
+  @Test
+  void 'outer parameter in lambda'() {
+    resolveTest 'def foo(param) { def l = a -> <caret>param }', GrParameter
+    resolveTest 'def foo(param) { def l = a -> {<caret>param} }', GrParameter
+    resolveTest 'def foo(param) { def l = (a = <caret>param) -> <caret>param }', GrParameter
+  }
+
+  @Test
+  void 'local variable inside lambda'() {
+    resolveTest 'def l = a -> {def param; <caret>param }', GrVariable
+  }
+
 }

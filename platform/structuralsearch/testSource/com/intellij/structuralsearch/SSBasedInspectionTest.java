@@ -32,7 +32,7 @@ public class SSBasedInspectionTest extends InspectionTestCase {
     options.setSearchPattern("f();");
     configurations.add(configuration2);
 
-    inspection.setConfigurations(configurations, myProject);
+    inspection.setConfigurations(configurations, getProject());
     myWrapper = new LocalInspectionToolWrapper(inspection);
   }
 
@@ -41,7 +41,7 @@ public class SSBasedInspectionTest extends InspectionTestCase {
   }
 
   private void doTest() {
-    doTest("ssBased/" + getTestName(true), myWrapper,"java 1.5");
+    doTest("ssBased/" + getTestName(true), myWrapper);
   }
 
   @Override

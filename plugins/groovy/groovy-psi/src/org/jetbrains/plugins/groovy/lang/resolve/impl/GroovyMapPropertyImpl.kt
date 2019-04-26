@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
-import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.plugins.groovy.GroovyLanguage
+import com.intellij.util.recursionSafeLazy
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 
 /**
  * @param name name of a key in a map
@@ -14,15 +14,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty
  */
 class GroovyMapPropertyImpl(
   private val type: PsiClassType,
-  private val name: String,
+  name: String,
   context: PsiElement
-) : LightElement(context.manager, GroovyLanguage), GroovyMapProperty {
+) : GroovyPropertyBase(name, context), GroovyMapProperty {
 
   private val scope = context.resolveScope
 
   override fun isValid(): Boolean = type.isValid
-
-  override fun getName(): String = name
 
   private fun computePropertyType(): PsiType? {
     val clazz = type.resolve() ?: return null
@@ -32,7 +30,7 @@ class GroovyMapPropertyImpl(
     return mapSubstitutor?.substitute(mapClass.typeParameters[1])
   }
 
-  private val myPropertyType by lazy(::computePropertyType)
+  private val myPropertyType by recursionSafeLazy(initializer = ::computePropertyType)
 
   override fun getPropertyType(): PsiType? = myPropertyType
 

@@ -201,7 +201,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   private void printTree(StringBuilder builder, int nestingLevel) {
     for (int i = 0; i < nestingLevel; i++) builder.append("  ");
-    builder.append(toString()).append('\n');
+    builder.append(this).append('\n');
     for (StubElement child : getChildrenStubs()) {
       ((StubBase)child).printTree(builder, nestingLevel + 1);
     }

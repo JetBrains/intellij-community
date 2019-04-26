@@ -22,7 +22,10 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newLinkedList;
@@ -79,7 +82,7 @@ public class FileWatchRequestModifier implements Runnable {
         myDirectoryMappingWatches.put(mapping, request);
       }
       else {
-        LOG.error("root=" + request.getRootPath() + " toAdd=" + ContainerUtil.newHashSet(toAdd.keySet()));
+        LOG.error("root=" + request.getRootPath() + " toAdd=" + toAdd.keySet());
       }
     }
   }

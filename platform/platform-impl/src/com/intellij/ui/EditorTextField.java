@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -10,9 +10,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -21,8 +21,10 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -31,6 +33,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
@@ -55,9 +58,8 @@ import java.util.List;
 /**
  * @author max
  */
-public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider, TextAccessor,
-                                                       DocumentBasedComponent, FocusListener, MouseListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
+public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
+                                                               FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
   private Document myDocument;
@@ -170,12 +172,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return this;
   }
 
+  @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myDocumentListeners.add(listener);
     installDocumentListener();
   }
 
-  public void removeDocumentListener(DocumentListener listener) {
+  @Override
+  public void removeDocumentListener(@NotNull DocumentListener listener) {
     myDocumentListeners.remove(listener);
     uninstallDocumentListener(false);
   }
@@ -227,9 +231,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
       validate();
       if (isFocused) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true));
       }
     }
   }
@@ -304,16 +306,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
    */
   public void setCaretPosition(int position) {
     Document document = getDocument();
-    if (document != null) {
-      if (position > document.getTextLength() || position < 0) {
-        throw new IllegalArgumentException("bad position: " + position);
-      }
-      if (myEditor != null) {
-        myEditor.getCaretModel().moveToOffset(myCaretPosition);
-      }
-      else {
-        myCaretPosition = position;
-      }
+    if (position > document.getTextLength() || position < 0) {
+      throw new IllegalArgumentException("bad position: " + position);
+    }
+    if (myEditor != null) {
+      myEditor.getCaretModel().moveToOffset(position);
+    }
+    else {
+      myCaretPosition = position;
     }
   }
   public CaretModel getCaretModel() {
@@ -360,9 +360,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
     revalidate();
     if (isFocused) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        requestFocus();
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> requestFocus());
     }
   }
 
@@ -372,6 +370,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (myCaretPosition >= 0) {
       myEditor.getCaretModel().moveToOffset(myCaretPosition);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
+    String tooltip = getToolTipText();
+    if (StringUtil.isNotEmpty(tooltip)) {
+      myEditor.getContentComponent().setToolTipText(tooltip);
     }
     add(myEditor.getComponent(), BorderLayout.CENTER);
   }
@@ -412,7 +414,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
     EditorEx editor = myEditor;
-    ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor));
+    ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor), ModalityState.stateForComponent(this));
     myEditor = null;
   }
 
@@ -440,11 +442,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.setOneLineMode(isOneLineMode);
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    final EditorColorsScheme defaultScheme =
-      UIUtil.isUnderDarcula() ? colorsManager.getGlobalScheme() : colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
-    EditorColorsScheme customGlobalScheme = isOneLineMode? defaultScheme : null;
-
-    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(customGlobalScheme));
+    EditorColorsScheme customGlobalScheme = colorsManager.getSchemeForCurrentUITheme();
+    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(isOneLineMode ? customGlobalScheme : null));
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
@@ -495,8 +494,12 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       }
     }
 
-    if (myProject != null && myFileType != null) {
-      editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType));
+    if (myProject != null) {
+      EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
+      VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
+      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(myProject, virtualFile) :
+                                      myFileType != null ? highlighterFactory.createEditorHighlighter(myProject, myFileType) : null;
+      if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
     editor.getSettings().setCaretRowShown(false);
@@ -723,9 +726,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   @Override
   public void requestFocus() {
     if (myEditor != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }

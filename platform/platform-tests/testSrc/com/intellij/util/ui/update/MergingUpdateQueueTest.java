@@ -373,7 +373,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     ScheduledExecutorService executor = JobScheduler.getScheduler();
     List<Future> futures = ContainerUtil.newArrayList();
     for (int i = 0; i < 10; i++) {
-      ScheduledFuture<?> future = executor.schedule((Runnable)() -> {
+      ScheduledFuture<?> future = executor.schedule(() -> {
         for (int j = 0; j < 100; j++) {
           TimeoutUtil.sleep(1);
           queue.queue(new Update(new Object()) {

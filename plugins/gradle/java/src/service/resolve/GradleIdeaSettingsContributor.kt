@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService
@@ -12,8 +12,9 @@ import groovy.lang.Closure
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_TYPE_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
 /**
  * Created by Nikita.Skvortsov
@@ -30,6 +31,10 @@ class GradleIdeaSettingsContributor : GradleMethodContextContributor {
       return true
     }
 
+    if (!processor.shouldProcessMethods()) {
+      return true
+    }
+
     val resolveScope = place.resolveScope
     val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
 
@@ -43,8 +48,8 @@ class GradleIdeaSettingsContributor : GradleMethodContextContributor {
           val projectSettingsMethodBuilder = GrLightMethodBuilder(place.manager, "settings").apply {
             containingClass = ideaProjectClass
             returnType = projectSettingsType
-            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, false).apply {
-              putUserData(DELEGATES_TO_KEY, PROJECT_SETTINGS_FQN)
+            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE).apply {
+              putUserData(DELEGATES_TO_TYPE_KEY, PROJECT_SETTINGS_FQN)
               putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
             }
           }
@@ -60,8 +65,8 @@ class GradleIdeaSettingsContributor : GradleMethodContextContributor {
           val moduleSettingsMethodBuilder = GrLightMethodBuilder(place.manager, "settings").apply {
             containingClass = ideaModuleClass
             returnType = moduleSettingsType
-            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, false).apply {
-              putUserData(DELEGATES_TO_KEY, MODULE_SETTINGS_FQN)
+            addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE).apply {
+              putUserData(DELEGATES_TO_TYPE_KEY, MODULE_SETTINGS_FQN)
               putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
             }
           }

@@ -26,6 +26,7 @@ import com.intellij.xml.util.CheckDtdReferencesInspection;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlDuplicatedIdInspection;
 import com.intellij.xml.util.XmlInvalidIdInspection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -68,6 +69,7 @@ public class XmlStressTest extends DaemonAnalyzerTestCase {
                                                               getTestRootDisposable());
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";

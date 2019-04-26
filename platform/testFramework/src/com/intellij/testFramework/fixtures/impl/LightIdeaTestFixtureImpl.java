@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -14,6 +14,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author mike
@@ -53,6 +55,11 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
       .append(() -> {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker.checkForSettingsDamage();
+        }
+      })
+      .append(() -> {
+        if (project != null) {
+          PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
         }
       })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open

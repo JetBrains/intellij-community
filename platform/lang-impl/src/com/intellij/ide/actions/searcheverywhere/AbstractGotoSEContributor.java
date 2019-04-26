@@ -23,21 +23,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereContributor<F> {
+public abstract class AbstractGotoSEContributor<Filter> implements SearchEverywhereContributor<Object, Filter> {
 
   protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
   protected static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
@@ -69,48 +69,52 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
-  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<F> filter,
-                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
-    if (myProject == null) {
-      return; //nothing to search
-    }
-
-    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
-      return;
-    }
-
-    String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
-    String searchString = filterControlSymbols(pattern) + suffix;
-    FilteringGotoByModel<F> model = createModel(myProject);
-    if (filter != null) {
-      model.setFilterItems(filter.getSelectedElements());
-    }
+  public void fetchElements(@NotNull String pattern,
+                            boolean everywhere,
+                            @Nullable SearchEverywhereContributorFilter<Filter> filter,
+                            @NotNull ProgressIndicator progressIndicator,
+                            @NotNull Processor<? super Object> consumer) {
+    if (myProject == null) return; //nothing to search
+    if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
 
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, psiContext);
+      if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) return;
+
+      FilteringGotoByModel<Filter> model = createModel(myProject);
+      if (filter != null) {
+        model.setFilterItems(filter.getSelectedElements());
+      }
+
+      if (progressIndicator.isCanceled()) return;
+
+      PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
+      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
-        popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
+        popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
           if (element == null) {
             LOG.error("Null returned from " + model + " in " + this);
             return true;
           }
-          return consumer.apply(element);
+          return consumer.process(element);
         });
-      } finally {
+      }
+      finally {
         Disposer.dispose(popup);
       }
     }, progressIndicator);
   }
 
   @NotNull
-  protected abstract FilteringGotoByModel<F> createModel(@NotNull Project project);
+  protected abstract FilteringGotoByModel<Filter> createModel(@NotNull Project project);
 
   @NotNull
   @Override
   public String filterControlSymbols(@NotNull String pattern) {
-    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
+    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") ||
+        pattern.contains(" line ") ||
+        pattern.contains("?l=")) { // quick test if reg exp should be used
       return applyPatternFilter(pattern, patternToDetectLinesAndColumns);
     }
 
@@ -139,7 +143,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
         return true;
       }
 
-      PsiElement psiElement = preparePsi((PsiElement) selected, modifiers, searchText);
+      PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
       Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
       if (extNavigatable != null && extNavigatable.canNavigate()) {
         extNavigatable.navigate(true);
@@ -167,21 +171,21 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     }
 
     if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiElement) {
-      return QualifiedNameProviderUtil.getQualifiedName((PsiElement) element);
+      return QualifiedNameProviderUtil.getQualifiedName((PsiElement)element);
     }
 
     return null;
   }
 
   @Override
-  public boolean isMultiselectSupported() {
+  public boolean isMultiSelectionSupported() {
     return true;
   }
 
   @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
-    return new SERenderer(list);
+  public ListCellRenderer<Object> getElementsRenderer() {
+    return new SERenderer();
   }
 
   @Override
@@ -238,11 +242,6 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   protected static class SERenderer extends SearchEverywherePsiRenderer {
-
-    public SERenderer(JList list) {
-      super(list);
-    }
-
     @Override
     public String getElementText(PsiElement element) {
       if (element instanceof NavigationItem) {

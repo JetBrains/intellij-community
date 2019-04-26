@@ -25,18 +25,18 @@ import org.jetbrains.uast.ULambdaExpression
 import org.jetbrains.uast.UastEmptyExpression
 
 class JavaULambdaExpression(
-  override val psi: PsiLambdaExpression,
+  override val sourcePsi: PsiLambdaExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULambdaExpression {
   override val functionalInterfaceType: PsiType?
-    get() = psi.functionalInterfaceType
+    get() = sourcePsi.functionalInterfaceType
 
   override val valueParameters: List<JavaUParameter> by lz {
-    psi.parameterList.parameters.map { JavaUParameter(it, this) }
+    sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
   override val body: UExpression by lz {
-    val b = psi.body
+    val b = sourcePsi.body
     when (b) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
       is PsiExpression -> JavaConverter.convertOrEmpty(b, this)

@@ -50,7 +50,7 @@ public class GitCommand {
   public static final GitCommand FETCH = read("fetch");  // fetch is a read-command, because it doesn't modify the index
   public static final GitCommand INIT = write("init");
   public static final GitCommand LOG = read("log");
-  public static final GitCommand LS_FILES = read("ls-files");
+  public static final GitCommand LS_FILES = readOptional("ls-files");
   public static final GitCommand LS_TREE = read("ls-tree");
   public static final GitCommand LS_REMOTE = read("ls-remote");
   public static final GitCommand MERGE = write("merge");
@@ -67,7 +67,7 @@ public class GitCommand {
   public static final GitCommand RM = write("rm");
   public static final GitCommand SHOW = read("show");
   public static final GitCommand STASH = write("stash");
-  public static final GitCommand STATUS = write("status");
+  public static final GitCommand STATUS = readOptional("status");
   public static final GitCommand SUBMODULE = write("submodule"); // NB: it is write command in the submodule, not in the current root which is the submodule's parent
   public static final GitCommand TAG = read("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
@@ -82,6 +82,7 @@ public class GitCommand {
 
   enum LockingPolicy {
     READ,
+    READ_OPTIONAL_LOCKING,
     WRITE
   }
 
@@ -121,6 +122,11 @@ public class GitCommand {
   @NotNull
   private static GitCommand read(@NotNull String name) {
     return new GitCommand(name, LockingPolicy.READ);
+  }
+
+  @NotNull
+  private static GitCommand readOptional(@NotNull String name) {
+    return new GitCommand(name, LockingPolicy.READ_OPTIONAL_LOCKING);
   }
 
   @NotNull

@@ -20,17 +20,17 @@ import com.intellij.psi.PsiPostfixExpression
 import org.jetbrains.uast.*
 
 class JavaUPostfixExpression(
-  override val psi: PsiPostfixExpression,
+  override val sourcePsi: PsiPostfixExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPostfixExpression {
-  override val operand: UExpression by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
+  override val operand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.operand, this) }
 
   override val operatorIdentifier: UIdentifier?
-    get() = UIdentifier(psi.operationSign, this)
+    get() = UIdentifier(sourcePsi.operationSign, this)
 
   override fun resolveOperator(): Nothing? = null
 
-  override val operator: UastPostfixOperator = when (psi.operationTokenType) {
+  override val operator: UastPostfixOperator = when (sourcePsi.operationTokenType) {
     JavaTokenType.PLUSPLUS -> UastPostfixOperator.INC
     JavaTokenType.MINUSMINUS -> UastPostfixOperator.DEC
     else -> UastPostfixOperator.UNKNOWN

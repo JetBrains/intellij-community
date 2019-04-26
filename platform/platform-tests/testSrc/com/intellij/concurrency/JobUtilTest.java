@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.Processor;
@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class JobUtilTest extends PlatformTestCase {
+public class JobUtilTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
   private long timeOutMs;
 
@@ -83,7 +83,7 @@ public class JobUtilTest extends PlatformTestCase {
     });
     assertTrue(b);
     long elapsed = System.currentTimeMillis() - start;
-    int expected = (9950 * 1 + (things.size()-9950) * 1000) / JobSchedulerImpl.getJobPoolParallelism();
+    long expected = (9950 + (things.size() - 9950) * 1000L) / JobSchedulerImpl.getJobPoolParallelism();
     String message = "Elapsed: " + elapsed + "; expected: " + expected + "; parallelism=" + JobSchedulerImpl.getJobPoolParallelism() + "; current cores=" + Runtime.getRuntime().availableProcessors();
     assertTrue(message, elapsed <= 2 * expected);
   }
@@ -143,7 +143,7 @@ public class JobUtilTest extends PlatformTestCase {
   }
 
   private static void logElapsed(Runnable r) {
-    LOG.debug("Elapsed: " + PlatformTestUtil.measure(r::run) + "ms");
+    LOG.debug("Elapsed: " + PlatformTestUtil.measure(r) + "ms");
   }
 
   public void testJobUtilRecursiveStress() {
@@ -479,17 +479,13 @@ public class JobUtilTest extends PlatformTestCase {
     // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
     // and cancel the indicator in the meantime
     // check that invokeConcurrentlyUnderProgress() gets canceled immediately
-    Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
-      ProgressManager.getInstance().runProcess(()->
-          assertFalse(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), indicator, __->{
-            TimeoutUtil.sleep(1);
-            counter.incrementAndGet();
-            return true;
-      })), indicator);
-    }, null);
-    ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      indicator.cancel();
-    }, 10, TimeUnit.MILLISECONDS);
+    Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
+        assertFalse(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), indicator, __->{
+          TimeoutUtil.sleep(1);
+          counter.incrementAndGet();
+          return true;
+    })), indicator), null);
+    ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> indicator.cancel(), 10, TimeUnit.MILLISECONDS);
     job.waitForCompletion(10_000);
     assertTrue(job.isDone());
     assertTrue(counter.toString(), counter.get() < N);
@@ -514,26 +510,24 @@ public class JobUtilTest extends PlatformTestCase {
         // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread and we can't do anything
         mainThread.set(Thread.currentThread());
         try {
-          elapsed.set(PlatformTestUtil.measure(() -> {
-            ProgressManager.getInstance().runProcess(()-> {
-              boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(/* more than 1 to pass through processIfTooFew */Arrays.asList(1, 1, 1, COARSENESS), indicator, delay -> {
-                if (delay == COARSENESS) {
-                  indicator.cancel(); // emulate job external cancel
-                }
-                // we seek to test the situation of "job submitted to FJP is waiting for lengthy task crated via invokeConcurrentlyUnderProgress()"
-                // so when the main job steals that lengthy task from within .get() we balk out
-                if (Thread.currentThread() != mainThread.get()) {
-                  TimeoutUtil.sleep(delay);
-                }
-                else {
-                  stealHappened.set(true);
-                }
-                return true;
-              });
+          elapsed.set(PlatformTestUtil.measure(() -> ProgressManager.getInstance().runProcess(()-> {
+            boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(/* more than 1 to pass through processIfTooFew */Arrays.asList(1, 1, 1, COARSENESS), indicator, delay -> {
+              if (delay == COARSENESS) {
+                indicator.cancel(); // emulate job external cancel
+              }
+              // we seek to test the situation of "job submitted to FJP is waiting for lengthy task crated via invokeConcurrentlyUnderProgress()"
+              // so when the main job steals that lengthy task from within .get() we balk out
+              if (Thread.currentThread() != mainThread.get()) {
+                TimeoutUtil.sleep(delay);
+              }
+              else {
+                stealHappened.set(true);
+              }
+              return true;
+            });
 
-              assertTrue(!ok || stealHappened.get());
-            }, indicator);
-          }));
+            assertTrue(!ok || stealHappened.get());
+          }, indicator)));
         }
         catch (Throwable e) {
           exception = e;

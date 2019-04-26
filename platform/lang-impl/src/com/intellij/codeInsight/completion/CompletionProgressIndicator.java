@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -13,7 +12,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -123,11 +121,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
   private final CompletionThreadingBase myThreading;
-  private final Object myLock = new String("CompletionProgressIndicator");
+  private final Object myLock = ObjectUtils.sentinel("CompletionProgressIndicator");
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
-                              boolean hasModifiers, LookupImpl lookup) {
+                              boolean hasModifiers, @NotNull LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
     myHandler = handler;
@@ -137,11 +135,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() ? new SyncCompletion() : new AsyncCompletion();
+    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || handler.isTestingMode() ? new SyncCompletion() : new AsyncCompletion();
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
     myArranger = new CompletionLookupArrangerImpl(this);
+    if (handler.isTestingMode()) {
+      myArranger.setConsiderAllItemsVisible();
+    }
     myLookup.setArranger(myArranger);
 
     myLookup.addLookupListener(myLookupListener);
@@ -190,7 +191,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
     if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
-      myLookup.setFocusDegree(CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
+      myLookup.setFocusDegree(CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
                               ? LookupImpl.FocusDegree.FOCUSED
                               : LookupImpl.FocusDegree.SEMI_FOCUSED);
     }
@@ -237,7 +238,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     advertiseTabReplacement(parameters);
     if (isAutopopupCompletion()) {
-      if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
+      if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()) {
         advertiseCtrlDot();
       }
       advertiseCtrlArrows();
@@ -337,11 +338,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   @Override
-  public void setParameters(CompletionParameters parameters) {
+  public void setParameters(@NotNull CompletionParameters parameters) {
     myParameters = parameters;
   }
 
   @Override
+  @NotNull
   public LookupImpl getLookup() {
     return myLookup;
   }
@@ -379,10 +381,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         return;
       }
 
-      if (Registry.is("dump.threads.on.empty.lookup") && myLookup.isCalculating() && myLookup.getItems().isEmpty()) {
-        PerformanceWatcher.getInstance().dumpThreads("emptyLookup/", true);
-      }
-
       if (!myLookup.showLookup()) {
         return;
       }
@@ -412,8 +410,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
-    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    if (!unitTestMode) {
+    if (!myHandler.isTestingMode()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
@@ -448,6 +445,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
       return;
     }
+
+    myArranger.setLastLookupPrefix(myLookup.getAdditionalPrefix());
+
     //noinspection NonAtomicOperationOnVolatileField
     myCount++; // invoked from a single thread
 
@@ -491,12 +491,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     Disposer.dispose(myQueue);
     LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
-    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-    LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
-
     CompletionServiceImpl
       .assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class,
                    CompletionPhase.CommittingDocuments.class);
+
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+    LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
+
     CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
     if (oldPhase instanceof CompletionPhase.CommittingDocuments) {
       LOG.assertTrue(((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion(), oldPhase);
@@ -542,7 +543,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   boolean blockingWaitForFinish(int timeoutMs) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
+    if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       if (!myFinishSemaphore.waitFor(100 * 1000)) {
         throw new AssertionError("Too long completion");
       }
@@ -594,8 +595,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
       else {
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
         updateLookup(myIsUpdateSuppressed);
+        if (CompletionServiceImpl.getCompletionPhase() != CompletionPhase.NoCompletion) {
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
+        }
       }
     }, myQueue.getModalityState());
   }
@@ -671,6 +674,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myInvocationCount == 0;
   }
 
+  int getInvocationCount() {
+    return myInvocationCount;
+  }
+
   @Override
   @NotNull
   public Project getProject() {
@@ -682,6 +689,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
 
+  @Override
   public void prefixUpdated() {
     final int caretOffset = myEditor.getCaretModel().getOffset();
     if (caretOffset < myStartCaret) {
@@ -693,7 +701,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       int start = pair.first;
-      if (caretOffset >= start && start >= 0) {
+      if (caretOffset >= start && start >= 0 && caretOffset <= text.length()) {
         final String newPrefix = text.subSequence(start, caretOffset).toString();
         if (pair.second.accepts(newPrefix)) {
           scheduleRestart();
@@ -706,9 +714,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     hideAutopopupIfMeaningless();
   }
 
+  @Override
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
+    if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       new CodeCompletionHandlerBase(myCompletionType, false, false, true).invokeCompletion(getProject(), myEditor, myInvocationCount);
@@ -729,18 +738,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       ((CompletionPhase.CommittingDocuments)oldPhase).replaced = true;
     }
 
-    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
-    CompletionServiceImpl.setCompletionPhase(phase);
-    phase.ignoreCurrentDocumentChange();
-
-    final Project project = getProject();
-    AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-      if (phase.checkExpired()) return;
-
-      CompletionAutoPopupHandler.invokeCompletion(myCompletionType,
-                                                  isAutopopupCompletion(), project, myEditor, myInvocationCount,
-                                                  true);
-    });
+    CompletionPhase.CommittingDocuments.scheduleAsyncCompletion(myEditor, myCompletionType, null, getProject(), this);
   }
 
   @Override
@@ -787,7 +785,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, listener);
     assert text != null;
-    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXmlEntities(text), HintManager.UNDER);
+    HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(text), HintManager.UNDER);
     connection.disconnect();
     return result[0];
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
@@ -28,8 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,7 +58,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private File myExecutable;
 
   private volatile MyProcessHandler myProcessHandler;
-  private volatile int myStartAttemptCount;
+  private final AtomicInteger myStartAttemptCount = new AtomicInteger(0);
   private volatile boolean myIsShuttingDown;
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
   private volatile List<String> myRecursiveWatchRoots = Collections.emptyList();
@@ -163,7 +167,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       return;
     }
 
-    if (myStartAttemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
+    if (myStartAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
       notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
       return;
     }
@@ -188,20 +192,18 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private void shutdownProcess() {
-    final OSProcessHandler processHandler = myProcessHandler;
+    OSProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       if (!processHandler.isProcessTerminated()) {
-        boolean killProcess = true;
-        try {
-          writeLine(EXIT_COMMAND);
-          killProcess = !processHandler.waitFor(500);
-          if (killProcess) {
-            LOG.warn("File watcher is still alive. Doing a force quit.");
-          }
-        }
+        try { writeLine(EXIT_COMMAND); }
         catch (IOException ignore) { }
-        if (killProcess) {
-          processHandler.destroyProcess();
+        if (!processHandler.waitFor(10)) {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (!processHandler.waitFor(500)) {
+              LOG.warn("File watcher is still alive. Doing a force quit.");
+              processHandler.destroyProcess();
+            }
+          });
         }
       }
 
@@ -239,7 +241,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private void writeLine(final String line) throws IOException {
+  private void writeLine(String line) throws IOException {
     if (LOG.isTraceEnabled()) LOG.trace("<< " + line);
     MyProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
@@ -255,15 +257,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static final Charset CHARSET;
-  static {
-    Charset cs = null;
-    try {
-      cs = SystemInfo.isWindows || SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : Charset.forName(System.getProperty("sun.jnu.encoding"));
-    }
-    catch (IllegalArgumentException ignored) { }
-    CHARSET = cs;
-  }
+  private static final Charset CHARSET =
+    SystemInfo.isWindows || SystemInfo.isMac ? StandardCharsets.UTF_8 : CharsetToolkit.getPlatformCharset();
 
   private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
     @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
@@ -281,11 +276,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
       super(process, commandLine, CHARSET);
-      myWriter = new BufferedWriter(writer(process.getOutputStream()));
-    }
-
-    private OutputStreamWriter writer(OutputStream stream) {
-      return CHARSET != null ? new OutputStreamWriter(stream, CHARSET) :  new OutputStreamWriter(stream);
+      myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), CHARSET));
     }
 
     private void writeLine(String line) throws IOException {
@@ -330,7 +321,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       if (LOG.isTraceEnabled()) LOG.trace(">> " + line);
 
       if (myLastOp == null) {
-        final WatcherOp watcherOp;
+        WatcherOp watcherOp;
         try {
           watcherOp = WatcherOp.valueOf(line);
         }
@@ -392,7 +383,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myNotificationSink.notifyManualWatchRoots(myLines);
     }
 
-    private void processChange(String path, WatcherOp op) {
+    private void processChange(@NotNull String path, @NotNull WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
         myNotificationSink.notifyReset(path);
         return;
@@ -459,7 +450,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     assert app != null && app.isUnitTestMode() : app;
 
     myIsShuttingDown = false;
-    myStartAttemptCount = 0;
+    myStartAttemptCount.set(0);
     startupProcess(false);
   }
 

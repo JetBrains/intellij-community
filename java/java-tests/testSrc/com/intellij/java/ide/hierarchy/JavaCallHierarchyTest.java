@@ -29,11 +29,13 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaCallHierarchyTest extends HierarchyViewTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -54,6 +56,14 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
 
   public void testIdeaDev41005() throws Exception {
     doJavaCallTypeHierarchyTest("B", "xyzzy", "B.java", "D.java", "A.java");
+  }
+
+  public void testDirectRecursion() throws Exception {
+    doJavaCallTypeHierarchyTest("A", "recursive", "A.java");
+  }
+
+  public void testIndirectRecursion() throws Exception {
+    doJavaCallTypeHierarchyTest("A", "recursive2", "A.java");
   }
 
   public void testIdeaDev41005_Inheritance() throws Exception {

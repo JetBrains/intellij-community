@@ -34,26 +34,35 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
-  private final OutputLineSplitter mySplitter;
+  private final OutputEventSplitter mySplitter;
 
   private volatile GeneralTestEventsProcessor myProcessor;
-  private boolean myPendingLineBreakFlag;
   private Runnable myTestingStartedHandler;
   private boolean myFirstTestingStartedEvent = true;
   private static final String ELLIPSIS = "<...>";
   private final int myCycleBufferSize = ConsoleBuffer.getCycleBufferSize();
 
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
-    this(testFrameworkName, consoleProperties.isEditable());
+    this(testFrameworkName);
   }
 
-  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, boolean stdinEnabled) {
+
+  /**
+   * @deprecated use {@link #OutputToGeneralTestEventsConverter(String)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, final boolean unneded) {
+    this(testFrameworkName);
+  }
+
+  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputLineSplitter(stdinEnabled) {
+    mySplitter = new OutputEventSplitter() {
       @Override
-      protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
-        processConsistentText(text, outputType, tcLikeFakeOutput);
+      public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
+        processConsistentText(text, outputType);
       }
     };
   }
@@ -68,6 +77,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   @Override
+  public void flushBufferOnProcessTermination(final int exitCode) {
+    mySplitter.flush();
+  }
+
+  @Override
   public void dispose() {
     setProcessor(null);
   }
@@ -78,61 +92,28 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   /**
-   * Flashes the rest of stdout text buffer after output has been stopped
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #processConsistentText(String, Key)} instead
    */
-  @Override
-  public void flushBufferOnProcessTermination(int exitCode) {
-    mySplitter.flush();
-    if (myPendingLineBreakFlag) {
-      fireOnUncapturedLineBreak();
-    }
+  @Deprecated
+  protected void processConsistentText(@NotNull final String text,
+                                       final Key<?> outputType,
+                                       @SuppressWarnings("unused") final boolean tcLikeFakeOutput) {
+    processConsistentText(text, outputType);
   }
 
-  private void fireOnUncapturedLineBreak() {
-    fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
-  }
-
-  protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
-    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitter.SM_MESSAGE_PREFIX) {
-      final StringBuilder builder = new StringBuilder(myCycleBufferSize);
-      builder.append(text, 0, myCycleBufferSize - OutputLineSplitter.SM_MESSAGE_PREFIX);
-      builder.append(ELLIPSIS);
-      builder.append(text, text.length() - OutputLineSplitter.SM_MESSAGE_PREFIX + ELLIPSIS.length(), text.length());
-      text = builder.toString();
+  protected void processConsistentText(@NotNull String text, @NotNull final Key<?> outputType) {
+    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputEventSplitterKt.SM_MESSAGE_PREFIX) {
+      text = text.substring(0, myCycleBufferSize - OutputEventSplitterKt.SM_MESSAGE_PREFIX) +
+             ELLIPSIS +
+             text.substring(text.length() - OutputEventSplitterKt.SM_MESSAGE_PREFIX + ELLIPSIS.length());
     }
 
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
-        if (myPendingLineBreakFlag) {
-          // output type for line break isn't important
-          // we may use any, e.g. current one
-          fireOnUncapturedLineBreak();
-          myPendingLineBreakFlag = false;
-        }
-        // Filters \n
-        String outputToProcess = text;
-        if (tcLikeFakeOutput && text.endsWith("\n")) {
-          // ServiceMessages protocol requires that every message
-          // should start with new line, so such behaviour may led to generating
-          // some number of useless \n.
-          //
-          // IDEA process handler flush output by size or line break
-          // So:
-          //  1. "a\n\nb\n" -> ["a\n", "\n", "b\n"]
-          //  2. "a\n##teamcity[..]\n" -> ["a\n", "#teamcity[..]\n"]
-          // We need distinguish 1) and 2) cases, in 2) first linebreak is redundant and must be ignored
-          // in 2) linebreak must be considered as output
-          // output will be in TestOutput message
-          // Lets set myPendingLineBreakFlag if we meet "\n" and then ignore it or apply depending on
-          // next output chunk
-          myPendingLineBreakFlag = true;
-          outputToProcess = outputToProcess.substring(0, outputToProcess.length() - 1);
-        }
         //fire current output
-        fireOnUncapturedOutput(outputToProcess, outputType);
-      }
-      else {
-        myPendingLineBreakFlag = false;
+        fireOnUncapturedOutput(text, outputType);
       }
     }
     catch (ParseException e) {
@@ -148,7 +129,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     final ServiceMessage message;
     try {
       message = ServiceMessage.parse(text.trim());
-    } catch (ParseException e) {
+    }
+    catch (ParseException e) {
       LOG.error("Failed to parse service message", e, text);
       return false;
     }
@@ -227,10 +209,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestFrameworkAttached() {
+  private void fireOnTestFrameworkAttached(@NotNull final TestDurationStrategy strategy) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onTestsReporterAttached();
+      processor.onDurationStrategyChanged(strategy);
     }
   }
 
@@ -608,7 +591,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         }
       }
       else if (TEST_REPORTER_ATTACHED.equals(name)) {
-        fireOnTestFrameworkAttached();
+        fireOnTestFrameworkAttached(TestDurationStrategyKt.getDurationStrategy(msg.getAttributes().get("durationStrategy")));
       }
       else if (SUITE_TREE_STARTED.equals(name)) {
         fireOnSuiteTreeStarted(msg.getAttributes().get("name"),
@@ -664,7 +647,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       catch (NumberFormatException ex) {
         final String diagnosticInfo = msg.getAttributes().get(ATTR_KEY_DIAGNOSTIC);
-        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse long error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo), ex);
+        LOG
+          .error(getTFrameworkPrefix(myTestFrameworkName) + "Parse long error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo), ex);
       }
       return count;
     }

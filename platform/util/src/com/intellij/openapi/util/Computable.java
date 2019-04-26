@@ -19,8 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ *  Please use {@link java.util.function.Supplier} instead
  *  @author dsl
  */
+@FunctionalInterface
 public interface Computable <T> {
 
   T compute();
@@ -36,6 +38,11 @@ public interface Computable <T> {
     @Override
     public T compute() {
       return myValue;
+    }
+
+    @Override
+    public String toString() {
+      return "PredefinedValueComputable{" + myValue + "}";
     }
   }
 

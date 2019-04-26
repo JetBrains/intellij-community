@@ -36,8 +36,8 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Disp
   private final TerminalProjectOptionsProvider myProjectOptionsProvider;
 
   public TerminalOptionsConfigurable(@NotNull Project project) {
-    myOptionsProvider = TerminalOptionsProvider.Companion.getInstance();
-    myProjectOptionsProvider = TerminalProjectOptionsProvider.Companion.getInstance(project);
+    myOptionsProvider = TerminalOptionsProvider.getInstance();
+    myProjectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project);
   }
 
   @NotNull

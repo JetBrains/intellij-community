@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -48,11 +49,13 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
 
   @NotNull
   @Override
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInCommentsAndStrings) {
     if (!RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY) {
       return Collections.emptyList();
     }
-    return ReferencesSearch.search(element).findAll();
+    return ReferencesSearch.search(element, searchScope).findAll();
   }
 
   @Nullable

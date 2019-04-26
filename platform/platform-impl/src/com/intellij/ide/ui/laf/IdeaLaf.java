@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredSideBorder;
+import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.util.ui.UIUtil;
 
@@ -47,23 +48,17 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("ScrollBar.background", col);
     defaults.put("ScrollBar.track", col);
 
-    //Border scrollPaneBorder = new BorderUIResource(new BegBorders.ScrollPaneBorder());
-    //defaults.put("ScrollPane.border", scrollPaneBorder);
     defaults.put("TextField.border", BegBorders.getTextFieldBorder());
     defaults.put("PasswordField.border", BegBorders.getTextFieldBorder());
     Border popupMenuBorder = new BegPopupMenuBorder();
     defaults.put("PopupMenu.border", popupMenuBorder);
     defaults.put("ScrollPane.border", BegBorders.getScrollPaneBorder());
 
-    defaults.put("ButtonUI", BegButtonUI.class.getName());
     defaults.put("ToggleButtonUI", BegToggleButtonUI.class.getName());
-    defaults.put("ComboBoxUI", BegComboBoxUI.class.getName());
     defaults.put("RadioButtonUI", BegRadioButtonUI.class.getName());
-    defaults.put("CheckBoxUI", BegCheckBoxUI.class.getName());
     defaults.put("TabbedPaneUI", BegTabbedPaneUI.class.getName());
     defaults.put("TableUI", BegTableUI.class.getName());
     defaults.put("TreeUI", BegTreeUI.class.getName());
-    //defaults.put("ScrollPaneUI", BegScrollPaneUI.class.getName());
 
     defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
     defaults.put("ToolTip.background", TOOLTIP_BACKGROUND_COLOR);
@@ -92,38 +87,38 @@ public final class IdeaLaf extends MetalLookAndFeel {
                "control INSERT", "copy",
                  "shift INSERT", "paste",
                  "shift DELETE", "cut",
-                        "RIGHT", "selectNextColumn",
-                     "KP_RIGHT", "selectNextColumn",
-                         "LEFT", "selectPreviousColumn",
-                      "KP_LEFT", "selectPreviousColumn",
-                         "DOWN", "selectNextRow",
-                      "KP_DOWN", "selectNextRow",
-                           "UP", "selectPreviousRow",
-                        "KP_UP", "selectPreviousRow",
-                  "shift RIGHT", "selectNextColumnExtendSelection",
-               "shift KP_RIGHT", "selectNextColumnExtendSelection",
-                   "shift LEFT", "selectPreviousColumnExtendSelection",
-                "shift KP_LEFT", "selectPreviousColumnExtendSelection",
-                   "shift DOWN", "selectNextRowExtendSelection",
-                "shift KP_DOWN", "selectNextRowExtendSelection",
-                     "shift UP", "selectPreviousRowExtendSelection",
-                  "shift KP_UP", "selectPreviousRowExtendSelection",
-                      "PAGE_UP", "scrollUpChangeSelection",
-                    "PAGE_DOWN", "scrollDownChangeSelection",
+                        "RIGHT", TableActions.Right.ID,
+                     "KP_RIGHT", TableActions.Right.ID,
+                         "LEFT", TableActions.Left.ID,
+                      "KP_LEFT", TableActions.Left.ID,
+                         "DOWN", TableActions.Down.ID,
+                      "KP_DOWN", TableActions.Down.ID,
+                           "UP", TableActions.Up.ID,
+                        "KP_UP", TableActions.Up.ID,
+                  "shift RIGHT", TableActions.ShiftRight.ID,
+               "shift KP_RIGHT", TableActions.ShiftRight.ID,
+                   "shift LEFT", TableActions.ShiftLeft.ID,
+                "shift KP_LEFT", TableActions.ShiftLeft.ID,
+                   "shift DOWN", TableActions.ShiftDown.ID,
+                "shift KP_DOWN", TableActions.ShiftDown.ID,
+                     "shift UP", TableActions.ShiftUp.ID,
+                  "shift KP_UP", TableActions.ShiftUp.ID,
+                      "PAGE_UP", TableActions.PageUp.ID,
+                    "PAGE_DOWN", TableActions.PageDown.ID,
                          "HOME", "selectFirstColumn",
                           "END", "selectLastColumn",
-                "shift PAGE_UP", "scrollUpExtendSelection",
-              "shift PAGE_DOWN", "scrollDownExtendSelection",
+                "shift PAGE_UP", TableActions.ShiftPageUp.ID,
+              "shift PAGE_DOWN", TableActions.ShiftPageDown.ID,
                    "shift HOME", "selectFirstColumnExtendSelection",
                     "shift END", "selectLastColumnExtendSelection",
                  "ctrl PAGE_UP", "scrollLeftChangeSelection",
                "ctrl PAGE_DOWN", "scrollRightChangeSelection",
-                    "ctrl HOME", "selectFirstRow",
-                     "ctrl END", "selectLastRow",
+                    "ctrl HOME", TableActions.CtrlHome.ID,
+                     "ctrl END", TableActions.CtrlEnd.ID,
            "ctrl shift PAGE_UP", "scrollRightExtendSelection",
          "ctrl shift PAGE_DOWN", "scrollLeftExtendSelection",
-              "ctrl shift HOME", "selectFirstRowExtendSelection",
-               "ctrl shift END", "selectLastRowExtendSelection",
+              "ctrl shift HOME", TableActions.CtrlShiftHome.ID,
+               "ctrl shift END", TableActions.CtrlShiftEnd.ID,
                           "TAB", "selectNextColumnCell",
                     "shift TAB", "selectPreviousColumnCell",
                         //"ENTER", "selectNextRowCell",

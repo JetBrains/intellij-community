@@ -70,9 +70,9 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
   //
 
   private class MyChangesBrowser extends ChangesBrowserBase {
-    @NotNull private final Ref<JBPopup> myRef;
+    @NotNull private final Ref<? extends JBPopup> myRef;
 
-    MyChangesBrowser(@NotNull Project project, @NotNull Ref<JBPopup> popupRef) {
+    MyChangesBrowser(@NotNull Project project, @NotNull Ref<? extends JBPopup> popupRef) {
       super(project, false, false);
       myRef = popupRef;
       myViewer.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -108,9 +108,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
       myRef.get().cancel();
 
       Object selection = ContainerUtil.getFirstItem(VcsTreeModelData.selected(myViewer).userObjects());
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        onSelected(selection);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
     }
   }
 }

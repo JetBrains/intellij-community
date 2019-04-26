@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -9,12 +9,10 @@ import java.io.File;
 import java.util.Collection;
 
 /**
- * Stripped-down version of {@code com.intellij.util.ArrayUtil}.
+ * Stripped-down version of {@link com.intellij.util.ArrayUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
-@SuppressWarnings({"SSBasedInspection"})
+@SuppressWarnings("SSBasedInspection")
 public class ArrayUtilRt {
   public static final short[] EMPTY_SHORT_ARRAY = new short[0];
   public static final char[] EMPTY_CHAR_ARRAY = new char[0];

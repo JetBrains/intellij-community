@@ -19,7 +19,6 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -76,7 +75,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiMethodReferenceExpression call = getMethodReference();
-    if (call == null || !ScratchFileService.isInProjectOrScratch(call)) return null;
+    if (call == null || !canModify(call)) return null;
     return call;
   }
 

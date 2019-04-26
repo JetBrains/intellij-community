@@ -36,7 +36,7 @@ public class IndentSelectionActionTest extends LightPlatformCodeInsightFixtureTe
 
   public void testWithLineSelection() {
     verifyAction("<selection>some text</selection>",
-                 "    <selection>some text</selection>");
+                 "<selection>    some text</selection>");
   }
 
   public void testWithLineSelectionExcludingSpaces() {

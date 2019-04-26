@@ -511,6 +511,7 @@ public class Runner {
     finally {
       try {
         cleanup(ui);
+        refreshApplicationIcon(dest);
       }
       catch (Throwable t) {
         logger().warn("cleanup failed", t);
@@ -519,7 +520,7 @@ public class Runner {
   }
 
   private static void refreshApplicationIcon(String destPath) {
-    if (isMac()) {
+    if (Utils.IS_MAC) {
       try {
         String applicationPath = destPath.contains("/Contents") ? destPath.substring(0, destPath.lastIndexOf("/Contents")) : destPath;
         logger().info("refreshApplicationIcon for: " + applicationPath);
@@ -531,10 +532,6 @@ public class Runner {
         logger().warn("refreshApplicationIcon failed", e);
       }
     }
-  }
-
-  private static boolean isMac() {
-    return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("mac");
   }
 
   private static String resolveJarFile() {

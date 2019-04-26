@@ -2,18 +2,16 @@
 package com.intellij.execution.jar;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 
-public final class JarApplicationConfigurationType extends ConfigurationTypeBase implements ConfigurationType {
-  @Override
-  public String getHelpTopic() {
-    return "reference.dialogs.rundebug.JarApplication";
-  }
-
+public final class JarApplicationConfigurationType extends SimpleConfigurationType implements ConfigurationType {
   @NotNull
   public static JarApplicationConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(JarApplicationConfigurationType.class);
@@ -23,12 +21,16 @@ public final class JarApplicationConfigurationType extends ConfigurationTypeBase
     super("JarApplication", ExecutionBundle.message("jar.application.configuration.name"),
           ExecutionBundle.message("jar.application.configuration.description"),
           NotNullLazyValue.createValue(() -> AllIcons.FileTypes.Archive));
-    addFactory(new ConfigurationFactory(this) {
-      @Override
-      @NotNull
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-        return new JarApplicationConfiguration(project, this, "");
-      }
-    });
+  }
+
+  @Override
+  @NotNull
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    return new JarApplicationConfiguration(project, this, "");
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.JarApplication";
   }
 }

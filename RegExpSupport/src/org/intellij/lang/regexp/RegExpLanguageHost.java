@@ -28,6 +28,8 @@ import java.util.EnumSet;
 public interface RegExpLanguageHost {
 
   EnumSet<RegExpGroup.Type> EMPTY_NAMED_GROUP_TYPES = EnumSet.noneOf(RegExpGroup.Type.class);
+  @SuppressWarnings("SSBasedInspection")
+  String[][] EMPTY_COMPLETION_ITEMS_ARRAY = new String[0][];
 
   boolean characterNeedsEscaping(char c);
   boolean supportsPerl5EmbeddedComments();
@@ -89,6 +91,11 @@ public interface RegExpLanguageHost {
   }
 
   boolean isValidCategory(@NotNull String category);
+
+  default boolean isValidPropertyValue(@NotNull String propertyName, @NotNull String value){
+    return true;
+  }
+
   @NotNull
   String[][] getAllKnownProperties();
   @Nullable
@@ -107,6 +114,11 @@ public interface RegExpLanguageHost {
 
   default Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
     return Lookbehind.FULL; // to not break existing implementations, although rarely actually supported.
+  }
+
+  @NotNull
+  default String[][] getAllPropertyValues(@NotNull String propertyName){
+    return EMPTY_COMPLETION_ITEMS_ARRAY; 
   }
 
   enum Lookbehind {

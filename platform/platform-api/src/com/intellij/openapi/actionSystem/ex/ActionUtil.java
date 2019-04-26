@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -41,7 +43,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ActionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ex.ActionUtil");
@@ -159,8 +163,9 @@ public class ActionUtil {
     boolean allowed = (!dumbMode || action.isDumbAware()) &&
                       (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
-    String description = presentation.getText() + " action update (" + action.getClass() + ")";
-    if (insidePerformDumbAwareUpdate++ == 0) {
+    String presentationText = presentation.getText();
+    boolean edt = ApplicationManager.getApplication().isDispatchThread();
+    if (edt && insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();
     }
     try {
@@ -180,8 +185,8 @@ public class ActionUtil {
       throw e1;
     }
     finally {
-      if (--insidePerformDumbAwareUpdate == 0) {
-        ActionPauses.STAT.finished(description);
+      if (edt && --insidePerformDumbAwareUpdate == 0) {
+        ActionPauses.STAT.finished(presentationText + " action update (" + action.getClass() + ")");
       }
       if (!allowed) {
         if (wasEnabledBefore == null) {
@@ -275,6 +280,47 @@ public class ActionUtil {
       runnable.run();
     }
   }
+  @NotNull
+  public static AnActionEvent createEmptyEvent() {
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
+  }
+
+  @NotNull
+  public static void sortAlphabetically(@NotNull List<AnAction> list) {
+    list.sort(new Comparator<AnAction>() {
+      @Override
+      public int compare(AnAction o1, AnAction o2) {
+        return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
+      }
+    });
+  }
+
+  @NotNull
+  /**
+   * Tries to find an 'action' and 'target action' by text and put the 'action' just before of after the 'target action'
+   */
+  public static void moveActionTo(@NotNull List<AnAction> list,
+                                  @NotNull String actionText,
+                                  @NotNull String targetActionText,
+                                  boolean before) {
+    if (Comparing.equal(actionText, targetActionText)) {
+      return;
+    }
+
+    int actionIndex = -1;
+    int targetIndex = -1;
+    for (int i = 0; i < list.size(); i++) {
+      AnAction action = list.get(i);
+      if (actionIndex == -1 && Comparing.equal(actionText, action.getTemplateText())) actionIndex = i;
+      if (targetIndex == -1 && Comparing.equal(targetActionText, action.getTemplateText())) targetIndex = i;
+      if (actionIndex != -1 && targetIndex != -1) {
+        if (actionIndex < targetIndex) targetIndex--;
+        AnAction anAction = list.remove(actionIndex);
+        list.add(before ? Math.max(0, targetIndex) : targetIndex + 1, anAction);
+        return;
+      }
+    }
+  }
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {
@@ -318,10 +364,18 @@ public class ActionUtil {
   }
 
   public static boolean recursiveContainsAction(@NotNull ActionGroup group, @NotNull AnAction action) {
+    return anyActionFromGroupMatches(group, true, Predicate.isEqual(action));
+  }
+
+  public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
+                                                  @NotNull Predicate<AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
-      if (action.equals(child)) return true;
-      if (child instanceof ActionGroup && recursiveContainsAction((ActionGroup)child, action)) {
-        return true;
+      if (condition.test(child)) return true;
+      if (child instanceof ActionGroup) {
+        ActionGroup childGroup = (ActionGroup)child;
+        if ((processPopupSubGroups || !childGroup.isPopup()) && anyActionFromGroupMatches(childGroup, processPopupSubGroups, condition)) {
+          return true;
+        }
       }
     }
     return false;
@@ -354,7 +408,7 @@ public class ActionUtil {
     p1.setSelectedIcon(ObjectUtils.chooseNotNull(p1.getSelectedIcon(), p2.getSelectedIcon()));
     p1.setHoveredIcon(ObjectUtils.chooseNotNull(p1.getHoveredIcon(), p2.getHoveredIcon()));
     if (StringUtil.isEmpty(p1.getText())) {
-      p1.setText(p2.getTextWithMnemonic(), p2.getDisplayedMnemonicIndex() >= 0);
+      p1.setTextWithMnemonic(p2.getTextWithPossibleMnemonic());
     }
     p1.setDescription(ObjectUtils.chooseNotNull(p1.getDescription(), p2.getDescription()));
     ShortcutSet ss1 = a1.getShortcutSet();

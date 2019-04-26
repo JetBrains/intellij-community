@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert field to local variable in constructor" "true"
 import java.util.ArrayList;
 
 class ITest {

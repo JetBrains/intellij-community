@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,4 +30,9 @@ public interface GradleTestTasksProvider {
 
   @NotNull
   List<String> getTasks(@NotNull Module module);
+
+  @NotNull
+  default List<String> getTasks(@NotNull Module module, @NotNull VirtualFile source) {
+    return getTasks(module);
+  }
 }

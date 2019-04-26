@@ -17,15 +17,16 @@ public class ScopeDescriptor {
     myScope = scope;
   }
 
-  public String getDisplay() {
+  public String getDisplayName() {
     return myScope == null ? null : myScope.getDisplayName();
   }
 
   @Nullable
-  public Icon getDisplayIcon() {
-    return myScope == null ? null : myScope.getDisplayIcon();
+  public Icon getIcon() {
+    return myScope == null ? null : myScope.getIcon();
   }
 
+  @Nullable
   public SearchScope getScope() {
     return myScope;
   }

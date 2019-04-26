@@ -48,7 +48,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myClass.isValid() || !myParameterList.isValid()) {
+    if (!myClass.isValid() || !myParameterList.isValid() || myClass instanceof PsiCompiledElement) {
       return false;
     }
 

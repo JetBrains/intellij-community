@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.util.CachedValueProvider;
@@ -11,7 +12,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.HashSet;
@@ -27,7 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR;
+import static java.util.Collections.singletonMap;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports.getAliasedShortNames;
 
 public class GrAnnotationCollector {
@@ -36,32 +36,22 @@ public class GrAnnotationCollector {
   public static GrAnnotation[] getResolvedAnnotations(@NotNull GrModifierList modifierList) {
     final GrAnnotation[] rawAnnotations = modifierList.getRawAnnotations();
 
-    if (!hasAliases(rawAnnotations)) return rawAnnotations;
+    if (!mayHaveAnnotationCollector(rawAnnotations)) return rawAnnotations;
 
-    List<GrAnnotation> result = ContainerUtil.newArrayList();
+    final List<GrAnnotation> result = ContainerUtil.newArrayList();
     for (GrAnnotation annotation : rawAnnotations) {
       final PsiAnnotation annotationCollector = findAnnotationCollector(annotation);
       if (annotationCollector != null) {
-        collectAnnotations(result, annotation, annotationCollector);
+        if (!collectCompileDynamic(result, annotation)) {
+          collectAnnotations(result, annotation, annotationCollector);
+        }
       }
-      else {
+      else if (!collectHardcoded(result, annotation)) {
         result.add(annotation);
       }
     }
 
-
     return result.toArray(GrAnnotation.EMPTY_ARRAY);
-  }
-
-  private static boolean hasAliases(@NotNull GrAnnotation[] rawAnnotations) {
-    for (GrAnnotation annotation : rawAnnotations) {
-      final PsiAnnotation annotationCollector = findAnnotationCollector(annotation);
-      if (annotationCollector != null) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   /**
@@ -79,9 +69,6 @@ public class GrAnnotationCollector {
     final PsiModifierList modifierList = (PsiModifierList)annotationCollector.getParent();
 
     Map<String, Map<String, PsiNameValuePair>> annotations = ContainerUtil.newLinkedHashMap();
-    if (GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE.equals(alias.getQualifiedName())) {
-      GrImmutableUtils.collectImmutableAnnotations(alias, list);
-    }
     collectAliasedAnnotationsFromAnnotationCollectorValueAttribute(annotationCollector, annotations);
     collectAliasedAnnotationsFromAnnotationCollectorAnnotations(modifierList, annotations);
 
@@ -123,23 +110,12 @@ public class GrAnnotationCollector {
 
   private static void collectAliasedAnnotationsFromAnnotationCollectorAnnotations(@NotNull PsiModifierList modifierList,
                                                                                   @NotNull Map<String, Map<String, PsiNameValuePair>> annotations) {
-    PsiElement parent = modifierList.getParent();
-    if (parent instanceof PsiClass &&
-        GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_DYNAMIC.equals(((PsiClass)parent).getQualifiedName())) {
-      Map<String, PsiNameValuePair> params = ContainerUtil.newLinkedHashMap();
-      annotations.put(GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC, params);
-      GrAnnotation annotation =
-        GroovyPsiElementFactory.getInstance(modifierList.getProject()).createAnnotationFromText("@CompileStatic(TypeCheckingMode.SKIP)");
-      params.put("value", annotation.getParameterList().getAttributes()[0]);
-      return;
-    }
-
-    PsiAnnotation[] rawAnnotations =
-      modifierList instanceof GrModifierList ? ((GrModifierList)modifierList).getRawAnnotations() : modifierList.getAnnotations();
+    PsiAnnotation[] rawAnnotations = modifierList instanceof GrModifierList ? ((GrModifierList)modifierList).getRawAnnotations()
+                                                                            : modifierList.getAnnotations();
     for (PsiAnnotation annotation : rawAnnotations) {
       final String qname = annotation.getQualifiedName();
 
-      if (qname == null || qname.equals(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR)) continue;
+      if (qname == null || qname.equals(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR) || qname.startsWith("java.lang.annotation")) continue;
 
       final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair pair : attributes) {
@@ -155,7 +131,6 @@ public class GrAnnotationCollector {
         annotations.put(qname, ContainerUtil.newLinkedHashMap());
       }
     }
-
   }
 
   private static void collectAliasedAnnotationsFromAnnotationCollectorValueAttribute(@NotNull PsiAnnotation annotationCollector,
@@ -197,7 +172,24 @@ public class GrAnnotationCollector {
       return null;
     }
     PsiElement resolved = annotation.getClassReference().resolve();
-    return resolved instanceof PsiClass ? findAnnotationCollector((PsiClass)resolved) : null;
+    if (resolved instanceof ClsClassImpl) {
+      return findAnnotationCollector(((ClsClassImpl)resolved).getSourceMirrorClass());
+    }
+    else if (resolved instanceof PsiClass) {
+      return findAnnotationCollector((PsiClass)resolved);
+    }
+    else {
+      return null;
+    }
+  }
+
+  private static boolean mayHaveAnnotationCollector(@NotNull GrAnnotation[] rawAnnotations) {
+    for (GrAnnotation annotation : rawAnnotations) {
+      if (mayHaveAnnotationCollector(annotation)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean mayHaveAnnotationCollector(@NotNull GrAnnotation annotation) {
@@ -221,4 +213,28 @@ public class GrAnnotationCollector {
     });
   }
 
+  private static boolean collectHardcoded(@NotNull List<GrAnnotation> list, @NotNull GrAnnotation alias) {
+    String fqn = alias.getQualifiedName();
+    if (GROOVY_TRANSFORM_IMMUTABLE.equals(fqn)) {
+      GrImmutableUtils.collectImmutableAnnotations(alias, list);
+      return true;
+    }
+    return collectCompileDynamic(list, alias);
+  }
+
+  private static boolean collectCompileDynamic(@NotNull List<GrAnnotation> list, @NotNull GrAnnotation alias) {
+    if (GROOVY_TRANSFORM_COMPILE_DYNAMIC.equals(alias.getQualifiedName())) {
+      PsiAnnotationOwner owner = alias.getOwner();
+      if (owner != null) {
+        GrLightAnnotation annotation = new GrLightAnnotation(
+          owner, alias,
+          GROOVY_TRANSFORM_COMPILE_STATIC,
+          singletonMap("value", "TypeCheckingMode.SKIP")
+        );
+        list.add(annotation);
+      }
+      return true;
+    }
+    return false;
+  }
 }

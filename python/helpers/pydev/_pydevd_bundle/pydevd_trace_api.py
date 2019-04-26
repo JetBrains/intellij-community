@@ -10,7 +10,7 @@ def remove_exception_breakpoint(plugin, pydb, type, exception):
 def get_breakpoints(plugin, pydb):
     return None
 
-def can_not_skip(plugin, pydb, pydb_frame, frame):
+def can_not_skip(plugin, pydb, pydb_frame, frame, info):
     return False
 
 def has_exception_breaks(plugin):

@@ -129,6 +129,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
 
   @Override
   public void loadState(@NotNull StoredSettingsBean state) {
-    myStoredSettings.analysisUIOptions.save(state.analysisUIOptions);
+    myStoredSettings.analysisUIOptions.loadState(state.analysisUIOptions);
   }
 }

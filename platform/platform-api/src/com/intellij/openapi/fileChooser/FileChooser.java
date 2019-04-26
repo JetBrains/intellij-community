@@ -68,7 +68,7 @@ public class FileChooser {
                                        @Nullable final Component parent,
                                        @Nullable final Project project,
                                        @Nullable final VirtualFile toSelect) {
-    Component parentComponent = (parent == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
+    Component parentComponent = parent == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
     LOG.assertTrue(!descriptor.isChooseMultiple());
     return ArrayUtil.getFirstElement(chooseFiles(descriptor, parentComponent, project, toSelect));
   }
@@ -82,12 +82,11 @@ public class FileChooser {
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there are files selected
    * @see FileChooserConsumer
-   * @since 11.1
    */
   public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
                                  @Nullable final Project project,
                                  @Nullable final VirtualFile toSelect,
-                                 @NotNull final Consumer<List<VirtualFile>> callback) {
+                                 @NotNull final Consumer<? super List<VirtualFile>> callback) {
     chooseFiles(descriptor, project, null, toSelect, callback);
   }
 
@@ -101,14 +100,13 @@ public class FileChooser {
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there are files selected
    * @see FileChooserConsumer
-   * @since 11.1
    */
   public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
                                  @Nullable final Project project,
                                  @Nullable final Component parent,
                                  @Nullable final VirtualFile toSelect,
-                                 @NotNull final Consumer<List<VirtualFile>> callback) {
-    Component parentComponent = (parent == null) ? WindowManager.getInstance().suggestParentWindow(project) : parent;
+                                 @NotNull final Consumer<? super List<VirtualFile>> callback) {
+    Component parentComponent = parent == null ? WindowManager.getInstance().suggestParentWindow(project) : parent;
     final FileChooserFactory factory = FileChooserFactory.getInstance();
     final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parentComponent);
     pathChooser.choose(toSelect, callback);
@@ -122,7 +120,6 @@ public class FileChooser {
    * @param project    project
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there is file selected
-   * @since 13
    */
   public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
                                 @Nullable final Project project,
@@ -140,7 +137,6 @@ public class FileChooser {
    * @param parent     parent component
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there is file selected
-   * @since 13
    */
   public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
                                 @Nullable final Project project,

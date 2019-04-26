@@ -46,9 +46,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private final long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
-  RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
-    this(ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document), document.getTextLength(), start, end, register,
-         false, false);
+  RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
+    this(forceDocumentStrongReference ? document : ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document),
+         document.getTextLength(), start, end, register, false, false);
   }
 
   // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
@@ -161,7 +161,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
   }
 
-  void setStickingToRight(boolean value) {
+  public void setStickingToRight(boolean value) {
     if (!isValid() || value == isStickingToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), isGreedyToRight(), value, getLayer());
   }
@@ -178,7 +178,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isGreedyToRight();
   }
 
-  boolean isStickingToRight() {
+  public boolean isStickingToRight() {
     RangeMarkerTree.RMNode node = myNode;
     return node != null && node.isStickingToRight();
   }

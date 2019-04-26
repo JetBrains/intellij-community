@@ -43,6 +43,7 @@ class BinaryExpressionEvaluator implements Evaluator {
 
   }
 
+  @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
   static Object evaluateOperation(final Value leftResult,
                                   final IElementType opType,
                                   final Evaluator rightOperand,

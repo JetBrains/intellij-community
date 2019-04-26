@@ -15,7 +15,7 @@ import java.io.File;
  * @author Eugene Zhuravlev
  * Date: 06-Dec-17
  */
-class Locations {
+public class Locations {
   private static final File ourDataDir;
 
   static {

@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -33,6 +34,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -64,7 +66,7 @@ public class HgHistoryUtil {
       @Override
       protected VcsCommitMetadata convertDetails(@NotNull String rev,
                                                  @NotNull String changeset,
-                                                 @NotNull SmartList<HgRevisionNumber> parents,
+                                                 @NotNull SmartList<? extends HgRevisionNumber> parents,
                                                  @NotNull Date revisionDate,
                                                  @NotNull String author,
                                                  @NotNull String email,
@@ -90,15 +92,15 @@ public class HgHistoryUtil {
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
-  public static List<HgCommit> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
-                                       @NotNull List<String> hashParameters, boolean silent)
+  public static List<VcsFullCommitDetails> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
+                                                   @NotNull List<String> hashParameters, boolean silent)
     throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
 
-    ArrayList<HgCommit> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -142,17 +144,38 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static HgCommit createDetails(@NotNull Project project,
-                                       @NotNull VirtualFile root,
-                                       @NotNull VcsLogObjectsFactory factory,
-                                       @NotNull HgFileRevision revision) {
+  public static VcsFullCommitDetails createDetails(@NotNull Project project,
+                                                   @NotNull VirtualFile root,
+                                                   @NotNull VcsLogObjectsFactory factory,
+                                                   @NotNull HgFileRevision revision) {
+    List<List<VcsFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
+    reportedChanges.add(getStatusInfo(revision));
+
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
-    List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
-    List<Hash> parentsHashes = new SmartList<>();
-    for (HgRevisionNumber parent : parents) {
-      parentsHashes.add(factory.createHash(parent.getChangeset()));
+    List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
+    for (HgRevisionNumber parent : parents.stream().skip(1).collect(Collectors.toList())) {
+      reportedChanges.add(getChangesFromParent(project, root, vcsRevisionNumber, parent));
     }
 
+    Hash hash = factory.createHash(vcsRevisionNumber.getChangeset());
+    List<Hash> parentsHashes = ContainerUtil.map(parents, p -> factory.createHash(p.getChangeset()));
+    long time = revision.getRevisionDate().getTime();
+    VcsUser author = factory.createUser(vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail());
+    return new VcsChangesLazilyParsedDetails(project, hash, parentsHashes, time, root, vcsRevisionNumber.getSubject(), author,
+                                             vcsRevisionNumber.getCommitMessage(), author,
+                                             time, reportedChanges, new HgChangesParser(vcsRevisionNumber));
+  }
+
+  @NotNull
+  protected static List<VcsFileStatusInfo> getChangesFromParent(@NotNull Project project, @NotNull VirtualFile root,
+                                                                @NotNull HgRevisionNumber commit, @NotNull HgRevisionNumber parent) {
+    HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true)
+      .baseRevision(parent).targetRevision(commit).build(project);
+    return convertHgChanges(status.executeInCurrentThread(root));
+  }
+
+  @NotNull
+  private static List<VcsFileStatusInfo> getStatusInfo(@NotNull HgFileRevision revision) {
     List<VcsFileStatusInfo> firstParentChanges = new ArrayList<>();
     for (String file : revision.getModifiedFiles()) {
       firstParentChanges.add(new VcsFileStatusInfo(Change.Type.MODIFICATION, file, null));
@@ -166,23 +189,7 @@ public class HgHistoryUtil {
     for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
       firstParentChanges.add(new VcsFileStatusInfo(Change.Type.MOVED, copiedFile.getKey(), copiedFile.getValue()));
     }
-
-    List<List<VcsFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
-    reportedChanges.add(firstParentChanges);
-
-    for (int index = 1; index < parents.size(); index++) {
-      HgRevisionNumber parent = parents.get(index);
-      HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true).baseRevision(parent)
-        .targetRevision(vcsRevisionNumber).build(project);
-      Set<HgChange> hgChanges = status.executeInCurrentThread(root);
-
-      reportedChanges.add(convertHgChanges(hgChanges));
-    }
-
-    return new HgCommit(project, root, factory.createHash(vcsRevisionNumber.getChangeset()), parentsHashes,
-                        vcsRevisionNumber,
-                        factory.createUser(vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail()), revision.getRevisionDate().getTime(),
-                        reportedChanges);
+    return firstParentChanges;
   }
 
   @NotNull
@@ -270,7 +277,7 @@ public class HgHistoryUtil {
   }
 
   public static void readLog(@NotNull Project project, @NotNull VirtualFile root, @NotNull HgVersion version, int limit,
-                             @NotNull List<String> hashes, @NotNull String template, @NotNull Consumer<StringBuilder> consumer)
+                             @NotNull List<String> hashes, @NotNull String template, @NotNull Consumer<? super StringBuilder> consumer)
     throws VcsException {
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
@@ -313,7 +320,8 @@ public class HgHistoryUtil {
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<? super String, ? extends CommitInfo> converter, boolean silent) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter,
+                                                               boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<>();
     if (result == null) {
       return revisions;
@@ -363,7 +371,7 @@ public class HgHistoryUtil {
                                         @Override
                                         protected VcsCommitMetadata convertDetails(@NotNull String rev,
                                                                                    @NotNull String changeset,
-                                                                                   @NotNull SmartList<HgRevisionNumber> parents,
+                                                                                   @NotNull SmartList<? extends HgRevisionNumber> parents,
                                                                                    @NotNull Date revisionDate,
                                                                                    @NotNull String author,
                                                                                    @NotNull String email,
@@ -400,7 +408,7 @@ public class HgHistoryUtil {
       @Override
       protected TimedVcsCommit convertDetails(@NotNull String rev,
                                               @NotNull String changeset,
-                                              @NotNull SmartList<HgRevisionNumber> parents,
+                                              @NotNull SmartList<? extends HgRevisionNumber> parents,
                                               @NotNull Date revisionDate,
                                               @NotNull String author,
                                               @NotNull String email,
@@ -492,9 +500,9 @@ public class HgHistoryUtil {
 
   private static class HgLogOutputSplitter extends HgLineProcessListener {
     @NotNull private final StringBuilder myOutput;
-    private final Consumer<StringBuilder> myConsumer;
+    private final Consumer<? super StringBuilder> myConsumer;
 
-    HgLogOutputSplitter(Consumer<StringBuilder> consumer) {
+    HgLogOutputSplitter(Consumer<? super StringBuilder> consumer) {
       myConsumer = consumer;
       myOutput = new StringBuilder();
     }

@@ -74,7 +74,7 @@ public class ShowXPathAction extends XPathAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+        final Editor editor = e.getData(CommonDataKeys.EDITOR);
         if (editor == null) {
             return;
         }

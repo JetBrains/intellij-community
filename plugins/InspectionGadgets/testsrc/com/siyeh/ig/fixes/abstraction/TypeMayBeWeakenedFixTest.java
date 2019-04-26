@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.abstraction;
 
 import com.intellij.ToolExtensionPoints;
@@ -17,7 +17,6 @@ import java.util.Collections;
  * @author Bas Leijdekkers
  */
 public class TypeMayBeWeakenedFixTest extends IGQuickFixesTestCase {
-
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     super.tuneFixture(builder);
@@ -35,7 +34,7 @@ public class TypeMayBeWeakenedFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     myRelativePath = "abstraction/type_may_be_weakened";
     ImplicitUsageProvider.EP_NAME.getExtensionList();
-    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
+    Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensionList();
   }
 
   public void testShorten() { doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "java.util.Collection")); }

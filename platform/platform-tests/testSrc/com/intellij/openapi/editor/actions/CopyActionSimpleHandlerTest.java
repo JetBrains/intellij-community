@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,14 @@ public class CopyActionSimpleHandlerTest extends CopyActionTest {
 
   @Override
   public void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE = myPrevValue;
-    super.tearDown();
+    try {
+      CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE = myPrevValue;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

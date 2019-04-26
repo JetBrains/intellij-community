@@ -17,6 +17,7 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public class ElementStub extends DomStub {
 
-  private final List<DomStub> myChildren = new SmartList<>();
+  private final List<Stub> myChildren = new SmartList<>();
   private final int myIndex;
   private final boolean myCustom;
 
@@ -51,13 +52,13 @@ public class ElementStub extends DomStub {
     myValue = value;
   }
 
-  void addChild(DomStub child) {
+  void addChild(Stub child) {
     myChildren.add(child);
   }
 
   @NotNull
   @Override
-  public List<DomStub> getChildrenStubs() {
+  public List<? extends Stub> getChildrenStubs() {
     return myChildren;
   }
 

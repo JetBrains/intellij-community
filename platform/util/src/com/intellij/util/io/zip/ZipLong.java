@@ -47,7 +47,6 @@ public final class ZipLong implements Cloneable {
    * Create instance from a number.
    *
    * @param value the long to store as a ZipLong
-   * @since 1.1
    */
   public ZipLong(long value) {
     this.value = value;
@@ -57,7 +56,6 @@ public final class ZipLong implements Cloneable {
    * Create instance from bytes.
    *
    * @param bytes the bytes to store as a ZipLong
-   * @since 1.1
    */
   public ZipLong(byte[] bytes) {
     this(bytes, 0);
@@ -68,7 +66,6 @@ public final class ZipLong implements Cloneable {
    *
    * @param bytes  the bytes to store as a ZipLong
    * @param offset the offset to start
-   * @since 1.1
    */
   public ZipLong(byte[] bytes, int offset) {
     value = ZipLong.getValue(bytes, offset);
@@ -78,7 +75,6 @@ public final class ZipLong implements Cloneable {
    * Get value as four bytes in big endian byte order.
    *
    * @return value as four bytes in big endian order
-   * @since 1.1
    */
   public byte[] getBytes() {
     return ZipLong.getBytes(value);
@@ -88,7 +84,6 @@ public final class ZipLong implements Cloneable {
    * Get value as Java long.
    *
    * @return value as a long
-   * @since 1.1
    */
   public long getValue() {
     return value;
@@ -139,7 +134,6 @@ public final class ZipLong implements Cloneable {
    *
    * @param o an object to compare
    * @return true if the objects are equal
-   * @since 1.1
    */
   public boolean equals(Object o) {
     if (!(o instanceof ZipLong)) {
@@ -152,7 +146,6 @@ public final class ZipLong implements Cloneable {
    * Override to make two instances with same value equal.
    *
    * @return the value stored in the ZipLong
-   * @since 1.1
    */
   public int hashCode() {
     return (int)value;

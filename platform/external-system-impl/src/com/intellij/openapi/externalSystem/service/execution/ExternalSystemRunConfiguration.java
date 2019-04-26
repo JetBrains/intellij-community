@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -7,8 +7,6 @@ import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
-import com.intellij.build.output.BuildOutputInstantReaderImpl;
-import com.intellij.build.output.BuildOutputParser;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -28,6 +26,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -43,6 +42,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -59,9 +59,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -78,7 +77,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.List;
+import java.util.Collections;
 
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_SETUP_PREFIX;
@@ -203,7 +202,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (file != null) {
         Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
         if (module != null) {
-          scope = SearchScopeProvider.createSearchScope(ContainerUtil.ar(module));
+          scope = GlobalSearchScopes.executionScope(Collections.singleton(module));
         }
       }
     }
@@ -314,18 +313,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         progressListenerClazz != null ? ServiceManager.getService(myProject, progressListenerClazz)
                                       : createBuildView(task.getId(), executionName, task.getExternalProjectPath(), consoleView, processHandler);
 
-      List<BuildOutputParser> buildOutputParsers = new SmartList<>();
-      for (ExternalSystemOutputParserProvider outputParserProvider : ExternalSystemOutputParserProvider.EP_NAME.getExtensions()) {
-        if (task.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
-          buildOutputParsers.addAll(outputParserProvider.getBuildOutputParsers(task));
-        }
-      }
-
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      final BuildOutputInstantReaderImpl buildOutputInstantReader =
-        progressListener == null || buildOutputParsers.isEmpty() ? null :
-        new BuildOutputInstantReaderImpl(task.getId(), progressListener, buildOutputParsers);
-
       JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();
       if (javaRunConfigurationExtensionManager != null) {
         javaRunConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
@@ -341,100 +328,107 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         else {
           greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
         }
-        ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
+        try (ExternalSystemEventDispatcher messageDispatcher = new ExternalSystemEventDispatcher(task, progressListener)) {
+          ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
-          private boolean myResetGreeting = true;
+            private boolean myResetGreeting = true;
 
-          @Override
-          public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-            if (progressListener != null) {
-              long eventTime = System.currentTimeMillis();
-              AnAction rerunTaskAction = new MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
-              progressListener.onEvent(
-                new StartBuildEventImpl(new DefaultBuildDescriptor(id, executionName, workingDir, eventTime), "running...")
-                  .withProcessHandler(processHandler, view -> {
-                    processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
-                    foldGreetingOrFarewell(consoleView, greeting, true);
-                  })
-                  .withContentDescriptorSupplier(() -> myContentDescriptor)
-                  .withRestartAction(rerunTaskAction)
-                  .withRestartActions(restartActions)
-                  .withExecutionEnvironment(myEnv)
-              );
+            @Override
+            public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+              if (progressListener != null) {
+                long eventTime = System.currentTimeMillis();
+                AnAction rerunTaskAction = new MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
+                BuildViewSettingsProvider viewSettingsProvider =
+                  consoleView instanceof BuildViewSettingsProvider ?
+                  new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView) : null;
+                progressListener.onEvent(
+                  new StartBuildEventImpl(new DefaultBuildDescriptor(id, executionName, workingDir, eventTime), "running...")
+                    .withProcessHandler(processHandler, view -> {
+                      processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
+                      foldGreetingOrFarewell(consoleView, greeting, true);
+                    })
+                    .withContentDescriptorSupplier(() -> myContentDescriptor)
+                    .withRestartAction(rerunTaskAction)
+                    .withRestartActions(restartActions)
+                    .withExecutionEnvironment(myEnv)
+                    .withBuildViewSettingsProvider(viewSettingsProvider)
+                );
+              }
             }
-          }
 
-          @Override
-          public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-            if (myResetGreeting) {
-              processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
-              myResetGreeting = false;
+            @Override
+            public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+              if (myResetGreeting) {
+                processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
+                myResetGreeting = false;
+              }
+              if (consoleView != null) {
+                consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+              }
+              else {
+                processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+              }
+              messageDispatcher.append(text);
             }
-            if (consoleView != null) {
-              consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
-            }
-            else {
-              processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
-            }
-            if (buildOutputInstantReader != null) {
-              buildOutputInstantReader.append(text);
-            }
-          }
 
-          @Override
-          public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-            FailureResult failureResult =
-              ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
-            if (progressListener != null) {
-              progressListener.onEvent(new FinishBuildEventImpl(
-                id, null, System.currentTimeMillis(), "failed", failureResult));
+            @Override
+            public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+              FailureResult failureResult =
+                ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
+              if (progressListener != null) {
+                progressListener.onEvent(new FinishBuildEventImpl(
+                  id, null, System.currentTimeMillis(), "failed", failureResult));
+              }
+              ExternalSystemUtil.printFailure(e, failureResult, consoleView, processHandler);
+              processHandler.notifyProcessTerminated(1);
             }
-            ExternalSystemUtil.printFailure(e, failureResult, consoleView, processHandler);
-            processHandler.notifyProcessTerminated(1);
-          }
 
-          @Override
-          public void onSuccess(@NotNull ExternalSystemTaskId id) {
-            if (progressListener != null) {
-              progressListener.onEvent(new FinishBuildEventImpl(
-                id, null, System.currentTimeMillis(), "completed successfully", new SuccessResultImpl()));
+            @Override
+            public void onSuccess(@NotNull ExternalSystemTaskId id) {
+              if (progressListener != null) {
+                progressListener.onEvent(new FinishBuildEventImpl(
+                  id, null, System.currentTimeMillis(), "completed successfully", new SuccessResultImpl()));
+              }
             }
-          }
 
-          @Override
-          public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (progressListener != null && event instanceof ExternalSystemTaskExecutionEvent) {
-              BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-              progressListener.onEvent(buildEvent);
+            @Override
+            public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+              if (event instanceof ExternalSystemBuildEvent) {
+                messageDispatcher.onEvent(((ExternalSystemBuildEvent)event).getBuildEvent());
+              }
+              else if (event instanceof ExternalSystemTaskExecutionEvent) {
+                BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
+                messageDispatcher.onEvent(buildEvent);
+              }
             }
-          }
 
-          @Override
-          public void onEnd(@NotNull ExternalSystemTaskId id) {
-            final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-            final String farewell;
-            if (mySettings.getTaskNames().size() > 1) {
-              farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
+            @Override
+            public void onEnd(@NotNull ExternalSystemTaskId id) {
+              final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+              final String farewell;
+              if (mySettings.getTaskNames().size() > 1) {
+                farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
+              }
+              else {
+                farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, settingsDescription);
+              }
+              processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
+              foldGreetingOrFarewell(consoleView, farewell, false);
+              processHandler.notifyProcessTerminated(0);
+              messageDispatcher.close();
             }
-            else {
-              farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, settingsDescription);
-            }
-            processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
-            foldGreetingOrFarewell(consoleView, farewell, false);
-            processHandler.notifyProcessTerminated(0);
-            if (buildOutputInstantReader != null) {
-              buildOutputInstantReader.close();
-            }
-          }
-        };
-        task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+          };
+          task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+        }
       });
       ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
-      AnAction[] actions = AnAction.EMPTY_ARRAY;
+      DefaultActionGroup actionGroup = new DefaultActionGroup();
       if (executionConsole instanceof BuildView) {
-        actions = ((BuildView)executionConsole).getSwitchActions();
+        actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
+        actionGroup.add(new ShowExecutionErrorsOnlyAction((BuildView)executionConsole));
       }
-      DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions);
+      DefaultExecutionResult executionResult =
+        new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
       executionResult.setRestartActions(restartActions);
       return executionResult;
     }
@@ -446,7 +440,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       final JavaParameters extensionsJP = new JavaParameters();
       for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings());
+        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
       }
 
       String jvmAgentSetup;
@@ -547,8 +541,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     private final ExecutionEnvironment myEnvironment;
 
     MyTaskRerunAction(BuildProgressListener progressListener,
-                             ExecutionEnvironment environment,
-                             RunContentDescriptor contentDescriptor) {
+                      ExecutionEnvironment environment,
+                      RunContentDescriptor contentDescriptor) {
       myProgressListener = progressListener;
       myContentDescriptor = contentDescriptor;
       myEnvironment = environment;

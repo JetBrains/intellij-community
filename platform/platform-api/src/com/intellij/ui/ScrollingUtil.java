@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -39,10 +25,9 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 /**
- * A helper class for registering Keymap aware navigation actions for lists and trees
+ * A helper class for registering Keymap aware navigation actions for lists and tables
  *
  * @author Konstantin Bulenkov
- * @since 15.0
  */
 public class ScrollingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ScrollingUtil");
@@ -211,19 +196,7 @@ public class ScrollingUtil {
   }
   private static void _ensureRangeIsVisible(JComponent c, int top, int bottom) {
     if (c instanceof JList) {
-      JList list = ((JList)c);
-      int size = list.getModel().getSize();
-      if (top < 0) {
-        top = 0;
-      }
-      if (bottom >= size) {
-        bottom = size - 1;
-      }
-      Rectangle cellBounds = list.getCellBounds(top, bottom);
-      if (cellBounds != null) {
-        cellBounds.x = 0;
-        c.scrollRectToVisible(cellBounds);
-      }
+      ensureRangeIsVisible((JList)c, top, bottom);
     }
     else if (c instanceof JTable) {
       JTable table = (JTable)c;
@@ -512,25 +485,16 @@ public class ScrollingUtil {
       moveHome(table);
       return;
     }
-    int size = table.getModel().getRowCount();
-    int decrement = visible - 1;
+    int step = visible - 1;
     ListSelectionModel selectionModel = table.getSelectionModel();
-    int index = Math.max(selectionModel.getMinSelectionIndex() - decrement, 0);
+    int index = Math.max(selectionModel.getMinSelectionIndex() - step, 0);
     int visibleIndex = getLeadingRow(table, table.getVisibleRect());
-    int top = visibleIndex - decrement;
+    int top = visibleIndex - step;
     if (top < 0) {
       top = 0;
     }
     int bottom = top + visible - 1;
-    if (bottom >= size) {
-      bottom = size - 1;
-    }
-
-    Rectangle cellBounds = getCellBounds(table, top, bottom);
-    table.scrollRectToVisible(cellBounds);
-
-    table.getSelectionModel().setSelectionInterval(index, index);
-    ensureIndexIsVisible(table, index, 0);
+    _scrollAfterPageMove(table, top, bottom, index);
   }
 
   public static void movePageDown(JTable table) {
@@ -540,12 +504,17 @@ public class ScrollingUtil {
       return;
     }
     ListSelectionModel selectionModel = table.getSelectionModel();
-    int size = table.getModel().getRowCount();
-    int increment = visible - 1;
-    int index = Math.min(selectionModel.getMinSelectionIndex() + increment, size - 1);
+    int step = visible - 1;
     int firstVisibleRow = getLeadingRow(table, table.getVisibleRect());
-    int top = firstVisibleRow + increment;
+    int top = firstVisibleRow + step;
     int bottom = top + visible - 1;
+    int size = table.getModel().getRowCount();
+    int index = Math.min(selectionModel.getMinSelectionIndex() + step, size - 1);
+    _scrollAfterPageMove(table, top, bottom, index);
+  }
+
+  private static void _scrollAfterPageMove(JTable table, int top, int bottom, int index) {
+    int size = table.getModel().getRowCount();
     if (bottom >= size) {
       bottom = size - 1;
     }
@@ -568,7 +537,11 @@ public class ScrollingUtil {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent));
+      e.getPresentation().setEnabled(isEnabled());
+    }
+
+    protected boolean isEnabled() {
+      return SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent);
     }
   }
 
@@ -627,8 +600,8 @@ public class ScrollingUtil {
       }
 
       @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!isMultiline(target));
+      protected boolean isEnabled() {
+        return super.isEnabled() && !isMultiline(target);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
     new MyScrollingAction(table) {
@@ -638,8 +611,8 @@ public class ScrollingUtil {
       }
 
       @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!isMultiline(target));
+      protected boolean isEnabled() {
+        return super.isEnabled() && !isMultiline(target);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
     new MyScrollingAction(table) {

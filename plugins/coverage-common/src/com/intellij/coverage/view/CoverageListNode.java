@@ -40,7 +40,7 @@ public class CoverageListNode extends AbstractTreeNode {
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
     final Object[] children = CoverageViewTreeStructure.getChildren(this, myBundle, myStateBean);
-    return (Collection<CoverageListNode>)Arrays.asList((CoverageListNode[])children);
+    return Arrays.asList((CoverageListNode[])children);
   }
 
   @Override
@@ -128,10 +128,10 @@ public class CoverageListNode extends AbstractTreeNode {
 
   private boolean contains(VirtualFile file, PsiDirectory value) {
     if (myStateBean.myFlattenPackages) {
-      return Comparing.equal(((PsiDirectory)value).getVirtualFile(), file.getParent());
+      return Comparing.equal(value.getVirtualFile(), file.getParent());
     }
 
-    if (VfsUtilCore.isAncestor(((PsiDirectory)value).getVirtualFile(), file, false)) {
+    if (VfsUtilCore.isAncestor(value.getVirtualFile(), file, false)) {
       return true;
     }
 

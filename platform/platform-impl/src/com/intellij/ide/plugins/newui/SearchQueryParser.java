@@ -94,7 +94,7 @@ public abstract class SearchQueryParser {
       return;
     }
     if (size == 1) {
-      searchQuery = words.get(0);
+      addToSearchQuery(words.get(0));
       return;
     }
 
@@ -108,17 +108,22 @@ public abstract class SearchQueryParser {
           handleAttribute(name, words.get(index++), invert);
         }
         else {
-          searchQuery = query;
+          addToSearchQuery(query);
           return;
         }
       }
-      else if (searchQuery == null) {
-        searchQuery = name;
-      }
       else {
-        searchQuery = query;
-        return;
+        addToSearchQuery(name);
       }
+    }
+  }
+
+  protected void addToSearchQuery(@NotNull String query) {
+    if (searchQuery == null) {
+      searchQuery = query;
+    }
+    else {
+      searchQuery += " " + query;
     }
   }
 
@@ -136,6 +141,9 @@ public abstract class SearchQueryParser {
 
     public Trending(@NotNull String query) {
       parse(query);
+    }
+
+    protected Trending() {
     }
 
     @NotNull
@@ -189,6 +197,30 @@ public abstract class SearchQueryParser {
     }
   }
 
+  public static class Marketplace extends Trending {
+    public final Set<String> vendors = new HashSet<>();
+
+    public Marketplace(@NotNull String query) {
+      parse(query);
+    }
+
+    @Override
+    protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
+      if (name.equals("/vendor")) {
+        vendors.add(value);
+      }
+      else if (name.startsWith("/")) {
+        super.handleAttribute(name.substring(1), value, invert);
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getUrlQuery() {
+      return super.getUrlQuery();    // TODO: Auto-generated method stub
+    }
+  }
+
   public static class Installed extends SearchQueryParser {
     public Boolean enabled; // False == disabled
     public Boolean bundled; // False == custom
@@ -196,9 +228,16 @@ public abstract class SearchQueryParser {
     public Boolean needUpdate;
     public Boolean deleted;
     public Boolean needRestart; // inactive & after update
-    public final boolean attributes;
+    public boolean attributes;
 
     public Installed(@NotNull String query) {
+      localParse(query);
+    }
+
+    protected Installed() {
+    }
+
+    private void localParse(@NotNull String query) {
       for (String word : splitQuery(query)) {
         if (word.startsWith("#")) {
           handleAttribute(word.substring(1), "", false);
@@ -206,15 +245,14 @@ public abstract class SearchQueryParser {
         else if (word.startsWith("-#")) {
           handleAttribute(word.substring(2), "", true);
         }
-        else if (searchQuery == null) {
-          searchQuery = word;
-        }
         else {
-          searchQuery = query;
-          break;
+          addToSearchQuery(word);
         }
       }
+      parseEnd();
+    }
 
+    protected void parseEnd() {
       attributes = enabled != null || bundled != null || invalid != null || needUpdate != null || deleted != null || needRestart != null;
     }
 
@@ -251,6 +289,47 @@ public abstract class SearchQueryParser {
           needRestart = !invert;
           break;
       }
+    }
+  }
+
+  public static class InstalledWithVendor extends Installed {
+    public final Set<String> vendors = new HashSet<>();
+
+    public InstalledWithVendor(@NotNull String query) {
+      localParse(query);
+    }
+
+    private void localParse(@NotNull String query) {
+      List<String> words = splitQuery(query);
+      int size = words.size();
+
+      if (size == 0) {
+        return;
+      }
+
+      int index = 0;
+      while (index < size) {
+        String name = words.get(index++);
+        if (name.startsWith("/")) {
+          if (name.equals("/vendor:")) {
+            if (index < size) {
+              vendors.add(words.get(index++));
+            }
+            else {
+              addToSearchQuery(query);
+              break;
+            }
+          }
+          else {
+            handleAttribute(name.substring(1), "", false);
+          }
+        }
+        else {
+          addToSearchQuery(name);
+        }
+      }
+
+      parseEnd();
     }
   }
 }

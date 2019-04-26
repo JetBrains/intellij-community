@@ -834,7 +834,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
-      return statement.findExitedStatement() == mySource.getMainStatement();
+      return statement.findExitedElement() == mySource.getMainStatement();
     }
   }
 
@@ -982,13 +982,14 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (!JavaTokenType.NE.equals(binOp.getOperationTokenType())) return null;
       PsiExpression operand = ExpressionUtils.getValueComparedWithNull(binOp);
       if (operand == null) return null;
-      PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(PsiUtil.skipParenthesizedExprDown(operand));
+      PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(operand);
       if (assignment == null) return null;
-      PsiMethodCallExpression readerCall = tryCast(assignment.getRExpression(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression readerCall =
+        tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(readerCall)) return null;
       PsiExpression reader = readerCall.getMethodExpression().getQualifierExpression();
 
-      PsiLocalVariable lineVar = ExpressionUtils.resolveLocalVariable(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()));
+      PsiLocalVariable lineVar = ExpressionUtils.resolveLocalVariable(assignment.getLExpression());
       if (lineVar == null) return null;
       if (ReferencesSearch.search(lineVar).anyMatch(ref -> !PsiTreeUtil.isAncestor(loopStatement, ref.getElement(), true))) {
         return null;
@@ -1295,7 +1296,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Override
     StreamEx<PsiExpression> expressions() {
-      return StreamEx.of(myInitializer, myExpression);
+      return StreamEx.of(myInitializer, myExpression, myCondition).nonNull();
     }
 
     @Override

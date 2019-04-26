@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -51,17 +53,27 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                                 @Nullable PsiElement originalElement,
                                                 final boolean preferShort,
                                                 @Nullable String forcedPropName) {
-    if (element instanceof FakeDocElement) return null;
+    if (element instanceof FakePsiElement) return null;
     element = isWhitespaceOrComment(originalElement) ? element : ObjectUtils.coalesce(originalElement, element);
+    if (originalElement != null && hasFileOrPointerReferences(originalElement.getReferences())) return null;
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     VirtualFile virtualFile = containingFile.getViewProvider().getVirtualFile();
     if (!service.isApplicableToFile(virtualFile)) return null;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
+    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile);
     if (rootSchema == null) return null;
 
     return generateDoc(element, rootSchema, preferShort, forcedPropName);
+  }
+
+  private static boolean hasFileOrPointerReferences(PsiReference[] references) {
+    for (PsiReference reference : references) {
+      if (reference instanceof PsiFileReference
+          || reference instanceof JsonPointerReferenceProvider.JsonSchemaIdReference
+          || reference instanceof JsonPointerReferenceProvider.JsonPointerReference) return true;
+    }
+    return false;
   }
 
   private static boolean isWhitespaceOrComment(@Nullable PsiElement originalElement) {
@@ -76,30 +88,36 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
-    final PsiElement checkable = walker.goUpToCheckable(element);
+    final PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return null;
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true);
+    final JsonPointerPosition position = walker.findPosition(checkable, true);
     if (position == null) return null;
     if (forcedPropName != null) {
       if (isWhitespaceOrComment(element)) {
-        position.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+        position.addFollowingStep(forcedPropName);
       }
       else {
         if (position.isEmpty()) {
           return null;
         }
-        final JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
-        if (lastStep.getName() == null) return null;
-        position.set(position.size() - 1, JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+        if (position.isArray(position.size() - 1)) return null;
+        position.replaceStep(position.size() - 1, forcedPropName);
       }
     }
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(element.getProject(), rootSchema, position).resolve();
 
     String htmlDescription = null;
+    boolean deprecated = false;
     List<JsonSchemaType> possibleTypes = ContainerUtil.newArrayList();
     for (JsonSchemaObject schema : schemas) {
       if (htmlDescription == null) {
         htmlDescription = getBestDocumentation(preferShort, schema);
+        String message = schema.getDeprecationMessage();
+        if (message != null) {
+          if (htmlDescription == null) htmlDescription = message;
+          else htmlDescription = message + "<br/>" + htmlDescription;
+          deprecated = true;
+        }
       }
       if (schema.getType() != null && schema.getType() != JsonSchemaType._any) {
         possibleTypes.add(schema.getType());
@@ -107,22 +125,27 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       else if (schema.getTypeVariants() != null) {
         possibleTypes.addAll(schema.getTypeVariants());
       }
+      else {
+        final JsonSchemaType guessedType = schema.guessType();
+        if (guessedType != null) {
+          possibleTypes.add(guessedType);
+        }
+      }
     }
 
-    return htmlDescription == null
-           ? null
-           : appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription);
+    return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, deprecated, preferShort);
   }
 
-  @NotNull
-  private static String appendNameTypeAndApi(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> position,
+  @Nullable
+  private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,
-                                             @NotNull String htmlDescription) {
+                                             @Nullable String htmlDescription,
+                                             boolean deprecated,
+                                             boolean preferShort) {
     if (position.size() == 0) return htmlDescription;
 
-    JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
-    String name = lastStep.getName();
+    String name = position.getLastName();
     if (name == null) return htmlDescription;
 
     String type = "";
@@ -131,8 +154,14 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       type = ": " + schemaType;
     }
 
-    htmlDescription = DocumentationMarkup.DEFINITION_START + name  + type + apiInfo + DocumentationMarkup.DEFINITION_END +
-                      DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END;
+    String deprecationComment = deprecated ? " (deprecated)" : "";
+    if (preferShort) {
+      htmlDescription = "<b>" + name + "</b>" + type + apiInfo + deprecationComment + (htmlDescription == null ? "" : ("<br/>" + htmlDescription));
+    }
+    else {
+      htmlDescription = DocumentationMarkup.DEFINITION_START + name + type + apiInfo + deprecationComment + DocumentationMarkup.DEFINITION_END +
+                        (htmlDescription == null ? "" : (DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END));
+    }
     return htmlDescription;
   }
 
@@ -141,7 +170,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                              @NotNull JsonSchemaObject rootSchema) {
     JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     String apiInfo = "";
-    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema.getSchemaFile());
+    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema);
     if (provider != null) {
       String information = provider.getThirdPartyApiInformation();
       if (information != null) {

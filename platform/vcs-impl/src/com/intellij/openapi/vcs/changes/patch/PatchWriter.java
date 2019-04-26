@@ -30,7 +30,7 @@ public class PatchWriter {
   public static void writePatches(@NotNull final Project project,
                                   @NotNull String fileName,
                                   @NotNull String basePath,
-                                  @NotNull List<FilePatch> patches,
+                                  @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
                                   @NotNull Charset charset) throws IOException {
     writePatches(project, fileName, basePath, patches, commitContext, charset, false);
@@ -39,7 +39,7 @@ public class PatchWriter {
   public static void writePatches(@NotNull final Project project,
                                   @NotNull String fileName,
                                   @Nullable String basePath,
-                                  @NotNull List<FilePatch> patches,
+                                  @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
                                   @NotNull Charset charset, boolean includeBinaries) throws IOException {
     try (Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset)) {
@@ -50,7 +50,7 @@ public class PatchWriter {
   private static void write(@NotNull Project project,
                             @NotNull Writer writer,
                             @Nullable String basePath,
-                            @NotNull List<FilePatch> patches,
+                            @NotNull List<? extends FilePatch> patches,
                             @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
     final String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
     UnifiedDiffWriter
@@ -61,7 +61,7 @@ public class PatchWriter {
   }
 
   public static void writeAsPatchToClipboard(@NotNull Project project,
-                                             @NotNull List<FilePatch> patches,
+                                             @NotNull List<? extends FilePatch> patches,
                                              @NotNull String basePath,
                                              @Nullable CommitContext commitContext) throws IOException {
     StringWriter writer = new StringWriter();

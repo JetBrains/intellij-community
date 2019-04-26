@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -59,6 +45,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
 
   private final MergingUpdateQueue myUpdateQueue;
   private Runnable myBouncer;
+
+  private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
 
   public OverheadView(@NotNull DebugProcessImpl process) {
     myProcess = process;
@@ -196,17 +184,24 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
         protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (value instanceof OverheadProducer) {
             OverheadProducer overheadProducer = (OverheadProducer)value;
-            if (!overheadProducer.isEnabled()) {
-              SimpleColoredComponent component = new SimpleColoredComponent();
-              overheadProducer.customizeRenderer(component);
-              component.iterator().forEachRemaining(f -> append(f, SimpleTextAttributes.GRAYED_ATTRIBUTES));
-              setIcon(component.getIcon());
+            if (overheadProducer.isObsolete()) {
+              overrideAttributes(overheadProducer, STRIKEOUT_ATTRIBUTES);
+            }
+            else if (!overheadProducer.isEnabled()) {
+              overrideAttributes(overheadProducer, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             else {
               overheadProducer.customizeRenderer(this);
             }
           }
           setTransparentIconBackground(true);
+        }
+
+        private void overrideAttributes(OverheadProducer overhead, SimpleTextAttributes attributes) {
+          SimpleColoredComponent component = new SimpleColoredComponent();
+          overhead.customizeRenderer(component);
+          component.iterator().forEachRemaining(f -> append(f, attributes));
+          setIcon(component.getIcon());
         }
       };
     }

@@ -35,8 +35,8 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
                                       @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
-    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<Data>(file, dataDescriptor, initialSize, lockContext) :
-                   new PersistentEnumerator<Data>(file, dataDescriptor, initialSize);
+    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
+                   new PersistentEnumerator<>(file, dataDescriptor, initialSize);
   }
 
   public PersistentEnumeratorDelegate(@NotNull final File file,
@@ -44,8 +44,8 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
                                       final int initialSize,
                                       @Nullable PagedFileStorage.StorageLockContext lockContext,
                                       int version) throws IOException {
-    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<Data>(file, dataDescriptor, initialSize, lockContext, version) :
-                   new PersistentEnumerator<Data>(file, dataDescriptor, initialSize, null, version);
+    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version) :
+                   new PersistentEnumerator<>(file, dataDescriptor, initialSize, null, version);
   }
 
   static boolean useBtree() {

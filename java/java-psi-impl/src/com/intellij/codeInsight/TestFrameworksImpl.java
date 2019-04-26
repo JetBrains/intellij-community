@@ -94,4 +94,12 @@ public class TestFrameworksImpl extends TestFrameworks {
     }
     return false;
   }
+
+  @Override
+  public boolean isTestMethod(PsiMethod method, boolean checkAbstract) {
+    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
+      if (framework.isTestMethod(method, checkAbstract)) return true;
+    }
+    return false;
+  }
 }

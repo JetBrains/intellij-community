@@ -38,6 +38,7 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
   public void testFalseToNotEqualsJUnit4() { doTest(); }
   public void testObjectEqualsToEquals() { doTest(); }
   public void testTrueToArrayEquals() { doTest(); }
+  public void testNegatedTrue() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {

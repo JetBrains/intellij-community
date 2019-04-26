@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Getter;
@@ -20,14 +6,16 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
 
+@Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "childrenArray()")
 abstract class RefValueHashMap<K,V> implements Map<K,V>{
   private final Map<K,MyReference<K,V>> myMap;
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+  private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   @NotNull
   static IncorrectOperationException pointlessContainsKey() {
@@ -45,18 +33,18 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   }
 
   RefValueHashMap() {
-    myMap = new THashMap<K, MyReference<K,V>>();
+    myMap = new THashMap<>();
   }
 
   RefValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
-    myMap = new THashMap<K, MyReference<K,V>>(strategy);
+    myMap = new THashMap<>(strategy);
   }
 
   protected abstract MyReference<K,V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<? super V> queue);
 
   private void processQueue() {
     while (true) {
-      @SuppressWarnings("unchecked")
+      //noinspection unchecked
       MyReference<K,V> ref = (MyReference<K,V>)myQueue.poll();
       if (ref == null) {
         return;
@@ -128,7 +116,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
+    List<V> result = new ArrayList<>();
     final Collection<MyReference<K, V>> refs = myMap.values();
     for (MyReference<K, V> ref : refs) {
       final V value = ref.get();
@@ -143,5 +131,17 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   @Override
   public Set<Entry<K, V>> entrySet() {
     throw new UnsupportedOperationException();
+  }
+
+  @SuppressWarnings("unused")
+  // used in debugger renderer
+  private Map.Entry[] childrenArray() {
+    return myMap.entrySet().stream()
+      .map(entry -> {
+        Object val = SoftReference.deref(entry.getValue());
+        return val != null ? new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), val) : null;
+      })
+      .filter(Objects::nonNull)
+      .toArray(Entry[]::new);
   }
 }

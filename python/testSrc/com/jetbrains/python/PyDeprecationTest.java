@@ -15,7 +15,8 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.util.ref.GCUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.util.ref.GCWatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -47,7 +48,7 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("deprecation/functionStub.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(file.findTopLevelFunction("getstatus"), ((PsiFileImpl)file).getTreeElement()).tryGc();
     assertNotParsed(file);
     
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
@@ -93,7 +94,8 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("deprecation/deprecatedModule.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(((PsiFileImpl)file).getStub(), ((PsiFileImpl)file).getTreeElement()).tryGc();
+
     assertNotParsed(file);
 
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());

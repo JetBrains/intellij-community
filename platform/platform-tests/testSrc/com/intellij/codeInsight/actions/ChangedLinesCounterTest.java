@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,15 @@ public class ChangedLinesCounterTest extends LightPlatformCodeInsightFixtureTest
 
   @Override
   public void tearDown() throws Exception {
-    myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
-    super.tearDown();
+    try {
+      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void doTest(int expectedLinesChanged) {

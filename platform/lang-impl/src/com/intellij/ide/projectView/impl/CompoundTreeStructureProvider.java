@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -22,10 +24,10 @@ import java.util.Objects;
  * @author Sergey Malenkov
  */
 public final class CompoundTreeStructureProvider implements TreeStructureProvider {
-  private static final TreeStructureProvider EMPTY = new CompoundTreeStructureProvider();
+  private static final TreeStructureProvider EMPTY = new CompoundTreeStructureProvider(Collections.emptyList());
   private static final Key<TreeStructureProvider> KEY = Key.create("TreeStructureProvider");
   private static final Logger LOG = Logger.getInstance(CompoundTreeStructureProvider.class);
-  private final TreeStructureProvider[] providers;
+  private final List<TreeStructureProvider> providers;
 
   /**
    * @return a shared instance for the specified project
@@ -35,12 +37,12 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
     if (project == null || project.isDisposed()) return EMPTY;
     TreeStructureProvider provider = project.getUserData(KEY);
     if (provider != null) return provider;
-    provider = new CompoundTreeStructureProvider(EP_NAME.getExtensions(project));
+    provider = new CompoundTreeStructureProvider(EP.getExtensions(project));
     project.putUserData(KEY, provider);
     return provider;
   }
 
-  public CompoundTreeStructureProvider(@NotNull TreeStructureProvider... providers) {
+  public CompoundTreeStructureProvider(@NotNull List<TreeStructureProvider> providers) {
     this.providers = providers;
   }
 

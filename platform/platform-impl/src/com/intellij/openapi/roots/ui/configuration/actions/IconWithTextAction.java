@@ -33,11 +33,18 @@ public abstract class IconWithTextAction extends AnAction implements CustomCompo
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull final Presentation presentation) {
-    return createCustomComponentImpl(this, presentation);
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    return createCustomComponentImpl(this, presentation, place);
   }
 
-  public static JComponent createCustomComponentImpl(final AnAction action, final Presentation presentation) {
+  @NotNull
+  public static JComponent createCustomComponentImpl(@NotNull AnAction action, @NotNull Presentation presentation, @NotNull String place) {
+    return new ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+  }
+
+  /** @deprecated use {@link IconWithTextAction#createCustomComponentImpl(AnAction, Presentation, String)} */
+  @Deprecated
+  public static JComponent createCustomComponentImpl(AnAction action, Presentation presentation) {
     return new ActionButtonWithText(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
   }
 }

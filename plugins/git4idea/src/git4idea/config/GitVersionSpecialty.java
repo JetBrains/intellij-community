@@ -78,17 +78,6 @@ public enum GitVersionSpecialty {
   },
 
   /**
-   * Git understands {@code 'git status --porcelain'}.
-   * Since 1.7.0.
-   */
-  KNOWS_STATUS_PORCELAIN {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isLaterOrEqual(new GitVersion(1, 7, 0, 0));
-    }
-  },
-
-  /**
    * {@code git fetch --prune} is actually supported since 1.7.0,
    * but before 1.7.7.2 calling {@code git fetch --prune origin master} would delete all other references.
    * This was fixed in {@code ed43de6ec35dfd4c4bd33ae9b5f2ebe38282209f} and added to the Git 1.7.7.2 release.
@@ -165,6 +154,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 0, 0));
+    }
+  },
+
   FOLLOW_IS_BUGGY_IN_THE_LOG {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -212,6 +208,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  SUPPORTS_FORCE_PUSH_WITH_LEASE {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 4, 0));
+    }
+  },
+
   INCOMING_OUTGOING_BRANCH_INFO {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -231,6 +234,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 1, 0, 0));
+    }
+  },
+
+  ENV_GIT_OPTIONAL_LOCKS_ALLOWED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 15, 0, 0));
     }
   },
 

@@ -16,22 +16,34 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiAwareObject;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiElementFromSelectionRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
-    final Object element = dataProvider.getData(PlatformDataKeys.SELECTED_ITEM.getName());
-    if (element instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)element;
-      if (psiElement.isValid()) {
-        return element;
-      }
+    Object item = PlatformDataKeys.SELECTED_ITEM.getData(dataProvider);
+    if (item instanceof PsiElement) {
+      PsiElement element = (PsiElement)item;
+      return element.isValid() ? element : null;
     }
-
+    if (item instanceof PsiAwareObject) {
+      Project project = CommonDataKeys.PROJECT.getData(dataProvider);
+      PsiElement element = project == null ? null : ((PsiAwareObject)item).findElement(project);
+      return element != null && element.isValid() ? element : null;
+    }
+    if (item instanceof VirtualFile) {
+      Project project = CommonDataKeys.PROJECT.getData(dataProvider);
+      PsiElement element = project == null ? null : PsiManager.getInstance(project).findFile((VirtualFile)item);
+      return element != null && element.isValid() ? element : null;
+    }
     return null;
   }
 }

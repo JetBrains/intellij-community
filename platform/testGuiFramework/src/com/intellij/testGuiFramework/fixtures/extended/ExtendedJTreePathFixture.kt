@@ -8,14 +8,18 @@ import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isComponentShowing
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.repeatUntil
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
+import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -89,29 +93,37 @@ import javax.swing.tree.TreePath
 
   fun doubleClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.LEFT_BUTTON, 2)
 
-  fun rightClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.RIGHT_BUTTON, 1)
+  fun rightClickPath(): Unit = repeatUntil({ isComponentShowing(JPopupMenu::class.java) }, {
+    myDriver.clickPath(tree, path, MouseButton.RIGHT_BUTTON, 1)
+  })
 
   fun expandPath() {
-    myDriver.expandPath(tree, path)
+    step("expand path ${path.path.toList()}") { myDriver.expandPath(tree, path) }
   }
+
+  fun isPathSelected(): Boolean = myDriver.isPathSelected(tree, path)
 
   protected fun expandAndGetPathStepByStep(stringPath: List<String>): TreePath {
     fun <T> List<T>.list2tree() = map { subList(0, indexOf(it) + 1) }
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeout = Timeouts.seconds02) {
-          try {
-            partialPath = ExtendedJTreePathFinder(tree)
-              .findMatchingPathByPredicate(predicate = predicate, pathStrings = partialList)
-            partialPath != null
+        step("search partial path $partialList") {
+          GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeout = Timeouts.seconds02) {
+            try {
+              partialPath = ExtendedJTreePathFinder(tree)
+                .findMatchingPathByPredicate(predicate = predicate, pathStrings = partialList)
+              partialPath != null
+            }
+            catch (e: Exception) {
+              false
+            }
           }
-          catch (e: Exception) {
-            false
+          cachePaths[partialList] = partialPath!!
+          step("expand partial path ${cachePaths.getValue(partialList)} for partial list $partialList") {
+            myDriver.expandPath(tree, cachePaths.getValue(partialList))
           }
         }
-        cachePaths[partialList] = partialPath!!
-        myDriver.expandPath(tree, cachePaths.getValue(partialList))
       }
     }
     return cachePaths.getValue(stringPath)

@@ -4,8 +4,8 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jdom.Verifier;
@@ -15,7 +15,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
@@ -37,23 +40,34 @@ public class DefaultJDOMExternalizer {
     writeExternal(data, parentNode, null);
   }
 
-  public static void writeExternal(@NotNull Object data,
-                                   @NotNull Element parentNode,
-                                   @Nullable("null means all elements accepted") JDOMFilter filter) throws WriteExternalException {
-    Field[] fields = data.getClass().getFields();
-
-    for (Field field : fields) {
-      if (field.getName().indexOf('$') >= 0) continue;
+  private static final ConcurrentMap<Class, Map<String, Field>> ourFieldCache = ConcurrentFactoryMap.createMap(c -> {
+    Map<String, Field> result = new LinkedHashMap<>();
+    for (Field field : c.getFields()) {
+      String name = field.getName();
+      if (name.indexOf('$') >= 0 || result.containsKey(name)) continue;
       int modifiers = field.getModifiers();
-      if (!(Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
-          /*!Modifier.isFinal(modifiers) &&*/ !Modifier.isTransient(modifiers) &&
-          field.getAnnotation(Transient.class) == null)) continue;
-
-      field.setAccessible(true); // class might be non-public
-      Class type = field.getType();
-      if (filter != null && !filter.isAccept(field) || field.getDeclaringClass().getAnnotation(Transient.class) != null) {
+      if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers) ||
+          Modifier.isTransient(modifiers) || field.getAnnotation(Transient.class) != null) {
         continue;
       }
+
+      field.setAccessible(true); // class might be non-public
+      if (field.getDeclaringClass().getAnnotation(Transient.class) != null) {
+        continue;
+      }
+      result.put(name, field);
+    }
+    return result;
+  });
+
+  public static void writeExternal(@NotNull Object data,
+                                   @NotNull Element parentNode,
+                                   @Nullable("null means all elements are accepted") JDOMFilter filter) throws WriteExternalException {
+    for (Field field : ourFieldCache.get(data.getClass()).values()) {
+      if (filter != null && !filter.isAccept(field)) {
+        continue;
+      }
+      Class type = field.getType();
       String value = null;
       try {
         if (type.isPrimitive()) {
@@ -156,21 +170,22 @@ public class DefaultJDOMExternalizer {
   public static void readExternal(@NotNull Object data, Element parentNode) throws InvalidDataException{
     if (parentNode == null) return;
 
+    Map<String, Field> fields = ourFieldCache.get(data.getClass());
+
     for (Element e : parentNode.getChildren("option")) {
       String fieldName = e.getAttributeValue("name");
       if (fieldName == null) {
         throw new InvalidDataException();
       }
       try {
-        Field field = data.getClass().getField(fieldName);
-        Class type = field.getType();
-        int modifiers = field.getModifiers();
-        if (!BitUtil.isSet(modifiers, Modifier.PUBLIC) || BitUtil.isSet(modifiers, Modifier.STATIC)) continue;
-        field.setAccessible(true); // class might be non-public
-        if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
+        Field field = fields.get(fieldName);
+        if (field == null) {
+          continue;
+        }
+        if (Modifier.isFinal(field.getModifiers())) {
           // read external contents of final field
           Object value = field.get(data);
-          if (JDOMExternalizable.class.isInstance(value)) {
+          if (value instanceof JDOMExternalizable) {
             final List children = e.getChildren("value");
             for (Object child : children) {
               Element valueTag = (Element)child;
@@ -180,6 +195,7 @@ public class DefaultJDOMExternalizer {
           continue;
         }
         String value = e.getAttributeValue("value");
+        Class type = field.getType();
         if (type.isPrimitive()) {
           if (value != null) {
             if (type.equals(byte.class)) {
@@ -280,16 +296,8 @@ public class DefaultJDOMExternalizer {
           throw new InvalidDataException("wrong type: " + type);
         }
       }
-      catch (NoSuchFieldException ignore) {
-      }
-      catch (SecurityException ex) {
-        throw new InvalidDataException();
-      }
-      catch (IllegalAccessException ex) {
+      catch (SecurityException | InstantiationException | IllegalAccessException ex) {
         throw new InvalidDataException(ex);
-      }
-      catch (InstantiationException ex) {
-        throw new InvalidDataException();
       }
     }
   }

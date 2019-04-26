@@ -27,7 +27,7 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
     checkBox("Automatically add quotes to property names when typing ':'",
              () -> settings.AUTO_QUOTE_PROP_NAME,
              v -> settings.AUTO_QUOTE_PROP_NAME = v);
-    checkBox("Automatically add whitespace when typing ':' after property namess",
+    checkBox("Automatically add whitespace when typing ':' after property names",
              () -> settings.AUTO_WHITESPACE_AFTER_COLON,
              v -> settings.AUTO_WHITESPACE_AFTER_COLON = v);
   }

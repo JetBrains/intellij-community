@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -48,8 +50,7 @@ public abstract class AbstractExternalSystemSettings<
 {
 
   @NotNull private final Topic<L> myChangesTopic;
-  
-  private Project  myProject;
+  private Supplier<Project> myProjectSupplier;
 
   @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
   
@@ -58,17 +59,17 @@ public abstract class AbstractExternalSystemSettings<
 
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
-    myProject = project;
+    myProjectSupplier = project.isDefault() ? ()->ProjectManager.getInstance().getDefaultProject() : ()->project;
   }
 
   @Override
   public void dispose() {
-    myProject = null;
+    myProjectSupplier = null;
   }
 
   @NotNull
   public Project getProject() {
-    return myProject;
+    return myProjectSupplier.get();
   }
 
   public boolean showSelectiveImportDialogOnInitialImport() {
@@ -211,7 +212,7 @@ public abstract class AbstractExternalSystemSettings<
 
   @NotNull
   public L getPublisher() {
-    return myProject.getMessageBus().syncPublisher(myChangesTopic);
+    return getProject().getMessageBus().syncPublisher(myChangesTopic);
   }
 
   protected void fillState(@NotNull State<PS> state) {
@@ -229,15 +230,16 @@ public abstract class AbstractExternalSystemSettings<
             return;
           }
 
+          Project project = getProject();
           for (Object o : linked) {
             final ExternalProjectSettings settings = (ExternalProjectSettings)o;
             for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(myProject);
+              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
               ProjectSystemId externalSystemId = manager.getSystemId();
               if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
-                ExternalProjectsManager.getInstance(myProject).refreshProject(
+                ExternalProjectsManager.getInstance(project).refreshProject(
                   settings.getExternalProjectPath(),
-                  new ImportSpecBuilder(myProject, externalSystemId)
+                  new ImportSpecBuilder(project, externalSystemId)
                     .useDefaultCallback()
                     .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
                     .build()

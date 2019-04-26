@@ -87,7 +87,7 @@ public class StoredContent extends Content {
   }
 
   private static PersistentFS getFS() {
-    return ((PersistentFS)PersistentFS.getInstance());
+    return PersistentFS.getInstance();
   }
 
   public int getContentId() {

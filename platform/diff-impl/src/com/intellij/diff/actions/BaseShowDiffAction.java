@@ -15,20 +15,24 @@
  */
 package com.intellij.diff.actions;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.actions.impl.MutableDiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class BaseShowDiffAction extends AnAction implements DumbAware {
+public abstract class BaseShowDiffAction extends DumbAwareAction {
   BaseShowDiffAction() {
     setEnabledInModalContext(true);
   }
@@ -46,10 +50,10 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    DiffRequest request = getDiffRequest(e);
-    if (request == null) return;
+    DiffRequestChain chain = getDiffRequestChain(e);
+    if (chain == null) return;
 
-    DiffManager.getInstance().showDiff(project, request);
+    DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
   }
 
   protected abstract boolean isAvailable(@NotNull AnActionEvent e);
@@ -59,5 +63,24 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  protected abstract DiffRequest getDiffRequest(@NotNull AnActionEvent e);
+  protected abstract DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
+
+  @NotNull
+  protected static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                       @NotNull VirtualFile file1,
+                                                                       @NotNull VirtualFile file2) {
+    DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+    DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
+
+    DiffContent content1 = contentFactory.create(project, file1);
+    DiffContent content2 = contentFactory.create(project, file2);
+
+    MutableDiffRequestChain chain = new MutableDiffRequestChain(content1, content2);
+
+    chain.setWindowTitle(requestFactory.getTitle(file1, file2));
+    chain.setTitle1(requestFactory.getContentTitle(file1));
+    chain.setTitle2(requestFactory.getContentTitle(file2));
+
+    return chain;
+  }
 }

@@ -4,8 +4,9 @@ package com.intellij.ui.paint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.paint.LinePainter2D.Align;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import static com.intellij.ui.paint.PaintUtil.alignToInt;
  * Draws or fills a rectangle with a stroke defined by {@link StrokeType}. The size of the rectangle is exactly
  * of the requested width/height (unlike in {@link Graphics#drawRect(int, int, int, int)}).
  * <p>
- * It's assumed that the {@link JBUI.ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
+ * It's assumed that the {@link ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
  * passed to the methods of this class. So the user scale factor is not taken into account.
  *
  * @author Sergey.Malenkov
@@ -123,12 +124,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
           path.append(new Rectangle2D.Double(x_out + sw, y_out + sw, w_out - dsw, h_out - dsw), false);
         }
         PaintUtil.paintWithAA(g, arc != null ? valueAA : RenderingHints.VALUE_ANTIALIAS_DEFAULT,
-                              new Runnable() {
-                                       @Override
-                                       public void run() {
-                                         g.fill(path);
-                                       }
-                                     });
+                              () -> g.fill(path));
       }
       else {
         FILL.paint(g, x, y, width, height, arc, strokeType, strokeWidth, valueAA);
@@ -224,12 +220,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
                          new Rectangle2D.Double(x_out, y_out, w_out, h_out);
 
       PaintUtil.paintWithAA(g, arc != null ? valueAA : RenderingHints.VALUE_ANTIALIAS_DEFAULT,
-                            new Runnable() {
-                                     @Override
-                                     public void run() {
-                                       g.fill(rect);
-                                     }
-                                   });
+                            () -> g.fill(rect));
     }
   };
 

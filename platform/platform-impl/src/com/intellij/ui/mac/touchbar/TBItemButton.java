@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class TBItemButton extends TBItem {
+  protected @Nullable Icon myOriginIcon;
   protected @Nullable Icon myIcon;
   protected @Nullable String myText;
   protected int myLayoutBits = 0;
@@ -177,12 +178,32 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  void update(Icon icon, String text, boolean isSelected, boolean isDisabled) {
-    if (icon != null) icon = IconLoader.getDarkIcon(icon, true);
+  synchronized void update(Icon icon, String text, boolean isSelected, boolean isDisabled) {
+    boolean isIconChanged = false;
+    if (!_equals(icon, myOriginIcon)) {
+      myOriginIcon = icon;
+      myIcon = myOriginIcon != null ? IconLoader.getDarkIcon(myOriginIcon, true) : null;
+      isIconChanged = true;
+      // NOTE: some of layered buttons (like 'stop' or 'debug') can change the icon-object permanently (every second) without any visible differences
+      // System.out.printf("\tbutton [%s]: icon has been changed %s -> %s\n", myUid, _icon2string(myIcon), _icon2string(icon));
+    }
 
     int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
     flags = _applyFlag(flags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);
-    _update(icon, text, myAction, flags);
+
+    if (myNativePeer != ID.NIL) {
+      if (isIconChanged)
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_IMG;
+      if (!Comparing.equal(text, myText))
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_TEXT;
+      if (flags != myFlags)
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+    }
+
+    myText = text;
+    myFlags = flags;
+    if (myUpdateOptions != 0)
+      updateNativePeer();
   }
 
   private static boolean _equals(Icon ic0, Icon ic1) {

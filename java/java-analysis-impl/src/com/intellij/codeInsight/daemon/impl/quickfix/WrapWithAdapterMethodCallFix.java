@@ -18,8 +18,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +172,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
   public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     super(expression);
     myType = type;
-    myWrapper = StreamEx.of(WRAPPERS).findFirst(w -> w.isApplicable(expression, expression.getType(), type)).orElse(null);
+    myWrapper = ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type));
   }
 
   @Nls
@@ -198,7 +198,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
     return myType != null &&
            myWrapper != null &&
            myType.isValid() &&
-           ScratchFileService.isInProjectOrScratch(startElement);
+           BaseIntentionAction.canModify(startElement);
   }
 
   @Override

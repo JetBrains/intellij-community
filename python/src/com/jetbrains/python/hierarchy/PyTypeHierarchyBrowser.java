@@ -5,6 +5,7 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.hierarchy.treestructures.PySubTypesHierarchyTreeStructure;
@@ -31,12 +32,12 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     if (!(descriptor instanceof PyHierarchyNodeDescriptor)) {
       return null;
     }
-    return ((PyHierarchyNodeDescriptor)descriptor).getPsiElement();
+    return descriptor.getPsiElement();
   }
 
   @Override
   protected void createTrees(@NotNull Map<String, JTree> trees) {
-    createTreeAndSetupCommonActions(trees, "PyTypeHierarchyPopupMenu");
+    createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
   @Override

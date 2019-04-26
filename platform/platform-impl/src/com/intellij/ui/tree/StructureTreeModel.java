@@ -108,7 +108,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Function<Structure, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
     invoker.runOrInvokeLater(() -> {
       if (!disposed) {
@@ -126,7 +126,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<Node, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<? super Node, ? extends Result> function) {
     Object component = path.getLastPathComponent();
     if (component instanceof Node) {
       Node node = (Node)component;
@@ -141,7 +141,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<Node, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<? super Node, ? extends Result> function) {
     return onValidThread(structure -> {
       Node node = root.get();
       if (node == null) return null;
@@ -390,8 +390,17 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       }
     }
     Comparator<? super Node> comparator = this.comparator;
-    if (comparator != null) list.sort(comparator); // an exception may be thrown while sorting children
-
+    if (comparator != null) {
+      try {
+        list.sort(comparator); // an exception may be thrown while sorting children
+      }
+      catch (IllegalArgumentException exception) {
+        StringBuilder sb = new StringBuilder("unexpected sorting failed in ");
+        sb.append(this);
+        for (Node next : list) sb.append('\n').append(next);
+        LOG.error(sb.toString(), exception);
+      }
+    }
     HashMap<Object, Node> map = new HashMap<>();
     node.getChildren().forEach(child -> {
       Object element = child.getElement();
@@ -536,7 +545,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return isLeaf(null);
     }
 
-    private boolean isLeaf(@Nullable Consumer<Node> validator) {
+    private boolean isLeaf(@Nullable Consumer<? super Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;
@@ -567,7 +576,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a descriptive name for the instance to help a tree identification
    * @see Invoker#Invoker(String, Disposable)
    */
-  @SuppressWarnings("JavadocReference")
   @Override
   public String toString() {
     return description;

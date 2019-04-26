@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -25,7 +26,7 @@ public class FileStorageCoreUtil {
 
   public static final String COMPONENT = "component";
   public static final String NAME = "name";
-  public static final String DEFAULT_EXT = ".xml";
+  public static final String DEFAULT_EXT = PathManager.DEFAULT_EXT;
 
   @NotNull
   public static Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {

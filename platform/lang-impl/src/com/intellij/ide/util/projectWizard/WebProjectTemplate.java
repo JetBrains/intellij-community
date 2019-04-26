@@ -2,7 +2,6 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.module.WebModuleBuilder;
-import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
@@ -20,7 +19,7 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    return WebModuleType.getInstance().createModuleBuilder(this);
+    return new WebModuleBuilder<>(this);
   }
 
   @Nullable

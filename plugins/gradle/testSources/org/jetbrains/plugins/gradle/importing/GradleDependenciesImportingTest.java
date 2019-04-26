@@ -25,8 +25,12 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
@@ -37,6 +41,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,6 +51,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
@@ -462,9 +468,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     List<LibraryOrderEntry> unresolvableDep = getModuleLibDeps("project.main", "Gradle: some:unresolvable-lib:0.1");
     assertEquals(1, unresolvableDep.size());
     LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
-    if(isGradle40orNewer()) {
-      assertTrue(unresolvableEntry.isModuleLevel());
-    }
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
     String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
     assertEquals(1, unresolvableEntryUrls.length);
@@ -501,6 +504,58 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("3.3+") // org.gradle.api.artifacts.ConfigurationPublications was introduced since 3.3
+  public void testSourceSetOutputDirsAsArtifactDependencies() throws Exception {
+    createSettingsFile("rootProject.name = 'server'\n" +
+                       "include 'api'\n" +
+                       "include 'modules:X'\n" +
+                       "include 'modules:Y'");
+    importProject(
+      "configure(subprojects - project(':modules')) {\n" +
+      "    group 'server'\n" +
+      "    version '1.0-SNAPSHOT'\n" +
+      "    apply plugin: 'java'\n" +
+      "    sourceCompatibility = 1.8\n" +
+      "}\n" +
+      "\n" +
+      "project(':api') {\n" +
+      "    sourceSets {\n" +
+      "        webapp\n" +
+      "    }\n" +
+      "    configurations {\n" +
+      "        webappConf {\n" +
+      "            afterEvaluate {\n" +
+      "                sourceSets.webapp.output.each {\n" +
+      "                    outgoing.artifact(it) {\n" +
+      "                        builtBy(sourceSets.webapp.output)\n" +
+      "                    }\n" +
+      "                }\n" +
+      "            }\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n" +
+      "\n" +
+      "def webProjects = [project(':modules:X'), project(':modules:Y')]\n" +
+      "configure(webProjects) {\n" +
+      "    dependencies {\n" +
+      "        compile project(path: ':api', configuration: 'webappConf')\n" +
+      "    }\n" +
+      "}"
+    );
+
+    assertModules("server", "server.modules",
+                  "server.modules.X", "server.modules.X.main", "server.modules.X.test",
+                  "server.modules.Y", "server.modules.Y.main", "server.modules.Y.test",
+                  "server.api", "server.api.main", "server.api.test", "server.api.webapp");
+
+    assertModuleModuleDeps("server.modules.X.main", "server.api.webapp");
+    assertModuleModuleDepScope("server.modules.X.main", "server.api.webapp", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("server.modules.Y.main", "server.api.webapp");
+    assertModuleModuleDepScope("server.modules.Y.main", "server.api.webapp", DependencyScope.COMPILE);
+  }
+
+  @Test
   public void testSourceSetOutputDirsAsRuntimeDependencies() throws Exception {
     importProject(
       "apply plugin: 'java'\n" +
@@ -508,7 +563,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("project", "project.main", "project.test");
-    final String path = pathFromBasedir("build/generated-resources/main");
+    final String path = path("build/generated-resources/main");
     final String depName = PathUtil.toPresentableUrl(path);
     assertModuleLibDep("project.main", depName, "file://" + path);
     assertModuleLibDepScope("project.main", depName, DependencyScope.RUNTIME);
@@ -545,7 +600,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.RUNTIME);
     assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.RUNTIME);
 
-    final String path = pathFromBasedir("projectA/build/generated-resources/main");
+    final String path = path("projectA/build/generated-resources/main");
     final String classesPath = "file://" + path;
     final String depName = PathUtil.toPresentableUrl(path);
     assertModuleLibDep("project.projectA.main", depName, classesPath);
@@ -554,6 +609,63 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project.projectB.main", depName, DependencyScope.COMPILE);
     assertModuleLibDep("project.projectC.main", depName, classesPath);
     assertModuleLibDepScope("project.projectC.main", depName, DependencyScope.RUNTIME);
+  }
+
+  @Test
+  @TargetVersions("3.4+")
+  public void testSourceSetOutputDirsAsDependenciesOfDependantModules() throws Exception {
+    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    importProject(
+      "subprojects { \n" +
+      "    apply plugin: \"java\" \n" +
+      "}\n" +
+      "project(':projectA') {\n" +
+      "  sourceSets.main.output.dir file('generated/projectA')\n" +
+      "}\n" +
+      "project(':projectB') {\n" +
+      "  sourceSets.main.output.dir file('generated/projectB')\n" +
+      "  dependencies {\n" +
+      "    implementation project(':projectA')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':projectC') {\n" +
+      "  dependencies {\n" +
+      "    implementation project(':projectB')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project",
+                  "project.projectA", "project.projectA.main", "project.projectA.test",
+                  "project.projectB", "project.projectB.main", "project.projectB.test",
+                  "project.projectC", "project.projectC.main", "project.projectC.test");
+
+    assertModuleModuleDepScope("project.projectB.main", "project.projectA.main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.RUNTIME);
+    assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.COMPILE);
+
+    final String pathA =
+      FileUtil.toSystemIndependentName(new File(getProjectPath(), "projectA/generated/projectA").getAbsolutePath());
+    final String classesPathA = "file://" + pathA;
+    final String depNameA = PathUtil.toPresentableUrl(pathA);
+
+    final String pathB =
+      FileUtil.toSystemIndependentName(new File(getProjectPath(), "projectB/generated/projectB").getAbsolutePath());
+    final String classesPathB = "file://" + pathB;
+    final String depNameB = PathUtil.toPresentableUrl(pathB);
+
+    assertModuleLibDep("project.projectA.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectA.main", depNameA, DependencyScope.RUNTIME);
+
+    assertModuleLibDep("project.projectB.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectB.main", depNameA, DependencyScope.COMPILE);
+    assertModuleLibDep("project.projectB.main", depNameB, classesPathB);
+    assertModuleLibDepScope("project.projectB.main", depNameB, DependencyScope.RUNTIME);
+
+    assertModuleLibDep("project.projectC.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectC.main", depNameA, DependencyScope.RUNTIME);
+    assertModuleLibDep("project.projectC.main", depNameB, classesPathB);
+    assertModuleLibDepScope("project.projectC.main", depNameB, DependencyScope.COMPILE);
   }
 
   @Test
@@ -591,9 +703,16 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.impl", "project.impl.main", "project.impl.test");
 
     assertModuleModuleDepScope("project.test", "project.main", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.test", EMPTY_STRING_ARRAY);
+
     assertModuleModuleDepScope("project.api.test", "project.api.main", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.api.test", EMPTY_STRING_ARRAY);
+
     assertModuleModuleDepScope("project.impl.test", "project.impl.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.impl.test", "project.api.test", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.impl.test", "project.api.test");
+
+    assertModuleModuleDeps("project.impl.main", EMPTY_STRING_ARRAY);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.api", "project.impl");
@@ -760,13 +879,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleModuleDeps("project.project1.main");
-    assertModuleLibDeps("project.project1.main");
+    assertModuleModuleDeps("project.project1.main", EMPTY_STRING_ARRAY);
+    assertModuleLibDeps("project.project1.main", EMPTY_STRING_ARRAY);
     assertModuleLibDepScope("project.project1.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project.project1.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
 
-    assertModuleModuleDeps("project.project2.main");
-    assertModuleLibDeps("project.project2.main");
+    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
+    assertModuleLibDeps("project.project2.main", EMPTY_STRING_ARRAY);
     assertModuleLibDepScope("project.project2.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project.project2.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
 
@@ -774,6 +893,49 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.project2.test", "project.project2.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.project2.test", "project.project1.test", DependencyScope.COMPILE);
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
+  }
+
+  @Test
+  public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
+    createSettingsFile("include 'project1', 'project2'");
+    createProjectSubFile("project1/build.gradle",
+                         new GradleBuildScriptBuilderEx()
+                           .withJavaPlugin()
+                           .addPostfix(
+                             "configurations {",
+                             "  aParentCfg",
+                             "  compile.extendsFrom aParentCfg",
+                             "}",
+                             "sourceSets {",
+                             "  aParentSrc { java.srcDirs = ['src/aParent/java'] }",
+                             "  main { java { compileClasspath += aParentSrc.output } }",
+                             "}",
+                             "task aParentSrcJar(type:Jar) {",
+                             "    appendix 'parent'",
+                             "    from sourceSets.aParentSrc.output",
+                             "}",
+                             "artifacts {",
+                             "  aParentCfg aParentSrcJar",
+                             "}"
+                           )
+                           .generate()
+    );
+
+    createProjectSubFile("project2/build.gradle",
+                         new GradleBuildScriptBuilderEx().withJavaPlugin().addPostfix(
+                           "dependencies {",
+                           "  compile project(':project1')",
+                           "}"
+                         ).generate());
+
+    importProject("");
+
+    assertModules("project",
+                  "project.project1", "project.project1.main", "project.project1.test", "project.project1.aParentSrc",
+                  "project.project2", "project.project2.main", "project.project2.test");
+
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.aParentSrc");
   }
 
 
@@ -812,8 +974,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleModuleDeps("project.project2.main");
+    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.project1", "project.project2");
@@ -857,8 +1020,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project2", "project.project2.main", "project.project2.test");
 
     assertModuleModuleDeps("project.project2.main", "project.project1.main");
-    assertModuleModuleDeps("project.project2.test", "project.project2.main",
-                           "project.project1.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.main", EMPTY_STRING_ARRAY);
+    assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.project1", "project.project2");
@@ -917,8 +1081,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleOutput("project.project2.main", getProjectPath() + "/project2/buildIdea/main", "");
     assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2/buildIdea/test");
 
-    assertModuleModuleDeps("project.project2.main");
+    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
+    assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.project1", "project.project2");
@@ -1374,5 +1539,22 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertModuleLibDep("project", depName, classesJar.getUrl(), sourcesJar.getUrl(), javadocJar.getUrl());
     }
     assertMergedModuleCompileLibDepScope("project", depName);
+  }
+  
+  @Test
+  @TargetVersions("4.6+")
+  public void testAnnotationProcessorDependencies() throws Exception {
+    importProject(
+      "apply plugin: 'java'\n" +
+    "\n" +
+    "dependencies {\n" +
+    "    compileOnly 'org.projectlombok:lombok:1.16.2'\n" +
+    "    testCompileOnly 'org.projectlombok:lombok:1.16.2'\n" +
+    "    annotationProcessor 'org.projectlombok:lombok:1.16.2'\n" +
+    "}\n");
+
+    final String depName = "Gradle: org.projectlombok:lombok:1.16.2";
+    assertModuleLibDepScope("project.main", depName, DependencyScope.PROVIDED);
+
   }
 }

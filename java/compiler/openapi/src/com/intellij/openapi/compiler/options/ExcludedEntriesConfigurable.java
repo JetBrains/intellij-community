@@ -238,9 +238,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
       if(indexToSelect >= 0) {
         myExcludedTable.setRowSelectionInterval(indexToSelect, indexToSelect);
       }
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myExcludedTable, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myExcludedTable, true));
     }
 
     @Override

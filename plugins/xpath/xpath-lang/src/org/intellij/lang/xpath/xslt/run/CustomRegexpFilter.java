@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -161,7 +162,7 @@ public class CustomRegexpFilter implements Filter {
     return expression;
   }
 
-  public Result applyFilter(final String line, final int entireLength) {
+  public Result applyFilter(@NotNull final String line, final int entireLength) {
 
     final Matcher matcher = myPattern.matcher(line);
     if (matcher.find()) {

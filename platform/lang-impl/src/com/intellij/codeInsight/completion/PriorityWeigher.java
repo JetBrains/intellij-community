@@ -37,12 +37,4 @@ public class PriorityWeigher extends CompletionWeigher {
     }
     return 0.0;
   }
-
-  public static class Negative extends PriorityWeigher {
-    @Override
-    public Double weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-      return -super.weigh(element, location);
-    }
-  }
-
 }

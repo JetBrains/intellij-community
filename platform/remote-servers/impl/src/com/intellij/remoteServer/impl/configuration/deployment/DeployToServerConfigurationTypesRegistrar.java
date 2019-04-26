@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.ApplicationInitializedListener;
-import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.remoteServer.ServerType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,10 +15,8 @@ public class DeployToServerConfigurationTypesRegistrar implements ApplicationIni
   @Override
   public void componentsInitialized() {
     //todo[nik] improve this: configuration types should be loaded lazily
-    ExtensionPoint<ConfigurationType> point = ConfigurationType.CONFIGURATION_TYPE_EP.getPoint(null);
-    for (ServerType serverType : ServerType.EP_NAME.getExtensionList()) {
-      point.registerExtension(new DeployToServerConfigurationType(serverType));
-    }
+    ((ExtensionPointImpl<ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint(null))
+      .registerExtensions(ContainerUtil.map(ServerType.EP_NAME.getExtensionList(), type -> new DeployToServerConfigurationType(type)));
   }
 
   @NotNull

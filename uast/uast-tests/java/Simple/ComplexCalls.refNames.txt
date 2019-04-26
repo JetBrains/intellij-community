@@ -1,0 +1,76 @@
+A -> UClass (name = A) from PsiIdentifier:A
+B -> USimpleNameReferenceExpression (identifier = B) from PsiJavaCodeReferenceElement:B
+B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
+foo -> UMethod (name = foo) from PsiIdentifier:foo
+B -> UClass (name = B) from PsiIdentifier:B
+A -> USimpleNameReferenceExpression (identifier = A) from PsiJavaCodeReferenceElement:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+a -> UField (name = a) from PsiIdentifier:a
+A -> USimpleNameReferenceExpression (identifier = A) from PsiJavaCodeReferenceElement:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiJavaCodeReferenceElement:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+bar -> UMethod (name = bar) from PsiIdentifier:bar
+    A -> USimpleNameReferenceExpression (identifier = A) from PsiJavaCodeReferenceElement:A
+    A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiJavaCodeReferenceElement:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+barR -> UMethod (name = barR) from PsiIdentifier:barR
+String -> USimpleNameReferenceExpression (identifier = String) from PsiJavaCodeReferenceElement:String
+String -> USimpleNameReferenceExpression (identifier = String) from PsiIdentifier:String
+a -> UParameter (name = a) from PsiIdentifier:a
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiReferenceExpression:bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+main -> UMethod (name = main) from PsiIdentifier:main
+String -> USimpleNameReferenceExpression (identifier = String) from PsiJavaCodeReferenceElement:String
+String -> USimpleNameReferenceExpression (identifier = String) from PsiIdentifier:String
+args -> UParameter (name = args) from PsiIdentifier:args
+    B -> USimpleNameReferenceExpression (identifier = B) from PsiJavaCodeReferenceElement:B
+    B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
+    b -> ULocalVariable (name = b) from PsiIdentifier:b
+    B -> USimpleNameReferenceExpression (identifier = B) from PsiJavaCodeReferenceElement:B
+    B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.bar().barR("asdf").bar().foo()
+    foo -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar().barR("asdf").bar().foo
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.bar().barR("asdf").bar()
+    bar -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar().barR("asdf").bar
+    barR -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from PsiMethodCallExpression:b.bar().barR("asdf")
+    barR -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar().barR
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.bar()
+    bar -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiReferenceExpression:b
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    barR -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from PsiIdentifier:barR
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:foo
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.bar().bar().bar().foo()
+    foo -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar().bar().bar().foo
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.bar().bar().bar()
+    bar -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar().bar().bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.bar().bar()
+    bar -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar().bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.bar()
+    bar -> UQualifiedReferenceExpression from PsiReferenceExpression:b.bar
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiReferenceExpression:b
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:foo
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.a.a.a.bar().a.foo()
+    foo -> UQualifiedReferenceExpression from PsiReferenceExpression:b.a.a.a.bar().a.foo
+    a -> UQualifiedReferenceExpression from PsiReferenceExpression:b.a.a.a.bar().a
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:b.a.a.a.bar()
+    bar -> UQualifiedReferenceExpression from PsiReferenceExpression:b.a.a.a.bar
+    a -> UQualifiedReferenceExpression from PsiReferenceExpression:b.a.a.a
+    a -> UQualifiedReferenceExpression from PsiReferenceExpression:b.a.a
+    a -> UQualifiedReferenceExpression from PsiReferenceExpression:b.a
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiReferenceExpression:b
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:foo

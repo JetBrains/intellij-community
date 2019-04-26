@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -462,8 +463,8 @@ class FindExtremumMigration extends BaseStreamApiMigration {
 
 
       final TerminalBlock terminalBlock;
-      PsiType variableType = variable.getType();
-      if(!variableType.equals(myExtremum.getType())) {
+      PsiType variableType = myLoopVarExpression.getType();
+      if(!Objects.equals(variableType, myExtremum.getType())) {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
         PsiExpression variableExpr = factory.createExpressionFromText(name, variable);
         terminalBlock = blockWithMap.add(new StreamApiMigrationInspection.MapOp(variableExpr, variable, type));
@@ -526,8 +527,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
 
       PsiExpression extremumInitializer = extremum.getInitializer();
       if (!ExpressionUtils.isEvaluatedAtCompileTime(extremumInitializer)) return null;
-      return new PrimitiveExtremumTerminal(comparison.isMax(), terminalBlock, comparisonLoopVarExpr, extremum, extremumInitializer
-      );
+      return new PrimitiveExtremumTerminal(comparison.isMax(), terminalBlock, comparisonLoopVarExpr, extremum, extremumInitializer);
     }
   }
 

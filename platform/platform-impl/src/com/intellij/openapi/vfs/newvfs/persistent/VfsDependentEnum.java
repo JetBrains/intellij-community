@@ -22,7 +22,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -49,17 +48,21 @@ public class VfsDependentEnum<T> {
   private final Object myLock = new Object();
   private boolean myTriedToLoadFile;
 
-  public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version, File basePath) {
-    myFile = new File(basePath, DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
+  public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version) {
+    myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
     myKeyDescriptor = descriptor;
     myVersion = version;
   }
 
-  static File getBaseFile(FSRecords fsRecords) {
-    return new File(fsRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+  static File getBaseFile() {
+    return new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   }
 
   public int getId(@NotNull T s) throws IOException {
+    return getIdRaw(s, true);
+  }
+
+  int getIdRaw(@NotNull T s, boolean vfsRebuildOnException) throws IOException {
     Integer integer = myInstanceToId.get(s);
     if (integer != null) return integer;
 
@@ -80,7 +83,7 @@ public class VfsDependentEnum<T> {
         return enumerated;
       }
       catch (IOException e) {
-        invalidate(e);
+        invalidate(e, vfsRebuildOnException);
         throw e;
       }
     }
@@ -91,7 +94,7 @@ public class VfsDependentEnum<T> {
 
     try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(fileOutputStream))) {
       if (myFile.length() == 0) {
-        DataInputOutputUtil.writeTIME(output, FSRecords.getInstance().getCreationTimestamp());
+        DataInputOutputUtil.writeTIME(output, FSRecords.getCreationTimestamp());
         DataInputOutputUtil.writeINT(output, myVersion);
       }
       myKeyDescriptor.save(output, instance);
@@ -112,7 +115,7 @@ public class VfsDependentEnum<T> {
       try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)))) {
         long vfsVersion = DataInputOutputUtil.readTIME(input);
 
-        if (vfsVersion != FSRecords.getInstance().getCreationTimestamp()) {
+        if (vfsVersion != FSRecords.getCreationTimestamp()) {
           // vfs was rebuilt, so the list will be rebuilt
           deleteFile = true;
           return false;
@@ -147,17 +150,15 @@ public class VfsDependentEnum<T> {
   }
 
   // GuardedBy("myLock")
-  private void invalidate(@NotNull Throwable e) {
+  private void invalidate(@NotNull Throwable e, boolean vfsRebuildOnException) {
     if (!myMarkedForInvalidation) {
       myMarkedForInvalidation = true;
-      doInvalidation(e); // exception will be rethrown in this call
+      // exception will be rethrown in this call
+      FileUtil.deleteWithRenaming(myFile); // better alternatives ?
+      if (vfsRebuildOnException) {
+        FSRecords.requestVfsRebuild(e);
+      }
     }
-  }
-
-  @Contract("_->fail")
-  private void doInvalidation(@NotNull Throwable e) {
-    FileUtil.deleteWithRenaming(myFile); // better alternatives ?
-    FSRecords.getInstance().requestVfsRebuild(e);
   }
 
   private void register(@NotNull T instance, int id) {
@@ -192,7 +193,7 @@ public class VfsDependentEnum<T> {
         assert false : "Reading nonexistent value:" + id + "," + myFile + ", loaded:" + loaded;
       }
       catch (IOException | AssertionError e) {
-        invalidate(e);
+        invalidate(e, true);
         throw e;
       }
     }

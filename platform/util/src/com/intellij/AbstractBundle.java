@@ -49,16 +49,13 @@ public abstract class AbstractBundle {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
       bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
-      myBundle = new SoftReference<ResourceBundle>(bundle);
+      myBundle = new SoftReference<>(bundle);
     }
     return bundle;
   }
 
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
-    ConcurrentFactoryMap.createWeakMap(new Function<ClassLoader, Map<String, ResourceBundle>>() {
-      @Override
-      public Map<String, ResourceBundle> fun(ClassLoader k) {return ContainerUtil.createConcurrentSoftValueMap();}
-    });
+    ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
 
   public static ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     Map<String, ResourceBundle> map = ourCache.get(loader);

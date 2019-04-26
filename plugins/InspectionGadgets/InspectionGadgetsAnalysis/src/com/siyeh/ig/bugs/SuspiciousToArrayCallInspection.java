@@ -91,7 +91,8 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       if (arguments.length != 1) {
         return;
       }
-      final PsiExpression argument = arguments[0];
+      final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+      if (argument == null) return;
 
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();

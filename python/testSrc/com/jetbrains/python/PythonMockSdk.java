@@ -15,26 +15,21 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.List;
 
 /**
  * @author yole
@@ -45,13 +40,7 @@ public class PythonMockSdk {
   private PythonMockSdk() {
   }
 
-  public static Sdk findOrCreate(final String version, @NotNull final VirtualFile... additionalRoots) {
-    final List<Sdk> sdkList = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
-    for (Sdk sdk : sdkList) {
-      if (sdk.getName().equals(MOCK_SDK_NAME + " " + version)) {
-        return sdk;
-      }
-    }
+  public static Sdk create(final String version, @NotNull final VirtualFile... additionalRoots) {
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
     String sdkHome = new File(mock_path, "bin/python" + version).getPath();
@@ -76,7 +65,6 @@ public class PythonMockSdk {
       }
     });
 
-
     String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
     roots.putValue(PythonSdkType.BUILTIN_ROOT_TYPE, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path));
 
@@ -84,12 +72,7 @@ public class PythonMockSdk {
       roots.putValue(OrderRootType.CLASSES, root);
     }
 
-
     MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, sdkType);
-
-    final FileBasedIndex index = FileBasedIndex.getInstance();
-    index.requestRebuild(StubUpdatingIndex.INDEX_ID);
-    index.requestRebuild(PyModuleNameIndex.NAME);
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
     return sdk.clone();

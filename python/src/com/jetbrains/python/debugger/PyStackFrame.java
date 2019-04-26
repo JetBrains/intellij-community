@@ -161,7 +161,8 @@ public class PyStackFrame extends XStackFrame {
         }
         else {
           int groupIndex = -1;
-          if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE)) && name.length() > 4) {
+          if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE)) && name.length() > 4 &&
+              !name.equals("__exception__")) {
             groupIndex = DUNDER_VALUES_IND;
           }
           else if (pyValue.isIPythonHidden()) {

@@ -24,5 +24,14 @@ public interface CustomComponentAction {
    * to retrieve current component from a Presentation instance in {@link AnAction#update(AnActionEvent)} method.
    */
   @NotNull
-  JComponent createCustomComponent(@NotNull Presentation presentation);
+  default JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    return createCustomComponent(presentation);
+  }
+
+  /** @deprecated Use {@link CustomComponentAction#createCustomComponent(Presentation, String)} */
+  @Deprecated
+  @NotNull
+  default JComponent createCustomComponent(@NotNull Presentation presentation) {
+    throw new AssertionError();
+  }
 }

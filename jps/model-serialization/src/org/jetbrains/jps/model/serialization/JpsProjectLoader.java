@@ -49,11 +49,13 @@ import java.util.stream.Stream;
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
-  private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
-  private static final ExecutorService
-    ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsProjectLoader Pool", SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
+
+  private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
+  private static final ExecutorService ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "JpsProjectLoader Pool", SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
+
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
   private final boolean myLoadUnloadedModules;
@@ -67,19 +69,16 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, @NotNull Path baseDir) {
-    final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
+    JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
     expander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, baseDir.toFile());
     return expander;
   }
 
-  public static void loadProject(final JpsProject project,
-                                 Map<String, String> pathVariables,
-                                 String projectPath) throws IOException {
+  public static void loadProject(JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
     loadProject(project, pathVariables, projectPath, false);
   }
 
-  public static void loadProject(final JpsProject project, Map<String, String> pathVariables, String projectPath,
-                                 boolean loadUnloadedModules) throws IOException {
+  public static void loadProject(JpsProject project, Map<String, String> pathVariables, String projectPath, boolean loadUnloadedModules) throws IOException {
     Path file = Paths.get(FileUtil.toCanonicalPath(projectPath));
     if (Files.isRegularFile(file) && projectPath.endsWith(".ipr")) {
       new JpsProjectLoader(project, pathVariables, file.getParent(), loadUnloadedModules).loadFromIpr(file);
@@ -108,8 +107,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         return value;
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
     return dir.getParent().getFileName().toString();
   }
 
@@ -131,9 +129,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
     String prefixedComponentName = "External" + componentName;
     Element externalData = null;
-    for (Element child : (JDOMUtil.getChildren(loadRootElement(externalConfigDir.resolve(configFile.getFileName()))))) {
+    for (Element child : JDOMUtil.getChildren(loadRootElement(externalConfigDir.resolve(configFile.getFileName())))) {
       // be ready to handle both original name and prefixed
-      if (child.getName().equals(prefixedComponentName) || child.getName().equals(componentName)) {
+      if (child.getName().equals(prefixedComponentName) || JDomSerializationUtil.isComponent(prefixedComponentName, child) ||
+          child.getName().equals(componentName) || JDomSerializationUtil.isComponent(componentName, child)) {
         externalData = child;
         break;
       }
@@ -320,9 +319,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final List<Path> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
-      final Path file = Paths.get(path);
-      if (foundFiles.add(file) && !unloadedModules.contains(getModuleName(file))) {
-        moduleFiles.add(file);
+      if (path != null) {
+        final Path file = Paths.get(path);
+        if (foundFiles.add(file) && !unloadedModules.contains(getModuleName(file))) {
+          moduleFiles.add(file);
+        }
       }
     }
 
@@ -340,8 +341,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @NotNull
-  public static List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
-                                            @NotNull final Map<String, String> pathVariables) {
+  public static List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
+                                            @Nullable JpsSdkType<?> projectSdkType,
+                                            @NotNull Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
     Path externalModuleDir = resolveExternalProjectConfig("modules");
@@ -351,17 +353,19 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
     for (Path file : moduleFiles) {
       futureModuleFilesContents.add(ourThreadPool.submit(() -> {
-        final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
+        JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
 
         Element data = loadRootElement(file, expander);
-        Path externalPath = externalModuleDir == null ? null : externalModuleDir.resolve(FileUtilRt.getNameWithoutExtension(file.getFileName().toString()) + ".xml");
-        Element externalData = externalPath == null ? null : loadRootElement(externalPath, expander);
-        if (externalData != null) {
-          if (data == null) {
-            data = externalData;
-          }
-          else {
-            JDOMUtil.merge(data, externalData);
+        if (externalModuleDir != null) {
+          String externalName = FileUtilRt.getNameWithoutExtension(file.getFileName().toString()) + ".xml";
+          Element externalData = loadRootElement(externalModuleDir.resolve(externalName), expander);
+          if (externalData != null) {
+            if (data == null) {
+              data = externalData;
+            }
+            else {
+              JDOMUtil.merge(data, externalData);
+            }
           }
         }
 
@@ -492,8 +496,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       }
 
       @Override
-      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element componentElement) {
-      }
+      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element componentElement) { }
     };
   }
 }

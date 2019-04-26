@@ -5,12 +5,14 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -57,20 +59,7 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement psiElement = myDescriptor.getPsiElement();
-    if (psiElement == null || !psiElement.isValid()) return false;
-    final LocalQuickFix fix = getFix();
-    if (!(fix instanceof ElementAwareLocalQuickFix)) {
-      return true;
-    }
-    int offset = editor.getCaretModel().getOffset();
-    if (myDescriptor instanceof ProblemDescriptorBase) {
-      TextRange range = ((ProblemDescriptorBase)myDescriptor).getTextRange();
-      if (range != null && range.getEndOffset() == offset) {
-        offset--;
-      }
-    }
-    PsiElement element = file.findElementAt(offset);
-    return element == null || ((ElementAwareLocalQuickFix)fix).isAvailable(project, myDescriptor, element);
+    return psiElement != null && psiElement.isValid();
   }
 
   @Override
@@ -113,6 +102,12 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   @TestOnly
   public ProblemHighlightType getHighlightType() {
     return myDescriptor.getHighlightType();
+  }
+  
+  @Nullable
+  public PsiFile getFile() {
+    PsiElement element = myDescriptor.getPsiElement();
+    return element != null ? element.getContainingFile() : null;
   }
 
   public String toString() {

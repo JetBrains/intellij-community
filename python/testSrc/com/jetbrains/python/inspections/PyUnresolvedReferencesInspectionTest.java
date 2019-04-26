@@ -764,6 +764,29 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-22508
+  public void testFakesFromTypeshed() {
+    doTestByText("print(<error descr=\"Unresolved reference 'function'\">function</error>)\n" +
+                 "print(<error descr=\"Unresolved reference 'module'\">module</error>)");
+  }
+
+  // PY-29929
+  public void testAttrsSpecialAttribute() {
+    doTestByText("import attr\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class C:\n" +
+                 "    a = attr.ib()\n" +
+                 "\n" +
+                 "print(C.__attrs_attrs__)\n" +
+                 "print(C(1).__attrs_attrs__)");
+  }
+
+  // PY-32927
+  public void testPrefixExpressionOnClassHavingSkeletons() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

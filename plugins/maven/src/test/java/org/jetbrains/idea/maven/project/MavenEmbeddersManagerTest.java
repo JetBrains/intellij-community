@@ -32,6 +32,9 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
     try {
       myManager.releaseForcefullyInTests();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

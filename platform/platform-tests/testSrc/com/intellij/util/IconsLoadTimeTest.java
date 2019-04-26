@@ -33,7 +33,6 @@ public class IconsLoadTimeTest {
   @Before
   public void setState() {
     TestScaleHelper.setSystemProperty("idea.is.internal", "true");
-    TestScaleHelper.setRegistryProperty("ide.svg.icon", "true");
   }
 
   @After

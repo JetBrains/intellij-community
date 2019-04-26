@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -174,7 +175,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return {@code true} if glass pane can process the specified event, {@code false} otherwise
    */
   @Override
-  public boolean canBePreprocessed(MouseEvent event) {
+  public boolean canBePreprocessed(@NotNull MouseEvent event) {
     return JBScrollPane.canBePreprocessed(event, this);
   }
 
@@ -242,6 +243,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
         myFractionalRemainder = deltaAdjusted - (double)valueAdjusted;
         setValue(value + valueAdjusted);
       }
+    }
+    else if (delta != 0.0) {
+      return true; // do not consume event if it can be processed by parent component
     }
     event.consume();
     return true;

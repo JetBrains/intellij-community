@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.regexp;
 
+import java.util.EnumSet;
+
 /**
  * @author yole
  */
@@ -83,6 +85,11 @@ public enum RegExpCapability {
   CARET_NEGATED_PROPERTIES,
 
   /**
+   * supports properties with name and value like \p{name=value}
+   */
+  PROPERTY_VALUES,
+
+  /**
    * \\u, \l, \\U, \L, and \E
    */
   TRANSFORMATION_ESCAPES,
@@ -121,4 +128,14 @@ public enum RegExpCapability {
    * MySQL character classes [=c=] [.class.] [:<:] [:>:]
    */
   MYSQL_BRACKET_EXPRESSIONS,
+
+  /**
+   * \g{[integer]} \g[unsigned integer]
+   */
+  PCRE_BACK_REFERENCES,
+  ;
+  static final EnumSet<RegExpCapability> DEFAULT_CAPABILITIES = EnumSet.of(NESTED_CHARACTER_CLASSES,
+                                                                           ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+                                                                           UNICODE_CATEGORY_SHORTHAND,
+                                                                           EXTENDED_UNICODE_CHARACTER);
 }

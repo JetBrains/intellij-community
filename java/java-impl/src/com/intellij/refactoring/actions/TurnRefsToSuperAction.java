@@ -23,7 +23,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class TurnRefsToSuperAction extends BaseRefactoringAction {
+public class TurnRefsToSuperAction extends BaseJavaRefactoringAction {
   @Override
   public boolean isAvailableInEditorOnly() {
     return false;

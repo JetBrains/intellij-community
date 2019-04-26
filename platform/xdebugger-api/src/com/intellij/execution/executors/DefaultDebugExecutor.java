@@ -18,6 +18,7 @@ package com.intellij.execution.executors;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -52,7 +53,7 @@ public class DefaultDebugExecutor extends Executor {
 
   @Override
   public Icon getDisabledIcon() {
-    return AllIcons.Process.DisabledDebug;
+    return IconLoader.getDisabledIcon(getIcon());
   }
 
   @Override

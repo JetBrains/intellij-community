@@ -92,6 +92,7 @@ public class ParenthesesUtils {
   }
 
   @Contract("null -> null")
+  @Nullable
   public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;

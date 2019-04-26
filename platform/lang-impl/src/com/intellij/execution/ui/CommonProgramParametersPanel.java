@@ -104,7 +104,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
       @Override
       public void actionPerformed(ActionEvent e) {
         List<String> macros = new ArrayList<>();
-        ComboBoxModel<String> model = myWorkingDirectoryComboBox.getChildComponent().getModel();
+        ComboBoxModel<String> model = myWorkingDirectoryComboBox.getModel();
         for (int i = 0; i < model.getSize(); ++i) {
           macros.add(model.getElementAt(i));
         }
@@ -150,7 +150,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   public void addWorkingDirectoryListener(Consumer<? super String> onTextChange) {
-    myWorkingDirectoryComboBox.getChildComponent().addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
+    myWorkingDirectoryComboBox.addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
   }
 
   public void setWorkingDirectory(String dir) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.ErrorInfo;
@@ -81,7 +81,7 @@ public abstract class PropertyTable extends JBTable {
 
     setShowVerticalLines(false);
     setIntercellSpacing(new Dimension(0, 1));
-    setGridColor(UIUtil.getSlightlyDarkerColor(getBackground()));
+    setGridColor(ColorUtil.darker(getBackground(), 1));
 
     setColumnSelectionAllowed(false);
     setCellSelectionEnabled(false);
@@ -159,8 +159,8 @@ public abstract class PropertyTable extends JBTable {
     InputMap focusedInputMap = getInputMap(JComponent.WHEN_FOCUSED);
     InputMap ancestorInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    actionMap.put("selectPreviousRow", new MySelectNextPreviousRowAction(false));
-    actionMap.put("selectNextRow", new MySelectNextPreviousRowAction(true));
+    actionMap.put(TableActions.Up.ID, new MySelectNextPreviousRowAction(false));
+    actionMap.put(TableActions.Down.ID, new MySelectNextPreviousRowAction(true));
 
     actionMap.put("startEditing", new MyStartEditingAction());
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "startEditing");
@@ -404,7 +404,7 @@ public abstract class PropertyTable extends JBTable {
 
     if (size > 0) {
       List<Property> rootProperties = new ArrayList<>();
-      for (Property each : (Iterable<? extends Property>)getProperties(myContainers.get(0))) {
+      for (Property each : getProperties(myContainers.get(0))) {
         addIfNeeded(getCurrentComponent(), each, rootProperties);
       }
       sortPropertiesAndCreateGroups(rootProperties);
@@ -1128,9 +1128,6 @@ public abstract class PropertyTable extends JBTable {
 
         if (component instanceof JComboBox) {
           ComboBox.registerTableCellEditor((JComboBox)component, this);
-        }
-        else if (component instanceof JCheckBox) {
-          if (UIUtil.isUnderAquaLookAndFeel()) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
         }
 
         return component;

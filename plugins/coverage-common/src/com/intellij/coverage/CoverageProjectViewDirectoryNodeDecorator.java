@@ -1,20 +1,23 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
-  public CoverageProjectViewDirectoryNodeDecorator(final CoverageDataManager coverageDataManager) {
-    super(coverageDataManager);
+final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
+  CoverageProjectViewDirectoryNodeDecorator(@NotNull Project project) {
+    super(project);
   }
 
   @Override
@@ -24,9 +27,15 @@ public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageP
       return;
     }
 
-    final CoverageDataManager manager = getCoverageDataManager();
+    Project project = element.getProject();
+
+    final CoverageDataManager manager = getCoverageDataManager(project);
+    if (manager == null) {
+      return;
+    }
+
     final CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
-    final CoverageAnnotator coverageAnnotator = currentSuite != null ? currentSuite.getAnnotator(element.getProject()) : null;
+    final CoverageAnnotator coverageAnnotator = currentSuite != null ? currentSuite.getAnnotator(project) : null;
     if (coverageAnnotator == null) {
       // N/A
       return;
@@ -46,10 +55,16 @@ public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageP
 
   @Override
   public void decorate(ProjectViewNode node, PresentationData data) {
-    final CoverageDataManager manager = getCoverageDataManager();
+    Project project = node.getProject();
+    if (project == null) {
+      return;
+    }
+
+    final CoverageDataManager manager = getCoverageDataManager(project);
+    if (manager == null) return;
     final CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
-    final CoverageAnnotator coverageAnnotator = currentSuite != null ? currentSuite.getAnnotator(node.getProject())
-                                                                     : null;
+
+    final CoverageAnnotator coverageAnnotator = currentSuite == null ? null : currentSuite.getAnnotator(project);
     if (coverageAnnotator == null) {
       // N/A
       return;
@@ -75,5 +90,4 @@ public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageP
       data.setLocationString(informationString);
     }
   }
-
 }

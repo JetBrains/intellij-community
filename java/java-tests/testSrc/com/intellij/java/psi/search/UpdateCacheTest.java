@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -15,7 +14,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -36,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -69,7 +68,10 @@ public class UpdateCacheTest extends PsiTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ProjectManager.getInstance().closeProject(myProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(myProject, false);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -93,7 +95,7 @@ public class UpdateCacheTest extends PsiTestCase {
     VirtualFile root = ProjectRootManager.getInstance(myProject).getContentRoots()[0];
 
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "New.java";
-    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(CharsetToolkit.UTF8_CHARSET));
+    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -141,17 +143,17 @@ public class UpdateCacheTest extends PsiTestCase {
     PlatformTestUtil.saveProject(myProject);
     final VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
     Project project = myProject;
-    ProjectUtil.closeAndDispose(project);
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
     myProject = null;
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
 
     assertTrue("Project was not disposed", project.isDisposed());
     myModule = null;
-    
+
     final File file = new File(root.getPath(), "1.java");
     assertTrue(file.exists());
 
-    FileUtil.writeToFile(file, "class A{ Object o;}".getBytes(CharsetToolkit.UTF8_CHARSET));
+    FileUtil.writeToFile(file, "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     root.refresh(false, true);
 
     LocalFileSystem.getInstance().refresh(false);
@@ -181,7 +183,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "dir" + File.separatorChar + "New.java";
     LOG.assertTrue(new File(newFilePath).getParentFile().mkdir());
-    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(CharsetToolkit.UTF8_CHARSET));
+    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -206,9 +208,9 @@ public class UpdateCacheTest extends PsiTestCase {
   public void testTodoConfigurationChange() {
     TodoPattern pattern = new TodoPattern("newtodo", TodoAttributesUtil.createDefault(), true);
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns();
-    
+
     checkTodos(new String[]{"2.java"});
-    
+
     TodoConfiguration.getInstance().setTodoPatterns(new TodoPattern[]{pattern});
 
     try{
@@ -317,7 +319,7 @@ public class UpdateCacheTest extends PsiTestCase {
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);
     // currently it actually finds usages by FQN due to Java PSI enabled for out-of-source java files
-    // so the following check is disabled 
+    // so the following check is disabled
     //checkUsages(exceptionClass, new String[]{});
     checkTodos(new String[]{"2.java", "New.java"});
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -131,7 +131,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
           final WorkerThreadRequest currentRequest = getCurrentRequest();
           if(currentRequest != threadRequest) {
-            reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest));
+            reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed()));
             break; // ensure events are processed by one thread at a time
           }
 

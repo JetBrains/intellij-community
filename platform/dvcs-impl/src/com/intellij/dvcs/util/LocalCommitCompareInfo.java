@@ -8,6 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class LocalCommitCompareInfo extends CommitCompareInfo {
-  public abstract void copyChangesFromBranch(@NotNull List<Change> changes,
+  public abstract void copyChangesFromBranch(@NotNull List<? extends Change> changes,
                                              boolean swapSides) throws VcsException;
 }

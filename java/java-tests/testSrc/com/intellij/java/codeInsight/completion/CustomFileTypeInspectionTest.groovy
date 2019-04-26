@@ -17,10 +17,12 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class CustomFileTypeInspectionTest extends LightCodeInsightFixtureTestCase {
 
   void testSpellChecking() {

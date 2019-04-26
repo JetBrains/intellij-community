@@ -26,15 +26,9 @@ public class ProjectScope {
     "CONTENT_SCOPE_KEY",
     project -> ProjectScopeBuilder.getInstance(project).buildContentScope());
 
-  private static final NotNullLazyKey<EverythingGlobalScope, Project> EVERYTHING_SCOPE_KEY = NotNullLazyKey.create(
+  private static final NotNullLazyKey<GlobalSearchScope, Project> EVERYTHING_SCOPE_KEY = NotNullLazyKey.create(
     "EVERYTHING_SCOPE_KEY",
-    project -> new EverythingGlobalScope(project) {
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return "All Places";
-      }
-    });
+    project -> ProjectScopeBuilder.getInstance(project).buildEverythingScope());
 
   private ProjectScope() { }
 

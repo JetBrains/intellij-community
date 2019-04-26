@@ -19,7 +19,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -61,7 +60,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myClass.isValid() || !ScratchFileService.isInProjectOrScratch(myClass)) return false;
+    if (!myClass.isValid() || !canModify(myClass)) return false;
     PsiClass base = myClass.getSuperClass();
     if (base == null) return false;
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(base, myClass, PsiSubstitutor.EMPTY);

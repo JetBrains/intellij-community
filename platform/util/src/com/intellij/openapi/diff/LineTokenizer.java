@@ -32,7 +32,7 @@ public class LineTokenizer extends LineTokenizerBase<String> {
 
   @NotNull
   public String[] execute() {
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     doExecute(lines);
     return ArrayUtil.toStringArray(lines);
   }

@@ -14,7 +14,6 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
 rowConstraints:
   constraints:
-  - {}
   - align: &id003 {horizontal: false, unit: -1, value: 0.0}
     noGrid: true
   - align: *id003
@@ -30,7 +29,6 @@ rowConstraints:
       min: *id005
       preferred: *id005
   - align: *id003
-  - {}
   - align: *id003
     noGrid: true
   - align: *id003
@@ -39,7 +37,7 @@ rowConstraints:
       min: *id006
       preferred: *id006
   - align: *id003
-  count: 11
+  count: 9
 columnConstraints:
   constraints:
   - gapAfter:
@@ -50,7 +48,7 @@ columnConstraints:
   - {}
   count: 2
 componentConstrains:
-  'TitledSeparator #0':
+  Async Profiler [titledSeparator]:
     horizontal: {grow: 100.0}
     spanX: 2097051
     vertical:
@@ -62,7 +60,7 @@ componentConstrains:
         preferred: *id009
     wrap: true
   'HyperlinkLabel #1': {spanX: 2097051, wrap: true}
-  'Agent path:': {}
+  Agent path [label]: {}
   'TextFieldWithBrowseButton #3':
     horizontal:
       grow: 100.0
@@ -70,7 +68,7 @@ componentConstrains:
         min: {horizontal: true, value: 350.0}
     spanX: 2097051
     wrap: true
-  If field is empty bundled agent will be used:
+  If field is empty bundled agent will be used [label]:
     horizontal:
       gapBefore:
         min: &id010 {horizontal: true, value: 5.0}
@@ -78,7 +76,7 @@ componentConstrains:
     skip: 1
     spanX: 2097051
     wrap: true
-  'Agent options:': {}
+  Agent options [label]: {}
   'TextFieldWithBrowseButton #6':
     horizontal:
       grow: 100.0
@@ -86,7 +84,7 @@ componentConstrains:
         min: {horizontal: true, value: 350.0}
     spanX: 2097051
     wrap: true
-  Don't add output format (collapsed is used) or output file options:
+  Don't add output format (collapsed is used) or output file options [label]:
     horizontal:
       gapBefore:
         min: &id011 {horizontal: true, value: 5.0}
@@ -94,7 +92,7 @@ componentConstrains:
     skip: 1
     spanX: 2097051
     wrap: true
-  'TitledSeparator #8':
+  Java Flight Recorder [titledSeparator]:
     horizontal: {grow: 100.0}
     spanX: 2097051
     vertical:
@@ -105,7 +103,7 @@ componentConstrains:
         min: &id013 {horizontal: false, value: 12.0}
         preferred: *id013
     wrap: true
-  'JRE home:': {}
+  JRE home [label]: {}
   'TextFieldWithBrowseButton #10':
     horizontal:
       grow: 100.0
@@ -113,7 +111,7 @@ componentConstrains:
         min: {horizontal: true, value: 350.0}
     spanX: 2097051
     wrap: true
-  At least OracleJRE 9 or OpenJRE 11 is required to import dump:
+  At least OracleJRE 9 or OpenJRE 11 is required to import dump [label]:
     horizontal:
       gapBefore:
         min: &id014 {horizontal: true, value: 5.0}
@@ -126,25 +124,24 @@ cellBounds:
 - [0, 46, 480, 15]
 - [0, 71, 92, 21]
 - [98, 71, 382, 21]
-- [98, 102, 382, 13]
+- [98, 98, 382, 13]
 - [0, 121, 92, 21]
 - [98, 121, 382, 21]
-- [98, 152, 382, 13]
+- [98, 148, 382, 13]
 - [0, 171, 480, 36]
 - [0, 217, 92, 21]
 - [98, 217, 382, 21]
-- [98, 248, 382, 13]
+- [98, 244, 382, 13]
 componentBounds:
-  'TitledSeparator #0': [0, 5, 480, 26]
+  Async Profiler [titledSeparator]: [0, 5, 480, 26]
   'HyperlinkLabel #1': [0, 46, 159, 15]
-  'Agent path:': [0, 74, 72, 15]
+  Agent path [label]: [0, 74, 72, 15]
   'TextFieldWithBrowseButton #3': [95, 68, 388, 27]
-  If field is empty bundled agent will be used: [103, 102, 227, 13]
-  'Agent options:': [0, 124, 92, 15]
+  If field is empty bundled agent will be used [label]: [103, 98, 227, 13]
+  Agent options [label]: [0, 124, 92, 15]
   'TextFieldWithBrowseButton #6': [95, 118, 388, 27]
-  Don't add output format (collapsed is used) or output file options: [103, 152, 340,
-    13]
-  'TitledSeparator #8': [0, 176, 480, 26]
-  'JRE home:': [0, 220, 62, 15]
+  Don't add output format (collapsed is used) or output file options [label]: [103, 148, 340, 13]
+  Java Flight Recorder [titledSeparator]: [0, 176, 480, 26]
+  JRE home [label]: [0, 220, 62, 15]
   'TextFieldWithBrowseButton #10': [95, 214, 388, 27]
-  At least OracleJRE 9 or OpenJRE 11 is required to import dump: [103, 248, 327, 13]
+  At least OracleJRE 9 or OpenJRE 11 is required to import dump [label]: [103, 244, 327, 13]

@@ -21,7 +21,7 @@ import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
 
 class JavaUCompositeQualifiedExpression(
-  override val psi: PsiElement,
+  override val sourcePsi: PsiElement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
 
@@ -42,4 +42,11 @@ class JavaUCompositeQualifiedExpression(
 
   override val accessType: UastQualifiedExpressionAccessType
     get() = UastQualifiedExpressionAccessType.SIMPLE
+
+  override val referenceNameElement: UElement?
+    get() =
+      when (val selector = selector) {
+        is UCallExpression -> selector.methodIdentifier
+        else -> unwrapReferenceNameElement(selector)
+      }
 }

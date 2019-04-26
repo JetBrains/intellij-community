@@ -1,46 +1,88 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
+import com.intellij.ide.actions.OpenFileAction;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
-import org.editorconfig.language.psi.EditorConfigPsiFile;
-import org.editorconfig.language.services.EditorConfigFileHierarchyService;
-import org.editorconfig.language.services.EditorConfigServiceLoaded;
-import org.editorconfig.language.services.EditorConfigServiceResult;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
 public class EditorConfigNavigationActionsFactory {
+  private static final Key<EditorConfigNavigationActionsFactory> NAVIGATION_FACTORY_KEY = Key.create("editor.config.navigation.factory");
+
+  private final List<String> myEditorConfigFilePaths = ContainerUtil.newArrayList();
+
+  private static final Object INSTANCE_LOCK = new Object();
+
+  private EditorConfigNavigationActionsFactory() {
+  }
+
   @NotNull
-  public static List<DumbAwareAction> getNavigationActions(@NotNull final PsiFile file) {
-    final List<DumbAwareAction> actions = ContainerUtil.newArrayList();
-    final List<EditorConfigPsiFile> parentFiles = getParentFiles(file.getVirtualFile(), file.getProject());
-    for (EditorConfigPsiFile parentFile : parentFiles) {
-      final NavigatablePsiElement target = parentFile.findRelevantNavigatable();
-      actions.add(DumbAwareAction.create(
-        getActionName(parentFile, parentFiles.size() > 1),
-        event -> target.navigate(true)));
+  public List<AnAction> getNavigationActions(@NotNull Project project) {
+    final List<AnAction> actions = ContainerUtil.newArrayList();
+    synchronized (myEditorConfigFilePaths) {
+      List<VirtualFile> editorConfigFiles = Utils.pathsToFiles(myEditorConfigFilePaths);
+      for (VirtualFile editorConfigFile : editorConfigFiles) {
+        if (editorConfigFile != null) {
+          actions.add(DumbAwareAction.create(
+            getActionName(editorConfigFile, editorConfigFiles.size() > 1),
+            event -> OpenFileAction.openFile(editorConfigFile, project)));
+        }
+      }
     }
-    return actions;
+    return actions.size() <= 1 ? actions : Collections.singletonList(new NavigationActionGroup(actions.toArray(AnAction.EMPTY_ARRAY)));
   }
 
-  private static String getActionName(@NotNull EditorConfigPsiFile file, boolean withFolder) {
-    return EditorConfigBundle.message("action.open.file", EditorConfigPresentationUtil.getFileName(file, withFolder));
+  public void updateEditorConfigFilePaths(@NotNull List<String> editorConfigFilePaths) {
+    synchronized (myEditorConfigFilePaths) {
+      myEditorConfigFilePaths.clear();
+      myEditorConfigFilePaths.addAll(editorConfigFilePaths);
+    }
   }
 
   @NotNull
-  static List<EditorConfigPsiFile> getParentFiles(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
-    final EditorConfigFileHierarchyService hierarchyService = EditorConfigFileHierarchyService.getInstance(project);
-    final EditorConfigServiceResult serviceResult = hierarchyService.getParentEditorConfigFiles(virtualFile);
-    return serviceResult instanceof EditorConfigServiceLoaded ?
-           ((EditorConfigServiceLoaded)serviceResult).getList() : Collections.emptyList();
+  private static String getActionName(@NotNull VirtualFile file, boolean withFolder) {
+    final String fileName = EditorConfigPresentationUtil.getFileName(file, withFolder);
+    return !withFolder ? EditorConfigBundle.message("action.open.file", fileName) : fileName;
   }
+
+  @NotNull
+  public static EditorConfigNavigationActionsFactory getInstance(@NotNull VirtualFile file) {
+    synchronized (INSTANCE_LOCK) {
+      EditorConfigNavigationActionsFactory instance = file.getUserData(NAVIGATION_FACTORY_KEY);
+      if (instance == null) {
+        instance = new EditorConfigNavigationActionsFactory();
+        file.putUserData(NAVIGATION_FACTORY_KEY, instance);
+      }
+      return instance;
+    }
+  }
+
+  private static class NavigationActionGroup extends ActionGroup {
+    private final AnAction[] myChildActions;
+
+    private NavigationActionGroup(AnAction[] actions) {
+      super("Open EditorConfig File", true);
+      myChildActions = actions;
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return myChildActions;
+    }
+  }
+
 }

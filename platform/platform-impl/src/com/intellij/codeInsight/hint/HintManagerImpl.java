@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -33,8 +33,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -241,8 +243,10 @@ public class HintManagerImpl extends HintManager {
     location = new Point(newRectangle.x + xOffset, newRectangle.y + yOffset);
 
     Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
+    //in some rare cases lookup can appear just on the edge with the editor, so don't hide it on every typing
+    Rectangle newBoundsForIntersectionCheck = new Rectangle(location.x - 1, location.y - 1, size.width + 2, size.height + 2);
 
-    final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
+    final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBoundsForIntersectionCheck);
     if (okToUpdateBounds || hint.vetoesHiding()) {
       hint.setLocation(new RelativePoint(editor.getContentComponent(), location));
     }
@@ -256,6 +260,7 @@ public class HintManagerImpl extends HintManager {
    * So, first of all, editor will be scrolled to make the caret position visible.
    */
   public void showEditorHint(final LightweightHint hint, final Editor editor, @PositionFlags final short constraint, @HideFlags final int flags, final int timeout, final boolean reviveOnEditorChange) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     editor.getScrollingModel().runActionOnScrollingFinished(() -> {
       LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
@@ -688,26 +693,38 @@ public class HintManagerImpl extends HintManager {
   }
 
   @Override
-  public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
-    JComponent label = HintUtil.createInformationLabel(text);
-    showInformationHint(editor, label);
+  public void showInformationHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position) {
+    showInformationHint(editor, text, null, position);
+  }
+
+  @Override
+  public void showInformationHint(@NotNull Editor editor, @NotNull String text, @Nullable HyperlinkListener listener) {
+    showInformationHint(editor, text, listener, ABOVE);
+  }
+
+  private void showInformationHint(@NotNull Editor editor,
+                                   @NotNull String text,
+                                   @Nullable HyperlinkListener listener,
+                                   @PositionFlags short position) {
+    JComponent label = HintUtil.createInformationLabel(text, listener, null, null);
+    showInformationHint(editor, label, position);
   }
 
   @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component) {
     // Set the accessible name so that screen readers announce the panel type (e.g. "Hint panel")
     // when the tooltip gets the focus.
-    AccessibleContextUtil.setName(component, "Hint");
-    showInformationHint(editor, component, true);
+    showInformationHint(editor, component, ABOVE);
   }
 
-  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, boolean showByBalloon) {
+  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, @PositionFlags short position) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
+    AccessibleContextUtil.setName(component, "Hint");
     LightweightHint hint = new LightweightHint(component);
-    Point p = getHintPosition(hint, editor, ABOVE);
-    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
+    Point p = getHintPosition(hint, editor, position);
+    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);
   }
 
   @Override
@@ -842,7 +859,7 @@ public class HintManagerImpl extends HintManager {
     return hintInfo;
   }
 
-  private void updateLastEditor(final Editor editor) {
+  protected void updateLastEditor(final Editor editor) {
     if (myLastEditor != editor) {
       if (myLastEditor != null) {
         myLastEditor.removeEditorMouseListener(myEditorMouseListener);
@@ -865,7 +882,7 @@ public class HintManagerImpl extends HintManager {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       if (action instanceof ActionToIgnore) return;
 
       AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);

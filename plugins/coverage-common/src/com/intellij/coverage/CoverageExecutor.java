@@ -3,6 +3,7 @@ package com.intellij.coverage;
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,13 +22,8 @@ public class CoverageExecutor extends Executor {
   @NotNull
   @Override
   public String getStartActionText(@NotNull String configurationName) {
-    final String name = configurationName != null ? escapeMnemonicsInConfigurationName(shortenNameIfNeed(configurationName)) : null;
-    return "Run" + (StringUtil.isEmpty(name) ? "" :  " '" + name + "'") + " with Co_verage";
-  }
-
-
-  private static String escapeMnemonicsInConfigurationName(String configurationName) {
-    return configurationName.replace("_", "__");
+    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'";
+    return TextWithMnemonic.parse("Run%s with Co_verage").replaceFirst("%s", configName).toString();
   }
 
   @Override

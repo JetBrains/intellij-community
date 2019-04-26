@@ -41,6 +41,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.IdeaCompilerOutputImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.IdeaContentRootImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.IdeaSourceDirectoryImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ModuleExtendedModelImpl;
+import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,7 +92,12 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     for (Task task : project.getTasks()) {
       if (task instanceof Jar) {
         Jar jar = (Jar)task;
-        artifacts.add(jar.getArchivePath());
+        try {
+          artifacts.add(jar.getArchivePath());
+        }
+        catch (Exception e) {
+          project.getLogger().error("warning: [task " + jar.getPath() + "] " + e.getMessage());
+        }
       }
     }
 
@@ -107,13 +113,13 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
           testClassesDirs.addAll(test.getTestClassesDirs().getFiles());
         }
         else {
-          testClassesDirs.add(test.getTestClassesDir());
+          testClassesDirs.add(getTestClassesDirOld(test));
         }
 
         if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
           Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
           if (testSrcDirs instanceof Iterable) {
-            for (Object dir : Iterable.class.cast(testSrcDirs)) {
+            for (Object dir : (Iterable)testSrcDirs) {
               addFilePath(directorySet.getTestDirectories(), dir);
             }
           }
@@ -136,7 +142,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
               compilerOutput.setTestClassesDir(firstClassesDir);
             }
             else {
-              compilerOutput.setTestClassesDir(output.getClassesDir());
+              compilerOutput.setTestClassesDir(getClassesDirOld(output));
             }
             compilerOutput.setTestResourcesDir(output.getResourcesDir());
           }
@@ -146,7 +152,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
               compilerOutput.setMainClassesDir(firstClassesDir);
             }
             else {
-              compilerOutput.setMainClassesDir(output.getClassesDir());
+              compilerOutput.setMainClassesDir(getClassesDirOld(output));
             }
             compilerOutput.setMainResourcesDir(output.getResourcesDir());
           }
@@ -188,6 +194,14 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     return moduleVersionModel;
   }
 
+  private static File getTestClassesDirOld(Test test) {
+    return (File)ReflectionUtil.callByReflection(test, "getTestClassesDir");
+  }
+
+  private static File getClassesDirOld(SourceSetOutput output) {
+    return (File)ReflectionUtil.callByReflection(output, "getClassesDir");
+  }
+
   @NotNull
   @Override
   public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
@@ -205,7 +219,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
       sourceSetClassesDir = CollectionUtils.findFirst(sourceSet.getOutput().getClassesDirs().getFiles(), Specs.SATISFIES_ALL);
     }
     else {
-      sourceSetClassesDir = sourceSet.getOutput().getClassesDir();
+      sourceSetClassesDir = getClassesDirOld(sourceSet.getOutput());
     }
     for (File testClassesDir : testClassesDirs) {
       do {

@@ -14,7 +14,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 
 /**
  * @author max
@@ -23,8 +23,9 @@ import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
  *
  * @see ColorIcon
  */
-public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
-  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<Pair<Integer, Boolean>, EmptyIcon>();
+// public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
+public class EmptyIcon extends JBUI.CachingScalableJBIcon<JBUI.CachingScalableJBIcon> { // backward compatible version
+  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
 
   public static final Icon ICON_18 = JBUI.scale(create(18));
   public static final Icon ICON_16 = JBUI.scale(create(16));
@@ -48,7 +49,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBUI.JBIcon)} to meet HiDPI.
+   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
   public static EmptyIcon create(int size) {
     return create(size, size);
@@ -57,7 +58,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBUI.JBIcon)} to meet HiDPI.
+   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
   public static EmptyIcon create(int width, int height) {
     return create(width, height, true);
@@ -97,6 +98,12 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
     width = icon.width;
     height = icon.height;
     myUseCache = icon.myUseCache;
+  }
+
+  @NotNull
+  @Override
+  public /*EmptyIcon*/ JBUI.CachingScalableJBIcon scale(float scale) { // backward compatible version
+    return super.scale(scale);
   }
 
   @NotNull

@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
+import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -62,12 +63,10 @@ public class LibraryScopeCache {
       }
     });
   private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = ContainerUtil.newConcurrentMap();
-  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache =
-    ConcurrentFactoryMap.createMap(key -> calcLibraryScope(key));
-  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache =
-    ConcurrentFactoryMap.createMap(key -> calcLibraryUseScope(key));
+  private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryScope(key));
+  private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryUseScope(key));
 
-  public LibraryScopeCache(Project project) {
+  public LibraryScopeCache(@NotNull Project project) {
     myProject = project;
     myLibrariesOnlyScope = new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject), myProject);
   }
@@ -85,7 +84,7 @@ public class LibraryScopeCache {
   }
 
   @NotNull
-  private GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<Module> modulesLibraryIsUsedIn) {
+  private GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<? extends Module> modulesLibraryIsUsedIn) {
     Module[] array = modulesLibraryIsUsedIn.toArray(Module.EMPTY_ARRAY);
     GlobalSearchScope scope = myLibraryScopes.get(array);
     return scope != null ? scope : ConcurrencyUtil.cacheOrGet(myLibraryScopes, array,
@@ -98,7 +97,7 @@ public class LibraryScopeCache {
    * @return a cached resolve scope
    */
   @NotNull
-  public GlobalSearchScope getLibraryScope(@NotNull List<OrderEntry> orderEntries) {
+  public GlobalSearchScope getLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
     return myLibraryResolveScopeCache.get(orderEntries);
   }
 
@@ -108,7 +107,7 @@ public class LibraryScopeCache {
    * @return a cached use scope
    */
   @NotNull
-  public GlobalSearchScope getLibraryUseScope(@NotNull List<OrderEntry> orderEntries) {
+  public GlobalSearchScope getLibraryUseScope(@NotNull List<? extends OrderEntry> orderEntries) {
     return myLibraryUseScopeCache.get(orderEntries);
   }
 
@@ -131,7 +130,7 @@ public class LibraryScopeCache {
       }
     }
 
-    Comparator<Module> comparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
+    Comparator<Module> comparator = Comparator.comparing(Module::getName);
     Collections.sort(modulesLibraryUsedIn, comparator);
     List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
 
@@ -189,8 +188,8 @@ public class LibraryScopeCache {
       united.add(myLibrariesOnlyScope);
     }
 
-    for (Module module : modulesWithLibrary) {
-      united.add(GlobalSearchScope.moduleWithDependentsScope(module));
+    if (!modulesWithLibrary.isEmpty()) {
+      united.add(new ModuleWithDependentsScope(myProject, modulesWithLibrary));
     }
 
     return GlobalSearchScope.union(united.toArray(GlobalSearchScope.EMPTY_ARRAY));
@@ -208,7 +207,7 @@ public class LibraryScopeCache {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myOriginal.contains(file) && (myIndex.isInLibraryClasses(file) || myIndex.isInLibrarySource(file));
+      return myOriginal.contains(file) && myIndex.isInLibrary(file);
     }
 
     @Override

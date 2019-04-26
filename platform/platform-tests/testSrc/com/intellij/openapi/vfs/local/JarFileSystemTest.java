@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +22,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -61,7 +62,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(file2, file3);
 
     VirtualFile file4 = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
-    assertTrue(!file4.isDirectory());
+    assertFalse(file4.isDirectory());
 
     byte[] bytes = file4.contentsToByteArray();
     assertNotNull(bytes);
@@ -194,6 +195,11 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
   }
 
+  @After
+  public void testDown() {
+    JarFileSystemImpl.cleanupForNextTest();
+  }
+
   @Test
   public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
@@ -212,7 +218,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
 
     jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    assertTrue(!jarFileSystem.isMakeCopyOfJar(jar));
+    assertFalse(jarFileSystem.isMakeCopyOfJar(jar));
   }
 
   @Test

@@ -101,18 +101,25 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
+    String scratchPath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(PathManager.getScratchPath()));
     project.getMessageBus().connect(disposable).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        boolean update = JBIterable.from(events).find(e -> ScratchUtil.isScratch(e.getFile())) != null;
+        boolean update = JBIterable.from(events).find(e -> {
+          VirtualFile file = e.getFile();
+          VirtualFile parent = file == null ? null : file.getParent();
+          if (parent == null) return false;
+          return ScratchUtil.isScratch(parent) ||
+                 file.isDirectory() && parent.getPath().startsWith(scratchPath);
+        }) != null;
         if (update) {
           onUpdate.run();
         }
       }
     });
-    for (RootType rootId : RootType.getAllRootIds()) {
-      if (rootId.isHidden()) continue;
-      rootId.registerTreeUpdater(project, disposable, onUpdate);
+    for (RootType rootType : RootType.getAllRootTypes()) {
+      if (rootType.isHidden()) continue;
+      rootType.registerTreeUpdater(project, disposable, onUpdate);
     }
   }
 
@@ -148,14 +155,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
-    VirtualFile virtualFile = getVirtualFile(rootId);
+  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootType) {
+    VirtualFile virtualFile = getVirtualFile(rootType);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
   @Nullable
-  private static VirtualFile getVirtualFile(@NotNull RootType rootId) {
-    String path = ScratchFileService.getInstance().getRootPath(rootId);
+  private static VirtualFile getVirtualFile(@NotNull RootType rootType) {
+    String path = ScratchFileService.getInstance().getRootPath(rootType);
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
@@ -169,6 +176,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return new MyProjectNode(project, settings);
   }
 
+  @Nullable
+  private static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {
+    if (rootType.isHidden()) return null;
+    MyRootNode node = new MyRootNode(project, rootType, settings);
+    return node.isEmpty() ? null : node;
+  }
+
   public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
     @NotNull
     @Override
@@ -176,13 +190,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                @NotNull Collection<AbstractTreeNode> children,
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
-      if (project != null && isScratchesMergedIntoProjectTab()) {
-        ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
-        list.addAll(children);
-        list.add(createRootNode(project, settings));
-        return list;
-      }
-      return children;
+      if (project == null || !isScratchesMergedIntoProjectTab()) return children;
+      if (children.isEmpty() && JBIterable.from(RootType.getAllRootTypes()).filterMap(
+        o -> createRootNode(project, o, settings)).isEmpty()) return children;
+      ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
+      list.addAll(children);
+      list.add(createRootNode(project, settings));
+      return list;
     }
 
     @Nullable
@@ -232,11 +246,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode> list = ContainerUtil.newArrayList();
-      for (RootType rootId : RootType.getAllRootIds()) {
-        if (rootId.isHidden()) continue;
-        MyRootNode e = new MyRootNode(getProject(), rootId, getSettings());
-        if (e.isEmpty()) continue;
-        list.add(e);
+      for (RootType rootType : RootType.getAllRootTypes()) {
+        ContainerUtil.addIfNotNull(list, createRootNode(getProject(), rootType, getSettings()));
       }
       return list;
     }
@@ -281,8 +292,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @NotNull
     @Override
     public Collection<VirtualFile> getRoots() {
-      VirtualFile root = getVirtualFile();
-      return root == null ? EMPTY_ROOTS : Collections.singleton(root);
+      return getDefaultRootsFor(getVirtualFile());
     }
 
     @NotNull

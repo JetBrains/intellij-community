@@ -46,4 +46,17 @@ public class UpdateStrategyCustomization {
   public boolean haveSameMajorVersion(@NotNull BuildNumber build1, @NotNull BuildNumber build2) {
     return build1.getBaselineVersion() == build2.getBaselineVersion();
   }
+
+  /**
+   * Returns {@code true} if version of {@code candidateBuild} is newer than version of {@code currentBuild} so it may be suggested as an update.
+   * <br>
+   * If you use composite version numbers in your IDE (e.g. to be able to release new versions in parallel with bugfix updates for older versions)
+   * and append them to the build number of the platform they are based on, it may happen that a newer version of your IDE is based on an
+   * older version of the platform, so a bug fix update for an old version will have build number greater than the build number of a new version.
+   * In this case you need to override this method and compare components of build numbers which correspond to your IDE's version to ensure that
+   * the old version won't be suggested as an update to the new version.
+   */
+  public boolean isNewerVersion(@NotNull BuildNumber candidateBuild, @NotNull BuildNumber currentBuild) {
+    return candidateBuild.compareTo(currentBuild) > 0;
+  }
 }

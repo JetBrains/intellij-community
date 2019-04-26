@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.service;
 
 import com.intellij.ide.IdeView;
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -33,6 +34,7 @@ import org.jetbrains.idea.devkit.actions.DevkitActionsUtil;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -42,9 +44,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * An base class for actions generating service classes (implementation and optionally interface) and registering new service in plugin.xml.
+ * An base class for actions generating service classes (implementation and optionally interface) and registering new service in {@code plugin.xml}.
  */
 abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
+
   NewServiceActionBase(String text, String description) {
     super(text, description, null);
   }
@@ -52,6 +55,12 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    Module module = e.getData(LangDataKeys.MODULE);
+    e.getPresentation().setEnabled(module != null && PsiUtil.isPluginModule(module));
   }
 
   @Override
@@ -88,7 +97,9 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
   protected abstract String getTagName();
 
   protected abstract String getOnlyImplementationTemplateName();
+
   protected abstract String getInterfaceTemplateName();
+
   protected abstract String getImplementationTemplateName();
 
   protected abstract String getDialogTitle();
@@ -122,7 +133,8 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
         if (isSeparateMode()) {
           myServiceImplementationTextField.setEnabled(true);
           myServiceNameLabel.setText(DevKitBundle.message("new.service.dialog.interface"));
-        } else {
+        }
+        else {
           myServiceImplementationTextField.setEnabled(false);
           myServiceNameLabel.setText(DevKitBundle.message("new.service.dialog.class"));
         }
@@ -194,7 +206,8 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
         myAdjusting = true;
         myServiceImplementationTextField.setText("");
         myAdjusting = false;
-      } else if (myNeedAdjust) {
+      }
+      else if (myNeedAdjust) {
         myAdjusting = true;
         myServiceImplementationTextField.setText("impl." + myServiceNameTextField.getText() + "Impl");
         myAdjusting = false;
@@ -286,7 +299,8 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
         String interfacePackage;
         if (implementationDirRelativePackage.isEmpty()) {
           interfacePackage = ""; // interface and implementation are placed in the same package; there shouldn't be an import statement
-        } else {
+        }
+        else {
           //noinspection ConstantConditions
           interfacePackage = StringUtil.getPackageName(createdInterface.getQualifiedName());
         }
@@ -320,9 +334,9 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
     private boolean doCreateService(Callable<Boolean> action) {
       try {
         return WriteCommandAction.writeCommandAction(getProject())
-                                 .withName(DevKitBundle.message("new.service.class.action.name"))
-                                 .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
-                                 .compute(() -> action.call());
+          .withName(DevKitBundle.message("new.service.class.action.name"))
+          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
+          .compute(() -> action.call());
       }
       catch (Exception e) {
         handleException(e);

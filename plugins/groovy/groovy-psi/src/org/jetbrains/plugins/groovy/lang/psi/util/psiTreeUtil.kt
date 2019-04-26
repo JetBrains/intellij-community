@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
@@ -7,7 +7,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
-import com.intellij.util.withPrevious
+import com.intellij.util.containers.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrSingleResultResolverProcessor
@@ -54,7 +54,7 @@ inline fun <reified T : PsiElement> PsiElement.skipParentsOfType(): Pair<PsiElem
 fun PsiElement.skipParentsOfType(strict: Boolean = false, vararg types: Class<*>): Pair<PsiElement, PsiElement?>? {
   val seq = parents().withPrevious().drop(if (strict) 1 else 0)
   return seq.firstOrNull { (parent, _) ->
-    parent.javaClass !in types
+    !PsiTreeUtil.instanceOf(parent, *types)
   }
 }
 

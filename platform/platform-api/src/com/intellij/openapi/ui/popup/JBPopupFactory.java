@@ -23,7 +23,6 @@ import java.util.List;
  * Factory class for creating popup chooser windows (similar to the Code | Generate... popup) and various notifications/confirmations.
  *
  * @author mike
- * @since 6.0
  */
 public abstract class JBPopupFactory {
   /**
@@ -44,7 +43,7 @@ public abstract class JBPopupFactory {
   }
 
   /**
-   * @deprecated Please use {@link #createPopupChooserBuilder(List)}} instead
+   * @deprecated Please use {@link #createPopupChooserBuilder(List)} instead
   */
   @Deprecated
   @NotNull
@@ -299,7 +298,6 @@ public abstract class JBPopupFactory {
    * @param maxRowCount the number of visible rows to show in the popup (if the popup has more items,
    *                    a scrollbar will be displayed).
    * @return the popup instance.
-   * @since 14.1
    */
   @NotNull
   public abstract ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount);

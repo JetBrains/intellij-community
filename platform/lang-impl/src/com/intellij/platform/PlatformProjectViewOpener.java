@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.platform;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -16,11 +17,18 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
+  public PlatformProjectViewOpener() {
+    if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isDataGrip()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
   @Override
-  public void configureProject(final Project project, @NotNull final VirtualFile baseDir, Ref<Module> moduleRef) {
+  public void configureProject(@NotNull final Project project, @NotNull final VirtualFile baseDir, @NotNull Ref<Module> moduleRef) {
     ToolWindowManagerEx manager = (ToolWindowManagerEx)ToolWindowManager.getInstance(project);
     ToolWindow toolWindow = manager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (toolWindow == null) {

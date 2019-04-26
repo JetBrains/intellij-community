@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -19,6 +18,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
@@ -30,7 +30,6 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.TasksBundle;
@@ -60,6 +59,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
 
     buildModuleFiles(project, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
+    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
     buildModules(project, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
 
     buildArtifacts(project, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
@@ -120,7 +120,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
         if (!isMavenModule(module.getModule())) {
           return false;
         }
-        for (MavenExecutionEnvironmentProvider environmentProvider: MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
+        for (MavenExecutionEnvironmentProvider environmentProvider : MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
           if (environmentProvider.isApplicable(task)) {
             return true;
           }
@@ -163,32 +163,36 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     MavenExplicitProfiles explicitProfiles = mavenProjectsManager.getExplicitProfiles();
     Map<MavenProject, List<MavenProject>> rootProjectsToModules = new HashMap<>();
 
+    boolean buildOnlyResources = false;
     for (ModuleBuildTask moduleBuildTask : moduleBuildTasks) {
       MavenProject mavenProject = mavenProjectsManager.findProject(moduleBuildTask.getModule());
       if (mavenProject == null) continue;
 
+      buildOnlyResources = buildOnlyResources || moduleBuildTask instanceof ModuleResourcesBuildTask;
       MavenProject rootProject = mavenProjectsManager.findRootProject(mavenProject);
       rootProjectsToModules.computeIfAbsent(rootProject, p -> new ArrayList<>()).add(mavenProject);
     }
 
     boolean clean = moduleBuildTasks.stream().anyMatch(task -> !(task instanceof ModuleFilesBuildTask) && !task.isIncrementalBuild());
+    boolean compileOnly = moduleBuildTasks.stream().allMatch(task -> task instanceof ModuleFilesBuildTask);
     boolean includeDependentModules = moduleBuildTasks.stream().anyMatch(ModuleBuildTask::isIncludeDependentModules);
+    String goal = getGoal(buildOnlyResources, compileOnly);
     List<MavenRunnerParameters> commands = new ArrayList<>();
     for (Map.Entry<MavenProject, List<MavenProject>> entry : rootProjectsToModules.entrySet()) {
       ParametersList parameters = new ParametersList();
       if (clean) {
         parameters.add("clean");
       }
-      parameters.add("install");
+      parameters.add(goal);
 
       List<MavenProject> mavenProjects = entry.getValue();
       if (!includeDependentModules) {
         if (mavenProjects.size() > 1) {
           parameters.add("--projects");
           parameters.add(mavenProjects.stream()
-                                      .map(MavenProject::getMavenId)
-                                      .map(mavenId -> mavenId.getGroupId() + ":" + mavenId.getArtifactId())
-                                      .collect(joining(",")));
+                           .map(MavenProject::getMavenId)
+                           .map(mavenId -> mavenId.getGroupId() + ":" + mavenId.getArtifactId())
+                           .collect(joining(",")));
         }
         else {
           parameters.add("--non-recursive");
@@ -207,38 +211,48 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     runBatch(project, mavenRunner, "Maven Build", commands, callback);
   }
 
+  @NotNull
+  private static String getGoal(boolean buildOnlyResources, boolean compileOnly) {
+    if (buildOnlyResources) {
+      return "resources:resources";
+    }
+    return compileOnly ? "compile" : "install";
+  }
+
   public static void runBatch(@NotNull Project project, @NotNull MavenRunner mavenRunner, @NotNull String title,
                               @NotNull List<MavenRunnerParameters> commands, @Nullable ProjectTaskNotification callback) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicInteger errors = new AtomicInteger();
       AtomicInteger warnings = new AtomicInteger();
-      MavenConsole console = new MavenConsoleImpl(title, project) {
+      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath(), ToolWindowId.BUILD, 0);
+
+      console.addProcessListener(new ProcessAdapter() {
 
         @Override
-        public void attachToProcess(ProcessHandler processHandler) {
-          super.attachToProcess(processHandler);
-          processHandler.addProcessListener(new ProcessAdapter() {
-            @Override
-            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-              String line = event.getText();
-
-              Matcher errorsMatcher = ERRORS_NUMBER_PATTERN.matcher(line);
-              if (errorsMatcher.matches()) {
-                try {
-                  errors.addAndGet(Integer.parseInt(errorsMatcher.group(1)));
-                }
-                catch (NumberFormatException ignore) {
-                }
-              }
-
-              Matcher warningMatcher = WARNING_PATTERN.matcher(line);
-              if (warningMatcher.find()) {
-                warnings.incrementAndGet();
-              }
-            }
-          });
+        public void processTerminated(@NotNull ProcessEvent event) {
+          super.processTerminated(event);
         }
-      };
+
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          String line = event.getText();
+
+          Matcher errorsMatcher = ERRORS_NUMBER_PATTERN.matcher(line);
+          if (errorsMatcher.matches()) {
+            try {
+              errors.addAndGet(Integer.parseInt(errorsMatcher.group(1)));
+            }
+            catch (NumberFormatException ignore) {
+            }
+          }
+
+          Matcher warningMatcher = WARNING_PATTERN.matcher(line);
+          if (warningMatcher.find()) {
+            warnings.incrementAndGet();
+          }
+        }
+      });
+
       FileDocumentManager.getInstance().saveAllDocuments();
 
       new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {

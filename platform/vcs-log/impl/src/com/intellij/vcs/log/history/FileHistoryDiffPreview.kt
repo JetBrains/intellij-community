@@ -13,8 +13,10 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 
-internal class FileHistoryDiffPreview(project: Project, private val changeGetter: () -> Change?,
-                                      disposable: Disposable) : ChangeViewDiffRequestProcessor(project, DiffPlaces.VCS_LOG_VIEW) {
+internal class FileHistoryDiffPreview(project: Project, private val changeGetter: () -> Change?, isInEditor: Boolean,
+                                      disposable: Disposable) :
+  ChangeViewDiffRequestProcessor(project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW) {
+  
   init {
     myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
     Disposer.register(disposable, this)
@@ -30,12 +32,7 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
   override fun selectChange(change: ChangeViewDiffRequestProcessor.Wrapper) {}
 
   fun updatePreview(state: Boolean) {
-    if (state) {
-      refresh(false)
-    }
-    else {
-      clear()
-    }
+    updatePreview(state, false)
   }
 
   override fun getFastLoadingTimeMillis(): Int {

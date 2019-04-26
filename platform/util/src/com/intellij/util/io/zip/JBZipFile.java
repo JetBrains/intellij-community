@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.ZipException;
 
@@ -49,12 +50,12 @@ public class JBZipFile implements Closeable {
   /**
    * A list of entries in the file.
    */
-  private final List<JBZipEntry> entries = new ArrayList<JBZipEntry>(HASH_SIZE);
+  private final List<JBZipEntry> entries = new ArrayList<>(HASH_SIZE);
 
   /**
    * A map of entry names.
    */
-  private final Map<String, JBZipEntry> nameMap = new HashMap<String, JBZipEntry>(HASH_SIZE);
+  private final Map<String, JBZipEntry> nameMap = new HashMap<>(HASH_SIZE);
 
   /**
    * The encoding to use for filenames and the file comment
@@ -79,7 +80,7 @@ public class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(File f) throws IOException {
-    this(f, CharsetToolkit.UTF8_CHARSET);
+    this(f, StandardCharsets.UTF_8);
   }
 
   /**
@@ -90,7 +91,7 @@ public class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(String name) throws IOException {
-    this(new File(name), CharsetToolkit.UTF8_CHARSET);
+    this(new File(name), StandardCharsets.UTF_8);
   }
 
   /**
@@ -438,7 +439,7 @@ public class JBZipFile implements Closeable {
     if (myOutputStream != null) {
       myOutputStream = null;
 
-      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<JBZipEntry, byte[]>();
+      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<>();
       for (JBZipEntry entry : entries) {
         existingEntries.put(entry, entry.getData());
       }

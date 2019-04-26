@@ -26,7 +26,7 @@ class TBItemGroup extends TBItem {
       return ID.NIL;
 
     final ID[] ids = myGroupItems.getVisibleNativePeers();
-    return NST.createGroupItem(myUid, ids, ids.length);
+    return NST.createGroupItem(myUid, ids);
   }
 
   @Override

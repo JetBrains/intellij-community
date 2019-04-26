@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
+import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -29,7 +30,6 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Producer;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,12 +67,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       return;
     }
 
-    DataContext context = new DataContext() {
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
-      }
-    };
+    DataContext context =
+      dataId -> PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
 
     final Project project = editor.getProject();
     if (project == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
@@ -125,6 +121,11 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       editor.getComponent().getToolkit().beep();
     }
     if (text == null) return;
+    int textLength = text.length();
+    if (BasePasteHandler.isContentTooLarge(textLength)) {
+      BasePasteHandler.contentLengthLimitExceededMessage(textLength);
+      return;
+    }
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 

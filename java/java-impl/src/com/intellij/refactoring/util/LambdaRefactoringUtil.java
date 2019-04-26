@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -164,7 +163,6 @@ public class LambdaRefactoringUtil {
     final PsiElement resolveElement = resolveResult.getElement();
 
     if (resolveElement instanceof PsiMember) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(referenceExpression.getProject());
       buf.append("{");
 
       if (!PsiType.VOID.equals(interfaceMethod.getReturnType())) {
@@ -258,10 +256,7 @@ public class LambdaRefactoringUtil {
         return true;
       }
     }
-    if (qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null) {
-      return true;
-    }
-    return false;
+    return qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
   }
 
   private static boolean isInferredSameTypeAfterConversion(PsiLambdaExpression lambdaExpression,
@@ -276,9 +271,20 @@ public class LambdaRefactoringUtil {
     if (copyTopLevelCall != null) {
       PsiMethodReferenceExpression methodReferenceInCopy = (PsiMethodReferenceExpression)PsiTreeUtil.releaseMark(copyTopLevelCall, marker);
       if (methodReferenceInCopy != null) {
-        PsiType functionalInterfaceType = methodReferenceInCopy.getFunctionalInterfaceType();
+        PsiClassType functionalInterfaceType = (PsiClassType)methodReferenceInCopy.getFunctionalInterfaceType();
+        if (functionalInterfaceType == null) return false;
+        PsiClassType.ClassResolveResult funcResult = functionalInterfaceType.resolveGenerics();
+        PsiClass funcClass = funcResult.getElement();
+        PsiSubstitutor funcSubstitutor = funcResult.getSubstitutor();
         PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)methodReferenceInCopy.replace(lambdaExpression);
-        return Comparing.equal(functionalInterfaceType, lambdaCopy.getFunctionalInterfaceType());
+
+        PsiClassType lambdaCopyType = (PsiClassType)lambdaCopy.getFunctionalInterfaceType();
+        if (lambdaCopyType == null) return false;
+        PsiClassType.ClassResolveResult lambdaCopyResult = lambdaCopyType.resolveGenerics();
+        PsiClass lambdaCopyClass = lambdaCopyResult.getElement();
+        PsiSubstitutor lambdaCopySubstitutor = lambdaCopyResult.getSubstitutor();
+        return lambdaExpression.getManager().areElementsEquivalent(funcClass, lambdaCopyClass)
+               && funcSubstitutor.equals(lambdaCopySubstitutor);
       }
     }
     return false;
@@ -380,6 +386,7 @@ public class LambdaRefactoringUtil {
    * @return true if method reference can be converted to lambda
    */
   public static boolean canConvertToLambdaWithoutSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
+    if (!canConvertToLambda(methodReferenceExpression)) return false;
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
     return qualifierExpression == null || !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
   }

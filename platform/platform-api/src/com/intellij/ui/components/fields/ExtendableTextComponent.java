@@ -3,8 +3,7 @@ package com.intellij.ui.components.fields;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
-
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -43,7 +42,7 @@ public interface ExtendableTextComponent {
       return getIconGap() + Math.max(icon1.getIconWidth(), icon2.getIconWidth());
     }
 
-    default int getBeforeIconOffset() {
+    default int getAfterIconOffset() {
       return 0;
     }
 

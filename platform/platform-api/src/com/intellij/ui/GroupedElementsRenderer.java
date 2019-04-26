@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.intellij.ui;
 
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -101,7 +102,15 @@ public abstract class GroupedElementsRenderer {
     @Override
     protected void layout() {
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-      myRendererComponent.add(myComponent, BorderLayout.CENTER);
+
+      JComponent centerComponent = new NonOpaquePanel(myComponent) {
+        @Override
+        public Dimension getPreferredSize() {
+          return UIUtil.updateListRowHeight(super.getPreferredSize());
+        }
+      };
+
+      myRendererComponent.add(centerComponent, BorderLayout.CENTER);
     }
 
     @Override

@@ -259,12 +259,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     // this is needed to prevent memory leak, since the command is put into undo queue
     final RunResult[] results = {result};
 
-    doExecuteCommand(() -> {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        results[0].run();
-        results[0] = null;
-      });
-    });
+    doExecuteCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      results[0].run();
+      results[0] = null;
+    }));
   }
 
   /**

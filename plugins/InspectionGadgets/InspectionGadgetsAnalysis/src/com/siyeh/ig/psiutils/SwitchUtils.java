@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -41,13 +42,25 @@ public class SwitchUtils {
    * @return a negative number if a default case was encountered.
    */
   public static int calculateBranchCount(@NotNull PsiSwitchStatement statement) {
-    final PsiCodeBlock body = statement.getBody();
+    // preserved for plugin compatibility
+    return calculateBranchCount((PsiSwitchBlock)statement);
+  }
+
+  /**
+   * Calculates the number of branches in the specified switch block.
+   * When a default case is present the count will be returned as a negative number,
+   * e.g. if a switch block contains 4 labeled cases and a default case, it will return -5
+   * @param block  the switch block to count the cases of.
+   * @return a negative number if a default case was encountered.
+   */
+  public static int calculateBranchCount(@NotNull PsiSwitchBlock block) {
+    final PsiCodeBlock body = block.getBody();
     if (body == null) {
       return 0;
     }
     int branches = 0;
     boolean defaultFound = false;
-    for (final PsiSwitchLabelStatement child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatement.class)) {
+    for (final PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
       if (child.isDefaultCase()) {
         defaultFound = true;
       }
@@ -122,6 +135,20 @@ public class SwitchUtils {
     else {
       return false;
     }
+  }
+
+  /**
+   * Returns true if given switch block has a rule-based format (like 'case 0 ->')
+   * @param block block to test
+   * @return true if given switch block has a rule-based format; false if it has conventional label-based format (like 'case 0:')
+   * If switch body has no labels yet and language level permits, rule-based format is assumed.
+   */
+  public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
+    if (!HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(block)) {
+      return false;
+    }
+    PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
+    return label == null || label instanceof PsiSwitchLabeledRuleStatement;
   }
 
   private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
@@ -203,7 +230,15 @@ public class SwitchUtils {
     }
     final PsiExpression left = check.getLeft();
     final PsiExpression right = check.getRight();
-    return PsiUtil.isConstantExpression(left) ? right : left;
+    if (PsiUtil.isConstantExpression(left)) {
+      return right;
+    }
+    else if (PsiUtil.isConstantExpression(right)) {
+      return left;
+    }
+    else {
+      return null;
+    }
   }
 
   private static boolean canBeCaseLabel(PsiExpression expression, LanguageLevel languageLevel) {
@@ -243,6 +278,34 @@ public class SwitchUtils {
     final LabelSearchVisitor visitor = new LabelSearchVisitor(name);
     ancestor.accept(visitor);
     return visitor.isUsed();
+  }
+
+  /**
+   * @param label a switch label statement
+   * @return list of enum constants which are targets of the specified label; empty list if the supplied element is not a switch label,
+   * or it is not an enum switch.
+   */
+  @NotNull
+  public static List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
+    if (label == null) {
+      return Collections.emptyList();
+    }
+    final PsiExpressionList list = label.getCaseValues();
+    if (list == null) {
+      return Collections.emptyList();
+    }
+    List<PsiEnumConstant> constants = new ArrayList<>();
+    for (PsiExpression value : list.getExpressions()) {
+      if (value instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)value).resolve();
+        if (target instanceof PsiEnumConstant) {
+          constants.add((PsiEnumConstant)target);
+          continue;
+        }
+      }
+      return Collections.emptyList();
+    }
+    return constants;
   }
 
   private static class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {

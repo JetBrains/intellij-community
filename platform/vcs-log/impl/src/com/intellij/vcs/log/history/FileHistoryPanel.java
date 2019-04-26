@@ -15,8 +15,10 @@
  */
 package com.intellij.vcs.log.history;
 
+import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -24,7 +26,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -36,6 +38,7 @@ import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -45,8 +48,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -56,6 +61,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
+  @Nullable private final FileHistoryDiffPreview myDiffPreview;
+  @NotNull private final OnePixelSplitter myDiffPreviewSplitter;
+
   @NotNull private final FilePath myFilePath;
   @NotNull private final FileHistoryUi myUi;
   @NotNull private final VirtualFile myRoot;
@@ -102,9 +110,18 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
 
+    JBPanel tablePanel = new JBPanel(new BorderLayout());
+    tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
+    tablePanel.add(createActionsToolbar(), BorderLayout.WEST);
+
+    myDiffPreview = createDiffPreview(false);
+    myDiffPreviewSplitter = new OnePixelSplitter(false, "vcs.history.diff.splitter.proportion", 0.7f);
+    myDiffPreviewSplitter.setHonorComponentsMinimumSize(false);
+    myDiffPreviewSplitter.setFirstComponent(tablePanel);
+    ApplicationManager.getApplication().invokeLater(() -> showDiffPreview(myUi.getProperties().get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
+
     setLayout(new BorderLayout());
-    add(myDetailsSplitter, BorderLayout.CENTER);
-    add(createActionsToolbar(), BorderLayout.WEST);
+    add(myDiffPreviewSplitter, BorderLayout.CENTER);
 
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
@@ -143,10 +160,41 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
+    if (myDiffPreview != null) {
+      myDiffPreview.updatePreview(myUi.getProperties().get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+    }
   }
 
   public void showDetails(boolean show) {
     myDetailsSplitter.setSecondComponent(show ? myDetailsPanel : null);
+  }
+
+  public boolean hasDiffPreview() {
+    return myDiffPreview != null;
+  }
+
+  void showDiffPreview(boolean state) {
+    if (myDiffPreview != null) {
+      myDiffPreview.updatePreview(state);
+      myDiffPreviewSplitter.setSecondComponent(state ? myDiffPreview.getComponent() : null);
+    }
+  }
+
+  @Nullable
+  private FileHistoryDiffPreview createDiffPreview(boolean isInEditor) {
+    if (!myFilePath.isDirectory()) {
+      FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myUi.getLogData().getProject(), () -> myUi.getSelectedChange(),
+                                                                      isInEditor, this);
+      ListSelectionListener selectionListener = e -> {
+        int[] selection = myGraphTable.getSelectedRows();
+        ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
+                                                        o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()));
+      };
+      myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
+      Disposer.register(diffPreview, () -> myGraphTable.getSelectionModel().removeListSelectionListener(selectionListener));
+      return diffPreview;
+    }
+    return null;
   }
 
   @Nullable
@@ -159,7 +207,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil.toObjectArray(VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)), Change.class);
+      if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
+      return VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)).toArray(new Change[0]);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUi.getProperties();
@@ -172,7 +221,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
       List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(details, myUi::createRevision), VcsFileRevision.class);
+      return ContainerUtil.mapNotNull(details, myUi::createRevision).toArray(new VcsFileRevision[0]);
     }
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
@@ -192,6 +241,24 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }
     else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
       return myUi.getLogData().getLogProvider(myRoot).getDiffHandler();
+    }
+    else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
+      if (myFilePath.isDirectory()) return null;
+      return new ShowPreviewEditorAction.DiffPreviewProvider() {
+        @NotNull
+        @Override
+        public DiffRequestProcessor createDiffRequestProcessor() {
+          FileHistoryDiffPreview preview = notNull(createDiffPreview(true));
+          preview.updatePreview(true);
+          return preview;
+        }
+
+        @NotNull
+        @Override
+        public Object getOwner() {
+          return myUi;
+        }
+      };
     }
     return null;
   }

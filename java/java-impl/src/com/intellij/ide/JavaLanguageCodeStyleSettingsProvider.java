@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
+import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -29,6 +30,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 
@@ -184,6 +189,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "SPECIAL_ELSE_IF_TREATMENT",
                                    "ENUM_CONSTANTS_WRAP",
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
+                                   "ALIGN_CONSECUTIVE_ASSIGNMENTS",
                                    "ALIGN_SUBSEQUENT_SIMPLE_METHODS",
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN");
 
@@ -327,8 +333,56 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Nullable
   @Override
-  public CodeStyleBean createBean() {
-    return new JavaCodeStyleBean();
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
+      return new JavaPackageEntryTableAccessor(codeStyleObject, field);
+    }
+    return super.getAccessor(codeStyleObject, field);
+  }
+
+  @Override
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    if (codeStyleObject instanceof JavaCodeStyleSettings) {
+      return Collections.singletonList(new RepeatAnnotationsAccessor((JavaCodeStyleSettings)codeStyleObject));
+    }
+    return super.getAdditionalAccessors(codeStyleObject);
+  }
+
+  private static class RepeatAnnotationsAccessor extends CodeStylePropertyAccessor<List<String>> {
+
+    private final JavaCodeStyleSettings mySettings;
+
+    RepeatAnnotationsAccessor(@NotNull JavaCodeStyleSettings settings) {
+      mySettings = settings;
+    }
+
+    @Override
+    public boolean set(@NotNull List<String> extVal) {
+      mySettings.setRepeatAnnotations(extVal);
+      return true;
+    }
+
+    @Override
+    @Nullable
+    public List<String> get() {
+      return mySettings.getRepeatAnnotations();
+    }
+
+    @Override
+    protected List<String> parseString(@NotNull String string) {
+      return CodeStylePropertiesUtil.getValueList(string);
+    }
+
+    @Nullable
+    @Override
+    protected String valueToString(@NotNull List<String> value) {
+      return CodeStylePropertiesUtil.toCommaSeparatedString(value);
+    }
+
+    @Override
+    public String getPropertyName() {
+      return "repeat_annotations";
+    }
   }
 
   private static final String GENERAL_CODE_SAMPLE =
@@ -500,9 +554,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    while (x < 50000) x++;\n" +
     "    do x++; while (x < 10000);\n" +
     "    switch (a) {\n" +
-    "    case 0:\n" +
-    "      doCase0();\n" +
-    "      break;\n" +
+    "    case 0: case 1:\ndoCase0(); break;\ncase 2: case 3: return;" +
     "    default:\n" +
     "      doDefault();\n" +
     "    }\n" +

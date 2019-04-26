@@ -18,6 +18,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
@@ -40,9 +41,12 @@ public abstract class MapBasedForwardIndex<Key, Value, MapValueType> extends Abs
     return getDiffBuilder(inputId, getInput(inputId));
   }
 
-  protected abstract InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, MapValueType mapValueType) throws IOException;
-  protected abstract MapValueType convertToMapValueType(int inputId, Map<Key, Value> map) throws IOException;
+  @NotNull
+  protected abstract InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable MapValueType mapValueType) throws IOException;
+  @NotNull
+  protected abstract MapValueType convertToMapValueType(int inputId, @NotNull Map<Key, Value> map) throws IOException;
 
+  @Nullable
   public MapValueType getInput(int inputId) throws IOException {
     return myInputsIndex.get(inputId);
   }

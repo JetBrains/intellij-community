@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -139,6 +140,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
 
   public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
+    PsiUtilCore.ensureValid(file);
     if (file.getVirtualFile() == null || DumbService.isDumb(file.getProject())) {
       return StringUtil.contains(file.getViewProvider().getContents(), name);
     }

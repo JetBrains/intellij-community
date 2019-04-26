@@ -8,11 +8,13 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -29,7 +31,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -46,7 +47,6 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -88,9 +88,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private boolean myModelUpdateInProgress;
 
-  public ChangesTree(@NotNull Project project,
-                     boolean showCheckboxes,
-                     boolean highlightProblems) {
+  public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    this(project, showCheckboxes, highlightProblems, false);
+  }
+
+  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean expandInSpeedSearch) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
@@ -99,7 +101,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
+    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
@@ -152,8 +154,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        TreePath clickPath =
-          getUI() instanceof WideSelectionTreeUI ? getClosestPathForLocation(e.getX(), e.getY()) : getPathForLocation(e.getX(), e.getY());
+        TreePath clickPath = WideSelectionTreeUI.isWideSelection(ChangesTree.this)
+                             ? getClosestPathForLocation(e.getX(), e.getY())
+                             : getPathForLocation(e.getX(), e.getY());
         if (clickPath == null) return false;
 
         final int row = getRowForLocation(e.getPoint().x, e.getPoint().y);
@@ -214,12 +217,19 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void addSelectionListener(@NotNull Runnable runnable) {
-    addTreeSelectionListener(new TreeSelectionListener() {
+    addSelectionListener(runnable, null);
+  }
+
+  public void addSelectionListener(@NotNull Runnable runnable, @Nullable Disposable parent) {
+    TreeSelectionListener listener = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         runnable.run();
       }
-    });
+    };
+
+    addTreeSelectionListener(listener);
+    if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
   }
 
   public void setInclusionListener(@Nullable Runnable runnable) {
@@ -272,13 +282,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setSelectedChanges(oldSelection);
   }
 
-  private void setChildIndent(boolean isFlat) {
-    BasicTreeUI treeUI = (BasicTreeUI)getUI();
-
-    treeUI.setLeftChildIndent(!isFlat ? UIUtil.getTreeLeftChildIndent() : 0);
-    treeUI.setRightChildIndent(!isFlat ? UIUtil.getTreeRightChildIndent() : 0);
-  }
-
   private boolean isCurrentModelFlat() {
     boolean isFlat = true;
     Enumeration enumeration = getRoot().depthFirstEnumeration();
@@ -304,7 +307,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
       setModel(model);
       myIsModelFlat = isCurrentModelFlat();
-      setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
+      setShowsRootHandles(!myGroupingSupport.isNone() || !myIsModelFlat);
 
       if (myKeepTreeState) {
         //noinspection ConstantConditions
@@ -323,7 +326,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myModelUpdateInProgress;
   }
 
-  private void resetTreeState() {
+  protected void resetTreeState() {
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;
@@ -700,10 +703,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Color getFileColorFor(Object object) {
     VirtualFile file;
     if (object instanceof FilePath) {
-      file = ((FilePath)object).getVirtualFile();
+      file = getVirtualFileFor((FilePath)object);
     }
     else if (object instanceof Change) {
-      file = ((Change)object).getVirtualFile();
+      file = getVirtualFileFor(ChangesUtil.getFilePath((Change)object));
     }
     else {
       file = ObjectUtils.tryCast(object, VirtualFile.class);
@@ -713,6 +716,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       return VfsPresentationUtil.getFileBackgroundColor(myProject, file);
     }
     return super.getFileColorFor(object);
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFileFor(@NotNull FilePath filePath) {
+    if (filePath.isNonLocal()) return null;
+    return ChangesUtil.findValidParentAccurately(filePath);
   }
 
   @Override

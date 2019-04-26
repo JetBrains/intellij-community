@@ -61,6 +61,7 @@ public class RenamePropertyTest extends MultiFileTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/";

@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the state and settings of a "choose by name" popup from the point of view of the logic which fills it with items.
@@ -15,6 +16,7 @@ import com.intellij.util.Processor;
 public interface ChooseByNameViewModel {
   Project getProject();
 
+  @NotNull
   ChooseByNameModel getModel();
 
   /**
@@ -25,7 +27,8 @@ public interface ChooseByNameViewModel {
   /**
    * Transforms text entered by the user in the dialog into the search pattern (for example, removes irrelevant suffixes like "line ...")
    */
-  String transformPattern(String pattern);
+  @NotNull
+  String transformPattern(@NotNull String pattern);
 
   /**
    * If true, top matching candidates should be shown in the popup also when the entered pattern is empty. If false, an empty list is

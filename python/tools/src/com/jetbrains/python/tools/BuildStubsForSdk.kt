@@ -92,7 +92,7 @@ class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
   override val moduleTypeId: String
     get() = PythonModuleTypeBase.PYTHON_MODULE
 
-  override fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk? = createPythonSdkProducer(sdkPath)
+  override fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk = createPythonSdkProducer(sdkPath)
 
   override fun createStubsGenerator(stubsFilePath: String): PyStubsGenerator = PyStubsGenerator(stubsFilePath)
 

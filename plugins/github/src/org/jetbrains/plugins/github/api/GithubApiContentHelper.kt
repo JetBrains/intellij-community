@@ -32,7 +32,7 @@ object GithubApiContentHelper {
       return gson.fromJson(string, TypeToken.get(clazz).type)
     }
     catch (e: JsonParseException) {
-      throw GithubJsonException("Couldn't parse GitHub response", e)
+      throw GithubJsonException("Can't parse GitHub response", e)
     }
   }
 
@@ -43,7 +43,7 @@ object GithubApiContentHelper {
       return gson.fromJson(reader, typeToken.type)
     }
     catch (e: JsonParseException) {
-      throw GithubJsonException("Couldn't parse GitHub response", e)
+      throw GithubJsonException("Can't parse GitHub response", e)
     }
   }
 
@@ -54,7 +54,7 @@ object GithubApiContentHelper {
       return gson.toJson(content)
     }
     catch (e: JsonIOException) {
-      throw GithubJsonException("Couldn't serialize GitHub request body", e)
+      throw GithubJsonException("Can't serialize GitHub request body", e)
     }
   }
 

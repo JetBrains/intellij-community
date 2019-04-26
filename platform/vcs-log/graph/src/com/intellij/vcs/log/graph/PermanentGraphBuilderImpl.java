@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+@Deprecated
 public class PermanentGraphBuilderImpl<CommitId> implements PermanentGraphBuilder<CommitId> {
 
   private final GraphColorManager<CommitId> STUB_COLOR_MANAGER = new GraphColorManager<CommitId>() {
@@ -42,7 +43,7 @@ public class PermanentGraphBuilderImpl<CommitId> implements PermanentGraphBuilde
 
   @NotNull
   @Override
-  public PermanentGraph<CommitId> build(@NotNull List<GraphCommit<CommitId>> commits) {
+  public PermanentGraph<CommitId> build(@NotNull List<? extends GraphCommit<CommitId>> commits) {
     return PermanentGraphImpl.newInstance(commits, STUB_COLOR_MANAGER, Collections.emptySet());
   }
 }

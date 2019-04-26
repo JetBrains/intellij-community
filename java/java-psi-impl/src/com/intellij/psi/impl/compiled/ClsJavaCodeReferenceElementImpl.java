@@ -28,16 +28,14 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiAnnotatedJavaCodeReferenceElement {
@@ -132,21 +130,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       int index = 0;
       for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiClass)resolve)) {
         if (index >= typeElements.length) {
-          PsiTypeParameterListOwner parameterOwner = parameter.getOwner();
-          if (parameterOwner == resolve) {
-            substitutionMap.put(parameter, null);
-          }
-          else if (parameterOwner instanceof PsiClass) {
-            PsiElement containingClass = myParent;
-            while ((containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true)) != null) {
-              PsiSubstitutor superClassSubstitutor =
-                TypeConversionUtil.getClassSubstitutor((PsiClass)parameterOwner, (PsiClass)containingClass, PsiSubstitutor.EMPTY);
-              if (superClassSubstitutor != null) {
-                substitutionMap.put(parameter, superClassSubstitutor.substitute(parameter));
-                break;
-              }
-            }
-          }
+          substitutionMap.put(parameter, null);
         }
         else {
           substitutionMap.put(parameter, typeElements[index].getType());
@@ -219,6 +203,9 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     PsiFile file = getContainingFile();
+    if (file == null) {
+      throw new PsiInvalidElementAccessException(this);
+    }
     final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
     ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode,file);
     if (results.length == 0) return JavaResolveResult.EMPTY_ARRAY;

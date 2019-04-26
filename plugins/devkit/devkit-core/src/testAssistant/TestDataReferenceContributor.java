@@ -33,8 +33,8 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.ULiteralExpression;
-import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.Collection;
 
@@ -47,31 +47,22 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(registrar,
-                                                         UastPatterns.stringLiteralExpression()
+                                                         UastPatterns.injectionHostUExpression()
                                                                      .annotationParam(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME, "value"),
                                                          new TestDataReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static class TestDataReferenceProvider extends UastLiteralReferenceProvider {
+  private static class TestDataReferenceProvider extends UastInjectionHostReferenceProvider {
+
     @NotNull
     @Override
-    public PsiReference[] getReferencesByULiteral(@NotNull final ULiteralExpression literalExpression,
-                                                  @NotNull PsiLanguageInjectionHost host,
-                                                  @NotNull final ProcessingContext context) {
-
+    public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                        @NotNull PsiLanguageInjectionHost host,
+                                                        @NotNull ProcessingContext context) {
       TextRange range = ElementManipulators.getValueTextRange(host);
 
-      //ideally `literalExpression.getValue()` should be the right value for `stringValue`, but something is wrong with Kotlin
-      String stringValue;
-      if (literalExpression.getSourcePsi() == host) {
-        stringValue = UastLiteralUtils.getValueIfStringLiteral(literalExpression);
-        if (stringValue == null) return PsiReference.EMPTY_ARRAY;
-      }
-      else {
-        StringBuilder chars = new StringBuilder();
-        host.createLiteralTextEscaper().decode(TextRange.from(0, host.getTextLength()), chars);
-        stringValue = chars.toString();
-      }
+      String stringValue = UastUtils.evaluateString(uExpression);
+      if (stringValue == null) return PsiReference.EMPTY_ARRAY;
 
       final TestDataReferenceSet referenceSet = new TestDataReferenceSet(stringValue,
                                                                          host, range.getStartOffset(),

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class NestedCopiesHolder {
@@ -29,7 +30,7 @@ public class NestedCopiesHolder {
   }
 
   public synchronized Set<NestedCopyInfo> getAndClear() {
-    Set<NestedCopyInfo> copy = ContainerUtil.newHashSet(mySet);
+    Set<NestedCopyInfo> copy = new HashSet<>(mySet);
     mySet.clear();
 
     return copy;

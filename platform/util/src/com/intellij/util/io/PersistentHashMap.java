@@ -101,7 +101,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private final LimitedPool<BufferExposingByteArrayOutputStream> myStreamPool =
-    new LimitedPool<BufferExposingByteArrayOutputStream>(10, new LimitedPool.ObjectFactory<BufferExposingByteArrayOutputStream>() {
+    new LimitedPool<>(10, new LimitedPool.ObjectFactory<BufferExposingByteArrayOutputStream>() {
       @Override
       @NotNull
       public BufferExposingByteArrayOutputStream create() {
@@ -120,12 +120,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
-  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      dropMemoryCaches();
-    }
-  });
+  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(this::dropMemoryCaches);
 
   public PersistentHashMap(@NotNull final File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -259,6 +254,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return false;
   }
 
+  private static final int MAX_RECYCLED_BUFFER_SIZE = 4096;
+  
   private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(final KeyDescriptor<Key> keyDescriptor) {
     return new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024, keyDescriptor) {
       @Override
@@ -282,7 +279,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
             previousRecord = readValueId(id);
           }
 
-          long headerRecord = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), previousRecord);
+          long headerRecord = myValueStorage.appendBytes(bytes.toByteArraySequence(), previousRecord);
 
           if (myDirectlyStoreLongFileOffsetMode) {
             ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonNegativeValue(key, headerRecord);
@@ -295,7 +292,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
             myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
           }
 
-          myStreamPool.recycle(bytes);
+          if (bytes.getInternalBuffer().length <= MAX_RECYCLED_BUFFER_SIZE) {
+            // Avoid internal fragmentation by not retaining / reusing large append buffers (IDEA-208533)
+            myStreamPool.recycle(bytes);
+          }
         }
         catch (IOException e) {
           markCorrupted();
@@ -407,7 +407,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       appenderStream.setOut(bytes);
       myValueExternalizer.save(appenderStream, value);
       appenderStream.setOut(null);
-      newValueOffset = myValueStorage.appendBytes(bytes.getInternalBuffer(), 0, bytes.size(), 0);
+      newValueOffset = myValueStorage.appendBytes(bytes.toByteArraySequence(), 0);
     }
 
     myEnumerator.lockStorage();
@@ -520,8 +520,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @NotNull
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    final List<Key> values = new ArrayList<Key>();
-    processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<Key>(values));
+    final List<Key> values = new ArrayList<>();
+    processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(values));
     return values;
   }
 
@@ -602,13 +602,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
     final PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(valueOffset);
 
-    DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.buffer));
     final Value valueRead;
-    try {
+    try (DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.buffer))) {
       valueRead = myValueExternalizer.read(input);
-    }
-    finally {
-      input.close();
     }
 
     if (myValueStorage.performChunksCompaction(readResult.chunksCount, readResult.buffer.length)) {
@@ -875,17 +871,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   private static File[] getFilesInDirectoryWithNameStartingWith(@NotNull File fileFromDirectory, @NotNull final String baseFileName) {
     File parentFile = fileFromDirectory.getParentFile();
-    return parentFile != null ? parentFile.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(final File pathname) {
-        return pathname.getName().startsWith(baseFileName);
-      }
-    }) : null;
+    return parentFile != null ? parentFile.listFiles(pathname -> pathname.getName().startsWith(baseFileName)) : null;
   }
 
   private void newCompact(@NotNull PersistentHashMapValueStorage newStorage) throws IOException {
     long started = System.currentTimeMillis();
-    final List<CompactionRecordInfo> infos = new ArrayList<CompactionRecordInfo>(10000);
+    final List<CompactionRecordInfo> infos = new ArrayList<>(10000);
 
     traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
       @Override

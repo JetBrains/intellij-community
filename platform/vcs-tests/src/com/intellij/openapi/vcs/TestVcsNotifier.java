@@ -41,6 +41,11 @@ public class TestVcsNotifier extends VcsNotifier {
     return notification;
   }
 
+  @NotNull
+  public List<Notification> getNotifications(){
+    return ContainerUtil.unmodifiableOrEmptyList(myNotifications);
+  }
+
   public void cleanup() {
     myNotifications.clear();
   }

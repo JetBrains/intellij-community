@@ -47,7 +47,7 @@ class CodeType:
     co_consts = ...  # type: Tuple[Any, ...]
     co_names = ...  # type: Tuple[str, ...]
     co_varnames = ...  # type: Tuple[str, ...]
-    co_filename = ...  # type: Optional[str]
+    co_filename = ...  # type: str
     co_name = ...  # type: str
     co_firstlineno = ...  # type: int
     co_lnotab = ...  # type: bytes

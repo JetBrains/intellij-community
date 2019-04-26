@@ -188,7 +188,6 @@ public class FindManagerImpl extends FindManager {
       findInProjectSettings.addDirectory(findModel.getDirectoryName());
       myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
     }
-    FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
   }
 
   @Override
@@ -216,7 +215,7 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
-    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup") && Registry.is("ide.find.as.popup.allow.multiline"));
+    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup.allow.multiline"));
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
@@ -417,9 +416,9 @@ public class FindManagerImpl extends FindManager {
       boolean previousCharacterIsSameAsNext = text.charAt(startOffset - 1) == text.charAt(startOffset);
 
       boolean firstCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset));
-      isWordStart = !firstCharacterIsIdentifier && !previousCharacterIsSameAsNext ||
-                    firstCharacterIsIdentifier && !previousCharacterIsIdentifier;
-    } else {
+      isWordStart = firstCharacterIsIdentifier ? !previousCharacterIsIdentifier : !previousCharacterIsSameAsNext;
+    }
+    else {
       isWordStart = true;
     }
 
@@ -428,11 +427,11 @@ public class FindManagerImpl extends FindManager {
     if (endOffset != text.length()) {
       boolean nextCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(endOffset));
       boolean nextCharacterIsSameAsPrevious = endOffset > 0 && text.charAt(endOffset) == text.charAt(endOffset - 1);
-      boolean lastSearchedCharacterIsIdentifier = endOffset  > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+      boolean lastSearchedCharacterIsIdentifier = endOffset > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
 
-      isWordEnd = lastSearchedCharacterIsIdentifier && !nextCharacterIsIdentifier ||
-                  !lastSearchedCharacterIsIdentifier && !nextCharacterIsSameAsPrevious;
-    } else {
+      isWordEnd = lastSearchedCharacterIsIdentifier ? !nextCharacterIsIdentifier : !nextCharacterIsSameAsPrevious;
+    }
+    else {
       isWordEnd = true;
     }
 
@@ -688,7 +687,7 @@ public class FindManagerImpl extends FindManager {
                 else {
                   int diff = 0;
                   if (start == end || start == matchEnd) {
-                    diff = scanningForward ? 1 : -1;
+                    diff = 1;
                   }
                   start = matchEnd + diff;
                   continue;
@@ -737,7 +736,6 @@ public class FindManagerImpl extends FindManager {
     return tokensOfInterest;
   }
 
-  @Nullable
   private static SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
     SyntaxHighlighter syntaxHighlighter = lang != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file) : null;
     if (lang == null || syntaxHighlighter instanceof PlainSyntaxHighlighter) {

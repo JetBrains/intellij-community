@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,23 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionBean;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
+import java.nio.file.Paths;
+
 @TestDataPath("$CONTENT_ROOT/testData/inspections/intentionDescription")
-public class IntentionDescriptionNotFoundInspectionTest extends LightCodeInsightFixtureTestCase {
+public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -30,14 +40,28 @@ public class IntentionDescriptionNotFoundInspectionTest extends LightCodeInsight
   }
 
   @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.addLibrary("core", PathUtil.getJarPathForClass(Project.class));
+    moduleBuilder.addLibrary("editor", PathUtil.getJarPathForClass(Editor.class));
+    moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(IntentionActionBean.class));
+    moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(IncorrectOperationException.class));
+    moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
+      .resolveSibling("intellij.platform.resources").toString());
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(IntentionDescriptionNotFoundInspection.class);
-    myFixture.addClass("package com.intellij.codeInsight.intention; public interface IntentionAction {}");
+    myFixture.copyDirectoryToProject("resources", "resources");
   }
 
   public void testHighlightingForDescription() {
     myFixture.testHighlighting("MyIntentionAction.java");
+  }
+
+  public void testHighlightingNotRegisteredInPluginXml() {
+    myFixture.testHighlighting("MyIntentionActionNotRegisteredInPluginXml.java");
   }
 
   public void testNoHighlighting() {

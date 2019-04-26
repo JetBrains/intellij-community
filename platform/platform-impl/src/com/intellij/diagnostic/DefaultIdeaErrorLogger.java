@@ -2,8 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -50,15 +49,14 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       Throwable t = event.getThrowable();
       PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-      if (pluginId != null && !pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
-        FUSApplicationUsageTrigger.getInstance().trigger(PluginExceptionStatisticCollector.class, pluginId.getIdString(), null);
-      }
 
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
+
+      LifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginId, t);
 
       return notificationEnabled ||
              showPluginError ||
