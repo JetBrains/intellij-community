@@ -112,11 +112,11 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("IDE_AA_TYPE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.ideAAType"))
-  internal var ideAAType by property(AntialiasingType.SUBPIXEL)
+  internal var ideAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:OptionTag("EDITOR_AA_TYPE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.editorAAType"))
-  internal var editorAAType by property(AntialiasingType.SUBPIXEL)
+  internal var editorAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:OptionTag("COLOR_BLINDNESS")
   var colorBlindness by enum<ColorBlindness>()

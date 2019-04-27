@@ -17,6 +17,7 @@ private val LOG = logger<BaseState>()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
+    // should be part of class and not file level to access private field of class
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
 
@@ -80,6 +81,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   // Enum is an immutable, so, it is safe to use it as default value.
+  @Deprecated(message = "Use [enum] instead", replaceWith = ReplaceWith("enum(defaultValue)"), level = DeprecationLevel.ERROR)
   protected fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
     addProperty(result)
@@ -110,10 +112,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     addProperty(result)
     @Suppress("UNCHECKED_CAST")
     return result as StoredPropertyBase<MutableList<T>>
-  }
-
-  protected fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
-    return map(value)
   }
 
   protected fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
