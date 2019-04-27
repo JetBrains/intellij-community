@@ -5,9 +5,12 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
+import gnu.trove.THashMap
 import kotlin.reflect.KProperty
 
-class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
+class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBase<MutableMap<K, V>>() {
+  private val value: MutableMap<K, V> = value ?: MyMap()
+
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.OBJECT
 
@@ -44,4 +47,35 @@ class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : Stored
 
   @Suppress("FunctionName")
   fun __getValue() = value
+
+  override fun getModificationCount(): Long {
+    return when (value) {
+      is MyMap -> value.modificationCount
+      else -> super.getModificationCount()
+    }
+  }
+}
+
+private class MyMap<K: Any, V> : THashMap<K, V>() {
+  @Volatile
+  var modificationCount = 0L
+
+  override fun put(key: K, value: V): V? {
+    val oldValue = super.put(key, value)
+    if (oldValue !== value) {
+      modificationCount++
+    }
+    return oldValue
+  }
+
+  // to detect remove from iterator
+  override fun removeAt(index: Int) {
+    super.removeAt(index)
+    modificationCount++
+  }
+
+  override fun clear() {
+    super.clear()
+    modificationCount++
+  }
 }

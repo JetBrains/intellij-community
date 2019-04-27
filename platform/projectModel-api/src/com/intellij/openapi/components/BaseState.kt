@@ -8,13 +8,13 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
-import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashMap
 
 private val LOG = logger<BaseState>()
 
@@ -127,7 +127,20 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result as StoredPropertyBase<MutableList<T>>
   }
 
-  protected fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
+  protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> {
+    val result = MapStoredProperty<K, V>(null)
+    addProperty(result)
+    return result
+  }
+
+  protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> {
+    val result = MapStoredProperty<K, V>(LinkedHashMap())
+    addProperty(result)
+    return result
+  }
+
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use map", replaceWith = ReplaceWith("map()"))
+  protected fun <K : Any, V: Any> map(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
     val result = MapStoredProperty(value)
     addProperty(result)
     return result
@@ -201,10 +214,10 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
   /**
-   * If you use [set], [treeSet] or [map], you must ensure that [incrementModificationCount] is called for each mutation operation on corresponding property value (e.g. add, remove).
+   * If you use [set], [treeSet] or [linkedMap], you must ensure that [incrementModificationCount] is called for each mutation operation on corresponding property value (e.g. add, remove).
    * Setting property to a new value updates modification count, but direct modification of mutable collection or map doesn't.
    *
-   * The only exclusion - [list].
+   * [list] and [map] track content mutation, but if key or value is not primitive value, you also have to [incrementModificationCount] in case of nested mutation.
    */
   @Transient
   override fun getModificationCount(): Long {

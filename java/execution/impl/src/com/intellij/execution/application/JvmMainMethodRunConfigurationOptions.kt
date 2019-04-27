@@ -7,7 +7,6 @@ import com.intellij.execution.JvmConfigurationOptions
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
-import java.util.*
 
 open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PROGRAM_PARAMETERS")
@@ -27,7 +26,7 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
 
   @Property(description = "Environment variables")
   @get:XMap(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name")
-  var env by map<String, String>(LinkedHashMap())
+  var env by linkedMap<String, String>()
 
   // see ConfigurationWithCommandLineShortener - "null if option was not selected explicitly, legacy user-local options to be used"
   // so, we cannot use NONE as default value
