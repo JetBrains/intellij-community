@@ -144,33 +144,33 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
   }
 
   private fun `do test Delete to Word End`() {
-    doTest(DELETE, FORWARD, """doTest^(^"`test`"^,^ Direction^.^FORWARD^)^""")
+    doTest(DELETE, FORWARD, """doTest^(^"`test`"^,^ ^Direction^.^FORWARD^)^""")
     doTest(DELETE, FORWARD, """
-^      assert^(^i^ <^ expectedCaretOffset^)^ {^ "^Duplicate^ carets^:^ '^${'$'}stringWithCaretStops^'"^ }^
+^      ^assert^(^i^ ^<^ ^expectedCaretOffset^)^ ^{^ ^"^Duplicate^ ^carets^:^ ^'^${'$'}stringWithCaretStops^'"^ ^}^
 """)
 
     doTest(DELETE, FORWARD, """
-^  private^ fun^ doTest^(^stringWithCaretStops^:^ String^,^
-^                     direction^:^ Direction^,^
-^                     isDelete^:^ Boolean^ =^ false^)^ {^
+^  ^private^ ^fun^ ^doTest^(^stringWithCaretStops^:^ ^String^,^
+^                     ^direction^:^ ^Direction^,^
+^                     ^isDelete^:^ ^Boolean^ ^=^ ^false^)^ ^{^
 """)
 
     doTest(DELETE, FORWARD, """
-^data^ class^ CaretStopOptions^(^@^OptionTag^(^"`BACKWARD`"^)^ val^ backwardPolicy^:^ CaretStopPolicy^,^
-^                            @^OptionTag^(^"`FORWARD`"^)^ val^ forwardPolicy^:^ CaretStopPolicy^)^ {^
+^data^ ^class^ ^CaretStopOptions^(^@^OptionTag^(^"`BACKWARD`"^)^ ^val^ ^backwardPolicy^:^ ^CaretStopPolicy^,^
+^                            ^@^OptionTag^(^"`FORWARD`"^)^ ^val^ ^forwardPolicy^:^ ^CaretStopPolicy^)^ ^{^
 """)
 
     doTest(DELETE, FORWARD, """
-^  public^ void^ setCaretStopOptions^(^@^NotNull^ CaretStopOptions^ options^)^ {^
-^    myOsSpecificState^.^CARET_STOP_OPTIONS^ =^ options^;^
-^  }^
+^  ^public^ ^void^ ^setCaretStopOptions^(^@^NotNull^ ^CaretStopOptions^ ^options^)^ ^{^
+^    ^myOsSpecificState^.^CARET_STOP_OPTIONS^ ^=^ ^options^;^
+^  ^}^
 """)
 
     doTest(DELETE, FORWARD, """
-^my_list^ =^ [^"`one`"^,^ "`two`"^,^ "`three`"^,^
-^           "`four`"^,^ "`five`"^,^
-^           "`six`"^.^six^,^ "`seven`"^seven^,^
-^           eight^"`eight`"^,^ nine^/^"`nine`"^]^
+^my_list^ ^=^ ^[^"`one`"^,^ ^"`two`"^,^ ^"`three`"^,^
+^           ^"`four`"^,^ ^"`five`"^,^
+^           ^"`six`"^.^six^,^ ^"`seven`"^seven^,^
+^           ^eight^"`eight`"^,^ ^nine^/^"`nine`"^]^
 """)
   }
 

@@ -212,7 +212,8 @@ public class EditorActionUtil {
   @NotNull
   public static TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
     int startOffset = editor.getCaretModel().getOffset();
-    int endOffset = getNextCaretStopOffset(editor, CaretStopPolicy.WORD_END, isCamel, handleQuoted);
+    // IDEA-211756 "Delete to word end" is extremely inconvenient on whitespaces
+    int endOffset = getNextCaretStopOffset(editor, CaretStopPolicy.BOTH, isCamel, handleQuoted);
     return TextRange.create(startOffset, endOffset);
   }
 

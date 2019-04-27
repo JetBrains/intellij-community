@@ -22,6 +22,7 @@ data class CaretStopPolicy(@OptionTag("WORD") val wordStop: CaretStop = CaretSto
     @JvmField val NONE       = CaretStopPolicy(wordStop = CaretStop.NONE,  lineStop = CaretStop.NONE)
     @JvmField val WORD_START = CaretStopPolicy(wordStop = CaretStop.START, lineStop = CaretStop.BOTH)
     @JvmField val WORD_END   = CaretStopPolicy(wordStop = CaretStop.END,   lineStop = CaretStop.BOTH)
+    @JvmField val BOTH       = CaretStopPolicy(wordStop = CaretStop.BOTH,  lineStop = CaretStop.BOTH)
   } // @formatter:on
 }
 
