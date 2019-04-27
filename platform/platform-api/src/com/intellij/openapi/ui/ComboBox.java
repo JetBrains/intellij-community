@@ -170,6 +170,21 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     updateUI();
   }
 
+  public boolean isSwingPopup() {
+    return getClientProperty("ComboBox.jbPopup") == null;
+  }
+
+  @Override
+  public void setKeySelectionManager(KeySelectionManager aManager) {
+    super.setKeySelectionManager(aManager == null || isSwingPopup() ? aManager : new KeySelectionManager() {
+      @Override
+      public int selectionForKey(char aKey, ComboBoxModel aModel) {
+        showPopup();
+        return -1;
+      }
+    });
+  }
+
   public void setMinimumAndPreferredWidth(final int minimumAndPreferredWidth) {
     myMinimumAndPreferredWidth = minimumAndPreferredWidth;
   }

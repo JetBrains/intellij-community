@@ -84,6 +84,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     };
     step.setDefaultOptionIndex(myComboBox.getSelectedIndex());
     myPopup = new ListPopupImpl(step, 10);
+    myPopup.setRequestFocus(false);
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
