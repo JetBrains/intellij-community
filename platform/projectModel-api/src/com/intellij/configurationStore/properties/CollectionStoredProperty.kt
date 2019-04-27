@@ -8,6 +8,9 @@ import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.util.SmartList
 import kotlin.reflect.KProperty
 
+// Technically, it is not possible to proxy write operations because collection/map can be mutated via iterator.
+// So, even if Kotlin can create delegator for us, still, to track mutations via iterator we have to reimplement collection/map.
+
 /**
  * AbstractCollectionBinding modifies collection directly, so, we cannot use null as default null and return empty list on get.
  */

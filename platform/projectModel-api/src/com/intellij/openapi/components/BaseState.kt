@@ -9,9 +9,12 @@ import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import gnu.trove.THashMap
+import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
+import java.util.*
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
+import kotlin.collections.ArrayList
 
 private val LOG = logger<BaseState>()
 
@@ -65,8 +68,18 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  protected fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
-    val result = CollectionStoredProperty(initialValue)
+  protected fun stringSet(): StoredPropertyBase<MutableSet<String>> {
+    val result = CollectionStoredProperty<String, MutableSet<String>>(THashSet())
+    addProperty(result)
+    return result
+  }
+
+  /**
+   * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
+   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   */
+  protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState {
+    val result = CollectionStoredProperty<E, MutableSet<E>>(TreeSet())
     addProperty(result)
     return result
   }
@@ -187,6 +200,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
+  /**
+   * If you use [set], [treeSet] or [map], you must ensure that [incrementModificationCount] is called for each mutation operation on corresponding property value (e.g. add, remove).
+   * Setting property to a new value updates modification count, but direct modification of mutable collection or map doesn't.
+   *
+   * The only exclusion - [list].
+   */
   @Transient
   override fun getModificationCount(): Long {
     var result = ownModificationCount
