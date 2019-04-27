@@ -1,5 +1,6 @@
-package com.intellij.configurationScript
+package com.intellij.configurationScript.schemaGenerators
 
+import com.intellij.configurationScript.JsonObjectBuilder
 import com.intellij.configurationStore.Property
 import com.intellij.configurationStore.properties.CollectionStoredProperty
 import com.intellij.configurationStore.properties.EnumStoredProperty

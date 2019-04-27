@@ -1,6 +1,7 @@
 package com.intellij.configurationScript
 
 import com.google.gson.Gson
+import com.intellij.configurationScript.schemaGenerators.rcTypeIdToPropertyName
 import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.testFramework.ProjectRule

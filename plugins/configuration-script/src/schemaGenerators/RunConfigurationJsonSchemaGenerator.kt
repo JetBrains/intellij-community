@@ -1,5 +1,8 @@
-package com.intellij.configurationScript
+package com.intellij.configurationScript.schemaGenerators
 
+import com.intellij.configurationScript.JsonObjectBuilder
+import com.intellij.configurationScript.Keys
+import com.intellij.configurationScript.LOG
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfigurationOptions
@@ -50,7 +53,8 @@ internal class RunConfigurationJsonSchemaGenerator {
       addPropertyForConfigurationType(properties, typePropertyName, isMultiFactory, typeDefinitionId)
 
       if (isMultiFactory) {
-        processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, factory ->
+        processFactories(factories,
+                                                                           typeDefinitionId) { factoryPropertyName, factoryDefinitionId, factory ->
           describeFactory(factory, factoryDefinitionId, if (StringUtil.equals(factoryPropertyName, factory.name)) null else factory.name)
         }
 
@@ -62,7 +66,8 @@ internal class RunConfigurationJsonSchemaGenerator {
           }
 
           map("properties") {
-            processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
+            processFactories(factories,
+                                                                               typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
               addPropertyForFactory(factoryPropertyName, factoryDefinitionId, isSingleChildOnly = false)
               // describeFactory cannot be here because JsonBuilder instance here equals to definitions - recursive building is not supported (to reuse StringBuilder instance)
             }
@@ -112,7 +117,8 @@ internal class RunConfigurationJsonSchemaGenerator {
               }
 
               map("properties") {
-                processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
+                processFactories(factories,
+                                                                                   typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
                   addPropertyForFactory(factoryPropertyName, factoryDefinitionId, isSingleChildOnly = true)
                 }
               }

@@ -2,6 +2,9 @@
 package com.intellij.configurationScript
 
 import com.intellij.configurationScript.providers.PluginsConfiguration
+import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
+import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
+import com.intellij.configurationScript.schemaGenerators.buildJsonSchema
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware

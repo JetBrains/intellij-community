@@ -1,5 +1,10 @@
-package com.intellij.configurationScript
+package com.intellij.configurationScript.providers
 
+import com.intellij.configurationScript.Keys
+import com.intellij.configurationScript.LOG
+import com.intellij.configurationScript.readObject
+import com.intellij.configurationScript.schemaGenerators.processConfigurationTypes
+import com.intellij.configurationScript.schemaGenerators.rcFactoryIdToPropertyName
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfigurationOptions
@@ -74,7 +79,9 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
       }
 
       val factoryKey = keyNode.value
-      val factory = type.configurationFactories.find { factory -> factoryKey == rcFactoryIdToPropertyName(factory) }
+      val factory = type.configurationFactories.find { factory -> factoryKey == rcFactoryIdToPropertyName(
+        factory)
+      }
       if (factory == null) {
         LOG.warn("Unknown run configuration factory: ${keyNode.value}")
         continue
