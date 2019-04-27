@@ -39,7 +39,7 @@ internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder, custo
       "type" to property.jsonType.jsonName
 
       annotation?.let {
-        if (!it.description.isEmpty()) {
+        if (it.description.isNotEmpty()) {
           "description" toUnescaped it.description
         }
       }

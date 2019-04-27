@@ -364,6 +364,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     descriptor.serviceInterface = element.getAttributeValue("serviceInterface");
     descriptor.serviceImplementation = element.getAttributeValue("serviceImplementation");
     descriptor.testServiceImplementation = element.getAttributeValue("testServiceImplementation");
+    descriptor.configurationSchemaKey = element.getAttributeValue("configurationSchemaKey");
     descriptor.overrides = Boolean.parseBoolean(element.getAttributeValue("overrides"));
     return descriptor;
   }

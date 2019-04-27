@@ -33,7 +33,7 @@ class ConfigurationFileTest {
   @Test
   fun schema() {
     // check that parseable
-    val schema = generateConfigurationSchema()
+    val schema = doGenerateConfigurationSchema(emptyList())
     val jsonReader = Gson().fromJson(CharSequenceReader(schema), Any::class.java)
     assertThat(jsonReader).isNotNull
   }

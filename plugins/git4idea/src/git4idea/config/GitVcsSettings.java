@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.push.GitPushTagMode;
@@ -54,7 +53,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
 
   @NotNull
   public UpdateMethod getUpdateType() {
-    return ObjectUtils.notNull(myState.getUpdateType(), UpdateMethod.BRANCH_DEFAULT);
+    return myState.getUpdateType();
   }
 
   public void setUpdateType(UpdateMethod updateType) {

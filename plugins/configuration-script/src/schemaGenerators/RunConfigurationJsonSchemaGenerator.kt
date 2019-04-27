@@ -3,6 +3,7 @@ package com.intellij.configurationScript.schemaGenerators
 import com.intellij.configurationScript.JsonObjectBuilder
 import com.intellij.configurationScript.Keys
 import com.intellij.configurationScript.LOG
+import com.intellij.configurationScript.SchemaGenerator
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfigurationOptions
@@ -34,12 +35,21 @@ private inline fun processFactories(factories: Array<ConfigurationFactory>,
   }
 }
 
-internal class RunConfigurationJsonSchemaGenerator {
+
+internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
   private val definitionBuilder = StringBuilder()
   private val definitions = JsonObjectBuilder(definitionBuilder, indentLevel = 1)
 
-  val definitionNodeKey = "runConfigurationDefinitions"
-  val definitionPointerPrefix = "#/$definitionNodeKey/"
+  companion object {
+    const val definitionNodeKey = "runConfigurationDefinitions"
+    private const val definitionPointerPrefix = "#/$definitionNodeKey/"
+  }
+
+  override fun generate(rootBuilder: JsonObjectBuilder) {
+    rootBuilder.map(Keys.runConfigurations) {
+      definitionReference(definitionPointerPrefix, Keys.runConfigurations)
+    }
+  }
 
   fun generate(): CharSequence {
     val properties = JsonObjectBuilder(StringBuilder(), indentLevel = 1)

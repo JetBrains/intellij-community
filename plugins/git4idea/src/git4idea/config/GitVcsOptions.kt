@@ -23,6 +23,7 @@ class GitVcsOptions : BaseState() {
   var updateChangesPolicy by enum(GitVcsSettings.UpdateChangesPolicy.STASH)
 
   @get:OptionTag("UPDATE_TYPE")
+  @com.intellij.configurationStore.Property(description = "Update method")
   var updateType by enum(UpdateMethod.BRANCH_DEFAULT)
 
   @get:OptionTag("PUSH_AUTO_UPDATE")
