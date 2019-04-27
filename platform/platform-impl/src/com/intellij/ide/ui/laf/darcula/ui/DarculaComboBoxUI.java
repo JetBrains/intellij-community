@@ -95,6 +95,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   protected ComboPopup createPopup() {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
+      //noinspection unchecked
       return new DarculaJBPopupComboPopup<Object>(comboBox);
     }
     return new CustomComboPopup(comboBox);
@@ -301,6 +302,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       icon = cc.getIcon();
       cc.setIcon(OffsetIcon.getOriginalIcon(icon));
     }
+    else if (c instanceof JComponent) {
+      JComponent cc = (JComponent)c;
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
+    }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
 
@@ -319,6 +325,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       JLabel cc = (JLabel)c;
       cc.setBorder(border);
       cc.setIcon(icon);
+    }
+    else if (c instanceof JComponent) {
+      JComponent cc = (JComponent)c;
+      cc.setBorder(border);
     }
   }
 
