@@ -28,7 +28,8 @@ import kotlin.collections.set
 /**
  * Allows to infer method parameters types regarding method calls and inner dependencies between types.
  */
-class MethodParametersInferenceProcessor(val method: GrMethod, private val elementFactory: GroovyPsiElementFactory) {
+class MethodParametersInferenceProcessor(val method: GrMethod) {
+  private val elementFactory: GroovyPsiElementFactory = GroovyPsiElementFactory.getInstance(method.project)
   private val defaultTypeParameterList = (method.typeParameterList?.copy()
                                           ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val nameGenerator = NameGenerator()
@@ -64,7 +65,7 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
     val generator = NameGenerator()
     for (param in method.parameters) {
       if (param.typeElement == null) {
-        val newTypeParameter = elementFactory.createTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
+        val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
         typeParameters.add(newTypeParameter)
         parameterIndex[param] = newTypeParameter
         param.setType(newTypeParameter.type())
@@ -82,16 +83,11 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
                                                   propagateVariablesToNestedSessions = true)
     collectOuterMethodCalls(inferenceSession)
     val signatureSubstitutor = inferenceSession.inferSubst()
-    for ((parameter, typeParameter) in parameterIndex) {
-      parameter.setType(signatureSubstitutor.substitute(typeParameter))
-    }
     method.typeParameterList?.replace(defaultTypeParameterList.copy())
     val defaultTypeParameters = method.typeParameters
-    for (parameter in parameterIndex.keys) {
-      if (parameter.type is PsiClassType) {
-        parameter.setType(
-          createDeeplyParametrizedType(parameter.type as PsiClassType, method.typeParameterList!!))
-      }
+    for ((parameter, typeParameter) in parameterIndex) {
+      parameter.setType(
+        createDeeplyParametrizedType(signatureSubstitutor.substitute(typeParameter)!!, method.typeParameterList!!))
     }
     return defaultTypeParameters
   }
@@ -113,6 +109,9 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
     val representativeSubstitutor = collectRepresentativeSubstitutor(graph)
     var resultSubstitutor = PsiSubstitutor.EMPTY
     for (variable in representatives) {
+      if (variable in constantInferenceVariables) {
+        continue
+      }
       val equalTypeParameters = inferenceVariables.filter {
         it.instantiation == PsiType.NULL &&
         graph.getRepresentative(it) == variable &&
@@ -120,7 +119,7 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
       }
       if (equalTypeParameters.isNotEmpty()) {
         val parent = graph.nodes[variable]?.directParent?.inferenceVariable
-        val advice = if (parent?.instantiation == PsiType.NULL) parent?.type() else parent?.instantiation
+        val advice = parent?.type()
         val newTypeParam = createBoundedTypeParameterElement(variable,
                                                              inferenceSession.restoreNameSubstitution, representativeSubstitutor,
                                                              advice)
@@ -129,8 +128,18 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
         equalTypeParameters.forEach { resultSubstitutor = resultSubstitutor.put(it, newTypeParam.type()) }
       }
       else {
-        resultSubstitutor = resultSubstitutor.put(variable, inferenceSession.restoreNameSubstitution.substitute(
-          representativeSubstitutor.substitute(variable.instantiation)))
+        val newTypeParam = createBoundedTypeParameterElement(variable,
+                                                             inferenceSession.restoreNameSubstitution, representativeSubstitutor,
+                                                             variable.instantiation)
+        if (variable.instantiation is PsiIntersectionType ||
+            (graph.nodes[variable]?.directParent != null && variable.parameter.type() !in targetParameters.map { it.type })) {
+          defaultTypeParameterList.add(newTypeParam)
+          resultSubstitutor = resultSubstitutor.put(variable, newTypeParam.type())
+        }
+        else {
+          resultSubstitutor = resultSubstitutor.put(variable, inferenceSession.restoreNameSubstitution.substitute(
+            representativeSubstitutor.substitute(variable.instantiation)))
+        }
       }
     }
     for (param in targetParameters) {
@@ -144,12 +153,12 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
    * Creates type parameter with upper bound of [target].
    * If [target] is parametrized, all it's parameter types will also be parametrized.
    */
-  private fun createDeeplyParametrizedType(target: PsiClassType,
+  private fun createDeeplyParametrizedType(target: PsiType,
                                            typeParameterList: PsiTypeParameterList): PsiType {
     val visitor = object : PsiTypeMapper() {
 
       private fun registerTypeParameter(vararg supertypes: PsiClassType): PsiType {
-        val typeParameter = elementFactory.createTypeParameter(nameGenerator.name, supertypes)
+        val typeParameter = elementFactory.createProperTypeParameter(nameGenerator.name, supertypes)
         typeParameterList.add(typeParameter)
         return typeParameter.type()
       }
@@ -159,12 +168,7 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
         val parameters = classType.parameters
         val replacedParameters = parameters.map { it.accept(this) }.toArray(emptyArray())
         val resolveResult = classType.resolveGenerics()
-        if (resolveResult.isValidResult) {
-          return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
-        }
-        else {
-          return registerTypeParameter(*(replacedParameters.map { it as PsiClassType }.toTypedArray()))
-        }
+        return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
       }
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
@@ -179,17 +183,18 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
         return registerTypeParameter(upperBound)
       }
 
-      override fun visitTypeVariable(`var`: PsiTypeVariable?): PsiType? {
-        println("wow")
-        return super.visitTypeVariable(`var`)
+      override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
+        intersectionType ?: return intersectionType
+        val parametrizedConjuncts = intersectionType.conjuncts.map { it.accept(this) as PsiClassType }.toTypedArray()
+        return registerTypeParameter(*parametrizedConjuncts)
       }
 
     }
-    if (target.hasParameters()) {
+    if (target is PsiIntersectionType || (target is PsiClassType && target.hasParameters())) {
       return target.accept(visitor)
     }
     else {
-      val typeParam = elementFactory.createTypeParameter(nameGenerator.name, arrayOf(target))
+      val typeParam = elementFactory.createProperTypeParameter(nameGenerator.name, arrayOf(target as PsiClassType))
       typeParameterList.add(typeParam)
       return typeParam.type()
     }
@@ -203,16 +208,20 @@ class MethodParametersInferenceProcessor(val method: GrMethod, private val eleme
                                                 restoreNameSubstitution: PsiSubstitutor,
                                                 relationSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
                                                 supertypeAdvice: PsiType? = null): PsiTypeParameter {
-    val parametrizedSupertype = supertypeAdvice ?: variable.upperBounds().firstOrNull { restoreNameSubstitution.substitute(it) != it }
-    val superTypes = if (parametrizedSupertype != null) {
-      arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(parametrizedSupertype)) as PsiClassType)
-    }
+    val parametrizedSupertype = supertypeAdvice ?: variable.instantiation
+    val superTypes = if (parametrizedSupertype != null && parametrizedSupertype != PsiType.NULL)
+      if (parametrizedSupertype is PsiClassType)
+        arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(parametrizedSupertype)) as PsiClassType)
+      else
+        (parametrizedSupertype as PsiIntersectionType).conjuncts.map {
+          restoreNameSubstitution.substitute(relationSubstitutor.substitute(it)) as PsiClassType
+        }.toTypedArray()
     else
       variable.upperBounds()
         .filter { it != PsiType.getJavaLangObject(variable.manager, variable.resolveScope) }
         .map { it as PsiClassType }
         .toTypedArray()
-    return elementFactory.createTypeParameter(restoreNameSubstitution.substitute(variable.type()).canonicalText, superTypes)
+    return elementFactory.createProperTypeParameter(restoreNameSubstitution.substitute(variable.type()).canonicalText, superTypes)
   }
 
 

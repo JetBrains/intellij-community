@@ -127,7 +127,7 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
-  void testOuterTypeParameter() {
+  void testMultipleInterfaces() {
     doTest(true)
   }
 

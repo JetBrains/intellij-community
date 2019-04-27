@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
@@ -34,7 +35,13 @@ class InferenceVariableGraph(components: List<List<InferenceVariable>>, private 
    * Fourthly, all detached nodes are instantiated in their specific type.
    */
   init {
-    components.flatten().forEach { initialVariableInstantiations[it] = it.instantiation; it.instantiation = PsiType.NULL }
+    components.flatten().forEach {
+      initialVariableInstantiations[it] = if (it.instantiation == PsiType.NULL && it.parameter.extendsList.referencedTypes.isNotEmpty()) {
+        PsiIntersectionType.createIntersection(it.parameter.extendsList.referencedTypes.toList())
+      } else {
+        it.instantiation
+      }
+      it.instantiation = PsiType.NULL }
     for (component in components) {
       val representative = component[0]
       nodes[representative] = InferenceVariableNode(representative)
@@ -51,6 +58,37 @@ class InferenceVariableGraph(components: List<List<InferenceVariable>>, private 
     }
     makeTree(order)
     propagatePossibleInstantiations(order)
+
+    val inodesMap = HashMap<InferenceVariableNode, InternalNode>()
+    for (node in order) {
+      inodesMap[node] = InternalNode(node, inodesMap)
+    }
+    for (node in order) {
+      inodesMap[node]!!.doit(inodesMap)
+    }
+    for (node in order) {
+      val inode = inodesMap[node]!!
+      if (inode.children.size == 1 && inode.next != null) {
+        val child = inode.children[0]
+        val parent = inodesMap[inode.next!!]!!
+        child.node.directParent = inode.next
+        child.next = inode.next
+        parent.children.remove(inode)
+        parent.children.add(child)
+        representativeMap[node.inferenceVariable] = inode.next!!.inferenceVariable
+        representativeMap.entries.filter { it.value == node.inferenceVariable }.forEach { it.setValue(inode.next!!.inferenceVariable) }
+      }
+    }
+
+
+  }
+
+  class InternalNode(val node: InferenceVariableNode, map: Map<InferenceVariableNode, InternalNode>) {
+    var next = node.directParent
+    val children = ArrayList<InternalNode>()
+    fun doit(map: Map<InferenceVariableNode, InternalNode>) {
+      map[next]?.children?.add(this)
+    }
   }
 
   private fun topologicalOrder(): List<InferenceVariableNode> {
@@ -130,9 +168,23 @@ class InferenceVariableGraph(components: List<List<InferenceVariable>>, private 
     var instantiationSubstitutor = PsiSubstitutor.EMPTY
     for (node in order) {
       val variable = node.inferenceVariable
-      if (node.supertypes.isEmpty() && node.supertypes.isEmpty()) {
-        val validInstantiation = variable.upperBounds().firstOrNull { it is PsiClassType && it.hasParameters() }
-        variable.instantiation = instantiationSubstitutor.substitute(validInstantiation ?: PsiType.NULL)
+      if (node.directParent == null) {
+        val instantiation = initialVariableInstantiations[variable]
+        if (instantiation is PsiIntersectionType) {
+          val typeParam = variable.parameter!!
+          variable.instantiation = PsiIntersectionType.createIntersection(
+            typeParam.extendsList.referencedTypes.map { session.substituteWithInferenceVariables(it) as PsiClassType })
+        }
+        else {
+          val validInstantiation = session.substituteWithInferenceVariables(
+            if (variable.parameter.extendsList.referencedTypes.isNotEmpty()) {
+              variable.parameter.extendsList.referencedTypes[0]
+            }
+            else {
+              variable.instantiation
+            })
+          variable.instantiation = instantiationSubstitutor.substitute(validInstantiation ?: PsiType.NULL)
+        }
       }
       if (variable.instantiation != PsiType.NULL) {
         instantiationSubstitutor = instantiationSubstitutor.put(variable, variable.instantiation)

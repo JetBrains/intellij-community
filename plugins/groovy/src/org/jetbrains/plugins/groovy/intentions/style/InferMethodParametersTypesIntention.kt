@@ -8,7 +8,6 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParametersInferenceProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
@@ -34,8 +33,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     if (!method.isConstructor) {
       AddReturnTypeFix.applyFix(project, element)
     }
-    val elementFactory = GroovyPsiElementFactory.getInstance(project)
-    val processor = MethodParametersInferenceProcessor(method, elementFactory)
+    val processor = MethodParametersInferenceProcessor(method)
     processor.runInferenceProcess()
     if (!method.hasTypeParameters() || method.isConstructor) {
       // todo: there is exist GrUnnecessaryDefModifierFix, I should call it somehow
