@@ -146,9 +146,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  /**
-   * Empty string is always normalized to null.
-   */
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use string", replaceWith = ReplaceWith("string(defaultValue)"))
   protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
@@ -268,6 +266,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   // internal usage only
   @Suppress("FunctionName")
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   fun __getProperties() = properties
 }
