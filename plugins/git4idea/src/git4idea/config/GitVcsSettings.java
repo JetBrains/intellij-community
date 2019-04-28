@@ -53,11 +53,11 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
 
   @NotNull
   public UpdateMethod getUpdateType() {
-    return myState.getUpdateType();
+    return myState.getUpdateMethod();
   }
 
   public void setUpdateType(UpdateMethod updateType) {
-    myState.setUpdateType(updateType);
+    myState.setUpdateMethod(updateType);
   }
 
   @NotNull
