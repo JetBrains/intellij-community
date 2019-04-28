@@ -187,8 +187,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
       showPopupMenu(event, (ActionGroup) myAction);
-    } else {
-      ActionUtil.performActionDumbAware(myAction, event);
+    }
+    else {
+      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
     }
   }
 
