@@ -12,6 +12,7 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.util.SPFileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -218,10 +219,9 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testMoveDictOutside() throws IOException {
-    final VirtualFile tempDir = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP), true);
-    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
-    final VirtualFile file = testDir.findChild(TEST_DIC);
-    moveFileToDirAndCheck(file,testDir, tempDir);
+    VirtualFile tempDir = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
+    moveFileToDirAndCheck(testDir.findChild(TEST_DIC), testDir, tempDir);
   }
 
   public void testMoveNotInDictFolder() throws IOException {
@@ -256,16 +256,18 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     moveFileToDirAndCheck(file, testDir, anotherDir);
   }
 
-  private void moveFileToDirAndCheck(VirtualFile file, VirtualFile from, VirtualFile to) throws IOException {
+  private void moveFileToDirAndCheck(@NotNull VirtualFile file, @NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
+    doBeforeCheck();
+    WriteAction.run(() -> file.move(this, to));
     try {
-      doBeforeCheck();
-      WriteAction.run(() -> file.move(this, to));
       doAfterCheck();
     }
     finally {
-      //back to initial state
+      // back to initial state
       WriteAction.run(() -> {
-        to.findChild(TEST_DIC).move(this, from);
+        if (to.findChild(TEST_DIC) != null) {
+          to.findChild(TEST_DIC).move(this, from);
+        }
         to.delete(this);
       });
     }
