@@ -156,7 +156,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   @Override
   public IntentionActionWithOptions getIntentionAction() {
     MyIntentionAction action = new MyIntentionAction();
-    return action.getOptions().isEmpty() ? null : action;
+    return action.myOptions.isEmpty() ? null : action;
   }
 
   @Override
