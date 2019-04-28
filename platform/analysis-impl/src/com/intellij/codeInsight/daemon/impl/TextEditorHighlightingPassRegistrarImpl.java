@@ -5,7 +5,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
@@ -25,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
-  private static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
-
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
   private int nextAvailableId = Pass.LAST_PASS + 1;
@@ -35,10 +32,6 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
-
-    for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
-      factoryRegistrar.registerHighlightingPassFactory(this);
-    }
   }
 
   private static class PassConfig {
