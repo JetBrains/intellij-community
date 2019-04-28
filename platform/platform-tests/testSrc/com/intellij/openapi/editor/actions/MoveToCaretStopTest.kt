@@ -55,7 +55,8 @@ data^ class^ CaretStopOptions^(^@^OptionTag^(^"^BACKWARD^"^)^ val^ backwardPolic
 my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
            "^four^"^,^ "^five^"^,^
            "^six^"^.^six^,^ "^seven^"^seven^,^
-           eight^"^eight^"^,^ nine^/^"^nine^"^]^
+           eight^"^eight^"^,^ nine^/^"^nine^"^,^
+           "."^"^ten^"^,^ (^"."^"^eleven^"^"."^)^,^ "^twelve^"^"."^]^
 """)
   }
 
@@ -88,7 +89,8 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 ^my_list ^= ^[^"^one^"^, ^"^two^"^, ^"^three^"^,
            ^"^four^"^, ^"^five^"^,
            ^"^six^"^.^six^, ^"^seven^"^seven^,
-           ^eight^"^eight^"^, ^nine^/^"^nine^"^]
+           ^eight^"^eight^"^, ^nine^/^"^nine^"^,
+           ^"."^"^ten^"^, ^(^"."^"^eleven^"^"."^)^, ^"^twelve^"^"."^]]
 """)
   }
 
@@ -129,7 +131,8 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 ^my_list ^= ^[^"^one^"^, ^"^two^"^, ^"^three^"^,^
 ^           ^"^four^"^, ^"^five^"^,^
 ^           ^"^six^"^.^six^, ^"^seven^"^seven^,^
-^           ^eight^"^eight^"^, ^nine^/^"^nine^"^]^
+^           ^eight^"^eight^"^, ^nine^/^"^nine^"^,^
+^           ^"."^"^ten^"^, ^(^"."^"^eleven^"^"."^)^, ^"^twelve^"^"."^]^
 """)
   }
 
@@ -170,7 +173,8 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 ^my_list^ ^=^ ^[^"`one`"^,^ ^"`two`"^,^ ^"`three`"^,^
 ^           ^"`four`"^,^ ^"`five`"^,^
 ^           ^"`six`"^.^six^,^ ^"`seven`"^seven^,^
-^           ^eight^"`eight`"^,^ ^nine^/^"`nine`"^]^
+^           ^eight^"`eight`"^,^ ^nine^/^"`nine`"^,^
+^           ^"."^"`ten`"^,^ ^(^"."^"`eleven`"^"."^)^,^ ^"`twelve`"^"."^]^
 """)
   }
 
@@ -212,7 +216,8 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 ^my_list ^= ^[^"`one`"^, ^"`two`"^, ^"`three`"^,^
 ^           ^"`four`"^, ^"`five`"^,^
 ^           ^"`six`"^.^six^, ^"`seven`"^seven^,^
-^           ^eight^"`eight`"^, ^nine^/^"`nine`"^]^
+^           ^eight^"`eight`"^, ^nine^/^"`nine`"^,^
+^           ^"."^"`ten`"^, ^(^"."^"`eleven`"^"."^)^, ^"`twelve`"^"."^]^
 """)
   }
 
