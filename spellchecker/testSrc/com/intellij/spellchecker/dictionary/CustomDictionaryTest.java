@@ -200,13 +200,14 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
     final VirtualFile file = testDir.findChild(TEST_DIC_AFTER);
 
-    try {
-      doBeforeCheck();
+    doBeforeCheck();
 
-      WriteAction.run(() -> {
-        final VirtualFile copy = file.copy(this, tempDir, TEST_DIC);
-        copy.move(this, testDir);
-      });
+    WriteAction.run(() -> {
+      final VirtualFile copy = file.copy(this, tempDir, TEST_DIC);
+      copy.move(this, testDir);
+    });
+
+    try {
       doAfterCheck();
     }
     finally {
