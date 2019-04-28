@@ -31,7 +31,7 @@ class MoveToCaretStopTest : LightPlatformCodeInsightFixtureTestCase() {
 
     doTest(MOVE, FORWARD, """doTest^(^"^test^"^,^ Direction^.^FORWARD^)^""")
     doTest(MOVE, FORWARD, """
-      assert^(^i^ <^ expectedCaretOffset^)^ {^ "^Duplicate^ carets^:^ '^${'$'}stringWithCaretStops^'"^ }^
+      assert^(^i^ <^ expectedCaretOffset^)^ {^ "^Duplicate^ carets^:^ '^${'$'}stringWithCaretStops^'^"^ }^
 """)
 
     doTest(MOVE, FORWARD, """
@@ -56,7 +56,20 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
            "^four^"^,^ "^five^"^,^
            "^six^"^.^six^,^ "^seven^"^seven^,^
            eight^"^eight^"^,^ nine^/^"^nine^"^,^
-           "."^"^ten^"^,^ (^"."^"^eleven^"^"."^)^,^ "^twelve^"^"."^]^
+           "^...^"^"^ten^"^,^ (^"^...^"^"^eleven^"^"^...^"^)^,^ "^twelve^"^"^...^"^]^
+""")
+
+    doTest(MOVE, FORWARD, """
+  [^  "^word^"^"^...^"^]^  ,^
+  [^"^word^"^  "^...^"^]^  ,^
+  [^"^word^"^"^...^"^  ]^  ,^
+  [^ "^word^"^"^...^"^ ]^  ,^
+  [^"^  word^"^"^...^"^]^  ,^
+  [^"^ word^ "^"^...^"^]^  ,^
+  [^"^word^  "^"^...^"^]^  ,^
+  [^"^word^"^"^  ...^"^]^  ,^
+  [^"^word^"^"^ ...^ "^]^  ,^
+  [^"^word^"^"^...^  "^]^  ,^
 """)
   }
 
@@ -65,7 +78,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 
     doTest(MOVE, BACKWARD, """^doTest^(^"^test^"^, ^Direction^.^FORWARD^)""")
     doTest(MOVE, BACKWARD, """
-      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'" ^}
+      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'^" ^}
 """)
 
     doTest(MOVE, BACKWARD, """
@@ -90,7 +103,20 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
            ^"^four^"^, ^"^five^"^,
            ^"^six^"^.^six^, ^"^seven^"^seven^,
            ^eight^"^eight^"^, ^nine^/^"^nine^"^,
-           ^"."^"^ten^"^, ^(^"."^"^eleven^"^"."^)^, ^"^twelve^"^"."^]]
+           ^"^...^"^"^ten^"^, ^(^"^...^"^"^eleven^"^"^...^"^)^, ^"^twelve^"^"^...^"^]]
+""")
+
+    doTest(MOVE, BACKWARD, """
+  ^[  ^"^word^"^"^...^"^]  ^,
+  ^[^"^word^"  ^"^...^"^]  ^,
+  ^[^"^word^"^"^...^"  ^]  ^,
+  ^[ ^"^word^"^"^...^" ^]  ^,
+  ^[^"  ^word^"^"^...^"^]  ^,
+  ^[^" ^word ^"^"^...^"^]  ^,
+  ^[^"^word  ^"^"^...^"^]  ^,
+  ^[^"^word^"^"  ^...^"^]  ^,
+  ^[^"^word^"^" ^... ^"^]  ^,
+  ^[^"^word^"^"^...  ^"^]  ^,
 """)
   }
 
@@ -107,7 +133,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
   private fun `do test Move to Neighbor Word on Windows`(direction: Direction) {
     doTest(MOVE, direction, """doTest^(^"^test^"^, ^Direction^.^FORWARD^)""")
     doTest(MOVE, direction, """
-^      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'" ^}^
+^      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'^" ^}^
 """)
 
     doTest(MOVE, direction, """
@@ -132,7 +158,20 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 ^           ^"^four^"^, ^"^five^"^,^
 ^           ^"^six^"^.^six^, ^"^seven^"^seven^,^
 ^           ^eight^"^eight^"^, ^nine^/^"^nine^"^,^
-^           ^"."^"^ten^"^, ^(^"."^"^eleven^"^"."^)^, ^"^twelve^"^"."^]^
+^           ^"^...^"^"^ten^"^, ^(^"^...^"^"^eleven^"^"^...^"^)^, ^"^twelve^"^"^...^"^]^
+""")
+
+    doTest(MOVE, direction, """
+^  ^[  ^"^word^"^"^...^"^]  ^,^
+^  ^[^"^word^"  ^"^...^"^]  ^,^
+^  ^[^"^word^"^"^...^"  ^]  ^,^
+^  ^[ ^"^word^"^"^...^" ^]  ^,^
+^  ^[^"  ^word^"^"^...^"^]  ^,^
+^  ^[^" ^word ^"^"^...^"^]  ^,^
+^  ^[^"^word  ^"^"^...^"^]  ^,^
+^  ^[^"^word^"^"  ^...^"^]  ^,^
+^  ^[^"^word^"^" ^... ^"^]  ^,^
+^  ^[^"^word^"^"^...  ^"^]  ^,^
 """)
   }
 
@@ -149,7 +188,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
   private fun `do test Delete to Word End`() {
     doTest(DELETE, FORWARD, """doTest^(^"`test`"^,^ ^Direction^.^FORWARD^)^""")
     doTest(DELETE, FORWARD, """
-^      ^assert^(^i^ ^<^ ^expectedCaretOffset^)^ ^{^ ^"^Duplicate^ ^carets^:^ ^'^${'$'}stringWithCaretStops^'"^ ^}^
+^      ^assert^(^i^ ^<^ ^expectedCaretOffset^)^ ^{^ ^"^Duplicate^ ^carets^:^ ^'^${'$'}stringWithCaretStops^'^"^ ^}^
 """)
 
     doTest(DELETE, FORWARD, """
@@ -174,7 +213,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 ^           ^"`four`"^,^ ^"`five`"^,^
 ^           ^"`six`"^.^six^,^ ^"`seven`"^seven^,^
 ^           ^eight^"`eight`"^,^ ^nine^/^"`nine`"^,^
-^           ^"."^"`ten`"^,^ ^(^"."^"`eleven`"^"."^)^,^ ^"`twelve`"^"."^]^
+^           ^"`...`"^"`ten`"^,^ ^(^"`...`"^"`eleven`"^"`...`"^)^,^ ^"`twelve`"^"`...`"^]^
 """)
   }
 
@@ -192,7 +231,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
   private fun `do test Delete to Word Start`() {
     doTest(DELETE, BACKWARD, """^doTest^(^"`test`"^, ^Direction^.^FORWARD^)""")
     doTest(DELETE, BACKWARD, """
-^      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'" ^}^
+^      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'^" ^}^
 """)
 
     doTest(DELETE, BACKWARD, """
@@ -217,7 +256,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 ^           ^"`four`"^, ^"`five`"^,^
 ^           ^"`six`"^.^six^, ^"`seven`"^seven^,^
 ^           ^eight^"`eight`"^, ^nine^/^"`nine`"^,^
-^           ^"."^"`ten`"^, ^(^"."^"`eleven`"^"."^)^, ^"`twelve`"^"."^]^
+^           ^"`...`"^"`ten`"^, ^(^"`...`"^"`eleven`"^"`...`"^)^, ^"`twelve`"^"`...`"^]^
 """)
   }
 
