@@ -1,6 +1,11 @@
-def <T0 extends java.io.Serializable> Object foo(List<List<T0>> a, T0 b) {
+def <T0> Object foo(List<? extends List<T0>> a, T0 b) {
   a.get(0).add(b)
 }
 
-foo([[1]], 2)
-foo([['s']], 'q')
+class A{}
+class B{}
+
+def m(A a, B b) {
+  foo([[a]], a)
+  foo([[b]], b)
+}

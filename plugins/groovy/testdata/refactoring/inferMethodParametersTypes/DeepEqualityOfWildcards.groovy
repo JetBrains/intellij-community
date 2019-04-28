@@ -2,7 +2,10 @@ def foo(a, b) {
   a.add(b.get(0))
 }
 
-void  m () {
-  foo([[1]], [[2]])
-  foo([['s']], [["q"]])
+class A{}
+class B{}
+
+void  m (A a, B b) {
+  foo([[a]], [[a]])
+  foo([[b]], [[b]])
 }

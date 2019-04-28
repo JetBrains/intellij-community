@@ -1,4 +1,4 @@
-def <V0 extends java.io.Serializable> Object foo(C<V0, V0, V0> a, V0 b) {
+def <T0> Object foo(C<T0, T0, T0> a, T0 b) {
   a.doTU(b, b)
   a.doU(b)
   a.doT(b)
@@ -13,5 +13,9 @@ class C<T, U, V> {
   void doTU(T t, U u) {}
   void doTUV(T t, U u, V v) {}
 }
-foo(new C<String, String, String>(), 'q')
-foo(new C<Integer, Integer, Integer>(), 2)
+class A{}
+class B{}
+def m(A a, B b) {
+  foo(new C<A, A, A>(), a)
+  foo(new C<B, B, B>(), b)
+}

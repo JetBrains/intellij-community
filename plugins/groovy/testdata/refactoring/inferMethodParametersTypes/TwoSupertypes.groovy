@@ -9,5 +9,11 @@ class C<T, U> {
   void doTU(T t, U u) {}
 }
 
-foo(new C<String, String>(), 'q')
-foo(new C<Integer, Integer>(), 2)
+class A{}
+class B{}
+
+def m(A a, B b) {
+  foo(new C<A, A>(), a)
+  foo(new C<B, B>(), b)
+}
+

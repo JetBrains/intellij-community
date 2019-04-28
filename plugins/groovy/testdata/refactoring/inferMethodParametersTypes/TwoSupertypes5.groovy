@@ -10,10 +10,13 @@ class C<T> {
   T get() { return null }
 }
 
-void m() {
-  C<Integer> ci = null;
-  C<String> cs = null;
+class A{}
+class B{}
 
-  foo(ci, ci, ci, ci)
-  foo(cs, cs, cs, cs)
+void m() {
+  C<A> ca = null;
+  C<B> cb = null;
+
+  foo(ca, ca, ca, ca)
+  foo(cb, cb, cb, cb)
 }

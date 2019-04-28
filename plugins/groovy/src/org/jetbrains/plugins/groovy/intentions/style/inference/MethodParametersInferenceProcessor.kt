@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -45,7 +44,8 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
   fun runInferenceProcess() {
     val parameterIndex = setUpNewTypeParameters()
     val constantTypeParameters = setUpParametersSignature(parameterIndex)
-    inferTypeParameters(constantTypeParameters)
+    val registry = setUpRegistry(constantTypeParameters)
+    inferTypeParameters(registry)
     if (method.typeParameters.isEmpty()) {
       method.typeParameterList?.delete()
     }
@@ -96,56 +96,58 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
   /**
    * Does third phase of inference
    */
-  private fun inferTypeParameters(constantTypeParameters: Array<PsiTypeParameter>) {
+  private fun inferTypeParameters(registry: InferenceUnitRegistry) {
+    val graph = InferenceUnitGraph(registry)
+    val representativeSubstitutor = collectRepresentativeSubstitutor(graph, registry)
+    var resultSubstitutor = PsiSubstitutor.EMPTY
+    for (unit in graph.getRepresentatives().filter { !it.constant }) {
+      val preferableType = getPreferableType(graph, unit, representativeSubstitutor, resultSubstitutor)
+      graph.getEqualUnits(unit).forEach { resultSubstitutor = resultSubstitutor.put(it.initialTypeParameter, preferableType) }
+    }
+    for (param in targetParameters) {
+      param.setType(resultSubstitutor.substitute(param.type))
+    }
+    method.typeParameterList?.replace(defaultTypeParameterList)
+  }
+
+  private fun getPreferableType(graph: InferenceUnitGraph,
+                                unit: InferenceUnit,
+                                representativeSubstitutor: PsiSubstitutor,
+                                resultSubstitutor: PsiSubstitutor): PsiType {
+    val equalTypeParameters = graph.getEqualUnits(unit).filter { it.typeInstantiation == PsiType.NULL }
+    val mayBeDirectlyInstantiated = equalTypeParameters.isEmpty() &&
+                                    when {
+                                      (unit.flexible) -> (unit.typeInstantiation !is PsiIntersectionType)
+                                      else -> unit.subtypes.size <= 1
+                                    }
+    when {
+      mayBeDirectlyInstantiated -> {
+        val instantiation = if (unit.flexible || unit.subtypes.size != 0) unit.typeInstantiation
+        else PsiWildcardType.createExtends(method.manager, unit.typeInstantiation)
+        return resultSubstitutor.substitute(representativeSubstitutor.substitute(instantiation))
+      }
+      else -> {
+        val parent = unit.unitInstantiation
+        val advice = if (parent?.typeInstantiation == PsiType.NULL) parent?.type else parent?.typeInstantiation
+        val newTypeParam = createBoundedTypeParameterElement(unit, representativeSubstitutor, advice)
+        defaultTypeParameterList.add(newTypeParam)
+        return newTypeParam.type()
+      }
+    }
+  }
+
+  private fun setUpRegistry(constantTypeParameters: Array<PsiTypeParameter>): InferenceUnitRegistry {
     val inferenceSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method,
                                                   propagateVariablesToNestedSessions = true)
     collectInnerMethodCalls(inferenceSession)
-    val constantInferenceVariables = getConstantInferenceVariables(constantTypeParameters, inferenceSession)
+    constantTypeParameters.map { it.type() }.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
     inferenceSession.inferSubst()
+    val registry = InferenceUnitRegistry()
     val inferenceVariables = method.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }.toList()
-    val graph = createInferenceVariableGraph(inferenceVariables, inferenceSession)
-    graph.adjustFlexibleVariables(method)
-    val representatives = inferenceVariables.map { graph.getRepresentative(it)!! }.toSet()
-    val representativeSubstitutor = collectRepresentativeSubstitutor(graph)
-    var resultSubstitutor = PsiSubstitutor.EMPTY
-    for (variable in representatives) {
-      if (variable in constantInferenceVariables) {
-        continue
-      }
-      val equalTypeParameters = inferenceVariables.filter {
-        it.instantiation == PsiType.NULL &&
-        graph.getRepresentative(it) == variable &&
-        it !in constantInferenceVariables
-      }
-      if (equalTypeParameters.isNotEmpty()) {
-        val parent = graph.nodes[variable]?.directParent?.inferenceVariable
-        val advice = parent?.type()
-        val newTypeParam = createBoundedTypeParameterElement(variable,
-                                                             inferenceSession.restoreNameSubstitution, representativeSubstitutor,
-                                                             advice)
-        defaultTypeParameterList.add(newTypeParam)
-        resultSubstitutor = resultSubstitutor.put(variable, newTypeParam.type())
-        equalTypeParameters.forEach { resultSubstitutor = resultSubstitutor.put(it, newTypeParam.type()) }
-      }
-      else {
-        val newTypeParam = createBoundedTypeParameterElement(variable,
-                                                             inferenceSession.restoreNameSubstitution, representativeSubstitutor,
-                                                             variable.instantiation)
-        if (variable.instantiation is PsiIntersectionType ||
-            (graph.nodes[variable]?.directParent != null && variable.parameter.type() !in targetParameters.map { it.type })) {
-          defaultTypeParameterList.add(newTypeParam)
-          resultSubstitutor = resultSubstitutor.put(variable, newTypeParam.type())
-        }
-        else {
-          resultSubstitutor = resultSubstitutor.put(variable, inferenceSession.restoreNameSubstitution.substitute(
-            representativeSubstitutor.substitute(variable.instantiation)))
-        }
-      }
-    }
-    for (param in targetParameters) {
-      param.setType(resultSubstitutor.substitute(inferenceSession.substituteWithInferenceVariables(param.type)))
-    }
-    method.typeParameterList?.replace(defaultTypeParameterList)
+    registry.setUpUnits(inferenceVariables, inferenceSession)
+    constantTypeParameters.map { it.type() }.forEach { registry.searchUnit(it)?.constant = true }
+    method.parameters.mapNotNull { registry.searchUnit(it.type) }.forEach { it.flexible = true }
+    return registry
   }
 
 
@@ -202,26 +204,18 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
 
 
   /**
-   * Creates ready for insertion type parameter with correct dependency on other type parameter.
+   * Creates ready for insertion type parameter with correct extends list.
    */
-  private fun createBoundedTypeParameterElement(variable: InferenceVariable,
-                                                restoreNameSubstitution: PsiSubstitutor,
+  private fun createBoundedTypeParameterElement(unit: InferenceUnit,
                                                 relationSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
                                                 supertypeAdvice: PsiType? = null): PsiTypeParameter {
-    val parametrizedSupertype = supertypeAdvice ?: variable.instantiation
-    val superTypes = if (parametrizedSupertype != null && parametrizedSupertype != PsiType.NULL)
-      if (parametrizedSupertype is PsiClassType)
-        arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(parametrizedSupertype)) as PsiClassType)
-      else
-        (parametrizedSupertype as PsiIntersectionType).conjuncts.map {
-          restoreNameSubstitution.substitute(relationSubstitutor.substitute(it)) as PsiClassType
-        }.toTypedArray()
-    else
-      variable.upperBounds()
-        .filter { it != PsiType.getJavaLangObject(variable.manager, variable.resolveScope) }
-        .map { it as PsiClassType }
-        .toTypedArray()
-    return elementFactory.createProperTypeParameter(restoreNameSubstitution.substitute(variable.type()).canonicalText, superTypes)
+    val superType = supertypeAdvice ?: unit.typeInstantiation
+    val mappedSupertypes = when (superType) {
+      is PsiClassType -> arrayOf(relationSubstitutor.substitute(superType) as PsiClassType)
+      is PsiIntersectionType -> superType.conjuncts.map { relationSubstitutor.substitute(it) as PsiClassType }.toTypedArray()
+      else -> emptyArray()
+    }
+    return elementFactory.createProperTypeParameter(unit.initialTypeParameter.name!!, mappedSupertypes)
   }
 
 

@@ -1,6 +1,10 @@
-def <T0 extends java.lang.Number> Object foo(ArrayList<T0> a) {
-  a[0].doubleValue()
+Object foo(ArrayList<? extends A> a) {
+  a[0].bar()
 }
 
-foo(new ArrayList<Integer>())
-foo(new ArrayList<Double>())
+class A{ void bar(){} }
+class B extends A{}
+class C extends A{}
+
+foo(new ArrayList<B>())
+foo(new ArrayList<C>())

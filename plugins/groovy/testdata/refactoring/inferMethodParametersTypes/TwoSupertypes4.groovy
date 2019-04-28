@@ -4,5 +4,11 @@ def void foo(a, b, c, d) {
   b.add(d.get(0))
 }
 
-foo([1], [2], [3], [4])
-foo(['a'], ['b'], ['c'], ['d'])
+class A{}
+class B{}
+
+def m(A a, B b) {
+  foo([a], [a], [a], [a])
+  foo([b], [b], [b], [b])
+}
+

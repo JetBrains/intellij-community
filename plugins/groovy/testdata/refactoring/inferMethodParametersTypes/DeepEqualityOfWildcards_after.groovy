@@ -1,8 +1,11 @@
-def <V0 extends java.io.Serializable, W0 extends java.util.List<V0>> Object foo(List<List<V0>> a, List<W0> b) {
+def <T0, W0 extends java.util.List<T0>> Object foo(List<List<T0>> a, List<W0> b) {
   a.add(b.get(0))
 }
 
-void  m () {
-  foo([[1]], [[2]])
-  foo([['s']], [["q"]])
+class A{}
+class B{}
+
+void  m (A a, B b) {
+  foo([[a]], [[a]])
+  foo([[b]], [[b]])
 }

@@ -2,6 +2,11 @@ def void foo(a, x) {
   a.add(x)
 }
 
-foo([1, 2, 3], 4)
+class A{}
+class B{}
 
-foo(["a", "b", "c"], "d")
+def m(A a, B b) {
+  foo([a], a)
+
+  foo([b], b)
+}
