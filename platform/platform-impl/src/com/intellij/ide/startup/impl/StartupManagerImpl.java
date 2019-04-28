@@ -369,7 +369,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     activity.end();
   }
 
-  public static void runActivity(Runnable runnable) {
+  public static void runActivity(@NotNull Runnable runnable) {
     ProgressManager.checkCanceled();
     try {
       runnable.run();
