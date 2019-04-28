@@ -291,9 +291,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory"/>
+    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
+    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
+    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory"/>
 
     <registryKey key="groovy.console.project.view.names" defaultValue="false"
                  description="Substitute console file name with selected module/version for this console file"/>

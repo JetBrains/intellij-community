@@ -1,5 +1,7 @@
 <idea-plugin>
   <extensionPoints>
+    <extensionPoint name="highlightingPassFactory" interface="com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar"/>
+
     <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
     </extensionPoint>

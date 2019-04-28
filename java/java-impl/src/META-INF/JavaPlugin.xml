@@ -58,12 +58,6 @@
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.hints.MethodChainHintsPassFactory</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
     </component>
     <component>
@@ -304,6 +298,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.AnnotationHintsPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.MethodChainHintsPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
+
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>

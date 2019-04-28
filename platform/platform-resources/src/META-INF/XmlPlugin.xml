@@ -106,14 +106,9 @@
     <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
   </extensionPoints>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
-    </component>
-  </project-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <tipAndTrick file="TagNameCompletion.html"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory"/>
 
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 

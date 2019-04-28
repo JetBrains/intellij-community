@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.editor.Editor;
@@ -20,37 +21,38 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-final class TestDataHighlightingPassFactory implements TextEditorHighlightingPassFactory {
+final class TestDataHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(StdFileTypes.JAVA.getDefaultExtension());
   public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES =
     ContainerUtil.immutableList("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj");
   private static final int MAX_HOPES = 3;
   private static final String TEST_DATA = "testdata";
-  private final Project myProject;
 
-
-  TestDataHighlightingPassFactory(@NotNull Project project) {
-    myProject = project;
-    TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, null, null, true, -1);
+  @Override
+  public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
+    registrar.registerTextEditorHighlightingPass(this, null, null, true, -1);
   }
 
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null && isSupported(virtualFile)) {
-      return new TestDataHighlightingPass(myProject, PsiDocumentManager.getInstance(myProject).getDocument(file));
+    if (virtualFile != null) {
+      Project project = file.getProject();
+      if (isSupported(virtualFile, project)) {
+        return new TestDataHighlightingPass(project, PsiDocumentManager.getInstance(project).getDocument(file));
+      }
     }
     return null;
   }
 
-  public boolean isSupported(@NotNull VirtualFile file) {
+  private static boolean isSupported(@NotNull VirtualFile file, @NotNull Project project) {
     if (ScratchUtil.isScratch(file)) {
       return false;
     }
     final String ext = file.getExtension();
     if (SUPPORTED_FILE_TYPES.contains(ext)) {
-      return ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(file) == null;
+      return ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(file) == null;
     }
 
     if (SUPPORTED_IN_TEST_DATA_FILE_TYPES.contains(ext)) {
