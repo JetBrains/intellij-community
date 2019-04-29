@@ -5,10 +5,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -45,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -427,12 +423,18 @@ public class ExecutionHelper {
   private static Runnable createTimeLimitedExecutionProcess(@NotNull ProcessHandler processHandler,
                                                             @NotNull ExecutionMode mode,
                                                             @NotNull final String presentableCmdline) {
-    List<String> outputCollected = new ArrayList<>();
+    ProcessOutput outputCollected = new ProcessOutput();
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (StringUtil.isNotEmpty(event.getText())) {
-          outputCollected.add(outputType.toString() + ": " + event.getText());
+        String eventText = event.getText();
+        if (StringUtil.isNotEmpty(eventText)) {
+          if (ProcessOutputType.isStdout(outputType)) {
+            outputCollected.appendStdout(eventText);
+          }
+          else if (ProcessOutputType.isStderr(outputType)) {
+            outputCollected.appendStderr(eventText);
+          }
         }
       }
     });
@@ -444,7 +446,7 @@ public class ExecutionHelper {
         try {
           final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
-            mode.onTimeout(processHandler, presentableCmdline, new ArrayList<>(outputCollected));
+            mode.onTimeout(processHandler, presentableCmdline, outputCollected);
             processHandler.destroyProcess();
           }
         }
