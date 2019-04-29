@@ -14,13 +14,13 @@ import java.util.List;
 
 public class FontPreferences {
   public final static @NonNls @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
-  public final static int DEFAULT_FONT_SIZE = FontSize.SMALL.getSize();
+  public final static int DEFAULT_FONT_SIZE = SystemInfo.isWindows ? 13 : FontSize.SMALL.getSize();
 
   public final static float DEFAULT_LINE_SPACING = 1.2f;
   public final static String FALLBACK_FONT_FAMILY         = "Monospaced";
   public final static String MAC_OS_DEFAULT_FONT_FAMILY   = "Menlo";
   public final static String LINUX_DEFAULT_FONT_FAMILY    = "DejaVu Sans Mono";
-  public final static String WINDOWS_DEFAULT_FONT_FAMILY  = FALLBACK_FONT_FAMILY;
+  public final static String WINDOWS_DEFAULT_FONT_FAMILY  = "Consolas";
 
   @NotNull
   public List<String> getEffectiveFontFamilies() {
