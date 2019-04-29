@@ -20,11 +20,13 @@ import com.google.common.base.Suppliers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.LocalFilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,25 +60,13 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   @NotNull
   @Override
   public Collection<Change> getChanges() {
-    try {
-      return myChanges.get().getMergedChanges();
-    }
-    catch (VcsException e) {
-      LOG.error("Error happened when parsing changes", e);
-      return Collections.emptyList();
-    }
+    return myChanges.get().getMergedChanges();
   }
 
   @NotNull
   @Override
   public Collection<Change> getChanges(int parent) {
-    try {
-      return myChanges.get().getChanges(parent);
-    }
-    catch (VcsException e) {
-      LOG.error("Error happened when parsing changes", e);
-      return Collections.emptyList();
-    }
+    return myChanges.get().getChanges(parent);
   }
 
   public int size() {
@@ -89,11 +79,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }
     else {
       for (int i = 0; i < getParents().size(); i++) {
-        try {
-          size += changes.getChanges(i).size();
-        }
-        catch (VcsException ignored) {
-        }
+        size += changes.getChanges(i).size();
       }
     }
     return size;
@@ -101,10 +87,10 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
   public interface Changes {
     @NotNull
-    Collection<Change> getMergedChanges() throws VcsException;
+    Collection<Change> getMergedChanges();
 
     @NotNull
-    Collection<Change> getChanges(int parent) throws VcsException;
+    Collection<Change> getChanges(int parent);
   }
 
   protected static class EmptyChanges implements Changes {
@@ -133,7 +119,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }
 
     @NotNull
-    protected ParsedChanges parseChanges() throws VcsException {
+    protected ParsedChanges parseChanges() {
       List<Change> mergedChanges = parseMergedChanges();
       List<Collection<Change>> changes = computeChanges(mergedChanges);
       ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
@@ -142,7 +128,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }
 
     @NotNull
-    private List<Change> parseMergedChanges() throws VcsException {
+    private List<Change> parseMergedChanges() {
       List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
       List<Change> changes = myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this,
                                                              ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
@@ -159,19 +145,18 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
     @NotNull
     @Override
-    public Collection<Change> getMergedChanges() throws VcsException {
+    public Collection<Change> getMergedChanges() {
       return parseChanges().getMergedChanges();
     }
 
     @NotNull
     @Override
-    public Collection<Change> getChanges(int parent) throws VcsException {
+    public Collection<Change> getChanges(int parent) {
       return parseChanges().getChanges(parent);
     }
 
     @NotNull
-    private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges)
-      throws VcsException {
+    private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges) {
       if (myChangesOutput.size() == 1) {
         return Collections.singletonList(mergedChanges);
       }
@@ -208,15 +193,10 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
         myStatusInfo = statusInfo;
         mySourceChanges = Suppliers.memoize(() -> {
           List<Change> sourceChanges = ContainerUtil.newArrayList();
-          try {
-            for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
-              List<VcsFileStatusInfo> statusInfos = Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent));
-              sourceChanges.addAll(myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this, statusInfos,
-                                                                   parent));
-            }
-          }
-          catch (VcsException e) {
-            LOG.error(e);
+          for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
+            List<VcsFileStatusInfo> statusInfos = Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent));
+            sourceChanges.addAll(myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this, statusInfos,
+                                                                 parent));
           }
           return sourceChanges;
         });
@@ -255,6 +235,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     List<Change> parseStatusInfo(@NotNull Project project,
                                  @NotNull VcsShortCommitDetails commit,
                                  @NotNull List<VcsFileStatusInfo> changes,
-                                 int parentIndex) throws VcsException;
+                                 int parentIndex);
   }
 }
