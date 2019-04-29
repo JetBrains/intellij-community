@@ -282,7 +282,7 @@ IDS_VM_OPTIONS=$vmOptions
   private void generateProductJson(String targetDir, boolean isJreIncluded) {
     def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
-    def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
+    def javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
