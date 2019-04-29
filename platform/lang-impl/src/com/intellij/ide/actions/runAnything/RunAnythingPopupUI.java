@@ -547,7 +547,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final JLabel myTitle = new JLabel();
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
       Component cmp = null;
       if (isMoreItem(index)) {
         cmp = RunAnythingMore.get(isSelected);
@@ -555,7 +555,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(isSelected);
+          cmp = ((RunAnythingItem)value).createComponent(isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
