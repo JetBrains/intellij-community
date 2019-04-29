@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -29,12 +28,11 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     @Nullable PsiClass aClass,
+                                     PsiClass aClass,
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     if (!ResolveUtilKt.shouldProcessMethods(processor) && !ResolveUtilKt.shouldProcessProperties(processor)) return;
-    if (aClass == null) return;
 
     PsiElement grCall = place.getParent();
     if (grCall instanceof GrMethodCall) {

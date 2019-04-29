@@ -38,9 +38,6 @@ public interface ExtensionsArea  {
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NonNls @NotNull String extensionPointName);
 
-  @Nullable
-  <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName);
-
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
 

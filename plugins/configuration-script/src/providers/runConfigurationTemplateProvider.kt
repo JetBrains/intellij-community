@@ -2,6 +2,7 @@ package com.intellij.configurationScript.providers
 
 import com.intellij.configurationScript.ConfigurationFileManager
 import com.intellij.configurationScript.Keys
+import com.intellij.configurationScript.RunConfigurationListReader
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.impl.RunConfigurationTemplateProvider

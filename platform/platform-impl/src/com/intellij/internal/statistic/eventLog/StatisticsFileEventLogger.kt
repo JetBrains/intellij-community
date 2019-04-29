@@ -4,8 +4,6 @@
 
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.openapi.Disposable
 import com.intellij.util.ConcurrencyUtil
 import java.io.File
@@ -29,13 +27,9 @@ open class StatisticsFileEventLogger(private val sessionId: String,
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
     val eventTime = System.currentTimeMillis()
     myLogExecutor.execute(Runnable {
-      val context = EventContext.create(eventId, data)
-      val validatedEventId = SensitiveDataValidator.getInstance().guaranteeCorrectEventId(group, context)
-      val validatedEventData = SensitiveDataValidator.getInstance().guaranteeCorrectEventData(group, context)
-
       val creationTime = System.currentTimeMillis()
-      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, validatedEventId, isState)
-      for (datum in validatedEventData) {
+      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, eventId, isState)
+      for (datum in data) {
         event.event.addData(datum.key, datum.value)
       }
       log(writer, event, creationTime)

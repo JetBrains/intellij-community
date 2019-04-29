@@ -142,7 +142,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   @Nullable
   static List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
     if (!ITERABLE_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
-    PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
+    PsiExpression qualifier = terminalCall.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return null;
     // Do not visit this path if some class implements both Iterable and Stream
     PsiType type = qualifier.getType();
@@ -167,7 +167,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   @Nullable
   static List<OperationRecord> extractMapForEach(PsiMethodCallExpression terminalCall) {
     if (!MAP_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
-    PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
+    PsiExpression qualifier = terminalCall.getMethodExpression().getQualifierExpression();
     if (qualifier == null) return null;
     // Do not visit this path if some class implements both Map and Stream
     PsiType type = qualifier.getType();

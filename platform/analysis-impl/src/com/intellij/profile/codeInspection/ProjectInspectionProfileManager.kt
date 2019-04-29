@@ -26,6 +26,8 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.xmlb.Accessor
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -53,9 +55,18 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     }
   }
 
-  private var state = ProjectInspectionProfileManagerState()
+  private var state = State()
 
   private val initialLoadSchemesFuture: Promise<Any?>
+
+  private val skipDefaultsSerializationFilter = object : SkipDefaultValuesSerializationFilters(State()) {
+    override fun accepts(accessor: Accessor, bean: Any, beanValue: Any?): Boolean {
+      if (beanValue == null && accessor.name == "projectProfile") {
+        return false
+      }
+      return super.accepts(accessor, bean, beanValue)
+    }
+  }
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
@@ -89,6 +100,14 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
       project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileActivated(oldScheme, newScheme)
     }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
+
+  private class State : BaseState() {
+    @get:OptionTag("PROJECT_PROFILE")
+    var projectProfile by string(PROJECT_DEFAULT_PROFILE_NAME)
+
+    @get:OptionTag("USE_PROJECT_PROFILE")
+    var useProjectProfile by property(true)
+  }
 
   init {
     val app = ApplicationManager.getApplication()
@@ -171,8 +190,8 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
 
     schemeManagerIprProvider?.writeState(result)
 
-    serializeObjectInto(state, result)
-    if (result.children.isNotEmpty()) {
+    serializeObjectInto(state, result, skipDefaultsSerializationFilter)
+    if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
     }
 
@@ -185,7 +204,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
   override fun loadState(state: Element) {
     val data = unwrapState(state, project, schemeManagerIprProvider, schemeManager)
 
-    val newState = ProjectInspectionProfileManagerState()
+    val newState = State()
 
     data?.let {
       try {
@@ -289,12 +308,4 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     profile.profileChanged()
     project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileChanged(profile)
   }
-}
-
-private class ProjectInspectionProfileManagerState : BaseState() {
-  @get:OptionTag("PROJECT_PROFILE")
-  var projectProfile by string(PROJECT_DEFAULT_PROFILE_NAME)
-
-  @get:OptionTag("USE_PROJECT_PROFILE")
-  var useProjectProfile by property(true)
 }

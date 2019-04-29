@@ -311,7 +311,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     return temp;
   }
 
-  private static void processEvents(List<? extends VFileEvent> events) {
+  private static void processEvents(List<VFileEvent> events) {
     WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
   }
 

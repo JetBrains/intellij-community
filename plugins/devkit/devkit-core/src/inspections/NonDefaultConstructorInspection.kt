@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
@@ -27,8 +26,8 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
     if (javaPsi.language.id == "Groovy" || javaPsi.classKind != JvmClassKind.CLASS ||
-        PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) || PsiUtil.isAbstractClass(javaPsi) ||
-        javaPsi.hasModifierProperty(PsiModifier.PRIVATE) /* ignore private classes */) {
+        PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) ||
+        PsiUtil.isAbstractClass(javaPsi)) {
       return null
     }
 
@@ -75,32 +74,19 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 }
 
 private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint? {
-  val parentClass = clazz.uastParent as? UClass
-  if (parentClass == null) {
-    val qualifiedName = clazz.qualifiedName ?: return null
-    return findExtensionPointByImplementationClass(qualifiedName, qualifiedName, project)
-  }
-  else {
-    val parentQualifiedName = parentClass.qualifiedName ?: return null
-    // parent$inner string cannot be found, so, search by parent FQN
-    return findExtensionPointByImplementationClass(parentQualifiedName, "$parentQualifiedName$${clazz.javaPsi.name}", project)
-  }
-}
-
-private fun findExtensionPointByImplementationClass(searchString: String, qualifiedName: String, project: Project): ExtensionPoint? {
   var result: ExtensionPoint? = null
-  val strictMatch = searchString === qualifiedName
-  processExtensionDeclarations(searchString, project, strictMatch = strictMatch) { extension, tag ->
+  val qualifiedNamed = clazz.qualifiedName ?: return null
+  processExtensionDeclarations(qualifiedNamed, project) { extension, tag ->
     val point = extension.extensionPoint ?: return@processExtensionDeclarations true
     if (point.beanClass.stringValue == null) {
-      if (tag.attributes.any { it.name == "implementation" && it.value == qualifiedName }) {
+      if (tag.attributes.any { it.name == "implementation" && it.value == qualifiedNamed }) {
         result = point
         return@processExtensionDeclarations false
       }
     }
     else {
       // bean EP
-      if (tag.name == "className" || tag.subTags.any { it.name == "className" && (strictMatch || it.textMatches(qualifiedName)) } || checkAttributes(tag, qualifiedName)) {
+      if (tag.name == "className" || tag.subTags.any { it.name == "className" } || checkAttributes(tag, qualifiedNamed)) {
         result = point
         return@processExtensionDeclarations false
       }
@@ -117,14 +103,14 @@ private val ignoredTagNames = THashSet(listOf("semContributor", "modelFacade", "
 //<lang.elementManipulator forClass="com.intellij.psi.css.impl.CssTokenImpl"
 //                         implementationClass="com.intellij.psi.css.impl.CssTokenImpl$Manipulator"/>
 // will be found for `com.intellij.psi.css.impl.CssTokenImpl`, but we need to ignore `forClass` and check that we have exact match for implementation attribute
-private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
+private fun checkAttributes(tag: XmlTag, qualifiedNamed: String): Boolean {
   if (ignoredTagNames.contains(tag.name)) {
     // DbmsExtension passes Dbms instance directly, doesn't need to check
     return false
   }
 
   return tag.attributes.any {
-    it.name.startsWith("implementation") && it.value == qualifiedName
+    it.name.startsWith("implementation") && it.value == qualifiedNamed
   }
 }
 
@@ -133,8 +119,8 @@ private fun isAllowedParameters(list: PsiParameterList, extensionPoint: Extensio
     return true
   }
 
-  val area = extensionPoint?.area?.stringValue
-  val isAppLevelExtensionPoint = area == null || area == "IDEA_APPLICATION"
+  val area = extensionPoint?.area?.value ?: ExtensionPoint.Area.IDEA_APPLICATION
+  val isAppLevelExtensionPoint = area == ExtensionPoint.Area.IDEA_APPLICATION
 
   // hardcoded for now, later will be generalized
   if (isAppLevelExtensionPoint || extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {

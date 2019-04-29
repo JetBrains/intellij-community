@@ -1380,6 +1380,16 @@ public class ExpressionUtils {
   }
 
   /**
+   * Returns true if given new-expression creates an array rather than an object.
+   *
+   * @param expression expression to check
+   * @return true if given new-expression creates an array
+   */
+  public static boolean isArrayCreationExpression(@NotNull PsiNewExpression expression) {
+    return expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0;
+  }
+
+  /**
    * Returns ancestor expression for given subexpression which parent is not an expression anymore (except lambda)
    * 
    * @param expression an expression to find its ancestor

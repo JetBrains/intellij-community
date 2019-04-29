@@ -1206,6 +1206,10 @@ public class PluginManagerCore {
 
   @NotNull
   public static IdeaPluginDescriptorImpl[] loadDescriptors(@Nullable StartupProgress progress, @NotNull List<? super String> errors) {
+    if (ClassUtilCore.isLoadingOfExternalPluginsDisabled()) {
+      return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
+    }
+
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_PLUGIN_DESCRIPTORS);

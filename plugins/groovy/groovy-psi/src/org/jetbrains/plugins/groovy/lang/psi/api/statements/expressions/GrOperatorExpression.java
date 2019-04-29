@@ -6,13 +6,13 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 
 public interface GrOperatorExpression extends GrExpression {
 
   @Nullable
   @Override
-  GroovyCallReference getReference();
+  GroovyReference getReference();
 
   @Nullable
   PsiType getLeftType();

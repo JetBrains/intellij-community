@@ -78,14 +78,4 @@ public class MavenServerProgressIndicatorWrapper implements MavenServerProgressI
   public void setFraction(double fraction) throws RemoteException {
     myDelegate.setFraction(fraction);
   }
-
-  @Override
-  public void startTask(String text) throws RemoteException {
-    myDelegate.startTask(text);
-  }
-
-  @Override
-  public void completeTask(String text, String errorMessage) throws RemoteException {
-    myDelegate.completeTask(text, errorMessage);
-  }
 }

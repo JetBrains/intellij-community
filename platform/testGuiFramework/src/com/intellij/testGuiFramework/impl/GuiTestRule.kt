@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -69,7 +68,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
-class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
+class GuiTestRule : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
@@ -89,12 +88,6 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
     .aroundIfNotNull(createScreenRecordingRuleIfNeeded())
-    .let {
-      if (enableScreenshotsDuringTest)
-        it.around(ScreenshotsDuringTest(500))
-      else
-        it
-    }
 
   private val timeoutRule = Timeout(20, TimeUnit.MINUTES)
 
@@ -356,7 +349,7 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
       runOnEdt {
         TransactionGuard.submitTransaction(ApplicationManager.getApplication(), Runnable {
           for (project in openProjects) {
-            Assert.assertTrue("Failed to close project ${project.name}", ProjectManagerEx.getInstanceEx().closeAndDispose(project))
+            Assert.assertTrue("Failed to close project ${project.name}", ProjectUtil.closeAndDispose(project))
           }
         })
       }

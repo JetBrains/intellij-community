@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 
 /**
  * @author max
@@ -33,8 +30,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    JBCheckBox checkBox = new JBCheckBox();
-    checkBox.setFocusable(false);
+    JCheckBox checkBox = new JCheckBox();
     updateCustomComponent(checkBox, presentation);
     return createCheckboxComponent(checkBox, this, place);
   }
@@ -79,9 +75,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
         ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, checkBox);
         DataContext dataContext =
           actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(checkBox);
-        InputEvent inputEvent = new KeyEvent(checkBox, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, ' ');
-        AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, place, dataContext);
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, place, dataContext));
       }
     });
 

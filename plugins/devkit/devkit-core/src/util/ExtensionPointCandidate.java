@@ -1,10 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
-
-import java.util.Objects;
 
 public class ExtensionPointCandidate extends PointableCandidate {
   public final String epName;
@@ -45,10 +57,10 @@ public class ExtensionPointCandidate extends PointableCandidate {
 
     ExtensionPointCandidate candidate = (ExtensionPointCandidate)o;
 
-    if (!Objects.equals(epName, candidate.epName)) return false;
-    if (!Objects.equals(attributeName, candidate.attributeName)) return false;
-    if (!Objects.equals(tagName, candidate.tagName)) return false;
-    if (!Objects.equals(beanClassName, candidate.beanClassName)) return false;
+    if (epName != null ? !epName.equals(candidate.epName) : candidate.epName != null) return false;
+    if (attributeName != null ? !attributeName.equals(candidate.attributeName) : candidate.attributeName != null) return false;
+    if (tagName != null ? !tagName.equals(candidate.tagName) : candidate.tagName != null) return false;
+    if (beanClassName != null ? !beanClassName.equals(candidate.beanClassName) : candidate.beanClassName != null) return false;
 
     return true;
   }

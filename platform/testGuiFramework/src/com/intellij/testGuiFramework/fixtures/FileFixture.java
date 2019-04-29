@@ -111,7 +111,7 @@ public class FileFixture {
           }
         });
       }
-    }, Timeouts.INSTANCE.getMinutes05());
+    }, Timeouts.INSTANCE.getMinutes02());
     return this;
   }
 

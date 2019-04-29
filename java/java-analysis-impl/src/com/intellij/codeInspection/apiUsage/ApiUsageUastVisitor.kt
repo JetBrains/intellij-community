@@ -217,7 +217,8 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return false
   }
 
-  private fun isInsideImportStatement(node: UElement) = node.sourcePsi.findContaining(UImportStatement::class.java) != null
+  private fun isInsideImportStatement(node: UElement) =
+    node.skipParentOfType(true, UQualifiedReferenceExpression::class.java) is UImportStatement
 
   private fun maybeProcessImplicitConstructorInvocationAtSubclassDeclaration(sourceNode: UElement, subclassDeclaration: UClass) {
     val hasExplicitConstructor = subclassDeclaration.methods.any { it.isConstructor }

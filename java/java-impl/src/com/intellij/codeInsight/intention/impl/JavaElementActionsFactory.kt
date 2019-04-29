@@ -18,6 +18,14 @@ import java.util.*
 class JavaElementActionsFactory : JvmElementActionsFactory() {
   private val renderer = JavaElementRenderer.getInstance()
 
+  override fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
+    return with(request) {
+      val declaration = target as PsiModifierListOwner
+      if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
+      listOf(ModifierFix(declaration, renderer.render(modifier), shouldPresent, false))
+    }
+  }
+
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()

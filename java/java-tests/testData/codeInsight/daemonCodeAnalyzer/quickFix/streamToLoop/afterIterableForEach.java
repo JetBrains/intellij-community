@@ -43,14 +43,4 @@ public class Main {
 
     interface Visitor { }
   }
-  
-  class X implements Iterable<String> {
-    class Y {
-      void test() {
-          for (String s : X.this) {
-              System.out.println(s);
-          }
-      }
-    }
-  }
 }

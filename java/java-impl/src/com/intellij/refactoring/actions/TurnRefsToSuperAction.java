@@ -16,13 +16,9 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
 import org.jetbrains.annotations.NotNull;
@@ -36,27 +32,6 @@ public class TurnRefsToSuperAction extends BaseJavaRefactoringAction {
   @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass && elements[0].getLanguage() == JavaLanguage.INSTANCE;
-  }
-
-  @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
-                                                        @NotNull Editor editor,
-                                                        @NotNull PsiFile file,
-                                                        @NotNull DataContext context,
-                                                        @NotNull String place) {
-    if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
-      return isJavaClassHeader(element);
-    }
-    return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);
-  }
-
-  public static boolean isJavaClassHeader(@NotNull PsiElement element) {
-    if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
-    return psiClass != null && (element == psiClass || element == psiClass.getNameIdentifier() ||
-                                PsiTreeUtil.isAncestor(psiClass.getModifierList(), element, false) ||
-                                PsiTreeUtil.isAncestor(psiClass.getExtendsList(), element, false) ||
-                                PsiTreeUtil.isAncestor(psiClass.getImplementsList(), element, false));
   }
 
   @Override

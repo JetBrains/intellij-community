@@ -59,15 +59,15 @@ public abstract class DiffActionExecutor {
   }
 
   @Nullable
-  private static Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
+  private Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
     Editor editor = null;
     if (contextEditor != null) {
       VirtualFile contextFile = FileDocumentManager.getInstance().getFile(contextEditor.getDocument());
-      if (Comparing.equal(contextFile, file)) editor = contextEditor;
+      if (Comparing.equal(contextFile, mySelectedFile)) editor = contextEditor;
     }
 
     if (editor == null) {
-      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
+      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(mySelectedFile);
       if (fileEditor instanceof TextEditor) editor = ((TextEditor)fileEditor).getEditor();
     }
 
@@ -75,8 +75,10 @@ public abstract class DiffActionExecutor {
     return editor.getCaretModel().getLogicalPosition().line;
   }
 
-  @NotNull
-  protected DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
+  @Nullable
+  protected DiffContent createRemote(final VcsRevisionNumber revisionNumber) throws IOException, VcsException {
+    final ContentRevision fileRevision = myDiffProvider.createFileContent(revisionNumber, mySelectedFile);
+    if (fileRevision == null) return null;
     DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
     DiffContent diffContent;
@@ -109,15 +111,16 @@ public abstract class DiffActionExecutor {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final ContentRevision contentRevision = getContentRevision();
-        if (contentRevision == null) return;
-
+        final VcsRevisionNumber revisionNumber = getRevisionNumber();
         try {
-          DiffContent content1 = createRemote(contentRevision);
+          if (revisionNumber == null) {
+            return;
+          }
+          DiffContent content1 = createRemote(revisionNumber);
+          if (content1 == null) return;
           DiffContent content2 = DiffContentFactory.getInstance().create(myProject, mySelectedFile);
 
           String title = DiffRequestFactory.getInstance().getTitle(mySelectedFile);
-          VcsRevisionNumber revisionNumber = contentRevision.getRevisionNumber();
 
           boolean inverted = false;
           String title1;
@@ -198,7 +201,7 @@ public abstract class DiffActionExecutor {
   }
 
   @Nullable
-  protected abstract ContentRevision getContentRevision();
+  protected abstract VcsRevisionNumber getRevisionNumber();
 
   public static class CompareToFixedExecutor extends DiffActionExecutor {
     private final VcsRevisionNumber myNumber;
@@ -213,9 +216,8 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
-    @Nullable
-    protected ContentRevision getContentRevision() {
-      return myDiffProvider.createFileContent(myNumber, mySelectedFile);
+    protected VcsRevisionNumber getRevisionNumber() {
+      return myNumber;
     }
   }
 
@@ -229,8 +231,8 @@ public abstract class DiffActionExecutor {
 
     @Override
     @Nullable
-    protected ContentRevision getContentRevision() {
-      return myDiffProvider.createCurrentFileContent(mySelectedFile);
+    protected VcsRevisionNumber getRevisionNumber() {
+      return myDiffProvider.getCurrentRevision(mySelectedFile);
     }
   }
 
@@ -244,23 +246,21 @@ public abstract class DiffActionExecutor {
       super(diffProvider, selectedFile, project, editor);
     }
 
-    @Nullable
     @Override
-    protected ContentRevision getContentRevision() {
+    protected VcsRevisionNumber getRevisionNumber() {
       final ItemLatestState itemState = myDiffProvider.getLastRevision(mySelectedFile);
-      if (itemState == null) return null;
-
+      if (itemState == null) {
+        return null;
+      }
       myFileStillExists = itemState.isItemExists();
-      return myDiffProvider.createFileContent(itemState.getNumber(), mySelectedFile);
+      return itemState.getNumber();
     }
 
-    @NotNull
     @Override
-    protected DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
+    protected DiffContent createRemote(final VcsRevisionNumber revisionNumber) throws IOException, VcsException {
       if (myFileStillExists) {
-        return super.createRemote(fileRevision);
-      }
-      else {
+        return super.createRemote(revisionNumber);
+      } else {
         return DiffContentFactory.getInstance().createEmpty();
       }
     }

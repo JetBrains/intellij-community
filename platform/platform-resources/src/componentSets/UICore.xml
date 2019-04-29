@@ -67,10 +67,13 @@
       <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.wm.impl.WindowDressing</implementation-class>
+      <headless-implementation-class/>
+    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.openapi.wm.impl.WindowDressing"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
   </extensions>
 </idea-plugin>

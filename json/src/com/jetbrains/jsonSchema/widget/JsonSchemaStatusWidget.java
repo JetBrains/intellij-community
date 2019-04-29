@@ -30,7 +30,6 @@ import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
-import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,13 +168,11 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (provider != null) {
       final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas();
       final String remoteSource = provider.getRemoteSource();
-      boolean useRemoteSource = preferRemoteSchemas && remoteSource != null
-                  && !JsonFileResolver.isSchemaUrl(remoteSource)
-                  && !remoteSource.endsWith("!");
-      String providerName = useRemoteSource ? remoteSource : provider.getPresentableName();
+      String providerName = preferRemoteSchemas && remoteSource != null && !remoteSource.endsWith("!") ? remoteSource : provider.getPresentableName();
       String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-      String name = useRemoteSource ? bar + new JsonSchemaInfo(remoteSource).getDescription() : (shortName.startsWith("JSON schema") ? shortName : (bar + shortName));
-      String kind = !useRemoteSource && (provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema)
+      String name = preferRemoteSchemas && remoteSource != null && !remoteSource.endsWith("!") ? bar + new JsonSchemaInfo(remoteSource).getDescription()
+          : (shortName.startsWith("JSON schema") ? shortName : (bar + shortName));
+      String kind = !preferRemoteSchemas && (provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema)
                     ? " (bundled)"
                     : "";
       return new MyWidgetState(tooltip + providerName + kind, name, true);

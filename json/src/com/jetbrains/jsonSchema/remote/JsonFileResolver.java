@@ -89,8 +89,4 @@ public class JsonFileResolver {
     Couple<String> couple = UriUtil.splitScheme(schemaFieldText);
     return couple.first.startsWith("http");
   }
-
-  public static boolean isSchemaUrl(@Nullable String url) {
-    return url != null && url.startsWith("http://json-schema.org/") && (url.endsWith("/schema") || url.endsWith("/schema#"));
-  }
 }

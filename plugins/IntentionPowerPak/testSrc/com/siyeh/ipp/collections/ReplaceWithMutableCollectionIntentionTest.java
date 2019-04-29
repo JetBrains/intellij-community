@@ -15,10 +15,6 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
     doTest();
   }
 
-  public void testMapOfEntries() {
-    doTest();
-  }
-
   public void testListOf() {
     doTest();
   }
@@ -39,19 +35,7 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
     doTest();
   }
 
-  public void testDeclaration() {
-    doTest();
-  }
-
-  public void testAssignment() {
-    doTest();
-  }
-
-  public void testSwitchExpression() {
-    doTest();
-  }
-
-  public void testAssignmentInSwitchExpression() {
+  public void testAssigned() {
     doTest();
   }
 
@@ -68,6 +52,6 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_9_ANNOTATED;
   }
 }

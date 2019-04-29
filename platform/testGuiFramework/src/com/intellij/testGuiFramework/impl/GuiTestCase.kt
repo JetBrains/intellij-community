@@ -68,11 +68,15 @@ import javax.swing.text.JTextComponent
  *
  */
 @RunWith(GuiTestLocalRunner::class)
-open class GuiTestCase(enableScreenshotsDuringTest: Boolean = true) {
+open class GuiTestCase {
 
   @Rule
   @JvmField
-  val guiTestRule = GuiTestRule(enableScreenshotsDuringTest)
+  val screenshotsDuringTest = ScreenshotsDuringTest(500) // 0.5 sec
+
+  @Rule
+  @JvmField
+  val guiTestRule = GuiTestRule()
 
   val projectsFolder: File = guiTestRule.projectsFolder
 

@@ -151,7 +151,7 @@ public class IoTestUtil {
       Process process = builder.start();
       StringBuilder output = new StringBuilder();
       Thread thread = new Thread(() -> {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
           String line;
           while ((line = reader.readLine()) != null) {
             output.append(line).append('\n');

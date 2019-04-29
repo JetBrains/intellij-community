@@ -11,14 +11,14 @@ import java.util.Objects;
 public final class UsageDescriptor {
   private final String myKey;
   private final int myValue;
-  private final @NotNull FeatureUsageData myData;
+  private final @Nullable FeatureUsageData myData;
 
   public UsageDescriptor(@NotNull String key) {
     this(key, 1);
   }
 
   public UsageDescriptor(@NotNull String key, int value) {
-    this(key, value, new FeatureUsageData());
+    this(key, value, (FUSUsageContext)null);
   }
 
   @Deprecated
@@ -28,8 +28,9 @@ public final class UsageDescriptor {
 
   @Deprecated
   public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
-    this(key, value);
-    if (context != null) myData.addFeatureContext(context);
+    myKey = ConvertUsagesUtil.ensureProperKey(key);
+    myValue = value;
+    myData = context != null ? new FeatureUsageData().addFeatureContext(context) : null;
   }
 
   public UsageDescriptor(@NotNull String key, @Nullable FeatureUsageData data) {
@@ -50,7 +51,7 @@ public final class UsageDescriptor {
     return myValue;
   }
 
-  @NotNull
+  @Nullable
   public FeatureUsageData getData() {
     return myData;
   }

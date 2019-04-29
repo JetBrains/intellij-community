@@ -24,16 +24,12 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   public RepositoryLibraryProperties() {
   }
 
-  public RepositoryLibraryProperties(JpsMavenRepositoryLibraryDescriptor descriptor) {
-    myDescriptor = descriptor;
-  }
-
   public RepositoryLibraryProperties(String mavenId, final boolean includeTransitiveDependencies) {
-    this(new JpsMavenRepositoryLibraryDescriptor(mavenId, includeTransitiveDependencies, Collections.emptyList()));
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, includeTransitiveDependencies, Collections.emptyList());
   }
 
   public RepositoryLibraryProperties(String mavenId, String packaging, final boolean includeTransitiveDependencies) {
-    this(new JpsMavenRepositoryLibraryDescriptor(mavenId, packaging, includeTransitiveDependencies, Collections.emptyList()));
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, packaging, includeTransitiveDependencies, Collections.emptyList());
   }
 
   public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
@@ -44,8 +40,8 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
                                      @NotNull String artifactId,
                                      @NotNull String version,
                                      boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
-    this(new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies,
-                                                           excludedDependencies));
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies,
+                                                           excludedDependencies);
   }
 
   @Override

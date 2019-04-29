@@ -16,7 +16,6 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
@@ -35,14 +34,10 @@ public class EncapsulateFieldsAction extends BaseJavaRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file,
-                                                        @NotNull DataContext context, @NotNull String place) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
     if (containingClass != null) {
-      if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
-        if (PsiTreeUtil.getParentOfType(psiElement, PsiField.class, false) == null) return false;
-      }
       final PsiField[] fields = containingClass.getFields();
       for (PsiField field : fields) {
         if (isAcceptedField(field)) return true;

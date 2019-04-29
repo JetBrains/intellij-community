@@ -41,13 +41,8 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
   @Override
   public void initializeComponent(@NotNull Object component, boolean service) {
     if (!service || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
-      getComponentStore().initComponent(component, service);
+      ServiceKt.getStateStore(this).initComponent(component, service);
     }
-  }
-
-  @NotNull
-  protected IComponentStore getComponentStore() {
-    return ServiceKt.getStateStore(this);
   }
 
   @Override

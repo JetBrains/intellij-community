@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
@@ -46,9 +44,6 @@ import java.util.Set;
 
 public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
-    // sick and tired of hunting tests leaking documents
-    ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
-
     boolean[] foundLeaksBeforeTest = new boolean[1];
     Condition<Object> isReallyLeak = file -> {
       if (file instanceof PsiFile && !((PsiFile)file).isPhysical()) return false;
@@ -298,7 +293,9 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     BinaryFileDecompiler decompiler = file -> {
       throw new IllegalStateException("oh no");
     };
-    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler, getTestRootDisposable());
+    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler);
+    Disposer.register(getTestRootDisposable(),
+                      () -> BinaryFileTypeDecompilers.INSTANCE.removeExplicitExtension(ArchiveFileType.INSTANCE, decompiler));
 
     PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
     assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());

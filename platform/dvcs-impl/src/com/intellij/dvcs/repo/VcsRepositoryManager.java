@@ -202,11 +202,11 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
       finally {
         REPO_LOCK.writeLock().unlock();
       }
+      BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }
     finally {
       MODIFY_LOCK.unlock();
     }
-    BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
   }
 
   @NotNull
