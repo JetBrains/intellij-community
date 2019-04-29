@@ -34,7 +34,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   @NotNull
   @Override
-  public Component createComponent(boolean isSelected) {
+  public Component createComponent(boolean isSelected, boolean hasFocus) {
     SimpleColoredComponent component = new SimpleColoredComponent();
     component.append(myCommand);
     component.appendTextPadding(20);

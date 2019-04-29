@@ -25,7 +25,7 @@ public class RunAnythingGradleItem extends RunAnythingItemBase {
 
   @NotNull
   @Override
-  public Component createComponent(boolean isSelected) {
+  public Component createComponent(boolean isSelected, boolean hasFocus) {
     String command = getCommand();
 
     int spaceIndex = StringUtil.lastIndexOf(command, ' ', 0, command.length());
