@@ -42,7 +42,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
     }
 
     JPanel component = new JPanel(new BorderLayout());
-    Color background = UIUtil.getListBackground(isSelected, hasFocus);
+    Color background = UIUtil.getListBackground(isSelected, true);
     component.setBackground(background);
 
     SimpleColoredComponent textComponent = new SimpleColoredComponent();
