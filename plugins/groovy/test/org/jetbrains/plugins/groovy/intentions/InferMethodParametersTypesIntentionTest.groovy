@@ -131,4 +131,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testRaw() {
+    doTest(true)
+  }
+
 }

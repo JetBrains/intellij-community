@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInfe
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import java.util.*
+import kotlin.collections.LinkedHashSet
 import kotlin.collections.set
 
 
@@ -107,7 +108,8 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
     for (param in targetParameters) {
       param.setType(resultSubstitutor.substitute(param.type))
     }
-    method.typeParameterList?.replace(defaultTypeParameterList)
+    val residualTypeParameterList = buildResidualTypeParameterList(defaultTypeParameterList)
+    method.typeParameterList?.replace(residualTypeParameterList)
   }
 
   private fun getPreferableType(graph: InferenceUnitGraph,
@@ -167,9 +169,15 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
 
       override fun visitClassType(classType: PsiClassType?): PsiType? {
         classType ?: return classType
-        val parameters = classType.parameters
+        val generifiedClassType = if (classType.isRaw) {
+          val resolveResult = classType.resolve()!!
+          val wildcards = Array(resolveResult.typeParameters.size) { PsiWildcardType.createUnbounded(method.manager) }
+          elementFactory.createType(resolveResult, *wildcards)
+        }
+        else classType
+        val parameters = generifiedClassType.parameters
         val replacedParameters = parameters.map { it.accept(this) }.toArray(emptyArray())
-        val resolveResult = classType.resolveGenerics()
+        val resolveResult = generifiedClassType.resolveGenerics()
         return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
       }
 
@@ -192,7 +200,7 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
       }
 
     }
-    if (target is PsiIntersectionType || (target is PsiClassType && target.hasParameters())) {
+    if (target is PsiIntersectionType || (target is PsiClassType && (target.hasParameters() || target.isRaw))) {
       return target.accept(visitor)
     }
     else {
@@ -202,6 +210,37 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
     }
   }
 
+
+  private fun buildResidualTypeParameterList(typeParameterList: PsiTypeParameterList): PsiTypeParameterList {
+    method.typeParameterList!!.replace(typeParameterList)
+    val necessaryTypeParameters = LinkedHashSet<PsiTypeParameter>()
+    val visitor = object : PsiTypeVisitor<PsiType>() {
+      override fun visitClassType(classType: PsiClassType?): PsiType? {
+        classType ?: return classType
+        val resolveElement = classType.resolveGenerics().element
+        if (resolveElement is PsiTypeParameter) {
+          necessaryTypeParameters.add(resolveElement)
+          resolveElement.extendsList.referencedTypes.forEach { it.accept(this) }
+        }
+        classType.parameters.forEach { it.accept(this) }
+        return super.visitClassType(classType)
+      }
+
+      override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
+        wildcardType?.extendsBound?.accept(this)
+        return super.visitWildcardType(wildcardType)
+      }
+
+      override fun visitCapturedWildcardType(capturedWildcardType: PsiCapturedWildcardType?): PsiType? {
+        capturedWildcardType?.wildcard?.accept(this)
+        return super.visitCapturedWildcardType(capturedWildcardType)
+      }
+    }
+    method.parameters.forEach { it.type.accept(visitor) }
+    val resultingTypeParameterList = elementFactory.createTypeParameterList()
+    necessaryTypeParameters.forEach { resultingTypeParameterList.add(it) }
+    return resultingTypeParameterList
+  }
 
   /**
    * Creates ready for insertion type parameter with correct extends list.

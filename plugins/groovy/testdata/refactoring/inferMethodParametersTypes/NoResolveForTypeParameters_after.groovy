@@ -1,4 +1,4 @@
-def <T<caret>> int foo(T a, Integer b) {
+def <T> int foo(T a, Integer b) {
   return 2
 }
 
