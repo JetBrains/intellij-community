@@ -19,47 +19,48 @@ private val LOG = Logger.getInstance(VcsIgnoreFilesChecker::class.java)
 class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
 
   override fun projectOpened() {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      project.messageBus
-        .connect()
-        .subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+    if (ApplicationManager.getApplication().isUnitTestMode) return
+
+    project.messageBus
+      .connect()
+      .subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+        ApplicationManager.getApplication().executeOnPooledThread {
           generateVcsIgnoreFileInStoreDirIfNeeded(project)
-        })
-      StartupManager.getInstance(project).runWhenProjectIsInitialized {
+        }
+      })
+
+    StartupManager.getInstance(project).runWhenProjectIsInitialized {
+      ApplicationManager.getApplication().executeOnPooledThread {
         generateVcsIgnoreFileInRootIfNeeded(project)
       }
     }
   }
 
-  private fun generateVcsIgnoreFileInStoreDirIfNeeded(project: Project) =
-    ApplicationManager.getApplication().executeOnPooledThread {
-      if (project.isDisposed) return@executeOnPooledThread
+  /**
+   * Generate ignore file in .idea directory silently
+   */
+  private fun generateVcsIgnoreFileInStoreDirIfNeeded(project: Project) {
+    if (project.isDisposed || !project.isDirectoryBased) return
 
-      //generate ignore file in .idea directory silently
-      if (project.isDirectoryBased) {
-        project.stateStore.projectConfigDir?.let { projectConfigDirPath ->
-          LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath)?.let { projectConfigDirVFile ->
-            VcsUtil.getVcsFor(project, projectConfigDirVFile)?.let { vcs ->
-              LOG.debug("Generate VCS ignore file in $projectConfigDirPath for vcs ${vcs.name}")
-              VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectConfigDirVFile)
-            }
-          }
-        }
-      }
-    }
+    val projectConfigDirPath = project.stateStore.projectConfigDir ?: return
+    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath) ?: return
+    val vcs = VcsUtil.getVcsFor(project, projectConfigDirVFile) ?: return
 
-  private fun generateVcsIgnoreFileInRootIfNeeded(project: Project) =
-    ApplicationManager.getApplication().executeOnPooledThread {
-      if (project.isDisposed) return@executeOnPooledThread
+    LOG.debug("Generate VCS ignore file in $projectConfigDirPath for vcs ${vcs.name}")
+    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectConfigDirVFile)
+  }
 
-      //propose to manage (generate) ignore file in project VCS root directory
-      project.projectFile?.let { projectFile ->
-        VcsUtil.getVcsRootFor(project, projectFile)?.let { projectFileVcsRoot ->
-          VcsUtil.getVcsFor(project, projectFileVcsRoot)?.let { vcs ->
-            LOG.debug("Propose manage VCS ignore in ${projectFileVcsRoot.path} for vcs ${vcs.name}")
-            VcsImplUtil.proposeUpdateIgnoreFile(project, vcs, projectFileVcsRoot)
-          }
-        }
-      }
-    }
+  /**
+   * Propose to manage (generate) ignore file in project VCS root directory.
+   */
+  private fun generateVcsIgnoreFileInRootIfNeeded(project: Project) {
+    if (project.isDisposed) return
+
+    val projectFile = project.projectFile ?: return
+    val projectFileVcsRoot = VcsUtil.getVcsRootFor(project, projectFile) ?: return
+    val vcs = VcsUtil.getVcsFor(project, projectFileVcsRoot) ?: return
+
+    LOG.debug("Propose manage VCS ignore in ${projectFileVcsRoot.path} for vcs ${vcs.name}")
+    VcsImplUtil.proposeUpdateIgnoreFile(project, vcs, projectFileVcsRoot)
+  }
 }

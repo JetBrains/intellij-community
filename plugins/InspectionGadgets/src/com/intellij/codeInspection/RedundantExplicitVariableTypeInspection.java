@@ -47,7 +47,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
          PsiTypeElement typeElementCopy = copyVariable.getTypeElement();
          if (typeElementCopy != null) {
            IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
-           if (variable.getType().equals(copyVariable.getType())) {
+           if (variable.getType().equals(getNormalizedType(copyVariable))) {
              holder.registerProblem(element2Highlight,
                                     "Explicit type of local variable can be omitted",
                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
@@ -55,6 +55,15 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
            }
          }
        }
+
+      private PsiType getNormalizedType(PsiVariable copyVariable) {
+        PsiType type = copyVariable.getType();
+        PsiClass refClass = PsiUtil.resolveClassInType(type);
+        if (refClass instanceof PsiAnonymousClass) {
+          type = ((PsiAnonymousClass)refClass).getBaseClassType();
+        }
+        return type;
+      }
     };
   }
 

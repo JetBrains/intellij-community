@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
@@ -23,6 +24,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
@@ -336,6 +338,18 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.consoleCommandHistoryLimit = value
     }
 
+  var sortTabsAlphabetically: Boolean
+    get() = state.sortTabsAlphabetically
+    set(value) {
+      state.sortTabsAlphabetically = value
+    }
+
+  var openTabsAtTheEnd: Boolean
+    get() = state.openTabsAtTheEnd
+    set(value) {
+      state.openTabsAtTheEnd = value
+    }
+
   var showInplaceComments: Boolean
     get() = state.showInplaceComments
     set(value) {
@@ -344,6 +358,15 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
 
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
+
+  init {
+    if (Registry.`is`("tabs.alphabetical")) {
+      sortTabsAlphabetically = true
+    }
+    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
+      openTabsAtTheEnd = true
+    }
+  }
 
   companion object {
     init {
@@ -494,7 +517,9 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
             verbose("oldDefFontScale=%.2f", oldDefFontScale)
           }
         }
-        if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)
+        if (readScale != defFontScale && readScale != oldDefFontScale) {
+          size = ((readSize / readScale) * defFontScale).roundToInt()
+        }
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size

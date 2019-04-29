@@ -835,7 +835,7 @@ public class JavaCompletionUtil {
     if (afterTailOffset > tailOffset &&
         tailOffset > caretOffset &&
         TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caretOffset) > 0) {
-      TabOutScopesTracker.getInstance().registerEmptyScope(editor, caretOffset, afterTailOffset - caretOffset);
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, caretOffset, afterTailOffset);
     }
     return true;
   }

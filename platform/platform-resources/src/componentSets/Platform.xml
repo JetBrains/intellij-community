@@ -6,11 +6,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.vfs.LocalFileSystem</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.vfs.VirtualFileManager</interface-class>
       <implementation-class>com.intellij.openapi.vfs.PlatformVirtualFileManager</implementation-class>
     </component>
@@ -28,15 +23,6 @@
     <component>
       <interface-class>com.intellij.openapi.vfs.pointers.VirtualFilePointerManager</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.vfs.JarFileSystem</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.vfs.ex.temp.TempFileSystem</implementation-class>
     </component>
 
     <component>

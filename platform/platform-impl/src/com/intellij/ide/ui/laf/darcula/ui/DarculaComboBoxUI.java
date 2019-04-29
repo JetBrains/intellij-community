@@ -4,11 +4,9 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OffsetIcon;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.*;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -284,13 +282,25 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     Icon icon = null;
     Insets iPad = null;
+    Border border = null;
     if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent scc = (SimpleColoredComponent)c;
-      iPad = scc.getIpad();
-      scc.setIpad(JBUI.emptyInsets());
-      icon = scc.getIcon();
-      if (!scc.isIconOnTheRight() && icon instanceof OffsetIcon) {
-        scc.setIcon(((OffsetIcon)icon).getIcon());
+      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+      iPad = cc.getIpad();
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
+      cc.setIpad(JBUI.emptyInsets());
+      icon = cc.getIcon();
+      if (!cc.isIconOnTheRight() && icon instanceof OffsetIcon) {
+        cc.setIcon(((OffsetIcon)icon).getIcon());
+      }
+    }
+    else if (c instanceof JLabel) {
+      JLabel cc = (JLabel)c;
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
+      icon = cc.getIcon();
+      if (icon instanceof OffsetIcon) {
+        cc.setIcon(((OffsetIcon)icon).getIcon());
       }
     }
 
@@ -302,9 +312,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent scc = (SimpleColoredComponent)c;
-      scc.setIpad(iPad);
-      scc.setIcon(icon);
+      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+      cc.setIpad(iPad);
+      cc.setIcon(icon);
+      cc.setBorder(border);
+    }
+    else if (c instanceof JLabel) {
+      JLabel cc = (JLabel)c;
+      cc.setBorder(border);
+      cc.setIcon(icon);
     }
   }
 
@@ -596,7 +612,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     protected void configurePopup() {
       super.configurePopup();
       Border border = UIManager.getBorder("ComboPopup.border");
-      setBorder(border != null ? border : JBUI.Borders.empty());
+      setBorder(border != null ? border :
+                SystemInfo.isMac ? JBUI.Borders.empty() :
+                IdeBorderFactory.createBorder());
       putClientProperty("JComboBox.isCellEditor", DarculaUIUtil.isTableCellEditor(comboBox));
     }
 
@@ -677,7 +695,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         Component component = comboBox.getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (component instanceof JComponent) {
           customizeListRendererComponent((JComponent)component);
-          component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
         }
         return component;
       }

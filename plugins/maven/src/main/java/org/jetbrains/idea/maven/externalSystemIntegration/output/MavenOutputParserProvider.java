@@ -3,11 +3,11 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -21,7 +21,7 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
   }
 
   @Override
-  public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTask task) {
+  public List<BuildOutputParser> getBuildOutputParsers(@NotNull ExternalSystemTaskId taskId) {
     throw new UnsupportedOperationException();
   }
 

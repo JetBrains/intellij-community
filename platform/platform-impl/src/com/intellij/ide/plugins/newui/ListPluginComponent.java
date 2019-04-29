@@ -110,7 +110,7 @@ public class ListPluginComponent extends CellPluginComponent {
       }
       else if (update) {
         myUpdateButton = new UpdateButton();
-        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, false));
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myPlugin));
         myBaselinePanel.addButtonComponent(myUpdateButton);
       }
 
@@ -251,7 +251,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
       if (myUpdateButton == null) {
         myUpdateButton = new UpdateButton();
-        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
         myBaselinePanel.addButtonComponent(myUpdateButton);
       }
       else {

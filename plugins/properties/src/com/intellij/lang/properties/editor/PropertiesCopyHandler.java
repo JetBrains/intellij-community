@@ -244,7 +244,6 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
         }
       };
 
-      //noinspection GtkPreferredJComboBoxRenderer
       resourceBundleComboBox.setRenderer(new GotoFileCellRenderer(500) {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

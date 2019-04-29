@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
@@ -26,7 +27,7 @@ public class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
   }
 
   public static MultiMap<SchemaTypeInfo, SchemaTypeInfo> parse(final InputStream is) {
-    return parse(new InputStreamReader(is));
+    return parse(new InputStreamReader(is, StandardCharsets.UTF_8));
   }
 
   public static MultiMap<SchemaTypeInfo, SchemaTypeInfo> parse(@NotNull Reader reader) {

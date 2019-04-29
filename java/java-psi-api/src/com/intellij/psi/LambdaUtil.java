@@ -600,7 +600,8 @@ public class LambdaUtil {
   public static boolean isExpressionStatementExpression(PsiElement body) {
     return body instanceof PsiAssignmentExpression ||
            PsiUtil.isIncrementDecrementOperation(body) ||
-           body instanceof PsiCallExpression ||
+           body instanceof PsiMethodCallExpression || //method invocation
+           body instanceof PsiNewExpression && !((PsiNewExpression)body).isArrayCreation() || //class instance creation
            body instanceof PsiReferenceExpression && !body.isPhysical();
   }
 

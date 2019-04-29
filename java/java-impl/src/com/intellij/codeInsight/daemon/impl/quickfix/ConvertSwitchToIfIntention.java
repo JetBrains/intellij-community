@@ -167,9 +167,10 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         parent = (PsiCodeBlock)(switchStatement.getParent());
       }
     }
+    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     if (hadSideEffects) {
       final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, switchStatement);
-      parent.addBefore(declarationStatement, switchStatement);
+      javaCodeStyleManager.shortenClassReferences(parent.addBefore(declarationStatement, switchStatement));
     }
     final PsiStatement ifStatement = factory.createStatementFromText(ifStatementText, switchStatement);
     if (unwrapDefault) {
@@ -189,12 +190,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         addedIf.delete();
       }
       else {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedIf);
+        javaCodeStyleManager.shortenClassReferences(addedIf);
       }
     }
     else {
-      JavaCodeStyleManager.getInstance(project)
-        .shortenClassReferences(commentTracker.replaceAndRestoreComments(switchStatement, ifStatement));
+      javaCodeStyleManager.shortenClassReferences(commentTracker.replaceAndRestoreComments(switchStatement, ifStatement));
     }
   }
 

@@ -86,10 +86,8 @@ public class CvsEntriesManager implements VirtualFileListener {
   }
 
   public void registerAsVirtualFileListener(@NotNull Disposable listenerDisposable) {
-    if (myIsActive == 0) {
-      VirtualFileManager.getInstance().addVirtualFileListener(this, listenerDisposable);
-      VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener(), listenerDisposable);
-    }
+    VirtualFileManager.getInstance().addVirtualFileListener(this, listenerDisposable);
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener(), listenerDisposable);
     myIsActive++;
   }
 

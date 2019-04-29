@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services.artifactory;
 
 import com.google.gson.Gson;
@@ -27,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,7 +35,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     try {
       final Gson gson = new Gson();
       final InputStreamReader stream =
-        new InputStreamReader(new Endpoint.Repositories(url).getRepositoryDetailsListJson(null).getInputStream());
+        new InputStreamReader(new Endpoint.Repositories(url).getRepositoryDetailsListJson(null).getInputStream(), StandardCharsets.UTF_8);
       final ArtifactoryModel.RepositoryType[] repos = gson.fromJson(stream, ArtifactoryModel.RepositoryType[].class);
       final List<RemoteRepositoryDescription> result = new ArrayList<>(repos.length);
       for (ArtifactoryModel.RepositoryType repo : repos) {
@@ -80,7 +67,8 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
         final String name = StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":");
         final InputStream stream = new Endpoint.Search.Artifact(url).getArtifactSearchResultJson(name, null).getInputStream();
 
-        final ArtifactoryModel.GavcResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.GavcResults.class);
+        final ArtifactoryModel.GavcResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream,
+                                                                                                                StandardCharsets.UTF_8), ArtifactoryModel.GavcResults.class);
         if (results != null && results.results != null) {
           for (ArtifactoryModel.GavcResult result : results.results) {
             if (!result.uri.endsWith(packaging)) continue;
@@ -93,7 +81,8 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
         final String searchString = className.endsWith("*") || className.endsWith("?") ? className : className + ".class";
         final InputStream stream = new Endpoint.Search.Archive(url).getArchiveSearchResultJson(searchString, null).getInputStream();
 
-        final ArtifactoryModel.ArchiveResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.ArchiveResults.class);
+        final ArtifactoryModel.ArchiveResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream,
+                                                                                                                   StandardCharsets.UTF_8), ArtifactoryModel.ArchiveResults.class);
         if (results != null && results.results != null) {
           for (ArtifactoryModel.ArchiveResult result : results.results) {
             for (String uri : result.archiveUris) {

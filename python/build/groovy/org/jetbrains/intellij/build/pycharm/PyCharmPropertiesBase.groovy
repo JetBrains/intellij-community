@@ -28,6 +28,9 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "intellij.python.pydev")
+
+    buildCrossPlatformDistribution = true
+    mavenArtifacts.additionalModules = ["intellij.java.compiler.antTasks"]
   }
 
   @Override
