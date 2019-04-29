@@ -28,7 +28,7 @@ public abstract class JBProtocolCommand {
   @Nullable
   public static JBProtocolCommand findCommand(@Nullable String commandName) {
     if (commandName != null) {
-      for (JBProtocolCommand command : EP_NAME.getExtensionList()) {
+      for (JBProtocolCommand command : EP_NAME.getIterable()) {
         if (command.getCommandName().equals(commandName)) {
           return command;
         }
