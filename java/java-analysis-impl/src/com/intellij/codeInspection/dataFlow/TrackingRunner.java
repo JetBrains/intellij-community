@@ -91,6 +91,10 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
   public abstract static class DfaProblemType {
     public abstract String toString();
+
+    CauseItem[] findCauses(PsiExpression expression, MemoryStateChange history) {
+      return new CauseItem[0];
+    }
   }
 
   public static class CauseItem {
@@ -243,8 +247,35 @@ public class TrackingRunner extends StandardDataFlowRunner {
   }
   
   public static class CastDfaProblemType extends DfaProblemType {
+    @Override
+    public CauseItem[] findCauses(PsiExpression expression, MemoryStateChange history) {
+      if (expression instanceof PsiTypeCastExpression) {
+        PsiType expressionType = expression.getType();
+        MemoryStateChange operandPush = history.findExpressionPush(((PsiTypeCastExpression)expression).getOperand());
+        if (operandPush != null) {
+          return new CauseItem[]{findTypeCause(operandPush, expressionType, false)};
+        }
+      }
+      return new CauseItem[0];
+    }
+
     public String toString() {
       return "cast may fail";
+    }
+  }
+
+  public static class NullableDfaProblemType extends DfaProblemType {
+    @Override
+    public CauseItem[] findCauses(PsiExpression expression, MemoryStateChange history) {
+      Pair<MemoryStateChange, DfaNullability> nullability = history.findFact(history.myTopOfStack, DfaFactType.NULLABILITY);
+      if (nullability.second == DfaNullability.NULLABLE || nullability.second == DfaNullability.NULL) {
+        return new CauseItem[]{findNullabilityCause(history, nullability.first, nullability.second)};
+      }
+      return new CauseItem[0];
+    }
+
+    public String toString() {
+      return "may be null";
     }
   }
 
@@ -263,6 +294,11 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
     public ValueDfaProblemType(Object value) {
       myValue = value;
+    }
+
+    @Override
+    public CauseItem[] findCauses(PsiExpression expression, MemoryStateChange history) {
+      return findConstantValueCause(expression, history, myValue);
     }
 
     @Override
@@ -286,7 +322,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
   /*
   TODO: 1. Find causes of other warnings:  
-            Cause for possible NPE
             Cause for AIOOBE
             Cause for "Contract always fails"
             Cause for "modifying an immutable collection"
@@ -297,6 +332,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
             Warning caused by polyadic math
             Warning caused by narrowing conversion
             Warning caused by unary minus
+            Warning caused by final field initializer
   TODO: 3. Check how it works with 
             Inliners (notably: Stream API)
             Ternary operators
@@ -307,18 +343,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   private static CauseItem findCauseChain(PsiExpression expression, MemoryStateChange history, DfaProblemType type) {
     CauseItem root = new CauseItem(type, expression);
     if (history.getExpression() != expression) return root;
-    if (type instanceof ValueDfaProblemType) {
-      Object expectedValue = ((ValueDfaProblemType)type).myValue;
-      CauseItem[] causes = findConstantValueCause(expression, history, expectedValue);
-      root.addChildren(causes);
-    }
-    if (type instanceof CastDfaProblemType && expression instanceof PsiTypeCastExpression) {
-      PsiType expressionType = expression.getType();
-      MemoryStateChange operandPush = history.findExpressionPush(((PsiTypeCastExpression)expression).getOperand());
-      if (operandPush != null) {
-        root.addChildren(findTypeCause(operandPush, expressionType, false));
-      }
-    }
+    root.addChildren(type.findCauses(expression, history));
     return root;
   }
 
@@ -590,9 +615,25 @@ public class TrackingRunner extends StandardDataFlowRunner {
   private static CauseItem findNullabilityCause(MemoryStateChange factUse, MemoryStateChange factDef, DfaNullability nullability) {
     PsiExpression expression = factUse.getExpression();
     if (factDef != null && expression != null) {
+      DfaValue value = factUse.myTopOfStack;
+      if (factDef.myInstruction instanceof AssignInstruction && factDef.myTopOfStack == value) {
+        PsiExpression rExpression = PsiUtil.skipParenthesizedExprDown(((AssignInstruction)factDef.myInstruction).getRExpression());
+        while (rExpression instanceof PsiTypeCastExpression) {
+          rExpression = PsiUtil.skipParenthesizedExprDown(((PsiTypeCastExpression)rExpression).getOperand());
+        }
+        if (rExpression != null) {
+          MemoryStateChange rValuePush = factDef.findExpressionPush(rExpression);
+          if (rValuePush != null) {
+            CauseItem assignmentItem = new CauseItem("'" + value + "' was assigned", rExpression);
+            Pair<MemoryStateChange, DfaNullability> rValueFact = rValuePush.findFact(rValuePush.myTopOfStack, DfaFactType.NULLABILITY);
+            assignmentItem.addChildren(findNullabilityCause(rValuePush, rValueFact.first, nullability));
+            return assignmentItem;
+          }
+        }
+      }
       PsiExpression defExpression = factDef.getExpression();
       if (defExpression != null) {
-        return new CauseItem(expression.getText() + " is known to be '" + nullability.getPresentationName() + "' from #ref", defExpression);
+        return new CauseItem("'" + expression.getText() + "' is known to be '" + nullability.getPresentationName() + "' from #ref", defExpression);
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
@@ -660,8 +701,13 @@ public class TrackingRunner extends StandardDataFlowRunner {
         else {
           message = memberName + " '" + name + "' is annotated as '" + nullability.getPresentationName() + "'";
         }
-        if (owner.getContainingFile() == anchor.getContainingFile()) {
+        if (info.getAnnotation().getContainingFile() == anchor.getContainingFile()) {
+          anchor = info.getAnnotation();
+        } else if (owner.getContainingFile() == anchor.getContainingFile()) {
           anchor = owner.getNavigationElement();
+          if (anchor instanceof PsiNameIdentifierOwner) {
+            anchor = ((PsiNameIdentifierOwner)anchor).getNameIdentifier();
+          }
         }
         return new CauseItem(message, anchor);
       }

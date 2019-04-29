@@ -94,6 +94,11 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
     if (expression instanceof PsiTypeCastExpression) {
       return new TrackingRunner.CastDfaProblemType();
     }
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      // Test possible NPE in qualifiers only
+      return new TrackingRunner.NullableDfaProblemType();
+    }
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
     assertNotNull("No common dataflow result for expression: " + selectedText, result);
     Set<Object> values = result.getExpressionValues(expression);
@@ -141,4 +146,7 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testAndChainCause() { doTest(); }
   public void testAndChainDependentCause() { doTest(); }
   public void testOrChainCause() { doTest(); }
+  public void testNpeSimple() { doTest(); }
+  public void testNpeAnnotation() { doTest(); }
+  public void testNpeWithCast() { doTest(); }
 }
