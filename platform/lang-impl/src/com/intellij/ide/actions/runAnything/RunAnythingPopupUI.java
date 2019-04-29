@@ -555,7 +555,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(isSelected, hasFocus);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);

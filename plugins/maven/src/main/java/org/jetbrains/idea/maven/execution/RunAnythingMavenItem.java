@@ -24,9 +24,9 @@ public class RunAnythingMavenItem extends RunAnythingItemBase {
 
   @NotNull
   @Override
-  public Component createComponent(boolean isSelected, boolean hasFocus) {
+  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
     String command = getCommand();
-    JPanel component = (JPanel)super.createComponent(isSelected, hasFocus);
+    JPanel component = (JPanel)super.createComponent(pattern, isSelected, hasFocus);
 
     String toComplete = notNullize(substringAfterLast(command, " "));
     if (toComplete.startsWith("-")) {
