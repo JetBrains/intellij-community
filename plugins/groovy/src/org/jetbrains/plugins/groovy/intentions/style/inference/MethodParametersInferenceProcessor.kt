@@ -181,7 +181,12 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
         val parameters = generifiedClassType.parameters
         val replacedParameters = parameters.map { it.accept(this) }.toArray(emptyArray())
         val resolveResult = generifiedClassType.resolveGenerics()
-        return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
+        if (classType == PsiType.getJavaLangObject(method.manager, method.resolveScope)) {
+          return registerTypeParameter()
+        }
+        else {
+          return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
+        }
       }
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {

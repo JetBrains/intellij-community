@@ -49,7 +49,8 @@ class InferenceUnitRegistry {
       unit.typeInstantiation = variable.instantiation
       map[unit] = variable
     }
-    for ((unit, variable) in map) {
+    val entries = map.entries.sortedBy { (unit, _) -> unit.toString() }
+    for ((unit, variable) in entries) {
       deepConnect(session, map, (variable.getBounds(InferenceBound.UPPER) + variable.getBounds(InferenceBound.EQ)),
                   { strongUpperBoundHandler(it, unit) }, { weakUpperBoundHandler(it, unit) })
       deepConnect(session, map, (variable.getBounds(InferenceBound.LOWER) + variable.getBounds(InferenceBound.EQ)),

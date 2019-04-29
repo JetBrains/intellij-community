@@ -36,8 +36,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     val processor = MethodParametersInferenceProcessor(method)
     processor.runInferenceProcess()
     if (!method.hasTypeParameters() || method.isConstructor) {
-      // todo: there is exist GrUnnecessaryDefModifierFix, I should call it somehow
-      method.firstChild.delete()
+      method.modifierList.setModifierProperty("def", false)
     }
   }
 

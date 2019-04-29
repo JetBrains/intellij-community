@@ -214,7 +214,7 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
 
   data class InternalNode(val node: InferenceUnit) {
     var next = node.unitInstantiation
-    val children = HashSet<InternalNode>()
+    val children = LinkedHashSet<InternalNode>()
   }
 
   /**

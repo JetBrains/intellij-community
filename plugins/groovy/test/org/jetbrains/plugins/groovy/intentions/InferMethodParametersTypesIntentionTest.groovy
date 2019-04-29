@@ -143,4 +143,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testDiamond() {
+    doTest(true)
+  }
+
 }
