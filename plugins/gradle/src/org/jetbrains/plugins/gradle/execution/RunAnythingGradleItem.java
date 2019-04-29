@@ -27,26 +27,26 @@ public class RunAnythingGradleItem extends RunAnythingItemBase {
   @Override
   public Component createComponent(boolean isSelected, boolean hasFocus) {
     String command = getCommand();
+    JPanel component = (JPanel)super.createComponent(isSelected, hasFocus);
 
     int spaceIndex = StringUtil.lastIndexOf(command, ' ', 0, command.length());
     String toComplete = spaceIndex < 0 ? "" : command.substring(spaceIndex + 1);
-    String description = null;
     if (toComplete.startsWith("-")) {
       boolean isLongOpt = toComplete.startsWith("--");
       Options options = GradleCommandLineOptionsProvider.getSupportedOptions();
       Option option = options.getOption(toComplete.substring(isLongOpt ? 2 : 1));
       if (option != null) {
-        description = option.getDescription();
+        String description = option.getDescription();
+
+        if (description != null) {
+          SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
+          descriptionComponent
+            .append(" " + StringUtil.shortenTextWithEllipsis(description, 200, 0), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          component.add(descriptionComponent, BorderLayout.EAST);
+        }
       }
     }
-    SimpleColoredComponent component = new SimpleColoredComponent();
-    component.append(command);
-    component.appendTextPadding(20);
-    setupIcon(component, myIcon);
 
-    if (description != null) {
-      component.append(" " + StringUtil.shortenTextWithEllipsis(description, 200, 0), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
-    }
     return component;
   }
 }

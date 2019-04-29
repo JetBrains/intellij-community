@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,17 +27,7 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
   @NotNull
   @Override
   public Component createComponent(boolean isSelected, boolean hasFocus) {
-    JPanel component = new JPanel(new BorderLayout());
-    Color background = UIUtil.getListBackground(isSelected, hasFocus);
-
-    component.setBackground(background);
-    component.setBorder(JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(UIUtil.getListCellHPadding())));
-
-    Color foreground = UIUtil.getListForeground(isSelected, hasFocus);
-    SimpleColoredComponent runConfigComponent = new SimpleColoredComponent();
-    runConfigComponent.append(myWrapper.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground));
-    setupIcon(runConfigComponent, myIcon);
-    component.add(runConfigComponent, BorderLayout.WEST);
+    JPanel component = (JPanel)super.createComponent(isSelected, hasFocus);
 
     ConfigurationType type = myWrapper.getType();
     if (type == null) {
@@ -51,7 +40,7 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
     }
 
     SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
-    descriptionComponent.append(description, new SimpleTextAttributes(STYLE_SMALLER, foreground));
+    descriptionComponent.append(description, new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getListForeground(isSelected, hasFocus)));
     component.add(descriptionComponent, BorderLayout.EAST);
 
     return component;
