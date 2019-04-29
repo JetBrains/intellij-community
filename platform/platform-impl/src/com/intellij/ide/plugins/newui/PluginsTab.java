@@ -8,13 +8,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Alarm;
@@ -80,11 +78,6 @@ public abstract class PluginsTab {
       }
 
       @Override
-      public ActionCallback select(Integer key, boolean now) {
-        return super.select(key, now);    // TODO: Auto-generated method stub
-      }
-
-      @Override
       protected JComponent create(Integer key) {
         if (key == 0) {
           return createPluginsPanel(mySelectionListener);
@@ -100,10 +93,16 @@ public abstract class PluginsTab {
     listPanel.add(mySearchTextField, BorderLayout.NORTH);
     listPanel.add(myCardPanel);
 
-    OnePixelSplitter splitter = new OnePixelSplitter();
+    OnePixelSplitter splitter = new OnePixelSplitter(false, 0.45f) {
+      @Override
+      protected Divider createDivider() {
+        Divider divider = super.createDivider();
+        divider.setBackground(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR);
+        return divider;
+      }
+    };
     splitter.setFirstComponent(listPanel);
     splitter.setSecondComponent(myDetailsPage = createDetailsPanel(mySearchListener));
-    splitter.setProportion(0.45f);
 
     mySearchPanel = createSearchPanel(mySelectionListener, mySearchTextField);
 

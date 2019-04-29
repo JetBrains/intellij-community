@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TextUI;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -85,7 +83,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     if (key == 1) {
       myEmptyPanel = new JBPanelWithEmptyText();
-      myEmptyPanel.setBorder(new CustomLineBorder(new JBColor(0xC5C5C5, 0x515151), JBUI.insets(1, 0, 0, 0)));
+      myEmptyPanel.setBorder(new CustomLineBorder(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR, JBUI.insets(1, 0, 0, 0)));
       myEmptyPanel.setOpaque(true);
       myEmptyPanel.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
       return myEmptyPanel;
@@ -199,13 +197,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void createMetricsPanel(@NotNull JPanel centerPanel) {
     // text field without horizontal margins
-    myVersion = new JTextField() {
-      @Override
-      public void setUI(TextUI ui) {
-        super.setUI(new TextFieldWithPopupHandlerUI() {
-        });
-      }
-    };
+    myVersion = new JTextField();
+    myVersion.putClientProperty("TextFieldWithoutMargins", Boolean.TRUE);
     myVersion.setEditable(false);
     myVersion.setFont(UIUtil.getLabelFont());
     myVersion.setBorder(null);
