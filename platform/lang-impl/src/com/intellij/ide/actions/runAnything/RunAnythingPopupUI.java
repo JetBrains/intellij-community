@@ -373,7 +373,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
         myIsItemSelected = true;
 
         if (isMoreItem(myResultsList.getSelectedIndex())) {
-          mySearchField.setText(myLastInputText != null ? myLastInputText : "");
+          if (myLastInputText != null) {
+            mySearchField.setText(myLastInputText);
+          }
           return;
         }
 
@@ -602,7 +604,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
   private class CalcThread implements Runnable {
     @NotNull private final Project myProject;
     @NotNull private final String myPattern;
@@ -610,7 +611,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final ActionCallback myDone = new ActionCallback();
     @NotNull private final RunAnythingSearchListModel myListModel;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
+    private CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
       myProject = project;
       myPattern = pattern;
       RunAnythingSearchListModel model = getSearchingModel(myResultsList);
@@ -961,7 +962,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class RunAnythingShowFilterAction extends ShowFilterAction {
-    public RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
+    private RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
       super(parentDisposable, myProject);
     }
 
