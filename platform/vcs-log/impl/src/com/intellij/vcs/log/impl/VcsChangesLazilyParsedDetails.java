@@ -191,17 +191,15 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   }
 
   private static class MyMergedChange extends MergedChange {
-    @NotNull private final MergedStatusInfo<VcsFileStatusInfo> myStatusInfo;
     @NotNull private final Supplier<List<Change>> mySourceChanges;
 
     MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<VcsFileStatusInfo> statusInfo,
                    @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> parser) {
       super(change);
-      myStatusInfo = statusInfo;
       mySourceChanges = Suppliers.memoize(() -> {
         List<Change> sourceChanges = ContainerUtil.newArrayList();
-        for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
-          List<VcsFileStatusInfo> statusInfos = Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent));
+        for (int parent = 0; parent < statusInfo.getMergedStatusInfos().size(); parent++) {
+          List<VcsFileStatusInfo> statusInfos = Collections.singletonList(statusInfo.getMergedStatusInfos().get(parent));
           sourceChanges.addAll(parser.apply(statusInfos, parent));
         }
         return sourceChanges;
