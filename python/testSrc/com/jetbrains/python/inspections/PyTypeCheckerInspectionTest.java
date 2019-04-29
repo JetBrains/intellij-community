@@ -733,4 +733,28 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "    return <warning descr=\"Expected type 'F', got 'str' instead\">\"\"</warning>")
     );
   }
+
+  // PY-35544
+  public void testLessSpecificCallableAgainstMoreSpecific() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText(
+        "from typing import Callable\n" +
+        "\n" +
+        "class MainClass:\n" +
+        "    pass\n" +
+        "\n" +
+        "class SubClass(MainClass):\n" +
+        "    pass\n" +
+        "\n" +
+        "def f(p: Callable[[SubClass], int]):\n" +
+        "    pass\n" +
+        "\n" +
+        "def g(p: MainClass) -> int:\n" +
+        "    pass\n" +
+        "\n" +
+        "f(g)"
+      )
+    );
+  }
 }
