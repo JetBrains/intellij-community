@@ -420,13 +420,13 @@ public class ExecutionHelper {
     };
   }
 
-  private static Runnable createTimeLimitedExecutionProcess(final ProcessHandler processHandler,
-                                                            final ExecutionMode mode,
+  private static Runnable createTimeLimitedExecutionProcess(@NotNull ProcessHandler processHandler,
+                                                            @NotNull ExecutionMode mode,
                                                             @NotNull final String presentableCmdline) {
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
-      private final Runnable myProcessThread = () -> {
+      private final Runnable myProcessRunnable = () -> {
         try {
           final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
@@ -442,7 +442,7 @@ public class ExecutionHelper {
       @Override
       public void run() {
         mySemaphore.down();
-        ApplicationManager.getApplication().executeOnPooledThread(myProcessThread);
+        ApplicationManager.getApplication().executeOnPooledThread(myProcessRunnable);
 
         mySemaphore.waitFor();
       }
