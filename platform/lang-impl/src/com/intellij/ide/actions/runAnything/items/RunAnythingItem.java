@@ -4,6 +4,7 @@ package com.intellij.ide.actions.runAnything.items;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,9 +25,9 @@ public abstract class RunAnythingItem {
    * @param isSelected true if item is selected in the list
    */
   @Deprecated
-  @NotNull
+  @Nullable
   public Component createComponent(boolean isSelected) {
-    return createComponent(isSelected, true);
+    return null;
   }
 
   /**
@@ -37,6 +38,11 @@ public abstract class RunAnythingItem {
    */
   @NotNull
   public Component createComponent(boolean isSelected, boolean hasFocus) {
+    Component oldComponent = createComponent(isSelected);
+    if (oldComponent != null) {
+      return oldComponent;
+    }
+
     JPanel component = new JPanel(new BorderLayout());
     component.setBackground(UIUtil.getListBackground(isSelected, hasFocus));
 
