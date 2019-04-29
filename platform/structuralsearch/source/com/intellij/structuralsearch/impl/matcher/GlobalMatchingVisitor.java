@@ -187,44 +187,37 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @param elements the element for which the sons are looked for match
    */
   public void matchContext(@NotNull NodeIterator elements) {
-    if (matchContext == null) {
-      return;
-    }
     final CompiledPattern pattern = matchContext.getPattern();
     final NodeIterator patternNodes = pattern.getNodes().clone();
     final MatchResultImpl saveResult = matchContext.hasResult() ? matchContext.getResult() : null;
     final List<PsiElement> saveMatchedNodes = matchContext.getMatchedNodes();
 
     try {
-      matchContext.setResult(null);
-      matchContext.setMatchedNodes(null);
-
       if (!patternNodes.hasNext()) return;
       final MatchingHandler firstMatchingHandler = pattern.getHandler(patternNodes.current());
 
       for (; elements.hasNext(); elements.advance()) {
+        matchContext.setResult(null);
+        matchContext.setMatchedNodes(null);
         final PsiElement elementNode = elements.current();
 
-        boolean matched = firstMatchingHandler.matchSequentially(patternNodes, elements, matchContext);
-
-        if (matched) {
-          MatchingHandler matchingHandler = matchContext.getPattern().getHandler(Configuration.CONTEXT_VAR_NAME);
-          if (matchingHandler != null) {
-            matched = ((SubstitutionHandler)matchingHandler).handle(elementNode, matchContext);
-          }
+        final boolean patternMatched = firstMatchingHandler.matchSequentially(patternNodes, elements, matchContext);
+        final boolean contextMatched;
+        if (patternMatched) {
+          final MatchingHandler matchingHandler = pattern.getHandler(Configuration.CONTEXT_VAR_NAME);
+          contextMatched = matchingHandler == null || ((SubstitutionHandler)matchingHandler).handle(elementNode, matchContext);
+        }
+        else {
+          contextMatched = false;
         }
 
         final List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
-
-        if (matched && matchedNodes != null) {
+        if (contextMatched && matchedNodes != null) {
           dispatchMatched(matchedNodes, matchContext.getResult());
         }
 
-        matchContext.setMatchedNodes(null);
-        matchContext.setResult(null);
-
         patternNodes.reset();
-        if (matchedNodes != null && !matchedNodes.isEmpty() && matched) {
+        if (matchedNodes != null && !matchedNodes.isEmpty() && patternMatched) {
           elements.rewind();
         }
       }

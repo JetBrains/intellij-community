@@ -2964,6 +2964,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(3, findMatchesCount(source6, "'x:[exprtype( List )]"));
     assertEquals(1, findMatchesCount(source6, "'x:[exprtype( List<List<String>> )]"));
     assertEquals(2, findMatchesCount(source6, "'x:[exprtype( List<Garbage> )]"));
+
+    String source7 = "class X {{" +
+                     "  System.out.println(1.0 * 2 + 3 * 4);\n" +
+                     "}}";
+    assertEquals(1, findMatchesCount(source7, "[exprtype( int )]'_a * '_b"));
   }
 
   public void testSearchReferences() {
