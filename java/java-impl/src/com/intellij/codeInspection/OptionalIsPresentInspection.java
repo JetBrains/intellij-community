@@ -188,10 +188,16 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       }
       PsiType falseType = falseExpression.getType();
       PsiType trueType = expression.getType();
-      // like x ? double_expression : integer_expression; support only if integer_expression is simple literal,
-      // so could be converted explicitly to double
-      if (falseType instanceof PsiPrimitiveType && trueType instanceof PsiPrimitiveType &&
-          !falseType.equals(trueType) && JavaPsiMathUtil.getNumberFromLiteral(falseExpression) == null) {
+      if (falseType == null || trueType == null) return ProblemType.NONE;
+      if (falseType instanceof PsiPrimitiveType && trueType instanceof PsiPrimitiveType) {
+        if (falseType.equals(trueType) || JavaPsiMathUtil.getNumberFromLiteral(falseExpression) != null) {
+          // like x ? double_expression : integer_expression; support only if integer_expression is simple literal,
+          // so could be converted explicitly to double
+          return ProblemType.WARNING;
+        }
+        return ProblemType.NONE;
+      }
+      if (!trueType.isAssignableFrom(falseType)) {
         return ProblemType.NONE;
       }
     }
