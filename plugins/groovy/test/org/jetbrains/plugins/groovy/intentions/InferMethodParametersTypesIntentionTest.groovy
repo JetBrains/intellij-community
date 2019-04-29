@@ -83,6 +83,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testAppearedWildcard2() {
+    doTest(true)
+  }
+
   void testConstructor() {
     doTest(true)
   }

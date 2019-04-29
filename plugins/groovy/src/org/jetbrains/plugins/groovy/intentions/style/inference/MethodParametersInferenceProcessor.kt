@@ -119,13 +119,16 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
     val equalTypeParameters = graph.getEqualUnits(unit).filter { it.typeInstantiation == PsiType.NULL }
     val mayBeDirectlyInstantiated = equalTypeParameters.isEmpty() &&
                                     when {
-                                      (unit.flexible) -> (unit.typeInstantiation !is PsiIntersectionType)
+                                      unit.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
                                       else -> unit.subtypes.size <= 1
                                     }
     when {
       mayBeDirectlyInstantiated -> {
-        val instantiation = if (unit.flexible || unit.subtypes.size != 0) unit.typeInstantiation
-        else PsiWildcardType.createExtends(method.manager, unit.typeInstantiation)
+        val instantiation = when {
+          unit.flexible || unit.subtypes.size != 0 -> unit.typeInstantiation
+          unit.typeInstantiation == unit.type -> PsiWildcardType.createUnbounded(method.manager)
+          else -> PsiWildcardType.createExtends(method.manager, unit.typeInstantiation)
+        }
         return resultSubstitutor.substitute(representativeSubstitutor.substitute(instantiation))
       }
       else -> {

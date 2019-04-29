@@ -178,11 +178,10 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
     var instantiationSubstitutor = PsiSubstitutor.EMPTY
     for (unit in order.filter { it.unitInstantiation == null }) {
       val validInstantiation =
-        if (unit.initialTypeParameter.extendsList.referencedTypes.isNotEmpty()) {
-          unit.initialTypeParameter.extendsList.referencedTypes[0]
-        }
-        else {
-          unit.typeInstantiation
+        when {
+          unit.initialTypeParameter.extendsList.referencedTypes.isNotEmpty() -> unit.initialTypeParameter.extendsList.referencedTypes[0]
+          (unit.subtypes + unit.weakSubtypes + unit.weakSupertypes).isEmpty() -> initialInstantiations[unit]
+          else -> unit.typeInstantiation
         }
       unit.typeInstantiation = instantiationSubstitutor.substitute(validInstantiation ?: PsiType.NULL)
       if (unit.typeInstantiation != PsiType.NULL) {
