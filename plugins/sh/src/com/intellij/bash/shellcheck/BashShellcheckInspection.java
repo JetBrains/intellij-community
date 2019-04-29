@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class BashShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
   static final String SHORT_NAME = "ShellCheck";
 
@@ -27,5 +29,11 @@ public class BashShellcheckInspection extends LocalInspectionTool implements Ext
   @Override
   public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     return SuppressQuickFix.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new ShellcheckOptionsPanel().getPanel();
   }
 }

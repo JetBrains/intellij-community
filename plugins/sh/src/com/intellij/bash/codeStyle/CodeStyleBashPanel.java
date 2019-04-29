@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
-  private static final String BROWSE_FOLDER_TITLE = "Choose Path to the Shfmt Formatter:";
+  private static final String BROWSE_FORMATTER_TITLE = "Choose Path to the Shfmt Formatter:";
   private static final String LINK_TITLE = "Download shfmt formatter";
 
   private JPanel myPanel;
@@ -55,7 +55,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myRightPanel);
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
-    myShfmtPathSelector.addBrowseFolderListener(BROWSE_FOLDER_TITLE, "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myShfmtPathSelector.addBrowseFolderListener(BROWSE_FORMATTER_TITLE, "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
     myShfmtPathSelector.setEditable(false);
     myTabCharacter.addChangeListener(listener -> {
       if (myTabCharacter.isSelected()) {
@@ -67,7 +67,7 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
         myIndentLabel.setEnabled(true);
       }
     });
-    myWarningLabel.setIcon(AllIcons.General.BalloonWarning);
+    myWarningLabel.setIcon(AllIcons.General.Warning);
 
     addPanelToWatch(myPanel);
   }

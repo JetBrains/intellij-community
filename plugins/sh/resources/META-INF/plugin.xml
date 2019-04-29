@@ -41,12 +41,10 @@
     <lang.formatter language="Bash" implementationClass="com.intellij.bash.formatter.BashFormatterModelBuilder"/>
     <postFormatProcessor implementation="com.intellij.bash.formatter.BashPostFormatProcessor"/>
 
-    <externalAnnotator language="Bash" implementationClass="com.intellij.bash.shellcheck.BashShellcheckExternalAnnotator"/>
     <registryKey key="bash.shellcheck.path"/>
-    <localInspection language="Bash" shortName="ShellCheck"
-                     enabledByDefault="true" level="ERROR" unfair="true"
-                     implementationClass="com.intellij.bash.shellcheck.BashShellcheckInspection"
-                     displayName="ShellCheck" groupName="Bash"/>
+    <externalAnnotator language="Bash" implementationClass="com.intellij.bash.shellcheck.BashShellcheckExternalAnnotator"/>
+    <localInspection groupName="Bash" language="Bash" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
+                     level="ERROR" unfair="true" implementationClass="com.intellij.bash.shellcheck.BashShellcheckInspection"/>
 
     <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
     <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>

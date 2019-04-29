@@ -9,12 +9,15 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -58,10 +61,14 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
   @Nullable
   @Override
   public Collection<BashShellcheckExternalAnnotator.Result> doAnnotate(String fileContent) {
-    String shellcheckExecutable = Registry.stringValue("bash.shellcheck.path");
-    if (StringUtil.isEmpty(shellcheckExecutable)) {
+    String shellcheckExecutable = BashShellcheckUtil.getShellcheckPath();;
+    if (!BashShellcheckUtil.isValidPath(shellcheckExecutable)) {
+      Notification notification = new Notification("Bash", "", "Bash shellcheck not installed or incorrect path", NotificationType.WARNING);
+      notification.addAction(NotificationAction.createSimple("Download", () -> BashShellcheckUtil.download(null, null)));
+      Notifications.Bus.notify(notification);
       return null;
     }
+
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
