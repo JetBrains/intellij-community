@@ -276,4 +276,12 @@ public abstract class SdkType implements SdkTypeId {
   public String sdkPath(@NotNull VirtualFile homePath) {
     return homePath.getPath();
   }
+
+  /**
+   * If this method returns false, this SDK type will not be shown in the SDK type chooser popup when the user
+   * creates a new SDK.
+   */
+  public boolean allowCreationByUser() {
+    return true;
+  }
 }

@@ -2,13 +2,11 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,18 +22,15 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.win32.WindowsElevationUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.ui.AppUIUtil;
@@ -44,7 +39,7 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBDimension;
+import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -86,7 +81,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private final ComponentListener resizedListener;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
-    super(ApplicationNamesInfo.getInstance().getFullProductName());
+    super();
+    updateTitle();
 
     myRootPane = createRootPane(actionManager, dataManager);
     setRootPane(myRootPane);
@@ -333,8 +329,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     updateTitle(this, myTitle, myFileTitle, myCurrentFile);
   }
 
-  public static String getElevationSuffix() {
-    return WindowsElevationUtil.isUnderElevation() ? " (Administrator)" : "";
+  public static @Nullable String getSuperUserSuffix() {
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
@@ -343,7 +339,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     try {
       ourUpdatingTitle = true;
 
-      if(IdeFrameDecorator.isCustomDecoration()) {
+      if (IdeFrameDecorator.isCustomDecoration()) {
         frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
       }
 
@@ -353,11 +349,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
       }
-      else if (!SystemInfo.isMac || builder.isEmpty()) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
+      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
+      builder.append(getSuperUserSuffix(), " ");
       frame.setTitle(builder.toString());
     }
     finally {
@@ -379,15 +376,19 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private static final class Builder {
     private final StringBuilder sb = new StringBuilder();
 
-    public Builder append(@Nullable String s) {
+    Builder append(@Nullable String s) {
+      return append(s, " - ");
+    }
+
+    Builder append(@Nullable String s, String separator) {
       if (!StringUtil.isEmptyOrSpaces(s)) {
-        if (sb.length() > 0) sb.append(" - ");
+        if (sb.length() > 0) sb.append(separator);
         sb.append(s);
       }
       return this;
     }
 
-    public boolean isEmpty() {
+    boolean isEmpty() {
       return sb.length() == 0;
     }
 
@@ -498,7 +499,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
       widgetIDs.clear();
 
-      ((StatusBarEx)statusBar).removeCustomIndicationComponents();
+      if (statusBar instanceof IdeStatusBarImpl) {
+        ((IdeStatusBarImpl)statusBar).removeCustomIndicationComponents();
+      }
     });
   }
 
@@ -551,15 +554,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       doLayout();
     }
   }
-
-  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
-                                                                          AllIcons.Ide.Shadow.TopRight,
-                                                                          AllIcons.Ide.Shadow.Right,
-                                                                          AllIcons.Ide.Shadow.BottomRight,
-                                                                          AllIcons.Ide.Shadow.Bottom,
-                                                                          AllIcons.Ide.Shadow.BottomLeft,
-                                                                          AllIcons.Ide.Shadow.Left,
-                                                                          AllIcons.Ide.Shadow.TopLeft);
 
   @Override
   public void paint(@NotNull Graphics g) {

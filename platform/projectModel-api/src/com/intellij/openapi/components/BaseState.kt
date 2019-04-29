@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
 import com.intellij.configurationStore.properties.*
@@ -8,15 +8,19 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
-import gnu.trove.THashMap
+import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
+import java.util.*
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
+import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashMap
 
 private val LOG = logger<BaseState>()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
+    // should be part of class and not file level to access private field of class
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
 
@@ -64,8 +68,18 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  protected fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
-    val result = CollectionStoredProperty(initialValue)
+  protected fun stringSet(): StoredPropertyBase<MutableSet<String>> {
+    val result = CollectionStoredProperty<String, MutableSet<String>>(THashSet())
+    addProperty(result)
+    return result
+  }
+
+  /**
+   * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
+   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   */
+  protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState {
+    val result = CollectionStoredProperty<E, MutableSet<E>>(TreeSet())
     addProperty(result)
     return result
   }
@@ -80,14 +94,20 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   // Enum is an immutable, so, it is safe to use it as default value.
+  @Deprecated(message = "Use [enum] instead", replaceWith = ReplaceWith("enum(defaultValue)"), level = DeprecationLevel.ERROR)
   protected fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
     addProperty(result)
     return result
   }
 
-  protected inline fun <reified T : Enum<*>> enum(defaultValue: T? = null): StoredPropertyBase<T?> {
-    return doEnum(defaultValue, T::class.java)
+  protected inline fun <reified T : Enum<*>> enum(defaultValue: T): StoredPropertyBase<T> {
+    @Suppress("UNCHECKED_CAST")
+    return doEnum(defaultValue, T::class.java) as StoredPropertyBase<T>
+  }
+
+  protected inline fun <reified T : Enum<*>> enum(): StoredPropertyBase<T?> {
+    return doEnum(null, T::class.java)
   }
 
   @PublishedApi
@@ -107,19 +127,26 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result as StoredPropertyBase<MutableList<T>>
   }
 
-  protected fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
-    return map(value)
+  protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> {
+    val result = MapStoredProperty<K, V>(null)
+    addProperty(result)
+    return result
   }
 
-  protected fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
+  protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> {
+    val result = MapStoredProperty<K, V>(LinkedHashMap())
+    addProperty(result)
+    return result
+  }
+
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use map", replaceWith = ReplaceWith("map()"))
+  protected fun <K : Any, V: Any> map(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
     val result = MapStoredProperty(value)
     addProperty(result)
     return result
   }
 
-  /**
-   * Empty string is always normalized to null.
-   */
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use string", replaceWith = ReplaceWith("string(defaultValue)"))
   protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
@@ -184,6 +211,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
+  /**
+   * If you use [set], [treeSet] or [linkedMap], you must ensure that [incrementModificationCount] is called for each mutation operation on corresponding property value (e.g. add, remove).
+   * Setting property to a new value updates modification count, but direct modification of mutable collection or map doesn't.
+   *
+   * [list] and [map] track content mutation, but if key or value is not primitive value, you also have to [incrementModificationCount] in case of nested mutation.
+   */
   @Transient
   override fun getModificationCount(): Long {
     var result = ownModificationCount
@@ -233,6 +266,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   // internal usage only
   @Suppress("FunctionName")
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   fun __getProperties() = properties
 }

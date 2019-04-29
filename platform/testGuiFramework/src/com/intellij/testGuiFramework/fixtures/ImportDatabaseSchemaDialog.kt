@@ -58,6 +58,17 @@ class ImportDatabaseSchemaDialog(robot: Robot, dialog: JDialog) : JDialogFixture
       addPackage(name)
     }
   }
+
+  fun GuiTestCase.makeSureInFocus(timeout: Timeout = Timeouts.defaultTimeout) {
+    val currentTitle = this@ImportDatabaseSchemaDialog.target().title
+    step("wait for dialog with title '$currentTitle' focused") {
+      waitUntilFound(null, JDialog::class.java, timeout) {
+        it.isShowing && it.isEnabled && it.isVisible && it.isFocused
+        && (it.title == currentTitle)
+      }
+    }
+  }
+
 }
 
 fun GuiTestCase.importDatabaseSchemaDialog(timeout: Timeout = Timeouts.defaultTimeout): ImportDatabaseSchemaDialog {

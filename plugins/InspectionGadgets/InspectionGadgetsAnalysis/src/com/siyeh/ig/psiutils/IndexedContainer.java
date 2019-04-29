@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Tagir Valeev
  */
 public abstract class IndexedContainer {
-  private final PsiExpression myQualifier;
+  private final @NotNull PsiExpression myQualifier;
 
-  protected IndexedContainer(PsiExpression qualifier) {
-    myQualifier = PsiUtil.skipParenthesizedExprDown(qualifier);
+  protected IndexedContainer(@NotNull PsiExpression qualifier) {
+    myQualifier = qualifier;
   }
 
   /**
@@ -63,6 +64,7 @@ public abstract class IndexedContainer {
    * @return the qualifier of the expression which was used to create this {@code IndexedContainer}. The extracted qualifier might be
    * non-physical if it was implicit in the original code (e.g. "this" could be returned if original call was simply "size()")
    */
+  @NotNull
   public PsiExpression getQualifier() {
     return myQualifier;
   }
@@ -86,14 +88,14 @@ public abstract class IndexedContainer {
   @Nullable
   public static IndexedContainer fromLengthExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    PsiExpression arrayExpression = ExpressionUtils.getArrayFromLengthExpression(expression);
+    PsiExpression arrayExpression = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getArrayFromLengthExpression(expression));
     if (arrayExpression != null) {
       return new ArrayIndexedContainer(arrayExpression);
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       if (ListIndexedContainer.isSizeCall(call)) {
-        PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()));
         if (qualifier != null) {
           return new ListIndexedContainer(qualifier);
         }
@@ -103,7 +105,7 @@ public abstract class IndexedContainer {
   }
 
   static class ArrayIndexedContainer extends IndexedContainer {
-    ArrayIndexedContainer(PsiExpression qualifier) {
+    ArrayIndexedContainer(@NotNull PsiExpression qualifier) {
       super(qualifier);
     }
 
@@ -144,7 +146,7 @@ public abstract class IndexedContainer {
   }
 
   static class ListIndexedContainer extends IndexedContainer {
-    ListIndexedContainer(PsiExpression qualifier) {
+    ListIndexedContainer(@NotNull PsiExpression qualifier) {
       super(qualifier);
     }
 

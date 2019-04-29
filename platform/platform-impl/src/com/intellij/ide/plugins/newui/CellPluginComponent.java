@@ -34,6 +34,8 @@ public abstract class CellPluginComponent extends JPanel {
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xF5F9FF, 0x36393B));
 
+  public static boolean HANDLE_FOCUS_ON_SELECTION = true;
+
   public final IdeaPluginDescriptor myPlugin;
 
   protected LinkLabel myIconLabel;
@@ -127,7 +129,7 @@ public abstract class CellPluginComponent extends JPanel {
 
     if (scrollAndFocus) {
       scrollToVisible();
-      if (getParent() != null && type == EventHandler.SelectionType.SELECTION) {
+      if (getParent() != null && type == EventHandler.SelectionType.SELECTION && HANDLE_FOCUS_ON_SELECTION) {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
       }
     }

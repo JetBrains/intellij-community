@@ -63,7 +63,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     }
 
     try {
-      FileUtil.writeToFile(myTempFile, "end".getBytes(), true);
+      FileUtil.writeToFile(myTempFile, "end".getBytes(StandardCharsets.UTF_8), true);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -80,7 +80,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   protected void logCantRunException(ExecutionException e) {
     try {
       final String message = "CantRunException" + e.getMessage() + "\n";
-      FileUtil.writeToFile(myTempFile, message.getBytes());
+      FileUtil.writeToFile(myTempFile, message.getBytes(StandardCharsets.UTF_8));
     }
     catch (IOException e1) {
       LOG.error(e1);
@@ -118,7 +118,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     int logLevel = 1;
     try {
       final Properties properties = new Properties();
-      properties.load(new ByteArrayInputStream(myConfig.getVMParameters().getBytes()));
+      properties.load(new ByteArrayInputStream(myConfig.getVMParameters().getBytes(StandardCharsets.UTF_8)));
       final String verbose = properties.getProperty("-Dtestng.verbose");
       if (verbose != null) {
         logLevel = Integer.parseInt(verbose);

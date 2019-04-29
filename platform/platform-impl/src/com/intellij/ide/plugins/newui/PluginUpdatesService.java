@@ -2,8 +2,10 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import org.jetbrains.annotations.NotNull;
@@ -137,6 +139,29 @@ public class PluginUpdatesService {
       myPrepared = false;
       myPreparing = false;
     }
+  }
+
+  public static boolean isNeedUpdate(@NotNull IdeaPluginDescriptor descriptor) {
+    checkAccess();
+
+    PluginId pluginId = descriptor.getPluginId();
+    String idString = pluginId.getIdString();
+
+    if (myPrepared && myCache != null) {
+      for (PluginDownloader downloader : myCache) {
+        if (idString.equals(downloader.getPluginId())) {
+          return true;
+        }
+      }
+    }
+
+    return InstalledPluginsState.getInstance().hasNewerVersion(pluginId);
+  }
+
+  @Nullable
+  public static Collection<PluginDownloader> getUpdates() {
+    checkAccess();
+    return !myPrepared || myPreparing || myCache == null ? null : myCache;
   }
 
   private static void calculateUpdates() {

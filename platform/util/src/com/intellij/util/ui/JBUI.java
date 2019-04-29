@@ -670,7 +670,7 @@ public class JBUI {
 
       @NotNull
       public static Color inactiveUnderlineColor() {
-        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0xABABAB, 0x7A7A7A));
+        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0x9ca7b8, 0x747a80));
       }
 
       @NotNull
@@ -693,7 +693,7 @@ public class JBUI {
       @NotNull
       public static Color uncoloredTabSelectedColor() {
         return JBColor.namedColor("DefaultTabs.uncoloredTabSelectedColor",
-                                  DefaultTabs.background());
+                                  new JBColor(0xFAFAFA, 0x4E5254));
       }
 
       @NotNull
@@ -707,7 +707,7 @@ public class JBUI {
       public static Color inactiveMaskColor() {
         return JBColor.namedColor("DefaultTabs.inactiveMaskColor",
                                   new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
-                                              ColorUtil.withAlpha(Color.BLACK, .13)));
+                                              ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
 
       }
     }

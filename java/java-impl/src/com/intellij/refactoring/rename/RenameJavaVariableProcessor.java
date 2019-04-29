@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -419,5 +420,21 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         }
       }
     });
+  }
+  
+  @Override
+  public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
+    if (nonJava && element instanceof PsiField) {
+      final PsiField field = (PsiField)element;
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null) {
+        String qualifiedName = containingClass.getQualifiedName();
+        if (qualifiedName != null) {
+          return StringUtil.getQualifiedName(qualifiedName, newName);
+        }
+      }
+    }
+    
+    return null;
   }
 }

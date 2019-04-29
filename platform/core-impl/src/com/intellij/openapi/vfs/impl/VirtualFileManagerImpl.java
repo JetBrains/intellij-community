@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -16,37 +17,49 @@ import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
-  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector =
-    new KeyedExtensionCollector<VirtualFileSystem, String>("com.intellij.virtualFileSystem", this) {
-      @NotNull
-      @Override
-      protected String keyToString(@NotNull String key) {
-        return key;
-      }
-    };
+  private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
+    @Attribute
+    public boolean physical;
+  }
 
+  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>("com.intellij.virtualFileSystem", this);
   private final VirtualFileSystem[] myPhysicalFileSystems;
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
-  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems) {
+  public VirtualFileManagerImpl(@NotNull List<VirtualFileSystem> fileSystems) {
     this(fileSystems, ApplicationManager.getApplication().getMessageBus());
   }
 
-  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus) {
-    myPhysicalFileSystems = fileSystems;
+  public VirtualFileManagerImpl(@NotNull List<VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
+    List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(fileSystems);
+
+    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
+        if (((VirtualFileSystemBean)bean).physical) {
+          physicalFileSystems.add(bean.getInstance());
+        }
+      }
+    }
+
+    myPhysicalFileSystems = physicalFileSystems.toArray(new VirtualFileSystem[0]);
 
     for (VirtualFileSystem fileSystem : fileSystems) {
       myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
@@ -74,10 +87,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   @Nullable
   public VirtualFileSystem getFileSystem(@Nullable String protocol) {
-    if (protocol == null) return null;
+    if (protocol == null) {
+      return null;
+    }
+
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
     int size = systems.size();
-    if (size == 0) return null;
+    if (size == 0) {
+      return null;
+    }
+
     if (size > 1) {
       LOG.error(protocol + ": " + systems);
     }

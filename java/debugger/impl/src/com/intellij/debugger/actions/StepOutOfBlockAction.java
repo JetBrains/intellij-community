@@ -47,10 +47,7 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
         PsiElement block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class, PsiLambdaExpression.class);
         if (block instanceof PsiCodeBlock) {
           PsiElement parent = block.getParent();
-          if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression) {
-            xSession.stepOut();
-          }
-          else {
+          if (!(parent instanceof PsiMethod) && !(parent instanceof PsiLambdaExpression)) {
             TextRange textRange = block.getTextRange();
             Document document = FileDocumentManager.getInstance().getDocument(position.getFile().getVirtualFile());
             if (document != null) {
@@ -58,14 +55,13 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
               int endLine = document.getLineNumber(textRange.getEndOffset());
               session.sessionResumed();
               session.stepOver(false, new BlockFilter(startLine, endLine), StepRequest.STEP_LINE);
+              return;
             }
           }
         }
-        else {
-          xSession.stepOut();
-        }
       }
     }
+    xSession.stepOut();
   }
 
   @TestOnly

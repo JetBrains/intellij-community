@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -123,6 +123,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     if (!sessionDialog.showAndGet()) return;
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      //noinspection unchecked
       commitSession.execute((Collection<Change>)changes, commitMessage);
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }

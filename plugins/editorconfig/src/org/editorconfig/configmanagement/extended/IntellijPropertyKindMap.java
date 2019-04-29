@@ -35,9 +35,6 @@ public class IntellijPropertyKindMap {
     PROPERTY_KIND_MAP.put("wrap_on_typing", GENERIC);
     PROPERTY_KIND_MAP.put("smart_tabs", GENERIC);
     PROPERTY_KIND_MAP.put("continuation_indent_size", GENERIC);
-
-    PROPERTY_KIND_MAP.put("imports_layout", UNSUPPORTED);
-    PROPERTY_KIND_MAP.put("packages_to_use_import_on_demand", UNSUPPORTED);
   }
 
   @NotNull

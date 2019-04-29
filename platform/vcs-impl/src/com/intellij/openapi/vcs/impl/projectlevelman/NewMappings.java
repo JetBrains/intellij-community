@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,10 +32,9 @@ import static java.util.Collections.singletonList;
 import static java.util.function.Function.identity;
 
 public class NewMappings {
-
   public static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
 
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.NewMappings");
+  private final static Logger LOG = Logger.getInstance(NewMappings.class);
   private final Object myLock;
 
   // vcs to mappings
@@ -59,7 +58,7 @@ public class NewMappings {
     myFileStatusManager = fileStatusManager;
     myLock = new Object();
     myVcsToPaths = MultiMap.createOrderedSet();
-    myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
+    myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
     myActiveVcses = new AbstractVcs[0];
 

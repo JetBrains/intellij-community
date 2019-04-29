@@ -277,7 +277,8 @@ public class JavaCompletionUtil {
 
     List<PsiType> runtimeQualifiers = getQualifierCastTypes(javaReference, parameters);
     if (!runtimeQualifiers.isEmpty()) {
-      PsiType composite = PsiIntersectionType.createIntersection(JBIterable.of(plainQualifier).append(runtimeQualifiers).toList());
+      PsiType[] conjuncts = JBIterable.of(plainQualifier).append(runtimeQualifiers).toArray(PsiType.EMPTY_ARRAY);
+      PsiType composite = PsiIntersectionType.createIntersection(false, conjuncts);
       PsiElement ctx = createContextWithXxxVariable(element, composite);
       javaReference = createReference("xxx.xxx", ctx);
       processor.setQualifierType(composite);
@@ -835,7 +836,7 @@ public class JavaCompletionUtil {
     if (afterTailOffset > tailOffset &&
         tailOffset > caretOffset &&
         TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caretOffset) > 0) {
-      TabOutScopesTracker.getInstance().registerEmptyScope(editor, caretOffset, afterTailOffset - caretOffset);
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, caretOffset, afterTailOffset);
     }
     return true;
   }

@@ -42,7 +42,11 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     val parameterList = method.parameterList
     val parameter = findParameter(parameterList, expression, map) ?: return null
 
-    val delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY)
+    parameter.getUserData(DELEGATES_TO_KEY)?.let {
+      return it
+    }
+
+    val delegateFqnData = parameter.getUserData(DELEGATES_TO_TYPE_KEY)
     val strategyData = parameter.getUserData(DELEGATES_TO_STRATEGY_KEY)
     if (delegateFqnData != null) {
       return DelegatesToInfo(

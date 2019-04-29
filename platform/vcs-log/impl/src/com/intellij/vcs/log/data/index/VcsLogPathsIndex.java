@@ -18,9 +18,9 @@ import com.intellij.util.indexing.impl.ForwardIndex;
 import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogIndexService;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TByteObjectHashMap;
@@ -113,16 +113,16 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @Nullable
-  public Couple<FilePath> iterateRenames(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept)
-    throws IOException {
+  public Couple<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) throws IOException {
     Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
     if (renames == null) return null;
+    int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path));
     for (Couple<Integer> rename : renames) {
-      FilePath path1 = getPath(rename.first);
-      FilePath path2 = getPath(rename.second);
-      Couple<FilePath> paths = Couple.of(path1, path2);
-      if (accept.fun(paths)) {
-        return paths;
+      if ((isChildPath && rename.second == pathId) ||
+          (!isChildPath && rename.first == pathId)) {
+        FilePath path1 = getPath(rename.first);
+        FilePath path2 = getPath(rename.second);
+        return Couple.of(path1, path2);
       }
     }
     return null;

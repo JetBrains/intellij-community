@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 public class RefJavaManagerImpl extends RefJavaManager {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
     Conditions.or(Conditions.instanceOf(PsiFile.class, PsiJavaModule.class),
-                  Conditions.and(Conditions.notInstanceOf(PsiTypeParameter.class), psi -> {
+                  Conditions.and(Conditions.and(Conditions.notInstanceOf(PsiTypeParameter.class), Conditions.instanceOf(PsiNamedElement.class)), psi -> {
                     UDeclaration decl = UastContextKt.toUElement(psi, UDeclaration.class);
                     return decl != null && (decl instanceof UField || !(decl instanceof UVariable)) && (!(decl instanceof UClassInitializer));
                   }));

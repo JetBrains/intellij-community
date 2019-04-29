@@ -219,6 +219,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (category == null) {
       return;
     }
+    if (!myLanguageHosts.supportsPropertySyntax(property)) {
+      myHolder.createErrorAnnotation(property, "Property escape sequences are not supported in this regex dialect"); 
+      return;
+    }
     String propertyName = category.getText();
     if(!myLanguageHosts.isValidCategory(category.getPsi(), propertyName)) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");

@@ -148,12 +148,16 @@ public class StartupManagerImpl extends StartupManagerEx {
     // we measure it as a sequential activity to put on a timeline and make clear what's going on the end (avoid last "unknown" phase).
     Activity activity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES);
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
+    DumbService dumbService = DumbService.getInstance(myProject);
     for (StartupActivity extension : StartupActivity.POST_STARTUP_ACTIVITY.getExtensionList()) {
       if (DumbService.isDumbAware(extension)) {
         logActivityDuration(uiFreezeWarned, extension);
       }
       else {
-        queueSmartModeActivity(() -> logActivityDuration(uiFreezeWarned, extension));
+        dumbService.runWhenSmart(() -> {
+          ProgressManager.checkCanceled();
+          logActivityDuration(uiFreezeWarned, extension);
+        });
       }
     }
     activity.end();
@@ -162,7 +166,20 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private void logActivityDuration(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
     long startTime = StartUpMeasurer.getCurrentTime();
-    extension.runActivity(myProject);
+
+    try {
+      extension.runActivity(myProject);
+    }
+    catch (ServiceNotReadyException e) {
+      LOG.error(new Exception(e));
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+
     long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass());
     if (duration > 100) {
       Application app = ApplicationManager.getApplication();
@@ -369,7 +386,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     activity.end();
   }
 
-  public static void runActivity(Runnable runnable) {
+  public static void runActivity(@NotNull Runnable runnable) {
     ProgressManager.checkCanceled();
     try {
       runnable.run();

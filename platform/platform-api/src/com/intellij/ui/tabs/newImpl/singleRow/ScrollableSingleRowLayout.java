@@ -98,6 +98,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     if (myScrollSelectionInViewPending || myLastSingRowLayout == null || !data.layoutSize.equals(myLastSingRowLayout.layoutSize)) {
       myScrollSelectionInViewPending = false;
       doScrollSelectionInView(data);
+      clampScrollOffsetToBounds(data);
     }
   }
 

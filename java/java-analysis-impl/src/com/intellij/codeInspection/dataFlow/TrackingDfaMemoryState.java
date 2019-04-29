@@ -241,14 +241,14 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     @Nullable
     MemoryStateChange findExpressionPush(@Nullable PsiExpression expression) {
       if (expression == null) return null;
-      return findChange(change -> change.getExpression() == expression);
+      return findChange(change -> change.getExpression() == expression, false);
     }
 
-    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate) {
+    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate, boolean startFromSelf) {
       return findChange(change -> {
         Change varChange = change.myChanges.get(value);
         return varChange != null && varChange.myAddedRelations.stream().anyMatch(relationPredicate);
-      });
+      }, startFromSelf);
     }
     
     @NotNull
@@ -272,8 +272,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     }
 
     @Nullable
-    private MemoryStateChange findChange(@NotNull Predicate<MemoryStateChange> predicate) {
-      for (MemoryStateChange change = myPrevious; change != null; change = change.myPrevious) {
+    private MemoryStateChange findChange(@NotNull Predicate<MemoryStateChange> predicate, boolean startFromSelf) {
+      for (MemoryStateChange change = startFromSelf ? this : myPrevious; change != null; change = change.myPrevious) {
         if (predicate.test(change)) {
           return change;
         }

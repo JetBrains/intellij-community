@@ -6,9 +6,9 @@ import com.intellij.ide.SearchTopHitProvider;
 public class SearchEverywhereCommandInfo {
   private final String command;
   private final String definition;
-  private final SearchEverywhereContributor<?, ?> contributor;
+  private final SearchEverywhereContributor<?> contributor;
 
-  public SearchEverywhereCommandInfo(String command, String definition, SearchEverywhereContributor<?, ?> contributor) {
+  public SearchEverywhereCommandInfo(String command, String definition, SearchEverywhereContributor<?> contributor) {
     this.command = command;
     this.definition = definition;
     this.contributor = contributor;
@@ -22,7 +22,7 @@ public class SearchEverywhereCommandInfo {
     return definition;
   }
 
-  public SearchEverywhereContributor<?, ?> getContributor() {
+  public SearchEverywhereContributor<?> getContributor() {
     return contributor;
   }
 

@@ -224,7 +224,7 @@ public class PerformanceWatcher implements Disposable {
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
       if (dir.exists()) {
         //noinspection ResultOfMethodCallIgnored
-        dir.renameTo(new File(myLogDir, dir.getName() + "-" + unresponsiveDuration + "sec" + getFreezePlaceSuffix()));
+        dir.renameTo(new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec"));
       }
       myPublisher.uiFreezeFinished(unresponsiveDuration);
       myFreezeStart = 0;

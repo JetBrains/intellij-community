@@ -15,27 +15,39 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class MavenProgressIndicator {
   private ProgressIndicator myIndicator;
   private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
+  private final Supplier<MavenSyncConsole> mySyncSupplier;
 
-  public MavenProgressIndicator() {
-    this(new MyEmptyProgressIndicator());
+  public MavenProgressIndicator(Supplier<MavenSyncConsole> syncSupplier) {
+    this(new MyEmptyProgressIndicator(), syncSupplier);
   }
 
-  public MavenProgressIndicator(ProgressIndicator i) {
+  public MavenProgressIndicator(ProgressIndicator i,
+                                Supplier<MavenSyncConsole> syncSupplier) {
+
     myIndicator = i;
+    mySyncSupplier = syncSupplier;
   }
 
   public synchronized void setIndicator(ProgressIndicator i) {
+    //setIndicatorStatus(i);
     i.setText(myIndicator.getText());
     i.setText2(myIndicator.getText2());
     if (!i.isIndeterminate()) {
@@ -51,10 +63,17 @@ public class MavenProgressIndicator {
 
   public synchronized void setText(String text) {
     myIndicator.setText(text);
+    if (mySyncSupplier != null) {
+      mySyncSupplier.get().addText(text);
+    }
+
   }
 
   public synchronized void setText2(String text) {
     myIndicator.setText2(text);
+    if (mySyncSupplier != null) {
+      mySyncSupplier.get().addText(text);
+    }
   }
 
   public synchronized void setFraction(double fraction) {
@@ -100,6 +119,23 @@ public class MavenProgressIndicator {
 
   public void checkCanceledNative() {
     if (isCanceled()) throw new ProcessCanceledException();
+  }
+
+  public void startTask(String text) {
+    if (mySyncSupplier != null) {
+      mySyncSupplier.get().startTask(text);
+    }
+  }
+
+  public void completeTask(String text, String message) {
+    if (mySyncSupplier != null) {
+      if (message == null) {
+        mySyncSupplier.get().completeTask(text);
+      }
+      else {
+        mySyncSupplier.get().completeTask(text, new RuntimeException(message));
+      }
+    }
   }
 
 

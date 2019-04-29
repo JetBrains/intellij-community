@@ -166,6 +166,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       if (!ExpressionUtils.isNullLiteral(qualifier) && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
         fixes.add(new SurroundWithRequireNonNullFix(qualifier));
       }
+      
+      if (onTheFly && !ExpressionUtils.isNullLiteral(qualifier)) {
+        ContainerUtil.addIfNotNull(fixes, createExplainFix(qualifier, new TrackingRunner.NullableDfaProblemType()));
+      }
 
       ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));
     }

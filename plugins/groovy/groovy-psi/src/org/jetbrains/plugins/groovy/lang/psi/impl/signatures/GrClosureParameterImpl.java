@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,21 +18,27 @@ class GrClosureParameterImpl implements GrClosureParameter {
   private final PsiParameter myParameter;
   private final PsiSubstitutor mySubstitutor;
   private final boolean myEraseType;
+  private final PsiElement myContext;
 
-  GrClosureParameterImpl(@NotNull PsiParameter parameter) {
-    this(parameter, PsiSubstitutor.EMPTY, false);
+  GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiElement context) {
+    this(parameter, PsiSubstitutor.EMPTY, false, context);
   }
 
-  GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor, boolean eraseType) {
+  GrClosureParameterImpl(@NotNull PsiParameter parameter,
+                         @NotNull PsiSubstitutor substitutor,
+                         boolean eraseType,
+                         @NotNull PsiElement context) {
     myParameter = parameter;
     mySubstitutor = substitutor;
     myEraseType = eraseType;
+    myContext = context;
   }
 
   @Nullable
   @Override
   public PsiType getType() {
-    PsiType type = mySubstitutor.substitute(myParameter.getType());
+    PsiType correctType = PsiClassImplUtil.correctType(myParameter.getType(), myContext.getResolveScope());
+    PsiType type = mySubstitutor.substitute(correctType);
     return myEraseType ? TypeConversionUtil.erasure(type, mySubstitutor) : type;
   }
 
@@ -47,7 +55,7 @@ class GrClosureParameterImpl implements GrClosureParameter {
 
   @Override
   public boolean isValid() {
-    return myParameter.isValid();
+    return myContext.isValid() && myParameter.isValid();
   }
 
   @Nullable

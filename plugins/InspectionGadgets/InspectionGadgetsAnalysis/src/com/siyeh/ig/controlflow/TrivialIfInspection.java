@@ -146,6 +146,12 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (Objects.requireNonNull(nextStatement.getReturnValue()).textMatches(replacementText)) {
       ct.deleteAndRestoreComments(statement);
     } else {
+      if (nextStatement.getParent() == statement.getParent()) {
+        PsiElement sibling = nextStatement.getPrevSibling();
+        if (sibling instanceof PsiWhiteSpace) {
+          sibling.delete();
+        }
+      }
       ct.replace(Objects.requireNonNull(returnStatement.getReturnValue()), replacementText);
       ct.replaceAndRestoreComments(statement, returnStatement);
       if (!ControlFlowUtils.isReachable(nextStatement)) {

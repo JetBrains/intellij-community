@@ -54,7 +54,13 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     myName = method.getName();
-    myCanonicalText = returnType.getCanonicalText();
+    if (fixWholeHierarchy) {
+      PsiType type = getHierarchyAdjustedReturnType(method, returnType);
+      myCanonicalText = (type != null ? type : returnType).getCanonicalText();
+    }
+    else {
+      myCanonicalText = returnType.getCanonicalText();
+    }
   }
 
 
@@ -192,27 +198,34 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return editor;
   }
 
+  private static PsiType getHierarchyAdjustedReturnType(final PsiMethod method, @NotNull PsiType returnType) {
+    for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+      PsiType superMethodReturnType = superMethod.getReturnType();
+      if (superMethodReturnType != null && superMethodReturnType.isAssignableFrom(returnType)) {
+        if (superMethodReturnType instanceof PsiClassType && returnType instanceof PsiPrimitiveType) {
+          return ((PsiPrimitiveType)returnType).getBoxedType(method);
+        }
+        return returnType;
+      }
+    }
+    return null;
+  }
+  
   @NotNull
-  private PsiMethod[] getChangeRoots(final PsiMethod method, @NotNull PsiType returnType) {
-    if (!myFixWholeHierarchy) return new PsiMethod[]{method};
-
-    final PsiMethod[] methods = method.findDeepestSuperMethods();
-
-    if (methods.length > 0) {
-      for (PsiMethod psiMethod : methods) {
-        if (returnType.equals(psiMethod.getReturnType())) {
-          return new PsiMethod[] {method};
+  private List<PsiMethod> changeReturnType(final PsiMethod method, @NotNull PsiType returnType) {
+    PsiMethod[] methods = new PsiMethod[] {method};
+    if (myFixWholeHierarchy) {
+      PsiType type = getHierarchyAdjustedReturnType(method, returnType);
+      if (type != null) {
+        returnType = type;
+      }
+      else {
+        final PsiMethod[] superMethods = method.findDeepestSuperMethods();
+        if (superMethods.length > 0) {
+          methods = superMethods;
         }
       }
-      return methods;
     }
-    // no - only base
-    return new PsiMethod[] {method};
-  }
-
-  @NotNull
-  private List<PsiMethod> changeReturnType(final PsiMethod method, @NotNull final PsiType returnType) {
-    final PsiMethod[] methods = getChangeRoots(method, returnType);
 
     final MethodSignatureChangeVisitor methodSignatureChangeVisitor = new MethodSignatureChangeVisitor();
     for (PsiMethod targetMethod : methods) {

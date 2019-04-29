@@ -1,6 +1,7 @@
 package com.intellij.configurationScript
 
 import com.google.gson.Gson
+import com.intellij.configurationScript.schemaGenerators.rcTypeIdToPropertyName
 import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.testFramework.ProjectRule
@@ -20,9 +21,19 @@ class ConfigurationFileTest {
   }
 
   @Test
+  fun `file name`() {
+    assertThat(isConfigurationFile("foo")).isFalse()
+    assertThat(isConfigurationFile("foo.yaml")).isFalse()
+    assertThat(isConfigurationFile("foo.yml")).isFalse()
+    assertThat(isConfigurationFile("intellij.yml")).isTrue()
+    assertThat(isConfigurationFile("intellij.yaml")).isTrue()
+    assertThat(isConfigurationFile("intellij.json")).isTrue()
+  }
+
+  @Test
   fun schema() {
     // check that parseable
-    val schema = generateConfigurationSchema()
+    val schema = doGenerateConfigurationSchema(emptyList())
     val jsonReader = Gson().fromJson(CharSequenceReader(schema), Any::class.java)
     assertThat(jsonReader).isNotNull
   }

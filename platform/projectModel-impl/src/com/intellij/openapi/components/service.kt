@@ -4,6 +4,7 @@ package com.intellij.openapi.components
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
+import com.intellij.project.ProjectStoreOwner
 
 inline fun <reified T : Any> service(): T = ServiceManager.getService(T::class.java)
 
@@ -15,10 +16,16 @@ inline fun <reified T : Any> Project.service(): T = ServiceManager.getService(th
 
 val ComponentManager.stateStore: IComponentStore
   get() {
-    val key: Any = if (this is Project) IComponentStore::class.java else IComponentStore::class.java.name
-    return picoContainer.getComponentInstance(key) as IComponentStore
+    return when {
+      this is ProjectStoreOwner -> (this as ProjectStoreOwner).getComponentStore()
+      else -> {
+        // module or application service
+        picoContainer.getComponentInstance(IComponentStore::class.java.name) as IComponentStore
+      }
+    }
   }
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> =
-  (this as ComponentManagerImpl).getComponentInstancesOfType(baseClass)
+fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> {
+  return (this as ComponentManagerImpl).getComponentInstancesOfType(baseClass)
+}

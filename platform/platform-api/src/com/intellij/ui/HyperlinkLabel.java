@@ -24,6 +24,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -106,7 +107,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   protected void processComponentKeyEvent(KeyEvent event) {
     if (event.getModifiers() == 0 && event.getKeyCode() == KeyEvent.VK_SPACE) {
       event.consume();
-      fireHyperlinkEvent();
+      fireHyperlinkEvent(event);
     }
   }
 
@@ -121,7 +122,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       myMousePressed = false;
       repaint();
     } else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
-      fireHyperlinkEvent();
+      fireHyperlinkEvent(e);
       myMousePressed = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
@@ -195,15 +196,15 @@ public class HyperlinkLabel extends HighlightableComponent {
     return myHighlightedText.getText();
   }
 
-  protected void fireHyperlinkEvent() {
-    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null);
+  protected void fireHyperlinkEvent(@Nullable InputEvent inputEvent) {
+    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null, null, inputEvent);
     for (HyperlinkListener listener : myListeners) {
       listener.hyperlinkUpdate(e);
     }
   }
 
   public void doClick() {
-    fireHyperlinkEvent();
+    fireHyperlinkEvent(null);
   }
 
   public void setHtmlText(String text) {

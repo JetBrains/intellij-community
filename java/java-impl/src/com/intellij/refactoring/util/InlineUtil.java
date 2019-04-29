@@ -327,9 +327,15 @@ public class InlineUtil {
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    PsiElement callParent = methodCall.getParent();
+    PsiElement callParent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
       return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)callParent)) {
+      PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
+      if (negationParent instanceof PsiReturnStatement || negationParent instanceof PsiLambdaExpression) {
+        return TailCallType.Invert;
+      }
     }
     if (callParent instanceof PsiExpressionStatement) {
       PsiStatement curElement = (PsiStatement)callParent;
@@ -555,7 +561,17 @@ public class InlineUtil {
     Continue((methodCopy, callSite, returnType) -> {
       extractReturnValues(methodCopy, true);
       return null;
-    }), 
+    }),
+    Invert((methodCopy, callSite, returnType) -> {
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements(methodCopy)) {
+        PsiExpression value = statement.getReturnValue();
+        if (value != null) {
+          CommentTracker ct = new CommentTracker();
+          ct.replaceAndRestoreComments(value, BoolUtils.getNegatedExpressionText(value, ct));
+        }
+      }
+      return null;
+    }),
     Return((methodCopy, callSite, returnType) -> null);
     
     @Nullable

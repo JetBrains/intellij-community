@@ -2,8 +2,6 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.editorconfig.Utils;
 import org.editorconfig.language.codeinsight.inspections.EditorConfigValueCorrectnessInspection;

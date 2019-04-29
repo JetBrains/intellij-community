@@ -24,6 +24,7 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,9 +42,8 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
   private final PsiElement myScope;
   private final ElementFilter myFilter;
   private boolean myMembersFlag;
-  private boolean myQualified;
+  private final boolean myQualified;
   private PsiType myQualifierType;
-  private PsiClass myQualifierClass;
   private final Condition<? super String> myMatcher;
   private final Options myOptions;
   private final boolean myAllowStaticWithInstanceQualifier;
@@ -61,33 +61,34 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
     }
     myScope = scope;
 
+    PsiClass qualifierClass = null;
     PsiElement elementParent = element.getContext();
+    myQualified = elementParent instanceof PsiReferenceExpression && ((PsiReferenceExpression)elementParent).isQualified();
     if (elementParent instanceof PsiReferenceExpression) {
       PsiExpression qualifier = ((PsiReferenceExpression)elementParent).getQualifierExpression();
       if (qualifier instanceof PsiSuperExpression) {
         final PsiJavaCodeReferenceElement qSuper = ((PsiSuperExpression)qualifier).getQualifier();
         if (qSuper == null) {
-          myQualifierClass = JavaResolveUtil.getContextClass(myElement);
+          qualifierClass = JavaResolveUtil.getContextClass(myElement);
         } else {
           final PsiElement target = qSuper.resolve();
-          myQualifierClass = target instanceof PsiClass ? (PsiClass)target : null;
+          qualifierClass = target instanceof PsiClass ? (PsiClass)target : null;
         }
       }
       else if (qualifier != null) {
-        myQualified = true;
-        setQualifierType(qualifier.getType());
+        myQualifierType = qualifier.getType();
         if (myQualifierType == null && qualifier instanceof PsiJavaCodeReferenceElement) {
           final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
           if (target instanceof PsiClass) {
-            myQualifierClass = (PsiClass)target;
+            qualifierClass = (PsiClass)target;
           }
         }
       } else {
-        myQualifierClass = JavaResolveUtil.getContextClass(myElement);
+        qualifierClass = JavaResolveUtil.getContextClass(myElement);
       }
     }
-    if (myQualifierClass != null && myQualifierType == null) {
-      myQualifierType = JavaPsiFacade.getElementFactory(element.getProject()).createType(myQualifierClass);
+    if (qualifierClass != null) {
+      myQualifierType = JavaPsiFacade.getElementFactory(element.getProject()).createType(qualifierClass);
     }
 
     myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance ||
@@ -220,9 +221,6 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
 
   public void setQualifierType(@Nullable PsiType qualifierType) {
     myQualifierType = qualifierType;
-    myQualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType instanceof PsiIntersectionType
-                                                           ? ((PsiIntersectionType)qualifierType).getRepresentative()
-                                                           : qualifierType);
   }
 
   @Nullable
@@ -243,9 +241,16 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
 
   private boolean isAccessibleForResolve(@Nullable PsiElement element) {
     if (element instanceof PsiMember) {
-      PsiClass accessObjectClass = myQualified ? myQualifierClass : null;
+      Set<PsiClass> accessObjectClasses =
+        !myQualified ? Collections.singleton(null) :
+        myQualifierType instanceof PsiIntersectionType ? ContainerUtil.map2Set(((PsiIntersectionType)myQualifierType).getConjuncts(),
+                                                                               PsiUtil::resolveClassInClassTypeOnly) :
+        Collections.singleton(PsiUtil.resolveClassInClassTypeOnly(myQualifierType));
       PsiMember member = (PsiMember)element;
-      return getResolveHelper().isAccessible(member, member.getModifierList(), myElement, accessObjectClass, myDeclarationHolder);
+      PsiResolveHelper helper = getResolveHelper();
+      PsiModifierList modifierList = member.getModifierList();
+      return ContainerUtil.exists(accessObjectClasses, aoc ->
+        helper.isAccessible(member, modifierList, myElement, aoc, myDeclarationHolder));
     }
     if (element instanceof PsiPackage) {
       return getResolveHelper().isAccessible((PsiPackage)element, myElement);

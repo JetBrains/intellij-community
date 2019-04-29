@@ -329,7 +329,7 @@ public class ColoredOutputTypeRegistry {
      */
     private static int computeAwtFont(@NotNull AnsiTerminalEmulator terminalEmulator) {
       int result = 0;
-      if (terminalEmulator.getBoldness() == AnsiTerminalEmulator.Boldness.BOLD) {
+      if (terminalEmulator.getWeight() == AnsiTerminalEmulator.Weight.BOLD) {
         result = Font.BOLD;
       }
       if (terminalEmulator.isItalic()) {

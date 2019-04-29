@@ -95,7 +95,7 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
-  public abstract void processEvents(@NotNull List<VFileEvent> events);
+  public abstract void processEvents(@NotNull List<? extends VFileEvent> events);
 
   @NotNull
   public static NewVirtualFileSystem replaceWithNativeFS(@NotNull final NewVirtualFileSystem fs) {

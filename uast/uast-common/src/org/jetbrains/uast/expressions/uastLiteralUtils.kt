@@ -138,13 +138,18 @@ val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
 val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
   get() = this.sourcePsi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
 
-// Workaround until everything will migrate to `UInjectionHost` from `ULiteralExpression`, see KT-27283
+/**
+ * @return if given [uElement] is an [ULiteralExpression] but not a [UInjectionHost]
+ * (which could happen because of "KotlinULiteralExpression and PsiLanguageInjectionHost mismatch", see KT-27283 )
+ * then tries to convert it to [UInjectionHost] and return it,
+ * otherwise return [uElement] itself
+ *
+ * NOTE: when `kotlin.uast.force.uinjectionhost` flag is `true` this method is useless because there is no mismatch anymore
+ */
 @ApiStatus.Experimental
-fun unwrapPolyadic(uElement: UExpression): UExpression {
-  if (uElement is ULiteralExpression) {
-    val parent = uElement.uastParent
-    if (parent is UPolyadicExpression)
-      return parent
+fun wrapULiteral(uElement: UExpression): UExpression {
+  if (uElement is ULiteralExpression && uElement !is UInjectionHost) {
+    uElement.sourceInjectionHost.toUElementOfType<UInjectionHost>()?.let { return it }
   }
   return uElement
 }

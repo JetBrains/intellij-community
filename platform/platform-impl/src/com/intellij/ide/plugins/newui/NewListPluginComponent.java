@@ -31,7 +31,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   private final MyPluginModel myPluginModel;
   private final boolean myMarketplace;
   private boolean myUninstalled;
-  private IdeaPluginDescriptor myUpdateDescriptor;
+  public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
@@ -94,7 +94,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       else {
         myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(false));
 
-        myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, true));
+        myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
         myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
         ColorButton.setWidth72(myInstallButton);
       }
@@ -155,15 +155,10 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
     }
 
-    String vendor = myPlugin.isBundled() ? null : myPlugin.getVendor();
+    String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
     if (!StringUtil.isEmptyOrSpaces(vendor)) {
       myVendor = GridCellPluginComponent.createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
     }
-  }
-
-  @Nullable
-  public IdeaPluginDescriptor getUpdateDescriptor() {
-    return myUpdateDescriptor;
   }
 
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
@@ -187,7 +182,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
       if (myUpdateButton == null) {
         myNameAndButtons.addButtonAsFirstComponent(myUpdateButton = new UpdateButton());
-        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
       }
       else {
         myUpdateButton.setVisible(true);
@@ -254,9 +249,8 @@ public class NewListPluginComponent extends CellPluginComponent {
 
       Ref<String> enableAction = new Ref<>();
       String message = PluginManagerConfigurableNew.getErrorMessage(myPluginModel, myPlugin, enableAction);
-      myErrorComponent = ErrorComponent
-        .show(myCenterPanel, true, VerticalLayout.FILL_HORIZONTAL, myErrorComponent, message, enableAction.get(),
-              enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
+      myErrorComponent = ErrorComponent.show(myCenterPanel, VerticalLayout.FILL_HORIZONTAL, myErrorComponent, message, enableAction.get(),
+                                             enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
 
       if (addListeners) {
         myEventHandler.add(myErrorComponent);
@@ -279,7 +273,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   }
 
   private void showProgress(boolean repaint) {
-    myIndicator = new OneLineProgressIndicator();
+    myIndicator = new OneLineProgressIndicator(false);
     myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
     myNameAndButtons.setProgressComponent(this, myIndicator.createBaselineWrapper());
 
@@ -368,10 +362,6 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   @Override
   public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends CellPluginComponent> selection) {
-    if (myMarketplace) {
-      return;
-    }
-
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -391,11 +381,27 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
 
     int size = selection.size();
+
+    if (myMarketplace) {
+      JButton[] installButtons = new JButton[size];
+
+      for (int i = 0; i < size; i++) {
+        JButton button = ((NewListPluginComponent)selection.get(i)).myInstallButton;
+        if (button == null || !button.isVisible() || !button.isEnabled()) {
+          return;
+        }
+        installButtons[i] = button;
+      }
+
+      group.add(new ListPluginComponent.ButtonAnAction(installButtons));
+      return;
+    }
+
     JButton[] updateButtons = new JButton[size];
 
     for (int i = 0; i < size; i++) {
       JButton button = ((NewListPluginComponent)selection.get(i)).myUpdateButton;
-      if (button == null) {
+      if (button == null || !button.isVisible()) {
         updateButtons = null;
         break;
       }
@@ -439,10 +445,6 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   @Override
   public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
-    if (myMarketplace) {
-      return;
-    }
-
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -457,9 +459,29 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
     }
 
+    if (myMarketplace) {
+      if (keyCode == KeyEvent.VK_ENTER) {
+        if (restart) {
+          ((NewListPluginComponent)selection.get(0)).myRestartButton.doClick();
+        }
+
+        for (CellPluginComponent component : selection) {
+          JButton button = ((NewListPluginComponent)component).myInstallButton;
+          if (button == null || !button.isVisible() || !button.isEnabled()) {
+            return;
+          }
+        }
+        for (CellPluginComponent component : selection) {
+          ((NewListPluginComponent)component).myInstallButton.doClick();
+        }
+      }
+      return;
+    }
+
     boolean update = true;
     for (CellPluginComponent component : selection) {
-      if (((NewListPluginComponent)component).myUpdateButton == null) {
+      JButton button = ((NewListPluginComponent)component).myUpdateButton;
+      if (button == null || !button.isVisible()) {
         update = false;
         break;
       }

@@ -86,9 +86,11 @@ internal class JsonObjectBuilder(private val builder: StringBuilder, private var
   }
 
   fun rawBuilder(key: CharSequence, child: JsonObjectBuilder) {
+    indentLevel++
     appendNameAndValue(key, '{', '}') {
       builder.append(child.builder)
     }
+    indentLevel--
   }
 
   fun definitionReference(prefix: String, pointer: CharSequence, wrappingKey: String? = null) {

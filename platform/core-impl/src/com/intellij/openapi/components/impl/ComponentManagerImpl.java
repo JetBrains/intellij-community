@@ -265,13 +265,19 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+    return getComponentInstancesOfType(baseClass, false);
+  }
+
+  @NotNull
+  public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     List<T> result = null;
     // we must use instances only from our adapter (could be service or extension point or something else)
     for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter &&
           ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
+        ComponentConfigComponentAdapter adapter = (ComponentConfigComponentAdapter)componentAdapter;
         //noinspection unchecked
-        T instance = (T)((ComponentConfigComponentAdapter)componentAdapter).myInitializedComponentInstance;
+        T instance = (T)(createIfNotYet ? adapter.getComponentInstance(myPicoContainer) : (T)adapter.myInitializedComponentInstance);
         if (instance != null) {
           if (result == null) {
             result = new ArrayList<>();

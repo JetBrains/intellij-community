@@ -6,8 +6,6 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.ConstructorInjectionAdapter;
-import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -819,27 +817,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     for (Element extensionElement : extensionElements) {
       adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer));
-    }
-  }
-
-  @NotNull
-  protected static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
-                                                             @NotNull Element extensionElement,
-                                                             boolean isNeedToDeserialize,
-                                                             @NotNull PluginDescriptor pluginDescriptor,
-                                                             boolean isConstructorInjectionSupported,
-                                                             boolean isUsePicoComponentAdapter) {
-    String orderId = extensionElement.getAttributeValue("id");
-    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
-    Element effectiveElement = isNeedToDeserialize ? extensionElement : null;
-    if (isUsePicoComponentAdapter) {
-      return new ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
-    }
-    else if (isConstructorInjectionSupported) {
-      return new SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
-    }
-    else {
-      return new XmlExtensionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
     }
   }
 
