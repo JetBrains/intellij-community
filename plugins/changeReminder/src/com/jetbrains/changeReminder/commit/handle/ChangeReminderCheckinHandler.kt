@@ -4,9 +4,10 @@ package com.jetbrains.changeReminder.commit.handle
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -37,6 +38,7 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
                                    private val dataGetter: IndexDataGetter) : CheckinHandler() {
   companion object {
     private val LOG = Logger.getInstance(ChangeReminderCheckinHandler::class.java)
+    private const val PROGRESS_TITLE = "Calculating whether something should be added to this commit"
   }
 
   private val project: Project = panel.project
@@ -102,16 +104,15 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
       }
 
       val commitOptions = CommitOptions(panel.author(), panel.isAmend())
+      val task =
+        object : Task.WithResult<List<PredictedFile>, Exception>(project, PROGRESS_TITLE, true) {
+          override fun compute(indicator: ProgressIndicator): List<PredictedFile> = getPredictedFiles(rootFiles, commitOptions)
+        }.apply {
+          cancelText = "Skip"
+        }
+
       val (executionTime, predictedFiles) = measureSupplierTimeMillis {
-        ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(
-            ThrowableComputable<List<PredictedFile>, Exception> {
-              getPredictedFiles(rootFiles, commitOptions)
-            },
-            "Calculating whether something should be added to this commit",
-            true,
-            project
-          )
+        ProgressManager.getInstance().run(task)
       }
       logEvent(project, ChangeReminderEvent.PREDICTION_CALCULATED, ChangeReminderData.EXECUTION_TIME, executionTime)
 
@@ -138,7 +139,7 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
       }
     }
     catch (e: ProcessCanceledException) {
-      throw e
+      return ReturnResult.COMMIT
     }
     catch (e: Exception) {
       LOG.error("Unexpected problem with ChangeReminder prediction", e)

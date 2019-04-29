@@ -24,7 +24,7 @@ public class Foundation {
 
   static {
     assert JnaLoader.isLoaded() : "JNA library is not available";
-    myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    myFoundationLibrary = Native.load("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static void init() { /* fake method to init foundation */ }
@@ -455,9 +455,8 @@ public class Foundation {
     }
   }
 
+  @Structure.FieldOrder({"origin", "size"})
   public static class NSRect extends Structure implements Structure.ByValue {
-    private static final List __FIELDS = Arrays.asList("origin", "size");
-
     public NSPoint origin;
     public NSSize size;
 
@@ -465,16 +464,10 @@ public class Foundation {
       origin = new NSPoint(x, y);
       size = new NSSize(w, h);
     }
-
-    @Override
-    protected List getFieldOrder() {
-      return __FIELDS;
-    }
   }
 
+  @Structure.FieldOrder({"x", "y"})
   public static class NSPoint extends Structure implements Structure.ByValue {
-    private static final List __FIELDS = Arrays.asList("x", "y");
-
     public CGFloat x;
     public CGFloat y;
 
@@ -487,16 +480,10 @@ public class Foundation {
       this.x = new CGFloat(x);
       this.y = new CGFloat(y);
     }
-
-    @Override
-    protected List getFieldOrder() {
-      return __FIELDS;
-    }
   }
 
+  @Structure.FieldOrder({"width", "height"})
   public static class NSSize extends Structure implements Structure.ByValue {
-    private static final List __FIELDS = Arrays.asList("width", "height");
-
     public CGFloat width;
     public CGFloat height;
 
@@ -508,11 +495,6 @@ public class Foundation {
     public NSSize(double width, double height) {
       this.width = new CGFloat(width);
       this.height = new CGFloat(height);
-    }
-
-    @Override
-    protected List getFieldOrder() {
-      return __FIELDS;
     }
   }
 

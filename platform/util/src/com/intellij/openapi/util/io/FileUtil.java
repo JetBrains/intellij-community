@@ -220,7 +220,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
-    return loadTextAndClose(new InputStreamReader(stream));
+    return loadTextAndClose(new InputStreamReader(stream, StandardCharsets.UTF_8));
   }
 
   @NotNull

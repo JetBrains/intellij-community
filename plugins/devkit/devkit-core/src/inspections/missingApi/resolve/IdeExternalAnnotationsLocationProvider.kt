@@ -36,7 +36,7 @@ class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
     groupId == "com.jetbrains" && (artifactId == "ideaIC" || artifactId == "ideaIU")
 
   private fun isKotlinIntelliJDependency(groupId: String, artifactId: String): Boolean =
-    groupId == "kotlin.build.custom.deps" && (artifactId == "intellij" || artifactId == "intellij-core")
+    (groupId == "kotlin.build.custom.deps" || groupId == "kotlin.build") && (artifactId == "intellij" || artifactId == "intellij-core")
 
   private fun getAnnotationsLocations(ideVersion: String): List<AnnotationsLocation> {
     val annotationsVersion = if (ideVersion.endsWith("-SNAPSHOT")) {

@@ -279,6 +279,11 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     }
 
     @Override
+    public boolean requiresCommittedPSI() {
+      return false;
+    }
+
+    @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       return Stream.of(myNames).map(LookupElementBuilder::create).toArray(LookupElement[]::new);
     }

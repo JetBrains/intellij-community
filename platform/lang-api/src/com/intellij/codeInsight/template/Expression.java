@@ -32,4 +32,10 @@ public abstract class Expression {
   public String getAdvertisingText() {
     return null;
   }
+
+  // true if calculateResult or calculateQuickResult require committed PSI for their calculation
+  // false otherwise
+  public boolean requiresCommittedPSI() {
+    return true;
+  }
 }

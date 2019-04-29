@@ -78,7 +78,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
   @NotNull
   private static Color getBackgroundColor(@NotNull EditorColorsScheme colorsScheme, boolean selected) {
-    return selected ? HintUtil.getRecentLocationsSelectionColor() : colorsScheme.getDefaultBackground();
+    return selected ? HintUtil.getRecentLocationsSelectionColor(colorsScheme) : colorsScheme.getDefaultBackground();
   }
 
   @NotNull

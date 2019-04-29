@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.predict
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.jetbrains.changeReminder.prediction.model.PredictionModel
@@ -119,6 +120,7 @@ class PredictionProvider(private val minProb: Double = 0.55) {
     getRelatedFiles(commit, history)
       .asSequence()
       .map { (candidateFile, candidateFileHistory) ->
+        ProgressManager.checkCanceled()
         val fileScore = PredictionModel.makePrediction(collectFileFactors(commit, candidateFile, candidateFileHistory))
         candidateFile to fileScore
       }

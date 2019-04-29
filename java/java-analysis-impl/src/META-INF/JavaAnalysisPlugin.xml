@@ -14,12 +14,6 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory</implementation-class>
-    </component>
-  </project-components>
-
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint"/>
@@ -48,6 +42,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory"/>
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
@@ -239,9 +234,9 @@
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
     <localInspection groupPath="Java" language="JAVA" cleanupTool="true"
-                     enabledByDefault="true" level="WARNING" groupBundle="messages.InspectionsBundle" 
+                     enabledByDefault="true" level="WARNING" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" bundle="messages.InspectionsBundle" shortName="RedundantBackticksAroundRawStringLiteral"
-                     implementationClass="com.intellij.codeInspection.RedundantBackticksAroundRawStringLiteralInspection" key="redundant.backticks.around.raw.string.literal.display.name" 
+                     implementationClass="com.intellij.codeInspection.RedundantBackticksAroundRawStringLiteralInspection" key="redundant.backticks.around.raw.string.literal.display.name"
                      isInternal="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"

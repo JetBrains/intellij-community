@@ -28,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -396,6 +397,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems());
       }
     }
+
+    MavenSyncConsole syncConsole = myProjectsManager.getSyncConsole();
+    assertEquals(0, syncConsole.runningProcesses());
+    assertTrue(syncConsole.isFinished());
+
   }
 
   protected void readProjects(List<VirtualFile> files, String... profiles) {

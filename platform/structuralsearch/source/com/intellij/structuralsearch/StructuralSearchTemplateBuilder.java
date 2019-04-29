@@ -102,6 +102,11 @@ public class StructuralSearchTemplateBuilder {
       return calculateResult(context);
     }
 
+    @Override
+    public boolean requiresCommittedPSI() {
+      return false;
+    }
+
     @Nullable
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {

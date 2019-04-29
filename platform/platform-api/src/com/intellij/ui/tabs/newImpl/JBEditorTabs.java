@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.newImpl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,8 +28,6 @@ import java.util.function.Supplier;
  * @author pegov
  */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
-  public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-
   /**
    * @Deprecated use {@link #myTabPainter}.
    */
@@ -38,16 +37,12 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
-    Registry.get(TABS_ALPHABETICAL_KEY).addListener(new RegistryValueListener.Adapter() {
-
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          resetTabsCache();
-          relayout(true, false);
-        });
-      }
-    }, parent);
+    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(UISettingsListener.TOPIC, (settings) -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        resetTabsCache();
+        relayout(true, false);
+      });
+    });
     setSupportsCompression(true);
   }
 
@@ -87,17 +82,13 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
     if (myAlphabeticalModeChanged) {
       return super.isAlphabeticalMode();
     }
-    return Registry.is(TABS_ALPHABETICAL_KEY);
+    return UISettings.getInstance().getSortTabsAlphabetically();
   }
 
   @Override
   public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
     myAlphabeticalModeChanged = true;
     return super.setAlphabeticalMode(alphabeticalMode);
-  }
-
-  public static void setEditorTabsAlphabeticalMode(boolean on) {
-    Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
   }
 
   @Override

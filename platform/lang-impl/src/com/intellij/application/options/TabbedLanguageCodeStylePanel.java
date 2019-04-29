@@ -584,7 +584,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Nullable
-    protected CommonCodeStyleSettings.IndentOptions getIndentOptions(CodeStyleSettings settings) {
+    private CommonCodeStyleSettings.IndentOptions getIndentOptions(CodeStyleSettings settings) {
       return settings.getCommonSettings(getDefaultLanguage()).getIndentOptions();
     }
 

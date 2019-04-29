@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -296,7 +296,7 @@ class JavaPredefinedConfigurations {
                                "}", MISC_TYPE),
 
       // interesting types
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"),"'Symbol",INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"), "'Symbol", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.variables.read"),
                                "'Symbol:[ script( \"import com.intellij.psi.*\n" +
                                "import static com.intellij.psi.util.PsiUtil.*\n" +
@@ -316,6 +316,8 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.try.without.resources"), "try ('_ResourceType '_resource{0,0} = '_init; '_expression{0,0}) {\n  '_TryStatement*;\n} catch('_ExceptionType '_Exception{0,0}) {\n  '_CatchStatement*;\n}", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switch.with.branches"), "switch ('_expression) {\n  case '_value{0,4}\\: '_statement*;\n}", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.labeled.break"), "break '_label;", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.methods.with.final.parameters"),
+                               "'_ReturnType '_Method('_BeforeType '_BeforeParameter*, final '_ParameterType '_Parameter, '_AfterType '_AfterParameter*);", INTERESTING_TYPE),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),

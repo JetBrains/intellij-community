@@ -187,8 +187,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
       showPopupMenu(event, (ActionGroup) myAction);
-    } else {
-      ActionUtil.performActionDumbAware(myAction, event);
+    }
+    else {
+      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
     }
   }
 
@@ -359,7 +360,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public void paintComponent(Graphics g) {
     jComponentPaint(g);
     paintButtonLook(g);
-    paintDownArrowIfGroup(g);
+    if (shallPaintDownArrow()) {
+      paintDownArrow(g);
+    }
   }
 
   // used in Rider, please don't change visibility
@@ -367,19 +370,23 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     super.paintComponent(g);
   }
 
-  private void paintDownArrowIfGroup(Graphics g) {
-    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return;
-    if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return;
-    if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return;
+  protected boolean shallPaintDownArrow() {
+    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return false;
+    if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    return true;
+  }
+
+  private void paintDownArrow(Graphics g) {
     Container parent = getParent();
     boolean horizontal = !(parent instanceof ActionToolbarImpl) ||
                          ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
     int x = horizontal ? JBUI.scale(6) : JBUI.scale(5);
     int y = horizontal ? JBUI.scale(5) : JBUI.scale(6);
-    if (isButtonEnabled()) {
-      AllIcons.General.Dropdown.paintIcon(this, g, x, y);
-    } else {
-      IconLoader.getDisabledIcon(AllIcons.General.Dropdown).paintIcon(this, g, x, y);
+    Icon arrowIcon = isButtonEnabled() ? AllIcons.General.Dropdown :
+                     IconLoader.getDisabledIcon(AllIcons.General.Dropdown);
+    if (arrowIcon != null) {
+      arrowIcon.paintIcon(this, g, x, y);
     }
   }
 

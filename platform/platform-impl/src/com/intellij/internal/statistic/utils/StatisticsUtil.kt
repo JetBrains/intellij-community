@@ -15,7 +15,6 @@ import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.psi.util.CachedValue
 import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet

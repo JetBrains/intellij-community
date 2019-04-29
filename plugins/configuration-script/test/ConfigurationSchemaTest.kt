@@ -3,20 +3,24 @@ package com.intellij.configurationScript
 import com.intellij.codeInsight.completion.CompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
+import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
 import com.intellij.json.JsonFileType
+import com.intellij.openapi.components.BaseState
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.io.sanitizeFileName
 import com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
+import java.nio.file.Paths
 
 // this test requires YamlJsonSchemaCompletionContributor, that's why intellij.yaml is added as test dependency
 internal class ConfigurationSchemaTest : CompletionTestCase() {
-  private var schemaFile: LightVirtualFile? = null
-  override fun setUp() {
-    super.setUp()
-    schemaFile = LightVirtualFile("scheme.json", JsonFileType.INSTANCE, generateConfigurationSchema(), Charsets.UTF_8, 0)
+  companion object {
+    private val testSnapshotDir = Paths.get(getCommunityPath(), "plugins/configuration-script", "testSnapshots")
   }
 
   fun `test map and description`() {
@@ -58,6 +62,43 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     """.trimIndent())
   }
 
+  private class Foo : BaseState() {
+    @Suppress("unused")
+    var a by string()
+  }
+
+  fun `test component state`() {
+    doTestComponentState("foo".trimIndent(), """
+      foo:
+        <caret>
+    """)
+  }
+
+  fun `test component state - nested key`() {
+    doTestComponentState("foo.bar", """
+      foo:
+        bar:
+          <caret>
+    """)
+  }
+
+  private fun doTestComponentState(path: String, fileContent: String) {
+    val variants = test(fileContent.trimIndent(), listOf(object : SchemaGenerator {
+      override fun generate(rootBuilder: JsonObjectBuilder) {
+        val pathToStateClass = mapOf(path to Foo::class.java)
+        val schemaGenerator = ComponentStateJsonSchemaGenerator()
+        schemaGenerator.doGenerate(rootBuilder, pathToStateClass)
+      }
+    }), schemaValidator = {
+      val snapshotFile = testSnapshotDir.resolve(sanitizeFileName(name) + ".json")
+      assertThat(it.toString()).toMatchSnapshot(snapshotFile)
+    })
+
+    assertThat(variantsToText(variants)).isEqualTo("""
+    a (string)
+    """.trimIndent())
+  }
+
   private fun checkDescription(variants: List<LookupElement>, name: String, expectedDescription: String) {
     val variant = variants.first { it.lookupString == name }
     val presentation = LookupElementPresentation()
@@ -65,7 +106,7 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     assertThat(presentation.typeText).isEqualTo(expectedDescription)
   }
 
-  private fun test(@Language("YAML") text: String): List<LookupElement> {
+  private fun test(@Language("YAML") text: String, generators: List<SchemaGenerator> = listOf(RunConfigurationJsonSchemaGenerator()), schemaValidator: ((CharSequence) -> Unit)? = null): List<LookupElement> {
     val position = EditorTestUtil.getCaretPosition(text)
     assertThat(position).isGreaterThan(0)
 
@@ -74,7 +115,11 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     val element = file.findElementAt(position)
     assertThat(element).isNotNull
 
-    val schemaObject = JsonSchemaReader.readFromFile(myProject, schemaFile!!)
+    val schemaContent = doGenerateConfigurationSchema(generators)
+    schemaValidator?.invoke(schemaContent)
+    val schemaFile = LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemaContent, Charsets.UTF_8, 0)
+
+    val schemaObject = JsonSchemaReader.readFromFile(myProject, schemaFile)
     assertThat(schemaObject).isNotNull
 
     return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element)

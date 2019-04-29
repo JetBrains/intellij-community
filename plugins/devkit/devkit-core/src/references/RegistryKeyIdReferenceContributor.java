@@ -69,8 +69,7 @@ class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    protected GenericAttributeValue<String> getNameElement(Extension extension) {
-      //noinspection unchecked
+    protected GenericAttributeValue<?> getNameElement(Extension extension) {
       return getAttribute(extension, "key");
     }
 

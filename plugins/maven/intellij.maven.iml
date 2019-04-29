@@ -68,6 +68,9 @@
     <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="intellij.maven.server.m2.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.maven.server.m30.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.maven.server.m36.impl" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

@@ -105,7 +105,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       for (IdeaPluginDescriptor descr : selection) {
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
-          if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
+          if (((PluginNode)descr).getStatus() == PluginNode.Status.INSTALLED) {
             enabled &= ourState.hasNewerVersion(descr.getPluginId());
           }
         }

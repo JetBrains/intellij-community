@@ -289,6 +289,16 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
       if ((varargs || functionalInterfaceParamTypes.length == parameterTypes.length) &&
           isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, referenceExpression, conflict, 0)) {
+        //reject static interface methods called on something else but interface class
+        if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass containingClass = psiMethod.getContainingClass();
+          if (containingClass != null && containingClass.isInterface()) {
+            final PsiClass qualifierClass = PsiMethodReferenceUtil.getQualifierResolveResult(referenceExpression).getContainingClass();
+            if (!containingClass.getManager().areElementsEquivalent(qualifierClass, containingClass)) {
+              return null;
+            }
+          }
+        }
         return true;
       }
 

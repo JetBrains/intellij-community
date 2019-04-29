@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,12 +70,14 @@ public abstract class ActionGroup extends AnAction {
    * @param popup {@code true} if this group is a popup, {@code false}
    *  otherwise
    */
-  public ActionGroup(String shortName, boolean popup){
+  public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String shortName, boolean popup){
     super(shortName);
     setPopup(popup);
   }
 
-  public ActionGroup(String text, String description, Icon icon) {
+  public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                     @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                     Icon icon) {
     super(text, description, icon);
   }
 

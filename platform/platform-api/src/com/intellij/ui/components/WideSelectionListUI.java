@@ -1,14 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.ui.list.ListCellBackgroundSupplier;
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 
 /**
  * @author Sergey.Malenkov
  */
-final class WideSelectionListUI extends BasicListUI {
+public final class WideSelectionListUI extends BasicListUI {
   private Rectangle myPaintBounds;
 
   @Override
@@ -31,8 +35,18 @@ final class WideSelectionListUI extends BasicListUI {
     if (paintBounds != null) {
       boolean selected = selectionModel.isSelectedIndex(row);
       boolean focused = row == leadSelectionIndex && list.hasFocus();
-      @SuppressWarnings("unchecked")
-      Component component = renderer.getListCellRendererComponent(list, model.getElementAt(row), row, selected, focused);
+      Object value = model.getElementAt(row);
+      Color background = null;
+      if (list instanceof ListCellBackgroundSupplier) {
+        //noinspection unchecked
+        background = ((ListCellBackgroundSupplier<Object>)list).getCellBackground(value, row);
+      }
+      if (background != null) {
+        g.setColor(background);
+        g.fillRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
+      }
+      //noinspection unchecked
+      Component component = renderer.getListCellRendererComponent(list, value, row, selected, focused);
       if (component != null) {
         if (rendererPane != component.getParent()) rendererPane.add(component);
         g.setClip(paintBounds.x, paintBounds.y, paintBounds.width, paintBounds.height);
@@ -98,5 +112,62 @@ final class WideSelectionListUI extends BasicListUI {
       }
     }
     return bounds;
+  }
+
+  @Override
+  protected void updateLayoutState() {
+    if (list.getLayoutOrientation() != JList.VERTICAL) {
+      super.updateLayoutState();
+      return;
+    }
+
+    // pasted from BasicListUI to provide min-height
+    int fixedCellHeight = list.getFixedCellHeight();
+    int fixedCellWidth = list.getFixedCellWidth();
+    cellWidth = fixedCellWidth;
+    if (fixedCellHeight != -1) {
+      cellHeight = fixedCellHeight;
+      cellHeights = null;
+    }
+    else {
+      cellHeight = -1;
+      cellHeights = new int[list.getModel().getSize()];
+    }
+    if ((fixedCellWidth == -1) || (fixedCellHeight == -1)) {
+      ListModel dataModel = list.getModel();
+      int dataModelSize = dataModel.getSize();
+      ListCellRenderer renderer = list.getCellRenderer();
+      if (renderer != null) {
+        for (int index = 0; index < dataModelSize; index++) {
+          Object value = dataModel.getElementAt(index);
+          //noinspection unchecked
+          Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
+          rendererPane.add(c);
+          Dimension cellSize = UIUtil.updateListRowHeight(c.getPreferredSize());
+          if (fixedCellWidth == -1) {
+            cellWidth = Math.max(cellSize.width, cellWidth);
+          }
+          if (fixedCellHeight == -1) {
+            cellHeights[index] = cellSize.height;
+          }
+        }
+      }
+      else {
+        if (cellWidth == -1) {
+          cellWidth = 0;
+        }
+        if (cellHeights == null) {
+          cellHeights = new int[dataModelSize];
+        }
+        for (int index = 0; index < dataModelSize; index++) {
+          cellHeights[index] = 0;
+        }
+      }
+    }
+  }
+
+  /** @noinspection MethodOverridesStaticMethodOfSuperclass, unused */
+  public static ComponentUI createUI(JComponent list) {
+    return new WideSelectionListUI();
   }
 }

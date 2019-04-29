@@ -156,7 +156,7 @@ public class FunExprOccurrence {
     String paramClassName = paramType instanceof PsiClassType ? ((PsiClassType)paramType).getClassName() : null;
     if (paramClassName == null) return false;
 
-    if (paramClassName.equals(sam.getName()) && sam.equals(((PsiClassType)paramType).resolve())) {
+    if (paramClassName.equals(sam.getName()) && sam.getManager().areElementsEquivalent(sam, ((PsiClassType)paramType).resolve())) {
       return true;
     }
 

@@ -327,6 +327,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   protected void resetTreeState() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (hasAtLeastNodes(this, 30000)) {
+      TreeUtil.collapseAll(this, 1);
+      return;
+    }
+
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;
@@ -358,6 +364,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       setSelectionRow(selectedTreeRow);
     }
     TreeUtil.showRowCentered(this, selectedTreeRow, false);
+  }
+
+  private static boolean hasAtLeastNodes(@NotNull Tree tree, int nodeNumber) {
+    return TreeUtil.treeTraverser(tree).traverse().take(nodeNumber).size() >= nodeNumber;
   }
 
   public void selectFile(@Nullable VirtualFile toSelect) {

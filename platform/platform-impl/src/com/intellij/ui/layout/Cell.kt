@@ -168,6 +168,9 @@ abstract class Cell {
     if (renderer != null) {
       component.renderer = renderer
     }
+    else {
+      component.renderer = SimpleListCellRenderer.create("") { it.toString() }
+    }
     val builder = component(growPolicy = growPolicy)
     return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, getter, setter)
   }

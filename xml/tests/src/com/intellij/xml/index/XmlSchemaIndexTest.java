@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
@@ -12,6 +13,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.xml.util.XmlUtil;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -42,7 +44,8 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
   public void testXsdNamespaceBuilder() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("web-app_2_5.xsd");
-    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
+    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream(),
+                                                                                                   StandardCharsets.UTF_8));
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
     assertEquals(Collections.singletonList("web-app"), builder.getTags());
@@ -50,7 +53,8 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
   public void testRootTags() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("XMLSchema.xsd");
-    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
+    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream(),
+                                                                                                   StandardCharsets.UTF_8));
     assertEquals(XmlUtil.XML_SCHEMA_URI, builder.getNamespace());
     assertEquals("1.0", builder.getVersion());
     assertEquals(Collections.singletonList("schema"), builder.getRootTags());

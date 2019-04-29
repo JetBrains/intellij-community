@@ -81,7 +81,7 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
       if (!ExpressionUtils.isVoidContext(expression)) {
         return;
       }
-      if (ExpressionUtils.isArrayCreationExpression(expression)) {
+      if (expression.isArrayCreation()) {
         return;
       }
       final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();

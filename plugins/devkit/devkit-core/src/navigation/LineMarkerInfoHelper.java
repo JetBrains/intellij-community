@@ -23,7 +23,6 @@ import org.jetbrains.idea.devkit.util.PointableCandidate;
 
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 class LineMarkerInfoHelper {
