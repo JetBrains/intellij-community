@@ -177,11 +177,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
-  }
-
-  @Override
   public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable) {
     return editConfigurable(project, dimensionServiceKey, configurable, isWorthToShowApplyButton(configurable));
   }
