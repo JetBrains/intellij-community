@@ -79,7 +79,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   private TestDialog myOldTestDialogValue;
 
   @Override
-  public int show(String message) {
+  public int show(@NotNull String message) {
     return 0;
   }
 

@@ -287,7 +287,7 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
     Ref<String> message = new Ref<>();
     Messages.setTestDialog(new TestDialog() {
       @Override
-      public int show(String m) {
+      public int show(@NotNull String m) {
         message.set(m);
         return Messages.YES;
       }

@@ -29,11 +29,11 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.Collections;
@@ -55,7 +55,7 @@ public class ProjectTemplateList extends JPanel {
     add(myPanel, BorderLayout.CENTER);
 
     GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<ProjectTemplate>(new ListItemDescriptorAdapter<ProjectTemplate>() {
-      @Nullable
+      @NotNull
       @Override
       public String getTextFor(ProjectTemplate value) {
         return value.getName();
@@ -80,12 +80,7 @@ public class ProjectTemplateList extends JPanel {
       }
     };
     myList.setCellRenderer(renderer);
-    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        updateSelection();
-      }
-    });
+    myList.getSelectionModel().addListSelectionListener(__ -> updateSelection());
 
     Messages.installHyperlinkSupport(myDescriptionPane);
   }
@@ -104,7 +99,7 @@ public class ProjectTemplateList extends JPanel {
     }
   }
 
-  public void setTemplates(List<ProjectTemplate> list, boolean preserveSelection) {
+  public void setTemplates(List<? extends ProjectTemplate> list, boolean preserveSelection) {
     Collections.sort(list, (o1, o2) -> Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
 
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
@@ -142,13 +137,10 @@ public class ProjectTemplateList extends JPanel {
         myList.setSelectedValue(template, true);
       }
     }
-    myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        ProjectTemplate template = getSelectedTemplate();
-        if (template != null) {
-          PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_TEMPLATE, template.getName());
-        }
+    myList.getSelectionModel().addListSelectionListener(__ -> {
+      ProjectTemplate template = getSelectedTemplate();
+      if (template != null) {
+        PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_TEMPLATE, template.getName());
       }
     });
   }
@@ -166,7 +158,7 @@ public class ProjectTemplateList extends JPanel {
   }
 
   @TestOnly
-  public boolean setSelectedTemplate(String name) {
+  boolean setSelectedTemplate(@NotNull String name) {
     ListModel model1 = myList.getModel();
     for (int j = 0; j < model1.getSize(); j++) {
       if (name.equals(((ProjectTemplate)model1.getElementAt(j)).getName())) {
