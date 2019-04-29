@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,7 +67,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl");
-  private static final int LOAD_FACTOR = 20;
   @NonNls
   private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^-]]+");
 
@@ -292,7 +289,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @Override
   @NotNull
-  public ConfigurableHit getConfigurables(ConfigurableGroup[] groups,
+  public ConfigurableHit getConfigurables(@NotNull ConfigurableGroup[] groups,
                                           final DocumentEvent.EventType type,
                                           Set<? extends Configurable> configurables,
                                           String option,
@@ -456,43 +453,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   public Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable) {
     loadHugeFilesIfNecessary();
     return myHighlightOption2Synonym.get(Couple.of(option, configurable.getId()));
-  }
-
-  @Override
-  public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
-    loadHugeFilesIfNecessary();
-    final boolean perProject = CodeStyle.usesOwnSettings(project);
-    final Map<String, Set<String>> result = new THashMap<>();
-    int count = 0;
-    final Set<String> prefixes = getProcessedWordsWithoutStemming(prefix);
-    for (String opt : prefixes) {
-      Set<OptionDescription> configs = getAcceptableDescriptions(opt);
-      if (configs == null) continue;
-      for (OptionDescription description : configs) {
-        String groupName = description.getGroupName();
-        if (perProject) {
-          if (Comparing.strEqual(groupName, ApplicationBundle.message("title.global.code.style"))) {
-            groupName = ApplicationBundle.message("title.project.code.style");
-          }
-        }
-        else {
-          if (Comparing.strEqual(groupName, ApplicationBundle.message("title.project.code.style"))) {
-            groupName = ApplicationBundle.message("title.global.code.style");
-          }
-        }
-        Set<String> foundHits = result.get(groupName);
-        if (foundHits == null) {
-          foundHits = new THashSet<>();
-          result.put(groupName, foundHits);
-        }
-        foundHits.add(description.getHit());
-        count++;
-      }
-    }
-    if (count > LOAD_FACTOR) {
-      result.clear();
-    }
-    return result;
   }
 
   @Override
