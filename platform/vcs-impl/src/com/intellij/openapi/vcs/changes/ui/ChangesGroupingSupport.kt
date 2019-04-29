@@ -7,6 +7,7 @@ import com.intellij.openapi.util.KeyedExtensionFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.MODULE_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
+import gnu.trove.THashMap
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.tree.DefaultTreeModel
@@ -15,11 +16,19 @@ private val PREDEFINED_PRIORITIES = mapOf(DIRECTORY_GROUPING to 10, MODULE_GROUP
 
 class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
   private val changeSupport = PropertyChangeSupport(source)
-  private val groupingFactories = collectFactories(project)
-  private val groupingConfig = groupingFactories.allKeys.associateBy({ it }, { false }).toMutableMap()
+  private val groupingConfig: MutableMap<String, Boolean>
 
   val groupingKeys: Set<String>
     get() = groupingConfig.filterValues { it }.keys
+
+  init {
+    groupingConfig = THashMap()
+    for (epBean in ChangesGroupingPolicyFactory.EP_NAME.extensionList) {
+      if (epBean.key != null) {
+        groupingConfig.put(epBean.key, false)
+      }
+    }
+  }
 
   operator fun get(groupingKey: String): Boolean {
     if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey")
@@ -43,7 +52,7 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
       override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
         var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
         groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
-          result = groupingFactories.getByKey(it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
+          result = findFactory(project, it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
         }
         return result
       }
@@ -55,7 +64,7 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
   fun setGroupingKeysOrSkip(groupingKeys: Set<String>) {
     groupingConfig.entries.forEach { it.setValue(it.key in groupingKeys) }
   }
-  fun isAvailable(groupingKey: String): Boolean = groupingFactories.getByKey(groupingKey) != null
+  fun isAvailable(groupingKey: String) = findFactory(project, groupingKey) != null
 
   fun addPropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.addPropertyChangeListener(listener)
   fun removePropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.removePropertyChangeListener(listener)
@@ -70,15 +79,13 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
     const val REPOSITORY_GROUPING = "repository"
     const val NONE_GROUPING = "none"
 
-    private fun collectFactories(project: Project): KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> {
-      return object : KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(ChangesGroupingPolicyFactory::class.java, ChangesGroupingPolicyFactory.EP_NAME, project.picoContainer) {
-        override fun getKey(key: String) = key
-      }
-    }
-
     @JvmStatic
     fun getFactory(project: Project, key: String): ChangesGroupingPolicyFactory {
-      return collectFactories(project).getByKey(key) ?: NoneChangesGroupingFactory
+      return findFactory(project, key) ?: NoneChangesGroupingFactory
+    }
+
+    private fun findFactory(project: Project, key: String): ChangesGroupingPolicyFactory? {
+      return KeyedExtensionFactory.findByKey(key, ChangesGroupingPolicyFactory.EP_NAME, project.picoContainer)
     }
   }
 }
