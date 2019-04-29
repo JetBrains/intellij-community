@@ -30,7 +30,7 @@ public class MavenEditorTabTitleProvider implements EditorTabTitleProvider, Dumb
     if (projectsManager.isMavenizedProject()) {
       MavenProject mavenProject = projectsManager.findProject(file);
       if (mavenProject != null) {
-        return mavenProject.getMavenId().getArtifactId();
+        return String.format("%s (%s)", file.getName(), mavenProject.getMavenId().getArtifactId());
       }
     }
 
