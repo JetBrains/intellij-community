@@ -139,4 +139,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testDefaultValues() {
+    doTest(true)
+  }
+
 }

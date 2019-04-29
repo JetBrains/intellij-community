@@ -287,6 +287,9 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
    */
   private fun collectOuterMethodCalls(resolveSession: GroovyInferenceSession) {
     val references = ReferencesSearch.search(method).findAll()
+    for (parameter in method.parameters) {
+      resolveSession.addConstraint(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
+    }
     for (occurrence in references) {
       if (occurrence is GrReferenceExpression) {
         val call = occurrence.parent
