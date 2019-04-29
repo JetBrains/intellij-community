@@ -290,7 +290,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
     new LibraryLicense(name: "jgraphx", libraryName: "jgraphx", version: "3.4.1.3", license: "BSD",
                        url: "https://github.com/jgraph/jgraphx"),
-    new LibraryLicense(name: "JNA", libraryName: "jna", version: "5.3.0", license: "LGPL 2.1",
+    new LibraryLicense(name: "JNA", libraryName: "jna", version: "5.3.1", license: "LGPL 2.1",
                        url: "https://github.com/java-native-access/jna", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "JSch", libraryName: "JSch", version: "0.1.53", license: "BSD", url: "http://www.jcraft.com/jsch/",
                        licenseUrl: "http://www.jcraft.com/jsch/LICENSE.txt"),
