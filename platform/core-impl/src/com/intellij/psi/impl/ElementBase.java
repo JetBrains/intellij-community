@@ -106,7 +106,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
-    Icon baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
+    Icon baseIcon = isVisibilitySupported() && Registry.is("ide.completion.show.visibility.icon")
+                    ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
 
     // to prevent blinking, base icon should be created with the layers
     if (this instanceof PsiElement) {
@@ -156,11 +157,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @NotNull
-  public static RowIcon buildRowIcon(final Icon baseIcon, Icon visibilityIcon) {
-    RowIcon icon = new RowIcon(2);
-    icon.setIcon(baseIcon, 0);
-    icon.setIcon(visibilityIcon, 1);
-    return icon;
+  public static RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
+    return Registry.is("ide.completion.show.visibility.icon") ? new RowIcon(baseIcon, visibilityIcon) : new RowIcon(baseIcon);
   }
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
