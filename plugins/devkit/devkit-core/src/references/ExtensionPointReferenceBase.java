@@ -42,12 +42,9 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
   /**
    * Returns the name attribute for resolving.
    *
-   * @return {@link Extension#getId()} by default.
    * @see #getAttribute(Extension, String)
    */
-  protected GenericAttributeValue<?> getNameElement(Extension extension) {
-    return extension.getId();
-  }
+  protected abstract GenericAttributeValue<?> getNameElement(Extension extension);
 
   @Nullable
   @Override
