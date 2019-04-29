@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
+import java.util.List;
 import java.util.Set;
 
 public abstract class SearchableOptionsRegistrar{
@@ -20,11 +21,11 @@ public abstract class SearchableOptionsRegistrar{
   }
 
   @NotNull
-  public abstract ConfigurableHit getConfigurables(@NotNull ConfigurableGroup[] groups,
+  public abstract ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
                                                    final DocumentEvent.EventType type,
-                                                   final Set<? extends Configurable> configurables,
-                                                   final String option,
-                                                   final Project project);
+                                                   @Nullable Set<? extends Configurable> configurables,
+                                                   @NotNull String option,
+                                                   @Nullable Project project);
 
   @Nullable
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);

@@ -81,7 +81,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private Configurable myQueuedConfigurable;
   private MyControl myControl;
 
-  public SettingsTreeView(SettingsFilter filter, ConfigurableGroup[] groups) {
+  public SettingsTreeView(SettingsFilter filter, List<ConfigurableGroup> groups) {
     myFilter = filter;
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
@@ -450,16 +450,16 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   }
 
   private final class MyRoot extends CachingSimpleNode {
-    private final ConfigurableGroup[] myGroups;
+    private final List<ConfigurableGroup> myGroups;
 
-    private MyRoot(ConfigurableGroup[] groups) {
+    private MyRoot(List<ConfigurableGroup> groups) {
       super(null);
       myGroups = groups;
     }
 
     @Override
     protected SimpleNode[] buildChildren() {
-      if (myGroups == null || myGroups.length == 0) {
+      if (myGroups == null || myGroups.isEmpty()) {
         return NO_CHILDREN;
       }
       ArrayList<MyNode> list = new ArrayList<>();

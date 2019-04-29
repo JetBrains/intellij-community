@@ -27,6 +27,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 
@@ -56,7 +57,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(configurable, null);
   }
 
-  public SettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter) {
+  public SettingsDialog(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, Configurable configurable, String filter) {
     super(project, true);
     myDimensionServiceKey = DIMENSION_KEY;
     myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory);
@@ -64,7 +65,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(null, project);
   }
 
-  protected SettingsTreeView treeViewFactory(SettingsFilter filter, ConfigurableGroup[] groups) {
+  protected SettingsTreeView treeViewFactory(SettingsFilter filter, List<ConfigurableGroup> groups) {
     return new SettingsTreeView(filter, groups);
   }
 

@@ -289,11 +289,11 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @Override
   @NotNull
-  public ConfigurableHit getConfigurables(@NotNull ConfigurableGroup[] groups,
+  public ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
                                           final DocumentEvent.EventType type,
-                                          Set<? extends Configurable> configurables,
-                                          String option,
-                                          Project project) {
+                                          @Nullable Set<? extends Configurable> configurables,
+                                          @NotNull String option,
+                                          @Nullable Project project) {
 
     final ConfigurableHit hits = new ConfigurableHit();
     final Set<Configurable> contentHits = hits.getContentHits();

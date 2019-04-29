@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.Set;
 
 public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
@@ -29,7 +30,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   boolean myDocumentWasChanged;
 
   private final SearchTextField mySearch;
-  private final ConfigurableGroup[] myGroups;
+  private final List<ConfigurableGroup> myGroups;
 
   private final SearchableOptionsRegistrar myRegistrar = SearchableOptionsRegistrar.getInstance();
   private Set<Configurable> myFiltered;
@@ -38,7 +39,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private boolean myUpdateRejected;
   private Configurable myLastSelected;
 
-  SettingsFilter(Project project, ConfigurableGroup[] groups, SearchTextField search) {
+  SettingsFilter(Project project, List<ConfigurableGroup> groups, SearchTextField search) {
     myProject = project;
     myGroups = groups;
     mySearch = search;
