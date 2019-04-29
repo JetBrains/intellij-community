@@ -242,7 +242,13 @@ public class TestIntegrationUtils {
     if (existingNames != null && !existingNames.add(name)) {
       int idx = 1;
       while (existingNames.contains(name)) {
-        final String newName = name + (idx++);
+        if (!name.startsWith("test")) {
+          name = "test" + StringUtil.capitalize(name);
+          if (existingNames.add(name)) {
+            break;
+          }
+        }
+        String newName = name + (idx++);
         if (existingNames.add(newName)) {
           name = newName;
           break;
