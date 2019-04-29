@@ -65,7 +65,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
@@ -188,7 +187,7 @@ public class MavenExternalParameters {
     Scanner sc = new Scanner(originalConf);
 
     try {
-      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest), StandardCharsets.UTF_8));
+      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest)));
 
       try {
         boolean patched = false;

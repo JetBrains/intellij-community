@@ -46,7 +46,7 @@ public abstract class NonCodeMembersContributor {
   }
 
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     @Nullable PsiClass aClass,
+                                     PsiClass aClass,
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {

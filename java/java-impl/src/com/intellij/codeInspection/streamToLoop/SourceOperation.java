@@ -83,11 +83,9 @@ abstract class SourceOperation extends Operation {
       return fn == null ? null : new IterateSource(args[0], fn);
     }
     if (name.equals("stream") && args.length == 0 &&
-        InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
-      if (qualifier != null) {
-        return new ForEachSource(qualifier);
-      }
+        InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION) &&
+        ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()) != null) {
+      return new ForEachSource(call.getMethodExpression().getQualifierExpression());
     }
     if (name.equals("stream") && args.length == 1 &&
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
@@ -112,20 +110,22 @@ abstract class SourceOperation extends Operation {
 
   static class ForEachSource extends SourceOperation {
     private final boolean myEntrySet;
-    private @NotNull PsiExpression myQualifier;
+    private @Nullable PsiExpression myQualifier;
 
-    ForEachSource(@NotNull PsiExpression qualifier) {
+    ForEachSource(@Nullable PsiExpression qualifier) {
       this(qualifier, false);
     }
 
-    ForEachSource(@NotNull PsiExpression qualifier, boolean entrySet) {
+    ForEachSource(@Nullable PsiExpression qualifier, boolean entrySet) {
       myQualifier = qualifier;
       myEntrySet = entrySet;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
+      if(myQualifier != null) {
+        myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
+      }
     }
 
     @Override
@@ -148,7 +148,10 @@ abstract class SourceOperation extends Operation {
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      String iterationParameterText = myQualifier.getText() + (myEntrySet ? ".entrySet()" : "");
+      PsiExpression iterationParameter = myQualifier == null ? ExpressionUtils
+        .getEffectiveQualifier(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
+      assert iterationParameter != null; // Checked at construction site that effective qualifier is available
+      String iterationParameterText = iterationParameter.getText() + (myEntrySet ? ".entrySet()" : "");
       return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameterText + ") {" + code + "}\n";
     }
   }

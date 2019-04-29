@@ -671,7 +671,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       while (true) {
         if (lastDocHighlighter == null && docHighlighters.hasNext()) {
           lastDocHighlighter = docHighlighters.next();
-          if (lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
+          if (!lastDocHighlighter.isValid() || lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
             lastDocHighlighter = null;
             continue;
           }
@@ -683,7 +683,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
         if (lastEditorHighlighter == null && editorHighlighters.hasNext()) {
           lastEditorHighlighter = editorHighlighters.next();
-          if (lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
+          if (!lastEditorHighlighter.isValid() || lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
             lastEditorHighlighter = null;
             continue;
           }

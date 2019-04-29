@@ -15,15 +15,10 @@ public class InstallPluginInfo {
   private final IdeaPluginDescriptor myDescriptor;
   private MyPluginModel myPluginModel;
   public final boolean install;
-  public final IdeaPluginDescriptor updateDescriptor;
   private TaskInfo myStatusBarTaskInfo;
 
-  public InstallPluginInfo(@NotNull IdeaPluginDescriptor descriptor,
-                           IdeaPluginDescriptor updateDescriptor,
-                           @NotNull MyPluginModel pluginModel,
-                           boolean install) {
+  public InstallPluginInfo(@NotNull IdeaPluginDescriptor descriptor, @NotNull MyPluginModel pluginModel, boolean install) {
     myDescriptor = descriptor;
-    this.updateDescriptor = updateDescriptor;
     myPluginModel = pluginModel;
     this.install = install;
   }
@@ -32,8 +27,7 @@ public class InstallPluginInfo {
     myPluginModel = null;
     indicator.removeStateDelegate(null);
     if (statusBar != null) {
-      String title = (install ? "Installing plugin " : "Update plugin ") + myDescriptor.getName();
-      statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task(title));
+      statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task());
     }
   }
 

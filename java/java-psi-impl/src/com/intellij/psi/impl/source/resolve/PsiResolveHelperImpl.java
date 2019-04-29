@@ -52,7 +52,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
     }
     else {
-      processor = new MethodResolverProcessor(null, argumentList, place, place.getContainingFile());
+      processor = new MethodResolverProcessor(aClass, argumentList, place, place.getContainingFile());
     }
 
     ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);

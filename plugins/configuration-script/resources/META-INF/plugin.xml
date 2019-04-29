@@ -1,4 +1,4 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <name>Configuration Script</name>
   <id>com.intellij.configurationScript</id>
   <vendor>JetBrains</vendor>

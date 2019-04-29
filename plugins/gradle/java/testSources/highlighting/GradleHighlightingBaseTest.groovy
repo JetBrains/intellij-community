@@ -6,7 +6,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -18,13 +17,11 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.util.ResolveTest
 
 import java.nio.file.Paths
 
 @CompileStatic
-abstract class GradleHighlightingBaseTest extends GradleImportingTestCase implements ResolveTest {
+abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
 
   @NotNull
   JavaCodeInsightTestFixture fixture
@@ -118,14 +115,6 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase implem
 
   protected final boolean isGradleAtLeast(@NotNull String version) {
     GradleVersion.version(gradleVersion) >= GradleVersion.version(version)
-  }
-
-  protected void setterMethodTest(String name, String originalName, String containingClass) {
-    def result = elementUnderCaret(GrMethodCall).advancedResolve()
-    def method = assertInstanceOf(result.element, PsiMethod)
-    methodTest(method, name, containingClass)
-    def original = assertInstanceOf(method.navigationElement, PsiMethod)
-    methodTest(original, originalName, containingClass)
   }
 }
 

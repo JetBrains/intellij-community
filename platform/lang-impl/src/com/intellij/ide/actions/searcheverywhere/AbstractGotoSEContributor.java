@@ -8,8 +8,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,15 +29,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractGotoSEContributor implements SearchEverywhereContributor<Object> {
-  private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
+public abstract class AbstractGotoSEContributor<Filter> implements SearchEverywhereContributor<Object, Filter> {
 
   protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
@@ -53,9 +47,8 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   //space character in the end of pattern forces full matches search
   private static final String fullMatchSearchSuffix = " ";
 
-  protected final Project myProject;
-  protected final PsiElement psiContext;
-  protected boolean myEverywhere;
+  @Nullable protected final Project myProject;
+  @Nullable protected final PsiElement psiContext;
 
   protected AbstractGotoSEContributor(@Nullable Project project, @Nullable PsiElement context) {
     myProject = project;
@@ -73,43 +66,32 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
     return true;
   }
 
-  @NotNull
-  protected List<AnAction> doGetActions(@NotNull String everywhereText,
-                                        @Nullable PersistentSearchEverywhereContributorFilter<?> filter,
-                                        @NotNull Runnable onChanged) {
-    if (myProject == null || filter == null) return Collections.emptyList();
-    return Arrays.asList(new SearchEverywhereUI.CheckBoxAction(everywhereText) {
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return myEverywhere;
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myEverywhere = state;
-        onChanged.run();
-      }
-    }, new SearchEverywhereUI.FiltersAction(filter, onChanged));
-  }
+  private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
   public void fetchElements(@NotNull String pattern,
+                            boolean everywhere,
+                            @Nullable SearchEverywhereContributorFilter<Filter> filter,
                             @NotNull ProgressIndicator progressIndicator,
                             @NotNull Processor<? super Object> consumer) {
-    if (myProject == null) return; //nowhere to search
+    if (myProject == null) return; //nothing to search
     if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
 
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
       if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) return;
 
-      FilteringGotoByModel<?> model = createModel(myProject);
+      FilteringGotoByModel<Filter> model = createModel(myProject);
+      if (filter != null) {
+        model.setFilterItems(filter.getSelectedElements());
+      }
+
       if (progressIndicator.isCanceled()) return;
 
       PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
       ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
-        popup.getProvider().filterElements(popup, pattern, myEverywhere, progressIndicator, element -> {
+        popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
           if (element == null) {
             LOG.error("Null returned from " + model + " in " + this);
@@ -125,7 +107,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   }
 
   @NotNull
-  protected abstract FilteringGotoByModel<?> createModel(@NotNull Project project);
+  protected abstract FilteringGotoByModel<Filter> createModel(@NotNull Project project);
 
   @NotNull
   @Override

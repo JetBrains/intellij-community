@@ -9,26 +9,13 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @NotNull private final ManagingFS myManagingFS;
 
-  public PlatformVirtualFileManager() {
-    super(getVirtualFileSystems());
+  public PlatformVirtualFileManager(@NotNull VirtualFileSystem[] fileSystems) {
+    super(fileSystems);
 
     myManagingFS = ManagingFS.getInstance();
-  }
-
-  @NotNull
-  private static List<VirtualFileSystem> getVirtualFileSystems() {
-    //noinspection unchecked
-    List<VirtualFileSystem> result = ApplicationManager.getApplication().getPicoContainer().getComponentInstancesOfType(VirtualFileSystem.class);
-    if (!result.isEmpty()) {
-      LOG.warn("Do not register file system as application component, instead, register as extension, for example:\n" +
-               "<virtualFileSystem implementationClass=\"com.example.MyFileSystem\" key=\"myProtocol\" physical=\"true\"/>\n\n" + result);
-    }
-    return result;
   }
 
   @Override

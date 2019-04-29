@@ -75,6 +75,16 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
+  public FilePath getUsedFilePath(VcsAbstractHistorySession session) {
+    return null;
+  }
+
+  @Override
+  public Boolean getAddinionallyCachedData(VcsAbstractHistorySession session) {
+    return null;
+  }
+
+  @Override
   public VcsAbstractHistorySession createFromCachedData(Boolean aBoolean,
                                                         @NotNull List<VcsFileRevision> revisions,
                                                         @NotNull FilePath filePath,

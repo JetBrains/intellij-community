@@ -15,9 +15,9 @@ import java.util.Map;
 class HashIdForwardIndexAccessor<Key, Value, Input>
   extends AbstractMapForwardIndexAccessor<Key, Value, Integer, Input>
   implements IntForwardIndexAccessor<Key, Value, Input> {
-  private final UpdatableSnapshotInputMappingIndex<Key, Value, Input> mySnapshotInputMappingIndex;
+  private final SnapshotInputMappingIndex<Key, Value, Input> mySnapshotInputMappingIndex;
 
-  HashIdForwardIndexAccessor(@NotNull UpdatableSnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappingIndex) {
+  HashIdForwardIndexAccessor(@NotNull SnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappingIndex) {
     super(EnumeratorIntegerDescriptor.INSTANCE);
     mySnapshotInputMappingIndex = snapshotInputMappingIndex;
   }

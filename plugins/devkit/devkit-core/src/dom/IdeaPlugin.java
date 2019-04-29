@@ -71,7 +71,6 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
-  @Stubbed
   IdeaVersion getIdeaVersion();
 
 

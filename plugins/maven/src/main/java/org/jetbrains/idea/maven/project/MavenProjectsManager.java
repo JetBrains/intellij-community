@@ -109,16 +109,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
 
-  public static MavenProjectsManager getInstance(@NotNull Project project) {
-    return project.getComponent(MavenProjectsManager.class);
+  public static MavenProjectsManager getInstance(Project p) {
+    return p.getComponent(MavenProjectsManager.class);
   }
 
-  public MavenProjectsManager(@NotNull Project project) {
+  public MavenProjectsManager(Project project) {
     super(project);
-
     myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
-    myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+    myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
   }
 
@@ -878,7 +877,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return result;
   }
 
-  public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<? super String> consumer) {
+  public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<String> consumer) {
     runWhenFullyOpen(() -> myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
       @Override
       public void perform(Project project,

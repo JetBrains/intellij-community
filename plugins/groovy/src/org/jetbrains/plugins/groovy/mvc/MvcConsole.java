@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -199,7 +198,7 @@ public class MvcConsole implements Disposable {
                                                  final String... input) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert module.getProject() == myProject;
-
+    
     final MyProcessInConsole process = new MyProcessInConsole(module, commandLine, onDone, showConsole, closeOnDone, input);
     if (isExecuting()) {
       myProcessQueue.add(process);
@@ -242,7 +241,7 @@ public class MvcConsole implements Disposable {
       handler = new OSProcessHandler(commandLine);
 
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      OutputStreamWriter writer = new OutputStreamWriter(handler.getProcess().getOutputStream(), StandardCharsets.UTF_8);
+      OutputStreamWriter writer = new OutputStreamWriter(handler.getProcess().getOutputStream());
       for (String s : input) {
         writer.write(s);
       }

@@ -3,9 +3,10 @@ package org.jetbrains.yaml.navigation;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFilter;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
@@ -25,6 +26,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
 
 import javax.swing.*;
@@ -34,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereContributor<YAMLKeyNavigationItem> {
+public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereContributor<YAMLKeyNavigationItem, Language> {
   final Project myProject;
 
   public YAMLKeysSearchEverywhereContributor(Project project) {
@@ -54,6 +56,11 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   @Override
+  public String includeNonProjectItemsText() {
+    return null;
+  }
+
+  @Override
   public int getSortWeight() {
     // lets show yaml keys in the last order
     // all other implementations have weight from 50 to 300
@@ -67,13 +74,15 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
   @Override
   public void fetchElements(@NotNull String pattern,
+                            boolean everywhere,
+                            @Nullable SearchEverywhereContributorFilter<Language> filter,
                             @NotNull ProgressIndicator progressIndicator,
                             @NotNull Processor<? super YAMLKeyNavigationItem> consumer) {
     if (myProject == null || pattern.isEmpty()) {
       return;
     }
 
-    Runnable task = () -> findKeys(consumer, pattern, progressIndicator);
+    Runnable task = () -> findKeys(consumer, pattern, everywhere, progressIndicator);
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       application.runReadAction(task);
@@ -85,7 +94,9 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
   @Override
   public boolean processSelectedItem(@NotNull YAMLKeyNavigationItem selected, int modifiers, @NotNull String searchText) {
-    ((Navigatable)selected).navigate(true);
+    if (selected instanceof Navigatable) {
+      ((Navigatable)selected).navigate(true);
+    }
     return true;
   }
 
@@ -102,6 +113,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
   private void findKeys(@NotNull Processor<? super YAMLKeyNavigationItem> consumer,
                         @NotNull String pattern,
+                        boolean everywhere,
                         ProgressIndicator progressIndicator) {
     if (ActionUtil.isDumbMode(myProject)) {
       return;
@@ -112,7 +124,6 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
     List<String> sorted = applyPattern(allKeys, pattern, progressIndicator);
 
-    boolean everywhere = SearchEverywhereManager.getInstance(myProject).isEverywhere();
     for (String name : sorted) {
       progressIndicator.checkCanceled();
       CommonProcessors.CollectProcessor<VirtualFile> files = new CommonProcessors.CollectProcessor<>();
@@ -192,11 +203,17 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     return count;
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<YAMLKeyNavigationItem> {
+  public static class Factory implements SearchEverywhereContributorFactory<YAMLKeyNavigationItem, Language> {
     @NotNull
     @Override
-    public SearchEverywhereContributor<YAMLKeyNavigationItem> createContributor(@NotNull AnActionEvent initEvent) {
+    public SearchEverywhereContributor<YAMLKeyNavigationItem, Language> createContributor(@NotNull AnActionEvent initEvent) {
       return new YAMLKeysSearchEverywhereContributor(initEvent.getProject());
+    }
+
+    @Nullable
+    @Override
+    public SearchEverywhereContributorFilter<Language> createFilter(@NotNull AnActionEvent initEvent) {
+      return null;
     }
   }
 }

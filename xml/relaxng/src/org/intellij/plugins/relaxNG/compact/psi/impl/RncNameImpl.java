@@ -282,11 +282,6 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
             }
 
             @Override
-            public boolean requiresCommittedPSI() {
-              return false;
-            }
-
-            @Override
             public LookupItem[] calculateLookupItems(ExpressionContext context) {
               return LookupItem.EMPTY_ARRAY;
             }

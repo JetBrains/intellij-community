@@ -26,6 +26,9 @@ class Test {
       /*2*/
       /*3*/
       int n = -a / b / c * d / a;
+      /*1*/
+      /*2*/
+      int o = b * c / a;
     int p = a + b + c;
     int q = a - b + c;
       /*1*/
@@ -61,9 +64,11 @@ class Test {
       int aa = -a / b / c * d;
       /*1*/
       int bb = -a / b / c * d;
+      /*1*/
+      int cc = a + b / c / d;
       /*2*/
       /*3*/
       /*4*/
-      int cc = /*1*/a / b / c / d;
+      int dd = /*1*/a / b / c / d;
   }
 }

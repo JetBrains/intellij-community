@@ -11,7 +11,6 @@ import com.intellij.util.xmlb.*
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.reflect.Type
 import java.net.URL
@@ -19,10 +18,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
+private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SerializationFilter>>()
 
-@ApiStatus.Internal
-fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
+private fun getDefaultSerializationFilter(): SerializationFilter {
   var result = SoftReference.dereference(skipDefaultsSerializationFilter.get())
   if (result == null) {
     result = object : SkipDefaultsSerializationFilter() {

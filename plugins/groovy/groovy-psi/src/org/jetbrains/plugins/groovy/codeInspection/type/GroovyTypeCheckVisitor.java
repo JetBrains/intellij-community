@@ -15,10 +15,6 @@ import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.BinaryExpressionHighlighter;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrConstructorInvocationHighlighter;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrEnumConstantHighlighter;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrNewExpressionHighlighter;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -68,6 +64,7 @@ import java.util.Objects;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.codeInspection.type.ImplKt.processConstructor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 
@@ -392,10 +389,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   private void checkNamedArgumentsType(@NotNull CallInfo<?> info) {
-    checkNamedArgumentsType(info.getCall());
-  }
-
-  private void checkNamedArgumentsType(@NotNull GroovyPsiElement rawCall) {
+    GroovyPsiElement rawCall = info.getCall();
     if (!(rawCall instanceof GrCall)) return;
     GrCall call = (GrCall)rawCall;
 
@@ -435,6 +429,32 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'"
         );
       }
+    }
+  }
+
+  private void checkOperator(@NotNull CallInfo<? extends GrBinaryExpression> info) {
+    if (hasErrorElements(info.getCall())) return;
+
+    GroovyResolveResult[] results = info.multiResolve();
+    GroovyResolveResult resolveResult = info.advancedResolve();
+
+    if (isOperatorWithSimpleTypes(info.getCall(), resolveResult)) return;
+
+    if (!checkCannotInferArgumentTypes(info)) return;
+
+    if (resolveResult.getElement() != null) {
+      checkMethodApplicability(resolveResult, true, info);
+    }
+    else if (results.length > 0) {
+      for (GroovyResolveResult result : results) {
+        if (!checkMethodApplicability(result, false, info)) return;
+      }
+
+      registerError(
+        info.getElementToHighlight(),
+        ProblemHighlightType.GENERIC_ERROR,
+        GroovyBundle.message("method.call.is.ambiguous")
+      );
     }
   }
 
@@ -699,11 +719,13 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     final GroovyCallReference reference = newExpression.getConstructorReference();
     if (reference == null) return;
-    if (new GrNewExpressionHighlighter(newExpression, reference, myHighlightSink).highlight()) {
+
+    final GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
+    if (processConstructor(reference, newExpression.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
       return;
     }
 
-    checkNamedArgumentsType(newExpression);
+    checkNamedArgumentsType(info);
   }
 
   @Override
@@ -711,11 +733,13 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitEnumConstant(enumConstant);
     if (hasErrorElements(enumConstant) || hasErrorElements(enumConstant.getArgumentList())) return;
 
-    if (new GrEnumConstantHighlighter(enumConstant, myHighlightSink).highlight()) {
+    final GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
+    final GroovyCallReference reference = enumConstant.getConstructorReference();
+    if (processConstructor(reference, enumConstant.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
       return;
     }
 
-    checkNamedArgumentsType(enumConstant);
+    checkNamedArgumentsType(info);
   }
 
   @Override
@@ -723,10 +747,12 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitConstructorInvocation(invocation);
     if (hasErrorElements(invocation) || hasErrorElements(invocation.getArgumentList())) return;
 
-    if (new GrConstructorInvocationHighlighter(invocation, myHighlightSink).highlight()) {
+    final GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
+    final GroovyCallReference reference = invocation.getConstructorReference();
+    if (processConstructor(reference, invocation.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
       return;
     }
-    checkNamedArgumentsType(invocation);
+    checkNamedArgumentsType(info);
   }
   
   @Override
@@ -768,9 +794,8 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitBinaryExpression(@NotNull GrBinaryExpression binary) {
     super.visitBinaryExpression(binary);
-    GroovyCallReference reference = binary.getReference();
-    if (reference == null) return;
-    new BinaryExpressionHighlighter(binary, reference, myHighlightSink).highlight();
+    if (isFake(binary)) return;
+    checkOperator(new GrBinaryExprInfo(binary));
   }
 
   @Override

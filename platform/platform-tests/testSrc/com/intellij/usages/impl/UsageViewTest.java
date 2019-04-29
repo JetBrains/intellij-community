@@ -293,7 +293,9 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     BinaryFileDecompiler decompiler = file -> {
       throw new IllegalStateException("oh no");
     };
-    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler, getTestRootDisposable());
+    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler);
+    Disposer.register(getTestRootDisposable(),
+                      () -> BinaryFileTypeDecompilers.INSTANCE.removeExplicitExtension(ArchiveFileType.INSTANCE, decompiler));
 
     PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
     assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());

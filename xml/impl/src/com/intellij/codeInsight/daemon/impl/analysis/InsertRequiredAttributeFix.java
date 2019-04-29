@@ -128,11 +128,6 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       }
 
       @Override
-      public boolean requiresCommittedPSI() {
-        return false;
-      }
-
-      @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         final LookupElement[] items = new LookupElement[myValues.length];
 

@@ -690,8 +690,7 @@ public class PluginManagerConfigurableNew
       for (PluginId dependId : entry.getValue()) {
         if (!PluginManagerCore.isModuleDependency(dependId)) {
           IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
-          if (!(descriptor instanceof IdeaPluginDescriptorImpl) ||
-              !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
+          if (!(descriptor instanceof IdeaPluginDescriptorImpl) || !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
             dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");
           }
           break;
@@ -867,14 +866,10 @@ public class PluginManagerConfigurableNew
     int bundledEnabled = 0;
     int downloadedEnabled = 0;
 
-    boolean hideImplDetails = !Registry.is("plugins.show.implementation.details");
-
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
         if (descriptor.isBundled()) {
-          if (hideImplDetails && descriptor.isImplementationDetail()) {
-            continue;
-          }
+          if (descriptor.isImplementationDetail() && !Registry.is("plugins.show.implementation.details")) continue;
           bundled.descriptors.add(descriptor);
           if (descriptor.isEnabled()) {
             bundledEnabled++;

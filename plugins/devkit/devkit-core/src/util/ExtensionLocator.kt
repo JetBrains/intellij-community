@@ -10,7 +10,7 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
-import com.intellij.util.xml.DomManager
+import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import java.util.*
@@ -48,8 +48,8 @@ internal fun processExtensionDeclarations(name: String, project: Project, strict
         return@processElementsWithWord true
       }
 
-      val extension = DomManager.getDomManager(project).getDomElement(element) as? Extension ?: return@processElementsWithWord true
-      callback(extension, element)
+      val dom = DomUtil.getDomElement(element) as? Extension ?: return@processElementsWithWord true
+      callback(dom, element)
     }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, true /* case-sensitive */)
 }
 

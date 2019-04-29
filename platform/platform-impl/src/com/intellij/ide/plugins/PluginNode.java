@@ -16,9 +16,10 @@ import java.util.List;
  * @author stathik
  */
 public class PluginNode implements IdeaPluginDescriptor {
-  public enum Status {
-    UNKNOWN, INSTALLED, DOWNLOADED, DELETED
-  }
+  public static final int STATUS_UNKNOWN = 0;
+  public static final int STATUS_INSTALLED = 1;
+  public static final int STATUS_DOWNLOADED = 5;
+  public static final int STATUS_DELETED = 6;
 
   private PluginId id;
   private String name;
@@ -40,7 +41,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private long date = Long.MAX_VALUE;
   private List<PluginId> myDependencies;
   private PluginId[] myOptionalDependencies;
-  private Status myStatus = Status.UNKNOWN;
+  private int myStatus = STATUS_UNKNOWN;
   private boolean myLoaded;
   private String myDownloadUrl;
   private String myRepositoryName;
@@ -167,11 +168,11 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.sinceBuild = sinceBuild;
   }
 
-  public Status getStatus() {
+  public int getStatus() {
     return myStatus;
   }
 
-  public void setStatus(Status status) {
+  public void setStatus(int status) {
     myStatus = status;
   }
 

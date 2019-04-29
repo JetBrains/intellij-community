@@ -476,11 +476,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       public Result calculateQuickResult(ExpressionContext context) {
         return result;
       }
-
-      @Override
-      public boolean requiresCommittedPSI() {
-        return false;
-      }
     };
     template.addVariable("", expr, expr, true);
 

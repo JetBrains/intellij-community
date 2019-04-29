@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,18 +46,21 @@ import java.util.List;
  * @author michael.golubev
  */
 public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
+
   private static final Logger LOG = Logger.getInstance(CloudGitDeploymentRuntime.class);
 
   private static final String COMMIT_MESSAGE = "Deploy";
 
   private static final CommitSession NO_COMMIT = new CommitSession() {
     @Override
-    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public void execute(Collection<Change> changes, String commitMessage) {
+
     }
   };
 
   private static final List<CommitExecutor> ourCommitExecutors = Arrays.asList(
     new CommitExecutor() {
+
       @Nls
       @Override
       public String getActionText() {

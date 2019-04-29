@@ -33,12 +33,4 @@ public class Main {
 
     interface Visitor { }
   }
-  
-  class X implements Iterable<String> {
-    class Y {
-      void test() {
-        forEach(System.out::println);
-      }
-    }
-  }
 }
