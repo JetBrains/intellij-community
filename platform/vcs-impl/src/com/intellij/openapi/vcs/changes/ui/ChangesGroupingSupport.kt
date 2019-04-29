@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.actionSystem.DataKey
@@ -18,7 +18,8 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
   private val groupingFactories = collectFactories(project)
   private val groupingConfig = groupingFactories.allKeys.associateBy({ it }, { false }).toMutableMap()
 
-  val groupingKeys: Set<String> get() = groupingConfig.filterValues { it }.keys
+  val groupingKeys: Set<String>
+    get() = groupingConfig.filterValues { it }.keys
 
   operator fun get(groupingKey: String): Boolean {
     if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey")
@@ -60,19 +61,17 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
   fun removePropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.removePropertyChangeListener(listener)
 
   companion object {
-    @JvmField val KEY: DataKey<ChangesGroupingSupport> = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")
-    const val PROP_GROUPING_KEYS: String = "ChangesGroupingKeys"
-    const val DIRECTORY_GROUPING: String = "directory"
-    const val MODULE_GROUPING: String = "module"
-    const val REPOSITORY_GROUPING: String = "repository"
-    const val NONE_GROUPING: String = "none"
+    @JvmField
+    val KEY = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")
+
+    const val PROP_GROUPING_KEYS = "ChangesGroupingKeys"
+    const val DIRECTORY_GROUPING = "directory"
+    const val MODULE_GROUPING = "module"
+    const val REPOSITORY_GROUPING = "repository"
+    const val NONE_GROUPING = "none"
 
     private fun collectFactories(project: Project): KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> {
-      return object : KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(
-        ChangesGroupingPolicyFactory::class.java,
-        ChangesGroupingPolicyFactory.EP_NAME,
-        project.picoContainer
-      ) {
+      return object : KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(ChangesGroupingPolicyFactory::class.java, ChangesGroupingPolicyFactory.EP_NAME, project.picoContainer) {
         override fun getKey(key: String) = key
       }
     }
