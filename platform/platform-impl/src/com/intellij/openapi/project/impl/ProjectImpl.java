@@ -33,23 +33,23 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.project.ProjectKt;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.*;
-import org.picocontainer.*;
+import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.util.List;
 
-public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
+public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   public static final String NAME_FILE = ".name";
@@ -61,6 +61,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private String myName;
   private final boolean myLight;
   static boolean ourClassesAreLoaded;
+
+  private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
+    //noinspection CodeBlock2Expr
+    return ServiceManager.getService(ProjectStoreFactory.class).createStore(this);
+  });
 
   /**
    * @param filePath System-independent path
@@ -126,55 +131,20 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
     super.bootstrapPicoContainer(name);
-    final MutablePicoContainer picoContainer = getPicoContainer();
 
-    final ProjectStoreClassProvider projectStoreClassProvider =
-      (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
-
-    picoContainer.registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
-    picoContainer.registerComponent(new ComponentAdapter() {
-      private ComponentAdapter myDelegate;
-
-      @NotNull
-      private ComponentAdapter getDelegate() {
-        if (myDelegate == null) {
-          Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new CachingConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
-        }
-        return myDelegate;
-      }
-
-      @Override
-      public Object getComponentKey() {
-        return IComponentStore.class;
-      }
-
-      @Override
-      public Class getComponentImplementation() {
-        return getDelegate().getComponentImplementation();
-      }
-
-      @Override
-      public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-        return getDelegate().getComponentInstance(container);
-      }
-
-      @Override
-      public void verify(final PicoContainer container) throws PicoIntrospectionException {
-        getDelegate().verify(container);
-      }
-
-      @Override
-      public void accept(final PicoVisitor visitor) {
-        visitor.visitComponentAdapter(this);
-        getDelegate().accept(visitor);
-      }
-    });
+    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
   }
 
+  // do not call for default project
   @NotNull
-  IProjectStore getStateStore() {
-    return ProjectKt.getStateStore(this);
+  private IProjectStore getStateStore() {
+    return (IProjectStore)getComponentStore();
+  }
+
+  @Override
+  @NotNull
+  public IComponentStore getComponentStore() {
+    return myComponentStore.getValue();
   }
 
   @Override

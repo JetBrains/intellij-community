@@ -118,8 +118,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
-    Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null || UIUtil.getParentOfType(JSpinner.class, c) != null ?
-                    JBUI.emptyInsets() : getDefaultMargins();
+    Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null ||
+                    UIUtil.getParentOfType(JSpinner.class, c) != null ||
+                    UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBUI.emptyInsets() : getDefaultMargins();
 
     JBInsets.removeFrom(bounds, c.getInsets());
     JBInsets.removeFrom(bounds, margin);

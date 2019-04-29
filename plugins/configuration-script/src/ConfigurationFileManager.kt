@@ -1,7 +1,6 @@
 package com.intellij.configurationScript
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -17,9 +16,6 @@ import org.yaml.snakeyaml.reader.StreamReader
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
-
-internal const val IDE_FILE = "intellij.yaml"
-internal const val IDE_FILE_VARIANT_2 = "intellij.yml"
 
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
@@ -60,7 +56,7 @@ internal class ConfigurationFileManager(project: Project) {
 
           if (event is VFileCreateEvent) {
             // VFileCreateEvent computes file on request, so, avoid getFile call
-            if (event.isDirectory || !(event.childName == IDE_FILE || event.childName == IDE_FILE_VARIANT_2)) {
+            if (event.isDirectory || !isConfigurationFile(event.childName)) {
               continue
             }
           }
@@ -87,9 +83,13 @@ internal fun doRead(reader: Reader): MappingNode? {
 }
 
 // todo check parent?
-internal fun isConfigurationFile(file: VirtualFile): Boolean {
-  val nameSequence = file.nameSequence
-  return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
+internal fun isConfigurationFile(file: VirtualFile) = isConfigurationFile(file.nameSequence)
+
+private const val filePrefix = "intellij."
+private val fileExtensions = listOf("yaml", "yml", "json")
+
+internal fun isConfigurationFile(name: CharSequence): Boolean {
+  return name.startsWith(filePrefix) && fileExtensions.any { name.length == (filePrefix.length + it.length) && name.endsWith(it) }
 }
 
 /**

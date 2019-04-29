@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -43,9 +43,9 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
 
   @Override
-  protected boolean setupConfigurationFromContext(final JavaTestConfigurationWithDiscoverySupport configuration,
-                                                  ConfigurationContext configurationContext,
-                                                  Ref<PsiElement> ref) {
+  protected boolean setupConfigurationFromContext(@NotNull final JavaTestConfigurationWithDiscoverySupport configuration,
+                                                  @NotNull ConfigurationContext configurationContext,
+                                                  @NotNull Ref<PsiElement> ref) {
     if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
       return false;
     }
@@ -181,7 +181,8 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   @Override
-  public boolean isConfigurationFromContext(JavaTestConfigurationWithDiscoverySupport configuration, ConfigurationContext configurationContext) {
+  public boolean isConfigurationFromContext(@NotNull JavaTestConfigurationWithDiscoverySupport configuration,
+                                            @NotNull ConfigurationContext configurationContext) {
     final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
     return position != null && position.equals(getPosition(configuration));
   }

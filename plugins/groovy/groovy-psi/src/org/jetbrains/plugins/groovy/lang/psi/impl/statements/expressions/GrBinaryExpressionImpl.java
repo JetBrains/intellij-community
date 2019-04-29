@@ -9,10 +9,10 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
@@ -24,7 +24,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorRef
  */
 public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl implements GrBinaryExpression {
 
-  private final NullableLazyValue<GroovyReference> myReference = AtomicNullableLazyValue.createValue(
+  private final NullableLazyValue<GroovyCallReference> myReference = AtomicNullableLazyValue.createValue(
     () -> hasOperatorReference(this) && !isFake(this) ? new GrOperatorReference(this) : null
   );
 
@@ -34,7 +34,7 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
 
   @Nullable
   @Override
-  public GroovyReference getReference() {
+  public GroovyCallReference getReference() {
     return myReference.getValue();
   }
 

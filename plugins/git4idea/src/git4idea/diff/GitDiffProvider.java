@@ -107,6 +107,17 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
            status == FileStatus.MERGED_WITH_CONFLICTS;
   }
 
+  @Nullable
+  @Override
+  public ContentRevision createCurrentFileContent(@NotNull VirtualFile file) {
+    if (file.isDirectory()) return null;
+    if (GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file) == null) return null;
+
+    VcsRevisionNumber revisionNumber = getCurrentRevision(file);
+    FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file.getPath()));
+    return GitContentRevision.createRevision(filePath, revisionNumber, myProject, file.getCharset());
+  }
+
   /**
    * {@inheritDoc}
    */

@@ -1,0 +1,61 @@
+{
+  "groups": [
+    {
+      "id": "my.simple.regexp.value",
+      "builds": [
+        {
+          "from": "191.4811"
+        }
+      ],
+      "rules": {
+        "event_id": [
+          "regexp:(.+)\\s*:\\s*(.*)"
+          ]}
+        },
+          {
+            "id": "my.simple.regexp.node.value",
+            "builds": [
+              {
+                "from": "191.4811"
+              }
+            ],
+            "rules": {
+              "event_id": [
+                "{regexp:(.+)\\s*:\\s*(.*)}"
+              ]
+            }
+          },
+          {
+            "id": "my.simple.regexp.ref",
+            "builds": [
+              {
+                "from": "191.4811"
+              }
+            ],
+            "rules": {
+              "event_id": [
+                "regexp#regexp_ref"
+              ],
+              "regexps": {
+                "regexp_ref": "(.+)\\s*:\\s*(.*)"
+              }
+            }
+          },
+          {
+            "id": "my.simple.regexp.node.ref",
+            "builds": [
+              {
+                "from": "191.4811"
+              }
+            ],
+            "rules": {
+              "event_id": [
+                "{regexp#regexp_ref}"
+              ],
+              "regexps": {
+                "regexp_ref": "(.+)\\s*:\\s*(.*)"
+              }
+            }
+          }
+        ]
+      }

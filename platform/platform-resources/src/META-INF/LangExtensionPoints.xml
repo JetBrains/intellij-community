@@ -1,5 +1,7 @@
 <idea-plugin>
   <extensionPoints>
+    <extensionPoint name="highlightingPassFactory" interface="com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar"/>
+
     <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
     </extensionPoint>
@@ -524,7 +526,7 @@
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
-    <extensionPoint name="statistician" beanClass="com.intellij.psi.statistics.StatisticsExtensionPoint">
+    <extensionPoint name="statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP">
       <with attribute="implementationClass" implements="com.intellij.psi.statistics.Statistician"/>
     </extensionPoint>
 

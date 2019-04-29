@@ -195,6 +195,11 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
        }
 
        @Override
+       public boolean requiresCommittedPSI() {
+         return false;
+       }
+
+       @Override
        public LookupElement[] calculateLookupItems(ExpressionContext context) {
          final LookupElement[] elements = expression.calculateLookupItems(context);
          if (elements != null) {

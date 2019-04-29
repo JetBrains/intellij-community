@@ -136,6 +136,11 @@ public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
     }
 
     @Override
+    public boolean requiresCommittedPSI() {
+      return false;
+    }
+
+    @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       return null;
     }

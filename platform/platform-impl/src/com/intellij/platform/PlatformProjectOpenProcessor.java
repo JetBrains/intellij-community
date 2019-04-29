@@ -239,7 +239,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
         return true;
       }
       else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        if (!ProjectUtil.closeAndDispose(projectToClose)) {
+        if (!ProjectManagerEx.getInstanceEx().closeAndDispose(projectToClose)) {
           return true;
         }
       }
@@ -255,7 +255,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     else {
       int exitCode = ProjectUtil.confirmOpenNewProject(false);
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        if (!ProjectUtil.closeAndDispose(projectToClose)) {
+        if (!ProjectManagerEx.getInstanceEx().closeAndDispose(projectToClose)) {
           return true;
         }
       }

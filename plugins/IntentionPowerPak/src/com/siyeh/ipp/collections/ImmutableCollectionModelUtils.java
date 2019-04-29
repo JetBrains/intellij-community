@@ -4,11 +4,11 @@ package com.siyeh.ipp.collections;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
@@ -18,81 +18,28 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.*;
 
-import static com.siyeh.ipp.collections.ImmutableCollectionModelUtils.ImmutableCollectionModel.CollectionType;
-
 class ImmutableCollectionModelUtils {
-
-  private static final Map<CollectionType, String> INITIALIZERS = new EnumMap<>(CollectionType.class);
-
-  static {
-    INITIALIZERS.put(CollectionType.SET, "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<>()");
-    INITIALIZERS.put(CollectionType.MAP, "new " + CommonClassNames.JAVA_UTIL_HASH_MAP + "<>()");
-    INITIALIZERS.put(CollectionType.LIST, "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>()");
-  }
 
   @Nullable
   static ImmutableCollectionModel createModel(@NotNull PsiMethodCallExpression call) {
     CollectionType type = CollectionType.create(call);
     if (type == null) return null;
+    if (!ControlFlowUtils.canExtractStatement(call)) return null;
     PsiExpression[] args = call.getArgumentList().getExpressions();
-    if (type == CollectionType.MAP && args.length % 2 != 0) return null;
     PsiVariable assignedVariable = getAssignedVariable(call);
     return new ImmutableCollectionModel(call, type, args, assignedVariable);
   }
 
   static void replaceWithMutable(@NotNull ImmutableCollectionModel model, @Nullable Editor editor) {
-    PsiMethodCallExpression call = model.getCall();
-    Project project = call.getProject();
-    PsiElementFactory factory = PsiElementFactory.getInstance(project);
-    String initializerText = INITIALIZERS.get(model.getType());
-    if (initializerText == null) return;
-
-    PsiVariable assignedVariable = model.getAssignedVariable();
-    if (assignedVariable != null) {
-      String name = assignedVariable.getName();
-      if (name == null) return;
-      PsiElement initializer = PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
-      PsiStatement statement = getOuterStatement(initializer);
-      if (statement == null) return;
-      PsiElement anchor = addUpdates(name, model, statement, factory);
-      if (editor != null) editor.getCaretModel().moveToOffset(anchor.getTextRange().getEndOffset());
-    }
-    else {
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      PsiType type = call.getType();
-      if (type == null) return;
-      String[] nameSuggestions = getNameSuggestions(call, type, codeStyleManager);
-      if (nameSuggestions.length == 0) return;
-      String name = nameSuggestions[0];
-      PsiElement anchor = new CommentTracker().replaceAndRestoreComments(call, name);
-      PsiStatement statement = getOuterStatement(anchor);
-      if (statement == null) return;
-      PsiDeclarationStatement declaration = addDeclaration(name, initializerText, type, statement, factory, codeStyleManager);
-      if (declaration == null) return;
-      if (anchor.getParent() instanceof PsiExpressionStatement) new CommentTracker().deleteAndRestoreComments(anchor);
-      anchor = addUpdates(name, model, declaration, factory);
-      if (editor != null) {
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-        PsiVariable variable = PsiTreeUtil.getChildOfType(declaration, PsiVariable.class);
-        if (variable == null) return;
-        new VariableRenamer(variable, editor, anchor).performInplaceRefactoring(new LinkedHashSet<>(Arrays.asList(nameSuggestions)));
-      }
-    }
-  }
-
-  @Nullable
-  private static PsiStatement getOuterStatement(PsiElement element) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiLambdaExpression.class);
-    if (!(parent instanceof PsiLambdaExpression)) return (PsiStatement)parent;
-    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)parent;
-    PsiCodeBlock codeBlock = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
-    return ControlFlowUtils.getFirstStatementInBlock(codeBlock);
+    ToMutableCollectionConverter.convert(model, editor);
   }
 
   @Nullable
@@ -112,92 +59,197 @@ class ImmutableCollectionModelUtils {
     return ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
   }
 
-  @NotNull
-  private static PsiElement addUpdates(@NotNull String name,
-                                       @NotNull ImmutableCollectionModel model,
-                                       @NotNull PsiStatement anchor,
-                                       @NotNull PsiElementFactory factory) {
-    PsiExpression[] args = model.getArgs();
-    for (int i = 0; i < args.length; i++) {
-      if (model.getType() != CollectionType.MAP) {
-        anchor = addUpdate(name + ".add(" + args[i].getText() + ");", anchor, factory);
-        continue;
-      }
-      if (i % 2 != 0) {
-        anchor = addUpdate(name + ".put(" + args[i - 1].getText() + ", " + args[i].getText() + ");", anchor, factory);
-      }
-    }
-    return anchor;
-  }
+  private enum CollectionType {
 
-  @NotNull
-  private static PsiStatement addUpdate(@NotNull String updateText, @NotNull PsiStatement anchor, @NotNull PsiElementFactory factory) {
-    PsiStatement statement = factory.createStatementFromText(updateText, null);
-    return BlockUtils.addAfter(anchor, statement);
-  }
+    MAP(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyMap").parameterCount(0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of")
+        .withContextFilter(
+          e -> e instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)e).getArgumentList().getExpressionCount() % 2 == 0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "ofEntries"))),
+    LIST(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList").parameterCount(0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList").parameterCount(1),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"))),
+    SET(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptySet").parameterCount(0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of")));
 
-  @Nullable
-  private static PsiDeclarationStatement addDeclaration(@NotNull String name,
-                                                        @NotNull String initializerText,
-                                                        @NotNull PsiType type,
-                                                        @NotNull PsiStatement statement,
-                                                        @NotNull PsiElementFactory factory,
-                                                        @NotNull JavaCodeStyleManager codeStyleManager) {
-    PsiExpression initializer = factory.createExpressionFromText(initializerText, null);
-    PsiDeclarationStatement declaration = factory.createVariableDeclarationStatement(name, type, initializer);
-    declaration = ObjectUtils.tryCast(codeStyleManager.shortenClassReferences(declaration), PsiDeclarationStatement.class);
-    if (declaration == null) return null;
-    return ObjectUtils.tryCast(BlockUtils.addBefore(statement, declaration), PsiDeclarationStatement.class);
-  }
+    private final CallMatcher myMatcher;
 
-  @NotNull
-  private static String[] getNameSuggestions(@NotNull PsiMethodCallExpression call,
-                                             @NotNull PsiType type,
-                                             @NotNull JavaCodeStyleManager codeStyleManager) {
-    String propertyName = getPropertyName(call, type, codeStyleManager);
-    SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, propertyName, call, type);
-    return codeStyleManager.suggestUniqueVariableName(nameInfo, call, true).names;
-  }
-
-  @NotNull
-  private static String getPropertyName(PsiMethodCallExpression call, PsiType type, JavaCodeStyleManager codeStyleManager) {
-    String propertyName = getPropertyNameByCall(call);
-    if (propertyName != null) return propertyName;
-    return codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type).names[0];
-  }
-
-  @Nullable
-  private static String getPropertyNameByCall(@NotNull PsiMethodCallExpression call) {
-    PsiMethodCallExpression outerCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
-    if (outerCall == null) return null;
-    PsiMethod method = outerCall.resolveMethod();
-    if (method == null) return null;
-    PsiExpression[] arguments = outerCall.getArgumentList().getExpressions();
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 0) return null;
-    for (int i = 0; i < arguments.length; i++) {
-      if (arguments[i] == call) {
-        int idx = i >= parameters.length ? parameters.length - 1 : i;
-        return parameters[idx].getName();
-      }
-    }
-    return null;
-  }
-
-  private static class VariableRenamer extends VariableInplaceRenamer {
-
-    private final PsiElement myAnchor;
-
-    private VariableRenamer(@NotNull PsiNamedElement elementToRename, @NotNull Editor editor, @NotNull PsiElement anchor) {
-      super(elementToRename, editor);
-      this.myAnchor = anchor;
-      editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
+    @Contract(pure = true)
+    CollectionType(@NotNull CallMatcher matcher) {
+      myMatcher = matcher;
     }
 
-    @Override
-    public void finish(boolean success) {
-      super.finish(success);
-      myEditor.getCaretModel().moveToOffset(myAnchor.getTextRange().getEndOffset());
+    @Nullable
+    static CollectionType create(@NotNull PsiMethodCallExpression call) {
+      return Arrays.stream(CollectionType.values()).filter(type -> type.myMatcher.test(call)).findFirst().orElse(null);
+    }
+  }
+
+  /**
+   * Replaces immutable collection creation with mutable one.
+   */
+  private static class ToMutableCollectionConverter {
+
+    private static final Map<CollectionType, String> INITIALIZERS = new EnumMap<>(CollectionType.class);
+    private static final CallMatcher MAP_ENTRY_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "entry").parameterCount(2);
+
+    static {
+      INITIALIZERS.put(CollectionType.SET, "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<>()");
+      INITIALIZERS.put(CollectionType.MAP, "new " + CommonClassNames.JAVA_UTIL_HASH_MAP + "<>()");
+      INITIALIZERS.put(CollectionType.LIST, "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>()");
+    }
+
+    private final PsiElementFactory myElementFactory;
+    private final JavaCodeStyleManager myCodeStyleManager;
+    private final Editor myEditor;
+
+    private ToMutableCollectionConverter(@NotNull Project project, @Nullable Editor editor) {
+      myElementFactory = PsiElementFactory.getInstance(project);
+      myCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      myEditor = editor;
+    }
+
+    private void replaceWithMutable(@NotNull ImmutableCollectionModel model) {
+      PsiMethodCallExpression call = RefactoringUtil.ensureCodeBlock(model.myCall);
+      if (call == null) return;
+      PsiStatement statement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(call, false), PsiStatement.class);
+      if (statement == null) return;
+
+      PsiVariable assignedVariable = model.myAssignedVariable;
+      if (assignedVariable != null) {
+        String initializerText = INITIALIZERS.get(model.myType);
+        if (initializerText == null) return;
+        PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
+        PsiElement anchor = addUpdates(assignedVariable, model, statement);
+        if (myEditor != null) myEditor.getCaretModel().moveToOffset(anchor.getTextRange().getEndOffset());
+      }
+      else {
+        createVariable(call, statement, model);
+      }
+    }
+
+    private void createVariable(@NotNull PsiMethodCallExpression call,
+                                @NotNull PsiStatement statement,
+                                @NotNull ImmutableCollectionModel model) {
+      PsiType type = call.getType();
+      if (type == null) return;
+      String[] names = getNameSuggestions(call, type);
+      if (names.length == 0) return;
+      String name = names[0];
+      PsiDeclarationStatement declaration = createDeclaration(name, type, model.myType, statement);
+      if (declaration == null) return;
+      PsiVariable declaredVariable = (PsiVariable)declaration.getDeclaredElements()[0];
+      PsiElement anchor = addUpdates(declaredVariable, model, declaration);
+      if (call.getParent() instanceof PsiExpressionStatement) {
+        new CommentTracker().deleteAndRestoreComments(statement);
+      }
+      else {
+        PsiReplacementUtil.replaceExpression(call, name, new CommentTracker());
+      }
+      if (myEditor != null) VariableRenamer.rename(declaredVariable, names, myEditor, anchor);
+    }
+
+    @Nullable
+    private PsiDeclarationStatement createDeclaration(@NotNull String name,
+                                                      @NotNull PsiType type,
+                                                      @NotNull CollectionType collectionType,
+                                                      @NotNull PsiStatement usage) {
+      String initializerText = INITIALIZERS.get(collectionType);
+      if (initializerText == null) return null;
+      PsiExpression initializer = myElementFactory.createExpressionFromText(initializerText, null);
+      PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(name, type, initializer);
+      return ObjectUtils.tryCast(BlockUtils.addBefore(usage, declaration), PsiDeclarationStatement.class);
+    }
+
+    @NotNull
+    private String[] getNameSuggestions(@NotNull PsiMethodCallExpression call, @NotNull PsiType type) {
+      String propertyName = getPropertyName(call, type);
+      SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, propertyName, call, type);
+      return myCodeStyleManager.suggestUniqueVariableName(nameInfo, call, true).names;
+    }
+
+    @NotNull
+    private String getPropertyName(@NotNull PsiMethodCallExpression call, @NotNull PsiType type) {
+      String propertyName = getPropertyNameByCall(call);
+      if (propertyName != null) return propertyName;
+      return myCodeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type).names[0];
+    }
+
+    @NotNull
+    private PsiStatement addUpdates(@NotNull PsiVariable variable, @NotNull ImmutableCollectionModel model, @NotNull PsiStatement anchor) {
+      String name = variable.getName();
+      if (name == null) return anchor;
+      return StreamEx.of(createUpdates(name, model))
+        .map(update -> myElementFactory.createStatementFromText(update, null))
+        .foldLeft(anchor, (acc, update) -> BlockUtils.addAfter(acc, update));
+    }
+
+    @NotNull
+    private static List<String> createUpdates(@NotNull String name, @NotNull ImmutableCollectionModel model) {
+      boolean isMapOfEntriesCall = "ofEntries".equals(model.myCall.getMethodExpression().getReferenceName());
+      PsiExpression[] args = model.myArgs;
+      List<String> updates = new ArrayList<>();
+      for (int i = 0; i < args.length; i++) {
+        PsiExpression arg = args[i];
+        if (model.myType != CollectionType.MAP) {
+          updates.add(String.format("%s.add(%s);", name, arg.getText()));
+        }
+        else if (isMapOfEntriesCall) {
+          updates.add(String.format("%s.put(%s);", name, extractPutArgs(arg)));
+        }
+        else if (i % 2 != 0) {
+          updates.add(String.format("%s.put(%s, %s);", name, args[i - 1].getText(), arg.getText()));
+        }
+      }
+      return updates;
+    }
+
+    @Nullable
+    private static String extractPutArgs(@NotNull PsiExpression entryExpression) {
+      if (entryExpression instanceof PsiReferenceExpression) {
+        return MessageFormat.format("{0}.getKey(), {0}.getValue()", entryExpression.getText());
+      }
+      PsiCallExpression call = ObjectUtils.tryCast(entryExpression, PsiCallExpression.class);
+      if (call == null || !isEntryConstruction(call)) return null;
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) return null;
+      PsiExpression[] expressions = argumentList.getExpressions();
+      if (expressions.length == 1) return extractPutArgs(expressions[0]);
+      if (expressions.length == 2) return expressions[0].getText() + "," + expressions[1].getText();
+      return null;
+    }
+
+    @Nullable
+    private static String getPropertyNameByCall(@NotNull PsiMethodCallExpression call) {
+      PsiMethodCallExpression outerCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
+      if (outerCall == null) return null;
+      PsiMethod method = outerCall.resolveMethod();
+      if (method == null) return null;
+      PsiExpression[] arguments = outerCall.getArgumentList().getExpressions();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 0) return null;
+      for (int i = 0; i < arguments.length; i++) {
+        if (arguments[i] == call) {
+          int idx = i >= parameters.length ? parameters.length - 1 : i;
+          return parameters[idx].getName();
+        }
+      }
+      return null;
+    }
+
+    private static boolean isEntryConstruction(@NotNull PsiCallExpression call) {
+      if (MAP_ENTRY_CALL.matches(call)) return true;
+      PsiNewExpression newExpression = ObjectUtils.tryCast(call, PsiNewExpression.class);
+      return newExpression != null && InheritanceUtil.isInheritor(newExpression.getType(), CommonClassNames.JAVA_UTIL_MAP_ENTRY);
+    }
+
+    static void convert(@NotNull ImmutableCollectionModel model, @Nullable Editor editor) {
+      new ToMutableCollectionConverter(model.myCall.getProject(), editor).replaceWithMutable(model);
     }
   }
 
@@ -205,22 +257,6 @@ class ImmutableCollectionModelUtils {
    * Represents immutable collection creation call (e.g. {@link Collections#singleton(Object)}).
    */
   static class ImmutableCollectionModel {
-
-    private static final CallMatcher LIST_CALL_MATCHER = CallMatcher.anyOf(
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList").parameterCount(0),
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList").parameterCount(1),
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").withLanguageLevelAtLeast(LanguageLevel.JDK_1_9)
-    );
-    private static final CallMatcher MAP_CALL_MATCHER = CallMatcher.anyOf(
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyMap").parameterCount(0),
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2),
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of").withLanguageLevelAtLeast(LanguageLevel.JDK_1_9)
-    );
-    private static final CallMatcher SET_CALL_MATCHER = CallMatcher.anyOf(
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptySet").parameterCount(0),
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1),
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of").withLanguageLevelAtLeast(LanguageLevel.JDK_1_9)
-    );
 
     private final PsiMethodCallExpression myCall;
     private final CollectionType myType;
@@ -237,40 +273,34 @@ class ImmutableCollectionModelUtils {
       myArgs = args;
       myAssignedVariable = assignedVariable;
     }
+  }
 
-    PsiMethodCallExpression getCall() {
-      return myCall;
+  /**
+   * Renames given variable and moves caret to anchor after renaming.
+   */
+  private static class VariableRenamer extends VariableInplaceRenamer {
+
+    private final PsiElement myAnchor;
+
+    private VariableRenamer(@NotNull PsiNamedElement elementToRename, @NotNull Editor editor, @NotNull PsiElement anchor) {
+      super(elementToRename, editor);
+      this.myAnchor = anchor;
+      editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
     }
 
-    CollectionType getType() {
-      return myType;
+    @Override
+    public void finish(boolean success) {
+      super.finish(success);
+      myEditor.getCaretModel().moveToOffset(myAnchor.getTextRange().getEndOffset());
     }
 
-    PsiExpression[] getArgs() {
-      return myArgs;
-    }
-
-    PsiVariable getAssignedVariable() {
-      return myAssignedVariable;
-    }
-
-    enum CollectionType {
-
-      MAP(MAP_CALL_MATCHER),
-      LIST(LIST_CALL_MATCHER),
-      SET(SET_CALL_MATCHER);
-
-      private final CallMatcher myMatcher;
-
-      @Contract(pure = true)
-      CollectionType(@NotNull CallMatcher matcher) {
-        myMatcher = matcher;
-      }
-
-      @Nullable
-      static CollectionType create(@NotNull PsiMethodCallExpression call) {
-        return Arrays.stream(CollectionType.values()).filter(type -> type.myMatcher.test(call)).findFirst().orElse(null);
-      }
+    static void rename(@NotNull PsiNamedElement elementToRename,
+                       @NotNull String[] names,
+                       @NotNull Editor editor,
+                       @NotNull PsiElement anchor) {
+      PsiDocumentManager.getInstance(elementToRename.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+      LinkedHashSet<String> suggestions = new LinkedHashSet<>(Arrays.asList(names));
+      new VariableRenamer(elementToRename, editor, anchor).performInplaceRefactoring(suggestions);
     }
   }
 }

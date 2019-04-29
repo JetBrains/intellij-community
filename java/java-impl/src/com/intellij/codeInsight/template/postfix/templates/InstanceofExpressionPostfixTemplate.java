@@ -110,6 +110,11 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
       public Result calculateQuickResult(ExpressionContext context) {
         return null;
       }
+
+      @Override
+      public boolean requiresCommittedPSI() {
+        return false;
+      }
     };
 
     template.addTextSegment(exprText);

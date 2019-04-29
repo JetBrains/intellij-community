@@ -1,10 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.dictionary;
 
-
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,17 +12,13 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.util.SPFileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
-import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String TEST_DIC = "test.dic";
@@ -31,32 +27,26 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String TEMP_DIC = TEST_DIC + ".temp";
   private static final String TEST_DIC_DIR = "testDir" ;
   public static final String TEMP = "temp";
-  private List<String> oldPaths;
   SpellCheckerSettings settings;
   SpellCheckerManager spellCheckerManager;
-
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
     settings = SpellCheckerSettings.getInstance(getProject());
     spellCheckerManager = SpellCheckerManager.getInstance(getProject());
-    oldPaths = settings.getCustomDictionariesPaths();
+
+    List<String> oldPaths = settings.getCustomDictionariesPaths();
     List<String> testDictionaries = new ArrayList<>();
     SPFileUtil.processFilesRecursively(getTestDictDirectory(), file -> {
-      if(extensionEquals(file, "dic")){
+      if(FileUtilRt.extensionEquals(file, "dic")){
         testDictionaries.add(file);
       }
     });
     settings.setCustomDictionariesPaths(testDictionaries);
+    Disposer.register(getTestRootDisposable(), () -> settings.setCustomDictionariesPaths(oldPaths));
     spellCheckerManager.fullConfigurationReload();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    //noinspection SuperTearDownInFinally
-    super.tearDown();
-    settings.setCustomDictionariesPaths(oldPaths);
   }
 
   @Override
@@ -73,11 +63,11 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   private VirtualFile getTestDictionaryFile() {
-    return findFileByIoFile(Paths.get(getTestDictionary()).toFile(), true);
+    return VfsUtil.findFileByIoFile(Paths.get(getTestDictionary()).toFile(), true);
   }
 
   private String loadFromTestDictionary() throws IOException {
-    final VirtualFile file = findFileByIoFile(new File(getTestDictionary()), true);
+    final VirtualFile file = VfsUtil.findFileByIoFile(new File(getTestDictionary()), true);
     if (file == null) return null;
     return VfsUtilCore.loadText(file);
   }
@@ -98,7 +88,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     final String oldDictContent = loadFromTestDictionary();
     try {
       doBeforeCheck();
-      modifyDictContent(VfsUtilCore.loadText(findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true)));
+      modifyDictContent(VfsUtilCore.loadText(VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true)));
       doAfterCheck();
     }
     finally {
@@ -108,7 +98,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   private void doNewDictTest() throws IOException {
-    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
+    final VirtualFile file = VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
     try {
       doBeforeCheck();
       WriteAction.run(() -> file.copy(this, file.getParent(), NEW_TEST_DIC));
@@ -121,8 +111,8 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   private void doLoadTest() throws IOException {
-    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
-    final String new_test_dic = toSystemIndependentName(file.getParent().getPath() + File.separator + NEW_TEST_DIC);
+    final VirtualFile file = VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
+    final String new_test_dic = FileUtil.toSystemIndependentName(file.getParent().getPath() + File.separator + NEW_TEST_DIC);
     settings.getCustomDictionariesPaths().add(new_test_dic);
     spellCheckerManager.fullConfigurationReload();
     try {
@@ -149,15 +139,15 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     }
     finally {
       //back to initial state
-      WriteAction.run(() -> findFileByIoFile(Paths.get(getTestDictDirectory(), TEMP_DIC).toFile(), true).rename(this, TEST_DIC));
+      WriteAction.run(() -> VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEMP_DIC).toFile(), true).rename(this, TEST_DIC));
     }
   }
 
-  public void testAddDictionary() throws IOException, InterruptedException {
+  public void testAddDictionary() throws IOException {
     doNewDictTest();
   }
 
-  public void testAddOneMoreDictionary() throws IOException, InterruptedException {
+  public void testAddOneMoreDictionary() throws IOException {
     doNewDictTest();
   }
 
@@ -206,17 +196,18 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testMoveDict() throws IOException {
-    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
-    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile tempDir = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
     final VirtualFile file = testDir.findChild(TEST_DIC_AFTER);
-    
+
+    doBeforeCheck();
+
+    WriteAction.run(() -> {
+      final VirtualFile copy = file.copy(this, tempDir, TEST_DIC);
+      copy.move(this, testDir);
+    });
+
     try {
-      doBeforeCheck();
-      
-      WriteAction.run(() -> {
-        final VirtualFile copy = file.copy(this, tempDir, TEST_DIC);
-        copy.move(this, testDir);
-      });
       doAfterCheck();
     }
     finally {
@@ -229,17 +220,16 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testMoveDictOutside() throws IOException {
-    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
-    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
-    final VirtualFile file = testDir.findChild(TEST_DIC);
-    moveFileToDirAndCheck(file,testDir, tempDir);
+    VirtualFile tempDir = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
+    moveFileToDirAndCheck(testDir.findChild(TEST_DIC), testDir, tempDir);
   }
 
   public void testMoveNotInDictFolder() throws IOException {
-    final VirtualFile tempDir1 = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP + "1"), true);
-    final VirtualFile tempDir2 = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP + "2"), true);
-    
-    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile tempDir1 = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP + "1"), true);
+    final VirtualFile tempDir2 = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP + "2"), true);
+
+    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
     final VirtualFile file = testDir.findChild(TEST_DIC_AFTER);
     WriteAction.run(() -> file.copy(this, tempDir1, TEST_DIC));
 
@@ -258,7 +248,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testMoveInsideDictFolders() throws IOException {
-    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
     final VirtualFile file = testDir.findChild(TEST_DIC);
 
     final String yetAnotherDirName = "yetAnotherDir";
@@ -267,23 +257,25 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     moveFileToDirAndCheck(file, testDir, anotherDir);
   }
 
-  private void moveFileToDirAndCheck(VirtualFile file, VirtualFile from, VirtualFile to) throws IOException {
+  private void moveFileToDirAndCheck(@NotNull VirtualFile file, @NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
+    doBeforeCheck();
+    WriteAction.run(() -> file.move(this, to));
     try {
-      doBeforeCheck();
-      WriteAction.run(() -> file.move(this, to));
       doAfterCheck();
     }
     finally {
-      //back to initial state
+      // back to initial state
       WriteAction.run(() -> {
-        to.findChild(TEST_DIC).move(this, from);
+        if (to.findChild(TEST_DIC) != null) {
+          to.findChild(TEST_DIC).move(this, from);
+        }
         to.delete(this);
       });
     }
   }
 
   public void testRenameToDict() throws IOException {
-    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
+    final VirtualFile file = VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
     try {
       doBeforeCheck();
       WriteAction.run(() -> file.rename(this, TEST_DIC));
@@ -296,7 +288,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testRenameToTxt() throws IOException {
-    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC).toFile(), true);
+    final VirtualFile file = VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC).toFile(), true);
     try {
       doBeforeCheck();
       WriteAction.run(() -> file.rename(this, "test.txt"));
@@ -309,7 +301,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testRenameStillDicExtension() throws IOException {
-    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC).toFile(), true);
+    final VirtualFile file = VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC).toFile(), true);
     try {
       doBeforeCheck();
       WriteAction.run(() -> file.rename(this, "still.dic"));
@@ -322,7 +314,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testRenameStillNotDicExtension() throws IOException {
-    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
+    final VirtualFile file = VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
     try {
       doBeforeCheck();
       WriteAction.run(() -> file.rename(this, "still_not_dic.extension"));
@@ -336,8 +328,8 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
 
 
   public void testRemoveDictDir() throws IOException {
-    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
-    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile tempDir = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
     final VirtualFile testDictDir = testDir.findChild(TEST_DIC_DIR);
     try {
       doBeforeCheck();
@@ -357,8 +349,8 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testAddDictDir() throws IOException {
-    final VirtualFile testDir = findFileByIoFile(new File(getTestDictDirectory()), true);
-    final VirtualFile tempDir = findFileByIoFile(createTempDirectory(TEST_DIC_DIR, TEMP), true);
+    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
+    final VirtualFile tempDir = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP), true);
     WriteAction.run(() -> testDir.findChild(TEST_DIC_AFTER).copy(this, tempDir, TEST_DIC));
     try {
       doBeforeCheck();

@@ -1,6 +1,6 @@
 /*
 Value is always false (null == s)
-  Parameter 's' is annotated as 'non-null' (@NotNull String s)
+  Parameter 's' is annotated as 'non-null' (@NotNull)
  */
 import org.jetbrains.annotations.NotNull;
 

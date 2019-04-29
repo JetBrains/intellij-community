@@ -16,6 +16,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
@@ -554,15 +555,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
         if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(reference, other, handler))) {
-          handler.addResult(other, 0, -1, myMatchingVisitor.getMatchContext());
+          handler.addResult(other, myMatchingVisitor.getMatchContext());
         }
       }
       else {
         final PsiElement deparenthesized = other instanceof PsiExpression && context.getOptions().isLooseMatching() ?
                                            PsiUtil.skipParenthesizedExprDown((PsiExpression)other) : other;
-        myMatchingVisitor.setResult(handler.validate(deparenthesized, 0, -1, context));
+        myMatchingVisitor.setResult(handler.validate(deparenthesized, context));
         if (myMatchingVisitor.getResult()) {
-          handler.addResult(other, 0, -1, context);
+          handler.addResult(other, context);
         }
       }
       return;
@@ -822,8 +823,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       try {
         final boolean result = (handler.isSubtype() || handler.isStrictSubtype())
                                ? checkMatchWithinHierarchy(patternElement, matchedElement, handler)
-                               : handler.validate(matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
-        if (result) handler.addResult(fullTypeResult ? matchedType : matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
+                               : handler.validate(matchedElement, myMatchingVisitor.getMatchContext());
+        if (result) handler.addResult(fullTypeResult ? matchedType : matchedElement, myMatchingVisitor.getMatchContext());
         return result;
       }
       finally {
@@ -906,7 +907,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     final boolean negated = handler.getPredicate() instanceof NotPredicate;
-    while (nodes.hasNext() && negated == handler.validate(nodes.current(), 0, -1, myMatchingVisitor.getMatchContext())) {
+    while (nodes.hasNext() && negated == handler.validate(nodes.current(), myMatchingVisitor.getMatchContext())) {
       nodes.advance();
     }
     return negated != nodes.hasNext();
@@ -1210,14 +1211,40 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitForStatement(final PsiForStatement for1) {
     final PsiForStatement for2 = (PsiForStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(notEmpty(for1.getInitialization()), notEmpty(for2.getInitialization())) &&
-                                myMatchingVisitor.matchOptionally(for1.getCondition(), for2.getCondition()) &&
-                                myMatchingVisitor.matchOptionally(for1.getUpdate(), for2.getUpdate()) &&
-                                matchBody(for1.getBody(), for2.getBody()));
+    final PsiStatement initialization = for1.getInitialization();
+    if (!myMatchingVisitor.setResult(initialization == null || initialization instanceof PsiEmptyStatement
+                                     ? myMatchingVisitor.isLeftLooseMatching()
+                                     : myMatchingVisitor.matchSequentially(getIterator(initialization),
+                                                                           getIterator(for2.getInitialization())))) {
+      return;
+    }
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(for1.getCondition(), for2.getCondition()))) {
+      return;
+    }
+    final PsiStatement update = for1.getUpdate();
+    if (!myMatchingVisitor.setResult(update == null
+                                     ? myMatchingVisitor.isLeftLooseMatching()
+                                     : myMatchingVisitor.matchSequentially(getIterator(update), getIterator(for2.getUpdate())))) {
+      return;
+    }
+    myMatchingVisitor.setResult(matchBody(for1.getBody(), for2.getBody()));
   }
 
-  private static PsiStatement notEmpty(PsiStatement statement) {
-    return statement instanceof PsiEmptyStatement ? null : statement;
+  private static NodeIterator getIterator(PsiStatement statement) {
+    if (statement instanceof PsiExpressionListStatement) {
+      PsiExpressionListStatement expressionListStatement = (PsiExpressionListStatement)statement;
+      return new ArrayBackedNodeIterator(expressionListStatement.getExpressionList().getExpressions());
+    }
+    else if (statement instanceof PsiExpressionStatement) {
+      PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+      return SingleNodeIterator.newSingleNodeIterator(expressionStatement.getExpression());
+    }
+    else if (statement instanceof PsiEmptyStatement) {
+      return SingleNodeIterator.EMPTY;
+    }
+    else {
+      return SingleNodeIterator.newSingleNodeIterator(statement);
+    }
   }
 
   @Override
@@ -1627,8 +1654,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (id == null) id = clazz2;
       final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, id, handler))) {
-          handler.addResult(id, 0, -1, myMatchingVisitor.getMatchContext());
+        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, clazz2, handler))) {
+          handler.addResult(id, myMatchingVisitor.getMatchContext());
         }
       }
       else {

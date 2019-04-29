@@ -9,7 +9,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,14 +64,14 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
       @Override
       public boolean isSpeedSearchEnabled() {
-        return SpeedSearchSupply.getSupply(myComboBox, true) != null;
+        return true;
       }
 
       @NotNull
       @Override
       public String getTextFor(T value) {
         Component component = myComboBox.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
-        return component instanceof TitledSeparator ? "" :
+        return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
                component instanceof SimpleColoredComponent ?
                ((SimpleColoredComponent)component).getCharSequence(false).toString() : String.valueOf(value);
       }
@@ -80,11 +79,12 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       @Override
       public boolean isSelectable(T value) {
         Component component = myComboBox.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
-        return !(component instanceof TitledSeparator);
+        return !(component instanceof TitledSeparator || component instanceof JSeparator);
       }
     };
     step.setDefaultOptionIndex(myComboBox.getSelectedIndex());
     myPopup = new ListPopupImpl(step, 10);
+    myPopup.setRequestFocus(false);
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {

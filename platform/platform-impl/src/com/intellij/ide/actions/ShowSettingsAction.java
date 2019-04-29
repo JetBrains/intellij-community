@@ -25,7 +25,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.isMainMenuOrShortcut(e.getPlace()));
+    e.getPresentation().setEnabledAndVisible(!ActionPlaces.isMacSystemMenuAction(e));
     if (SystemInfo.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       // It's called from Preferences in App menu.
       e.getPresentation().setVisible(false);

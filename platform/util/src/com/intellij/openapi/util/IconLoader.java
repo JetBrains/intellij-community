@@ -24,6 +24,7 @@ import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -805,6 +806,15 @@ public final class IconLoader {
         isResolved = true;
       }
 
+      MyUrlResolver(@Nullable URL url, @NotNull String path, @Nullable ClassLoader classLoader) {
+        myClass = null;
+        myOverriddenPath = path;
+        myClassLoader = classLoader;
+        myUrl = url;
+        myHandleNotFound = HandleNotFound.IGNORE;
+        isResolved = true;
+      }
+
       MyUrlResolver(@NotNull String path, @Nullable Class clazz, @Nullable ClassLoader classLoader, @NotNull HandleNotFound handleNotFound) {
         myOverriddenPath = path;
         myClass = clazz;
@@ -860,6 +870,14 @@ public final class IconLoader {
         if (classLoader != null && path != null && path.startsWith("/")) {
           return new MyUrlResolver(path.substring(1), null, classLoader, myHandleNotFound).resolve();
         }
+
+        //This use case for temp themes only. Here we want immediately replace existing icon to a local one
+        if (path != null && path.startsWith("file:/")) {
+          try {
+            return new MyUrlResolver(new URL(path), path.substring(1), classLoader).resolve();
+          } catch (MalformedURLException ignore) {}
+        }
+
         return this;
       }
 

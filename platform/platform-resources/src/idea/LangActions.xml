@@ -40,6 +40,12 @@
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
 
+    <group id="ShowIntentionsGroup" compact="true">
+      <reference ref="ShowIntentionActions"/>
+      <separator/>
+      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </group>
+
     <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
     <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Find"/>
 
@@ -144,6 +150,7 @@
       <separator/>
       <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.ShowNavBarAction"/>
+      <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>

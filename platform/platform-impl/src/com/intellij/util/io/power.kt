@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.jna.JnaLoader
@@ -72,10 +72,8 @@ private class WinPowerService : PowerService {
     }
   }
 
+  @Structure.FieldOrder("ACLineStatus", "BatteryFlag", "BatteryLifePercent", "SystemStatusFlag", "BatteryLifeTime", "BatteryFullLifeTime")
   class SYSTEM_POWER_STATUS : Structure() {
-    override fun getFieldOrder() =
-      listOf("ACLineStatus", "BatteryFlag", "BatteryLifePercent", "SystemStatusFlag", "BatteryLifeTime", "BatteryFullLifeTime")
-
     @JvmField var ACLineStatus: Byte = 0
     @JvmField var BatteryFlag: Byte = 0
     @JvmField var BatteryLifePercent: Byte = 0
@@ -89,7 +87,7 @@ private class WinPowerService : PowerService {
     fun GetLastError(): Int
   }
 
-  private val kernel32 = Native.loadLibrary("kernel32", Kernel32::class.java)
+  private val kernel32 = Native.load("kernel32", Kernel32::class.java)
 }
 //</editor-fold>
 
@@ -150,14 +148,13 @@ private class MacPowerService : PowerService {
     fun CFBooleanGetValue(ref: Pointer): Short
   }
 
+  @Structure.FieldOrder("location", "length")
   class CFRange : Structure(), Structure.ByValue {
-    override fun getFieldOrder() = listOf("location", "length")
-
     @JvmField var location: Long = 0
     @JvmField var length: Long = 0
   }
 
-  private val ioKit: IOKit = Native.loadLibrary("IOKit", IOKit::class.java)
+  private val ioKit: IOKit = Native.load("IOKit", IOKit::class.java)
   private val kIOPSIsPresentKey = CFSTR("Is Present")
   private val kIOPSTypeKey = CFSTR("Type")
   private val kIOPSInternalBatteryType = CFSTR("InternalBattery")

@@ -340,33 +340,30 @@ public class MoveClassesOrPackagesUtil {
     return directory;
   }
 
-  public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
-                                             final List<? extends VirtualFile> contentSourceRoots,
-                                             final PsiDirectory initialDirectory) {
+  @Nullable
+  public static VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
+                                             @NotNull List<? extends VirtualFile> contentSourceRoots,
+                                             @Nullable PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
     LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
     Map<PsiDirectory, String> relativePathsToCreate = new HashMap<>();
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
-    final PsiDirectory selectedDirectory = DirectoryChooserUtil.chooseDirectory(
+    PsiDirectory selectedDir = DirectoryChooserUtil.chooseDirectory(
       targetDirectories.toArray(PsiDirectory.EMPTY_ARRAY),
       initialDirectory,
       project,
-      relativePathsToCreate
-    );
+      relativePathsToCreate);
 
-    if (selectedDirectory == null) return null;
-    final VirtualFile virt = selectedDirectory.getVirtualFile();
-    final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virt);
-    LOG.assertTrue(sourceRootForFile != null);
-    return sourceRootForFile;
+    VirtualFile vDir = selectedDir == null ? null : selectedDir.getVirtualFile();
+    return vDir == null ? null : ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(vDir);
   }
 
-  public static void buildDirectoryList(PackageWrapper aPackage,
-                                        List<? extends VirtualFile> contentSourceRoots,
-                                        LinkedHashSet<? super PsiDirectory> targetDirectories,
-                                        Map<PsiDirectory, String> relativePathsToCreate) {
+  public static void buildDirectoryList(@NotNull PackageWrapper aPackage,
+                                        @NotNull List<? extends VirtualFile> contentSourceRoots,
+                                        @NotNull LinkedHashSet<? super PsiDirectory> targetDirectories,
+                                        @NotNull Map<PsiDirectory, String> relativePathsToCreate) {
 
     final PsiDirectory[] directories = aPackage.getDirectories();
     sourceRoots:

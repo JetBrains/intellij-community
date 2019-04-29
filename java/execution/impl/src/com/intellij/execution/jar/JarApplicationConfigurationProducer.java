@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jar;
 
 import com.intellij.execution.Location;
@@ -24,9 +24,9 @@ public final class JarApplicationConfigurationProducer extends LazyRunConfigurat
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(JarApplicationConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull JarApplicationConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     VirtualFile file = getJarFileFromContext(context);
     if (file != null) {
       configuration.setName(file.getName());
@@ -46,7 +46,7 @@ public final class JarApplicationConfigurationProducer extends LazyRunConfigurat
   }
 
   @Override
-  public boolean isConfigurationFromContext(JarApplicationConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull JarApplicationConfiguration configuration, @NotNull ConfigurationContext context) {
     VirtualFile file = getJarFileFromContext(context);
     return file != null && FileUtil.pathsEqual(file.getPath(), configuration.getJarPath());
   }

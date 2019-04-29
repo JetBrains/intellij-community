@@ -4,8 +4,6 @@ package org.jetbrains.idea.devkit.kotlin.inspections.missingApi
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.roots.JavaModuleExternalPaths
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
@@ -92,19 +90,17 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
   }
 
   private fun assertAnnotationsFoundForClass(className: String) {
-    val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))!!
+    val psiClass = myFixture.findClass(className)
     val annotations = AnnotationUtil.findAllAnnotations(psiClass, listOf(MissingRecentApiUsageProcessor.AVAILABLE_SINCE_ANNOTATION), false)
     assertNotEmpty(annotations)
   }
 
   fun `test highlighting of missing API usages in Java file`() {
-    myFixture.configureByFiles("plugin/missingApiUsages.java")
-    myFixture.checkHighlighting()
+    myFixture.testHighlighting("plugin/missingApiUsages.java")
   }
 
   fun `test highlighting of missing API usages in Kotlin file`() {
-    myFixture.configureByFiles("plugin/missingApiUsages.kt")
-    myFixture.checkHighlighting()
+    myFixture.testHighlighting("plugin/missingApiUsages.kt")
   }
 
 }

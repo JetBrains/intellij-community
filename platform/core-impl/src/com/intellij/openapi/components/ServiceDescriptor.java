@@ -3,19 +3,29 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 public final class ServiceDescriptor {
-  @Attribute("serviceInterface")
+  @Attribute()
   public String serviceInterface;
 
-  @Attribute("serviceImplementation")
+  @Attribute()
   public String serviceImplementation;
 
-  @Attribute("testServiceImplementation")
+  @Attribute
   public String testServiceImplementation;
 
-  @Attribute("overrides")
+  @Attribute
   public boolean overrides;
+
+  /**
+   * Cannot be specified as part of {@link State} because to get annotation, class must be loaded, but it cannot be done for performance reasons.
+   */
+  @Attribute
+  @ApiStatus.Experimental
+  @Nullable
+  public String configurationSchemaKey;
 
   public String getInterface() {
     return serviceInterface != null ? serviceInterface : getImplementation();

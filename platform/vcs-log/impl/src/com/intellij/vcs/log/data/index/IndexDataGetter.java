@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -312,11 +311,6 @@ public class IndexDataGetter {
     return affectedCommits;
   }
 
-  @Nullable
-  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept) {
-    return executeAndCatch(() -> myIndexStorage.paths.iterateRenames(parent, child, accept));
-  }
-
   @NotNull
   public FileNamesData createFileNamesData(@NotNull FilePath path) {
     return createFileNamesData(Collections.singletonList(path));
@@ -333,8 +327,8 @@ public class IndexDataGetter {
 
       @Nullable
       @Override
-      public Couple<FilePath> findRename(int parent, int child, @NotNull Function1<? super Couple<FilePath>, Boolean> accept) {
-        return IndexDataGetter.this.findRename(parent, child, couple -> accept.invoke(couple));
+      public Couple<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+        return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
       }
     };
   }

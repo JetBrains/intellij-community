@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,8 +30,6 @@ import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.proxy.SharedProxyConfig;
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.THashMap;
@@ -50,7 +49,6 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -128,7 +126,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void initComponent() {
     final HttpConfigurable currentState = getState();
     if (currentState != null) {
-      final Element serialized = XmlSerializer.serializeIfNotDefault(currentState, new SkipDefaultsSerializationFilter());
+      final Element serialized = XmlSerializer.serialize(currentState);
       if (serialized == null) {
         // all settings are defaults
         // trying user's proxy configuration entered while obtaining the license
@@ -364,7 +362,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Deprecated
   public void writeExternal(Element element) throws WriteExternalException {
-    XmlSerializer.serializeInto(getState(), element);
+    com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
       ApplicationManager.getApplication().invokeLater(() -> {
         IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();

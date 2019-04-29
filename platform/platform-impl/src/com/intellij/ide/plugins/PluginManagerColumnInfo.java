@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -95,7 +95,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
   }
 
   public static boolean isDownloaded(@NotNull PluginNode node) {
-    if (node.getStatus() == PluginNode.STATUS_DOWNLOADED) return true;
+    if (node.getStatus() == PluginNode.Status.DOWNLOADED) return true;
     final PluginId pluginId = node.getPluginId();
     if (PluginManager.isPluginInstalled(pluginId)) {
       return false;
@@ -111,22 +111,22 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
       final int up = defaultSortKey != null && defaultSortKey.getSortOrder() == SortOrder.ASCENDING ? -1 : 1;
       return (o1, o2) -> {
         if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-          final int status1 = ((PluginNode)o1).getStatus();
-          final int status2 = ((PluginNode)o2).getStatus();
+          final PluginNode.Status status1 = ((PluginNode)o1).getStatus();
+          final PluginNode.Status status2 = ((PluginNode)o2).getStatus();
           if (isDownloaded((PluginNode)o1)){
             if (!isDownloaded((PluginNode)o2)) return up;
             return comparator.compare(o1, o2);
           }
           if (isDownloaded((PluginNode)o2)) return -up;
 
-          if (status1 == PluginNode.STATUS_DELETED) {
-            if (status2 != PluginNode.STATUS_DELETED) return up;
+          if (status1 == PluginNode.Status.DELETED) {
+            if (status2 != PluginNode.Status.DELETED) return up;
             return comparator.compare(o1, o2);
           }
-          if (status2 == PluginNode.STATUS_DELETED) return -up;
+          if (status2 == PluginNode.Status.DELETED) return -up;
 
-          if (status1 == PluginNode.STATUS_INSTALLED) {
-            if (status2 !=PluginNode.STATUS_INSTALLED) return up;
+          if (status1 == PluginNode.Status.INSTALLED) {
+            if (status2 != PluginNode.Status.INSTALLED) return up;
             final boolean hasNewerVersion1 = ourState.hasNewerVersion(o1.getPluginId());
             final boolean hasNewerVersion2 = ourState.hasNewerVersion(o2.getPluginId());
             if (hasNewerVersion1 != hasNewerVersion2) {
@@ -135,7 +135,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
             }
             return comparator.compare(o1, o2);
           }
-          if (status2 == PluginNode.STATUS_INSTALLED) {
+          if (status2 == PluginNode.Status.INSTALLED) {
             return -up;
           }
         }
@@ -247,7 +247,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
         }
         myLabel.setText(!StringUtil.isEmpty(category) ? category : "n/a");
       }
-      if (myPluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
+      if (myPluginNode.getStatus() == PluginNode.Status.INSTALLED) {
         PluginId pluginId = myPluginNode.getPluginId();
         final boolean hasNewerVersion = ourState.hasNewerVersion(pluginId);
         if (hasNewerVersion) {

@@ -20,11 +20,11 @@ import static com.intellij.execution.process.AnsiCommands.*;
 import static com.intellij.execution.process.AnsiStreamingLexer.SGR_SUFFIX;
 import static com.intellij.execution.process.AnsiTerminalEmulator.BlinkSpeed.RAPID_BLINK;
 import static com.intellij.execution.process.AnsiTerminalEmulator.BlinkSpeed.SLOW_BLINK;
-import static com.intellij.execution.process.AnsiTerminalEmulator.Boldness.BOLD;
-import static com.intellij.execution.process.AnsiTerminalEmulator.Boldness.FAINT;
 import static com.intellij.execution.process.AnsiTerminalEmulator.FrameType.*;
 import static com.intellij.execution.process.AnsiTerminalEmulator.Underline.DOUBLE_UNDERLINE;
 import static com.intellij.execution.process.AnsiTerminalEmulator.Underline.SINGLE_UNDERLINE;
+import static com.intellij.execution.process.AnsiTerminalEmulator.Weight.BOLD;
+import static com.intellij.execution.process.AnsiTerminalEmulator.Weight.FAINT;
 import static com.intellij.openapi.editor.markup.EffectType.BOLD_LINE_UNDERSCORE;
 import static com.intellij.openapi.editor.markup.EffectType.LINE_UNDERSCORE;
 
@@ -42,7 +42,7 @@ class AnsiTerminalEmulator {
   @NotNull
   private Font myFont = Font.DEFAULT;
   @NotNull
-  private Boldness myBoldness = Boldness.DEFAULT;
+  private Weight myWeight = Weight.DEFAULT;
   @NotNull
   private Underline myUnderline = Underline.DEFAULT;
   @NotNull
@@ -102,10 +102,10 @@ class AnsiTerminalEmulator {
         resetTerminal();
         break;
       case SGR_COMMAND_BOLD:
-        myBoldness = BOLD;
+        myWeight = BOLD;
         break;
       case SGR_COMMAND_FAINT:
-        myBoldness = FAINT;
+        myWeight = FAINT;
         break;
       case SGR_COMMAND_ITALIC:
         myIsItalic = true;
@@ -135,12 +135,12 @@ class AnsiTerminalEmulator {
         myIsFraktur = true;
         break;
       case SGR_COMMAND_DOUBLE_UNDERLINE:
-        myBoldness = Boldness.DEFAULT;
+        myWeight = Weight.DEFAULT;
         // this is ECMA-48 behaviour. Probably we could make this configurable via flag?
         myUnderline = DOUBLE_UNDERLINE;
         break;
       case SGR_COMMAND_NO_BOLD_FAINT:
-        myBoldness = Boldness.DEFAULT;
+        myWeight = Weight.DEFAULT;
         break;
       case SGR_COMMAND_NO_ITALIC_FRAKTUR:
         myIsFraktur = false;
@@ -235,8 +235,8 @@ class AnsiTerminalEmulator {
     if (myFont != Font.DEFAULT) {
       codeConsumer.accept(myFont.sgrCode);
     }
-    if (myBoldness != Boldness.DEFAULT) {
-      codeConsumer.accept(myBoldness.sgrCode);
+    if (myWeight != Weight.DEFAULT) {
+      codeConsumer.accept(myWeight.sgrCode);
     }
     if (myUnderline != Underline.DEFAULT) {
       codeConsumer.accept(myUnderline.sgrCode);
@@ -284,7 +284,7 @@ class AnsiTerminalEmulator {
    */
   private void resetTerminal() {
     myFont = EMPTY_EMULATOR.myFont;
-    myBoldness = EMPTY_EMULATOR.myBoldness;
+    myWeight = EMPTY_EMULATOR.myWeight;
     myUnderline = EMPTY_EMULATOR.myUnderline;
     myBackgroundColor = EMPTY_EMULATOR.myBackgroundColor;
     myForegroundColor = EMPTY_EMULATOR.myForegroundColor;
@@ -344,8 +344,8 @@ class AnsiTerminalEmulator {
   }
 
   @NotNull
-  public Boldness getBoldness() {
-    return myBoldness;
+  public Weight getWeight() {
+    return myWeight;
   }
 
   public boolean isItalic() {
@@ -366,7 +366,7 @@ class AnsiTerminalEmulator {
     if (myIsFraktur != emulator.myIsFraktur) return false;
     if (myIsOverlined != emulator.myIsOverlined) return false;
     if (myFont != emulator.myFont) return false;
-    if (myBoldness != emulator.myBoldness) return false;
+    if (myWeight != emulator.myWeight) return false;
     if (myUnderline != emulator.myUnderline) return false;
     if (myBlink != emulator.myBlink) return false;
     if (myFrameType != emulator.myFrameType) return false;
@@ -383,7 +383,7 @@ class AnsiTerminalEmulator {
   @Override
   public int hashCode() {
     int result = myFont.hashCode();
-    result = 31 * result + myBoldness.hashCode();
+    result = 31 * result + myWeight.hashCode();
     result = 31 * result + myUnderline.hashCode();
     result = 31 * result + myBlink.hashCode();
     result = 31 * result + myFrameType.hashCode();
@@ -481,18 +481,18 @@ class AnsiTerminalEmulator {
     }
   }
 
-  public enum Boldness {
+  public enum Weight {
     FAINT(SGR_COMMAND_FAINT),
     NORMAL(SGR_COMMAND_NO_BOLD_FAINT),
     BOLD(SGR_COMMAND_BOLD);
 
-    private static final Boldness DEFAULT = NORMAL;
+    private static final Weight DEFAULT = NORMAL;
     /**
      * SGR sequence code that should be used to switch to this option
      */
     public final int sgrCode;
 
-    Boldness(int sgrCode) {
+    Weight(int sgrCode) {
       this.sgrCode = sgrCode;
     }
   }

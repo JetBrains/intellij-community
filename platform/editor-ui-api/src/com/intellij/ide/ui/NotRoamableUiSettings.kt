@@ -51,9 +51,9 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 }
 
 class NotRoamableUiOptions : BaseState() {
-  var ideAAType by property(AntialiasingType.SUBPIXEL)
+  var ideAAType by enum(AntialiasingType.SUBPIXEL)
 
-  var editorAAType by property(AntialiasingType.SUBPIXEL)
+  var editorAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:Property(filter = FontFilter::class)
   var fontFace by string()

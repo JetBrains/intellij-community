@@ -2330,6 +2330,7 @@ public class StringUtil extends StringUtilRt {
         String replaceWith = to.get(j);
 
         final int len = toReplace.length();
+        if (len == 0) continue;
         if (text.regionMatches(i, toReplace, 0, len)) {
           if (result == null) {
             result = new StringBuilder(text.length());

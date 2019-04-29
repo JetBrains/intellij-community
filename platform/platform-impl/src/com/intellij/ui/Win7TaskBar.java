@@ -44,7 +44,7 @@ class Win7TaskBar {
   private static Function mySetOverlayIcon;
 
   public interface User32Ex extends StdCallLibrary {
-    User32Ex INSTANCE = Native.loadLibrary("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
+    User32Ex INSTANCE = Native.load("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
 
     int LookupIconIdFromDirectoryEx(Memory pResBits, boolean fIcon, int cxDesired, int cyDesired, int Flags);
 

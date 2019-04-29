@@ -7,14 +7,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefin
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.ReferenceExpressionTest
+import org.jetbrains.plugins.groovy.util.ExpressionTest
 import org.junit.Before
 import org.junit.Test
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 
 @CompileStatic
-class CustomMapPropertyTest extends GroovyLatestTest implements ReferenceExpressionTest {
+class CustomMapPropertyTest extends GroovyLatestTest implements ExpressionTest {
 
   @Before
   void addClasses() {

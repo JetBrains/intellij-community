@@ -11,13 +11,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
+import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.lexer.EditorConfigLexerAdapter
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
 
 class EditorConfigParserDefinition : ParserDefinition {
-  override fun createLexer(project: Project) = EditorConfigLexerAdapter()
+  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter();
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
   override fun getCommentTokens() = COMMENTS

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -27,7 +13,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
@@ -45,18 +30,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction");
-
-  @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
-    final Pair<PsiElement, Handler> pair = findHandler(element);
-    if (pair == null) return false;
-
-    String text = pair.first.getText();
-    return !IOUtil.isAscii(text);
-  }
+  private static final Logger LOG = Logger.getInstance(ConvertToBasicLatinAction.class);
 
   @NotNull
   @Override
@@ -71,99 +48,108 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    final Pair<PsiElement, Handler> pair = findHandler(element);
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      Pair<PsiElement, Handler> pair = findHandler(element);
+      if (pair != null) {
+        return !IOUtil.isAscii(pair.first.getText());
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    Pair<PsiElement, Handler> pair = findHandler(element);
     if (pair == null) return;
-    final PsiElement workElement = pair.first;
-    final Handler handler = pair.second;
-    final String newText = handler.processText(workElement);
-    final PsiElement newElement = handler.createReplacement(workElement, newText);
-    workElement.replace(newElement);
+    PsiElement toReplace = pair.first;
+    PsiElement newElement = pair.second.getSubstitution(toReplace);
+    toReplace.replace(newElement);
   }
 
   @Nullable
-  private static Pair<PsiElement, Handler> findHandler(final PsiElement element) {
-    for (final Handler handler : ourHandlers) {
-      final PsiElement applicable = handler.findApplicable(element);
+  private static Pair<PsiElement, Handler> findHandler(PsiElement element) {
+    for (Handler handler : ourHandlers) {
+      PsiElement applicable = handler.findApplicable(element);
       if (applicable != null) {
-        return Pair.create(applicable, handler);
+        return pair(applicable, handler);
       }
     }
-
     return null;
   }
 
-  private static boolean shouldConvert(final char ch) {
-    return Character.UnicodeBlock.of(ch) != Character.UnicodeBlock.BASIC_LATIN;
-  }
-
   private abstract static class Handler {
-    @Nullable
-    public abstract PsiElement findApplicable(final PsiElement element);
+    abstract @Nullable PsiElement findApplicable(PsiElement element);
 
-    public String processText(final PsiElement element) {
-      final String text = element.getText();
-      final StringBuilder sb = new StringBuilder();
+    PsiElement getSubstitution(PsiElement element) {
+      String text = element.getText();
+      StringBuilder sb = new StringBuilder();
       for (int i = 0; i < text.length(); i++) {
-        final char ch = text.charAt(i);
-        if (!shouldConvert(ch)) {
+        char ch = text.charAt(i);
+        if (isBasicLatin(ch)) {
           sb.append(ch);
         }
         else {
           convert(sb, ch);
         }
       }
-      return sb.toString();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+      return getSubstitution(factory, element, sb.toString());
+    }
+
+    protected static boolean isBasicLatin(char ch) {
+      return Character.UnicodeBlock.of(ch) == Character.UnicodeBlock.BASIC_LATIN;
     }
 
     protected abstract void convert(StringBuilder sb, char ch);
 
-    public abstract PsiElement createReplacement(final PsiElement element, final String newText);
+    protected abstract PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText);
   }
 
-  private static final Handler[] ourHandlers = { new MyLiteralHandler(), new MyDocCommentHandler(), new MyCommentHandler() };
+  private static final Handler[] ourHandlers = {new LiteralHandler(), new DocCommentHandler(), new CommentHandler()};
 
-  private static class MyLiteralHandler extends Handler {
+  private static class LiteralHandler extends Handler {
     private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
 
     @Override
-    public PsiElement findApplicable(final PsiElement element) {
-      final PsiElement parent = element.getParent();
-      return element instanceof PsiJavaToken &&
-             LITERALS.contains(((PsiJavaToken)element).getTokenType()) &&
-             parent instanceof PsiLiteralExpression
-             ? parent : null;
+    PsiElement findApplicable(PsiElement element) {
+      if (element instanceof PsiJavaToken && LITERALS.contains(((PsiJavaToken)element).getTokenType())) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiLiteralExpression) {
+          return parent;
+        }
+      }
+      return null;
     }
 
     @Override
-    public PsiElement createReplacement(final PsiElement element, final String newText) {
-      return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(newText, element.getParent());
+    protected PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText) {
+      return factory.createExpressionFromText(newText, element.getParent());
     }
 
     @Override
-    protected void convert(final StringBuilder sb, final char ch) {
+    protected void convert(StringBuilder sb, char ch) {
       sb.append(String.format("\\u%04x", (int)ch));
     }
   }
 
-  private static class MyDocCommentHandler extends Handler {
+  private static class DocCommentHandler extends Handler {
     private static Map<Character, String> ourEntities;
 
     @Override
-    public PsiElement findApplicable(final PsiElement element) {
+    PsiElement findApplicable(PsiElement element) {
       return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
     }
 
     @Override
-    public String processText(final PsiElement element) {
+    PsiElement getSubstitution(PsiElement element) {
       loadEntities(element.getProject());
-      return super.processText(element);
+      return ourEntities != null ? super.getSubstitution(element) : element;
     }
 
     @Override
-    protected void convert(final StringBuilder sb, final char ch) {
-      assert ourEntities != null;
-      final String entity = ourEntities.get(ch);
+    protected void convert(StringBuilder sb, char ch) {
+      String entity = ourEntities.get(ch);
       if (entity != null) {
         sb.append('&').append(entity).append(';');
       }
@@ -173,20 +159,20 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     }
 
     @Override
-    public PsiElement createReplacement(final PsiElement element, final String newText) {
-      return JavaPsiFacade.getElementFactory(element.getProject()).createDocCommentFromText(newText);
+    protected PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText) {
+      return factory.createCommentFromText(newText, element.getParent());
     }
 
-    private static void loadEntities(final Project project) {
+    private static void loadEntities(Project project) {
       if (ourEntities != null) return;
 
-      final XmlFile file;
+      XmlFile file;
       try {
-        final String url = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
+        String url = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
         if (url == null) { LOG.error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI); return; }
-        final VirtualFile vFile = VfsUtil.findFileByURL(new URL(url));
+        VirtualFile vFile = VfsUtil.findFileByURL(new URL(url));
         if (vFile == null) { LOG.error("Resource not found: " + url); return; }
-        final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
         if (!(psiFile instanceof XmlFile)) { LOG.error("Unexpected resource: " + psiFile); return; }
         file = (XmlFile)psiFile;
       }
@@ -194,36 +180,30 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
         LOG.error(e); return;
       }
 
-      ourEntities = new HashMap<>();
-      final Pattern pattern = Pattern.compile("&#(\\d+);");
-      XmlUtil.processXmlElements(file, new PsiElementProcessor() {
-        @Override
-        public boolean execute(@NotNull PsiElement element) {
-          if (element instanceof XmlEntityDecl) {
-            final XmlEntityDecl entity = (XmlEntityDecl)element;
-            final Matcher m = pattern.matcher(entity.getValueElement().getValue());
-            if (m.matches()) {
-              final char i = (char)Integer.parseInt(m.group(1));
-              if (shouldConvert(i)) {
-                ourEntities.put(i, entity.getName());
-              }
+      Map<Character, String> entities = new HashMap<>();
+      Pattern pattern = Pattern.compile("&#(\\d+);");
+      XmlUtil.processXmlElements(file, element -> {
+        if (element instanceof XmlEntityDecl) {
+          XmlEntityDecl entity = (XmlEntityDecl)element;
+          Matcher m = pattern.matcher(entity.getValueElement().getValue());
+          if (m.matches()) {
+            char i = (char)Integer.parseInt(m.group(1));
+            if (!isBasicLatin(i)) {
+              entities.put(i, entity.getName());
             }
           }
-          return true;
         }
+        return true;
       }, true);
+
+      ourEntities = entities;
     }
   }
 
-  private static class MyCommentHandler extends MyDocCommentHandler {
+  private static class CommentHandler extends DocCommentHandler {
     @Override
-    public PsiElement findApplicable(final PsiElement element) {
+    PsiElement findApplicable(PsiElement element) {
       return element instanceof PsiComment ? element : null;
-    }
-
-    @Override
-    public PsiElement createReplacement(final PsiElement element, final String newText) {
-      return JavaPsiFacade.getElementFactory(element.getProject()).createCommentFromText(newText, element.getParent());
     }
   }
 }

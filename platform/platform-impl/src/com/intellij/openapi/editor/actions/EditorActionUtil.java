@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.actions;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -19,17 +20,21 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+
+import static java.lang.Character.*;
 
 public class EditorActionUtil {
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
@@ -204,6 +209,242 @@ public class EditorActionUtil {
     return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
   }
 
+  @NotNull
+  public static TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+    int startOffset = editor.getCaretModel().getOffset();
+    // IDEA-211756 "Delete to word end" is extremely inconvenient on whitespaces
+    int endOffset = getNextCaretStopOffset(editor, CaretStopPolicy.BOTH, isCamel, handleQuoted);
+    return TextRange.create(startOffset, endOffset);
+  }
+
+  @NotNull
+  public static TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+    int endOffset = editor.getCaretModel().getOffset();
+    int startOffset = getPreviousCaretStopOffset(editor, CaretStopPolicy.WORD_START, isCamel, handleQuoted);
+    return TextRange.create(startOffset, endOffset);
+  }
+
+  public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
+    return getNextCaretStopOffset(editor, caretStopPolicy, isCamel, false);
+  }
+
+  public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
+    return getPreviousCaretStopOffset(editor, caretStopPolicy, isCamel, false);
+  }
+
+  @SuppressWarnings("Duplicates")
+  public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                           boolean isCamel, boolean handleQuoted) {
+    int maxOffset = getNextLineStopOffset(editor, caretStopPolicy.getLineStop());
+
+    final CaretStop wordStop = caretStopPolicy.getWordStop();
+    if (wordStop.equals(CaretStop.NONE)) return maxOffset;
+
+    final int offset = editor.getCaretModel().getOffset();
+    if (offset == maxOffset) return maxOffset;
+
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset);
+
+    final int newOffset = getNextWordStopOffset(text, wordStop, tokenIterator, offset, maxOffset, isCamel);
+    if (newOffset < maxOffset &&
+        handleQuoted && tokenIterator != null &&
+        isTokenStart(tokenIterator, newOffset - 1) &&
+        isQuotedToken(tokenIterator, text)) {
+      // now at the end of an opening quote: | "word" -> "|word"
+      // find the start of a closing quote:   "|word" -> "word|"  (must be only a single step away)
+      final int newOffsetBeforeQuote = getNextWordStopOffset(text, CaretStop.BOTH, tokenIterator, newOffset, maxOffset, isCamel);
+      if (isTokenEnd(tokenIterator, newOffsetBeforeQuote + 1)) {
+        return getNextWordStopOffset(text, wordStop, tokenIterator, newOffsetBeforeQuote, maxOffset, isCamel); // "word"|
+      }
+    }
+    return newOffset;
+  }
+
+  @SuppressWarnings("Duplicates")
+  public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                               boolean isCamel, boolean handleQuoted) {
+    int minOffset = getPreviousLineStopOffset(editor, caretStopPolicy.getLineStop());
+
+    final CaretStop wordStop = caretStopPolicy.getWordStop();
+    if (wordStop.equals(CaretStop.NONE)) return minOffset;
+
+    final int offset = editor.getCaretModel().getOffset();
+    if (offset == minOffset) return minOffset;
+
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset - 1);
+
+    final int newOffset = getPreviousWordStopOffset(text, wordStop, tokenIterator, offset, minOffset, isCamel);
+    if (newOffset > minOffset &&
+        handleQuoted && tokenIterator != null &&
+        isTokenEnd(tokenIterator, newOffset + 1) &&
+        isQuotedToken(tokenIterator, text)) {
+      // at the start of a closing quote:  "word|" <- "word" |
+      // find the end of an opening quote: "|word" <- "word|"  (must be only a single step away)
+      final int newOffsetAfterQuote = getPreviousWordStopOffset(text, CaretStop.BOTH, tokenIterator, newOffset, minOffset, isCamel);
+      if (isTokenStart(tokenIterator, newOffsetAfterQuote - 1)) {
+        return getPreviousWordStopOffset(text, wordStop, tokenIterator, newOffsetAfterQuote, minOffset, isCamel); // |"word"
+      }
+    }
+    return newOffset;
+  }
+
+  private static int getNextWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
+                                           @Nullable HighlighterIterator tokenIterator,
+                                           int offset, int maxOffset, boolean isCamel) {
+    int newOffset = offset + 1;
+    for (; newOffset < maxOffset; newOffset++) {
+      final boolean isTokenBoundary = tokenIterator != null && advanceTokenOnBoundary(tokenIterator, text, newOffset);
+      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary)) break;
+    }
+    return newOffset;
+  }
+
+  private static int getPreviousWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
+                                               @Nullable HighlighterIterator tokenIterator,
+                                               int offset, int minOffset, boolean isCamel) {
+    int newOffset = offset - 1;
+    for (; newOffset > minOffset; newOffset--) {
+      final boolean isTokenBoundary = tokenIterator != null && retreatTokenOnBoundary(tokenIterator, text, newOffset);
+      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary)) break;
+    }
+    return newOffset;
+  }
+
+  private static boolean isWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
+                                          int offset, boolean isCamel, boolean isLexemeBoundary) {
+    if (wordStop.isAtStart() && wordStop.isAtEnd()) {
+      return isLexemeBoundary ||
+             isWordStart(text, offset, isCamel) ||
+             isWordEnd(text, offset, isCamel);
+    }
+    if (wordStop.isAtStart()) return isLexemeBoundary && !isWordEnd(text, offset, isCamel) || isWordStart(text, offset, isCamel);
+    if (wordStop.isAtEnd()) return isLexemeBoundary && !isWordStart(text, offset, isCamel) || isWordEnd(text, offset, isCamel);
+    return false;
+  }
+
+  private static boolean advanceTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (isTokenEnd(tokenIterator, offset)) {
+      final IElementType leftToken = tokenIterator.getTokenType();
+      final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
+      tokenIterator.advance();
+      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+             !isBetweenWhitespaces(text, offset) && isLexemeBoundary(leftToken, tokenIterator.getTokenType());
+    }
+    return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
+  }
+
+  private static boolean retreatTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (isTokenStart(tokenIterator, offset)) {
+      final IElementType rightToken = tokenIterator.getTokenType();
+      final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
+      tokenIterator.retreat();
+      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+             !isBetweenWhitespaces(text, offset) && isLexemeBoundary(tokenIterator.getTokenType(), rightToken);
+    }
+    return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
+  }
+
+  private static boolean isQuotedTokenInnardsBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    return (isTokenStart(tokenIterator, offset - 1) ||
+            isTokenEnd(tokenIterator, offset + 1)) &&
+           isQuotedToken(tokenIterator, text);
+  }
+
+  @Contract("null, _ -> false")
+  private static boolean isTokenStart(@NotNull HighlighterIterator tokenIterator, int offset) {
+    return offset == tokenIterator.getStart();
+  }
+
+  @Contract("null, _ -> false")
+  private static boolean isTokenEnd(@NotNull HighlighterIterator tokenIterator, int offset) {
+    return offset == tokenIterator.getEnd();
+  }
+
+  private static boolean isQuotedToken(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text) {
+    final int startOffset = tokenIterator.getStart();
+    final int endOffset = tokenIterator.getEnd();
+    if (endOffset - startOffset < 2) return false;
+    final char openingQuote = getQuoteAt(text, startOffset);
+    final char closingQuote = getQuoteAt(text, endOffset - 1);
+    return openingQuote != 0 && closingQuote == openingQuote;
+  }
+
+  private static char getQuoteAt(@NotNull CharSequence text, int offset) {
+    if (offset < 0 || offset >= text.length()) return 0;
+    final char ch = text.charAt(offset);
+    return (ch == '\'' || ch == '\"') ? ch : 0;
+  }
+
+  @Nullable
+  private static HighlighterIterator createHighlighterIteratorAtOffset(@NotNull Editor editor, int offset) {
+    if (!(editor instanceof EditorEx)) return null;
+    return ((EditorEx)editor).getHighlighter().createIterator(offset);
+  }
+
+  private static boolean isLexemeBoundary(@Nullable IElementType leftTokenType,
+                                          @Nullable IElementType rightTokenType) {
+    return leftTokenType != null &&
+           rightTokenType != null &&
+           LanguageWordBoundaryFilter.INSTANCE.forLanguage(rightTokenType.getLanguage())
+             .isWordBoundary(leftTokenType, rightTokenType);
+  }
+
+  public static int getNextLineStopOffset(@NotNull Editor editor, @NotNull CaretStop lineStop) {
+    final Document document = editor.getDocument();
+    final CaretModel caretModel = editor.getCaretModel();
+
+    final int lineNumber = caretModel.getLogicalPosition().line;
+    final boolean isAtLineEnd = (caretModel.getOffset() == document.getLineEndOffset(lineNumber));
+
+    return getNextLineStopOffset(document, lineStop, lineNumber, isAtLineEnd);
+  }
+
+  private static int getNextLineStopOffset(@NotNull Document document, @NotNull CaretStop lineStop,
+                                           int lineNumber, boolean isAtLineEnd) {
+    if (lineNumber + 1 >= document.getLineCount()) {
+      return document.getTextLength();
+    }
+    else if (!isAtLineEnd) {
+      return lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber) :
+             lineStop.isAtStart() ? document.getLineStartOffset(lineNumber + 1) :
+             document.getTextLength();
+    }
+    else {
+      return lineStop.isAtStart() ? document.getLineStartOffset(lineNumber + 1) :
+             lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber + 1) :
+             document.getTextLength();
+    }
+  }
+
+  public static int getPreviousLineStopOffset(@NotNull Editor editor, @NotNull CaretStop lineStop) {
+    final Document document = editor.getDocument();
+    final CaretModel caretModel = editor.getCaretModel();
+
+    final int lineNumber = caretModel.getLogicalPosition().line;
+    final boolean isAtLineStart = (caretModel.getOffset() == document.getLineStartOffset(lineNumber));
+
+    return getPreviousLineStopOffset(document, lineStop, lineNumber, isAtLineStart);
+  }
+
+  private static int getPreviousLineStopOffset(@NotNull Document document, @NotNull CaretStop lineStop,
+                                               int lineNumber, boolean isAtLineStart) {
+    if (lineNumber - 1 < 0) {
+      return 0;
+    }
+    else if (!isAtLineStart) {
+      return lineStop.isAtStart() ? document.getLineStartOffset(lineNumber) :
+             lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber - 1) :
+             0;
+    }
+    else {
+      return lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber - 1) :
+             lineStop.isAtStart() ? document.getLineStartOffset(lineNumber - 1) :
+             0;
+    }
+  }
+
   public static boolean isWordOrLexemeStart(@NotNull Editor editor, int offset, boolean isCamel) {
     CharSequence chars = editor.getDocument().getCharsSequence();
     return isWordStart(chars, offset, isCamel) || !isWordEnd(chars, offset, isCamel) && isLexemeBoundary(editor, offset);
@@ -220,67 +461,13 @@ public class EditorActionUtil {
   public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
     if (!(editor instanceof EditorEx) ||
         offset <= 0 || offset >= editor.getDocument().getTextLength() ||
-        DocumentUtil.isInsideSurrogatePair(editor.getDocument(), offset)) {
+        DocumentUtil.isInsideSurrogatePair(editor.getDocument(), offset) ||
+        isBetweenWhitespaces(editor.getDocument().getCharsSequence(), offset)) {
       return false;
     }
-    if (CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(), offset - 1, offset + 1)) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
-    if (it.getStart() != offset) {
-      return false;
-    }
-    IElementType rightToken = it.getTokenType();
-    it.retreat();
-    IElementType leftToken = it.getTokenType();
-    if (leftToken == null || rightToken == null) return false;
-    return LanguageWordBoundaryFilter.INSTANCE.forLanguage(leftToken.getLanguage()).isWordBoundary(leftToken, rightToken);
-  }
-
-  public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {
-    char prev = offset > 0 ? text.charAt(offset - 1) : 0;
-    char current = text.charAt(offset);
-
-    final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
-    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
-    if (!firstIsIdentifierPart && secondIsIdentifierPart) {
-      return true;
-    }
-
-    if (isCamel && firstIsIdentifierPart && secondIsIdentifierPart && isHumpBound(text, offset, true)) {
-      return true;
-    }
-
-    return (Character.isWhitespace(prev) || firstIsIdentifierPart) &&
-           !Character.isWhitespace(current) && !secondIsIdentifierPart;
-  }
-  
-  private static boolean isLowerCaseOrDigit(char c) {
-    return Character.isLowerCase(c) || Character.isDigit(c);
-  }
-
-  public static boolean isWordEnd(@NotNull CharSequence text, int offset, boolean isCamel) {
-    char prev = offset > 0 ? text.charAt(offset - 1) : 0;
-    char current = text.charAt(offset);
-    char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0;
-
-    final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
-    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
-    if (firstIsIdentifierPart && !secondIsIdentifierPart) {
-      return true;
-    }
-
-    if (isCamel) {
-      if (firstIsIdentifierPart
-          && (Character.isLowerCase(prev) && Character.isUpperCase(current)
-              || prev != '_' && current == '_'
-              || Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next)))
-      {
-        return true;
-      }
-    }
-
-    return !Character.isWhitespace(prev) && !firstIsIdentifierPart &&
-           (Character.isWhitespace(current) || secondIsIdentifierPart);
+    return retreatTokenOnBoundary(it, editor.getDocument().getCharsSequence(), offset);
   }
 
   /**
@@ -596,6 +783,12 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToNextWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
+    moveToNextCaretStop(editor, EditorSettingsExternalizable.getInstance().getCaretStopOptions().getForwardPolicy(),
+                        isWithSelection, camel);
+  }
+
+  public static void moveToNextCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                         boolean isWithSelection, boolean isCamel) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -614,21 +807,9 @@ public class EditorActionUtil {
       newOffset = currentFoldRegion.getEndOffset();
     }
     else {
-      newOffset = offset + 1;
-      int lineNumber = caretModel.getLogicalPosition().line;
-      if (lineNumber >= document.getLineCount()) return;
-      int maxOffset = document.getLineEndOffset(lineNumber);
-      if (newOffset > maxOffset) {
-        if (lineNumber + 1 >= document.getLineCount()) {
-          return;
-        }
-        maxOffset = document.getLineEndOffset(lineNumber + 1);
-      }
-      for (; newOffset < maxOffset; newOffset++) {
-        if (isWordOrLexemeStart(editor, newOffset, camel)) {
-          break;
-        }
-      }
+      newOffset = getNextCaretStopOffset(editor, caretStopPolicy, isCamel);
+      if (newOffset == offset) return;
+
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
       if (foldRegion != null) {
         newOffset = foldRegion.getStartOffset();
@@ -695,7 +876,12 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToPreviousWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
-    Document document = editor.getDocument();
+    moveToPreviousCaretStop(editor, EditorSettingsExternalizable.getInstance().getCaretStopOptions().getBackwardPolicy(),
+                            isWithSelection, camel);
+  }
+
+  public static void moveToPreviousCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                             boolean isWithSelection, boolean isCamel) {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
@@ -711,12 +897,9 @@ public class EditorActionUtil {
       newOffset = currentFoldRegion.getStartOffset();
     }
     else {
-      int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-      newOffset = offset - 1;
-      int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
-      for (; newOffset > minOffset; newOffset--) {
-        if (isWordOrLexemeStart(editor, newOffset, camel)) break;
-      }
+      newOffset = getPreviousCaretStopOffset(editor, caretStopPolicy, isCamel);
+      if (newOffset == offset) return;
+
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
       if (foldRegion != null && newOffset > foldRegion.getStartOffset()) {
         newOffset = foldRegion.getEndOffset();
@@ -835,18 +1018,60 @@ public class EditorActionUtil {
     }
   }
 
-  public static boolean isHumpBound(@NotNull CharSequence editorText, int offset, boolean start) {
-    if (offset <= 0 || offset >= editorText.length()) return false;
-    final char prevChar = editorText.charAt(offset - 1);
-    final char curChar = editorText.charAt(offset);
-    final char nextChar = offset + 1 < editorText.length() ? editorText.charAt(offset + 1) : 0; // 0x00 is not lowercase.
+  private static boolean isBetweenWhitespaces(@NotNull CharSequence text, int offset) {
+    return 0 < offset && offset < text.length() &&
+           isWhitespace(text.charAt(offset - 1)) &&
+           isWhitespace(text.charAt(offset));
+  }
 
-    return isLowerCaseOrDigit(prevChar) && Character.isUpperCase(curChar) ||
-        start && prevChar == '_' && curChar != '_' ||
-        !start && prevChar != '_' && curChar == '_' ||
-        start && prevChar == '$' && Character.isLetterOrDigit(curChar) ||
-        !start && Character.isLetterOrDigit(prevChar) && curChar == '$' ||
-        Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(nextChar);
+  public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {
+    return isWordBoundary(text, offset, isCamel, true);
+  }
+
+  public static boolean isWordEnd(@NotNull CharSequence text, int offset, boolean isCamel) {
+    return isWordBoundary(text, offset, isCamel, false);
+  }
+
+  public static boolean isWordBoundary(@NotNull CharSequence text, int offset, boolean isCamel, boolean isStart) {
+    if (offset < 0 || offset > text.length()) return false;
+
+    final char prev = offset > 0 ? text.charAt(offset - 1) : 0;
+    final char curr = offset < text.length() ? text.charAt(offset) : 0;
+
+    final char word = isStart ? curr : prev;
+    final char neighbor = isStart ? prev : curr;
+
+    if (isJavaIdentifierPart(word)) {
+      if (!isJavaIdentifierPart(neighbor)) return true;
+      if (isCamel && isHumpBound(text, offset, isStart)) return true;
+    }
+    if (isPunctuation(word) && !isPunctuation(neighbor)) return true;
+
+    return false;
+  }
+
+  public static boolean isHumpBound(@NotNull CharSequence text, int offset, boolean isStart) {
+    if (offset <= 0 || offset >= text.length()) return false;
+
+    final char prev = text.charAt(offset - 1);
+    final char curr = text.charAt(offset);
+    final char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0; // 0x00 is not lowercase.
+
+    final char hump = isStart ? curr : prev;
+    final char neighbor = isStart ? prev : curr;
+
+    return isLowerCaseOrDigit(prev) && isUpperCase(curr) ||
+           neighbor == '_' && hump != '_' ||
+           neighbor == '$' && isLetterOrDigit(hump) ||
+           isUpperCase(prev) && isUpperCase(curr) && isLowerCase(next);
+  }
+
+  private static boolean isLowerCaseOrDigit(char c) {
+    return isLowerCase(c) || isDigit(c);
+  }
+
+  private static boolean isPunctuation(char c) {
+    return !(isJavaIdentifierPart(c) || isWhitespace(c));
   }
 
   /**

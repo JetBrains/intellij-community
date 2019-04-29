@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -831,7 +831,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (variableNode != null) {
           final PsiElement grandParent = variableNode.getParent().getParent();
           if (grandParent instanceof PsiExpressionStatement) {
-            if (hasSemicolon(grandParent)) return false;
+            if (isCompleteStatement((PsiExpressionStatement)grandParent)) return false;
           }
           else if (grandParent instanceof PsiStatement) return false;
         }
@@ -901,7 +901,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           !PsiTreeUtil.isAncestor(((PsiForStatement)greatGrandParent).getBody(), variableNode, true)) {
         return true;
       }
-      if (hasSemicolon(grandParent)) {
+      if (isCompleteStatement((PsiExpressionStatement)grandParent)) {
         if (greatGrandParent instanceof PsiLoopStatement || greatGrandParent instanceof PsiIfStatement) return false;
         return !(greatGrandParent instanceof PsiCodeBlock) ||
                !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
@@ -924,8 +924,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
     if (grandParent instanceof PsiExpressionList && grandParent.getParent() instanceof PsiSwitchLabelStatementBase)  return true;
-    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
+    if (grandParent instanceof PsiExpressionStatement && isCompleteStatement((PsiExpressionStatement)grandParent)) {
       final PsiElement greatGrandParent = grandParent.getParent();
+      if (greatGrandParent instanceof PsiForStatement) {
+        final PsiForStatement forStatement = (PsiForStatement)greatGrandParent;
+        return forStatement.getInitialization() == grandParent || forStatement.getUpdate() == grandParent;
+      }
       return greatGrandParent instanceof PsiCodeBlock;
     }
     if (grandParent instanceof PsiReferenceList) {
@@ -972,7 +976,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return name != null && !"_Dummy_".equals(name);
   }
 
-  private static boolean hasSemicolon(PsiElement element) {
+  private static boolean isCompleteStatement(PsiExpressionStatement element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiForStatement && ((PsiForStatement)parent).getUpdate() == element) {
+      return true;
+    }
     PsiElement lastChild = element.getLastChild();
     while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
       lastChild = lastChild.getPrevSibling();

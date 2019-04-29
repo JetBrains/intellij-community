@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.repo.Repository
@@ -40,13 +40,11 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
     return nextPolicyParent
   }
 
-  class Factory(val project: Project) : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(model: DefaultTreeModel): RepositoryChangesGroupingPolicy = RepositoryChangesGroupingPolicy(project, model)
+  internal class Factory : ChangesGroupingPolicyFactory() {
+    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel) = RepositoryChangesGroupingPolicy(project, model)
   }
 
   companion object {
-    val REPOSITORY_CACHE: NotNullLazyKey<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>> = NotNullLazyKey.create<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>(
-      "ChangesTree.RepositoryCache") { mutableMapOf() }
-
+    val REPOSITORY_CACHE = NotNullLazyKey.create<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>("ChangesTree.RepositoryCache") { mutableMapOf() }
   }
 }

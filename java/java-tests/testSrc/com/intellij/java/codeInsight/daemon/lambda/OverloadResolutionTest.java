@@ -271,10 +271,12 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   public void testOverriddenMethodWithOtherRawSignature() { doTest(false);}
 
   public void testMoreSpecificForRawSignatureOnStaticProblem() { doTest(false);}
+  public void testSkipStaticInterfaceMethodCalledOnInheritorForMethodRefConflictResolving() { doTest(false);}
 
   public void testUnqualifiedStaticInterfaceMethodCallsOnInnerClasses() { doTest(false);}
 
   public void testStaticMethodInSuperInterfaceConflictWithCurrentStatic() { doTest(false);}
+  public void testPotentialCompatibilityWithArrayCreation() { doTest(false);}
   public void testOverloadsWithOneNonCompatible() { doTest(false);}
   public void testSecondSearchOverloadsBoxing() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());

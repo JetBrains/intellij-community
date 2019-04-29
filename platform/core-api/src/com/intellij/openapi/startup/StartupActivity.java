@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Dmitry Avdeev
+ * Runs an activity on project open.
  * <p>
  * If the activity implements {@link com.intellij.openapi.project.DumbAware} it will be started in a pooled thread under 'Loading Project' dialog,
- * otherwise it will be started in the dispatch thread after the initialization
+ * otherwise it will be started in the dispatch thread after the initialization.
+ *
+ * @author Dmitry Avdeev
  */
 public interface StartupActivity {
 

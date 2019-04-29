@@ -139,7 +139,7 @@ public class PsiUtil {
                                                    PsiElement place,
                                                    final boolean eraseParameterTypes) {
     if (argumentTypes == null) return Applicability.canBeApplicable;
-    GrSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor, eraseParameterTypes);
+    GrSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor, eraseParameterTypes, place);
 
     Applicability result = GroovyApplicabilityProvider.checkProviders(argumentTypes, method);
     if (result != null) return result;

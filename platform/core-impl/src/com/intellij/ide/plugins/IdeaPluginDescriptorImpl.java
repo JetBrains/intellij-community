@@ -258,7 +258,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
             String os = extensionElement.getAttributeValue("os");
             if (os != null) {
               extensionElement.removeAttribute("os");
-              if (!Extensions.isComponentSuitableForOs(os)) {
+              if (!isComponentSuitableForOs(os)) {
                 continue;
               }
             }
@@ -364,6 +364,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     descriptor.serviceInterface = element.getAttributeValue("serviceInterface");
     descriptor.serviceImplementation = element.getAttributeValue("serviceImplementation");
     descriptor.testServiceImplementation = element.getAttributeValue("testServiceImplementation");
+    descriptor.configurationSchemaKey = element.getAttributeValue("configurationSchemaKey");
     descriptor.overrides = Boolean.parseBoolean(element.getAttributeValue("overrides"));
     return descriptor;
   }
@@ -397,7 +398,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
       beanBinding.deserializeInto(componentConfig, componentElement);
       Map<String, String> options = componentConfig.options;
-      if (options != null && (!Extensions.isComponentSuitableForOs(options.get("os")))) {
+      if (options != null && (!isComponentSuitableForOs(options.get("os")))) {
         continue;
       }
 
@@ -840,5 +841,30 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String toString() {
     return "PluginDescriptor(name=" + myName + ", classpath=" + myPath + ")";
+  }
+
+  private static boolean isComponentSuitableForOs(@Nullable String os) {
+    if (StringUtil.isEmpty(os)) {
+      return true;
+    }
+
+    if (os.equals(Extensions.OS.mac.name())) {
+      return SystemInfoRt.isMac;
+    }
+    else if (os.equals(Extensions.OS.linux.name())) {
+      return SystemInfoRt.isLinux;
+    }
+    else if (os.equals(Extensions.OS.windows.name())) {
+      return SystemInfoRt.isWindows;
+    }
+    else if (os.equals(Extensions.OS.unix.name())) {
+      return SystemInfoRt.isUnix;
+    }
+    else if (os.equals(Extensions.OS.freebsd.name())) {
+      return SystemInfoRt.isFreeBSD;
+    }
+    else {
+      throw new IllegalArgumentException("Unknown OS '" + os + "'");
+    }
   }
 }

@@ -110,12 +110,13 @@ public class RefreshWorker {
       }
 
       if (file.isDirectory()) {
-        boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
+        VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
+        boolean fullSync = directory.allChildrenLoaded();
         if (fullSync) {
-          fullDirRefresh(fs, persistence, strategy, (VirtualDirectoryImpl)file);
+          fullDirRefresh(fs, persistence, strategy, directory);
         }
         else {
-          partialDirRefresh(fs, strategy, (VirtualDirectoryImpl)file);
+          partialDirRefresh(fs, strategy, directory);
         }
       }
       else {

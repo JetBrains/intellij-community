@@ -57,7 +57,7 @@ public class VcsHistoryCache {
     synchronized (myLock) {
       myHistoryCache.put(new HistoryCacheBaseKey(filePath, vcsKey),
                          new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(),
-                                           session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session), isFull));
+                                           session.getCurrentRevisionNumber(), factory.getAdditionallyCachedData(session), isFull));
     }
   }
 

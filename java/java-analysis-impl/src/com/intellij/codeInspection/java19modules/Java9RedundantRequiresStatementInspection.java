@@ -61,7 +61,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
                   isDependencyUnused(requiredModule.packagesExportedByModule, moduleImportedPackages, refJavaModule.getName())) {
                 PsiRequiresStatement requiresStatement = ContainerUtil.find(
                   psiJavaModule.getRequires(), statement -> requiredModuleName.equals(statement.getModuleName()));
-                if (requiresStatement != null) {
+                if (requiresStatement != null && !isSuppressedFor(requiresStatement)) {
                   CommonProblemDescriptor descriptor = manager.createProblemDescriptor(
                     requiresStatement,
                     InspectionsBundle.message("inspection.redundant.requires.statement.description", requiredModuleName),

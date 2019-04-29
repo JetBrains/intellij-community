@@ -43,6 +43,9 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
   }
 
   private static boolean isThisQualifierPossible(PsiExpression memberAccessExpression, @NotNull PsiMember member) {
+    if (member.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
     final PsiClass memberClass = member.getContainingClass();
     if (memberClass == null) {
       return false;
@@ -56,8 +59,8 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
       containingClass = ClassUtils.getContainingClass(containingClass);
     }
     while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true));
-    // qualified this needed, which is not possible on local or anonymous class.
-    return containingClass != null && !PsiUtil.isLocalOrAnonymousClass(containingClass);
+    // qualified this needed, which is not possible on anonymous class.
+    return containingClass != null && !(containingClass instanceof PsiAnonymousClass);
   }
 
   @Override

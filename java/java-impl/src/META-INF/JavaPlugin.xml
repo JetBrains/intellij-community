@@ -40,10 +40,6 @@
 
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.vfs.jrt.JrtFileSystem</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
@@ -60,12 +56,6 @@
     <component>
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.hints.MethodChainHintsPassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
@@ -308,6 +298,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.AnnotationHintsPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.MethodChainHintsPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
+
+    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
@@ -422,6 +417,8 @@
     <projectService serviceImplementation="com.intellij.debugger.settings.DebuggerProjectSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
@@ -1907,6 +1904,9 @@
     <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
     <java.externalAnnotation.locationProvider
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
+
+    <statistics.counterUsagesCollector groupId="new.project.wizard.attempt" version="1"/>
+    <statistics.counterUsagesCollector groupId="new.project.wizard.finish" version="1"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

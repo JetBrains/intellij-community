@@ -97,6 +97,11 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")
   var showIconInQuickNavigation by property(true)
 
+  @get:OptionTag("SORT_TABS_ALPHABETICALLY")
+  var sortTabsAlphabetically by property(false)
+  @get:OptionTag("OPEN_TABS_AT_THE_END")
+  var openTabsAtTheEnd by property(false)
+
   @get:OptionTag("CLOSE_NON_MODIFIED_FILES_FIRST")
   var closeNonModifiedFilesFirst by property(false)
   @get:OptionTag("ACTIVATE_MRU_EDITOR_ON_CLOSE")
@@ -107,11 +112,11 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("IDE_AA_TYPE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.ideAAType"))
-  internal var ideAAType by property(AntialiasingType.SUBPIXEL)
+  internal var ideAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:OptionTag("EDITOR_AA_TYPE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.editorAAType"))
-  internal var editorAAType by property(AntialiasingType.SUBPIXEL)
+  internal var editorAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:OptionTag("COLOR_BLINDNESS")
   var colorBlindness by enum<ColorBlindness>()
