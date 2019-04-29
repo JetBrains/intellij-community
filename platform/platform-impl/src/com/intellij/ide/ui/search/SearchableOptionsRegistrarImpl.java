@@ -294,10 +294,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                           @Nullable Set<? extends Configurable> configurables,
                                           @NotNull String option,
                                           @Nullable Project project) {
-
-    final ConfigurableHit hits = new ConfigurableHit();
-    final Set<Configurable> contentHits = hits.getContentHits();
-
+    Set<Configurable> contentHits = new LinkedHashSet<>();
     Set<String> options = getProcessedWordsWithoutStemming(option);
     if (configurables == null) {
       for (ConfigurableGroup group : groups) {
@@ -308,44 +305,51 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       contentHits.addAll(configurables);
     }
 
+    Set<Configurable> nameHits = new LinkedHashSet<>();
+    Set<Configurable> nameFullHits = new LinkedHashSet<>();
+
     String optionToCheck = option.trim().toLowerCase();
     for (Configurable each : contentHits) {
       if (each.getDisplayName() == null) continue;
       final String displayName = each.getDisplayName().toLowerCase();
       final List<String> allWords = StringUtil.getWordsIn(displayName);
       if (displayName.contains(optionToCheck)) {
-        hits.getNameFullHits().add(each);
-        hits.getNameHits().add(each);
+        nameFullHits.add(each);
+        nameHits.add(each);
       }
       for (String eachWord : allWords) {
         if (eachWord.startsWith(optionToCheck)) {
-          hits.getNameHits().add(each);
+          nameHits.add(each);
           break;
         }
       }
 
       if (options.isEmpty()) {
-        hits.getNameHits().add(each);
-        hits.getNameFullHits().add(each);
+        nameHits.add(each);
+        nameFullHits.add(each);
       }
     }
 
     final Set<Configurable> currentConfigurables = new HashSet<>(contentHits);
-    if (options.isEmpty()) { //operate with substring
+    //operate with substring
+    if (options.isEmpty()) {
       String[] components = REG_EXP.split(optionToCheck);
       if (components.length > 0) {
         Collections.addAll(options, components);
-      } else {
+      }
+      else {
         options.add(option);
       }
     }
+
     Set<String> helpIds = null;
     for (String opt : options) {
       final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
       if (optionIds == null) {
         contentHits.clear();
-        return hits;
+        return new ConfigurableHit(contentHits, nameHits, nameFullHits);
       }
+
       final Set<String> ids = new HashSet<>();
       for (OptionDescription id : optionIds) {
         ids.add(id.getConfigurableId());
@@ -355,6 +359,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
       helpIds.retainAll(ids);
     }
+
     if (helpIds != null) {
       for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext();) {
         Configurable configurable = it.next();
@@ -367,12 +372,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
       }
     }
+
     if (currentConfigurables.equals(contentHits) && !(configurables == null && type == DocumentEvent.EventType.CHANGE)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
-    return hits;
+    return new ConfigurableHit(contentHits, nameHits, nameFullHits);
   }
-
 
   @Nullable
   public synchronized Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
