@@ -15,7 +15,7 @@ import java.io.IOException;
 public class GitExecutableDetectorWindowsTest {
   @Before
   public void setUp() throws IOException, NoSuchFieldException, IllegalAccessException {
-    Assume.assumeTrue(SystemInfo.isWindows);
+    Assume.assumeTrue("Windows-only test", SystemInfo.isWindows);
     testRoot = FileUtil.createTempDirectory("", "");
   }
 
