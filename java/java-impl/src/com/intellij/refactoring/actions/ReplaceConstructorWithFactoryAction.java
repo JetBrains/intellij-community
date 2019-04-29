@@ -45,10 +45,9 @@ public class ReplaceConstructorWithFactoryAction extends BaseJavaRefactoringActi
                                                         @NotNull Editor editor,
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context) {
-    PsiMethod method = ReplaceConstructorWithBuilderAction.getJavaMethodHeader(element);
-    return (method != null &&
-            method.isConstructor() &&
-            acceptClass(method.getContainingClass())  ||
+    return (element instanceof PsiMethod &&
+            ((PsiMethod)element).isConstructor() &&
+            acceptClass(((PsiMethod)element).getContainingClass())  ||
             acceptClass(element))
            && element.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }

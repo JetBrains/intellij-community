@@ -59,14 +59,12 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
@@ -127,9 +125,6 @@ public class MavenExternalParameters {
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
     final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
-    if(mavenVersion == null) {
-      throw new ExecutionException("Cannot run maven: Maven home " + mavenHome + " looks incorrect");
-    }
     String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Runner | JRE";
     verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
 
@@ -192,7 +187,7 @@ public class MavenExternalParameters {
     Scanner sc = new Scanner(originalConf);
 
     try {
-      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest), StandardCharsets.UTF_8));
+      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest)));
 
       try {
         boolean patched = false;

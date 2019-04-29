@@ -58,20 +58,15 @@ public class RepositoryHelper {
    * Loads list of plugins, compatible with a current build, from all configured repositories
    */
   @NotNull
-  public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) {
+  public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) throws IOException {
     List<IdeaPluginDescriptor> result = new ArrayList<>();
     Set<String> addedPluginIds = new HashSet<>();
     for (String host : getPluginHosts()) {
-      try {
-        List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
-        for (IdeaPluginDescriptor plugin : plugins) {
-          if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
-            result.add(plugin);
-          }
+      List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
+      for (IdeaPluginDescriptor plugin : plugins) {
+        if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
+          result.add(plugin);
         }
-      }
-      catch (IOException e) {
-        LOG.info("Couldn't load plugins from " + (host == null ? "main repository" : host), e);
       }
     }
     return result;

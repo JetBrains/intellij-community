@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.jetbrains.python.console.pydev.AbstractPyCodeCompletion;
@@ -13,7 +13,6 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -140,7 +139,7 @@ public class PydevXmlUtils {
   public static List<PydevCompletionVariant> xmlToCompletions(String payload, String actionToken) throws Exception {
     SAXParser parser = getSAXParser();
     XMLToCompletionsInfo info = new XMLToCompletionsInfo();
-    parser.parse(new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8)), info);
+    parser.parse(new ByteArrayInputStream(payload.getBytes()), info);
     return decodeCompletions(info.getCompletions(), actionToken);
   }
 }

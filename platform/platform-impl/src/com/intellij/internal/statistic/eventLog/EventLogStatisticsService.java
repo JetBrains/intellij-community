@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.connect.StatServiceException;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,7 +86,7 @@ public class EventLogStatisticsService implements StatisticsService {
             .tuner(connection -> connection.setRequestProperty("Content-Encoding", "gzip"))
             .connect(request -> {
               final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-              try (OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(out), StandardCharsets.UTF_8)) {
+              try (OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(out))) {
                 LogEventSerializer.INSTANCE.toString(recordRequest, writer);
               }
               request.write(out.toByteArray());

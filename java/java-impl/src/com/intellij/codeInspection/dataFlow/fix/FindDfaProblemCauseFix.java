@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,14 +24,13 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,20 +69,22 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    ThrowableComputable<List<TrackingRunner.CauseItem>, RuntimeException> causeFinder = () -> {
-      PsiExpression element = myAnchor.getElement();
-      if (element == null) return Collections.emptyList();
-      return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
-    };
-    List<TrackingRunner.CauseItem> items = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(causeFinder), "Finding Cause", true, project);
-    PsiFile file = myAnchor.getContainingFile();
-    if (!items.isEmpty() && file != null) {
-      displayProblemCause(file, items);
-    }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.run(this::findCause), "Finding Cause", true, project);
+  }
+
+  private void findCause() {
+    PsiExpression element = myAnchor.getElement();
+    if (element == null) return;
+    PsiFile file = element.getContainingFile();
+    List<TrackingRunner.CauseItem> items =
+      TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
+    
+    ApplicationManager.getApplication().invokeLater(() -> ReadAction.run(() -> displayProblemCause(file, items)));
   }
 
   private static void displayProblemCause(PsiFile file, List<TrackingRunner.CauseItem> items) {
+    if (!file.isValid()) return;
     Project project = file.getProject();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return;
@@ -93,25 +95,22 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
     class CauseWithDepth {
       final int myDepth;
       final TrackingRunner.CauseItem myCauseItem;
-      final CauseWithDepth myParent;
 
-      CauseWithDepth(CauseWithDepth parent, TrackingRunner.CauseItem item) {
-        myParent = parent;
-        myDepth = parent == null ? 0 : parent.myDepth + 1;
+      CauseWithDepth(int depth, TrackingRunner.CauseItem item) {
+        myDepth = depth;
         myCauseItem = item;
       }
 
       @Override
       public String toString() {
-        return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(document, myParent == null ? null : myParent.myCauseItem);
+        return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(document);
       }
     }
     List<CauseWithDepth> causes;
     if (root == null) {
       causes = Collections.emptyList();
     } else {
-      causes = StreamEx.ofTree(new CauseWithDepth(null, root), cwd -> cwd.myCauseItem.children()
-        .map(child -> new CauseWithDepth(cwd, child))).skip(1).toList();
+      causes = EntryStream.ofTree(root, (depth, c) -> c.children()).skip(1).mapKeyValue((d, i) -> new CauseWithDepth(d, i)).toList();
     }
     if (causes.isEmpty()) {
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
@@ -147,7 +146,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .setItemChosenCallback(cause -> ReadAction.run(() -> navigate(editor, file, cause.myCauseItem)))
+      .setItemChosenCallback(cause -> navigate(editor, file, cause.myCauseItem))
       .createPopup();
     popup.showInBestPositionFor(editor);
   }
@@ -160,6 +159,6 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
     PsiNavigationSupport.getInstance().createNavigatable(file.getProject(), targetFile.getVirtualFile(), range.getStartOffset())
       .navigate(true);
     HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
-    hintManager.showInformationHint(editor, StringUtil.escapeXmlEntities(StringUtil.capitalize(item.toString())));
+    hintManager.showInformationHint(editor, StringUtil.escapeXmlEntities(item.toString()));
   }
 }

@@ -107,7 +107,10 @@ public abstract class AttachToProcessActionBase extends AnAction {
             }
 
             if (item instanceof AttachToProcessItem) {
-              popup.setCaption(((AttachToProcessItem)item).getSelectedDebugger().getDebuggerSelectedTitle());
+              String debuggerName = ((AttachToProcessItem)item).getSelectedDebugger().getDebuggerDisplayName();
+              debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
+
+              popup.setCaption(XDebuggerBundle.message("xdebugger.attach.popup.title", debuggerName));
             }
 
             if (item instanceof AttachHostItem) {

@@ -128,10 +128,8 @@ public class BaselinePanel extends NonOpaquePanel {
         int x = 0;
         int calcBaseWidth = calculateBaseWidth(parent);
 
-        if (myBaseComponent instanceof JLabel) {
-          JLabel label = (JLabel)myBaseComponent;
-          label.setToolTipText(calcBaseWidth < baseSize.width ? label.getText() : null);
-        }
+        JLabel label = (JLabel)myBaseComponent;
+        label.setToolTipText(calcBaseWidth < baseSize.width ? label.getText() : null);
 
         baseSize.width = Math.min(baseSize.width, calcBaseWidth);
         myBaseComponent.setBounds(x, top, baseSize.width, baseSize.height);

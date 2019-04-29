@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -558,10 +559,15 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   @Nullable
   public CommittedChangeList loadRevisions(final VirtualFile vf, final VcsRevisionNumber number) {
-    return VcsSynchronousProgressWrapper.compute(() -> {
-      final Pair<CommittedChangeList, FilePath> pair = getCommittedChangesProvider().getOneList(vf, number);
-      return pair != null ? pair.getFirst() : null;
-    }, getProject(), "Load Revision Contents");
+    final CommittedChangeList[] list = new CommittedChangeList[1];
+    final ThrowableRunnable<VcsException> runnable = () -> {
+      final Pair<CommittedChangeList, FilePath> pair =
+        getCommittedChangesProvider().getOneList(vf, number);
+      if (pair != null) {
+        list[0] = pair.getFirst();
+      }
+    };
+    return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
   }
 
   @Override

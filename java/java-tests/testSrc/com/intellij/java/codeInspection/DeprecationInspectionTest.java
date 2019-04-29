@@ -97,10 +97,6 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     doTest("deprecation/" + getTestName(true), tool);
   }
 
-  public void testDeprecatedUsageInJavadoc() {
-    doTest();
-  }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

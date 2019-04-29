@@ -49,6 +49,9 @@
     <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="callExpressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <extensionPoint name="expressionTypeCalculator"
+                    interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator"/>
     <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator"/>
     </extensionPoint>
@@ -86,7 +89,6 @@
     <extensionPoint name="expectedPackageNameProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProvider"/>
     <extensionPoint name="delegatesToProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider"/>
     <extensionPoint name="expressionFilter" interface="org.jetbrains.plugins.groovy.lang.GroovyExpressionFilter"/>
-    <extensionPoint name="inlayHintFilter" interface="org.jetbrains.plugins.groovy.editor.GroovyInlayHintFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -173,6 +175,8 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
@@ -291,10 +295,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
-    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
-    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory"/>
-
     <registryKey key="groovy.console.project.view.names" defaultValue="false"
                  description="Substitute console file name with selected module/version for this console file"/>
     <registryKey key="groovy.document.based.formatting" defaultValue="false"
@@ -1733,8 +1733,8 @@
 
     <action id="DumpGroovyControlFlowAction"
             class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
-            text="Dump Groovy Control Flow"
-            internal="true">
+            text="dump groovy control flow"
+            description="" internal="true">
       <add-to-group group-id="Internal"/>
     </action>
 
@@ -1815,6 +1815,15 @@
   </application-components>
 
   <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory</implementation-class>
+    </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>

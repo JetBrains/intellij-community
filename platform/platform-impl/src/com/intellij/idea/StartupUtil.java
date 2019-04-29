@@ -8,6 +8,7 @@ import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
+import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -81,7 +82,6 @@ public class StartupUtil {
 
   @FunctionalInterface
   public interface AppStarter {
-    // called in Idea Main thread
     void start();
 
     // not called in EDT
@@ -537,7 +537,7 @@ public class StartupUtil {
   }
 
   private static void installPluginUpdates() {
-    if (!Main.isCommandLine()) {
+    if (!Main.isCommandLine() && !ClassUtilCore.isLoadingOfExternalPluginsDisabled()) {
       try {
         StartupActionScriptManager.executeActionScript();
       }

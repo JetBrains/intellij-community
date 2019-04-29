@@ -18,7 +18,6 @@ package com.intellij.application;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,13 +26,11 @@ import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-@Bombed(month = Calendar.MAY, day = 15, user = "Dmitry Avdeev", description = "This test fails if it runs before Application is initialized and causes all subsuquent tests to fail")
 public class BadPluginTest extends PlatformTestCase {
   private static final String COM_YOUR_COMPANY_UNIQUE_PLUGIN_ID = "com.your.company.unique.plugin.id";
 

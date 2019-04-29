@@ -1,7 +1,7 @@
 /*
 Value is always false (s == s1)
   's1' was assigned (null)
-  and condition 's != null' was checked before (null == s)
+  s != null was checked before (null == s)
  */
 class Test {
   void test(String s) {

@@ -9,9 +9,6 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -250,7 +247,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
           Icon icon = factory.getGroupIcon(group);
           String parentGroup = factory.getParentGroup(group);
           TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), parentGroup, group, null);
-          templatesGroup.setSafeToReport(PluginInfoDetectorKt.getPluginInfo(factory.getClass()).isSafeToReport());
           groups.putValues(templatesGroup, values);
         }
       }
@@ -500,7 +496,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         throw new CommitStepException(null);
       }
     }
-    reportStatistics("new.project.wizard.finish");
   }
 
   @Override
@@ -722,22 +717,5 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       return getCustomStep().getHelpId();
     }
     return myContext.isCreatingNewProject() ? "Project_Category_and_Options" : "Module_Category_and_Options";
-  }
-
-  @Override
-  public void onStepLeaving() {
-    reportStatistics("new.project.wizard.attempt");
-  }
-
-  private void reportStatistics(String groupId) {
-    TemplatesGroup group = myProjectTypeList.getSelectedValue();
-    FeatureUsageData data = new FeatureUsageData();
-    myFrameworksPanel.reportFeatureUsageData(data);
-    ModuleWizardStep step = getCustomStep();
-    if (step instanceof StatisticsAwareModuleWizardStep) {
-      ((StatisticsAwareModuleWizardStep) step).reportFeatureUsageData(data);
-    }
-
-    FUCounterUsageLogger.getInstance().logEvent(groupId, group.isSafeToReport() ? group.getId() : "third-party");
   }
 }

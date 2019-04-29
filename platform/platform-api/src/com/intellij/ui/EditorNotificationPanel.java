@@ -49,7 +49,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -156,7 +155,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   @Override
   public IntentionActionWithOptions getIntentionAction() {
     MyIntentionAction action = new MyIntentionAction();
-    return action.myOptions.isEmpty() ? null : action;
+    return action.getOptions().isEmpty() ? null : action;
   }
 
   @Override
@@ -181,18 +180,15 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public List<IntentionAction> getOptions() {
-      return myOptions.isEmpty() ? Collections.emptyList() : myOptions.subList(1, myOptions.size());
+      return myOptions;
     }
 
     @Nls
     @NotNull
     @Override
     public String getText() {
-      if (!myOptions.isEmpty()) {
-        return myOptions.get(0).getText();
-      }
       String text = myLabel.getText();
-      return StringUtil.isEmpty(text) ? EditorBundle.message("editor.notification.default.action.name")
+      return StringUtil.isEmpty(text) ? EditorBundle.message("editor.notification.default.action.name") 
                                       : StringUtil.shortenTextWithEllipsis(text, 50, 0);
     }
 

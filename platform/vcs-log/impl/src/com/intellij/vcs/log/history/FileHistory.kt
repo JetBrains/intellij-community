@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -262,7 +263,7 @@ abstract class FileNamesData(startPaths: Collection<FilePath>) {
 
       collectAdditionsDeletions(commits) { ad ->
         if (commitToRename[ad.commits].any { rename -> ad.matches(rename) }) return@collectAdditionsDeletions
-        findRename(ad.parent, ad.child, ad.filePath, ad.isAddition)?.let { files ->
+        findRename(ad.parent, ad.child, ad::matches)?.let { files ->
           val rename = Rename(files.first, files.second, ad.parent, ad.child)
           commitToRename.putValue(ad.commits, rename)
           val otherPath = rename.getOtherPath(ad)!!
@@ -371,7 +372,7 @@ abstract class FileNamesData(startPaths: Collection<FilePath>) {
     affectedCommits.forEach { _, commitsMap -> commitsMap.removeAll(commits) }
   }
 
-  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>?
+  abstract fun findRename(parent: Int, child: Int, accept: (Couple<FilePath>) -> Boolean): Couple<FilePath>?
   abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>
 }
 
@@ -389,6 +390,11 @@ private class AdditionDeletion(val filePath: FilePath, val child: Int, val paren
       else FILE_PATH_HASHING_STRATEGY.equals(rename.filePath2, filePath)
     }
     return false
+  }
+
+  fun matches(files: Couple<FilePath>): Boolean {
+    return (isAddition && FILE_PATH_HASHING_STRATEGY.equals(files.second, filePath)) ||
+           (!isAddition && FILE_PATH_HASHING_STRATEGY.equals(files.first, filePath))
   }
 
   override fun equals(other: Any?): Boolean {

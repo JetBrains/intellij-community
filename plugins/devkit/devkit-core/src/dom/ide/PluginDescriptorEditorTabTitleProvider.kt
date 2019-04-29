@@ -8,6 +8,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.module.PluginDescriptorConstants
 import org.jetbrains.idea.devkit.util.DescriptorUtil
+import org.jetbrains.idea.devkit.util.PsiUtil
 
 class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
 

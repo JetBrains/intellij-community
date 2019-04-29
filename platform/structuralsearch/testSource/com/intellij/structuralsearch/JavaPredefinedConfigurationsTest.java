@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -147,15 +147,6 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
            "class X {}",
            PsiElement::getText,
            "registerNatives", "getClass", "hashCode", "equals", "clone", "toString", "notify", "notifyAll", "wait", "wait", "wait", "finalize");
-    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.with.final.parameters")),
-           "class X {" +
-           "  public void m(final int i, int j, int k) {" +
-           "    System.out.println(i);" +
-           "  }" +
-           "  void n() {}" +
-           "  void o(String s) {}" +
-           "}",
-           "public void m(final int i, int j, int k) {    System.out.println(i);  }");
     //assertTrue("untested configurations: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
 

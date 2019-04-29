@@ -52,14 +52,11 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
@@ -87,7 +84,6 @@ import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
-import static org.jetbrains.idea.maven.server.MavenServerProgressIndicator.DEPENDENCIES_RESOLVE_PREFIX;
 
 public class MavenUtil {
   @ApiStatus.Experimental
@@ -193,7 +189,7 @@ public class MavenUtil {
     }
   }
 
-  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable r) {
+  public static void runWhenInitialized(final Project project, final Runnable r) {
     if (project.isDisposed()) return;
 
     if (isNoBackgroundMode()) {
@@ -418,8 +414,7 @@ public class MavenUtil {
     return true;
   }
 
-  public static void run(Project project, String title, final MavenTask task)
-    throws MavenProcessCanceledException {
+  public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
     final RuntimeException[] runtimeEx = new RuntimeException[1];
     final Error[] errorEx = new Error[1];
@@ -428,7 +423,7 @@ public class MavenUtil {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(i, null));
+          task.run(new MavenProgressIndicator(i));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -452,20 +447,15 @@ public class MavenUtil {
                                                  final String title,
                                                  final boolean cancellable,
                                                  final MavenTask task) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(manager::getSyncConsole);
+    final MavenProgressIndicator indicator = new MavenProgressIndicator();
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;
 
       try {
-        manager.getSyncConsole().startTask(title);
         task.run(indicator);
-        manager.getSyncConsole().completeTask(title);
       }
-      catch (MavenProcessCanceledException | ProcessCanceledException e) {
-        manager.getSyncConsole().completeTask(title, e);
+      catch (MavenProcessCanceledException | ProcessCanceledException ignore) {
         indicator.cancel();
       }
     };
@@ -647,7 +637,6 @@ public class MavenUtil {
         }
       }
     }
-    MavenLog.LOG.warn("Cannot resolve maven version for " + mavenHome);
     return null;
   }
 
@@ -801,29 +790,6 @@ public class MavenUtil {
     }
 
     return res;
-  }
-
-  public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenProjectReaderResult> results) {
-    Set<MavenId> unresolvedIds = new HashSet<>();
-    for (MavenProjectReaderResult result : results) {
-      if (result.mavenModel.getDependencies() != null) {
-        for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
-          if (!artifact.isResolved()) {
-            unresolvedIds.add(artifact.getMavenId());
-          }
-        }
-      }
-    }
-
-    if (unresolvedIds.isEmpty()) {
-      return;
-    }
-
-    MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    for (MavenId id : unresolvedIds) {
-      syncConsole.startTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey());
-      syncConsole.completeTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey(), new RuntimeException(id + " not resolved"));
-    }
   }
 
   public interface MavenTaskHandler {

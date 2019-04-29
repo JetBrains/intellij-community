@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -29,7 +29,6 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -76,7 +75,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   }
 
   @Override
-  public boolean isConfigurationFromContext(@NotNull T configuration, @NotNull ConfigurationContext context) {
+  public boolean isConfigurationFromContext(T configuration, ConfigurationContext context) {
     if (isMultipleElementsSelected(context)) {
       return false;
     }

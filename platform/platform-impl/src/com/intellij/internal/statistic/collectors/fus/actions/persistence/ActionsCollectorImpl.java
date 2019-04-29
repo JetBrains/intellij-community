@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.Set;
 
 /**
@@ -36,7 +35,7 @@ import java.util.Set;
 )
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String GROUP = "actions";
-  public static final String DEFAULT_ID = "third.party";
+  private static final String DEFAULT_ID = "third.party";
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
     "tooltip.actions.execute", "tooltip.actions.show.all", "tooltip.actions.show.description.gear",
@@ -51,9 +50,6 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     final FeatureUsageData data = new FeatureUsageData().addOS();
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
-    }
-    else if (event instanceof MouseEvent) {
-      data.addInputEvent((MouseEvent)event);
     }
     FUCounterUsageLogger.getInstance().logEvent(GROUP, recorded, data);
   }

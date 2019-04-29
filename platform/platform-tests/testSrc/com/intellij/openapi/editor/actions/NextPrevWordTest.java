@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.testFramework.EditorTestUtil;
@@ -13,14 +12,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  * @author peter
  */
 public class NextPrevWordTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final CaretStopOptions originalCaretStopOptions = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
-    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT_IDEA.toCaretStopOptions());
-    disposeOnTearDown(() -> EditorSettingsExternalizable.getInstance().setCaretStopOptions(originalCaretStopOptions));
-  }
 
   public void testNextWordFromPreLastPosition() {
     myFixture.configureByText("a.txt", "<foo<caret>>");

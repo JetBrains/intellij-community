@@ -1,14 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ExceptionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 import java.lang.reflect.InvocationHandler;
@@ -38,7 +36,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     final List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
     InvocationHandler handler = new InvocationHandler() {
       @Override
-      public Object invoke(Object proxy, Method method, Object[] args) {
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         //noinspection unchecked
         KeyT keyArg = (KeyT) args [0];
         String key = getKey(keyArg);
@@ -54,24 +52,17 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
   }
 
   public T getByKey(@NotNull KeyT key) {
-    return findByKey(getKey(key), myEpName, myPicoContainer);
-  }
-
-  @Nullable
-  public static <T> T findByKey(@NotNull String key, @NotNull ExtensionPointName<KeyedFactoryEPBean> point, @NotNull PicoContainer picoContainer) {
-    for (KeyedFactoryEPBean epBean : point.getExtensionList()) {
-      if (!key.equals(epBean.key) || epBean.implementationClass == null) {
-        continue;
-      }
-
-      try {
-        return (T)epBean.instantiate(epBean.implementationClass, picoContainer);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+    final List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
+    for (KeyedFactoryEPBean epBean : epBeans) {
+      if (Comparing.strEqual(getKey(key), epBean.key)) {
+        try {
+          if (epBean.implementationClass != null) {
+            return (T)epBean.instantiate(epBean.implementationClass, myPicoContainer);
+          }
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     }
     return null;

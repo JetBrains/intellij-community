@@ -6,13 +6,11 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.treeStructure.treetable.TreeTable
-import com.intellij.util.ui.tree.TreeUtil
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
 import org.fest.swing.driver.JTreeLocation
 import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.exception.LocationUnavailableException
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -38,18 +36,11 @@ class TreeTableFixture(robot: Robot, target: TreeTable) :
     }
   }
 
-  fun expandTopLevel(){
-    TreeUtil.expand(target().tree, 1)
-  }
-
   fun isPathPresent(vararg pathStrings: String): Boolean {
     return try {
       val tree = target().tree
       ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
       true
-    }
-    catch (notFound: LocationUnavailableException) {
-      false
     }
     catch (notFound: ComponentLookupException) {
       false

@@ -19,7 +19,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import java.util.Collections;
 import java.util.function.Supplier;
 
-public class InlineMethodHandler extends JavaInlineActionHandler {
+class InlineMethodHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
   private InlineMethodHandler() {
@@ -32,27 +32,17 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
 
   @Override
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
-    performInline(project, editor, (PsiMethod)element.getNavigationElement(), false);
-  }
-
-  /**
-   * Try to inline method, displaying UI or error message if necessary
-   * @param project project where method is declared
-   * @param editor active editor where cursor might point to the call site 
-   * @param method method to be inlined
-   * @param allowInlineThisOnly if true, only call-site at cursor will be suggested 
-   *                            (in this case caller must check that cursor points to the valid reference)
-   */
-  public static void performInline(Project project, Editor editor, PsiMethod method, boolean allowInlineThisOnly) {
+    PsiMethod method = (PsiMethod)element.getNavigationElement();
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
 
+    boolean allowInlineThisOnly = false;
     PsiCodeBlock methodBody = method.getBody();
     Supplier<PsiCodeBlock> specialization = InlineMethodSpecialization.forReference(reference);
     if (specialization != null) {
       allowInlineThisOnly = true;
       methodBody = specialization.get();
     }
-
+    
     if (methodBody == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -70,7 +60,7 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
 
     if (reference != null) {
       final PsiElement refElement = reference.getElement();
-      if (!isJavaLanguage(refElement.getLanguage())) {
+      if (!isEnabledForLanguage(refElement.getLanguage())) {
         String message = RefactoringBundle
           .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);

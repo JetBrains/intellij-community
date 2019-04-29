@@ -30,6 +30,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diff.DiffBundle;
@@ -42,6 +43,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -405,18 +407,22 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myLoadingPanel.startLoading();
       myAcceptResolveAction.setEnabled(false);
 
-      BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+      BackgroundTaskUtil.executeOnPooledThread(this, () -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
+        Runnable callback;
         try {
-          return doPerformRediff(indicator);
+          callback = doPerformRediff(indicator);
         }
         catch (ProcessCanceledException e) {
-          return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+          callback = () -> myMergeContext.finishMerge(MergeResult.CANCEL);
         }
         catch (Throwable e) {
           LOG.error(e);
-          return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+          callback = () -> myMergeContext.finishMerge(MergeResult.CANCEL);
         }
-      }), null, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, ApplicationManager.getApplication().isUnitTestMode());
+        ApplicationManager.getApplication().invokeLater(callback, ModalityState.stateForComponent(myPanel));
+      });
     }
 
     @NotNull

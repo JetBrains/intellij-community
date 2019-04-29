@@ -37,6 +37,7 @@ import java.util.List;
  * @author Sergey.Malenkov
  */
 public final class FontComboBox extends ComboBox {
+  private static final FontInfoRenderer RENDERER = new FontInfoRenderer();
 
   private Model myModel;
   private final JBDimension mySize;
@@ -55,8 +56,8 @@ public final class FontComboBox extends ComboBox {
     size.width = size.height * 8;
     // preScaled=true as 'size' reflects already scaled font
     mySize = JBDimension.create(size, true);
-    setSwingPopup(false);
-    setRenderer(new FontInfoRenderer());
+    setSwingPopup(true);
+    setRenderer(RENDERER);
     getModel().addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {}

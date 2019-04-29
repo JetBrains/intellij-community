@@ -58,7 +58,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
 
   @NotNull
   protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
-    return ReflectionUtil.newInstance(clazz, false);
+    return ReflectionUtil.newInstance(clazz);
   }
 
   protected void initInstance(@NotNull Object instance) {

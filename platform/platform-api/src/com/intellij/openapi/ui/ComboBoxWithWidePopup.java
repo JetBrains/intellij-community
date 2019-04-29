@@ -46,6 +46,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     }
   }
 
+  @SuppressWarnings("GtkPreferredJComboBoxRenderer")
   @Override
   public void setRenderer(ListCellRenderer<? super E> renderer) {
     if (renderer instanceof SimpleColoredComponent) {

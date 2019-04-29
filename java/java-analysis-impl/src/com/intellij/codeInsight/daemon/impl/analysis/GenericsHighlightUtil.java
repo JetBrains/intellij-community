@@ -29,6 +29,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -838,7 +839,7 @@ public class GenericsHighlightUtil {
   @Nullable
   static HighlightInfo checkEnumInstantiation(@NotNull PsiElement expression, @Nullable PsiClass aClass) {
     if (aClass != null && aClass.isEnum() &&
-        !(expression instanceof PsiNewExpression && ((PsiNewExpression)expression).isArrayCreation())) {
+        !(expression instanceof PsiNewExpression && ExpressionUtils.isArrayCreationExpression((PsiNewExpression)expression))) {
       String description = JavaErrorMessages.message("enum.types.cannot.be.instantiated");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     }

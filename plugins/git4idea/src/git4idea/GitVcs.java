@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAnnotationProvider;
@@ -47,8 +46,6 @@ import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.status.GitChangeProvider;
@@ -427,17 +424,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public CheckoutProvider getCheckoutProvider() {
     return new GitCheckoutProvider();
-  }
-
-  @Nullable
-  @Override
-  public CommittedChangeList loadRevisions(VirtualFile vf, VcsRevisionNumber number) {
-    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
-    if (repository == null) return null;
-
-    return VcsSynchronousProgressWrapper.compute(
-      () -> GitCommittedChangeListProvider.getCommittedChangeList(myProject, repository.getRoot(), (GitRevisionNumber)number),
-      getProject(), "Load Revision Contents");
   }
 
   @Override
