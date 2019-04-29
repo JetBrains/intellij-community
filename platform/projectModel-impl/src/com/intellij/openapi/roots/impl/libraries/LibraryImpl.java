@@ -42,7 +42,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @NonNls private static final String LIBRARY_TYPE_ATTR = "type";
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
-  @NonNls private static final String PROPERTIES_ELEMENT = "properties";
+  @NonNls public static final String PROPERTIES_ELEMENT = "properties";
   private static final String EXCLUDED_ROOTS_TAG = "excluded";
   private String myName;
   private final LibraryTable myLibraryTable;
