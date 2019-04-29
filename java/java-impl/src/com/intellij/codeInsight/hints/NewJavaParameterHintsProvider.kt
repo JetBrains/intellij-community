@@ -16,7 +16,7 @@ class NewJavaParameterHintsProvider : NewParameterHintsProvider<NoSettings> {
       override fun getParameterHints(element: PsiElement, settings: NoSettings, sink: ParameterHintsSink) {
         if (element.text == "Hello" && element.children.isEmpty()) {
 
-          val base = factory.navigateSingle(factory.text("Hello world!")) { element.parentOfType<PsiClass>() }
+          val base = factory.navigateSingle(factory.smallText("Hello world!")) { element.parentOfType<PsiClass>() }
           val presentation = factory.withTooltip("This is hello world!", base)
           val info = ParameterHintInfo(presentation, element.textOffset, false, false, null, null)
           sink.addHint(info)

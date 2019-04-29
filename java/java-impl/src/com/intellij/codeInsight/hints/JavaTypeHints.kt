@@ -14,14 +14,14 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
   fun typeHint(type: PsiType): InlayPresentation = factory.roundWithBackground(hint(type, 0))
 
   private fun hint(type: PsiType, level: Int): InlayPresentation = when (type) {
-    is PsiArrayType -> factory.seq(hint(type.componentType, level), factory.text("[]"))
+    is PsiArrayType -> factory.seq(hint(type.componentType, level), factory.smallText("[]"))
     is PsiClassType -> classTypeHint(type, level)
-    is PsiCapturedWildcardType -> factory.seq(factory.text("capture of "), hint(type.wildcard, level))
+    is PsiCapturedWildcardType -> factory.seq(factory.smallText("capture of "), hint(type.wildcard, level))
     is PsiWildcardType -> wildcardHint(type, level)
-    is PsiEllipsisType -> factory.seq(hint(type.componentType, level), factory.text("..."))
+    is PsiEllipsisType -> factory.seq(hint(type.componentType, level), factory.smallText("..."))
     is PsiDisjunctionType -> join(type.disjunctions.map { hint(it, level) }, " | ")
     is PsiIntersectionType -> join(type.conjuncts.map { hint(it, level) }, " & ")
-    else -> factory.text(type.presentableText)
+    else -> factory.smallText(type.presentableText)
 
   }
 
@@ -35,7 +35,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
         else -> classHint(qualifier, level)
       }
     }
-    val className = factory.navigateSingle(factory.text(classType.className)) {
+    val className = factory.navigateSingle(factory.smallText(classType.className)) {
       classType.resolve()
     }
     if (classType.parameterCount == 0) {
@@ -48,11 +48,11 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     }
     val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
     if (level > 0) {
-      presentations.add(factory.seq(factory.text("<"), factory.folding(factory.text("...")) { parametersHint(classType, level) }, factory.text(">")))
+      presentations.add(factory.seq(factory.smallText("<"), factory.folding(factory.smallText("...")) { parametersHint(classType, level) }, factory.smallText(">")))
     } else {
-      presentations.add(factory.text("<"))
+      presentations.add(factory.smallText("<"))
       presentations.add(parametersHint(classType, level))
-      presentations.add(factory.text(">"))
+      presentations.add(factory.smallText(">"))
     }
     return SequencePresentation(presentations)
   }
@@ -71,18 +71,18 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     val className = factory.navigateSingle(getName(aClass)) { aClass }
     if (!aClass.hasTypeParameters()) {
       return if (containingClassPresentation != null) {
-        factory.seq(containingClassPresentation, factory.text("."), className)
+        factory.seq(containingClassPresentation, factory.smallText("."), className)
       }
       else {
         className
       }
     }
     val presentations = mutableListOf(joinWithDot(containingClassPresentation, className))
-    presentations.add(factory.text("<"))
+    presentations.add(factory.smallText("<"))
     aClass.typeParameters.mapTo(presentations) {
       factory.navigateSingle(getName(it)) { it }
     }
-    presentations.add(factory.text(">"))
+    presentations.add(factory.smallText(">"))
     return SequencePresentation(presentations)
   }
 
@@ -91,24 +91,24 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     val (type, bound) = when {
       wildcardType.isExtends -> "extends" to wildcardType.extendsBound
       wildcardType.isSuper -> "super" to wildcardType.superBound
-      else -> return factory.text("?")
+      else -> return factory.smallText("?")
     }
-    return factory.seq(factory.text("? $type "), hint(bound, level))
+    return factory.seq(factory.smallText("? $type "), hint(bound, level))
   }
 
   private fun joinWithDot(first: InlayPresentation?, second: InlayPresentation): InlayPresentation {
     if (first == null) {
       return second
     }
-    return factory.seq(first, factory.text("."), second)
+    return factory.seq(first, factory.smallText("."), second)
   }
 
   private fun getName(element: PsiNamedElement): InlayPresentation {
     val name = element.name
     if (name != null) {
-      return factory.text(name)
+      return factory.smallText(name)
     }
-    return factory.asWrongReference(factory.text(NO_NAME_MARKER))
+    return factory.asWrongReference(factory.smallText(NO_NAME_MARKER))
   }
 
   private fun join(presentations: Iterable<InlayPresentation>, text: String) : InlayPresentation {
@@ -116,7 +116,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     var first = true
     for (presentation in presentations) {
       if (!first) {
-        seq.add(factory.text(text))
+        seq.add(factory.smallText(text))
       }
       seq.add(presentation)
       first = false
