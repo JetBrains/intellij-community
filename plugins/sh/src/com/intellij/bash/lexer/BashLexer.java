@@ -7,10 +7,10 @@ import com.intellij.psi.tree.IElementType;
 
 public class BashLexer extends MergingLexerAdapterBase implements BashTokenTypes {
   private static final MergeFunction FUNCTION = (type, lexer) -> {
-    if (type != HEREDOC_LINE) return type;
+    if (type != HEREDOC_CONTENT) return type;
 
     IElementType current = lexer.getTokenType();
-    while (current == HEREDOC_LINE) {
+    while (current == HEREDOC_CONTENT) {
       lexer.advance();
       current = lexer.getTokenType();
     }

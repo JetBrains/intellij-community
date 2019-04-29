@@ -41,8 +41,6 @@ public interface BashTokenTypes extends BashTypes {
       LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT
   ));
 
-  TokenSet internalCommands = TokenSet.create(TRAP, LET);
-
   //these are keyword tokens which may be used as identifiers, e.g. in a for loop
   //these tokens will be remapped to word tokens if they occur at a position where a word token would be accepted
   TokenSet identifierKeywords = TokenSet.create(
@@ -50,17 +48,5 @@ public interface BashTokenTypes extends BashTypes {
       IF, IN, SELECT, THEN, UNTIL, WHILE, TIME
   );
 
-  TokenSet arithLiterals = TokenSet.create(NUMBER, OCTAL, HEX);
-
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING, INT, COLON);
-  IElementType HEREDOC_LINE = new BashTokenType("heredoc line (temporary)");
-
-  // test Operators
-  TokenSet conditionalOperators = TokenSet.create(OR_OR, AND_AND, BANG, EQ, REGEXP, GT, LT);
-
-  //this must NOT include PIPE_AMP because it's a command separator and not a real redirect token
-  TokenSet redirectionSet = TokenSet.create(GT, LT, SHIFT_RIGHT,
-      REDIRECT_HERE_STRING, REDIRECT_LESS_GREATER,
-      REDIRECT_GREATER_BAR, REDIRECT_GREATER_AMP, REDIRECT_AMP_GREATER, REDIRECT_LESS_AMP, REDIRECT_AMP_GREATER_GREATER,
-      HEREDOC_MARKER_TAG);
 }

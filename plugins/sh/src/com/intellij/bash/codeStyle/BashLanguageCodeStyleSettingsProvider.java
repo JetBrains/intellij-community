@@ -13,7 +13,7 @@ public class BashLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(settings, modelSettings, "Bash") {
+    return new CodeStyleAbstractConfigurable(settings, modelSettings, getLanguage().getID()) {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new CodeStyleBashPanel(settings, modelSettings);

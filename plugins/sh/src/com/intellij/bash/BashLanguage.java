@@ -1,6 +1,7 @@
 package com.intellij.bash;
 
 
+import com.intellij.bash.highlighter.BashHighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 

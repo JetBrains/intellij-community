@@ -1460,7 +1460,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 163: break;
           case 46: 
-            { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_LINE;
+            { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_CONTENT;
             } 
             // fall through
           case 164: break;
@@ -1470,12 +1470,12 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 165: break;
           case 48: 
-            { return HEREDOC_LINE;
+            { return HEREDOC_CONTENT;
             } 
             // fall through
           case 166: break;
           case 49: 
-            { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE;
+            { yybegin(HERE_DOC_END_MARKER); return HEREDOC_CONTENT;
             } 
             // fall through
           case 167: break;

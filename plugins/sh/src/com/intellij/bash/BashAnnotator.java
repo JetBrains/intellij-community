@@ -13,7 +13,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.bash.BashSyntaxHighlighter.*;
+import static com.intellij.bash.highlighter.BashHighlighterColors.*;
 
 public class BashAnnotator implements Annotator {
   @Override
@@ -22,15 +22,23 @@ public class BashAnnotator implements Annotator {
       mark(o, holder, STRING);
       highlightVariables(o, holder);
     }
-    else if (o instanceof BashHeredoc) {
-      annotateHeredoc((BashHeredoc) o, holder);
-    }
-
     // todo comment in case of poor performance because of the issue with EditorGutterComponentImpl#updateSize()
     else if (o instanceof BashGenericCommandDirective) {
-      mark(o, holder, EXTERNAL_COMMAND);
+      mark(o, holder, GENERIC_COMMAND);
     }
-
+    else if (o instanceof BashFunctionDefinition) {
+      PsiElement word = ((BashFunctionDefinition) o).getWord();
+      mark(word, holder, FUNCTION_DECLARATION);
+    }
+    else if (o instanceof BashAssignmentCommand) {
+      PsiElement literal = ((BashAssignmentCommand) o).getLiteral();
+      mark(literal, holder, VARIABLE_DECLARATION);
+    }
+    else if (o instanceof BashSubshellCommand) {
+      BashSubshellCommand subshellCommand = (BashSubshellCommand) o;
+      mark(subshellCommand.getLeftParen(), holder, SUBSHELL_COMMAND);
+      mark(subshellCommand.getRightParen(), holder, SUBSHELL_COMMAND);
+    }
     ASTNode node = o.getNode();
     IElementType elementType = node == null ? null : node.getElementType();
     if (elementType == BashTypes.WORD && o.getParent() instanceof BashSimpleCommandElement) {
@@ -38,20 +46,12 @@ public class BashAnnotator implements Annotator {
     }
   }
 
-  private static void annotateHeredoc(@NotNull BashHeredoc o, @NotNull AnnotationHolder holder) {
-    holder.createAnnotation(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, o.getTextRange(), null).setTextAttributes(HERE_DOC);
-    mark(o.getHeredocMarkerStart(), holder, HERE_DOC_START);
-    mark(o.getHeredocMarkerEnd(), holder, HERE_DOC_END);
-
-    highlightVariables(o, holder);
-  }
-
   private static void highlightVariables(@NotNull PsiElement container, @NotNull AnnotationHolder holder) {
     new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof BashVariable) {
-          mark(element, holder, VAR_USE);
+          mark(element, holder, VARIABLE);
         }
         super.visitElement(element);
       }

@@ -258,7 +258,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 }
 
 <HERE_DOC_END_MARKER> {
-  {WhiteSpace}+                   { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_LINE; }
+  {WhiteSpace}+                   { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_CONTENT; }
   {HeredocMarker}+                { if (yytext().toString().equals(heredocMarker))
                                   { heredocMarker = null; heredocWithWhiteSpaceIgnore = false; popState(); return HEREDOC_MARKER_END; }
                                     else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
@@ -266,8 +266,8 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 }
 
 <HERE_DOC_BODY> {
-    {InputCharacter}+             { return HEREDOC_LINE; }
-    {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
+    {InputCharacter}+             { return HEREDOC_CONTENT; }
+    {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_CONTENT; }
 }
 
 <YYINITIAL, CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {

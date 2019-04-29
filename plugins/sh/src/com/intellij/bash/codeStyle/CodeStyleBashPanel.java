@@ -3,7 +3,6 @@ package com.intellij.bash.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.bash.BashFileType;
 import com.intellij.bash.BashLanguage;
-import com.intellij.bash.BashSyntaxHighlighter;
 import com.intellij.bash.formatter.BashShfmtFormatterUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -13,6 +12,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -93,7 +94,8 @@ public class CodeStyleBashPanel extends CodeStyleAbstractPanel {
   @Nullable
   @Override
   protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-    return HighlighterFactory.createHighlighter(new BashSyntaxHighlighter(), scheme);
+    SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(BashLanguage.INSTANCE, null, null);
+    return HighlighterFactory.createHighlighter(highlighter, scheme);
   }
 
   @NotNull
