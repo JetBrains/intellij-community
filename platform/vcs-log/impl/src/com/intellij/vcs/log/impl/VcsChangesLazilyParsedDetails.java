@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 /**
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
@@ -54,7 +55,9 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
                                        @NotNull ChangesParser changesParser) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
     myChangesParser = changesParser;
-    myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
+    myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges, (sources, parent) -> {
+      return myChangesParser.parseStatusInfo(project, this, sources, parent);
+    }));
   }
 
   @NotNull
@@ -111,11 +114,14 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @NotNull protected final Project myProject;
     @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
     @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
+    @NotNull private final BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> myParser;
 
     public UnparsedChanges(@NotNull Project project,
-                           @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
+                           @NotNull List<List<VcsFileStatusInfo>> changesOutput,
+                           @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> parser) {
       myProject = project;
       myChangesOutput = changesOutput;
+      myParser = parser;
     }
 
     @NotNull
@@ -130,15 +136,14 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @NotNull
     private List<Change> parseMergedChanges() {
       List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
-      List<Change> changes = myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this,
-                                                             ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
+      List<Change> changes = myParser.apply(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
       LOG.assertTrue(changes.size() == statuses.size(), "Incorrectly parsed statuses " + statuses + " to changes " + changes);
       if (getParents().size() <= 1) return changes;
 
       // each merge change knows about all changes to parents
       List<Change> wrappedChanges = new ArrayList<>(statuses.size());
       for (int i = 0; i < statuses.size(); i++) {
-        wrappedChanges.add(new MyMergedChange(changes.get(i), statuses.get(i)));
+        wrappedChanges.add(new MyMergedChange(changes.get(i), statuses.get(i), myParser));
       }
       return wrappedChanges;
     }
@@ -163,7 +168,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       else {
         List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
-          changes.add(myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this, myChangesOutput.get(i), i));
+          changes.add(myParser.apply(myChangesOutput.get(i), i));
         }
         return changes;
       }
@@ -183,29 +188,29 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     public List<List<VcsFileStatusInfo>> getChangesOutput() {
       return myChangesOutput;
     }
+  }
 
-    private class MyMergedChange extends MergedChange {
-      @NotNull private final MergedStatusInfo<VcsFileStatusInfo> myStatusInfo;
-      @NotNull private final Supplier<List<Change>> mySourceChanges;
+  private static class MyMergedChange extends MergedChange {
+    @NotNull private final MergedStatusInfo<VcsFileStatusInfo> myStatusInfo;
+    @NotNull private final Supplier<List<Change>> mySourceChanges;
 
-      MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<VcsFileStatusInfo> statusInfo) {
-        super(change);
-        myStatusInfo = statusInfo;
-        mySourceChanges = Suppliers.memoize(() -> {
-          List<Change> sourceChanges = ContainerUtil.newArrayList();
-          for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
-            List<VcsFileStatusInfo> statusInfos = Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent));
-            sourceChanges.addAll(myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this, statusInfos,
-                                                                 parent));
-          }
-          return sourceChanges;
-        });
-      }
+    MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<VcsFileStatusInfo> statusInfo,
+                   @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> parser) {
+      super(change);
+      myStatusInfo = statusInfo;
+      mySourceChanges = Suppliers.memoize(() -> {
+        List<Change> sourceChanges = ContainerUtil.newArrayList();
+        for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
+          List<VcsFileStatusInfo> statusInfos = Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent));
+          sourceChanges.addAll(parser.apply(statusInfos, parent));
+        }
+        return sourceChanges;
+      });
+    }
 
-      @Override
-      public List<Change> getSourceChanges() {
-        return mySourceChanges.get();
-      }
+    @Override
+    public List<Change> getSourceChanges() {
+      return mySourceChanges.get();
     }
   }
 
