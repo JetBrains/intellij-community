@@ -205,7 +205,7 @@ public class SearchUtil {
   }
 
   @NotNull
-  private static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
+  public static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
     ListCellRenderer renderer = comboBox.getRenderer();
     if (renderer == null) renderer = new DefaultListCellRenderer();
 
