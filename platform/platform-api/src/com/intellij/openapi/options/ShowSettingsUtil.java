@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -46,13 +46,6 @@ public abstract class ShowSettingsUtil {
   public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable, boolean showApplyButton);
 
   public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
-
-  /**
-   * @deprecated create a new instance of configurable instead
-   * to remove in IDEA 15
-   */
-  @Deprecated
-  public abstract <T extends Configurable> T findProjectConfigurable(Project project, Class<T> confClass);
 
   public static String getSettingsMenuName() {
     return SystemInfo.isMac ? "Preferences" : "Settings";
