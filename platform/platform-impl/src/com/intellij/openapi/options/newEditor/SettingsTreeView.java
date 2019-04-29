@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -38,6 +38,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -922,8 +923,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       return false;
     }
 
+    @NotNull
     @Override
-    protected ActionCallback refilterNow(Object preferredSelection, boolean adjustSelection) {
+    protected Promise<?> refilterNow(Object preferredSelection, boolean adjustSelection) {
       final List<Object> toRestore = new ArrayList<>();
       if (myFilter.myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
         AbstractTreeUi ui = myBuilder.getUi();
@@ -936,14 +938,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       myWasHoldingFilter = myFilter.myContext.isHoldingFilter();
 
-      ActionCallback result = super.refilterNow(preferredSelection, adjustSelection);
       myRefilteringNow = true;
-      return result.doWhenDone(() -> {
-        myRefilteringNow = false;
-        if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
-          restoreExpandedState(toRestore);
-        }
-      });
+      return super.refilterNow(preferredSelection, adjustSelection)
+        .onSuccess(o -> {
+          myRefilteringNow = false;
+          if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
+            restoreExpandedState(toRestore);
+          }
+        });
     }
 
     private void restoreExpandedState(List<Object> toRestore) {

@@ -121,7 +121,9 @@ public class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
-    if (!withIdeSettings && project == null) project = ProjectManager.getInstance().getDefaultProject();
+    if (!withIdeSettings && project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
   }
 
@@ -346,8 +348,9 @@ public class ConfigurableExtensionPointUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return the list of all valid settings according to parameters
    */
+  @NotNull
   private static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
-    List<Configurable> list = ContainerUtil.newArrayList();
+    List<Configurable> list = new ArrayList<>();
     if (withIdeSettings) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ConfigurableHit;
@@ -8,7 +8,6 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
@@ -120,7 +119,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return myHits != null && myHits.getNameHits().contains(configurable);
   }
 
-  ActionCallback update(String text, boolean adjustSelection, boolean now) {
+  void update(String text, boolean adjustSelection, boolean now) {
     try {
       myUpdateRejected = true;
       mySearch.setText(text);
@@ -128,12 +127,12 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     finally {
       myUpdateRejected = false;
     }
-    return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
+    update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
   }
 
-  private ActionCallback update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
+  private void update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
     if (myUpdateRejected) {
-      return ActionCallback.REJECTED;
+      return;
     }
     String text = getFilterText();
     if (text.isEmpty()) {
@@ -179,9 +178,8 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
       myLastSelected = current;
     }
     SimpleNode node = !adjustSelection ? null : findNode(candidate);
-    ActionCallback callback = fireUpdate(node, adjustSelection, now);
+    fireUpdate(node, adjustSelection, now);
     myDocumentWasChanged = true;
-    return callback;
   }
 
   private static Configurable findConfigurable(Set<Configurable> configurables, Set<Configurable> hits) {
