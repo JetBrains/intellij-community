@@ -50,7 +50,7 @@ public class IdeaFreezeReporter {
         if (Registry.is("performance.watcher.freeze.report") &&
             lengthInSeconds > FREEZE_THRESHOLD &&
             // check that we have at least half of the dumps required
-            myCurrentDumps.size() >= lengthInSeconds * 500 / Registry.intValue("performance.watcher.unresponsive.interval.ms") &&
+            myCurrentDumps.size() >= Math.max(3, lengthInSeconds * 500 / Registry.intValue("performance.watcher.unresponsive.interval.ms")) &&
             !ContainerUtil.isEmpty(myStacktraceCommonPart) &&
             !DebugAttachDetector.isAttached()) {
           int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
