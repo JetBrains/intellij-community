@@ -167,7 +167,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         fixes.add(new SurroundWithRequireNonNullFix(qualifier));
       }
       
-      if (!ExpressionUtils.isNullLiteral(qualifier)) {
+      if (onTheFly && !ExpressionUtils.isNullLiteral(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createExplainFix(qualifier, new TrackingRunner.NullableDfaProblemType()));
       }
 
