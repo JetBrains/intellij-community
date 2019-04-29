@@ -657,6 +657,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
         if (isHelpMode(mySearchField.getText())) {
           buildHelpGroups(myListModel);
+          updatePopup();
           return;
         }
 
