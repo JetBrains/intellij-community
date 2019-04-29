@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -504,12 +505,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private static class NameFinder<T extends PyElement> implements Processor<T> {
+    @NotNull
+    private final TypeEvalContext myContext;
     private T myResult;
     private final String[] myNames;
     private int myLastResultIndex = -1;
     private PyClass myLastVisitedClass = null;
 
-    NameFinder(String... names) {
+    NameFinder(@NotNull TypeEvalContext context, String... names) {
+      myContext = context;
       myNames = names;
       myResult = null;
     }
@@ -535,11 +539,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
       final int index = ArrayUtil.indexOf(myNames, target.getName());
       // Do not depend on the order in which elements appear, always try to find the first one
-      if (index >= 0 && (myLastResultIndex == -1 || index < myLastResultIndex)) {
-        myLastResultIndex = index;
-        myResult = target;
-        if (index == 0) {
-          return false;
+      if (index >= 0) {
+        if (myLastResultIndex == -1 ||
+            index < myLastResultIndex ||
+            index == myLastResultIndex && PyiUtil.isOverload(myResult, myContext) && !PyiUtil.isOverload(target, myContext)) {
+          myLastResultIndex = index;
+          myResult = target;
+
+          if (index == 0 && !PyiUtil.isOverload(myResult, myContext)) {
+            return false;
+          }
         }
       }
       return true;
@@ -584,7 +593,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyFunction findMethodByName(@Nullable final String name, boolean inherited, @Nullable TypeEvalContext context) {
     if (name == null) return null;
-    NameFinder<PyFunction> proc = new NameFinder<>(name);
+    NameFinder<PyFunction> proc = new NameFinder<>(notNullizeContext(context), name);
     visitMethods(proc, inherited, context);
     return proc.getResult();
   }
@@ -601,7 +610,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyClass findNestedClass(String name, boolean inherited) {
     if (name == null) return null;
-    NameFinder<PyClass> proc = new NameFinder<>(name);
+    NameFinder<PyClass> proc = new NameFinder<>(TypeEvalContext.codeInsightFallback(getProject()), name);
     visitNestedClasses(proc, inherited);
     return proc.getResult();
   }
@@ -611,7 +620,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public PyFunction findInitOrNew(boolean inherited, final @Nullable TypeEvalContext context) {
     NameFinder<PyFunction> proc;
     if (isNewStyleClass(context)) {
-      proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW) {
+      proc = new NameFinder<PyFunction>(notNullizeContext(context), PyNames.INIT, PyNames.NEW) {
         @Nullable
         @Override
         protected PyClass getContainingClass(@NotNull PyFunction element) {
@@ -620,7 +629,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       };
     }
     else {
-      proc = new NameFinder<>(PyNames.INIT);
+      proc = new NameFinder<>(notNullizeContext(context), PyNames.INIT);
     }
     visitMethods(proc, inherited, context);
     return proc.getResult();
@@ -1041,7 +1050,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited, TypeEvalContext context) {
-    final NameFinder<PyTargetExpression> processor = new NameFinder<>(name);
+    final NameFinder<PyTargetExpression> processor = new NameFinder<>(notNullizeContext(context), name);
     visitClassAttributes(processor, inherited, context);
     return processor.getResult();
   }

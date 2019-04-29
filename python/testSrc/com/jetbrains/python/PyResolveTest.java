@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 
 public class PyResolveTest extends PyResolveTestCase {
   @Override
@@ -1338,5 +1339,15 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testDunderBuiltins() {
     final PsiElement element = doResolve();
     assertEquals(PyBuiltinCache.getInstance(myFixture.getFile()).getBuiltinsFile(), element);
+  }
+
+  // PY-35531
+  public void testOverloadedDunderInit() {
+    final PyFile file = (PyFile)myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
+
+    final PyFunction function = file.findTopLevelClass("A").findInitOrNew(false, context);
+    assertNotNull(function);
+    assertFalse(PyiUtil.isOverload(function, context));
   }
 }
