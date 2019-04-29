@@ -94,7 +94,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
     int size = systems.size();
     if (size == 0) {
-      if (!protocol.equals("mock") && !protocol.equals("library") && !protocol.equals("http")) {
+      if (!protocol.equals("mock") && !protocol.equals("library") && !protocol.startsWith("<error>") /* tests */) {
         String message = "Cannot find filesystem for protocol \"" + protocol + '"';
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(message);
