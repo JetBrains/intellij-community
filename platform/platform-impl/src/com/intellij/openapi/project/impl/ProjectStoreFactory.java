@@ -5,7 +5,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public interface ProjectStoreClassProvider {
+public interface ProjectStoreFactory {
   @NotNull
   IComponentStore createStore(@NotNull Project project);
 }

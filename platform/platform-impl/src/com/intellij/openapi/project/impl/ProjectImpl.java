@@ -64,7 +64,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
     //noinspection CodeBlock2Expr
-    return ServiceManager.getService(ProjectStoreClassProvider.class).createStore(this);
+    return ServiceManager.getService(ProjectStoreFactory.class).createStore(this);
   });
 
   /**
