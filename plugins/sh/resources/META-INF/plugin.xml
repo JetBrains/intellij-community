@@ -49,6 +49,7 @@
     <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
     <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.bash.BashErrorFilter"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.bash.highlighting.BashOccurrencesHighlightingFactory"/>
 
     <intentionAction>
       <className>com.intellij.bash.rename.BashRenameIntention</className>

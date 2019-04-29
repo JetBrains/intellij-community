@@ -1,0 +1,39 @@
+package com.intellij.bash.highlighting;
+
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
+
+public class BashOccurrencesHighlightUsagesHandler extends HighlightUsagesHandlerBase<PsiElement> {
+  BashOccurrencesHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file) {
+    super(editor, file);
+  }
+
+  @Override
+  public List<PsiElement> getTargets() {
+    return Collections.singletonList(myFile);
+  }
+
+  @Override
+  protected void selectTargets(List<PsiElement> targets, Consumer<List<PsiElement>> selectionConsumer) {
+    selectionConsumer.consume(targets);
+  }
+
+  @Override
+  public void computeUsages(List<PsiElement> targets) {
+    TextRange textRange = BashTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(myEditor);
+    if (textRange != null) {
+      CharSequence documentText = myEditor.getDocument().getImmutableCharSequence();
+      List<TextRange> occurrences = BashTextOccurrencesUtil.findAllOccurrences(documentText,
+          textRange.subSequence(documentText), true);
+      myReadUsages.addAll(occurrences);
+    }
+  }
+}
