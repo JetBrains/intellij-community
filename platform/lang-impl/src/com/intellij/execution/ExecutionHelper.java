@@ -348,10 +348,6 @@ public class ExecutionHelper {
       if (indicator != null && title2 != null) {
         indicator.setText2(title2);
       }
-      Application application = ApplicationManager.getApplication();
-      if (application.isDispatchThread() && application.isInternal() && !application.isHeadlessEnvironment()) {
-        LOG.warn("Synchronous execution on EDT: " + processHandler, new Throwable());
-      }
       process.run();
     }
   }
