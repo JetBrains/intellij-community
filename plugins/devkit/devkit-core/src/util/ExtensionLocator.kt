@@ -31,26 +31,19 @@ internal fun processExtensionDeclarations(name: String, project: Project, strict
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   PsiSearchHelper.getInstance(project).processElementsWithWord(
     { element, offsetInElement ->
-      if (element !is XmlTag) {
-        return@processElementsWithWord true
+      val elementAtOffset = (element as? XmlTag)?.findElementAt(offsetInElement) ?: return@processElementsWithWord true
+      if (strictMatch) {
+        if (!elementAtOffset.textMatches(name)) {
+          return@processElementsWithWord true
+        }
       }
-
-      val elementAtOffset = element.findElementAt(offsetInElement)
-      if (elementAtOffset == null) {
-        return@processElementsWithWord true
-      }
-
-      val foundText = elementAtOffset.text
-      if (!strictMatch && !StringUtil.contains(foundText, name)) {
-        return@processElementsWithWord true
-      }
-      if (strictMatch && !StringUtil.equals(foundText, name)) {
+      else if (!StringUtil.contains(elementAtOffset.text, name)) {
         return@processElementsWithWord true
       }
 
       val extension = DomManager.getDomManager(project).getDomElement(element) as? Extension ?: return@processElementsWithWord true
       callback(extension, element)
-    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, true /* case-sensitive */)
+    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, /* case-sensitive = */ true)
 }
 
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {
