@@ -435,7 +435,7 @@ public class GeneralCommandLine implements UserDataHolder {
   @NotNull
   protected Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Building process with commands: " + ContainerUtil.map(escapedCommands, it -> "\"" + it + "\""));
+      LOG.debug("Building process with commands: " + escapedCommands);
     }
     ProcessBuilder builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
