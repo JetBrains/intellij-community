@@ -40,10 +40,10 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
 
   val grouping: ChangesGroupingPolicyFactory
     get() = object : ChangesGroupingPolicyFactory() {
-      override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy {
-        var result: ChangesGroupingPolicy = DefaultChangesGroupingPolicy.Factory(project, showConflictsNode).createGroupingPolicy(model)
+      override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
+        var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
         groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
-          result = groupingFactories.getByKey(it)!!.createGroupingPolicy(model).apply { setNextGroupingPolicy(result) }
+          result = groupingFactories.getByKey(it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
         }
         return result
       }
