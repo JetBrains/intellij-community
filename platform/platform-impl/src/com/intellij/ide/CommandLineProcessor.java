@@ -6,7 +6,6 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
@@ -30,7 +29,6 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -94,7 +92,7 @@ public class CommandLineProcessor {
   }
 
   @Nullable
-  public static Project processExternalCommandLine(List<String> args, @Nullable String currentDirectory) {
+  public static Project processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
@@ -102,9 +100,7 @@ public class CommandLineProcessor {
     if (args.isEmpty()) return null;
 
     String command = args.get(0);
-    Iterator<ApplicationStarter> iterator = ((ExtensionPointImpl<ApplicationStarter>)ApplicationStarter.EP_NAME.getPoint(null)).iterator();
-    while (iterator.hasNext()) {
-      ApplicationStarter starter = iterator.next();
+    for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getIterable()) {
       if (starter == null) {
         break;
       }

@@ -83,7 +83,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
-  public void testToStringOnUnqualified() {
+  public void testToStringOnUnqualifiedPerformance() {
     @Language("JAVA")
     String fileText = "public class Fix {\n" +
                   "    {\n" +
@@ -111,7 +111,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
      }).usesAllCPUCores().assertTiming();
   }
 
-  public void testToStringOnQualified() {
+  public void testToStringOnQualifiedPerformance() {
     @Language("JAVA")
     String fileText = "public class Fix {\n" +
                   "    {\n" +

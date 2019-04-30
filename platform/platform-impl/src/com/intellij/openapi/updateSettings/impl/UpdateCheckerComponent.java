@@ -7,8 +7,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import static java.lang.Math.max;
 
@@ -45,26 +46,25 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
-  private final UpdateSettings mySettings;
 
-  public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
+  public UpdateCheckerComponent() {
     Disposer.register(this, myCheckForUpdatesAlarm);
 
-    mySettings = settings;
     updateDefaultChannel();
     checkSecureConnection();
-    scheduleOnStartCheck(app);
+    scheduleOnStartCheck();
     cleanupPatch();
-    snapPackageNotification(app);
+    snapPackageNotification();
   }
 
-  private void updateDefaultChannel() {
-    ChannelStatus current = mySettings.getSelectedChannelStatus();
+  private static void updateDefaultChannel() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
     boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
 
     if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
-      mySettings.setSelectedChannelStatus(ChannelStatus.EAP);
+      settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("update.notifications.title");
@@ -74,30 +74,32 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
     }
 
     if (!eap && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
-      mySettings.setSelectedChannelStatus(ChannelStatus.RELEASE);
+      settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
       LOG.info("channel set to 'release'");
     }
   }
 
-  private void checkSecureConnection() {
-    if (mySettings.isSecureConnection() && !mySettings.canUseSecureConnection()) {
+  private static void checkSecureConnection() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isSecureConnection() && !settings.canUseSecureConnection()) {
       String title = IdeBundle.message("update.notifications.title");
       String message = IdeBundle.message("update.sni.disabled.message");
       UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, null).notify(null);
     }
   }
 
-  private void scheduleOnStartCheck(Application app) {
-    if (!mySettings.isCheckNeeded()) {
+  private void scheduleOnStartCheck() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (!settings.isCheckNeeded()) {
       return;
     }
 
-    app.getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+      public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLastBuildChecked());
-        long timeSinceLastCheck = max(System.currentTimeMillis() - mySettings.getLastTimeChecked(), 0);
+        BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
+        long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
 
         if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {
           myCheckRunnable.run();
@@ -156,12 +158,15 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
     myCheckForUpdatesAlarm.cancelAllRequests();
   }
 
-  private void snapPackageNotification(Application app) {
-    if (!mySettings.isCheckNeeded() || ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
+  private static void snapPackageNotification() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (!settings.isCheckNeeded() || ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) {
+      return;
+    }
 
-    app.executeOnPooledThread(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-      final BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLastBuildChecked());
+      final BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
 
       if (lastBuildChecked == null) {
         /* First IDE start, just save info about build */

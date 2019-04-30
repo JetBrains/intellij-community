@@ -155,7 +155,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test commit unstaged case rename - case ignored on case insensitive system`() {
-    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+    assumeCaseInsensitiveSystem()
 
     tac("a.java", "old content")
     rm("a.java")
@@ -172,7 +172,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test commit wrongly staged case rename - case ignored on case insensitive system`() {
-    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+    assumeCaseInsensitiveSystem()
 
     tac("a.java", "old content")
     rm("a.java")
@@ -187,6 +187,10 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     repo.assertCommitted {
       modified("a.java")
     }
+  }
+
+  private fun assumeCaseInsensitiveSystem() {
+    assumeTrue("Case-insensitive system expected", !SystemInfo.isFileSystemCaseSensitive)
   }
 
   fun `test commit case rename + one staged file`() {

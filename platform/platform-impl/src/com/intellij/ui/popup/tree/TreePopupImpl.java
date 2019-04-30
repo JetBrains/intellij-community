@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,6 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.Range;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -456,7 +455,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
-    myBuilder.refilter();
+    myBuilder.refilterAsync();
   }
 
   @Override

@@ -79,8 +79,9 @@ abstract class BuildContext implements CompilationContext {
 
   /**
    * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}
+   * @return {@code true} if the step was executed
    */
-  abstract void executeStep(String stepMessage, String stepId, Closure step)
+  abstract boolean executeStep(String stepMessage, String stepId, Closure step)
 
   abstract boolean shouldBuildDistributions()
 

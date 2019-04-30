@@ -2018,7 +2018,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           ActionGroup actionGroup = renderer.getPopupMenuActions();
           if (actionGroup != null) {
             if (checkDumbAware(actionGroup)) {
-              actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, actionGroup).getComponent().show(this, e.getX(), e.getY());
+              actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup).getComponent().show(this, e.getX(), e.getY());
             }
             else {
               notifyNotDumbAware();
@@ -2033,7 +2033,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
         }
         if (group != null) {
-          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, group);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
         }
         e.consume();

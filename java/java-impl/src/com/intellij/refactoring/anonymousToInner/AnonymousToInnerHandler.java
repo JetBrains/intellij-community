@@ -38,6 +38,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -589,7 +590,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiTypeParameter) {
           final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
-          if (owner != null && !PsiTreeUtil.isAncestor(myAnonClass, owner, false)) {
+          if (owner != null && !PsiTreeUtil.isAncestor(myAnonClass, owner, false) && 
+              (RefactoringUtil.isInStaticContext(owner, myTargetClass) || myMakeStatic)) {
             myTypeParametersToCreate.add((PsiTypeParameter)resolved);
           }
         }

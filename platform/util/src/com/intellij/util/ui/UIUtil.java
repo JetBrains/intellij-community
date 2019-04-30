@@ -3520,7 +3520,7 @@ public class UIUtil {
 
   @NotNull
   public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
-    return UI_TRAVERSER.withRoot(component);
+    return UI_TRAVERSER.withRoot(component).expandAndFilter(o -> !(o instanceof CellRendererPane));
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");

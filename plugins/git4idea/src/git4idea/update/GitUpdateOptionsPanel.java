@@ -39,7 +39,7 @@ public class GitUpdateOptionsPanel {
 
   public boolean isModified(GitVcsSettings settings) {
     UpdateMethod type = getUpdateType();
-    return type != settings.getUpdateType() || updateSaveFilesPolicy() != settings.updateChangesPolicy();
+    return type != settings.getUpdateMethod() || updateSaveFilesPolicy() != settings.updateChangesPolicy();
   }
 
   /**
@@ -71,7 +71,7 @@ public class GitUpdateOptionsPanel {
    * Save configuration to settings object
    */
   public void applyTo(GitVcsSettings settings) {
-    settings.setUpdateType(getUpdateType());
+    settings.setUpdateMethod(getUpdateType());
     settings.setUpdateChangesPolicy(updateSaveFilesPolicy());
   }
 
@@ -79,7 +79,7 @@ public class GitUpdateOptionsPanel {
    * Update panel according to settings
    */
   public void updateFrom(GitVcsSettings settings) {
-    switch (settings.getUpdateType()) {
+    switch (settings.getUpdateMethod()) {
       case REBASE:
         myForceRebaseRadioButton.setSelected(true);
         break;
@@ -90,7 +90,7 @@ public class GitUpdateOptionsPanel {
         myBranchDefaultRadioButton.setSelected(true);
         break;
       default:
-        assert false : "Unknown value of update type: " + settings.getUpdateType();
+        assert false : "Unknown value of update type: " + settings.getUpdateMethod();
     }
     UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myStashRadioButton, myShelveRadioButton);
   }

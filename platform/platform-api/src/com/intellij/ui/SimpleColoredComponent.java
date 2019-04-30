@@ -864,9 +864,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
           UIUtil.drawSearchMatch(g, x1, x2, height);
         }
         else if (attributes.isClickable()) {
+          boolean selected = UIUtil.getTreeSelectionBackground(true) == getBackground();
           fgColor = ObjectUtils.notNull(attributes.getFgColor(), UIUtil.getLabelForeground());
-          Color bg = ObjectUtils.notNull(attributes.getBgColor(), UIUtil.getLabelBackground());
-          drawClickableFrag(g, x1, x2, height, bg, attributes.isHovered());
+          drawClickableFrag(g, x1, x2, height, selected, attributes.isHovered());
         }
         else {
           continue;
@@ -892,19 +892,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     g.fillRect(x, y, width, height);
   }
 
-  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, Color bg, boolean hovered) {
-    boolean darcula = UIUtil.isUnderDarcula();
-    Color c1 = darcula ? bg.brighter() : bg;
-    Color c2 = darcula ? bg : bg.darker();
+  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, boolean selected, boolean hovered) {
     GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-    RoundRectangle2D.Float shape = new RoundRectangle2D.Float(x1 + 1, 2, x2 - x1 - 2, height - 4, 4, 4);
-    if (hovered) {
-      g.setPaint(UIUtil.getGradientPaint(x1 + 1, 2, c1, x1 + 1, height - 5, c2));
+    RoundRectangle2D.Float shape = new RoundRectangle2D.Float(x1 + 1, 2, x2 - x1 - 2, height - 4, 6, 6);
+    g.setColor(JBUI.CurrentTheme.ActionButton.hoverBackground());
+    if (hovered && !selected) {
       g.fill(shape);
     }
-    g.setColor(new JBColor(Gray.xCC, new Color(0x757b80)));
-    g.draw(shape);
+    else {
+      g.draw(shape);
+    }
     c.restore();
   }
 

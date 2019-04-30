@@ -1,10 +1,10 @@
 /*
 Value is always false (y == null)
-  'y' was assigned (x)
+  'y' was assigned (=)
     One of the following happens:
-      'x' was assigned (new Object())
+      'x' was assigned (=)
         Expression cannot be null as it's newly created object (new Object())
-      or 'x' was assigned ("foo")
+      or 'x' was assigned to '"foo"' (=)
         Expression cannot be null as it's literal ("foo")
  */
 

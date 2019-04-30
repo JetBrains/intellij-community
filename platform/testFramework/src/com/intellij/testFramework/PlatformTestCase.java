@@ -277,9 +277,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     try {
       String projectName = FileUtilRt.getNameWithoutExtension(fileName);
-      Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path);
-      project.putUserData(CREATION_PLACE, creationPlace);
-      return project;
+      return ProjectManagerEx.getInstanceEx().newProject(projectName, path);
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {
@@ -345,7 +343,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    String place = project.getUserData(CREATION_PLACE);
+    String place = project instanceof ProjectImpl ? ((ProjectImpl)project).getCreationTrace() : null;
     return project + " " +(place == null ? "" : place) + base;
   }
 

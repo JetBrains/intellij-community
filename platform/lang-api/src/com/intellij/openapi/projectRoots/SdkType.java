@@ -244,7 +244,7 @@ public abstract class SdkType implements SdkTypeId {
    * @param parentComponent    the parent component for showing the dialog.
    * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
+   * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,

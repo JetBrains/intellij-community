@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public interface SearchEverywhereContributor<Item> {
+public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
 
   ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
 
@@ -104,7 +105,8 @@ public interface SearchEverywhereContributor<Item> {
     return false;
   }
 
-  default boolean isDumbModeSupported() {
+  @Override
+  default boolean isDumbAware() {
     return true;
   }
 

@@ -15,7 +15,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -33,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Contributor-based goto model
  */
-public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelEx {
+public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelEx, PossiblyDumbAware {
   public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
 
   protected final Project myProject;
@@ -47,6 +52,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     myProject = project;
     myContributors = contributors;
     assert !contributors.contains(null);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return ContainerUtil.find(myContributors, o -> DumbService.isDumbAware(o)) != null;
   }
 
   @NotNull
@@ -180,7 +190,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
           if (LOG.isDebugEnabled()) {
             LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + ",");
           }
-        } else {
+        }
+        else {
           NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
           for (NavigationItem item : itemsByName) {
             canceled.checkCanceled();
@@ -188,6 +199,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
               PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
               continue;
             }
+            VirtualFile file = item instanceof PsiElement && !(item instanceof PomTargetPsiElement)
+                               ? PsiUtilCore.getVirtualFile((PsiElement)item) : null;
+            if (file != null && !parameters.getSearchScope().contains(file)) continue;
 
             if (acceptItem(item)) {
               items.add(item);

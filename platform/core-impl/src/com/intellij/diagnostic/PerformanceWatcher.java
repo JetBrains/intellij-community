@@ -33,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -306,11 +307,21 @@ public class PerformanceWatcher implements Disposable {
     for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
       StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
       StackTraceElement el2 = stackTraceElements[stackTraceElements.length - i - 1];
-      if (!el1.equals(el2)) {
+      if (!compareStackTraceElements(el1, el2)) {
         return commonPart.subList(commonPart.size() - i, commonPart.size());
       }
     }
     return commonPart;
+  }
+
+  // same as java.lang.StackTraceElement.equals, but do not care about the line number
+  static boolean compareStackTraceElements(StackTraceElement el1, StackTraceElement el2) {
+    if (el1 == el2) {
+      return true;
+    }
+    return el1.getClassName().equals(el2.getClassName()) &&
+           Objects.equals(el1.getMethodName(), el2.getMethodName()) &&
+           Objects.equals(el1.getFileName(), el2.getFileName());
   }
 
   private class SwingThreadRunnable implements Runnable {

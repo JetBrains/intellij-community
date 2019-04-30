@@ -248,7 +248,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public boolean isModified() {
-    return true;
+    return false;
   }
 
   @Override

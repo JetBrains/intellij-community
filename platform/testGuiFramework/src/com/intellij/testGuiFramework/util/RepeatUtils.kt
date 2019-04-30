@@ -18,3 +18,19 @@ inline fun waitFor(timeOutSeconds: Int = 5, intervalMillis: Long = 500, crossinl
   }
   throw WaitTimedOutError("Failed to wait for condition in $timeOutSeconds seconds")
 }
+
+fun attempt(times: Int, func: () -> Unit) {
+  var exception: Exception? = null
+  for (i in 0 until times) {
+    try {
+      return func()
+    } catch (e: Exception) {
+      if (exception == null) {
+        exception = e
+      } else {
+        exception.addSuppressed(e)
+      }
+    }
+  }
+  throw exception!!
+}
