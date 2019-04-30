@@ -198,9 +198,7 @@ class DistributionJARsBuilder {
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
-    if ("false" != System.getenv("BUILD_THIRD_PARTY_LIB_LIST")) {
-      buildThirdPartyLibrariesList()
-    }
+    buildThirdPartyLibrariesList()
 
     def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
     if (loadingOrderFilePath != null) {
@@ -302,7 +300,7 @@ class DistributionJARsBuilder {
   }
 
   private void buildThirdPartyLibrariesList() {
-    buildContext.messages.block("Generate table of licenses for used third-party libraries") {
+    buildContext.executeStep("Generate table of licenses for used third-party libraries", BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP) {
       def generator = LibraryLicensesListGenerator.create(buildContext.messages,
                                                           buildContext.project,
                                                           buildContext.productProperties.allLibraryLicenses,
