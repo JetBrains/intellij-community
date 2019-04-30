@@ -175,7 +175,9 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   private static void matchStructures(@NotNull List<ConfigurableEP<Configurable>> configurableEPs,
                                       @Nullable ConfigurableFilter filter,
                                       @NotNull List<Node> expectedTopLevelNodes) {
-    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(configurableEPs, filter);
+    //noinspection unchecked
+    ConfigurableEP<Configurable>[] extensions = configurableEPs.toArray(new ConfigurableEP[0]);
+    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, filter);
     assertEquals(expectedTopLevelNodes.size(), list.size());
     for (int i = 0; i < list.size(); i++) {
       matchNodesDeeply(list.get(i), expectedTopLevelNodes.get(i));

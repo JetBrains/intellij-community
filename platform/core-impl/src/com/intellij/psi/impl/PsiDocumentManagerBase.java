@@ -942,7 +942,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {
-    return !myProject.isDisposed() && !virtualFile.getFileType().isBinary();
+    return !virtualFile.getFileType().isBinary() && !myProject.isDisposed();
   }
 
   public static boolean checkConsistency(@NotNull PsiFile psiFile, @NotNull Document document) {

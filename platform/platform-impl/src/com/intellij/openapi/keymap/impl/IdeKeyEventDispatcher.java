@@ -411,7 +411,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e) && e.isControlDown()) {
+    if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e)) {
       myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
       if (myFirstKeyStroke == null) return false;
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);

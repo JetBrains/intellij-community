@@ -143,7 +143,7 @@ private object TokenGenerator {
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
-  val decodedPath = urlDecoder.path()
+  val decodedPath = URLUtil.unescapePercentSequences(urlDecoder.path())
   var offset: Int
   var isEmptyPath: Boolean
   val isCustomHost = projectNameAsHost != null

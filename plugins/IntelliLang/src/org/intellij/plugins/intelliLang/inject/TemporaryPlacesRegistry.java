@@ -21,12 +21,10 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.impl.source.tree.injected.changesHandler.AbstractMarkerBasedInjectedFileChangesHandlerKt;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -94,19 +92,8 @@ public class TemporaryPlacesRegistry {
     myPsiModificationCounter = modificationCount;
     final List<TempPlace> placesToRemove = ContainerUtil.findAll(myTempPlaces, place -> {
       PsiLanguageInjectionHost element = place.elementPointer.getElement();
-
       if (element == null) {
-        Segment range = place.elementPointer.getRange();
-        if (range == null) return true;
-        PsiFile file = place.elementPointer.getContainingFile();
-        if (file == null) return true;
-        PsiLanguageInjectionHost newHost = AbstractMarkerBasedInjectedFileChangesHandlerKt.getInjectionHostAtRange(file, range);
-        if (newHost == null) return true;
-
-        newHost.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
-        place.elementPointer = SmartPointerManager.createPointer(newHost);
-
-        return false;
+        return true;
       }
       else {
         element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
@@ -190,8 +177,8 @@ public class TemporaryPlacesRegistry {
   }
 
   private static class TempPlace {
-    final InjectedLanguage language;
-    SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer;
+    public final InjectedLanguage language;
+    public final SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer;
 
     TempPlace(InjectedLanguage language, SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer) {
       this.language = language;

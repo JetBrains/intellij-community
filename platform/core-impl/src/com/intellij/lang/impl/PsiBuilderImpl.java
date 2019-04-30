@@ -214,21 +214,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return null;
   }
 
-  @Nullable
-  public List<ProductionMarker> getProductions() {
-    return new AbstractList<ProductionMarker>() {
-      @Override
-      public ProductionMarker get(int index) {
-        return myProduction.getMarkerAt(index);
-      }
-
-      @Override
-      public int size() {
-        return myProduction.size();
-      }
-    };
-  }
-
   private interface Node extends LighterASTNode {
     int hc();
   }
@@ -638,6 +623,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       myMessage = null;
     }
 
+    @NotNull
     @Override
     public WhitespacesAndCommentsBinder getBinder(boolean done) {
       assert !done;
@@ -664,11 +650,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public int getEndOffset() {
       return myBuilder.myLexStarts[myLexemeIndex] + myBuilder.myOffset;
-    }
-
-    @Override
-    public int getEndIndex() {
-      return getStartIndex();
     }
 
     @NotNull
@@ -908,7 +889,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @Override
   public void error(@NotNull String messageText) {
-    ProductionMarker lastMarker = myProduction.getStartMarkerAt(myProduction.size() - 1);
+    ProductionMarker lastMarker = myProduction.getStartingMarkerAt(myProduction.size() - 1);
     if (lastMarker instanceof ErrorItem && lastMarker.myLexemeIndex == myCurrentLexeme) {
       return;
     }
@@ -1027,7 +1008,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       LOG.error("Parser produced no markers. Text:\n" + myText);
     }
     // build tree only once to avoid threading issues in read-only PSI
-    StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartMarkerAt(0));
+    StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartingMarkerAt(0));
     if (rootMarker.myFirstChild != null) return rootMarker;
 
     myOptionalData.compact();
@@ -1044,7 +1025,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     int maxDepth = 0;
     int curDepth = 0;
     for (int i = 1; i < myProduction.size(); i++) {
-      ProductionMarker item = myProduction.getStartMarkerAt(i);
+      ProductionMarker item = myProduction.getStartingMarkerAt(i);
 
       if (item instanceof StartMarker) {
         final StartMarker marker = (StartMarker)item;
@@ -1110,7 +1091,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     int lastIndex = 0;
 
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
-      ProductionMarker starting = myProduction.getStartMarkerAt(i);
+      ProductionMarker starting = myProduction.getStartingMarkerAt(i);
       if (starting instanceof StartMarker) {
         assertMarkersBalanced(((StartMarker)starting).isDone(), starting);
       }

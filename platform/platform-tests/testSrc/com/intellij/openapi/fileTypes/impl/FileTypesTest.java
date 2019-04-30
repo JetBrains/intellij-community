@@ -68,6 +68,9 @@ public class FileTypesTest extends PlatformTestCase {
     try {
       FileTypeManagerImpl.reDetectAsync(false);
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
+      myFileTypeManager.clearForTests();
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.initComponent();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -368,10 +371,6 @@ public class FileTypesTest extends PlatformTestCase {
     }
     finally {
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(fileType, "*." + extension));
-
-      myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.initComponent();
     }
   }
 
@@ -613,12 +612,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
     assertEquals("IDL", extensions.getName());
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.removeAssociatedExtension(idl, extension);
-      myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.initComponent();
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(idl, extension));
   }
 
   public void testIfDetectorRanThenIdeaReopenedTheDetectorShouldBeReRun() throws IOException {

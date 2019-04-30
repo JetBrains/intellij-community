@@ -31,8 +31,8 @@ public class ConfigurableExtensionPointUtil {
   private ConfigurableExtensionPointUtil() {
   }
 
-  @NotNull
-  public static List<Configurable> buildConfigurablesList(@NotNull List<ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
+
+  public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
     final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
     List<String> idsInEpOrder = ContainerUtil.newArrayList();

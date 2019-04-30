@@ -149,7 +149,7 @@ class CustomMethodHandlers {
         if (TypeUtils.isJavaLangObject(type)) {
           return Object.class;
         }
-        if (TypeUtils.typeEquals(JAVA_LANG_CHAR_SEQUENCE, type)) {
+        if (TypeUtils.typeEquals(JAVA_LANG_CHARSEQUENCE, type)) {
           return CharSequence.class;
         }
         if (PsiType.INT.equals(type)) {

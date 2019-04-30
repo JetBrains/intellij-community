@@ -681,7 +681,7 @@ class LineStatusTrackerManager(
   private inner class MyDocumentListener : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
       if (!ApplicationManager.getApplication().isDispatchThread) return // disable for documents forUseInNonAWTThread
-      if (!partialChangeListsEnabled || project.isDisposed) return
+      if (!partialChangeListsEnabled) return
 
       val document = event.document
       if (documentsInDefaultChangeList.contains(document)) return

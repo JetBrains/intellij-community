@@ -178,30 +178,18 @@ public class URLUtil {
 
   @NotNull
   public static String unescapePercentSequences(@NotNull String s) {
-    return unescapePercentSequences(s, 0, s.length()).toString();
-  }
-
-  @NotNull
-  public static CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
-    int i = StringUtil.indexOf(s, '%', from, end);
-    if (i == -1) {
-      return s.subSequence(from, end);
+    if (s.indexOf('%') == -1) {
+      return s;
     }
 
     StringBuilder decoded = new StringBuilder();
-    decoded.append(s, from, i);
-
-    TIntArrayList bytes = null;
-    while (i < end) {
+    final int len = s.length();
+    int i = 0;
+    while (i < len) {
       char c = s.charAt(i);
       if (c == '%') {
-        if (bytes == null) {
-          bytes = new TIntArrayList();
-        }
-        else {
-          bytes.clear();
-        }
-        while (i + 2 < end && s.charAt(i) == '%') {
+        TIntArrayList bytes = new TIntArrayList();
+        while (i + 2 < len && s.charAt(i) == '%') {
           final int d1 = decode(s.charAt(i + 1));
           final int d2 = decode(s.charAt(i + 2));
           if (d1 != -1 && d2 != -1) {
@@ -225,7 +213,7 @@ public class URLUtil {
       decoded.append(c);
       i++;
     }
-    return decoded;
+    return decoded.toString();
   }
 
   private static int decode(char c) {
@@ -258,26 +246,14 @@ public class URLUtil {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
                ? Base64.getDecoder().decode(content)
-               : decode(content).getBytes(StandardCharsets.UTF_8);
+               : URLDecoder.decode(content, CharsetToolkit.UTF8).getBytes(StandardCharsets.UTF_8);
       }
-      catch (IllegalArgumentException e) {
+      catch (IllegalArgumentException | UnsupportedEncodingException e) {
         return null;
       }
     }
     return null;
   }
-
-  @NotNull
-  public static String decode(@NotNull String string) {
-    try {
-      return URLDecoder.decode(string, StandardCharsets.UTF_8.name());
-    }
-    catch (UnsupportedEncodingException ignore) {
-      //noinspection deprecation
-      return URLDecoder.decode(string);
-    }
-  }
-
 
   @NotNull
   public static String parseHostFromSshUrl(@NotNull String sshUrl) {

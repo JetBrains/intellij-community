@@ -6,10 +6,12 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PathUtil;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.net.URLDecoder;
 
 /**
  * Provides default paths for clone repository functionality.
@@ -40,9 +42,13 @@ public abstract class ClonePathProvider {
         return directoryPath;
       }
     }
-    String encoded = PathUtil.getFileName(vcsUrl);
+    return safeUrlDecode(PathUtil.getFileName(vcsUrl));
+  }
+
+  @NotNull
+  private static String safeUrlDecode(@NotNull String encoded) {
     try {
-      return URLUtil.decode(encoded);
+      return URLDecoder.decode(encoded, CharsetToolkit.UTF8);
     }
     catch (Exception e) {
       return encoded;
