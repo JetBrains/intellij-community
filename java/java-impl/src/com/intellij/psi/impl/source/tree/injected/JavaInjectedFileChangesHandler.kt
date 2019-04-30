@@ -50,6 +50,12 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       return
     }
 
+    if (!hasInjectionsInOriginFile(affectedMarkers, origPsiFile)) {
+      // can't go on if there is already no injection, maybe someone just uninjected them?
+      myInvalidated = true
+      return
+    }
+
     var workingRange: TextRange? = null
     val markersToRemove = SmartList<Marker>()
     for ((affectedMarker, markerText) in distributeTextToMarkers(affectedMarkers, affectedRange, e.offset + e.newLength)
@@ -88,6 +94,17 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       origPsiFile, workingRange.startOffset, workingRange.endOffset, true)
 
     rebuildMarkers(workingRange)
+  }
+
+  private var myInvalidated = false
+
+  override fun isValid(): Boolean = !myInvalidated && super.isValid()
+
+  private fun hasInjectionsInOriginFile(affectedMarkers: List<Marker>, origPsiFile: PsiFile): Boolean {
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
+    return affectedMarkers.any { marker ->
+      marker.hostSegment?.range?.let { injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, it).isNotEmpty() } ?: false
+    }
   }
 
   private fun rebuildMarkers(contextRange: TextRange) {
