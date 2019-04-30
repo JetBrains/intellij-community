@@ -316,12 +316,20 @@ public class MethodCandidateInfo extends CandidateInfo{
 
         myApplicabilityError.remove();
         try {
-          final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
+          Computable<PsiSubstitutor> computeSubst = () -> inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
+          final PsiElement markerList = getMarkerList();
+          final PsiSubstitutor inferredSubstitutor = includeReturnConstraint || markerList == null || isOverloadCheck() 
+                                                     ? computeSubst.compute() 
+                                                     : ourOverloadGuard.doPreventingRecursion(markerList, true, computeSubst);
+          if (inferredSubstitutor == null) {
+            //todo log error
+            return mySubstitutor;
+          }
           if (!stackStamp.mayCacheNow() ||
               isOverloadCheck() ||
               !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-              getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent()) ||
+              markerList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(markerList.getParent()) ||
               LambdaUtil.isLambdaParameterCheck()
             ) {
             return inferredSubstitutor;
