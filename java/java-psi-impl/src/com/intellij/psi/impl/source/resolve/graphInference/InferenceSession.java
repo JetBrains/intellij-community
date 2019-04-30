@@ -129,7 +129,7 @@ public class InferenceSession {
 
   void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
     final MethodCandidateInfo.CurrentCandidateProperties currentProperties = getCurrentProperties(parent);
-    initExpressionConstraints(parameters, args, parent, null, currentProperties != null && currentProperties.isVarargs());
+    initExpressionConstraints(parameters, args, parent, null, currentProperties != null && currentProperties.getInfo().isVarargs());
   }
 
   public void initExpressionConstraints(PsiParameter[] parameters,
@@ -369,7 +369,7 @@ public class InferenceSession {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
         collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints,
-                                     ignoredConstraints, properties.isVarargs(), initialSubstitutor);
+                                     ignoredConstraints, properties.getInfo().isVarargs(), initialSubstitutor);
 
         proceedWithAdditionalConstraints(additionalConstraints, ignoredConstraints);
       }
@@ -567,7 +567,7 @@ public class InferenceSession {
   public static boolean chooseVarargsMode(MethodCandidateInfo.CurrentCandidateProperties candidateProperties,
                                           JavaResolveResult resolveResult) {
     return resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs() ||
-           candidateProperties != null && candidateProperties.isVarargs();
+           candidateProperties != null && candidateProperties.getInfo().isVarargs();
   }
 
   PsiSubstitutor getInstantiations(Collection<InferenceVariable> variables) {
@@ -831,7 +831,7 @@ public class InferenceSession {
         if (argumentList != null) {
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
           if (properties != null && properties.isApplicabilityCheck()) {
-            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getInfo().getSiteSubstitutor(), inferParent);
+            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.getInfo().isVarargs(), properties.getInfo().getSiteSubstitutor(), inferParent);
           }
 
           final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)gParent);

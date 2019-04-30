@@ -164,7 +164,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return level1;
-    }, isVarargs(), true);
+    }, true);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -268,11 +268,11 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   private <T> T computeForOverloadedCandidate(final Computable<T> computable,
-                                              boolean varargs, boolean applicabilityCheck) {
+                                              boolean applicabilityCheck) {
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     final PsiElement argumentList = getMarkerList();
     final CurrentCandidateProperties alreadyThere =
-      map.put(argumentList, new CurrentCandidateProperties(this, varargs, applicabilityCheck));
+      map.put(argumentList, new CurrentCandidateProperties(this, applicabilityCheck));
     try {
       return computable.compute();
     }
@@ -426,7 +426,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       return javaPsiFacade.getResolveHelper()
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy,
                             myLanguageLevel);
-    }, policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
+    }, !includeReturnConstraint);
   }
 
   public boolean isRawSubstitution() {
@@ -486,17 +486,15 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public CurrentCandidateProperties createProperties() {
-    return new CurrentCandidateProperties(this, isVarargs(), false);
+    return new CurrentCandidateProperties(this, false);
   }
 
   public static class CurrentCandidateProperties {
     private final MethodCandidateInfo myMethod;
-    private final boolean myVarargs;
     private final boolean myApplicabilityCheck;
 
-    private CurrentCandidateProperties(MethodCandidateInfo info, boolean varargs, boolean applicabilityCheck) {
+    private CurrentCandidateProperties(MethodCandidateInfo info, boolean applicabilityCheck) {
       myMethod = info;
-      myVarargs = varargs;
       myApplicabilityCheck = applicabilityCheck;
     }
 
@@ -508,10 +506,6 @@ public class MethodCandidateInfo extends CandidateInfo{
       return myMethod;
     }
 
-
-    public boolean isVarargs() {
-      return myVarargs;
-    }
 
     public boolean isApplicabilityCheck() {
       return myApplicabilityCheck;
