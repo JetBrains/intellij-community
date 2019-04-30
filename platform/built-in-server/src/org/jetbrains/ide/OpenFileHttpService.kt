@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
@@ -82,7 +82,7 @@ internal class OpenFileHttpService : RestService() {
       apiRequest.focused = getBooleanParameter("focused", urlDecoder, true)
     }
 
-    val prefixLength = 1 + PREFIX.length + 1 + serviceName.length + 1
+    val prefixLength = 1 + PREFIX.length + 1 + getServiceName().length + 1
     val path = urlDecoder.path()
     if (path.length > prefixLength) {
       val matcher = LINE_AND_COLUMN.matcher(path).region(prefixLength, path.length)
