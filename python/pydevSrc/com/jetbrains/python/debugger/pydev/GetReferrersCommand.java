@@ -1,5 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.util.io.URLUtil;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyReferringObjectsValue;
@@ -21,7 +23,7 @@ public class GetReferrersCommand extends RunCustomOperationCommand<List<PyDebugV
     return new ResponseProcessor<List<PyDebugValue>>() {
       @Override
       protected List<PyDebugValue> parseResponse(ProtocolFrame response) throws PyDebuggerException {
-        return ProtocolParser.parseReferrers(decode(response.getPayload()), getDebugger().getDebugProcess());
+        return ProtocolParser.parseReferrers(URLUtil.decode(response.getPayload()), getDebugger().getDebugProcess());
       }
     };
   }

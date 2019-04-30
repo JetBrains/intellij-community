@@ -246,14 +246,26 @@ public class URLUtil {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
                ? Base64.getDecoder().decode(content)
-               : URLDecoder.decode(content, CharsetToolkit.UTF8).getBytes(StandardCharsets.UTF_8);
+               : decode(content).getBytes(StandardCharsets.UTF_8);
       }
-      catch (IllegalArgumentException | UnsupportedEncodingException e) {
+      catch (IllegalArgumentException e) {
         return null;
       }
     }
     return null;
   }
+
+  @NotNull
+  public static String decode(@NotNull String string) {
+    try {
+      return URLDecoder.decode(string, StandardCharsets.UTF_8.name());
+    }
+    catch (UnsupportedEncodingException ignore) {
+      //noinspection deprecation
+      return URLDecoder.decode(string);
+    }
+  }
+
 
   @NotNull
   public static String parseHostFromSshUrl(@NotNull String sshUrl) {

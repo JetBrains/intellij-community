@@ -22,13 +22,11 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -121,14 +119,8 @@ public class CommandLineProcessor {
     }
 
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      try {
-        String url = URLDecoder.decode(command, StandardCharsets.UTF_8.name());
-        JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-        ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      }
-      catch (UnsupportedEncodingException e) {
-        LOG.error(e);
-      }
+      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(URLUtil.decode(command));
+      ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       return null;
     }
 

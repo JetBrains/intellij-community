@@ -7,11 +7,9 @@ import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -24,15 +22,7 @@ final class JBProtocolOpenProjectCommand extends JBProtocolCommand {
 
   @Override
   public void perform(String target, @NotNull Map<String, String> parameters) {
-    String path;
-    try {
-      path = URLDecoder.decode(target, StandardCharsets.UTF_8.name());
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
-
-    String projectPath = StringUtil.trimStart(path, LocalFileSystem.PROTOCOL_PREFIX);
+    String projectPath = StringUtil.trimStart(URLUtil.decode(target), LocalFileSystem.PROTOCOL_PREFIX);
     ApplicationManager.getApplication().invokeLater(
       () -> ProjectUtil.openProject(projectPath, null, true), ModalityState.NON_MODAL);
   }

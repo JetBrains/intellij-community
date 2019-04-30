@@ -1,5 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.util.io.URLUtil;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +28,7 @@ public class ProtocolFrame {
 
     myCommand = Integer.parseInt(parts[0]);
     mySequence = Integer.parseInt(parts[1]);
-    myPayload = (parts.length == 3 && !parts[2].isEmpty() ? ProtocolParser.decode(parts[2]) : "").trim();
+    myPayload = (parts.length == 3 && !parts[2].isEmpty() ? URLUtil.decode(parts[2]) : "").trim();
   }
 
   public int getCommand() {
