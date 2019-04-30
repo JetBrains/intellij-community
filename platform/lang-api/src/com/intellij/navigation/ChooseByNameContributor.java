@@ -21,8 +21,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows a plugin to add items to "Goto Class" and "Goto Symbol" lists.
+ * Consider extending {@link ChooseByNameContributorEx) for better performance.
  *
- * @see ChooseByNameRegistry
+ * @see com.intellij.navigation.ChooseByNameRegistry
+ * @see com.intellij.navigation.ChooseByNameContributorEx
  */
 
 public interface ChooseByNameContributor {
