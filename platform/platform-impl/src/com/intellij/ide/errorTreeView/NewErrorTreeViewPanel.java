@@ -353,7 +353,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private List<ErrorTreeNodeDescriptor> getSelectedNodeDescriptors() {
-    TreePath[] paths = myTree.getSelectionPaths();
+    TreePath[] paths = myIsDisposed ? null : myTree.getSelectionPaths();
     if (paths == null) {
       return Collections.emptyList();
     }
