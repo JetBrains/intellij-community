@@ -219,61 +219,6 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     }
   }
 
-  public void testMoveDictOutside() throws IOException {
-    VirtualFile tempDir = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP), true);
-    VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
-    moveFileToDirAndCheck(testDir.findChild(TEST_DIC), testDir, tempDir);
-  }
-
-  public void testMoveNotInDictFolder() throws IOException {
-    final VirtualFile tempDir1 = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP + "1"), true);
-    final VirtualFile tempDir2 = VfsUtil.findFileByIoFile(FileUtil.createTempDirectory(TEST_DIC_DIR, TEMP + "2"), true);
-
-    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
-    final VirtualFile file = testDir.findChild(TEST_DIC_AFTER);
-    WriteAction.run(() -> file.copy(this, tempDir1, TEST_DIC));
-
-    try {
-      doBeforeCheck();
-      WriteAction.run(() -> tempDir1.findChild(TEST_DIC).move(this, tempDir2));
-      doAfterCheck();
-    }
-    finally {
-      //back to initial state
-      WriteAction.run(() -> {
-        tempDir1.delete(this);
-        tempDir2.delete(this);
-      });
-    }
-  }
-
-  public void testMoveInsideDictFolders() throws IOException {
-    final VirtualFile testDir = VfsUtil.findFileByIoFile(new File(getTestDictDirectory()), true);
-    final VirtualFile file = testDir.findChild(TEST_DIC);
-
-    final String yetAnotherDirName = "yetAnotherDir";
-    WriteAction.run(() -> testDir.createChildDirectory(this, yetAnotherDirName));
-    final VirtualFile anotherDir = testDir.findChild(yetAnotherDirName);
-    moveFileToDirAndCheck(file, testDir, anotherDir);
-  }
-
-  private void moveFileToDirAndCheck(@NotNull VirtualFile file, @NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
-    doBeforeCheck();
-    WriteAction.run(() -> file.move(this, to));
-    try {
-      doAfterCheck();
-    }
-    finally {
-      // back to initial state
-      WriteAction.run(() -> {
-        if (to.findChild(TEST_DIC) != null) {
-          to.findChild(TEST_DIC).move(this, from);
-        }
-        to.delete(this);
-      });
-    }
-  }
-
   public void testRenameToDict() throws IOException {
     final VirtualFile file = VfsUtil.findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
     try {
