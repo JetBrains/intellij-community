@@ -1415,6 +1415,11 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.ExplicitArrayFillingInspection"
                      displayName="Explicit array filling"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ExplicitMinMaxCheck"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.ExplicitMinMaxCheckInspection"
+                     displayName="Explicit min/max check"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
