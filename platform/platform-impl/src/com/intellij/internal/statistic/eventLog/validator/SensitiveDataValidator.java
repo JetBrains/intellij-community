@@ -3,73 +3,116 @@ package com.intellij.internal.statistic.eventLog.validator;
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.persistence.FUSWhiteListPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED;
+import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
 public class SensitiveDataValidator {
-  private static NotNullLazyValue<SensitiveDataValidator> me = NotNullLazyValue.createValue(() -> new SensitiveDataValidator());
+  private static final NotNullLazyValue<SensitiveDataValidator> me = NotNullLazyValue.createValue(
+    () -> ApplicationManager.getApplication().isUnitTestMode() ? new BlindSensitiveDataValidator() : new SensitiveDataValidator()
+  );
+
+  private final Semaphore mySemaphore;
+  private final AtomicBoolean isWhiteListInitialized;
 
   public static SensitiveDataValidator getInstance() {
     return me.getValue();
   }
 
-  protected SensitiveDataValidator() {}
+  protected SensitiveDataValidator() {
+    mySemaphore = new Semaphore();
+    isWhiteListInitialized = new AtomicBoolean(false);
+    updateValidators(FUSWhiteListPersistence.getCachedWhiteList());
+  }
 
-  protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.createConcurrentSoftMap();
+  protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
+    if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST.getDescription();
+
     ValidationResultType validationResultType = validateEvent(group, context);
     return validationResultType == ACCEPTED ? context.eventId : validationResultType.getDescription();
   }
 
   public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
     WhiteListGroupRules whiteListRule = eventsValidators.get(group.getId());
-    if (whiteListRule == null || !whiteListRule.areEventDataRulesDefined()) return context.eventData;  // there are no rules to validate
 
-    Map<String, Object> validatedData = ContainerUtil.newConcurrentMap(); // TODO: don't create validatedData map if all keys are accepted (just return context.eventData)
+    Map<String, Object> validatedData =
+      ContainerUtil.newConcurrentMap(); // TODO: don't create validatedData map if all keys are accepted (just return context.eventData)
     for (Map.Entry<String, Object> entry : context.eventData.entrySet()) {
       String key = entry.getKey();
       Object entryValue = entry.getValue();
-      ValidationResultType resultType = whiteListRule.validateEventData(key, entryValue, context);
+
+      ValidationResultType resultType = validateEventData(context, whiteListRule, key, entryValue);
       validatedData.put(key, resultType == ACCEPTED ? entryValue : resultType.getDescription());
     }
     return validatedData;
   }
 
+  private ValidationResultType validateEventData(@NotNull EventContext context,
+                                                 @Nullable WhiteListGroupRules whiteListRule,
+                                                 @NotNull String key,
+                                                 @NotNull Object entryValue) {
+    if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST;
+    if (whiteListRule == null) return UNDEFINED_RULE;
+    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return ACCEPTED;
+    return whiteListRule.validateEventData(key, entryValue, context);
+  }
+
   public SensitiveDataValidator update() {
-    String whiteListContent = getWhiteListContent();
+    updateValidators(getWhiteListContent());
+    return this;
+  }
+
+  private void updateValidators(@Nullable String whiteListContent) {
     if (whiteListContent != null) {
-      FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
-      if (groups != null) {
-        final BuildNumber buildNumber = BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
-        final Map<String, WhiteListGroupRules> result = groups.groups.stream().
-          filter(group -> group.accepts(buildNumber)).
-          collect(Collectors.toMap(group -> group.id, group -> createRules(group, groups.rules)));
+      mySemaphore.down();
+      try {
         eventsValidators.clear();
-        eventsValidators.putAll(result);
+        isWhiteListInitialized.set(false);
+        FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
+        if (groups != null) {
+          final BuildNumber buildNumber = BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
+          final Map<String, WhiteListGroupRules> result = groups.groups.stream().
+            filter(group -> group.accepts(buildNumber)).
+            collect(Collectors.toMap(group -> group.id, group -> createRules(group, groups.rules)));
+
+          eventsValidators.putAll(result);
+
+          isWhiteListInitialized.set(true);
+        }
+      }
+      finally {
+        mySemaphore.up();
       }
     }
-    return this;
+  }
+
+  private boolean isUnreachableWhitelist() {
+    return !isWhiteListInitialized.get();
   }
 
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
     WhiteListGroupRules whiteListRule = eventsValidators.get(group.getId());
     if (whiteListRule == null || !whiteListRule.areEventIdRulesDefined()) {
-      return ACCEPTED; // there are no rules (eventId and eventData) to validate
+      return UNDEFINED_RULE; // there are no rules (eventId and eventData) to validate
     }
 
     return whiteListRule.validateEventId(context);
@@ -90,5 +133,18 @@ public class SensitiveDataValidator {
       return content;
     }
     return FUSWhiteListPersistence.getCachedWhiteList();
+  }
+
+
+  private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
+    @Override
+    public String guaranteeCorrectEventId(@NotNull EventLogGroup group, @NotNull EventContext context) {
+      return context.eventId;
+    }
+
+    @Override
+    public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
+      return context.eventData;
+    }
   }
 }
