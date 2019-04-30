@@ -37,7 +37,7 @@ public class Example {
     @NotNull Class x = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">ClassUtils.primitiveToWrapper(null)</warning>;
   }
 
-  void writeBytes(@Nullable byte[] bytes) throws IOException {
-    new FilterOutputStream(null).write(<warning descr="Argument 'bytes' might be null">bytes</warning>);
+  void writeBytes(@Nullable byte[] bytes, FilterOutputStream stream) throws IOException {
+    stream.write(<warning descr="Argument 'bytes' might be null">bytes</warning>);
   }
 }
