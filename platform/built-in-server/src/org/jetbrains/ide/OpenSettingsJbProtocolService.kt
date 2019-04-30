@@ -13,7 +13,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 
-private const val SERVICE_NAME = "openSettings"
+private const val SERVICE_NAME = "settings"
 
 internal class OpenSettingsService : RestService() {
   override fun getServiceName() = SERVICE_NAME
