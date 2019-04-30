@@ -20,12 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.PatternUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ public class IgnoredFileBean implements IgnoredFileDescriptor {
   private final Pattern myPattern;
   private final IgnoreSettingsType myType;
   private final Project myProject;
-  private volatile VirtualFile myCachedResolved;
+  private volatile FilePath myCachedResolved;
 
   IgnoredFileBean(@NotNull String path, @NotNull IgnoreSettingsType type, @Nullable Project project) {
     myPath = path;
@@ -106,41 +105,45 @@ public class IgnoredFileBean implements IgnoredFileDescriptor {
 
   @Override
   public boolean matchesFile(@NotNull VirtualFile file) {
+    return matchesFile(VcsUtil.getFilePath(file));
+  }
+
+  @Override
+  public boolean matchesFile(@NotNull FilePath filePath) {
     if (myType == IgnoreSettingsType.MASK) {
-      return myPattern.matcher(file.getName()).matches();
+      return myPattern.matcher(filePath.getName()).matches();
     }
     else {
       // quick check for 'file' == exact match pattern
-      if (IgnoreSettingsType.FILE.equals(myType) && !StringUtil.equals(myFilenameIfFile, file.getNameSequence())) return false;
+      if (IgnoreSettingsType.FILE.equals(myType) && !StringUtil.equals(myFilenameIfFile, filePath.getName())) return false;
 
-      VirtualFile selector = resolve();
-      if (Comparing.equal(selector, NullVirtualFile.INSTANCE)) return false;
+      FilePath selector = resolve();
+      if (selector == null) return false;
 
       if (myType == IgnoreSettingsType.FILE) {
-        return Comparing.equal(selector, file);
+        return Comparing.equal(selector, filePath);
       }
       else {
         if ("./".equals(myPath)) {
           // special case for ignoring the project base dir (IDEADEV-16056)
-          return !file.isDirectory() && Comparing.equal(file.getParent(), selector);
+          return !filePath.isDirectory() && Comparing.equal(filePath.getParentPath(), selector);
         }
-        return VfsUtilCore.isAncestor(selector, file, false);
+        return FileUtil.startsWith(filePath.getPath(), selector.getPath());
       }
     }
   }
 
-  @NotNull
-  private VirtualFile resolve() {
+  @Nullable
+  private FilePath resolve() {
     if (myCachedResolved == null) {
-      VirtualFile resolved = doResolve();
-      myCachedResolved = resolved != null ? resolved : NullVirtualFile.INSTANCE;
+      myCachedResolved = doResolve();
     }
 
     return myCachedResolved;
   }
 
   @Nullable
-  private VirtualFile doResolve() {
+  private FilePath doResolve() {
     if (myProject == null || myProject.isDisposed()) {
       return null;
     }
@@ -148,13 +151,13 @@ public class IgnoredFileBean implements IgnoredFileDescriptor {
 
     String path = FileUtil.toSystemIndependentName(myPath);
     if (baseDir == null) {
-      return LocalFileSystem.getInstance().findFileByPath(path);
+      return VcsUtil.getFilePath(path);
     }
 
     VirtualFile resolvedRelative = baseDir.findFileByRelativePath(path);
-    if (resolvedRelative != null) return resolvedRelative;
+    if (resolvedRelative != null) return VcsUtil.getFilePath(resolvedRelative);
 
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    return VcsUtil.getFilePath(path);
   }
 
   public void resetCache() {
