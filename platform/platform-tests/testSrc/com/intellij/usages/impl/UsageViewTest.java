@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -51,7 +53,14 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     boolean[] foundLeaksBeforeTest = new boolean[1];
     Condition<Object> isReallyLeak = file -> {
-      if (file instanceof PsiFile && !((PsiFile)file).isPhysical()) return false;
+      if (file instanceof PsiFile) {
+        if (!((PsiFile)file).isPhysical()) {
+          return false;
+        }
+        Project project = ((PsiFile)file).getProject();
+        System.err.println(project + "; its creation trace: " + PlatformTestCase.getCreationPlace(project));
+      }
+
       System.err.println("DON'T BLAME ME, IT'S NOT MY FAULT! SOME SNEAKY TEST BEFORE ME HAS LEAKED PsiFiles/Documents!");
       foundLeaksBeforeTest[0] = true;
       return true;
