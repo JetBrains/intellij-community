@@ -321,6 +321,11 @@ public class PluginManagerConfigurableNewLayout
 
   private void createMarketplaceTab() {
     myMarketplaceTab = new PluginsTab() {
+      @Override
+      protected void createSearchTextField(int flyDelay) {
+        super.createSearchTextField(250);
+      }
+
       @NotNull
       @Override
       protected PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
@@ -414,9 +419,8 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
-                                                    @NotNull PluginSearchTextField searchTextField) {
-        SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(searchTextField) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+        SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
@@ -462,13 +466,24 @@ public class PluginManagerConfigurableNewLayout
           }
 
           @Override
+          protected void handleAppendToQuery() {
+            showPopupForQuery();
+          }
+
+          @Override
+          protected void handleAppendAttributeValue() {
+            showPopupForQuery();
+          }
+
+          @Override
           protected void showPopupForQuery() {
             hidePopup();
+            showSearchPanel(mySearchTextField.getText());
           }
 
           @Override
           protected void handleEnter() {
-            if (!searchTextField.getText().isEmpty()) {
+            if (!mySearchTextField.getText().isEmpty()) {
               handleTrigger("marketplace.suggest.popup.enter");
             }
           }
@@ -560,7 +575,7 @@ public class PluginManagerConfigurableNewLayout
           }
 
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.Marketplace(searchTextField.getText()) {
+          new SearchQueryParser.Marketplace(mySearchTextField.getText()) {
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               super.addToSearchQuery(query);
@@ -587,7 +602,7 @@ public class PluginManagerConfigurableNewLayout
           }
 
           String query = StringUtil.join(queries, " ");
-          searchTextField.setTextIgnoreEvents(query);
+          mySearchTextField.setTextIgnoreEvents(query);
           if (query.isEmpty()) {
             myMarketplaceTab.hideSearchPanel();
           }
@@ -713,8 +728,8 @@ public class PluginManagerConfigurableNewLayout
 
     myInstalledTab = new PluginsTab() {
       @Override
-      protected void createSearchTextField() {
-        super.createSearchTextField();
+      protected void createSearchTextField(int flyDelay) {
+        super.createSearchTextField(flyDelay);
 
         JBTextField textField = mySearchTextField.getTextEditor();
         textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
@@ -851,9 +866,8 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
-                                                    @NotNull PluginSearchTextField searchTextField) {
-        SearchUpDownPopupController installedController = new SearchUpDownPopupController(searchTextField) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+        SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
@@ -878,7 +892,7 @@ public class PluginManagerConfigurableNewLayout
 
           @Override
           protected void showPopupForQuery() {
-            showSearchPanel(searchTextField.getText());
+            showSearchPanel(mySearchTextField.getText());
           }
         };
 
@@ -894,7 +908,7 @@ public class PluginManagerConfigurableNewLayout
 
         myInstalledSearchCallback = updateAction -> {
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.InstalledWithVendor(searchTextField.getText()) {
+          new SearchQueryParser.InstalledWithVendor(mySearchTextField.getText()) {
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               super.addToSearchQuery(query);
@@ -927,7 +941,7 @@ public class PluginManagerConfigurableNewLayout
             myInstalledSearchSetState = false;
 
             String query = StringUtil.join(queries, " ");
-            searchTextField.setTextIgnoreEvents(query);
+            mySearchTextField.setTextIgnoreEvents(query);
             if (query.isEmpty()) {
               myInstalledTab.hideSearchPanel();
             }
