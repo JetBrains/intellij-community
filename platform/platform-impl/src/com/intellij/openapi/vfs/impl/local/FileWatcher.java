@@ -22,10 +22,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -105,13 +104,13 @@ public class FileWatcher {
     Future<?> lastTask = myLastTask.get();
     if (lastTask != null) {
       lastTask.cancel(false);
-      try {
-        lastTask.get();
-      }
-      catch (CancellationException ignored) { }
-      catch (InterruptedException | ExecutionException e) {
-        LOG.error(e);
-      }
+    }
+
+    try {
+      myFileWatcherExecutor.awaitTermination(1, TimeUnit.HOURS);
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
     }
 
     for (PluggableFileWatcher watcher : myWatchers) {
