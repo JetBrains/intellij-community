@@ -18,7 +18,6 @@ import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +189,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     final CompiledPattern pattern = matchContext.getPattern();
     final NodeIterator patternNodes = pattern.getNodes().clone();
     final MatchResultImpl saveResult = matchContext.hasResult() ? matchContext.getResult() : null;
-    final List<PsiElement> saveMatchedNodes = matchContext.getMatchedNodes();
+    matchContext.saveMatchedNodes();
 
     try {
       if (!patternNodes.hasNext()) return;
@@ -198,7 +197,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
       for (; elements.hasNext(); elements.advance()) {
         matchContext.setResult(null);
-        matchContext.setMatchedNodes(null);
+        matchContext.clearMatchedNodes();
         final PsiElement elementNode = elements.current();
 
         final boolean patternMatched = firstMatchingHandler.matchSequentially(patternNodes, elements, matchContext);
@@ -211,63 +210,17 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
           contextMatched = false;
         }
 
-        final List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
-        if (contextMatched && matchedNodes != null) {
-          dispatchMatched(matchedNodes, matchContext.getResult());
-        }
+        if (contextMatched) matchContext.dispatchMatched();
 
         patternNodes.reset();
-        if (matchedNodes != null && !matchedNodes.isEmpty() && patternMatched) {
+        if (patternMatched) {
           elements.rewind();
         }
       }
     }
     finally {
       matchContext.setResult(saveResult);
-      matchContext.setMatchedNodes(saveMatchedNodes);
-    }
-  }
-
-  private void dispatchMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
-    if (doDispatch(result)) return;
-
-    // There is no substitutions so show the context
-
-    processNoSubstitutionMatch(matchedNodes, result);
-    matchContext.getSink().newMatch(result);
-  }
-
-  private boolean doDispatch(final MatchResult result) {
-    boolean ret = false;
-
-    for (MatchResult r : result.getChildren()) {
-      if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
-        ret |= doDispatch(r);
-      }
-      else if (r.isTarget()) {
-        matchContext.getSink().newMatch(r);
-        ret = true;
-      }
-    }
-    return ret;
-  }
-
-  private static void processNoSubstitutionMatch(List<PsiElement> matchedNodes, MatchResultImpl result) {
-    boolean complexMatch = matchedNodes.size() > 1;
-    final PsiElement match = matchedNodes.get(0);
-
-    if (!complexMatch) {
-      result.setMatchRef(new SmartPsiPointer(match));
-      result.setMatchImage(match.getText());
-    }
-    else {
-      for (final PsiElement matchStatement : matchedNodes) {
-        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
-      }
-
-      result.setMatchRef(new SmartPsiPointer(match));
-      result.setMatchImage(match.getText());
-      result.setName(MatchResult.MULTI_LINE_MATCH);
+      matchContext.restoreMatchedNodes();
     }
   }
 

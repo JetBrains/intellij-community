@@ -299,13 +299,11 @@ public class SubstitutionHandler extends MatchingHandler {
     final MatchResultImpl substitution = context.getResult().findChild(name);
 
     if (substitution != null) {
-      final List<PsiElement> matchedNodes = context.getMatchedNodes();
-
       if (substitution.hasChildren()) {
         while (numberOfResults > 0) {
           --numberOfResults;
           final MatchResult matchResult = substitution.removeLastChild();
-          if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
+          context.removeMatchedNode(matchResult.getMatch());
         }
         if (!substitution.hasChildren()) {
           context.getResult().removeChild(name);
@@ -313,7 +311,7 @@ public class SubstitutionHandler extends MatchingHandler {
       } else {
         final MatchResult matchResult = context.getResult().removeChild(name);
         assert matchResult != null;
-        if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
+        context.removeMatchedNode(matchResult.getMatch());
       }
     }
   }
