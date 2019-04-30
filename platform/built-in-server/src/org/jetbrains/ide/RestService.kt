@@ -13,23 +13,19 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.showYesNoDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.NotNullLazyValue
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
 import com.intellij.util.net.NetUtils
+import com.intellij.util.text.nullize
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -39,15 +35,12 @@ import org.jetbrains.builtInWebServer.isSignedRequest
 import org.jetbrains.io.*
 import java.awt.Window
 import java.io.IOException
-import java.io.InputStreamReader
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 import java.lang.reflect.InvocationTargetException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URISyntaxException
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -57,46 +50,37 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * Don't create JsonReader/JsonWriter directly, use only provided [.createJsonReader], [.createJsonWriter] methods (to ensure that you handle in/out according to REST API guidelines).
  *
- * @see [Best Practices for Designing a Pragmatic RESTful API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api).
+ * @see [Best Practices for Designing a Pragmatic REST API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api).
  */
 abstract class RestService : HttpRequestHandler() {
   companion object {
     @JvmField
-    val LOG = Logger.getInstance(RestService::class.java)
+    val LOG = logger<RestService>()
 
     const val PREFIX = "api"
 
     @JvmStatic
     protected fun activateLastFocusedFrame() {
-      val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
-      if (frame is Window) {
-        (frame as Window).toFront()
-      }
+      (IdeFocusManager.getGlobalInstance().lastFocusedFrame as? Window)?.toFront()
     }
 
     @JvmStatic
     protected fun createJsonReader(request: FullHttpRequest): JsonReader {
-      val reader = JsonReader(InputStreamReader(ByteBufInputStream(request.content()), StandardCharsets.UTF_8))
+      val reader = JsonReader(ByteBufInputStream(request.content()).reader())
       reader.isLenient = true
       return reader
     }
 
     @JvmStatic
     protected fun createJsonWriter(out: OutputStream): JsonWriter {
-      val writer = JsonWriter(OutputStreamWriter(out, StandardCharsets.UTF_8))
+      val writer = JsonWriter(out.writer())
       writer.setIndent("  ")
       return writer
     }
 
     @JvmStatic
     fun getLastFocusedOrOpenedProject(): Project? {
-      val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
-      val project = lastFocusedFrame?.project
-      if (project == null) {
-        val openProjects = ProjectManager.getInstance().openProjects
-        return if (openProjects.size > 0) openProjects[0] else null
-      }
-      return project
+      return IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
     }
 
     @JvmStatic
@@ -130,40 +114,42 @@ abstract class RestService : HttpRequestHandler() {
       response.send(context.channel(), request)
     }
 
+    @Suppress("SameParameterValue")
     @JvmStatic
     protected fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? {
-      return ContainerUtil.getLastItem(urlDecoder.parameters()[name])
+      return urlDecoder.parameters().get(name)?.lastOrNull()
     }
 
     @JvmStatic
     protected fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int {
-      return StringUtilRt.parseInt(StringUtil.nullize(ContainerUtil.getLastItem(urlDecoder.parameters()[name]), true), -1)
+      return StringUtilRt.parseInt(getStringParameter(name, urlDecoder).nullize(nullizeSpaces = true), -1)
     }
 
     @JvmOverloads
     @JvmStatic
     protected fun getBooleanParameter(name: String, urlDecoder: QueryStringDecoder, defaultValue: Boolean = false): Boolean {
-      val values = urlDecoder.parameters()[name]
-      if (ContainerUtil.isEmpty(values)) {
-        return defaultValue
-      }
-
-      val value = values!!.get(values.size - 1)
+      val values = urlDecoder.parameters().get(name) ?: return defaultValue
       // if just name specified, so, true
-      return value.isEmpty() || java.lang.Boolean.parseBoolean(value)
+      val value = values.lastOrNull() ?: return true
+      return value.toBoolean()
     }
   }
 
-  protected val gson: NotNullLazyValue<Gson> = object : NotNullLazyValue<Gson>() {
-    override fun compute(): Gson {
-      return GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-    }
+  protected val gson: Gson by lazy {
+    GsonBuilder()
+      .setPrettyPrinting()
+      .disableHtmlEscaping()
+      .create()
   }
 
-  private val abuseCounter = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build<InetAddress, AtomicInteger>(
-    CacheLoader.from(Supplier { AtomicInteger() }))
+  private val abuseCounter = CacheBuilder.newBuilder()
+    .expireAfterWrite(1, TimeUnit.MINUTES)
+    .build<InetAddress, AtomicInteger>(CacheLoader.from(Supplier { AtomicInteger() }))
 
-  private val trustedOrigins = CacheBuilder.newBuilder().maximumSize(1024).expireAfterWrite(1, TimeUnit.DAYS).build<String, Boolean>()
+  private val trustedOrigins = CacheBuilder.newBuilder()
+    .maximumSize(1024)
+    .expireAfterWrite(1, TimeUnit.DAYS)
+    .build<String, Boolean>()
 
   /**
    * Service url must be "/api/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
@@ -183,7 +169,7 @@ abstract class RestService : HttpRequestHandler() {
 
     val uri = request.uri()
 
-    if (isPrefixlessAllowed && HttpRequestHandler.checkPrefix(uri, getServiceName())) {
+    if (isPrefixlessAllowed && checkPrefix(uri, getServiceName())) {
       return true
     }
 
@@ -229,7 +215,6 @@ abstract class RestService : HttpRequestHandler() {
     catch (e: Throwable) {
       val status: HttpResponseStatus?
       // JsonReader exception
-
       if (e is MalformedJsonException || e is IllegalStateException && e.message!!.startsWith("Expected a ")) {
         LOG.warn(e)
         status = HttpResponseStatus.BAD_REQUEST
@@ -246,6 +231,7 @@ abstract class RestService : HttpRequestHandler() {
 
   @Throws(InterruptedException::class, InvocationTargetException::class)
   protected open fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
+    @Suppress("DEPRECATION")
     return isHostTrusted(request)
   }
 
@@ -257,42 +243,34 @@ abstract class RestService : HttpRequestHandler() {
       return true
     }
 
-    var referrer = request.origin
-    if (referrer == null) {
-      referrer = request.referrer
-    }
-
-    val host: String?
-    try {
-      host = StringUtil.nullize(if (referrer == null) null else URI(referrer).host)
+    val referrer = request.origin ?: request.referrer
+    val host = try {
+      if (referrer == null) null else URI(referrer).host.nullize()
     }
     catch (ignored: URISyntaxException) {
       return false
     }
 
-    val isTrusted = Ref.create<Boolean>()
     if (host != null) {
       if (NetUtils.isLocalhost(host)) {
-        isTrusted.set(true)
+        return true
       }
       else {
-        isTrusted.set(trustedOrigins.getIfPresent(host))
+        trustedOrigins.getIfPresent(host)?.let {
+          return it
+        }
       }
     }
 
-    if (isTrusted.isNull) {
-      ApplicationManager.getApplication().invokeAndWait({
-                                                          AppIcon.getInstance().requestAttention(null, true)
-                                                          isTrusted.set(showYesNoDialog(
-                                                            IdeBundle.message("warning.use.rest.api", getServiceName(),
-                                                                              ObjectUtils.chooseNotNull(host, "unknown host")),
-                                                            "title.use.rest.api"))
-                                                          if (host != null) {
-                                                            trustedOrigins.put(host, isTrusted.get())
-                                                          }
-                                                        }, ModalityState.any())
-    }
-    return isTrusted.get()
+    var isTrusted = false
+    ApplicationManager.getApplication().invokeAndWait({
+                                                        AppIcon.getInstance().requestAttention(null, true)
+                                                        isTrusted = showYesNoDialog(IdeBundle.message("warning.use.rest.api", getServiceName(), host ?: "unknown host"), "title.use.rest.api")
+                                                        if (host != null) {
+                                                          trustedOrigins.put(host, isTrusted)
+                                                        }
+                                                      }, ModalityState.any())
+    return isTrusted
   }
 
   /**

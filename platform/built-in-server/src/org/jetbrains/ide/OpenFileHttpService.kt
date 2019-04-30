@@ -72,7 +72,7 @@ internal class OpenFileHttpService : RestService() {
 
     val apiRequest: OpenFileRequest
     if (request.method() === HttpMethod.POST) {
-      apiRequest = gson.value.fromJson(createJsonReader(request), OpenFileRequest::class.java)
+      apiRequest = gson.fromJson(createJsonReader(request), OpenFileRequest::class.java)
     }
     else {
       apiRequest = OpenFileRequest()

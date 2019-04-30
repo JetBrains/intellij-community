@@ -41,6 +41,7 @@ fun HttpResponse.setDate() {
 }
 
 fun HttpResponse.addNoCache(): HttpResponse {
+  @Suppress("SpellCheckingInspection")
   headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
   headers().add(HttpHeaderNames.PRAGMA, "no-cache")
   return this
@@ -121,11 +122,10 @@ fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, desc
 }
 
 fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
-  if (Registry.`is`("ide.http.server.response.actual.status", true) || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
-    return this
-  }
-  else {
-    return safeStatus
+  @Suppress("NullableBooleanElvis")
+  return when {
+    Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode ?: false -> this
+    else -> safeStatus
   }
 }
 
