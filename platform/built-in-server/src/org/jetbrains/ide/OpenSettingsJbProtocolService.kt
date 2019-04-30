@@ -19,7 +19,7 @@ internal class OpenSettingsService : RestService() {
   override fun getServiceName() = SERVICE_NAME
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val name = urlDecoder.parameters().get("name")?.firstOrNull()?.trim() ?: return "name parameter is not specified"
+    val name = urlDecoder.parameters().get("name")?.firstOrNull()?.trim() ?: return parameterMissedErrorMessage("name")
     if (!doOpenSettings(name)) {
       return "no configurables found"
     }
@@ -49,7 +49,7 @@ internal class OpenSettingsJbProtocolService : JBProtocolCommand(SERVICE_NAME) {
   override fun perform(target: String?, parameters: Map<String, String>) {
     val name = parameters.get("name")?.trim()?.nullize()
     if (name == null) {
-      RestService.LOG.warn("name parameter is not specified")
+      RestService.LOG.warn(RestService.parameterMissedErrorMessage("name") + " for action \"$SERVICE_NAME\"")
       return
     }
 
