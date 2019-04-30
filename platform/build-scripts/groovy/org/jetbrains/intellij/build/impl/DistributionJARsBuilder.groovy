@@ -337,7 +337,9 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
 
-    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
+    buildContext.messages.block("Build platform JARs in lib directory") {
+      buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
+    }
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -363,7 +365,9 @@ class DistributionJARsBuilder {
   private void buildBundledPlugins() {
     def layoutBuilder = createLayoutBuilder()
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
-    buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
+    buildContext.messages.block("Build bundled plugins") {
+      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
+    }
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
@@ -387,8 +391,10 @@ class DistributionJARsBuilder {
 
       if (!osSpecificPlugins.isEmpty()) {
         def layoutBuilder = createLayoutBuilder()
-        buildPlugins(layoutBuilder, osSpecificPlugins,
-                     "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
+          buildPlugins(layoutBuilder, osSpecificPlugins,
+                       "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        }
         usedModules.addAll(layoutBuilder.usedModules)
       }
     }
