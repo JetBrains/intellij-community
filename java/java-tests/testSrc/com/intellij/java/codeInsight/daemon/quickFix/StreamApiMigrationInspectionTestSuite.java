@@ -69,7 +69,7 @@ public class StreamApiMigrationInspectionTestSuite {
     }
 
       @Override
-    protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) throws Exception {
+    protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) throws Exception {
       ((IntentionManagerImpl)IntentionManager.getInstance())
         .withDisabledIntentions(() -> super.doAction(actionHint, testFullPath, testName));
     }
