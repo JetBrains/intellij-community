@@ -564,6 +564,12 @@ public class SearchUtil {
 
   @NotNull
   public static List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
+    List<Configurable> result = new ArrayList<>();
+    expandGroupTo(group, result);
+    return result;
+  }
+
+  public static void expandGroupTo(@NotNull ConfigurableGroup group, @NotNull Collection<Configurable> toCollection) {
     Configurable[] configurables = group.getConfigurables();
     List<Configurable> result = new ArrayList<>();
     ContainerUtil.addAll(result, configurables);
@@ -571,9 +577,12 @@ public class SearchUtil {
       addChildren(each, result);
     }
 
-    //noinspection deprecation
-    return ContainerUtil.filter(result, configurable -> !(configurable instanceof SearchableConfigurable.Parent) ||
-                                                        ((SearchableConfigurable.Parent)configurable).isVisible());
+    for (Configurable configurable : result) {
+      //noinspection deprecation
+      if (!(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible()) {
+        toCollection.add(configurable);
+      }
+    }
   }
 
   private static void addChildren(Configurable configurable, List<? super Configurable> list) {

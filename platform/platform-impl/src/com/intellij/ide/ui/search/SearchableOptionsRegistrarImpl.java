@@ -296,7 +296,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     Set<Configurable> contentHits = new LinkedHashSet<>();
     if (configurables == null) {
       for (ConfigurableGroup group : groups) {
-        contentHits.addAll(SearchUtil.expandGroup(group));
+        SearchUtil.expandGroupTo(group, contentHits);
       }
     }
     else {
