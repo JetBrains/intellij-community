@@ -21,6 +21,7 @@
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
     <projectService serviceImplementation="com.intellij.vcs.log.history.FileHistoryUiProperties"/>
+    <projectService serviceImplementation="com.intellij.vcs.log.history.VcsDirectoryRenamesProvider"/>
 
     <projectService serviceImplementation="com.intellij.vcs.log.statistics.VcsLogIndexCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
