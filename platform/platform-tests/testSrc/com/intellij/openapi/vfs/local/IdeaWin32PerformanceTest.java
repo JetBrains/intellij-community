@@ -34,7 +34,7 @@ public class IdeaWin32PerformanceTest {
 
   @Before
   public void setUp() {
-    assumeTrue(SystemInfo.isWindows);
+    assumeTrue("windows only", SystemInfo.isWindows);
     myDriver = IdeaWin32.getInstance();
     myIdeaTotal = myJavaTotal = 0;
   }

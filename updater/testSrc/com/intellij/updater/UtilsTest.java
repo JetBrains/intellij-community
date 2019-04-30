@@ -60,7 +60,7 @@ public class UtilsTest {
 
   @Test
   public void testDeleteLockedFileOnWindows() throws Exception {
-    assumeTrue(Utils.IS_WINDOWS);
+    assumeTrue("windows only", Utils.IS_WINDOWS);
 
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
@@ -84,7 +84,7 @@ public class UtilsTest {
 
   @Test
   public void testDeleteLockedFileOnUnix() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    assumeFalse("windows-allergic",Utils.IS_WINDOWS);
 
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
@@ -112,7 +112,7 @@ public class UtilsTest {
 
   @Test
   public void testNonRecursiveSymlinkDelete() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    assumeFalse("windows-allergic",Utils.IS_WINDOWS);
 
     File dir = tempDir.newFolder("temp_dir");
     File file = new File(dir, "file");
@@ -131,7 +131,7 @@ public class UtilsTest {
 
   @Test
   public void testDeleteDanglingSymlink() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    assumeFalse("windows-allergic",Utils.IS_WINDOWS);
 
     File dir = tempDir.newFolder("temp_dir");
     File link = new File(dir, "link");
