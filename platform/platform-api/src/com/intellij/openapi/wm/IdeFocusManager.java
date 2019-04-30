@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -206,7 +206,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
     IdeFocusManager fm = null;
 
     Application app = ApplicationManager.getApplication();
-    if (app != null && app.hasComponent(IdeFocusManager.class)) {
+    if (app != null) {
       fm = app.getComponent(IdeFocusManager.class);
     }
 
