@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -25,6 +26,7 @@ import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -556,8 +558,9 @@ public class SearchUtil {
   @NotNull
   public static List<Configurable> expand(@NotNull ConfigurableGroup[] groups) {
     List<Configurable> result = new ArrayList<>();
-    for (ConfigurableGroup eachGroup : groups) {
-      result.addAll(expandGroup(eachGroup));
+    CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
+    for (ConfigurableGroup group : groups) {
+      processExpandedGroups(group, consumer);
     }
     return result;
   }
@@ -565,11 +568,11 @@ public class SearchUtil {
   @NotNull
   public static List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
     List<Configurable> result = new ArrayList<>();
-    expandGroupTo(group, result);
+    processExpandedGroups(group, new CollectConsumer<>(result));
     return result;
   }
 
-  public static void expandGroupTo(@NotNull ConfigurableGroup group, @NotNull Collection<Configurable> toCollection) {
+  public static void processExpandedGroups(@NotNull ConfigurableGroup group, @NotNull Consumer<Configurable> consumer) {
     Configurable[] configurables = group.getConfigurables();
     List<Configurable> result = new ArrayList<>();
     ContainerUtil.addAll(result, configurables);
@@ -580,7 +583,7 @@ public class SearchUtil {
     for (Configurable configurable : result) {
       //noinspection deprecation
       if (!(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible()) {
-        toCollection.add(configurable);
+        consumer.accept(configurable);
       }
     }
   }

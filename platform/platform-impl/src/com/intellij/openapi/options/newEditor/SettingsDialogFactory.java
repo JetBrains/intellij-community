@@ -10,21 +10,30 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 public class SettingsDialogFactory {
   public static SettingsDialogFactory getInstance() {
     return ServiceManager.getService(SettingsDialogFactory.class);
   }
 
+  @NotNull
   public DialogWrapper create(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton){
     return new SettingsDialog(project, key, configurable, showApplyButton, showResetButton);
   }
 
+  @NotNull
   public DialogWrapper create(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton){
     return new SettingsDialog(parent, key, configurable, showApplyButton, showResetButton);
   }
 
+  @NotNull
   public DialogWrapper create(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter){
-    return new SettingsDialog(project, Arrays.asList(groups), configurable, filter);
+    return create(project, Arrays.asList(groups), configurable, filter);
+  }
+
+  @NotNull
+  public DialogWrapper create(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, Configurable configurable, String filter){
+    return new SettingsDialog(project, groups, configurable, filter);
   }
 }

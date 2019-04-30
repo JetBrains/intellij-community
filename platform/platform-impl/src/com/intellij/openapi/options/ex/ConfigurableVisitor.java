@@ -58,7 +58,7 @@ public abstract class ConfigurableVisitor {
     return null;
   }
 
-  public final List<Configurable> findAll(@NotNull ConfigurableGroup... groups) {
+  public final List<Configurable> findAll(@NotNull List<ConfigurableGroup> groups) {
     List<Configurable> list = new ArrayList<>();
     for (ConfigurableGroup group : groups) {
       add(list, group.getConfigurables());

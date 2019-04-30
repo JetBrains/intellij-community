@@ -19,6 +19,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -295,8 +296,9 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                           @Nullable Project project) {
     Set<Configurable> contentHits = new LinkedHashSet<>();
     if (configurables == null) {
+      CollectConsumer<Configurable> consumer = new CollectConsumer<>(contentHits);
       for (ConfigurableGroup group : groups) {
-        SearchUtil.expandGroupTo(group, contentHits);
+        SearchUtil.processExpandedGroups(group, consumer);
       }
     }
     else {

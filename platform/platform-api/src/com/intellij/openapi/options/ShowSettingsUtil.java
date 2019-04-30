@@ -23,7 +23,7 @@ public abstract class ShowSettingsUtil {
 
   public abstract void showSettingsDialog(@Nullable Project project, @NotNull String nameToSelect);
 
-  public abstract void showSettingsDialog(@NotNull final Project project, final Configurable toSelect);
+  public abstract void showSettingsDialog(@NotNull Project project, @Nullable Configurable toSelect);
 
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                                    @NotNull Class<T> configurableClass,

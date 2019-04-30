@@ -134,16 +134,16 @@ public class ConfigurableExtensionPointUtil {
    */
   public static ConfigurableGroup getConfigurableGroup(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
-    Map<String, Node<SortedConfigurableGroup>> tree = ContainerUtil.newHashMap();
+    Map<String, Node<SortedConfigurableGroup>> tree = new THashMap<>();
     for (Map.Entry<String, List<Configurable>> entry : map.entrySet()) {
       addGroup(tree, project, entry.getKey(), entry.getValue(), null);
     }
+
     SortedConfigurableGroup root = getGroup(tree, "root");
     if (!tree.isEmpty()) {
-      for (String groupId : tree.keySet()) {
-        LOG.warn("ignore group: " + groupId);
-      }
+      LOG.warn("ignore groups: " + tree.keySet());
     }
+
     if (root != null && root.myList != null && Registry.is("ide.settings.replace.group.with.single.configurable")) {
       replaceGroupWithSingleConfigurable(root.myList);
     }
@@ -200,7 +200,7 @@ public class ConfigurableExtensionPointUtil {
     return node.myValue;
   }
 
-  private static void addGroup(Map<String, Node<SortedConfigurableGroup>> tree, Project project,
+  private static void addGroup(@NotNull Map<String, Node<SortedConfigurableGroup>> tree, Project project,
                                String groupId, List<? extends Configurable> configurables, ResourceBundle alternative) {
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
@@ -252,6 +252,7 @@ public class ConfigurableExtensionPointUtil {
    * @param configurables a list of settings to process
    * @return the map of different groups of settings
    */
+  @NotNull
   public static Map<String, List<Configurable>> groupConfigurables(@NotNull List<? extends Configurable> configurables) {
     Map<String, Node<ConfigurableWrapper>> tree = new THashMap<>();
     for (Configurable configurable : configurables) {
