@@ -405,13 +405,6 @@ public class LambdaUtil {
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
-          if (properties != null && properties.isApplicabilityCheck()) { //todo simplification
-            final PsiParameter[] parameters = properties.getMethod().getParameterList().getParameters();
-            final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);
-            if (finalLambdaIdx < parameters.length) {
-              return properties.getInfo().getSiteSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
-            }
-          }
           JavaResolveResult resolveResult = properties != null ? properties.getInfo() : PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
           return getSubstitutedType(expression, tryToSubstitute, lambdaIdx, resolveResult);
         }
