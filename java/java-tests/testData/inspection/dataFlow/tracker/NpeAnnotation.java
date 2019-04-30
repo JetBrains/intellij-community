@@ -1,6 +1,6 @@
 /*
 May be null (s)
-  's' was assigned (=)
+  's' was assigned (loadString())
     Method 'loadString' is annotated as 'nullable' (@Nullable)
  */
 

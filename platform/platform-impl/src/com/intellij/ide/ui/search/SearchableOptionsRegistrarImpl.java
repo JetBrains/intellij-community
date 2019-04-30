@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.ui.search;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +21,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,6 +69,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl");
+  private static final int LOAD_FACTOR = 20;
   @NonNls
   private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^-]]+");
 
@@ -287,71 +289,66 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     myStorage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs);
   }
 
+  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @Override
   @NotNull
-  public ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
+  public ConfigurableHit getConfigurables(ConfigurableGroup[] groups,
                                           final DocumentEvent.EventType type,
-                                          @Nullable Set<? extends Configurable> configurables,
-                                          @NotNull String option,
-                                          @Nullable Project project) {
-    Set<Configurable> contentHits = new LinkedHashSet<>();
+                                          Set<? extends Configurable> configurables,
+                                          String option,
+                                          Project project) {
+
+    final ConfigurableHit hits = new ConfigurableHit();
+    final Set<Configurable> contentHits = hits.getContentHits();
+
+    Set<String> options = getProcessedWordsWithoutStemming(option);
     if (configurables == null) {
-      CollectConsumer<Configurable> consumer = new CollectConsumer<>(contentHits);
       for (ConfigurableGroup group : groups) {
-        SearchUtil.processExpandedGroups(group, consumer);
+        contentHits.addAll(SearchUtil.expandGroup(group));
       }
     }
     else {
       contentHits.addAll(configurables);
     }
 
-    String optionToCheck = option.trim().toLowerCase(Locale.ENGLISH);
-    Set<String> options = getProcessedWordsWithoutStemming(optionToCheck);
-
-    Set<Configurable> nameHits = new LinkedHashSet<>();
-    Set<Configurable> nameFullHits = new LinkedHashSet<>();
-
+    String optionToCheck = option.trim().toLowerCase();
     for (Configurable each : contentHits) {
       if (each.getDisplayName() == null) continue;
-      final String displayName = each.getDisplayName().toLowerCase(Locale.ENGLISH);
+      final String displayName = each.getDisplayName().toLowerCase();
       final List<String> allWords = StringUtil.getWordsIn(displayName);
       if (displayName.contains(optionToCheck)) {
-        nameFullHits.add(each);
-        nameHits.add(each);
+        hits.getNameFullHits().add(each);
+        hits.getNameHits().add(each);
       }
       for (String eachWord : allWords) {
         if (eachWord.startsWith(optionToCheck)) {
-          nameHits.add(each);
+          hits.getNameHits().add(each);
           break;
         }
       }
 
       if (options.isEmpty()) {
-        nameHits.add(each);
-        nameFullHits.add(each);
+        hits.getNameHits().add(each);
+        hits.getNameFullHits().add(each);
       }
     }
 
-    final Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new THashSet<>(contentHits) : null;
-    // operate with substring
-    if (options.isEmpty()) {
+    final Set<Configurable> currentConfigurables = new HashSet<>(contentHits);
+    if (options.isEmpty()) { //operate with substring
       String[] components = REG_EXP.split(optionToCheck);
       if (components.length > 0) {
         Collections.addAll(options, components);
-      }
-      else {
+      } else {
         options.add(option);
       }
     }
-
     Set<String> helpIds = null;
     for (String opt : options) {
       final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
       if (optionIds == null) {
         contentHits.clear();
-        return new ConfigurableHit(contentHits, nameHits, nameFullHits);
+        return hits;
       }
-
       final Set<String> ids = new HashSet<>();
       for (OptionDescription id : optionIds) {
         ids.add(id.getConfigurableId());
@@ -361,7 +358,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
       helpIds.retainAll(ids);
     }
-
     if (helpIds != null) {
       for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext();) {
         Configurable configurable = it.next();
@@ -374,12 +370,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
       }
     }
-
-    if (type == DocumentEvent.EventType.CHANGE && configurables != null && currentConfigurables.equals(contentHits)) {
+    if (currentConfigurables.equals(contentHits) && !(configurables == null && type == DocumentEvent.EventType.CHANGE)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
-    return new ConfigurableHit(contentHits, nameHits, nameFullHits);
+    return hits;
   }
+
 
   @Nullable
   public synchronized Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
@@ -463,23 +459,56 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   @Override
+  public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
+    loadHugeFilesIfNecessary();
+    final boolean perProject = CodeStyle.usesOwnSettings(project);
+    final Map<String, Set<String>> result = new THashMap<>();
+    int count = 0;
+    final Set<String> prefixes = getProcessedWordsWithoutStemming(prefix);
+    for (String opt : prefixes) {
+      Set<OptionDescription> configs = getAcceptableDescriptions(opt);
+      if (configs == null) continue;
+      for (OptionDescription description : configs) {
+        String groupName = description.getGroupName();
+        if (perProject) {
+          if (Comparing.strEqual(groupName, ApplicationBundle.message("title.global.code.style"))) {
+            groupName = ApplicationBundle.message("title.project.code.style");
+          }
+        }
+        else {
+          if (Comparing.strEqual(groupName, ApplicationBundle.message("title.project.code.style"))) {
+            groupName = ApplicationBundle.message("title.global.code.style");
+          }
+        }
+        Set<String> foundHits = result.get(groupName);
+        if (foundHits == null) {
+          foundHits = new THashSet<>();
+          result.put(groupName, foundHits);
+        }
+        foundHits.add(description.getHit());
+        count++;
+      }
+    }
+    if (count > LOAD_FACTOR) {
+      result.clear();
+    }
+    return result;
+  }
+
+  @Override
   public void addOption(String option, String path, final String hit, final String configurableId, final String configurableDisplayName) {
     putOptionWithHelpId(option, configurableId, configurableDisplayName, hit, path);
   }
 
   @Override
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
-    Set<String> result = new THashSet<>();
-    for (String opt : REG_EXP.split(text.toLowerCase(Locale.ENGLISH))) {
-      if (isStopWord(opt)) {
-        continue;
-      }
-
-      String processed = PorterStemmerUtil.stem(opt);
-      if (isStopWord(processed)) {
-        continue;
-      }
-
+    Set<String> result = new HashSet<>();
+    @NonNls final String toLowerCase = text.toLowerCase();
+    final String[] options = REG_EXP.split(toLowerCase);
+    for (String opt : options) {
+      if (isStopWord(opt)) continue;
+      final String processed = PorterStemmerUtil.stem(opt);
+      if (isStopWord(processed)) continue;
       result.add(opt);
     }
     return result;

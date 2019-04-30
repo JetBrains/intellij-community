@@ -3,7 +3,6 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -11,7 +10,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +17,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 /**
@@ -67,12 +64,7 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
    * @return an option prefix or {@code null} to ignore this option
    */
   protected String getOptionName(JCheckBox checkbox) {
-    return getOptionName(checkbox.getText());
-  }
-
-  @Nullable
-  protected String getOptionName(@NotNull String text) {
-    String name = StringUtil.stripHtml(text, false);
+    String name = StringUtil.stripHtml(checkbox.getText(), false);
     if (StringUtil.isEmpty(name)) {
       return null;
     }
@@ -101,21 +93,6 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
       String option = getOptionName(checkbox);
       if (option != null) {
         options.add(new Option(configurable, checkbox, option));
-      }
-    }
-    else if (component instanceof JComboBox) {
-      JComboBox combo = (JComboBox)component;
-      if (!combo.isEditable()) {
-        JLabel label = UIUtil.uiChildren(combo.getParent()).takeWhile(o -> o != combo).filter(JLabel.class).last();
-        String baseName = label == null ? null : getOptionName(label.getText());
-        if (baseName != null) {
-          String optionName = (baseName + " ").replace(": ", " | ");
-          List<String> list = SearchUtil.getItemsFromComboBox(combo);
-          for (int i = 0, len = list.size(); i < len; i++) {
-            String s = optionName + list.get(i);
-            options.add(new Option2(configurable, combo, s, i));
-          }
-        }
       }
     }
     else if (component instanceof Container) {
@@ -152,10 +129,10 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
   }
 
   private static final class Option extends BooleanOptionDescription implements Disposable {
-    final Configurable myConfigurable;
-    final JCheckBox myCheckBox;
+    private final Configurable myConfigurable;
+    private final JCheckBox myCheckBox;
 
-    Option(Configurable configurable, JCheckBox checkbox, String option) {
+    private Option(Configurable configurable, JCheckBox checkbox, String option) {
       super(option, ConfigurableVisitor.ByID.getID(configurable));
       myConfigurable = configurable;
       myCheckBox = checkbox;
@@ -175,44 +152,6 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
     public void setOptionState(boolean selected) {
       if (selected != myCheckBox.isSelected()) {
         myCheckBox.setSelected(selected);
-        try {
-          myConfigurable.apply();
-        }
-        catch (ConfigurationException exception) {
-          LOG.debug(exception);
-        }
-      }
-    }
-  }
-
-  private static final class Option2 extends BooleanOptionDescription implements Disposable {
-    final Configurable myConfigurable;
-    final JComboBox<?> myComboBox;
-    final int myIndex;
-    final int myPrevIndex;
-
-    Option2(Configurable configurable, JComboBox<?> comboBox, String option, int index) {
-      super(option, ConfigurableVisitor.ByID.getID(configurable));
-      myConfigurable = configurable;
-      myComboBox = comboBox;
-      myIndex = index;
-      myPrevIndex = myComboBox.getSelectedIndex();
-    }
-
-    @Override
-    public void dispose() {
-      myConfigurable.disposeUIResources();
-    }
-
-    @Override
-    public boolean isOptionEnabled() {
-      return myComboBox.getSelectedIndex() == myIndex;
-    }
-
-    @Override
-    public void setOptionState(boolean selected) {
-      if (selected != (myComboBox.getSelectedIndex() == myIndex)) {
-        myComboBox.setSelectedIndex(selected ? myIndex : myPrevIndex);
         try {
           myConfigurable.apply();
         }

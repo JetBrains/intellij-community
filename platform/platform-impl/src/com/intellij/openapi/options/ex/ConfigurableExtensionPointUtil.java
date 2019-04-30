@@ -121,9 +121,7 @@ public class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
-    if (!withIdeSettings && project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
+    if (!withIdeSettings && project == null) project = ProjectManager.getInstance().getDefaultProject();
     return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
   }
 
@@ -134,16 +132,16 @@ public class ConfigurableExtensionPointUtil {
    */
   public static ConfigurableGroup getConfigurableGroup(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
-    Map<String, Node<SortedConfigurableGroup>> tree = new THashMap<>();
+    Map<String, Node<SortedConfigurableGroup>> tree = ContainerUtil.newHashMap();
     for (Map.Entry<String, List<Configurable>> entry : map.entrySet()) {
       addGroup(tree, project, entry.getKey(), entry.getValue(), null);
     }
-
     SortedConfigurableGroup root = getGroup(tree, "root");
     if (!tree.isEmpty()) {
-      LOG.warn("ignore groups: " + tree.keySet());
+      for (String groupId : tree.keySet()) {
+        LOG.warn("ignore group: " + groupId);
+      }
     }
-
     if (root != null && root.myList != null && Registry.is("ide.settings.replace.group.with.single.configurable")) {
       replaceGroupWithSingleConfigurable(root.myList);
     }
@@ -200,7 +198,7 @@ public class ConfigurableExtensionPointUtil {
     return node.myValue;
   }
 
-  private static void addGroup(@NotNull Map<String, Node<SortedConfigurableGroup>> tree, Project project,
+  private static void addGroup(Map<String, Node<SortedConfigurableGroup>> tree, Project project,
                                String groupId, List<? extends Configurable> configurables, ResourceBundle alternative) {
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
@@ -252,7 +250,6 @@ public class ConfigurableExtensionPointUtil {
    * @param configurables a list of settings to process
    * @return the map of different groups of settings
    */
-  @NotNull
   public static Map<String, List<Configurable>> groupConfigurables(@NotNull List<? extends Configurable> configurables) {
     Map<String, Node<ConfigurableWrapper>> tree = new THashMap<>();
     for (Configurable configurable : configurables) {
@@ -349,9 +346,8 @@ public class ConfigurableExtensionPointUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return the list of all valid settings according to parameters
    */
-  @NotNull
   private static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
-    List<Configurable> list = new ArrayList<>();
+    List<Configurable> list = ContainerUtil.newArrayList();
     if (withIdeSettings) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
@@ -438,6 +434,81 @@ public class ConfigurableExtensionPointUtil {
 
   private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
     return !isValid(each, null) || (filter != null && !filter.isIncluded(each));
+  }
+
+  /*
+  private static void dumpConfigurable(ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint,
+                                       ConfigurableEP<Configurable> ep,
+                                       Configurable configurable) {
+    if (configurable != null && !(configurable instanceof ConfigurableGroup)) {
+      if (ep.instanceClass != null && (configurable instanceof SearchableConfigurable) && (configurable instanceof Configurable.Composite)) {
+        Element element = dump(ep, configurable, StringUtil.getShortName(configurablesExtensionPoint.getName()));
+        final Configurable[] configurables = ((Configurable.Composite)configurable).getConfigurables();
+        for (Configurable child : configurables) {
+          final Element dump = dump(null, child, "configurable");
+          element.addContent(dump);
+        }
+        final StringWriter out = new StringWriter();
+        try {
+          new XMLOutputter(Format.getPrettyFormat()).output(element, out);
+        }
+        catch (IOException e) {
+        }
+        System.out.println(out);
+      }
+    }
+  }
+
+  private static Element dump(@Nullable ConfigurableEP ep,
+                              Configurable configurable, String name) {
+    Element element = new Element(name);
+    if (ep != null) {
+      element.setAttribute("instance", ep.instanceClass);
+      String id = ep.id == null ? ((SearchableConfigurable)configurable).getId() : ep.id;
+      element.setAttribute("id", id);
+    }
+    else {
+      element.setAttribute("instance", configurable.getClass().getName());
+      if (configurable instanceof SearchableConfigurable) {
+        element.setAttribute("id", ((SearchableConfigurable)configurable).getId());
+      }
+    }
+
+    CommonBundle.lastKey = null;
+    String displayName = configurable.getDisplayName();
+    if (CommonBundle.lastKey != null) {
+      element.setAttribute("key", CommonBundle.lastKey).setAttribute("bundle", CommonBundle.lastBundle);
+    }
+    else {
+      element.setAttribute("displayName", displayName);
+    }
+    if (configurable instanceof NonDefaultProjectConfigurable) {
+      element.setAttribute("nonDefaultProject", "true");
+    }
+    return element;
+  }
+  */
+
+  /**
+   * @deprecated create a new instance of configurable instead
+   */
+  @Deprecated
+  @NotNull
+  public static <T extends Configurable> T findProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
+    return findConfigurable(Configurable.PROJECT_CONFIGURABLE.getExtensionList(project), configurableClass);
+  }
+
+  @NotNull
+  private static <T extends Configurable> T findConfigurable(@NotNull List<ConfigurableEP<Configurable>> extensions, Class<T> configurableClass) {
+    for (ConfigurableEP<Configurable> extension : extensions) {
+      if (extension.canCreateConfigurable()) {
+        final Configurable configurable = extension.createConfigurable();
+        if (configurableClass.isInstance(configurable)) {
+          return configurableClass.cast(configurable);
+        }
+      }
+    }
+    throw new IllegalArgumentException("Cannot find configurable of " + configurableClass);
   }
 
   @Nullable

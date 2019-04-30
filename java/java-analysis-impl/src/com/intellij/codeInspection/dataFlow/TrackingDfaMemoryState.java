@@ -7,11 +7,8 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -245,20 +242,6 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     MemoryStateChange findExpressionPush(@Nullable PsiExpression expression) {
       if (expression == null) return null;
       return findChange(change -> change.getExpression() == expression, false);
-    }
-
-    @Contract("null -> null")
-    @Nullable
-    MemoryStateChange findSubExpressionPush(@Nullable PsiExpression expression) {
-      if (expression == null) return null;
-      PsiElement topElement = ExpressionUtils.getPassThroughParent(expression);
-      return findChange(change -> {
-        PsiExpression changeExpression = change.getExpression();
-        if (changeExpression == null) return false;
-        return changeExpression == expression ||
-               (PsiTreeUtil.isAncestor(expression, changeExpression, true) &&
-                ExpressionUtils.getPassThroughParent(changeExpression) == topElement);
-      }, false);
     }
 
     MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate, boolean startFromSelf) {

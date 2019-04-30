@@ -443,15 +443,15 @@ public class GitPushOperation {
     UpdateMethod updateMethod = settings.getUpdateMethod();
     mySettings.setUpdateAllRootsIfPushRejected(settings.shouldUpdateAllRoots());
     if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
-        && mySettings.getUpdateMethod() != updateMethod && mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
-      mySettings.setUpdateMethod(updateMethod);
+        && mySettings.getUpdateType() != updateMethod && mySettings.getUpdateType() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
+      mySettings.setUpdateType(updateMethod);
     }
   }
 
   @NotNull
   private PushUpdateSettings readPushUpdateSettings() {
     boolean updateAllRoots = mySettings.shouldUpdateAllRootsIfPushRejected();
-    UpdateMethod updateMethod = mySettings.getUpdateMethod();
+    UpdateMethod updateMethod = mySettings.getUpdateType();
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
       updateMethod = GitUpdater.resolveUpdateMethod(myPushSpecs.keySet().iterator().next());

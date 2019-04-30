@@ -164,7 +164,6 @@ public class ArrangementGroupingRulesControl extends JBTable {
         ArrangementGroupingComponent component = (ArrangementGroupingComponent)value;
         component.setRowIndex(row + 1);
         component.setHighlight(myRowUnderMouse == row || table.isRowSelected(row));
-        component.revalidate();
         return component;
       }
       else if (value instanceof ArrangementRepresentationAware) {

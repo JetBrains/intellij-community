@@ -126,19 +126,16 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   @NotNull
-  public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path) throws VcsException {
-    String absolutePath = makeAbsolutePath(vcsRoot, GitUtil.unescapePath(path));
+  public static FilePath createPath(@NotNull VirtualFile vcsRoot,
+                                    @NotNull String path,
+                                    boolean unescapePath) throws VcsException {
+    String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
     return VcsUtil.getFilePath(absolutePath, false);
   }
 
   @NotNull
-  public static FilePath createPath(@NotNull VirtualFile vcsRoot, @NotNull String unescapedPath) {
-    String absolutePath = makeAbsolutePath(vcsRoot, unescapedPath);
-    return VcsUtil.getFilePath(absolutePath, false);
-  }
-
-  @NotNull
-  private static String makeAbsolutePath(@NotNull VirtualFile vcsRoot, @NotNull String unescapedPath) {
+  private static String makeAbsolutePath(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean unescapePath) throws VcsException {
+    String unescapedPath = unescapePath ? GitUtil.unescapePath(path) : path;
     return vcsRoot.getPath() + "/" + unescapedPath;
   }
 
@@ -176,8 +173,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                        @Nullable Charset charset) {
     if (path.getFileType().isBinary()) {
       return new GitBinaryContentRevision(path, revisionNumber, project);
-    }
-    else {
+    } else {
       return new GitContentRevision(path, revisionNumber, project, charset);
     }
   }

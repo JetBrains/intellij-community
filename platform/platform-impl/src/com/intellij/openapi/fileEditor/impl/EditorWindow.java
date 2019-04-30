@@ -900,7 +900,7 @@ public class EditorWindow {
 
     final Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
-    if (settings.getMarkModifiedTabsWithAsterisk()) {
+    if (settings.getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
       Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
       modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? crop : new EmptyIcon(7, 7);
       count++;

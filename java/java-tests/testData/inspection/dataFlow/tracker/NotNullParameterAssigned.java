@@ -1,6 +1,6 @@
 /*
 Value is always true (null == s)
-  's' was assigned (=)
+  's' was assigned (null)
  */
 import org.jetbrains.annotations.NotNull;
 

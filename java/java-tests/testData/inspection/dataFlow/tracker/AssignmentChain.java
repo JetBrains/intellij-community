@@ -1,6 +1,6 @@
 /*
 Value is always false (s == null)
-  's' was assigned (=)
+  's' was assigned (s1)
     Condition 's1 != null' was checked before (s1 == null)
  */
 class Test {

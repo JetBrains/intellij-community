@@ -29,5 +29,7 @@ internal class RangeExpression(
 
   override fun calculateQuickResult(context: ExpressionContext): Result? = calculateResult(context)
 
+  override fun requiresCommittedPSI(): Boolean = false
+
   override fun calculateLookupItems(context: ExpressionContext): Array<out LookupElement> = LookupElement.EMPTY_ARRAY
 }

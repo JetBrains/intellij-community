@@ -65,7 +65,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   @Override
   public boolean startInWriteAction() {
-    return !annotateOverriddenMethods();
+    return false;
   }
 
   @Override

@@ -349,7 +349,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       @NotNull
       @Override
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        if (e == null || mySelectedTab == null) return EMPTY_ARRAY;
+        if (e == null) return EMPTY_ARRAY;
         return mySelectedTab.actions.toArray(EMPTY_ARRAY);
       }
     });
@@ -424,6 +424,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         contributorsPanel.add(tab);
         myTabs.add(tab);
       });
+    switchToTab(allTab);
 
     return contributorsPanel;
   }
@@ -1426,8 +1427,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      SearchEverywhereContributor<?> contributor = mySelectedTab == null ? null : mySelectedTab.contributor;
-      e.getPresentation().setEnabled(contributor == null || contributor.showInFindResults());
+      Boolean enabled = mySelectedTab.getContributor().map(contributor -> contributor.showInFindResults()).orElse(true);
+      e.getPresentation().setEnabled(enabled);
     }
   }
 

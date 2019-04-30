@@ -1,6 +1,6 @@
 /*
 Value is always true (s != null)
-  's' was assigned (=)
+  's' was assigned (new Object())
     Expression cannot be null as it's newly created object (new Object())
  */
 

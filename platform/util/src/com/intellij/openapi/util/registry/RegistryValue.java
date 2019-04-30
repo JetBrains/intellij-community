@@ -18,6 +18,7 @@ import java.util.MissingResourceException;
  * @author Konstantin Bulenkov
  */
 public class RegistryValue {
+
   private final Registry myRegistry;
   private final String myKey;
   @Nullable private final RegistryKeyDescriptor myKeyDescriptor;
@@ -120,7 +121,7 @@ public class RegistryValue {
     if (myKeyDescriptor != null) {
       return myKeyDescriptor.isRestartRequired();
     }
-    return Boolean.parseBoolean(get(myKey + ".restartRequired", "false", false));
+    return Boolean.valueOf(get(myKey + ".restartRequired", "false", false));
   }
 
   public boolean isChangedFromDefault() {
@@ -190,22 +191,37 @@ public class RegistryValue {
     LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
   }
 
-  public void setValue(boolean value, @NotNull Disposable parentDisposable) {
+  public void setValue(boolean value, Disposable parentDisposable) {
     final boolean prev = asBoolean();
     setValue(value);
-    Disposer.register(parentDisposable, () -> setValue(prev));
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        setValue(prev);
+      }
+    });
   }
 
-  public void setValue(int value, @NotNull Disposable parentDisposable) {
+  public void setValue(int value, Disposable parentDisposable) {
     final int prev = asInteger();
     setValue(value);
-    Disposer.register(parentDisposable, () -> setValue(prev));
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        setValue(prev);
+      }
+    });
   }
 
-  public void setValue(String value, @NotNull Disposable parentDisposable) {
+  public void setValue(String value, Disposable parentDisposable) {
     final String prev = asString();
     setValue(value);
-    Disposer.register(parentDisposable, () -> setValue(prev));
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        setValue(prev);
+      }
+    });
   }
 
   boolean isChangedSinceAppStart() {
@@ -218,7 +234,12 @@ public class RegistryValue {
 
   public void addListener(@NotNull final RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
-    Disposer.register(parent, () -> myListeners.remove(listener));
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
   }
 
   @Override

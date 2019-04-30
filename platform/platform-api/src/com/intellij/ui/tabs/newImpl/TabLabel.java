@@ -182,19 +182,13 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    boolean hasCloseButtonOnTheLeft = false;
     if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
       if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
         insets.right -= JBUI.scale(4);
       }
       else {
-        hasCloseButtonOnTheLeft = true;
         insets.left -= JBUI.scale(4);
       }
-    }
-    // We reserve extra space inside file icon for (*) marker but mostly this space looks like wasted one
-    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getMarkModifiedTabsWithAsterisk() && !hasCloseButtonOnTheLeft) {
-      insets.left -= JBUI.scale(7);
     }
     return insets;
   }

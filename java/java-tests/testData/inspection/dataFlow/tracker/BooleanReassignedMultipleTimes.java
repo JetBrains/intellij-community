@@ -1,9 +1,9 @@
 /*
 Value is always false (b4)
-  'b4' was assigned (=)
-    'b3' was assigned (=)
-      'b2' was assigned (=)
-        'b1' was assigned (=)
+  'b4' was assigned (b3)
+    'b3' was assigned (b2)
+      'b2' was assigned (b1)
+        'b1' was assigned (b)
           'b == false' was established from condition (b)
  */
 import org.jetbrains.annotations.NotNull;
