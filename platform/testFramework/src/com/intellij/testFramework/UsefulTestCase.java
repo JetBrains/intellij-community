@@ -93,6 +93,8 @@ public abstract class UsefulTestCase extends TestCase {
 
   private String myTempDir;
 
+  static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
+
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
   static {
@@ -897,7 +899,8 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings, @NotNull CodeInsightSettings settings) {
+  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings,
+                                                    @NotNull CodeInsightSettings settings) {
     if (!oldSettings.equals(settings)) {
       Element newS = new Element("temp");
       settings.writeExternal(newS);

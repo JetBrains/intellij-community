@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -23,9 +24,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ReplaceConstructorWithBuilderAction extends BaseJavaRefactoringAction{
   @Override
@@ -43,10 +46,23 @@ public class ReplaceConstructorWithBuilderAction extends BaseJavaRefactoringActi
       return false;
     }
     if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
-      PsiMethod method = RefactoringActionContextUtil.getJavaMethodHeader(elementAt);
+      PsiMethod method = getJavaMethodHeader(elementAt);
       return method != null && method.isConstructor();
     }
     return true;
+  }
+
+  @Nullable
+  public static PsiMethod getJavaMethodHeader(@Nullable PsiElement element) {
+    if (element == null) return null;
+    if (element.getLanguage() != JavaLanguage.INSTANCE) return null;
+    PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+    if (psiMethod != null && (element == psiMethod || element == psiMethod.getNameIdentifier() ||
+                                 PsiTreeUtil.isAncestor(psiMethod.getModifierList(), element, false) ||
+                                 PsiTreeUtil.isAncestor(psiMethod.getParameterList(), element, false))) {
+      return psiMethod;
+    }
+    return null;
   }
 
   @Override

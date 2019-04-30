@@ -30,12 +30,50 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
+
+  @Override
+  @NotNull
+  public String[] getNames(Project project, boolean includeNonProjectItems) {
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+    Set<String> set = new HashSet<>();
+    Collections.addAll(set, cache.getAllMethodNames());
+    Collections.addAll(set, cache.getAllFieldNames());
+    Collections.addAll(set, cache.getAllClassNames());
+    return ArrayUtil.toStringArray(set);
+  }
+
+  @Override
+  @NotNull
+  public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
+    GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+
+    Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(pattern);
+
+    List<PsiMember> result = new ArrayList<>();
+    for (PsiMethod method : cache.getMethodsByName(name, scope)) {
+      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope, qualifiedMatcher, pattern)) {
+        result.add(method);
+      }
+    }
+    for (PsiField field : cache.getFieldsByName(name, scope)) {
+      if (isOpenable(field)) {
+        result.add(field);
+      }
+    }
+    for (PsiClass aClass : cache.getClassesByName(name, scope)) {
+      if (isOpenable(aClass)) {
+        result.add(aClass);
+      }
+    }
+    PsiMember[] array = result.toArray(PsiMember.EMPTY_ARRAY);
+    Arrays.sort(array, MyComparator.INSTANCE);
+    return array;
+  }
 
   @Nullable
   @Override

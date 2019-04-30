@@ -235,7 +235,7 @@ class GitChangesCollector {
       final char xStatus = xyStatus.charAt(0);
       final char yStatus = xyStatus.charAt(1);
 
-      final FilePath filepath = GitContentRevision.createPath(myVcsRoot, path);
+      final FilePath filepath = GitContentRevision.createPath(myVcsRoot, path, false);
 
       switch (xStatus) {
         case ' ':
@@ -308,7 +308,7 @@ class GitChangesCollector {
         case 'R':
           //noinspection AssignmentToForLoopParameter
           pos += 1;  // read the "from" filepath which is separated also by NUL character.
-          FilePath oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos]);
+          FilePath oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos], false);
 
           if (yStatus == 'D') {
             reportDeleted(oldFilepath, head);

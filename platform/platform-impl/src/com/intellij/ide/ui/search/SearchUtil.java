@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -26,7 +25,6 @@ import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -207,7 +205,7 @@ public class SearchUtil {
   }
 
   @NotNull
-  public static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
+  private static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
     ListCellRenderer renderer = comboBox.getRenderer();
     if (renderer == null) renderer = new DefaultListCellRenderer();
 
@@ -555,37 +553,25 @@ public class SearchUtil {
     return withoutQuoted + " " + filter.substring(beg);
   }
 
-  @NotNull
-  public static List<Configurable> expand(@NotNull ConfigurableGroup[] groups) {
-    List<Configurable> result = new ArrayList<>();
-    CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
-    for (ConfigurableGroup group : groups) {
-      processExpandedGroups(group, consumer);
+  public static List<Configurable> expand(ConfigurableGroup[] groups) {
+    final ArrayList<Configurable> result = new ArrayList<>();
+    for (ConfigurableGroup eachGroup : groups) {
+      result.addAll(expandGroup(eachGroup));
     }
     return result;
   }
 
-  @NotNull
-  public static List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
-    List<Configurable> result = new ArrayList<>();
-    processExpandedGroups(group, new CollectConsumer<>(result));
-    return result;
-  }
-
-  public static void processExpandedGroups(@NotNull ConfigurableGroup group, @NotNull Consumer<Configurable> consumer) {
-    Configurable[] configurables = group.getConfigurables();
+  public static List<Configurable> expandGroup(final ConfigurableGroup group) {
+    final Configurable[] configurables = group.getConfigurables();
     List<Configurable> result = new ArrayList<>();
     ContainerUtil.addAll(result, configurables);
     for (Configurable each : configurables) {
       addChildren(each, result);
     }
 
-    for (Configurable configurable : result) {
-      //noinspection deprecation
-      if (!(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible()) {
-        consumer.accept(configurable);
-      }
-    }
+    //noinspection deprecation
+    return ContainerUtil.filter(result, configurable -> !(configurable instanceof SearchableConfigurable.Parent) ||
+                                                        ((SearchableConfigurable.Parent)configurable).isVisible());
   }
 
   private static void addChildren(Configurable configurable, List<? super Configurable> list) {
@@ -599,6 +585,7 @@ public class SearchUtil {
   }
 
   private static final class SearchableConfigurableAdapter implements SearchableConfigurable {
+
     private final SearchableConfigurable myOriginal;
     private final UnnamedConfigurable myDelegate;
 

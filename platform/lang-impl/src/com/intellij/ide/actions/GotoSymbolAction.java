@@ -8,36 +8,19 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoSymbolAction extends GotoActionBase implements DumbAware {
+public class GotoSymbolAction extends GotoActionBase {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return;
-
-    boolean dumb = DumbService.isDumb(project);
     if (Registry.is("new.search.everywhere")) {
-      if (!dumb || new SymbolSearchEverywhereContributor(project, null).isDumbAware()) {
-        showInSearchEverywherePopup(SymbolSearchEverywhereContributor.class.getSimpleName(), e, true, true);
-      }
-      else {
-        GotoClassAction.invokeGoToFile(project, e);
-      }
-    }
-    else {
-      if (!dumb) {
-        super.actionPerformed(e);
-      }
-      else {
-        GotoClassAction.invokeGoToFile(project, e);
-      }
+      showInSearchEverywherePopup(SymbolSearchEverywhereContributor.class.getSimpleName(), e, true, true);
+    } else {
+      super.actionPerformed(e);
     }
   }
 

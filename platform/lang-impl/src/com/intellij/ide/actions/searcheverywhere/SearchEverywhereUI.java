@@ -349,7 +349,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       @NotNull
       @Override
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        if (e == null || mySelectedTab == null) return EMPTY_ARRAY;
+        if (e == null) return EMPTY_ARRAY;
         return mySelectedTab.actions.toArray(EMPTY_ARRAY);
       }
     });
@@ -424,6 +424,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         contributorsPanel.add(tab);
         myTabs.add(tab);
       });
+    switchToTab(allTab);
 
     return contributorsPanel;
   }
@@ -535,19 +536,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       contributorsMap.putAll(getAllTabContributors().stream().collect(Collectors.toMap(c -> c, c -> MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT)));
     }
 
-    Set<SearchEverywhereContributor<?>> allContributors = contributorsMap.keySet();
-    List<SearchEverywhereContributor<?>> contributors = DumbService.getInstance(myProject).filterByDumbAwareness(allContributors);
-    if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
-      myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                   mySelectedTab.getText(),
-                                                   ApplicationNamesInfo.getInstance().getFullProductName()));
+    Set<SearchEverywhereContributor<?>> contributors = contributorsMap.keySet();
+    boolean dumbModeSupported = contributors.stream().anyMatch(c -> c.isDumbModeSupported());
+    if (!dumbModeSupported && DumbService.getInstance(myProject).isDumb()) {
+      String tabName = mySelectedTab.getText();
+      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported", tabName, productName));
       myListModel.clear();
       return;
-    }
-    if (contributors.size() != allContributors.size()) {
-      myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                   mySelectedTab.getText(),
-                                                   ApplicationNamesInfo.getInstance().getFullProductName()));
     }
 
     myListModel.expireResults();
@@ -1431,8 +1427,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      SearchEverywhereContributor<?> contributor = mySelectedTab == null ? null : mySelectedTab.contributor;
-      e.getPresentation().setEnabled(contributor == null || contributor.showInFindResults());
+      Boolean enabled = mySelectedTab.getContributor().map(contributor -> contributor.showInFindResults()).orElse(true);
+      e.getPresentation().setEnabled(enabled);
     }
   }
 

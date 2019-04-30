@@ -125,7 +125,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testNonCanonicallyNamedFileRoot() {
-    assumeTrue("case-insensitive FS only", !SystemInfo.isFileSystemCaseSensitive)
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
 
     val file = tempDir.newFile("test.txt")
     refresh(file)
@@ -293,7 +293,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionWatchRoot() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    assumeTrue(SystemInfo.isWindows)
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -314,7 +314,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testJunctionAboveWatchRoot() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    assumeTrue(SystemInfo.isWindows)
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -370,7 +370,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 */
 
   @Test fun testSubst() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    assumeTrue(SystemInfo.isWindows)
 
     val target = tempDir.newFolder("top")
     val file = tempDir.newFile("top/sub/test.txt")
@@ -490,7 +490,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testHiddenFiles() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    assumeTrue(SystemInfo.isWindows)
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/dir/file")
@@ -501,7 +501,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testFileCaseChange() {
-    assumeTrue("case-insensitive FS only", !SystemInfo.isFileSystemCaseSensitive)
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/file.txt")
@@ -520,7 +520,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   @Test fun testUnicodePaths() {
     val name = IoTestUtil.getUnicodeName()
-    assumeTrue("Unicode names not supported", name != null)
+    assumeTrue(name != null)
 
     val root = tempDir.newFolder(name)
     val file = tempDir.newFile("${name}/${name}.txt")
@@ -531,7 +531,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testDisplacementByIsomorphicTree() {
-    assumeTrue("not mac again", !SystemInfo.isMac)
+    assumeTrue(!SystemInfo.isMac)
 
     val top = tempDir.newFolder("top")
     val root = tempDir.newFolder("top/root")
@@ -588,7 +588,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testUncRoot() {
-    assumeTrue("windows-only", SystemInfo.isWindows)
+    assumeTrue(SystemInfo.isWindows)
     watch(File("\\\\SRV\\share\\path"), checkRoots = WatchStatus.CHECK_NOT_WATCHED)
   }
 

@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class IdeaFreezeReporter {
@@ -51,7 +50,7 @@ public class IdeaFreezeReporter {
         if (Registry.is("performance.watcher.freeze.report") &&
             lengthInSeconds > FREEZE_THRESHOLD &&
             // check that we have at least half of the dumps required
-            myCurrentDumps.size() >= Math.max(3, lengthInSeconds * 500 / Registry.intValue("performance.watcher.unresponsive.interval.ms")) &&
+            myCurrentDumps.size() >= lengthInSeconds * 500 / Registry.intValue("performance.watcher.unresponsive.interval.ms") &&
             !ContainerUtil.isEmpty(myStacktraceCommonPart) &&
             !DebugAttachDetector.isAttached()) {
           int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
@@ -77,16 +76,7 @@ public class IdeaFreezeReporter {
           .filter(ThreadDumper::isEDT)
           .map(ThreadInfo::getThreadState)
           .allMatch(Thread.State.RUNNABLE::equals);
-        List<StackTraceElement[]> reasonStacks;
-        if (allInEdt) {
-          reasonStacks = StreamEx.of(myCurrentDumps)
-            .flatArray(ThreadDump::getThreadInfos)
-            .filter(ThreadDumper::isEDT)
-            .map(ThreadInfo::getStackTrace)
-            .toList();
-        }
-        else {
-          reasonStacks = new ArrayList<>();
+        if (!allInEdt) {
           long causeThreadId = -1;
           for (ThreadDump dump : myCurrentDumps) {
             if (causeThreadId == -1) {
@@ -100,7 +90,7 @@ public class IdeaFreezeReporter {
                     if (info.getThreadState() == Thread.State.RUNNABLE &&
                         ContainerUtil.find(info.getStackTrace(), s -> "runReadAction".equals(s.getMethodName())) != null) {
                       causeThreadId = info.getThreadId();
-                      reasonStacks.add(info.getStackTrace());
+                      myStacktraceCommonPart = ContainerUtil.newArrayList(info.getStackTrace());
                       break;
                     }
                   }
@@ -111,93 +101,19 @@ public class IdeaFreezeReporter {
               long finalCauseThreadId = causeThreadId;
               ThreadInfo causeThread = ContainerUtil.find(dump.getThreadInfos(), i -> i.getThreadId() == finalCauseThreadId);
               if (causeThread != null) {
-                reasonStacks.add(causeThread.getStackTrace());
+                myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, causeThread.getStackTrace());
               }
             }
           }
         }
-        List<StackTraceElement> commonStack = findDominantCommonStack(reasonStacks);
-        if (ContainerUtil.isEmpty(commonStack)) {
-          commonStack = myStacktraceCommonPart; // fallback to simple EDT common
+        if (ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+          return null;
         }
-        if (!ContainerUtil.isEmpty(commonStack)) {
-          String edtNote = allInEdt ? "in EDT " : "";
-          return LogMessage.createEvent(new Freeze(commonStack),
-                                        "Freeze " + edtNote + "for " + lengthInSeconds + " seconds",
-                                        attachments);
-        }
-        return null;
+        String edtNote = allInEdt ? "in EDT " : "";
+        return LogMessage.createEvent(new Freeze(myStacktraceCommonPart),
+                                      "Freeze " + edtNote + "for " + lengthInSeconds + " seconds",
+                                      attachments);
       }
     });
-  }
-
-  private static List<StackTraceElement> findDominantCommonStack(List<StackTraceElement[]> stacks) {
-    CallTreeNode root = new CallTreeNode(null, null);
-    // build tree
-    for (StackTraceElement[] stack : stacks) {
-      CallTreeNode node = root;
-      for (StackTraceElement element : stack) {
-        node = node.addCallee(element);
-      }
-    }
-    // find dominant
-    int half = stacks.size() / 2;
-    CallTreeNode node = root.getMostHitChild();
-    while (!node.myChildren.isEmpty()) {
-      CallTreeNode mostHitChild = node.getMostHitChild();
-      if (mostHitChild.myTotalHits > half) {
-        node = mostHitChild;
-      }
-      else {
-        break;
-      }
-    }
-    // build stack
-    List<StackTraceElement> res = new ArrayList<>();
-    while (node != null && node.myStackTraceElement != null) {
-      res.add(node.myStackTraceElement);
-      node = node.myParent;
-    }
-    Collections.reverse(res);
-    return res;
-  }
-
-  private static class CallTreeNode {
-    final StackTraceElement myStackTraceElement;
-    final CallTreeNode myParent;
-    final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
-    int myTotalHits = 1;
-
-    private CallTreeNode(StackTraceElement element, CallTreeNode parent) {
-      myStackTraceElement = element;
-      myParent = parent;
-    }
-
-    CallTreeNode addCallee(StackTraceElement e) {
-      for (CallTreeNode child : myChildren) {
-        if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
-          child.myTotalHits++;
-          return child;
-        }
-      }
-      CallTreeNode child = new CallTreeNode(e, this);
-      myChildren.add(child);
-      return child;
-    }
-
-    CallTreeNode getMostHitChild() {
-      CallTreeNode currentMax = null;
-      for (CallTreeNode child : myChildren) {
-        if (currentMax == null || child.myTotalHits > currentMax.myTotalHits) {
-          currentMax = child;
-        }
-      }
-      return currentMax;
-    }
-
-    @Override
-    public String toString() {
-      return myTotalHits + " " + myStackTraceElement;
-    }
   }
 }

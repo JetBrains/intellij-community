@@ -171,7 +171,7 @@ internal fun getOriginUrl(repo: File): String {
       }
     }
   }
-  return origins.getValue(repo)
+  return origins[repo]!!
 }
 
 @Volatile
@@ -188,9 +188,6 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
       if (!latestChangeCommits.containsKey(file)) {
         val commitInfo = commitInfo(repo, "--", path)
         if (commitInfo != null) {
-          if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
-            return null
-          }
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits += file to commitInfo
           }
@@ -199,7 +196,7 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
       }
     }
   }
-  return latestChangeCommits.getValue(file)
+  return latestChangeCommits[file]!!
 }
 
 /**
@@ -275,7 +272,7 @@ internal fun head(repo: File): String {
       }
     }
   }
-  return heads.getValue(repo)
+  return heads[repo]!!
 }
 
 internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {

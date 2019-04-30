@@ -18,7 +18,7 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
   private int myLineNumber = -1;
 
   public CopyRevisionNumberFromAnnotateAction(FileAnnotation annotation) {
-    super("Copy Revision Number");
+    super("Copy revision number");
     myAnnotation = annotation;
   }
 

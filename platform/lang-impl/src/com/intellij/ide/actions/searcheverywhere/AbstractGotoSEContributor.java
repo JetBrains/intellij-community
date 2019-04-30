@@ -159,7 +159,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
 
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-      if (!isDumbAware() && DumbService.isDumb(myProject)) return;
+      if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) return;
 
       FilteringGotoByModel<?> model = createModel(myProject);
       if (progressIndicator.isCanceled()) return;
@@ -274,11 +274,6 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   @Override
   public boolean isMultiSelectionSupported() {
     return true;
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return DumbService.isDumbAware(createModel(myProject));
   }
 
   @NotNull

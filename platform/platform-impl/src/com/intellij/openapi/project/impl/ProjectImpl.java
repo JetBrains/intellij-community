@@ -54,7 +54,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
-  @Deprecated
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
@@ -62,7 +61,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private String myName;
   private final boolean myLight;
   static boolean ourClassesAreLoaded;
-  private final String creationTrace;
 
   private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
     //noinspection CodeBlock2Expr
@@ -76,7 +74,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
     putUserData(CREATION_TIME, System.nanoTime());
-    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
+    }
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
@@ -349,11 +349,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
                          : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
            (isDefault() ? " (Default)" : "") +
            " " + myName;
-  }
-
-  @TestOnly
-  public String getCreationTrace() {
-    return creationTrace;
   }
 
   @Nullable

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentTreeWatcher;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -182,7 +183,9 @@ public class MnemonicHelper extends ComponentTreeWatcher {
 
   private static class MnemonicFixer implements ContainerListener {
     void addTo(Component component) {
-      for (Component c : UIUtil.uiTraverser(component)) {
+      JBTreeTraverser<Component> traverser = UIUtil.uiTraverser(component)
+        .expandAndFilter(o -> !(o instanceof CellRendererPane));
+      for (Component c : traverser) {
         if (c instanceof Container) ((Container)c).addContainerListener(this);
         if (c instanceof ActionButtonComponent) fixMacMnemonicKeyStroke((JComponent)c, null);
         MnemonicWrapper.getWrapper(c);
@@ -190,7 +193,9 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     }
 
     void removeFrom(Component component) {
-      for (Container c : UIUtil.uiTraverser(component).filter(Container.class)) {
+      JBTreeTraverser<Component> traverser = UIUtil.uiTraverser(component)
+        .expandAndFilter(o -> !(o instanceof CellRendererPane));
+      for (Container c : traverser.traverse().filter(Container.class)) {
         c.removeContainerListener(this);
       }
     }

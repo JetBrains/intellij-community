@@ -183,14 +183,14 @@ internal fun assignInvestigation(context: Context): Investigator? =
       } to context.devCommitsToSync
     }
     else triggeredBy() to context.iconsCommitsToSync
-    val reviews = mutableListOf<String>()
+    var reviews = emptyList<String>()
     if (commits.isEmpty()) {
       if (context.commitsAlreadyInReview.isEmpty()) {
         log("No commits, no investigation")
         return@callSafely null
       }
       context.commitsAlreadyInReview.keys.maxBy(CommitInfo::timestamp)?.let { latest ->
-        val review = context.commitsAlreadyInReview.getValue(latest)
+        val review = context.commitsAlreadyInReview[latest]!!
         log("Assigning investigation to ${latest.committerEmail} as author of latest change ${latest.hash} under review $review")
         investigator = latest.committerEmail
         commits = context.commitsAlreadyInReview.keys

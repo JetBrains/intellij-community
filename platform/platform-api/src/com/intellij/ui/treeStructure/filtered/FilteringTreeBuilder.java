@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -14,11 +28,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -50,9 +60,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
     if (filter instanceof ElementFilter.Active) {
       ((ElementFilter.Active)filter).addListener(new ElementFilter.Listener() {
-        @NotNull
         @Override
-        public Promise<?> update(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+        public ActionCallback update(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
           return refilter(preferredSelection, adjustSelection, now);
         }
       }, this);
@@ -107,65 +116,50 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
-  @NotNull
-  @Deprecated
   public ActionCallback refilter() {
-    //noinspection unchecked
-    return Promises.toActionCallback((Promise<Object>)refilter(null, true, false));
-  }
-
-  @SuppressWarnings("UnusedReturnValue")
-  @NotNull
-  public Promise<?> refilterAsync() {
     return refilter(null, true, false);
   }
 
-  @NotNull
-  public Promise<?> refilter(@Nullable final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+  public ActionCallback refilter(@Nullable final Object preferredSelection, final boolean adjustSelection, final boolean now) {
     if (myRefilterQueue != null) {
       myRefilterQueue.cancelAllUpdates();
     }
-
-    AsyncPromise<?> result = new AsyncPromise<>();
+    final ActionCallback callback = new ActionCallback();
     final Runnable afterCancelUpdate = new Runnable() {
       @Override
       public void run() {
         if (myRefilterQueue == null || now) {
-          refilterNow(preferredSelection, adjustSelection)
-            .onSuccess(o -> result.setResult(null));
+          refilterNow(preferredSelection, adjustSelection).doWhenDone(callback.createSetDoneRunnable());
         }
         else {
           myRefilterQueue.queue(new Update(this) {
             @Override
             public void run() {
-              refilterNow(preferredSelection, adjustSelection);
+              refilterNow(preferredSelection, adjustSelection).notifyWhenDone(callback);
             }
 
             @Override
             public void setRejected() {
               super.setRejected();
-              result.setResult(null);
+              callback.setDone();
             }
           });
         }
       }
     };
-
     if (!isDisposed()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         getUi().cancelUpdate().doWhenProcessed(afterCancelUpdate);
-      }
-      else {
+      } else {
         afterCancelUpdate.run();
       }
     }
 
-    return result;
+    return callback;
   }
 
 
-  @NotNull
-  protected Promise<?> refilterNow(Object preferredSelection, boolean adjustSelection) {
+  protected ActionCallback refilterNow(final Object preferredSelection, final boolean adjustSelection) {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
@@ -197,32 +191,28 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     };
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       queueUpdate().doWhenProcessed(selectionRunnable);
-    }
-    else {
+    } else {
       selectionRunnable.run();
     }
 
-    AsyncPromise<?> result = new AsyncPromise<>();
-    selectionDone
-      .doWhenDone(new Runnable() {
+    final ActionCallback result = new ActionCallback();
+
+    selectionDone.doWhenDone(new Runnable() {
       @Override
       public void run() {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           scrollSelectionToVisible(new Runnable() {
             @Override
             public void run() {
-              getReady(this)
-              .doWhenDone(() -> result.setResult(null))
-              .doWhenRejected(s -> result.setError(s));
+              getReady(this).notify(result);
             }
           }, false);
-        }
-        else {
-          result.setResult(null);
+        } else {
+          result.setDone();
         }
       }
-    })
-      .doWhenRejected(() -> result.cancel(true));
+    }).notifyWhenRejected(result);
+
     return result;
   }
 

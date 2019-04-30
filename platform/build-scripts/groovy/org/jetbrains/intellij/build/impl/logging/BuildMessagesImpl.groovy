@@ -133,14 +133,10 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   <V> V block(String blockName, Closure<V> body) {
-    long start = System.currentTimeMillis()
     try {
       blockNames.push(blockName)
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      def result = body()
-      long elapsedTime = System.currentTimeMillis() - start
-      debug("${blockNames.join(" > ")} finished in ${elapsedTime}ms")
-      return result
+      return body()
     }
     catch (IntelliJBuildException e) {
       throw e

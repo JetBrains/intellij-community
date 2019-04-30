@@ -1,7 +1,7 @@
 /*
 Value is always false (s == s1)
-  's' is known to be 'non-null' from line #8 (null == s)
-  and 's1' was assigned to 'null' (=)
+  's1' was assigned (null)
+  and condition 's != null' was checked before (null == s)
  */
 class Test {
   void test(String s) {

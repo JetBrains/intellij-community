@@ -103,6 +103,11 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   @Override
+  public boolean isDumbModeSupported() {
+    return false;
+  }
+
+  @Override
   protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
     String path = pathToAnonymousClass(searchText);
     if (path != null) {

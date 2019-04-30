@@ -176,7 +176,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private String getDefaultLibraryName() {
-    return getProperties().getValue(DEFAULT_LIBRARY_NAME_PROPERTY, "JUnit5");
+    return getProperties().getValue(DEFAULT_LIBRARY_NAME_PROPERTY);
   }
 
   private String getLastSelectedSuperClassName(TestFramework framework) {
@@ -366,6 +366,10 @@ public class CreateTestDialog extends DialogWrapper {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
+
+        if (defaultLibrary == null) {
+          defaultDescriptor = descriptor;
+        }
       }
 
       if (Comparing.equal(defaultLibrary, descriptor.getName())) {

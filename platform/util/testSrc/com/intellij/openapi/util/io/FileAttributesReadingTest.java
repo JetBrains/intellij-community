@@ -181,7 +181,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void special() {
-    assumeTrue("unix-only", SystemInfo.isUnix);
+    assumeTrue(SystemInfo.isUnix);
     File file = new File("/dev/null");
 
     FileAttributes attributes = getAttributes(file);
@@ -307,7 +307,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void junction() throws IOException {
-    assumeTrue("vista-or-newer only", SystemInfo.isWinVistaOrNewer);
+    assumeTrue(SystemInfo.isWinVistaOrNewer);
 
     File target = tempDir.newFolder("dir");
     File junction = IoTestUtil.createJunction(target.getPath(), tempDir.getRoot() + "/junction.dir");
@@ -338,7 +338,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void innerJunctionResolve() throws IOException {
-    assumeTrue("vista-or-newer only", SystemInfo.isWinVistaOrNewer);
+    assumeTrue(SystemInfo.isWinVistaOrNewer);
 
     File file = tempDir.newFile("dir/file.txt");
     File junction = new File(tempDir.getRoot(), "junction");
@@ -350,7 +350,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenDir() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue(SystemInfo.isWindows);
     File dir = tempDir.newFolder("dir");
     FileAttributes attributes = getAttributes(dir);
     assertFalse(attributes.isHidden());
@@ -361,7 +361,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenFile() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue(SystemInfo.isWindows);
     File file = tempDir.newFile("file");
     FileAttributes attributes = getAttributes(file);
     assertFalse(attributes.isHidden());
@@ -390,9 +390,9 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void wellHiddenFile() {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue(SystemInfo.isWindows);
     File file = new File("C:\\Documents and Settings\\desktop.ini");
-    assumeTrue(file +" is not there", file.exists());
+    assumeTrue(file.exists());
 
     FileAttributes attributes = getAttributes(file, false);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
@@ -444,7 +444,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void subst() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue(SystemInfo.isWindows);
 
     tempDir.newFile("file.txt");  // just to populate a directory
     File substRoot = IoTestUtil.createSubst(tempDir.getRoot().getPath());
@@ -499,7 +499,7 @@ public abstract class FileAttributesReadingTest {
   @Test
   public void stamps() throws IOException, InterruptedException {
     FileAttributes attributes = FileSystemUtil.getAttributes(tempDir.getRoot());
-    assumeTrue("Didn't like attributes: "+attributes+"; "+(attributes==null?"":attributes.lastModified), attributes != null && attributes.lastModified > (attributes.lastModified/1000)*1000);
+    assumeTrue(attributes != null && attributes.lastModified > (attributes.lastModified/1000)*1000);
 
     long t1 = System.currentTimeMillis();
     TimeoutUtil.sleep(10);
@@ -525,7 +525,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void notOwned() {
-    assumeTrue("unix-only", SystemInfo.isUnix);
+    assumeTrue(SystemInfo.isUnix);
     File userHome = new File(SystemProperties.getUserHome());
 
     FileAttributes homeAttributes = getAttributes(userHome);
@@ -539,7 +539,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void permissionsCloning() throws IOException {
-    assumeTrue("unix-only", SystemInfo.isUnix);
+    assumeTrue(SystemInfo.isUnix);
 
     File donor = tempDir.newFile("donor");
     File recipient = tempDir.newFile("recipient");
@@ -562,7 +562,7 @@ public abstract class FileAttributesReadingTest {
   @Test
   public void unicodeName() throws IOException {
     String name = IoTestUtil.getUnicodeName();
-    assumeTrue("Unicode names not supported", name != null);
+    assumeTrue(name != null);
     File file = tempDir.newFile(name + ".txt");
     FileUtil.writeToFile(file, myTestData);
 
