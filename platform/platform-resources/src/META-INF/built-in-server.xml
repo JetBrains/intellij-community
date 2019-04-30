@@ -30,6 +30,8 @@
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.OpenSettingsService"/>
 
+    <jbProtocolCommand implementation="org.jetbrains.ide.OpenSettingsJbProtocolService"/>
+
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer" order="last"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
