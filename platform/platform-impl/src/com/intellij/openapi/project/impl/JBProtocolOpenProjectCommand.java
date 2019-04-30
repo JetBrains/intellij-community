@@ -7,7 +7,6 @@ import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -22,7 +21,7 @@ final class JBProtocolOpenProjectCommand extends JBProtocolCommand {
 
   @Override
   public void perform(String target, @NotNull Map<String, String> parameters) {
-    String projectPath = StringUtil.trimStart(URLUtil.decode(target), LocalFileSystem.PROTOCOL_PREFIX);
+    String projectPath = StringUtil.trimStart(target, LocalFileSystem.PROTOCOL_PREFIX);
     ApplicationManager.getApplication().invokeLater(
       () -> ProjectUtil.openProject(projectPath, null, true), ModalityState.NON_MODAL);
   }

@@ -22,7 +22,6 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +118,7 @@ public class CommandLineProcessor {
     }
 
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(URLUtil.decode(command));
+      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
       ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       return null;
     }

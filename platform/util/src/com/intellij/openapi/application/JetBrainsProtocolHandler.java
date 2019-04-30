@@ -2,10 +2,13 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -24,43 +27,49 @@ public class JetBrainsProtocolHandler {
 
   public static void processJetBrainsLauncherParameters(@NotNull String url) {
     System.setProperty(JetBrainsProtocolHandler.class.getName(), url);
-    url = url.substring(PROTOCOL.length());
-    List<String> urlParts = StringUtil.split(url, "/");
+
+    // parse without protocol, otherwise first path component will be considered as host
+    URI uri = URI.create(url.substring(PROTOCOL.length()));
+
+    String path = uri.getPath();
+    List<String> urlParts = StringUtil.split(path, "/");
+    // expect at least platform prefix and command name
     if (urlParts.size() < 2) {
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.print("Wrong URL: " + PROTOCOL + url);
       return;
     }
 
-    String platformPrefix = urlParts.get(0);
-    ourMainParameter = null;
-    ourParameters.clear();
     ourCommand = urlParts.get(1);
-    if (urlParts.size() > 2) {
-      url = url.substring(platformPrefix.length() + 1 + ourCommand.length() + 1);
-      List<String> strings = StringUtil.split(url, "?");
-      ourMainParameter = strings.get(0);
-
-      if (strings.size() > 1) {
-        List<String> keyValues = StringUtil.split(StringUtil.join(ContainerUtil.subList(strings, 1), "?"), "&");
-        for (String keyValue : keyValues) {
-          if (keyValue.contains("=")) {
-            int ind = keyValue.indexOf('=');
-            String key = keyValue.substring(0, ind);
-            String value = keyValue.substring(ind + 1);
-            if (REQUIRED_PLUGINS_KEY.equals(key)) {
-              System.setProperty(key, value);
-            } else {
-              ourParameters.put(key, value);
-            }
-          }
-          else {
-            ourParameters.put(keyValue, "");
-          }
-        }
-      }
-    }
+    ourMainParameter = ContainerUtil.getOrElse(urlParts, 2, null);
+    ourParameters.clear();
+    computeParameters(uri.getRawQuery(), ourParameters);
 
     initialized = true;
+  }
+
+  // well, Netty cannot be added as dependency and so, QueryStringDecoder cannot be used
+  private static void computeParameters(@NotNull String rawQuery, @SuppressWarnings("SameParameterValue") @NotNull Map<String, String> parameters) {
+    if (StringUtilRt.isEmpty(rawQuery)) {
+      return;
+    }
+
+    for (String keyValue : StringUtil.split(rawQuery, "&")) {
+      if (keyValue.contains("=")) {
+        int ind = keyValue.indexOf('=');
+        String key = URLUtil.unescapePercentSequences(keyValue, 0, ind).toString();
+        String value = URLUtil.unescapePercentSequences(keyValue, ind + 1, keyValue.length()).toString();
+        if (REQUIRED_PLUGINS_KEY.equals(key)) {
+          System.setProperty(key, value);
+        }
+        else {
+          parameters.put(key, value);
+        }
+      }
+      else {
+        parameters.put(keyValue, "");
+      }
+    }
   }
 
   @Nullable
