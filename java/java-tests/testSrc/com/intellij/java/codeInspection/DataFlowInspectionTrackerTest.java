@@ -151,4 +151,5 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testNpeWithCast() { doTest(); }
   public void testAssignTernaryNotNull() { doTest(); }
   public void testAssignTernaryNumeric() { doTest(); }
+  public void testTrivialContract() { doTest(); }
 }
