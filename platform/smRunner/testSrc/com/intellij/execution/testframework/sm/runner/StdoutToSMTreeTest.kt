@@ -8,7 +8,7 @@ import org.junit.Assert
 
 
 class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
-  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest") }
+  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest", false) }
 
   private var flushBufferSize = 0
 
