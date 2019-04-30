@@ -4,7 +4,7 @@ package org.jetbrains.idea.svn.integrate
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.ui.AbstractCommitter
+import com.intellij.vcs.commit.AbstractCommitter
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 
 class AlienCommitter(

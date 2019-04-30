@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.CommitWorkflowHandler;
+import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;

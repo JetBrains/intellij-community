@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.ChangesViewManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.ui.LayeredIcon
 
 private val ICON = LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown)

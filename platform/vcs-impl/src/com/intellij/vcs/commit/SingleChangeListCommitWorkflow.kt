@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui
+package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.diagnostic.logger
@@ -13,7 +13,8 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
-import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.Companion.moveToFailedList
+import com.intellij.openapi.vcs.changes.ui.SessionDialog
+import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil

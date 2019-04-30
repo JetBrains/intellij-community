@@ -1,7 +1,7 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
+      <implementation-class>com.intellij.vcs.commit.VetoSavingCommittingDocumentsAdapter</implementation-class>
     </component>
   </application-components>
   <project-components>

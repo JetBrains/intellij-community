@@ -6,6 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.util.NullableFunction;
+import com.intellij.vcs.commit.AbstractCommitter;
+import com.intellij.vcs.commit.ChangeListCommitState;
+import com.intellij.vcs.commit.DefaultCommitResultHandler;
+import com.intellij.vcs.commit.SingleChangeListCommitter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,6 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.openapi.vcs.changes;
+package com.intellij.vcs.commit;
 
 import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.ui.AbstractCommitter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.HashMap;

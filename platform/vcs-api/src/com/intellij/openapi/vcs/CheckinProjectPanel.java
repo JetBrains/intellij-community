@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.CommitWorkflowHandler;
+import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;

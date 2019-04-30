@@ -9,6 +9,8 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 import java.awt.Dimension
 
 class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {

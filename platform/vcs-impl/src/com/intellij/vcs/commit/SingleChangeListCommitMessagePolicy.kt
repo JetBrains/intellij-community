@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui
+package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 
 class SingleChangeListCommitMessagePolicy(private val project: Project, private val initialCommitMessage: String?) {
   private val vcsConfiguration = VcsConfiguration.getInstance(project)

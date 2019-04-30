@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.CommitWorkflowHandler
+import com.intellij.vcs.commit.CommitWorkflowHandler
 
 abstract class BaseCommitExecutorAction : DumbAwareAction() {
   init {

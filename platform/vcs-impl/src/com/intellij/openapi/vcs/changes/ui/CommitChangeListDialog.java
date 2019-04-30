@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcs.commit.*;
 import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -49,8 +50,8 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow.getCommitHandlerFactories;
-import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflowKt.getPresentableText;
+import static com.intellij.vcs.commit.SingleChangeListCommitWorkflow.getCommitHandlerFactories;
+import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.*;

@@ -4,10 +4,10 @@ package org.jetbrains.idea.svn.integrate
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.ui.ChangeListCommitState
+import com.intellij.vcs.commit.ChangeListCommitState
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
-import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler
-import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow
+import com.intellij.vcs.commit.DefaultCommitResultHandler
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
 
 class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, changes: List<Change>, commitMessage: String?) :
   SingleChangeListCommitWorkflow(vcs.project, changes, vcsToCommit = vcs, initialCommitMessage = commitMessage) {

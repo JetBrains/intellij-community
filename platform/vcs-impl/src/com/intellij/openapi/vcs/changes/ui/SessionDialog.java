@@ -18,7 +18,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflowKt.removeEllipsisSuffix;
+import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.removeEllipsisSuffix;
 
 public class SessionDialog extends DialogWrapper {
 

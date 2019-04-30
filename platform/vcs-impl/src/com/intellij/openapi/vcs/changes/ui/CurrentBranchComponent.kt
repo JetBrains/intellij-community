@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
-import com.intellij.openapi.vcs.changes.CommitWorkflowUi
+import com.intellij.vcs.commit.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColorUtil

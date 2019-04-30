@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.vcs.commit
 
 import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.openapi.vcs.changes.ui.AbstractCommitter.Companion.collectErrors
+import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
 
 private val FROM = listOf("<", ">")
 private val TO = listOf("&lt;", "&gt;")

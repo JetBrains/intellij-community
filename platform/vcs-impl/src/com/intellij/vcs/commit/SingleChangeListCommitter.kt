@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui
+package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState
@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
+import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
 import org.jetbrains.annotations.CalledInAwt

@@ -4,7 +4,7 @@ package org.jetbrains.idea.svn.integrate
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
-import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflowUi
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 
 class AlienCommitChangeListDialog(workflow: AlienCommitWorkflow) : CommitChangeListDialog(workflow) {
   private val browser = AlienChangeListBrowser(project, workflow.changeList)
