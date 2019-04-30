@@ -3,7 +3,7 @@ Value is always false (x == null)
   One of the following happens:
     'x' was assigned (=)
       Expression cannot be null as it's newly created object (new Object())
-    or 'x' was assigned (=)
+    or 'x' was assigned to '"foo"' (=)
       Expression cannot be null as it's literal ("foo")
  */
 

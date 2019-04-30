@@ -6,14 +6,14 @@ Value is always true (x || (a+b)+(c+d)==10)
       Result of '+' is 10 ((a+b)+(c+d))
         Result of '+' is 3 (a+b)
           Left operand is 1 (a)
-            'a' was assigned (=)
+            'a' was assigned to '1' (=)
           and right operand is 2 (b)
-            'b' was assigned (=)
+            'b' was assigned to '2' (=)
         and result of '+' is 7 (c+d)
           Left operand is 3 (c)
-            'c' was assigned (=)
+            'c' was assigned to '3' (=)
           and right operand is 4 (d)
-            'd' was assigned (=)
+            'd' was assigned to '4' (=)
  */
 
 class Test {

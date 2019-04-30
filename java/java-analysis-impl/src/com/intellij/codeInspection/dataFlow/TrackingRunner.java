@@ -410,7 +410,12 @@ public class TrackingRunner extends StandardDataFlowRunner {
         anchor = rExpression;
       }
     }
-    return new CauseItem("'" + target + "' was assigned", anchor);
+    PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(rExpression);
+    String suffix = "";
+    if (stripped instanceof PsiLiteralExpression) {
+      suffix = " to '" + StringUtil.shortenTextWithEllipsis(stripped.getText(), 40, 5) + "'";
+    }
+    return new CauseItem("'" + target + "' was assigned" + suffix, anchor);
   }
 
   private static CauseItem[] findBooleanResultCauses(PsiExpression expression,
