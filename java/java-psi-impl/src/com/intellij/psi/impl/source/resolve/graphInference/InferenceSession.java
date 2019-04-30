@@ -560,7 +560,7 @@ public class InferenceSession {
                                                      JavaResolveResult resolveResult, PsiMethod method) {
     return resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() //constructor reference was erased 
            ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() 
-           : candidateProperties != null ? candidateProperties.getSubstitutor() : PsiSubstitutor.EMPTY;
+           : candidateProperties != null ? candidateProperties.getInfo().getSiteSubstitutor() : PsiSubstitutor.EMPTY;
   }
 
 
@@ -831,7 +831,7 @@ public class InferenceSession {
         if (argumentList != null) {
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
           if (properties != null && properties.isApplicabilityCheck()) {
-            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor(), inferParent);
+            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getInfo().getSiteSubstitutor(), inferParent);
           }
 
           final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)gParent);
@@ -1456,13 +1456,6 @@ public class InferenceSession {
                                        Set<ConstraintFormula> additionalConstraints,
                                        PsiSubstitutor substitutor, 
                                        Set<ConstraintFormula> ignoredConstraints) {
-
-    if (myContext instanceof PsiCall) {
-      PsiExpressionList argumentList = ((PsiCall)myContext).getArgumentList();
-      LOG.assertTrue(argumentList != null);
-      MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
-    }
-
     formula.apply(substitutor, true);
 
     addConstraint(formula);

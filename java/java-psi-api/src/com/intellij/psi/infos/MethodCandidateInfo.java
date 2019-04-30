@@ -164,7 +164,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return level1;
-    }, substitutor, isVarargs(), true);
+    }, isVarargs(), true);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -268,12 +268,11 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   private <T> T computeForOverloadedCandidate(final Computable<T> computable,
-                                              final PsiSubstitutor substitutor,
                                               boolean varargs, boolean applicabilityCheck) {
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     final PsiElement argumentList = getMarkerList();
     final CurrentCandidateProperties alreadyThere =
-      map.put(argumentList, new CurrentCandidateProperties(this, substitutor, varargs, applicabilityCheck));
+      map.put(argumentList, new CurrentCandidateProperties(this, varargs, applicabilityCheck));
     try {
       return computable.compute();
     }
@@ -427,7 +426,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       return javaPsiFacade.getResolveHelper()
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy,
                             myLanguageLevel);
-    }, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
+    }, policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
   }
 
   public boolean isRawSubstitution() {
@@ -453,13 +452,6 @@ public class MethodCandidateInfo extends CandidateInfo{
   public static CurrentCandidateProperties getCurrentMethod(PsiElement context) {
     final Map<PsiElement, CurrentCandidateProperties> currentMethodCandidates = CURRENT_CANDIDATE.get();
     return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
-  }
-
-  public static void updateSubstitutor(PsiElement context, PsiSubstitutor newSubstitutor) {
-    CurrentCandidateProperties candidateProperties = getCurrentMethod(context);
-    if (candidateProperties != null) {
-      candidateProperties.setSubstitutor(newSubstitutor);
-    }
   }
 
   @Nullable
@@ -494,18 +486,16 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public CurrentCandidateProperties createProperties() {
-    return new CurrentCandidateProperties(this, getSiteSubstitutor(), isVarargs(), false);
+    return new CurrentCandidateProperties(this, isVarargs(), false);
   }
 
   public static class CurrentCandidateProperties {
     private final MethodCandidateInfo myMethod;
-    private PsiSubstitutor mySubstitutor;
     private final boolean myVarargs;
     private final boolean myApplicabilityCheck;
 
-    private CurrentCandidateProperties(MethodCandidateInfo info, PsiSubstitutor substitutor, boolean varargs, boolean applicabilityCheck) {
+    private CurrentCandidateProperties(MethodCandidateInfo info, boolean varargs, boolean applicabilityCheck) {
       myMethod = info;
-      mySubstitutor = substitutor;
       myVarargs = varargs;
       myApplicabilityCheck = applicabilityCheck;
     }
@@ -518,13 +508,6 @@ public class MethodCandidateInfo extends CandidateInfo{
       return myMethod;
     }
 
-    public PsiSubstitutor getSubstitutor() {
-      return mySubstitutor;
-    }
-
-    public void setSubstitutor(PsiSubstitutor substitutor) {
-      mySubstitutor = substitutor;
-    }
 
     public boolean isVarargs() {
       return myVarargs;

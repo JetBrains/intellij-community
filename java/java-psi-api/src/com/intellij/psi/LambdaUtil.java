@@ -409,7 +409,7 @@ public class LambdaUtil {
             final PsiParameter[] parameters = properties.getMethod().getParameterList().getParameters();
             final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);
             if (finalLambdaIdx < parameters.length) {
-              return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
+              return properties.getInfo().getSiteSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
             }
           }
           JavaResolveResult resolveResult = properties != null ? properties.getInfo() : PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
