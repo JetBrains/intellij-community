@@ -70,7 +70,7 @@ open class MultipleFileMergeDialog(
 
   private var unresolvedFiles = files.toMutableList()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
-  val processedFiles: MutableList<VirtualFile> = mutableListOf<VirtualFile>()
+  val processedFiles: MutableList<VirtualFile> = mutableListOf()
   private lateinit var table: TreeTable
   private lateinit var acceptYoursButton: JButton
   private lateinit var acceptTheirsButton: JButton
@@ -158,7 +158,7 @@ open class MultipleFileMergeDialog(
               showMergeDialog()
             }
           }
-          mergeAction.putValue(DialogWrapper.DEFAULT_ACTION, java.lang.Boolean.TRUE)
+          mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
           createJButtonForAction(mergeAction).also {
             it.text = "Merge..."
             mergeButton = it
