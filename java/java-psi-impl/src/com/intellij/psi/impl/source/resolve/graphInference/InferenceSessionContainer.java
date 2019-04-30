@@ -119,25 +119,15 @@ public class InferenceSessionContainer {
                                             @NotNull final PsiCall parent,
                                             @NotNull final MethodCandidateInfo.CurrentCandidateProperties properties,
                                             @NotNull final InferenceSession parentSession) {
+    final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
+    if (errorMessages != null) {
+      return null;
+    }
+
     final CompoundInitialState compoundInitialState = createState(parentSession);
     InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(parent);
     if (initialInferenceState != null) {
       final InferenceSession childSession = new InferenceSession(initialInferenceState);
-      final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
-      if (errorMessages != null) {
-        PsiElement context = parentSession.getContext();
-        if (context instanceof PsiCallExpression) {
-          PsiMethod outerCallerMethod = ((PsiCallExpression)context).resolveMethod();
-          //caller on the upper level would provide better error:
-          //given foo(lambda) and failed checked exception compatibility constraint
-          //starting inference from lambda body, if accept self substitution,
-          //lambda body would have errors with completely failed inference, e.g. unhandled exception with non-inferred type or similar
-          if (outerCallerMethod != null && outerCallerMethod.hasTypeParameters()) {
-            return properties.getInfo().getSubstitutor(false);
-          }
-        }
-        return null;
-      }
       return childSession.collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
     }
 
