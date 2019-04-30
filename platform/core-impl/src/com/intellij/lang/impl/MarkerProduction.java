@@ -89,7 +89,7 @@ final class MarkerProduction extends TIntArrayList {
 
   boolean hasErrorsAfter(@NotNull PsiBuilderImpl.StartMarker marker) {
     for (int i = indexOf(marker) + 1; i < size(); ++i) {
-      PsiBuilderImpl.ProductionMarker m = getStartingMarkerAt(i);
+      PsiBuilderImpl.ProductionMarker m = getStartMarkerAt(i);
       if (m != null && hasError(m)) return true;
     }
     return false;
@@ -112,7 +112,13 @@ final class MarkerProduction extends TIntArrayList {
   }
 
   @Nullable
-  PsiBuilderImpl.ProductionMarker getStartingMarkerAt(int index) {
+  PsiBuilderImpl.ProductionMarker getMarkerAt(int index) {
+    int id = get(index);
+    return myPool.get(id > 0 ? id : -id);
+  }
+
+  @Nullable
+  PsiBuilderImpl.ProductionMarker getStartMarkerAt(int index) {
     int id = get(index);
     return id > 0 ? myPool.get(id) : null;
   }
@@ -152,7 +158,7 @@ final class MarkerProduction extends TIntArrayList {
     }
 
     for (int i = endIdx - 1; i > idx; i--) {
-      PsiBuilderImpl.ProductionMarker item = getStartingMarkerAt(i);
+      PsiBuilderImpl.ProductionMarker item = getStartMarkerAt(i);
       if (item instanceof PsiBuilderImpl.StartMarker) {
         PsiBuilderImpl.StartMarker otherMarker = (PsiBuilderImpl.StartMarker)item;
         if (!otherMarker.isDone()) {
