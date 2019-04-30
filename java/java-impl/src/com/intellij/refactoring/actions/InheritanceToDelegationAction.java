@@ -26,7 +26,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.refactoring.actions.TurnRefsToSuperAction.isJavaClassHeader;
+import static com.intellij.refactoring.actions.RefactoringActionContextUtil.isJavaClassHeader;
 
 public class InheritanceToDelegationAction extends BaseJavaRefactoringAction {
   @Override
