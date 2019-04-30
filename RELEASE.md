@@ -66,8 +66,8 @@ Before the first release candidate, update the dev branch (like studio-1.4-dev):
 
     ```diff
        <component name="KotlinCompilerSettings">
-    -    <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions" />
-    +    <option name="additionalArguments" value="-version -Xno-param-assertions -Xno-call-assertions -Xno-receiver-assertions" />
+    -    <option name="additionalArguments" value="-version -Xjvm-default=enable -Xstrict-java-nullability-assertions" />
+    +    <option name="additionalArguments" value="-version -Xjvm-default=enable -Xno-param-assertions -Xno-call-assertions -Xno-receiver-assertions" />
        </component>
     ```
 
