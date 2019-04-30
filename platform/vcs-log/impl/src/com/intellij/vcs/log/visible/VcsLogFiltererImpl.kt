@@ -17,7 +17,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.history.FileNamesData
+import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.*
@@ -106,7 +106,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
     val filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads, commitCandidates, forceFilterByVcs)
 
-    val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileNamesData)
+    val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
     val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
 
     LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters)
@@ -128,18 +128,18 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                          sortType: PermanentGraph.SortType,
                          matchingHeads: Set<Int>?,
                          matchingCommits: Set<Int>?,
-                         fileNamesData: FileNamesData? = null): VisibleGraph<Int> {
+                         fileHistoryData: FileHistoryData? = null): VisibleGraph<Int> {
     return if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
       EmptyVisibleGraph.getInstance()
     }
     else {
       val permanentGraph = dataPack.permanentGraph
-      if (permanentGraph !is PermanentGraphImpl || fileNamesData == null) {
+      if (permanentGraph !is PermanentGraphImpl || fileHistoryData == null) {
         permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits)
       }
       else {
         permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits) { controller, permanentGraphInfo ->
-          removeTrivialMerges(controller, permanentGraphInfo, fileNamesData) { trivialMerges ->
+          removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
             LOG.debug("Removed ${trivialMerges.size} trivial merges")
           }
         }
@@ -168,18 +168,18 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       Pair(emptyList(), visibleRoots.toList())
     }
 
-    val (filteredWithIndex, namesData) = if (rootsForIndex.isNotEmpty())
+    val (filteredWithIndex, historyData) = if (rootsForIndex.isNotEmpty())
       filterWithIndex(dataGetter!!, detailsFilters, commitCandidates)
     else Pair(null, null)
 
-    if (rootsForVcs.isEmpty()) return FilterByDetailsResult(filteredWithIndex, false, commitCount, namesData)
+    if (rootsForVcs.isEmpty()) return FilterByDetailsResult(filteredWithIndex, false, commitCount, historyData)
     val filterAllWithVcs = rootsForVcs.containsAll(visibleRoots)
     val filtersForVcs = if (filterAllWithVcs) filters else filters.with(VcsLogFilterObject.fromRoots(rootsForVcs))
     val headsForVcs = if (filterAllWithVcs) matchingHeads else getMatchingHeads(dataPack.refsModel, rootsForVcs, filtersForVcs)
     val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filtersForVcs, headsForVcs, commitCount, commitCandidates)
 
     val filteredCommits: Set<Int>? = union(filteredWithIndex, filteredWithVcs.matchingCommits)
-    return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount, namesData)
+    return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount, historyData)
   }
 
   private sealed class RangeFilterResult {
@@ -246,17 +246,17 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
   private fun filterWithIndex(dataGetter: IndexDataGetter,
                               detailsFilters: List<VcsLogDetailsFilter>,
-                              commitCandidates: TIntHashSet?): Pair<Set<Int>?, FileNamesData?> {
+                              commitCandidates: TIntHashSet?): Pair<Set<Int>?, FileHistoryData?> {
     val structureFilter = detailsFilters.filterIsInstance(VcsLogStructureFilter::class.java).singleOrNull()
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
-    val namesData = dataGetter.createFileNamesData(structureFilter.files)
-    val candidates = TroveUtil.intersect(TroveUtil.createTroveSet(namesData.getCommits()), commitCandidates)
+    val historyData = dataGetter.createFileHistoryData(structureFilter.files)
+    val candidates = TroveUtil.intersect(TroveUtil.createTroveSet(historyData.getCommits()), commitCandidates)
 
     val filtersWithoutStructure = detailsFilters.filterNot { it is VcsLogStructureFilter }
-    if (filtersWithoutStructure.isEmpty()) return Pair(TroveUtil.createJavaSet(candidates), namesData)
+    if (filtersWithoutStructure.isEmpty()) return Pair(TroveUtil.createJavaSet(candidates), historyData)
 
-    return Pair(dataGetter.filter(filtersWithoutStructure, candidates), namesData)
+    return Pair(dataGetter.filter(filtersWithoutStructure, candidates), historyData)
   }
 
   private fun filterWithVcs(graph: PermanentGraph<Int>,
@@ -465,7 +465,7 @@ private val LOG = Logger.getInstance(VcsLogFiltererImpl::class.java)
 private data class FilterByDetailsResult(val matchingCommits: Set<Int>?,
                                          val canRequestMore: Boolean,
                                          val commitCount: CommitCountStage,
-                                         val fileNamesData: FileNamesData? = null)
+                                         val fileHistoryData: FileHistoryData? = null)
 
 fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
   val detailsFilters = filters.detailsFilters

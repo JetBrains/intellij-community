@@ -162,7 +162,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                 sortType: PermanentGraph.SortType,
                                 filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
-      val data = indexDataGetter.createFileNamesData(filePath)
+      val data = indexDataGetter.createFileHistoryData(filePath)
 
       val permanentGraph = dataPack.permanentGraph
       if (permanentGraph !is PermanentGraphImpl) {

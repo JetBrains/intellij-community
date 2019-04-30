@@ -17,7 +17,7 @@ import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.history.FileNamesData;
+import com.intellij.vcs.log.history.FileHistoryData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -25,7 +25,6 @@ import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,9 +187,9 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
-        Set<Integer> commits = createFileNamesData(path).getCommits();
+        Set<Integer> commits = createFileHistoryData(path).getCommits();
         if (commits.isEmpty() && !path.isDirectory()) {
-          commits = createFileNamesData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
+          commits = createFileHistoryData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
         }
         TroveUtil.addAll(result, commits);
       }
@@ -273,7 +272,7 @@ public class IndexDataGetter {
   @SuppressWarnings("unused")
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
-    return executeAndCatch(() -> createFileNamesData(path).getFiles(), Collections.emptySet());
+    return executeAndCatch(() -> createFileHistoryData(path).getFiles(), Collections.emptySet());
   }
 
   @NotNull
@@ -312,13 +311,13 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  public FileNamesData createFileNamesData(@NotNull FilePath path) {
-    return createFileNamesData(Collections.singletonList(path));
+  public FileHistoryData createFileHistoryData(@NotNull FilePath path) {
+    return createFileHistoryData(Collections.singletonList(path));
   }
 
   @NotNull
-  public FileNamesData createFileNamesData(@NotNull Collection<FilePath> paths) {
-    return new FileNamesData(paths) {
+  public FileHistoryData createFileHistoryData(@NotNull Collection<FilePath> paths) {
+    return new FileHistoryData(paths) {
       @NotNull
       @Override
       public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
