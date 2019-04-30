@@ -4,11 +4,7 @@ package org.jetbrains.intellij.build.images.sync
 import org.jetbrains.intellij.build.images.ImageExtension
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
@@ -241,7 +237,8 @@ private fun removedByDesigners(context: Context, addedByDev: Collection<String>,
                                iconsRepo: File, iconsDir: String) = addedByDev.parallelStream().filter {
   val byDesigners = latestChangeTime("$iconsDir$it", iconsRepo)
   // latest changes are made by designers
-  byDesigners > 0 && latestChangeTime(context.devIcons[it]) < byDesigners
+  val latestChangeTime = latestChangeTime(context.devIcons[it])
+  latestChangeTime > 0 && byDesigners > 0 && latestChangeTime < byDesigners
 }.toList()
 
 private fun removedByDev(context: Context,
@@ -264,12 +261,10 @@ private fun latestChangeTime(file: String, repos: Collection<File>): Long {
   return -1
 }
 
-private fun modifiedByDev(context: Context, modified: Collection<String>) = modified.parallelStream()
+private fun modifiedByDev(context: Context, modified: Collection<String>) = modified.parallelStream().filter {
   // latest changes are made by developers
-  .filter { latestChangeTime(context.icons[it]) < latestChangeTime(context.devIcons[it]) }
-  .collect(Collectors.toList())
+  val latestChangeTimeByDev = latestChangeTime(context.devIcons[it])
+  latestChangeTimeByDev > 0 && latestChangeTime(context.icons[it]) < latestChangeTimeByDev
+}.collect(Collectors.toList())
 
-private fun latestChangeTime(obj: GitObject?) =
-  latestChangeTime(obj!!.path, obj.repo).also {
-    if (it <= 0) error(obj.toString())
-  }
+private fun latestChangeTime(obj: GitObject?) = latestChangeTime(obj!!.path, obj.repo)
