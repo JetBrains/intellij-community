@@ -294,6 +294,21 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                           @Nullable Set<? extends Configurable> configurables,
                                           @NotNull String option,
                                           @Nullable Project project) {
+    return findConfigurables(groups, type, configurables, option, project, false);
+  }
+
+  @NotNull
+  public ConfigurableHit findByNameOnly(@NotNull String option, @NotNull List<ConfigurableGroup> groups) {
+    return findConfigurables(groups, DocumentEvent.EventType.INSERT, null, option, /* project = */ null, /* searchByNameOnly = */ true);
+  }
+
+  @NotNull
+  private ConfigurableHit findConfigurables(@NotNull List<ConfigurableGroup> groups,
+                                            final DocumentEvent.EventType type,
+                                            @Nullable Set<? extends Configurable> configurables,
+                                            @NotNull String option,
+                                            @Nullable Project project,
+                                            boolean searchByNameOnly) {
     Set<Configurable> contentHits = new LinkedHashSet<>();
     if (configurables == null) {
       CollectConsumer<Configurable> consumer = new CollectConsumer<>(contentHits);
@@ -332,6 +347,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
 
+    if (searchByNameOnly) {
+      return new ConfigurableHit(Collections.emptySet(), nameHits, nameFullHits);
+    }
+
     final Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new THashSet<>(contentHits) : null;
     // operate with substring
     if (options.isEmpty()) {
@@ -349,7 +368,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
       if (optionIds == null) {
         contentHits.clear();
-        return new ConfigurableHit(contentHits, nameHits, nameFullHits);
+        return new ConfigurableHit(nameHits, nameFullHits, contentHits);
       }
 
       final Set<String> ids = new HashSet<>();
@@ -378,7 +397,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     if (type == DocumentEvent.EventType.CHANGE && configurables != null && currentConfigurables.equals(contentHits)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
-    return new ConfigurableHit(contentHits, nameHits, nameFullHits);
+    return new ConfigurableHit(nameHits, nameFullHits, contentHits);
   }
 
   @Nullable

@@ -104,7 +104,10 @@ internal class OpenFileHttpService : RestService() {
     }
 
     val promise = openFile(apiRequest, context, request) ?: return null
-    promise.onSuccess { sendStatus(HttpResponseStatus.OK, keepAlive, channel) }
+    promise
+      .onSuccess {
+        sendOk(request, context)
+      }
       .onError {
         if (it === NOT_FOUND) {
           // don't expose file status

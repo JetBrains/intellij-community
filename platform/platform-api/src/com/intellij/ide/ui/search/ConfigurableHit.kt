@@ -4,7 +4,7 @@ package com.intellij.ide.ui.search
 import com.intellij.openapi.options.Configurable
 import java.util.*
 
-data class ConfigurableHit(val contentHits: Set<Configurable>, val nameHits: Set<Configurable>, val nameFullHits: Set<Configurable>) {
+data class ConfigurableHit(val nameHits: Set<Configurable>, val nameFullHits: Set<Configurable>, val contentHits: Set<Configurable>) {
   val all: Set<Configurable>
     get() {
       val all = LinkedHashSet<Configurable>(nameHits.size + contentHits.size)

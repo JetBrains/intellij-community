@@ -274,7 +274,7 @@ abstract class RestService : HttpRequestHandler() {
   }
 
   /**
-   * Return error or send response using [.sendOk], [.send]
+   * Return error or send response using [sendOk], [send]
    */
   @Throws(IOException::class)
   abstract fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String?
