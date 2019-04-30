@@ -59,7 +59,6 @@ public class NlsCapitalizationUtilTest extends TestCase {
   public void testSentenceTooManyUppercaseWords() {
     assertNotCapitalization("Four Upper Case Words two lowercase", Nls.Capitalization.Sentence);
   }
-
   public void testTitle() {
     assertTitle("Word");
     assertTitle("Word Two");
@@ -69,6 +68,14 @@ public class NlsCapitalizationUtilTest extends TestCase {
   public void testTitleNotSatisfied() {
     assertNotCapitalization("lowercase", Nls.Capitalization.Title);
     assertNotCapitalization("Word lowercase", Nls.Capitalization.Title);
+  }
+
+  public void testFixValueSentence() {
+    assertEquals("First word", NlsCapitalizationUtil.fixValue("First Word", Nls.Capitalization.Sentence));
+  }
+
+  public void testFixValueTitle() {
+    assertEquals("Upper Case", NlsCapitalizationUtil.fixValue("upper case", Nls.Capitalization.Title));
   }
 
   private static void assertSentence(String value) {
