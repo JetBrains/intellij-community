@@ -143,7 +143,7 @@ public class GitChangeUtils {
       final ContentRevision before;
       final ContentRevision after;
       final String path = tokens[tokens.length - 1];
-      final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, true);
+      final FilePath filePath = GitContentRevision.createPathFromEscaped(vcsRoot, path);
       switch (tokens[0].charAt(0)) {
         case 'C':
         case 'A':
@@ -167,7 +167,7 @@ public class GitChangeUtils {
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          final FilePath oldFilePath = GitContentRevision.createPath(vcsRoot, tokens[1], true);
+          final FilePath oldFilePath = GitContentRevision.createPathFromEscaped(vcsRoot, tokens[1]);
           before = GitContentRevision.createRevision(oldFilePath, parentRevision, project);
           after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;

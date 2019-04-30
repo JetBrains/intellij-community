@@ -1,10 +1,10 @@
 /*
 Value is always true (j >= 0)
   Left operand is >= 0 (j)
-    'j' was assigned (i + 1)
+    'j' was assigned (=)
       Result of '+' is >= 0 (i + 1)
         Left operand is in {-1..Integer.MAX_VALUE-1} (i)
-          'i' was assigned (s.indexOf(' '))
+          'i' was assigned (=)
             Value is in {-1..Integer.MAX_VALUE-1} (s.indexOf(' '))
  */
 

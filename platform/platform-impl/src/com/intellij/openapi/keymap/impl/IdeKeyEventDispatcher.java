@@ -52,6 +52,7 @@ import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -437,7 +438,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
-      if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) || hasMnemonicInWindow(focusOwner, e)) {
+      if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) ||
+          hasMnemonicInWindow(focusOwner, e)) {
         myIgnoreNextKeyTypedEvent = true;
         return false;
       }
@@ -521,7 +523,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return secondKeyStrokes;
   }
 
-  private static boolean hasMnemonicInWindow(Component focusOwner, KeyEvent event) {
+  public static boolean hasMnemonicInWindow(Component focusOwner, KeyEvent event) {
     return KeyEvent.KEY_TYPED == event.getID() && hasMnemonicInWindow(focusOwner, event.getKeyChar()) ||
            KeyEvent.KEY_PRESSED == event.getID() && hasMnemonicInWindow(focusOwner, event.getKeyCode());
   }
@@ -532,43 +534,44 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return hasMnemonic(container, keyCode) || hasMnemonicInBalloons(container, keyCode);
   }
 
-  private static boolean hasMnemonic(final Container container, final int keyCode) {
-    if (container == null) return false;
+  private static boolean hasMnemonic(@Nullable Container container, int keyCode) {
+    Component component = UIUtil.uiTraverser(container)
+      .traverse()
+      .find(c -> hasMnemonic(c, keyCode));
+    return component != null;
+  }
 
-    final Component[] components = container.getComponents();
-    for (Component component : components) {
-      if (component instanceof AbstractButton) {
-        final AbstractButton button = (AbstractButton)component;
-        if (button instanceof JBOptionButton) {
-          if (((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
-              button.getMnemonic() == keyCode)
-          {
-            return true;
-          }
-        } else {
-          if (button.getMnemonic() == keyCode) return true;
+  private static boolean hasMnemonic(@Nullable Component component, int keyCode) {
+    if (component instanceof AbstractButton) {
+      AbstractButton button = (AbstractButton)component;
+      if (button instanceof JBOptionButton) {
+        if (((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
+            button.getMnemonic() == keyCode) {
+          return true;
         }
       }
-      if (component instanceof JLabel) {
-        final JLabel label = (JLabel)component;
-        if (label.getDisplayedMnemonic() == keyCode) return true;
+      else {
+        if (button.getMnemonic() == keyCode) return true;
       }
-      if (component instanceof ActionButtonWithText) {
-        if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
-      }
-      if (component instanceof Container) {
-        if (hasMnemonic((Container)component, keyCode)) return true;
-      }
+    }
+    if (component instanceof JLabel) {
+      JLabel label = (JLabel)component;
+      if (label.getDisplayedMnemonic() == keyCode) return true;
+    }
+    if (component instanceof ActionButtonWithText) {
+      if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
     }
     return false;
   }
 
   private static boolean hasMnemonicInBalloons(Container container, int code) {
-    final Component parent = UIUtil.findUltimateParent(container);
+    Component parent = UIUtil.findUltimateParent(container);
     if (parent instanceof RootPaneContainer) {
       final JLayeredPane pane = ((RootPaneContainer)parent).getLayeredPane();
       for (Component component : pane.getComponents()) {
-        if (component instanceof ComponentWithMnemonics && component instanceof Container && hasMnemonic((Container)component, code)) {
+        if (component instanceof ComponentWithMnemonics &&
+            component instanceof Container &&
+            hasMnemonic((Container)component, code)) {
           return true;
         }
       }

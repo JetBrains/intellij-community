@@ -79,8 +79,8 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     assertEmpty(validator.getEventRules(eventLogGroup))
     assertTrue(validator.getEventDataRules(eventLogGroup).isEmpty())
 
-    assertEventAccepted(validator, eventLogGroup, "<any-string-accepted>")
-    assertEventDataAccepted(validator, eventLogGroup, "<any-key-accepted>", "<any-string-accepted>")
+    assertUndefinedRule(validator, eventLogGroup, "<any-string-accepted>")
+    assertEventDataUndefinedRule(validator, eventLogGroup, "<any-key-accepted>", "<any-string-accepted>")
   }
 
   @Test
@@ -197,12 +197,20 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     TestCase.assertEquals(ValidationResultType.ACCEPTED, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
   }
 
+  private fun assertUndefinedRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+  }
+
   private fun assertEventRejected(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
     TestCase.assertEquals(ValidationResultType.REJECTED, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
   }
 
   private fun assertEventDataAccepted(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, key: String, dataValue: String) {
     TestCase.assertEquals(ValidationResultType.ACCEPTED, validator.validateEventData(eventLogGroup, key, dataValue))
+  }
+
+  private fun assertEventDataUndefinedRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, key: String, dataValue: String) {
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE, validator.validateEventData(eventLogGroup, key, dataValue))
   }
   private fun assertEventDataRejected(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, key: String, dataValue: String) {
     TestCase.assertEquals(ValidationResultType.REJECTED, validator.validateEventData(eventLogGroup, key, dataValue))
@@ -245,7 +253,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
       if (FeatureUsageData.platformDataKeys.contains(key)) return ValidationResultType.ACCEPTED
 
       val whiteListRule = eventsValidators[group.id]
-      return if (whiteListRule == null || !whiteListRule.areEventDataRulesDefined()) ValidationResultType.ACCEPTED
+      return if (whiteListRule == null || !whiteListRule.areEventDataRulesDefined()) ValidationResultType.UNDEFINED_RULE
       else whiteListRule.validateEventData(key, value, EventContext.create("", Collections.emptyMap())) // there are no configured rules
     }
   }

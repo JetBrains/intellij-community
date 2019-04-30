@@ -550,21 +550,19 @@ public class RefJavaManagerImpl extends RefJavaManager {
     //TODO support suppressions by comment tag in kotlin
     private void processComments(@NotNull UElement node) {
       for (UComment comment : node.getComments()) {
-        if (comment instanceof UComment) {
-          PsiElement psi = comment.getSourcePsi();
-          if (psi instanceof PsiDocComment) {
-            final PsiDocTag[] tags = ((PsiDocComment)psi).getTags();
-            for (PsiDocTag tag : tags) {
-              if (Comparing.strEqual(tag.getName(), SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-                final PsiElement[] dataElements = tag.getDataElements();
-                if (dataElements.length > 0) {
-                  final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psi, PsiModifierListOwner.class);
-                  if (listOwner != null) {
-                    final WritableRefElement element = (WritableRefElement)myRefManager.getReference(listOwner);
-                    if (element != null) {
-                      String suppression = StringUtil.join(dataElements, PsiElement::getText, ",");
-                      element.addSuppression(suppression);
-                    }
+        PsiElement psi = comment.getSourcePsi();
+        if (psi instanceof PsiDocComment) {
+          final PsiDocTag[] tags = ((PsiDocComment)psi).getTags();
+          for (PsiDocTag tag : tags) {
+            if (Comparing.strEqual(tag.getName(), SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+              final PsiElement[] dataElements = tag.getDataElements();
+              if (dataElements.length > 0) {
+                final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psi, PsiModifierListOwner.class);
+                if (listOwner != null) {
+                  final WritableRefElement element = (WritableRefElement)myRefManager.getReference(listOwner);
+                  if (element != null) {
+                    String suppression = StringUtil.join(dataElements, PsiElement::getText, ",");
+                    element.addSuppression(suppression);
                   }
                 }
               }

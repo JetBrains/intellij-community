@@ -331,8 +331,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
-    String sdkName = sdkRef == null ? null : sdkRef.getSdkName();
-    Sdk internalJava = sdkModel.findSdk(sdkName);
+    Sdk internalJava = sdkRef == null ? null : sdkModel.findSdk(sdkRef.getSdkName());
     if (internalJava != null && isValidInternalJdk(sdk, internalJava)) {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }

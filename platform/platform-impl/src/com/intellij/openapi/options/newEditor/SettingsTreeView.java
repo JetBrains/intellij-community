@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +14,6 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,6 +37,9 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -80,7 +82,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private Configurable myQueuedConfigurable;
   private MyControl myControl;
 
-  public SettingsTreeView(SettingsFilter filter, ConfigurableGroup[] groups) {
+  public SettingsTreeView(SettingsFilter filter, List<ConfigurableGroup> groups) {
     myFilter = filter;
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
@@ -376,49 +378,61 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myScroller.setBounds(0, 0, getWidth(), getHeight());
   }
 
-  ActionCallback select(@Nullable final Configurable configurable) {
+  @NotNull
+  Promise<? super Object> select(@Nullable Configurable configurable) {
     if (myBuilder.isSelectionBeingAdjusted()) {
-      return ActionCallback.REJECTED;
+      return Promises.rejectedPromise();
     }
-    final ActionCallback callback = new ActionCallback();
+
+    AsyncPromise<? super Object> promise = new AsyncPromise<>();
     myQueuedConfigurable = configurable;
     myQueue.queue(new Update(this) {
       @Override
       public void run() {
-        if (configurable == myQueuedConfigurable) {
-          if (configurable == null) {
-            fireSelected(null, callback);
-          }
-          else {
-            myBuilder.getReady(this).doWhenDone(() -> {
-              if (configurable != myQueuedConfigurable) return;
+        if (configurable != myQueuedConfigurable) {
+          return;
+        }
 
-              MyNode editorNode = findNode(configurable);
-              FilteringTreeStructure.FilteringNode editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
-              if (editorUiNode == null) return;
+        if (configurable == null) {
+          fireSelected(null)
+            .processed(promise);
+        }
+        else {
+          myBuilder.getReady(this).doWhenDone(() -> {
+            if (configurable != myQueuedConfigurable) return;
 
-              if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
-                myBuilder.select(editorUiNode, () -> fireSelected(configurable, callback));
-              }
-              else {
-                myBuilder.scrollSelectionToVisible(() -> fireSelected(configurable, callback), false);
-              }
-            });
-          }
+            MyNode editorNode = findNode(configurable);
+            FilteringTreeStructure.FilteringNode editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
+            if (editorUiNode == null) return;
+
+            @SuppressWarnings("CodeBlock2Expr")
+            Runnable handler = () -> {
+              fireSelected(configurable)
+                .processed(promise);
+            };
+
+            if (myBuilder.getSelectedElements().contains(editorUiNode)) {
+              myBuilder.scrollSelectionToVisible(handler, false);
+            }
+            else {
+              myBuilder.select(editorUiNode, handler);
+            }
+          });
         }
       }
 
       @Override
       public void setRejected() {
         super.setRejected();
-        callback.setRejected();
+        promise.setError("rejected");
       }
     });
-    return callback;
+    return promise;
   }
 
-  private void fireSelected(Configurable configurable, ActionCallback callback) {
-    myFilter.myContext.fireSelected(configurable, this).doWhenProcessed(callback.createSetDoneRunnable());
+  @NotNull
+  private Promise<? super Object> fireSelected(Configurable configurable) {
+    return myFilter.myContext.fireSelected(configurable, this);
   }
 
   @Override
@@ -426,39 +440,43 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myQueuedConfigurable = null;
   }
 
+  @NotNull
   @Override
-  public ActionCallback onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
+  public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
     return select(configurable);
   }
 
+  @NotNull
   @Override
-  public ActionCallback onModifiedAdded(Configurable configurable) {
+  public Promise<? super Object> onModifiedAdded(Configurable configurable) {
     myTree.repaint();
-    return ActionCallback.DONE;
+    return Promises.resolvedPromise();
   }
 
+  @NotNull
   @Override
-  public ActionCallback onModifiedRemoved(Configurable configurable) {
+  public Promise<? super Object> onModifiedRemoved(Configurable configurable) {
     myTree.repaint();
-    return ActionCallback.DONE;
+    return Promises.resolvedPromise();
   }
 
+  @NotNull
   @Override
-  public ActionCallback onErrorsChanged() {
-    return ActionCallback.DONE;
+  public Promise<? super Object> onErrorsChanged() {
+    return Promises.resolvedPromise();
   }
 
   private final class MyRoot extends CachingSimpleNode {
-    private final ConfigurableGroup[] myGroups;
+    private final List<ConfigurableGroup> myGroups;
 
-    private MyRoot(ConfigurableGroup[] groups) {
+    private MyRoot(List<ConfigurableGroup> groups) {
       super(null);
       myGroups = groups;
     }
 
     @Override
     protected SimpleNode[] buildChildren() {
-      if (myGroups == null || myGroups.length == 0) {
+      if (myGroups == null || myGroups.isEmpty()) {
         return NO_CHILDREN;
       }
       ArrayList<MyNode> list = new ArrayList<>();
@@ -922,8 +940,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       return false;
     }
 
+    @NotNull
     @Override
-    protected ActionCallback refilterNow(Object preferredSelection, boolean adjustSelection) {
+    protected Promise<?> refilterNow(Object preferredSelection, boolean adjustSelection) {
       final List<Object> toRestore = new ArrayList<>();
       if (myFilter.myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
         AbstractTreeUi ui = myBuilder.getUi();
@@ -936,14 +955,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       myWasHoldingFilter = myFilter.myContext.isHoldingFilter();
 
-      ActionCallback result = super.refilterNow(preferredSelection, adjustSelection);
       myRefilteringNow = true;
-      return result.doWhenDone(() -> {
-        myRefilteringNow = false;
-        if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
-          restoreExpandedState(toRestore);
-        }
-      });
+      return super.refilterNow(preferredSelection, adjustSelection)
+        .onSuccess(o -> {
+          myRefilteringNow = false;
+          if (!myFilter.myContext.isHoldingFilter() && getSelectedElements().isEmpty()) {
+            restoreExpandedState(toRestore);
+          }
+        });
     }
 
     private void restoreExpandedState(List<Object> toRestore) {

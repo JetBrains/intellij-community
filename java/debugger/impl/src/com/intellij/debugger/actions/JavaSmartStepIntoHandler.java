@@ -2,6 +2,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -26,7 +27,10 @@ import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -338,42 +342,67 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       if (!targets.isEmpty()) {
         StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
         if (frameProxy != null) {
+          // sanity check
           try {
-            Location location = frameProxy.location();
-            MethodBytecodeUtil.visit(location.method(), location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
-              boolean myLineMatch = false;
-
-              @Override
-              public void visitLineNumber(int line, Label start) {
-                myLineMatch = lines.isWithin(line - 1);
-              }
-
-              @Override
-              public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                if (myLineMatch) {
-                  Iterator<SmartStepTarget> iterator = targets.iterator();
-                  while (iterator.hasNext()) {
-                    SmartStepTarget e = iterator.next();
-                    if (e instanceof MethodSmartStepTarget &&
-                        DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(),
-                                                      owner.replace("/", "."), name, desc,
-                                                      suspendContext.getDebugProcess())) {
-                      iterator.remove();
-                      MethodSmartStepTarget target = (MethodSmartStepTarget)e;
-                      // fix ordinals
-                      existingMethodCalls(targets, target.getMethod())
-                        .forEach(t -> {
-                          int ordinal = t.getOrdinal();
-                          if (ordinal > target.getOrdinal()) {
-                            t.setOrdinal(ordinal - 1);
-                          }
-                        });
-                      break;
-                    }
+            List<MethodSmartStepTarget> methodTargets =
+              StreamEx.of(targets)
+                .select(MethodSmartStepTarget.class)
+                .filter(target -> !target.needsBreakpointRequest())
+                .toList();
+            visitLinesMethods(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf) -> {
+              if (name.startsWith("access$")) { // bridge method
+                ReferenceType cls = ContainerUtil.getFirstItem(frameProxy.getVirtualMachine().classesByName(owner));
+                if (cls != null) {
+                  Method method = DebuggerUtils.findMethod(cls, name, desc);
+                  if (method != null) {
+                    MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+                      @Override
+                      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                        if ("java/lang/AbstractMethodError".equals(owner)) {
+                          return;
+                        }
+                        removeMatchingMethod(methodTargets, owner, name, desc, suspendContext.getDebugProcess());
+                      }
+                    }, false);
                   }
                 }
               }
-            }, true);
+              else {
+                removeMatchingMethod(methodTargets, owner, name, desc, suspendContext.getDebugProcess());
+              }
+            });
+            if (!methodTargets.isEmpty()) {
+              return Collections.emptyList();
+            }
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+
+          // remove already executed
+          try {
+            visitLinesMethods(frameProxy.location(), false, lines, (opcode, owner, name, desc, itf) -> {
+              Iterator<SmartStepTarget> iterator = targets.iterator();
+              while (iterator.hasNext()) {
+                SmartStepTarget e = iterator.next();
+                if (e instanceof MethodSmartStepTarget &&
+                    DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(),
+                                                  owner.replace("/", "."), name, desc,
+                                                  suspendContext.getDebugProcess())) {
+                  iterator.remove();
+                  MethodSmartStepTarget target = (MethodSmartStepTarget)e;
+                  // fix ordinals
+                  existingMethodCalls(targets, target.getMethod())
+                    .forEach(t -> {
+                      int ordinal = t.getOrdinal();
+                      if (ordinal > target.getOrdinal()) {
+                        t.setOrdinal(ordinal - 1);
+                      }
+                    });
+                  break;
+                }
+              }
+            });
           }
           catch (Exception e) {
             LOG.info(e);
@@ -384,6 +413,42 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
     }
     return Collections.emptyList();
+  }
+
+  private static void removeMatchingMethod(List<MethodSmartStepTarget> targets,
+                                           String owner,
+                                           String name,
+                                           String desc,
+                                           DebugProcessImpl process) {
+    Iterator<MethodSmartStepTarget> iterator = targets.iterator();
+    while (iterator.hasNext()) {
+      if (DebuggerUtilsEx.methodMatches(iterator.next().getMethod(), owner.replace("/", "."), name, desc, process)) {
+        iterator.remove();
+        break;
+      }
+    }
+  }
+
+  private interface MethodInsnVisitor {
+    void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf);
+  }
+
+  private static void visitLinesMethods(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
+    MethodBytecodeUtil.visit(location.method(), full ? Long.MAX_VALUE : location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
+      boolean myLineMatch = false;
+
+      @Override
+      public void visitLineNumber(int line, Label start) {
+        myLineMatch = lines.isWithin(line - 1);
+      }
+
+      @Override
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+        if (myLineMatch) {
+          visitor.visitMethodInsn(opcode, owner, name, desc, itf);
+        }
+      }
+    }, true);
   }
 
   private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {

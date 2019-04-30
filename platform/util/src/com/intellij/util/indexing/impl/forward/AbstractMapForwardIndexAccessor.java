@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public abstract class AbstractMapForwardIndexAccessor<Key, Value, DataType> extends AbstractForwardIndexAccessor<Key, Value, DataType> {
+public abstract class AbstractMapForwardIndexAccessor<Key, Value, DataType, Input> extends AbstractForwardIndexAccessor<Key, Value, DataType, Input> {
   public AbstractMapForwardIndexAccessor(@NotNull DataExternalizer<DataType> externalizer) {
     super(externalizer);
   }

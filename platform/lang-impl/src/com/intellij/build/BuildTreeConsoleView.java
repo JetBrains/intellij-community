@@ -11,6 +11,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -56,10 +60,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -77,7 +79,7 @@ import static com.intellij.util.ui.UIUtil.getTreeSelectionForeground;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView, Filterable<ExecutionNode> {
+public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   @NonNls private static final String TREE = "tree";
@@ -94,13 +96,14 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final Tree myTree;
   private final ExecutionNode myRootNode;
   private final ExecutionNode myBuildProgressRootNode;
-  @Nullable
-  private volatile Predicate<ExecutionNode> myExecutionTreeFilter;
+  private final Set<Predicate<ExecutionNode>> myNodeFilters;
+  private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
 
   public BuildTreeConsoleView(Project project,
                               BuildDescriptor buildDescriptor,
                               @Nullable ExecutionConsole executionConsole,
                               @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
+    myNodeFilters = ContainerUtil.newConcurrentSet();
     myProject = project;
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
 
@@ -125,6 +128,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       new ConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, this, executionConsole, buildViewSettingsProvider);
     myThreeComponentsSplitter.setSecondComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
+    BuildTreeFilters.install(this);
+    myRootNode.setFilter(getFilter());
+    myOccurrenceNavigatorSupport = new ProblemOccurrenceNavigatorSupport(myTree);
   }
 
   private void installContextMenu(@NotNull StartBuildEvent startBuildEvent) {
@@ -143,8 +149,14 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       ActionUtil.copyFrom(edit, "EditSource");
       group.add(edit);
       group.addSeparator();
-      group.add(new ShowExecutionErrorsOnlyAction(this));
-
+      group.addAll(BuildTreeFilters.createFilteringActionsGroup(this));
+      group.addSeparator();
+      //Initializing prev and next occurrences actions
+      final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+      final AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
+      group.add(prevAction);
+      final AnAction nextAction = actionsManager.createNextOccurenceAction(this);
+      group.add(nextAction);
       PopupHandler.installPopupHandler(myTree, group, "BuildView");
     });
   }
@@ -162,20 +174,35 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return true;
   }
 
+  @NotNull
   @Override
-  @Nullable
   public Predicate<ExecutionNode> getFilter() {
-    return myExecutionTreeFilter;
+    return executionNode -> executionNode == getBuildProgressRootNode() ||
+                            executionNode.isRunning() ||
+                            executionNode.isFailed() ||
+                            myNodeFilters.stream().anyMatch(predicate -> predicate.test(executionNode));
   }
 
   @Override
-  public void setFilter(@Nullable Predicate<ExecutionNode> executionTreeFilter) {
-    myExecutionTreeFilter = executionTreeFilter;
-    ExecutionNode buildProgressRootNode = getBuildProgressRootNode();
+  public void addFilter(@NotNull Predicate<ExecutionNode> executionTreeFilter) {
+    myNodeFilters.add(executionTreeFilter);
+    updateFilter();
+  }
+
+  @Override
+  public void removeFilter(@NotNull Predicate<ExecutionNode> filter) {
+    myNodeFilters.remove(filter);
+    updateFilter();
+  }
+
+  @Override
+  public boolean contains(@NotNull Predicate<ExecutionNode> filter) {
+    return myNodeFilters.contains(filter);
+  }
+
+  private void updateFilter() {
     ExecutionNode rootElement = getRootElement();
-    Predicate<ExecutionNode> predicate = executionTreeFilter == null ? null :
-                                         node -> node == buildProgressRootNode || executionTreeFilter.test(node);
-    rootElement.setFilter(predicate);
+    rootElement.setFilter(getFilter());
     scheduleUpdate(rootElement);
   }
 
@@ -313,6 +340,38 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       SimpleNode parentOrNode = node.getParent() == null ? node : node.getParent();
       myTreeModel.invalidate(parentOrNode, true).onProcessed(p -> TreeUtil.promiseSelect(myTree, visitor(node)));
     }
+  }
+
+  @Override
+  public boolean hasNextOccurence() {
+    return myOccurrenceNavigatorSupport.hasNextOccurence();
+  }
+
+  @Override
+  public boolean hasPreviousOccurence() {
+    return myOccurrenceNavigatorSupport.hasPreviousOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goNextOccurence() {
+    return myOccurrenceNavigatorSupport.goNextOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goPreviousOccurence() {
+    return myOccurrenceNavigatorSupport.goPreviousOccurence();
+  }
+
+  @NotNull
+  @Override
+  public String getNextOccurenceActionName() {
+    return myOccurrenceNavigatorSupport.getNextOccurenceActionName();
+  }
+
+  @NotNull
+  @Override
+  public String getPreviousOccurenceActionName() {
+    return myOccurrenceNavigatorSupport.getPreviousOccurenceActionName();
   }
 
   @NotNull
@@ -502,7 +561,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING) {
       SimpleNode p = parentNode;
       do {
-        ((ExecutionNode)p).reportChildMessageKind(eventKind);
+        ExecutionNode executionNode = (ExecutionNode)p;
+        boolean warningUpdate = eventKind == MessageEvent.Kind.WARNING && !executionNode.hasWarnings();
+        executionNode.reportChildMessageKind(eventKind);
+        if (warningUpdate) {
+          executionNode.cleanUpCache();
+          scheduleUpdate(executionNode);
+        }
       }
       while ((p = p.getParent()) instanceof ExecutionNode);
       scheduleUpdate(getRootElement());
@@ -742,6 +807,41 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     public void clear() {
       myPanel.setVisible(false);
+    }
+  }
+
+  private static class ProblemOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
+    ProblemOccurrenceNavigatorSupport(final Tree tree) {
+      super(tree);
+    }
+
+    @Override
+    protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
+      Object userObject = node.getUserObject();
+      if (!(userObject instanceof ExecutionNode)) {
+        return null;
+      }
+      final ExecutionNode executionNode = (ExecutionNode)userObject;
+      if (executionNode.getChildCount() > 0 || !executionNode.hasWarnings() && !executionNode.isFailed()) {
+        return null;
+      }
+      List<Navigatable> navigatables = executionNode.getNavigatables();
+      if (!navigatables.isEmpty()) {
+        return navigatables.get(0);
+      }
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String getNextOccurenceActionName() {
+      return IdeBundle.message("action.next.problem");
+    }
+
+    @NotNull
+    @Override
+    public String getPreviousOccurenceActionName() {
+      return IdeBundle.message("action.previous.problem");
     }
   }
 
