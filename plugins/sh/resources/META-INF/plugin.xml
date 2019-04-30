@@ -59,5 +59,7 @@
   <actions>
     <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
             description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
+    <action id="BashSelectAllOccurrences" class="com.intellij.bash.rename.BashSelectAllOccurrencesAction"
+            use-shortcut-of="RenameElement"/>
   </actions>
 </idea-plugin>
