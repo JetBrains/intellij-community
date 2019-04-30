@@ -330,7 +330,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
 
-    final Set<Configurable> currentConfigurables = new HashSet<>(contentHits);
+    final Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new THashSet<>(contentHits) : null;
     // operate with substring
     if (options.isEmpty()) {
       String[] components = REG_EXP.split(optionToCheck);
@@ -373,7 +373,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
 
-    if (currentConfigurables.equals(contentHits) && !(configurables == null && type == DocumentEvent.EventType.CHANGE)) {
+    if (type == DocumentEvent.EventType.CHANGE && configurables != null && currentConfigurables.equals(contentHits)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
     return new ConfigurableHit(contentHits, nameHits, nameFullHits);
