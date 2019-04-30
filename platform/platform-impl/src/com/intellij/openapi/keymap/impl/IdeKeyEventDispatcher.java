@@ -438,7 +438,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
-      if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) || hasMnemonicInWindow(focusOwner, e)) {
+      if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) ||
+          hasMnemonicInWindow(focusOwner, e)) {
         myIgnoreNextKeyTypedEvent = true;
         return false;
       }
@@ -522,7 +523,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return secondKeyStrokes;
   }
 
-  private static boolean hasMnemonicInWindow(Component focusOwner, KeyEvent event) {
+  public static boolean hasMnemonicInWindow(Component focusOwner, KeyEvent event) {
     return KeyEvent.KEY_TYPED == event.getID() && hasMnemonicInWindow(focusOwner, event.getKeyChar()) ||
            KeyEvent.KEY_PRESSED == event.getID() && hasMnemonicInWindow(focusOwner, event.getKeyCode());
   }
