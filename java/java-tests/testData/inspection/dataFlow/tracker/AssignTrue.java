@@ -1,6 +1,6 @@
 /*
 Value is always true (b)
-  'b' was assigned (true)
+  'b' was assigned (=)
  */
 
 class Test {

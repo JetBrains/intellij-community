@@ -1,6 +1,6 @@
 /*
 May be null (foo)
-  'foo' was assigned (getFoo())
+  'foo' was assigned (=)
     Method 'getFoo' is annotated as 'nullable' (@Nullable)
  */
 
