@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -121,7 +122,7 @@ public class CommandLineProcessor {
 
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       try {
-        String url = URLDecoder.decode(command, "UTF-8");
+        String url = URLDecoder.decode(command, StandardCharsets.UTF_8.name());
         JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
         ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       }

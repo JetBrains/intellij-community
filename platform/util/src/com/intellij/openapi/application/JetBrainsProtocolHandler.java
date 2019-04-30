@@ -22,7 +22,7 @@ public class JetBrainsProtocolHandler {
   private static final Map<String, String> ourParameters = new HashMap<>(0);
   private static boolean initialized = false;
 
-  public static void processJetBrainsLauncherParameters(String url) {
+  public static void processJetBrainsLauncherParameters(@NotNull String url) {
     System.setProperty(JetBrainsProtocolHandler.class.getName(), url);
     url = url.substring(PROTOCOL.length());
     List<String> urlParts = StringUtil.split(url, "/");
@@ -30,6 +30,7 @@ public class JetBrainsProtocolHandler {
       System.err.print("Wrong URL: " + PROTOCOL + url);
       return;
     }
+
     String platformPrefix = urlParts.get(0);
     ourMainParameter = null;
     ourParameters.clear();
