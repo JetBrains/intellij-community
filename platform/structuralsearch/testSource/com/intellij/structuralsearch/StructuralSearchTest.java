@@ -794,7 +794,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     assertEquals("Variables initialized to null even when not present in search results", 1,
                  findMatchesCount(source3, "[script(\"args == null\")]new String('_args*)"));
-
+    String source4 = "class X {{\n" +
+                     "  // comment\n" +
+                     "  new /*!*/ Object() {};\n" +
+                     "}}";
+    assertEquals("expected variable of type anonymous class", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]new 'XX()"));
+    assertEquals("expected variable of type anonymous class 2", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
+    assertEquals("expected variable of type anonymous class 3", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiExpressionStatement\")]new Object() {};"));
+    assertEquals("expected variable of type anonymous class 4", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
   }
 
   public void testCheckScriptValidation() {
