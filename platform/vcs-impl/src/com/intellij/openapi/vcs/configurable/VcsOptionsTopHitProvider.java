@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
+import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
 
 /**
  * @author Sergey.Malenkov
