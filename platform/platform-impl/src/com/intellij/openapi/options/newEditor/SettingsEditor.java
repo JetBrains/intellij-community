@@ -58,10 +58,10 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
 
-  SettingsEditor(Disposable parent,
-                 Project project,
-                 List<ConfigurableGroup> groups,
-                 Configurable configurable,
+  SettingsEditor(@NotNull Disposable parent,
+                 @NotNull Project project,
+                 @NotNull List<ConfigurableGroup> groups,
+                 @Nullable Configurable configurable,
                  final String filter,
                  final ISettingsTreeViewFactory factory) {
     super(parent);
@@ -240,6 +240,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         configurable = ConfigurableVisitor.ALL.find(groups);
       }
     }
+
     myTreeView.select(configurable).doWhenDone(() -> myFilter.update(filter, false, true));
     Disposer.register(this, myTreeView);
     installSpotlightRemover();

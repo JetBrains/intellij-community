@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -33,7 +34,7 @@ public class SettingsDialogFactory {
   }
 
   @NotNull
-  public DialogWrapper create(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, Configurable configurable, String filter){
+  public DialogWrapper create(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
     return new SettingsDialog(project, groups, configurable, filter);
   }
 }
