@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -36,6 +37,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public final class ActionMenu extends JBMenu {
+  private static final boolean KEEP_MENU_HIERARCHY = SystemInfo.isMacSystemMenu && Registry.is("keep.menu.hierarchy", false);
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -210,8 +212,10 @@ public final class ActionMenu extends JBMenu {
   private class MenuListenerImpl implements MenuListener {
     @Override
     public void menuCanceled(MenuEvent e) {
-      clearItems();
-      addStubItem();
+      if (!KEEP_MENU_HIERARCHY) {
+        clearItems();
+        addStubItem();
+      }
     }
 
     @Override
@@ -220,8 +224,10 @@ public final class ActionMenu extends JBMenu {
         Disposer.dispose(myDisposable);
         myDisposable = null;
       }
-      clearItems();
-      addStubItem();
+      if (!KEEP_MENU_HIERARCHY) {
+        clearItems();
+        addStubItem();
+      }
     }
 
     @Override
@@ -231,6 +237,8 @@ public final class ActionMenu extends JBMenu {
         myDisposable = Disposer.newDisposable();
       }
       Disposer.register(myDisposable, helper);
+      if (KEEP_MENU_HIERARCHY)
+        clearItems();
       fillMenu();
     }
   }
