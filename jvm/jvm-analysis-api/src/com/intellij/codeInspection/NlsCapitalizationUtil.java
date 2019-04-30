@@ -21,25 +21,33 @@ public class NlsCapitalizationUtil {
 
   private static boolean checkSentenceCapitalization(@NotNull String value) {
     List<String> words = StringUtil.split(value, " ");
-    if (words.size() == 0) return true;
+    final int wordCount = words.size();
+    if (wordCount == 0) return true;
+
     if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
-    if (words.size() == 1) return true;
+    if (wordCount == 1) return true;
+
     int capitalized = 1;
-    for (int i = 1, size = words.size(); i < size; i++) {
+    for (int i = 1; i < wordCount; i++) {
       String word = words.get(i);
       if (isCapitalizedWord(word)) {
-        // check for abbreviations like SQL or I18n
+        // check for abbreviations like 'C', 'SQL', 'I18n'
         if (word.length() == 1 || !Character.isLowerCase(word.charAt(1))) {
           continue;
         }
         capitalized++;
       }
     }
-    return capitalized / words.size() < 0.2; // allow reasonable amount of capitalized words
+
+    // "Start service"
+    if (capitalized == 1 && wordCount == 2) return true;
+
+    final double ratio = ((double)capitalized - 1) / wordCount;
+    return ratio <= 0.4; // allow reasonable amount of capitalized words
   }
 
   private static boolean isCapitalizedWord(String word) {
-    return word.length() > 0 && Character.isLetter(word.charAt(0)) && Character.isUpperCase(word.charAt(0));
+    return !word.isEmpty() && Character.isLetter(word.charAt(0)) && Character.isUpperCase(word.charAt(0));
   }
 
   @NotNull
