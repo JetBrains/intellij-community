@@ -88,7 +88,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     return size;
   }
 
-  public interface Changes {
+  protected interface Changes {
     @NotNull
     Collection<Change> getMergedChanges();
 
@@ -212,7 +212,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }
   }
 
-  public static class ParsedChanges implements Changes {
+  protected static class ParsedChanges implements Changes {
     @NotNull private final Collection<Change> myMergedChanges;
     @NotNull private final List<? extends Collection<Change>> myChanges;
 
