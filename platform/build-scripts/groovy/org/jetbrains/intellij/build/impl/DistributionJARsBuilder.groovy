@@ -389,7 +389,7 @@ class DistributionJARsBuilder {
           satisfiesBundlingRequirements(it, osFamily)
         }
 
-      if (!osSpecificPlugins.isEmpty()) {
+      if (!osSpecificPlugins.isEmpty() && buildContext.shouldBuildDistributionForOS(osFamily.osId)) {
         def layoutBuilder = createLayoutBuilder()
         buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
           buildPlugins(layoutBuilder, osSpecificPlugins,
