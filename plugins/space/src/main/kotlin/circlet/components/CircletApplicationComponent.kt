@@ -3,7 +3,7 @@ package circlet.components
 import circlet.arenas.*
 import circlet.client.api.impl.*
 import circlet.klogging.impl.*
-import circlet.platform.client.serialization.*
+import circlet.platform.api.serialization.*
 import circlet.runtime.*
 import com.intellij.openapi.components.*
 import klogging.impl.*
