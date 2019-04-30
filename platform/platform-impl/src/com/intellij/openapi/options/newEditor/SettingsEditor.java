@@ -12,7 +12,6 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -27,6 +26,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,8 +69,9 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
     myProperties = PropertiesComponent.getInstance(project);
     mySettings = new Settings(groups) {
+      @NotNull
       @Override
-      protected ActionCallback selectImpl(Configurable configurable) {
+      protected Promise<? super Object> selectImpl(Configurable configurable) {
         myFilter.update(null, false, true);
         return myTreeView.select(configurable);
       }
@@ -111,15 +113,16 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     };
     myFilter.myContext.addColleague(new OptionsEditorColleague() {
+      @NotNull
       @Override
-      public ActionCallback onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
+      public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.ByID.getID(configurable));
           myLoadingDecorator.startLoading(false);
         }
         checkModified(oldConfigurable);
-        ActionCallback result = myEditor.select(configurable);
-        result.doWhenDone(() -> {
+        Promise<? super Object> result = myEditor.select(configurable);
+        result.onSuccess(it -> {
           updateController(configurable);
           //requestFocusToEditor(); // TODO
           myLoadingDecorator.stopLoading();
@@ -127,28 +130,31 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         return result;
       }
 
+      @NotNull
       @Override
-      public ActionCallback onModifiedAdded(Configurable configurable) {
+      public Promise<? super Object> onModifiedAdded(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
+      @NotNull
       @Override
-      public ActionCallback onModifiedRemoved(Configurable configurable) {
+      public Promise<? super Object> onModifiedRemoved(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
+      @NotNull
       @Override
-      public ActionCallback onErrorsChanged() {
+      public Promise<? super Object> onErrorsChanged() {
         return updateIfCurrent(myFilter.myContext.getCurrentConfigurable());
       }
 
-      private ActionCallback updateIfCurrent(Configurable configurable) {
+      private Promise<? super Object> updateIfCurrent(Configurable configurable) {
         if (configurable != null && configurable == myFilter.myContext.getCurrentConfigurable()) {
           updateStatus(configurable);
-          return ActionCallback.DONE;
+          return Promises.resolvedPromise();
         }
         else {
-          return ActionCallback.REJECTED;
+          return Promises.rejectedPromise("rejected");
         }
       }
     });
@@ -241,11 +247,16 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     }
 
-    myTreeView.select(configurable).doWhenDone(() -> myFilter.update(filter, false, true));
+    myTreeView.select(configurable)
+      .onSuccess(it -> myFilter.update(filter, false, true));
+
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
-    mySearch.getTextEditor().addActionListener(
-      event -> myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(this::requestFocusToEditor));
+    //noinspection CodeBlock2Expr
+    mySearch.getTextEditor().addActionListener(event -> {
+      myTreeView.select(myFilter.myContext.getCurrentConfigurable())
+        .onSuccess(o -> requestFocusToEditor());
+    });
   }
 
   private void requestFocusToEditor() {

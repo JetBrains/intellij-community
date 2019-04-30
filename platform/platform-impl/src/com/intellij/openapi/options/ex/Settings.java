@@ -9,6 +9,8 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -39,9 +41,7 @@ public abstract class Settings {
 
   @NotNull
   public final ActionCallback select(Configurable configurable) {
-    return configurable != null
-           ? selectImpl(choose(configurable, myMap.get(configurable)))
-           : ActionCallback.REJECTED;
+    return configurable == null ? ActionCallback.REJECTED : Promises.toActionCallback(selectImpl(choose(configurable, myMap.get(configurable))));
   }
 
   @NotNull
@@ -55,7 +55,8 @@ public abstract class Settings {
     return callback;
   }
 
-  protected abstract ActionCallback selectImpl(Configurable configurable);
+  @NotNull
+  protected abstract Promise<? super Object> selectImpl(Configurable configurable);
 
   private <T extends Configurable> T unwrap(Configurable configurable, Class<T> type) {
     T result = ConfigurableWrapper.cast(type, configurable);
