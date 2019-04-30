@@ -35,6 +35,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
     public boolean physical;
+
+    @NotNull
+    @Override
+    public VirtualFileSystem getInstance() {
+      VirtualFileSystem fs = super.getInstance();
+      if (fs instanceof Disposable) {
+        Disposer.register(ApplicationManager.getApplication(), (Disposable)fs);
+      }
+      return fs;
+    }
   }
 
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>("com.intellij.virtualFileSystem", this);
