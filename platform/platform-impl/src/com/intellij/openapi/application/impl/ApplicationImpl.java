@@ -153,13 +153,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         LOG.info("ApplicationImpl.externalInstanceListener invocation");
         String currentDirectory = args.isEmpty() ? null : args.get(0);
         List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
-        final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-        JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
+        Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
+        JFrame frame = project == null
+                       ? WindowManager.getInstance().findVisibleFrame() :
                        (JFrame)WindowManager.getInstance().getIdeFrame(project);
         if (frame != null) {
           if (frame instanceof IdeFrame) {
             AppIcon.getInstance().requestFocus((IdeFrame)frame);
-          } else {
+          }
+          else {
             frame.toFront();
             DialogEarthquakeShaker.shake(frame);
           }
