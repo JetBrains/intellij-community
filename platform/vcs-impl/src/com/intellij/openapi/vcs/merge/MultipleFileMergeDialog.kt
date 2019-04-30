@@ -11,6 +11,8 @@ import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -34,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
+import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
@@ -74,6 +77,8 @@ open class MultipleFileMergeDialog(
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
 
+  private val descriptionLabel = Label("Loading merge details...")
+
   private var groupByDirectory: Boolean = false
     get() = when {
       project != null -> VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
@@ -107,6 +112,14 @@ open class MultipleFileMergeDialog(
     }.installOn(table)
 
     TableSpeedSearch(table, Convertor { (it as? VirtualFile)?.name })
+
+    val modalityState = ModalityState.stateForComponent(descriptionLabel)
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
+      runInEdt(modalityState) {
+        descriptionLabel.text = description
+      }
+    }
   }
 
   private fun selectFirstFile() {
@@ -120,11 +133,8 @@ open class MultipleFileMergeDialog(
 
   override fun createCenterPanel(): JComponent {
     return panel(LCFlags.disableMagic) {
-      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
-      if (!description.isBlank()) {
-        row {
-          label(description)
-        }
+      row {
+        descriptionLabel()
       }
 
       row {
