@@ -286,7 +286,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     myStorage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs);
   }
 
-  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @Override
   @NotNull
   public ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
@@ -295,7 +294,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                           @NotNull String option,
                                           @Nullable Project project) {
     Set<Configurable> contentHits = new LinkedHashSet<>();
-    Set<String> options = getProcessedWordsWithoutStemming(option);
     if (configurables == null) {
       for (ConfigurableGroup group : groups) {
         contentHits.addAll(SearchUtil.expandGroup(group));
@@ -305,13 +303,15 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       contentHits.addAll(configurables);
     }
 
+    String optionToCheck = option.trim().toLowerCase(Locale.ENGLISH);
+    Set<String> options = getProcessedWordsWithoutStemming(optionToCheck);
+
     Set<Configurable> nameHits = new LinkedHashSet<>();
     Set<Configurable> nameFullHits = new LinkedHashSet<>();
 
-    String optionToCheck = option.trim().toLowerCase();
     for (Configurable each : contentHits) {
       if (each.getDisplayName() == null) continue;
-      final String displayName = each.getDisplayName().toLowerCase();
+      final String displayName = each.getDisplayName().toLowerCase(Locale.ENGLISH);
       final List<String> allWords = StringUtil.getWordsIn(displayName);
       if (displayName.contains(optionToCheck)) {
         nameFullHits.add(each);
@@ -331,7 +331,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
 
     final Set<Configurable> currentConfigurables = new HashSet<>(contentHits);
-    //operate with substring
+    // operate with substring
     if (options.isEmpty()) {
       String[] components = REG_EXP.split(optionToCheck);
       if (components.length > 0) {
@@ -467,13 +467,17 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Override
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
-    Set<String> result = new HashSet<>();
-    @NonNls final String toLowerCase = text.toLowerCase();
-    final String[] options = REG_EXP.split(toLowerCase);
-    for (String opt : options) {
-      if (isStopWord(opt)) continue;
-      final String processed = PorterStemmerUtil.stem(opt);
-      if (isStopWord(processed)) continue;
+    Set<String> result = new THashSet<>();
+    for (String opt : REG_EXP.split(text.toLowerCase(Locale.ENGLISH))) {
+      if (isStopWord(opt)) {
+        continue;
+      }
+
+      String processed = PorterStemmerUtil.stem(opt);
+      if (isStopWord(processed)) {
+        continue;
+      }
+
       result.add(opt);
     }
     return result;

@@ -553,16 +553,18 @@ public class SearchUtil {
     return withoutQuoted + " " + filter.substring(beg);
   }
 
-  public static List<Configurable> expand(ConfigurableGroup[] groups) {
-    final ArrayList<Configurable> result = new ArrayList<>();
+  @NotNull
+  public static List<Configurable> expand(@NotNull ConfigurableGroup[] groups) {
+    List<Configurable> result = new ArrayList<>();
     for (ConfigurableGroup eachGroup : groups) {
       result.addAll(expandGroup(eachGroup));
     }
     return result;
   }
 
-  public static List<Configurable> expandGroup(final ConfigurableGroup group) {
-    final Configurable[] configurables = group.getConfigurables();
+  @NotNull
+  public static List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
+    Configurable[] configurables = group.getConfigurables();
     List<Configurable> result = new ArrayList<>();
     ContainerUtil.addAll(result, configurables);
     for (Configurable each : configurables) {
@@ -585,7 +587,6 @@ public class SearchUtil {
   }
 
   private static final class SearchableConfigurableAdapter implements SearchableConfigurable {
-
     private final SearchableConfigurable myOriginal;
     private final UnnamedConfigurable myDelegate;
 
