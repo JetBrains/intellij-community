@@ -28,6 +28,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ import java.util.function.BiFunction;
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
  * because {@link Change} holds {@link LocalFilePath} which makes costly refreshes and type detections.
  */
+@ApiStatus.Experimental
 public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
   protected static final Changes EMPTY_CHANGES = new EmptyChanges();
@@ -88,7 +90,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     return size;
   }
 
-  public interface Changes {
+  protected interface Changes {
     @NotNull
     Collection<Change> getMergedChanges();
 
@@ -212,7 +214,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }
   }
 
-  public static class ParsedChanges implements Changes {
+  protected static class ParsedChanges implements Changes {
     @NotNull private final Collection<Change> myMergedChanges;
     @NotNull private final List<? extends Collection<Change>> myChanges;
 

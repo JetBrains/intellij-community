@@ -133,6 +133,8 @@ abstract class RestService : HttpRequestHandler() {
       val value = values.lastOrNull() ?: return true
       return value.toBoolean()
     }
+
+    fun parameterMissedErrorMessage(name: String) = "Parameter \"$name\" is not specified"
   }
 
   protected val gson: Gson by lazy {

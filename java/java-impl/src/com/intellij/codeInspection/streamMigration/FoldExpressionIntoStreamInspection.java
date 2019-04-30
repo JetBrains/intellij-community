@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.codeInsight.intention.impl.StreamRefactoringUtil.getMapOperationName;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARSEQUENCE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -138,7 +138,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       PsiExpression[] operands = polyadicExpression.getOperands();
       String mapToString;
       PsiType operandType = operands[0].getType();
-      if (!InheritanceUtil.isInheritor(operandType, JAVA_LANG_CHARSEQUENCE)) {
+      if (!InheritanceUtil.isInheritor(operandType, JAVA_LANG_CHAR_SEQUENCE)) {
         if (!StreamApiUtil.isSupportedStreamElement(operandType)) return null;
         mapToString = "."+getMapOperationName(operandType, type)+"(String::valueOf)";
       } else {
@@ -151,7 +151,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
                      .pairMap(EquivalenceChecker.getCanonicalPsiEquivalence()::expressionsAreEquivalent)
                      .allMatch(Boolean.TRUE::equals)) {
         delimiter = operands[1];
-        if (!InheritanceUtil.isInheritor(delimiter.getType(), JAVA_LANG_CHARSEQUENCE) &&
+        if (!InheritanceUtil.isInheritor(delimiter.getType(), JAVA_LANG_CHAR_SEQUENCE) &&
             !(delimiter instanceof PsiLiteralExpression && PsiType.CHAR.equals(delimiter.getType()))) {
           return null;
         }

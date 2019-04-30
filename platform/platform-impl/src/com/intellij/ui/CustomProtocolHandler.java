@@ -3,12 +3,14 @@ package com.intellij.ui;
 
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.URLUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
@@ -25,26 +27,12 @@ public class CustomProtocolHandler {
   }
 
   @NotNull
-  public List<String> getOpenArgs(URI uri) {
-    final List<String> args = new ArrayList<>();
-    final String query = uri.getQuery();
-    String file = null;
-    String line = null;
-    if (query != null) {
-      for (String param : query.split("&")) {
-        String[] pair = param.split("=");
-        String key = URLUtil.unescapePercentSequences(pair[0]);
-        if (pair.length > 1) {
-          if ("file".equals(key)) {
-            file = URLUtil.unescapePercentSequences(pair[1]);
-          }
-          else if ("line".equals(key)) {
-            line = URLUtil.unescapePercentSequences(pair[1]);
-          }
-        }
-      }
-    }
+  public List<String> getOpenArgs(@NotNull URI uri) {
+    Map<String, List<String>> parameters = new QueryStringDecoder(uri).parameters();
+    String file = ContainerUtil.getFirstItem(parameters.get("file"));
+    String line = ContainerUtil.getFirstItem(parameters.get("line"));
 
+    List<String> args = new SmartList<>();
     if (file != null) {
       if (line != null) {
         args.add(LINE_NUMBER_ARG_NAME);

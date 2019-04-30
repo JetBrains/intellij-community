@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.URLUtil;
 import com.jetbrains.python.debugger.*;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import com.thoughtworks.xstream.io.xml.XppReader;
@@ -12,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.xmlpull.mxp1.MXParser;
 
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -154,15 +153,6 @@ public class ProtocolParser {
 
   public static String parseSourceContent(String payload) {
     return payload;
-  }
-
-  public static String decode(final String value) throws PyDebuggerException {
-    try {
-      return URLDecoder.decode(value, "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new PyDebuggerException("Unable to decode: " + value + ", reason: " + e.getMessage());
-    }
   }
 
   public static String encodeExpression(final String expression) {
@@ -435,6 +425,6 @@ public class ProtocolParser {
     if (value == null && isRequired) {
       throw new PyDebuggerException("Attribute not found: " + name);
     }
-    return value == null ? null : decode(value);
+    return value == null ? null : URLUtil.decode(value);
   }
 }

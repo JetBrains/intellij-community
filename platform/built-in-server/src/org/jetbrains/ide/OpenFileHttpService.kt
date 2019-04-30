@@ -99,8 +99,7 @@ internal class OpenFileHttpService : RestService() {
     }
 
     if (apiRequest.file == null) {
-      sendStatus(HttpResponseStatus.BAD_REQUEST, keepAlive, channel)
-      return null
+      return parameterMissedErrorMessage("file")
     }
 
     val promise = openFile(apiRequest, context, request) ?: return null

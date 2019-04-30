@@ -588,10 +588,9 @@ public class SearchUtil {
     }
   }
 
-  private static void addChildren(Configurable configurable, List<? super Configurable> list) {
+  private static void addChildren(@NotNull Configurable configurable, @NotNull List<? super Configurable> list) {
     if (configurable instanceof Configurable.Composite) {
-      final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
-      for (Configurable eachKid : kids) {
+      for (Configurable eachKid : ((Configurable.Composite)configurable).getConfigurables()) {
         list.add(eachKid);
         addChildren(eachKid, list);
       }

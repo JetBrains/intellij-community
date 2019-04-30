@@ -84,7 +84,7 @@ public class StringEqualsCharSequenceInspection extends BaseInspection {
         return;
       }
       if (rightType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-          !InheritanceUtil.isInheritor(rightType, CommonClassNames.JAVA_LANG_CHARSEQUENCE)) {
+          !InheritanceUtil.isInheritor(rightType, CommonClassNames.JAVA_LANG_CHAR_SEQUENCE)) {
         return;
       }
       final PsiElement name = expression.getReferenceNameElement();

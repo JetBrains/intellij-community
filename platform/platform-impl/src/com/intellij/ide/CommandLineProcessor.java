@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.List;
 
@@ -120,14 +118,8 @@ public class CommandLineProcessor {
     }
 
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      try {
-        String url = URLDecoder.decode(command, "UTF-8");
-        JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-        ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      }
-      catch (UnsupportedEncodingException e) {
-        LOG.error(e);
-      }
+      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
+      ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       return null;
     }
 

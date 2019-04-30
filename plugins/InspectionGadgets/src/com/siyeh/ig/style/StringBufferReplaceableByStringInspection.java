@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARSEQUENCE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -330,7 +330,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
           if (!PsiType.INT.equals(type)) {
-            if (type != null && type.equalsToText(JAVA_LANG_CHARSEQUENCE)) {
+            if (type != null && type.equalsToText(JAVA_LANG_CHAR_SEQUENCE)) {
               result.append("String.valueOf(").append(tracker.textWithComments(argument)).append(')');
             }
             else {

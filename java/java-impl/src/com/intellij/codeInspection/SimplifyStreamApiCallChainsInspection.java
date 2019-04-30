@@ -1773,7 +1773,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     static final CallMatcher COLLECTOR_JOINING = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining")
       .parameterCount(0);
     static final CallMatcher COLLECTOR_JOINING_DELIMITER = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining")
-      .parameterTypes(JAVA_LANG_CHARSEQUENCE);
+      .parameterTypes(JAVA_LANG_CHAR_SEQUENCE);
 
     @Override
     public String getName() {
@@ -1826,7 +1826,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (ARRAYS_STREAM.matches(qualifier) || 
             (COLLECTION_STREAM.matches(qualifier) && ExpressionUtils.getEffectiveQualifier(qualifier.getMethodExpression()) != null)) {
           PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
-          if (InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHARSEQUENCE)) {
+          if (InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHAR_SEQUENCE)) {
             return new JoiningStringsFix();
           }
         }
@@ -1911,11 +1911,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (PsiUtil.skipParenthesizedExprDown(argumentExpressions[1]) != call) return null;
         PsiExpression delimiter = argumentExpressions[0];
         if (delimiter == null) return null;
-        if(!InheritanceUtil.isInheritor(delimiter.getType(), JAVA_LANG_CHARSEQUENCE)) return null;
+        if(!InheritanceUtil.isInheritor(delimiter.getType(), JAVA_LANG_CHAR_SEQUENCE)) return null;
         PsiMethodCallExpression stream = getQualifierMethodCall(call);
         if (stream == null) return null;
         PsiType elementType = StreamApiUtil.getStreamElementType(stream.getType());
-        if (!InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHARSEQUENCE)) return null;
+        if (!InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHAR_SEQUENCE)) return null;
         return new Context(maybeJoinCall, delimiter, argument);
       }
     }

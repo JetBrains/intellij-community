@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARSEQUENCE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.ExpressionUtils.resolveLocalVariable;
@@ -317,7 +317,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           }
         }
       }
-      if (!InheritanceUtil.isInheritor(type, JAVA_LANG_CHARSEQUENCE)) {
+      if (!InheritanceUtil.isInheritor(type, JAVA_LANG_CHAR_SEQUENCE)) {
         if (!neighborIsString || (type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType().equals(PsiType.CHAR))) {
           PsiLiteralExpression literalExpression = tryCast(expression, PsiLiteralExpression.class);
           if (literalExpression != null) {
