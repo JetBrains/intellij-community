@@ -56,6 +56,36 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+  fun `test temp injection survive on multiline`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          class A {
+            void foo() {
+              String a = "{\"bca\":<caret> \n1}";
+            }
+          }
+      """.trimIndent())
+
+      val fragmentFile = injectAndOpenInFragmentEditor("JSON", false)
+      TestCase.assertEquals("{\"bca\": \n1}", fragmentFile.text)
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+
+      fragmentFile.edit { insertString(text.indexOf(":"), "\n") }
+      checkResult("""
+          class A {
+            void foo() {
+              String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+    }
+
+  }
+
   fun `test delete in multiple hosts`() {
     with(myFixture) {
 
@@ -682,16 +712,20 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
-  private fun injectAndOpenInFragmentEditor(language: String): PsiFile {
+  private fun injectAndOpenInFragmentEditor(language: String, runFixPresenter: Boolean = true): PsiFile {
     with(myFixture) {
-      StoringFixPresenter().apply {
+      val fixPresenter = StoringFixPresenter().apply {
         InjectLanguageAction.invokeImpl(project,
                                         myFixture.editor,
                                         myFixture.file,
                                         Injectable.fromLanguage(Language.findLanguageByID(language)),
                                         this
         )
-      }.process()
+      }
+
+      if (runFixPresenter) {
+        fixPresenter.process()
+      }
       val quickEditHandler = QuickEditAction().invokeImpl(project, editor, file)
       return quickEditHandler.newFile
     }

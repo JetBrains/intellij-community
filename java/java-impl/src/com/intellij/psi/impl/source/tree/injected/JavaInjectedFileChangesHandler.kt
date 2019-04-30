@@ -76,7 +76,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       val remainingRange = removeHostsFromConcatenation(markersToRemove)
       if (remainingRange != null) {
         workingRange = remainingRange
-        getInjectionHostsAtRange(origPsiFile, remainingRange).firstOrNull()?.let { host ->
+        getInjectionHostAtRange(origPsiFile, remainingRange)?.let { host ->
           myEditor.caretModel.moveToOffset(
             ElementManipulators.getManipulator(host).getRangeInElement(host).startOffset + host.textRange.startOffset
           )
@@ -98,7 +98,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
 
     // kind of heuristics, strange things will happen if there are multiple injected files in one host
-    val injectedPsiFiles = getInjectionHostsAtRange(origPsiFile, contextRange).firstOrNull()?.let { host ->
+    val injectedPsiFiles = getInjectionHostAtRange(origPsiFile, contextRange)?.let { host ->
       injectedLanguageManager.getInjectedPsiFiles(host)?.mapNotNull { it.first as? PsiFile }
     }.orEmpty()
 
@@ -115,12 +115,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val markersFromShreds = getMarkersFromShreds(hostfulShreds)
     markers.addAll(markersFromShreds)
   }
-
-  private fun getInjectionHostsAtRange(origPsiFile: PsiFile, contextRange: TextRange): Sequence<PsiLanguageInjectionHost> =
-    origPsiFile.findElementAt(contextRange.startOffset)?.withNextSiblings.orEmpty()
-      .takeWhile { it.textRange.startOffset < contextRange.endOffset }
-      .flatMap { sequenceOf(it, it.parent) }
-      .filterIsInstance<PsiLanguageInjectionHost>()
 
 
   private val guardedBlocks get() = (myNewDocument as DocumentEx).guardedBlocks
@@ -199,9 +193,6 @@ private fun intermediateElement(psi: PsiElement) =
 
 private val PsiElement.nextSiblings: Sequence<PsiElement>
   get() = generateSequence(this.nextSibling) { it.nextSibling }
-
-private val PsiElement.withNextSiblings: Sequence<PsiElement>
-  get() = generateSequence(this) { it.nextSibling }
 
 private val PsiElement.prevSiblings: Sequence<PsiElement>
   get() = generateSequence(this.prevSibling) { it.prevSibling }
