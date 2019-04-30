@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.build.BuildTreeFilters;
 import com.intellij.build.BuildView;
 import com.intellij.build.DefaultBuildDescriptor;
-import com.intellij.build.ShowExecutionErrorsOnlyAction;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -313,7 +313,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
 
       AnAction[] actions = console instanceof BuildView ?
-                           new AnAction[]{new ShowExecutionErrorsOnlyAction((BuildView)console)} : AnAction.EMPTY_ARRAY;
+                           new AnAction[]{BuildTreeFilters.createFilteringActionsGroup((BuildView)console)} : AnAction.EMPTY_ARRAY;
       DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, actions);
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
         MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment());
