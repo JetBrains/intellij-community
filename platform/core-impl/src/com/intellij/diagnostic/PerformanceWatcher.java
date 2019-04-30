@@ -315,7 +315,7 @@ public class PerformanceWatcher implements Disposable {
   }
 
   // same as java.lang.StackTraceElement.equals, but do not care about the line number
-  private static boolean compareStackTraceElements(StackTraceElement el1, StackTraceElement el2) {
+  static boolean compareStackTraceElements(StackTraceElement el1, StackTraceElement el2) {
     if (el1 == el2) {
       return true;
     }
