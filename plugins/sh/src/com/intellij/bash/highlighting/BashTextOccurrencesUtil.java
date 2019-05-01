@@ -5,24 +5,21 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BashTextOccurrencesUtil {
-
   private BashTextOccurrencesUtil() {
   }
 
   @Nullable
   public static TextRange findTextRangeOfIdentifierAtCaret(@NotNull Editor editor) {
-    List<Caret> carets = editor.getCaretModel().getAllCarets();
-    if (carets.size() != 1) return null;
-    Caret caret = carets.get(0);
+    Caret caret = editor.getCaretModel().getPrimaryCaret();
     if (caret.hasSelection()) {
-      return null;
+      return TextRange.create(caret.getSelectionStart(), caret.getSelectionEnd());
     }
     return SelectWordUtil.getWordSelectionRange(editor.getDocument().getImmutableCharSequence(),
         caret.getOffset(),
@@ -34,9 +31,10 @@ public class BashTextOccurrencesUtil {
   }
 
   @NotNull
-  public static List<TextRange> findAllOccurrences(@NotNull CharSequence documentText, @NotNull CharSequence textToFind,
-                                            boolean matchExactWordsOnly) {
-    List<TextRange> result = new ArrayList<>();
+  public static List<TextRange> findAllOccurrences(@NotNull CharSequence documentText,
+                                                   @NotNull CharSequence textToFind,
+                                                   boolean matchExactWordsOnly) {
+    List<TextRange> result = ContainerUtil.newSmartList();
     int offset = StringUtil.indexOf(documentText, textToFind);
     while (offset >= 0) {
       TextRange textRange = TextRange.create(offset, offset + textToFind.length());

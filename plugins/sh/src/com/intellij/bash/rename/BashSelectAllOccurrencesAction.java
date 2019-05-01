@@ -11,10 +11,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
@@ -35,7 +35,7 @@ public class BashSelectAllOccurrencesAction extends EditorAction {
       return new BashSelectAllOccurrencesAction();
     }
     if (action instanceof BashSelectAllOccurrencesAction) {
-      return (BashSelectAllOccurrencesAction)action;
+      return (BashSelectAllOccurrencesAction) action;
     }
     LOG.error("Cannot cast " + action.getClass() + " to " + BashSelectAllOccurrencesAction.class);
     return new BashSelectAllOccurrencesAction();
@@ -51,9 +51,7 @@ public class BashSelectAllOccurrencesAction extends EditorAction {
 
     @Override
     public void doExecute(@NotNull final Editor editor, @Nullable Caret c, DataContext dataContext) {
-      List<Caret> carets = editor.getCaretModel().getAllCarets();
-      if (carets.size() != 1) return;
-      Caret caret = carets.get(0);
+      Caret caret = editor.getCaretModel().getPrimaryCaret();
       int caretOffset = caret.getOffset();
       TextRange caretTextRange;
       boolean matchExactWords;
@@ -75,7 +73,7 @@ public class BashSelectAllOccurrencesAction extends EditorAction {
       }
       occurrences.add(0, caretTextRange); // workaround to restore the original caret on Escape
 
-      List<CaretState> caretStates = new ArrayList<>();
+      List<CaretState> caretStates = ContainerUtil.newSmartList();
       for (TextRange occurrence : occurrences) {
         int caretInSelection = occurrence.getStartOffset() + caretOffset - caretTextRange.getStartOffset();
         CaretState caretState = new CaretState(editor.offsetToLogicalPosition(caretInSelection),
