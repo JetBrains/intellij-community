@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -806,6 +806,53 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("missed ;", expectedResult8_2, replace(s16_2, s17, s18));
   }
 
+  public void testSpecialClassReplacement() {
+    String in = "enum Color {\n" +
+                "  RED, GREEN, BLUE\n" +
+                "}\n" +
+                "interface X {\n" +
+                "  void x();\n" +
+                "}\n" +
+                "@interface Anno {}\n";
+    String what = "class 'X {}";
+    String by = "/** @author me */\n" +
+                "class $X$ {}";
+    String expected = "/** @author me */\n" +
+                      "enum Color {\n" +
+                      "  RED, GREEN, BLUE\n" +
+                      "}\n" +
+                      "/** @author me */\n" +
+                      "interface X {\n" +
+                      "  void x();\n" +
+                      "}\n" +
+                      "/** @author me */\n" +
+                      "@interface Anno {}\n";
+    assertEquals("Special class replacement", expected, replace(in, what, by, true));
+
+    String in2 = "new ArrayList<String>(null) {\n" +
+                 "  @Override\n" +
+                 "  public int hashCode() {\n" +
+                 "    return super.hashCode();\n" +
+                 "  }\n" +
+                 "}";
+    String by2 = "class $X$ {\n" +
+                "  public String toString() {\n" +
+                "    return \"hello\";\n" +
+                "  }\n" +
+                "}\n";
+    String expected2 = "new ArrayList<String>(null){\n" +
+                       "  public String toString() {\n" +
+                       "    return \"hello\";\n" +
+                       "  }\n" +
+                       "  @Override\n" +
+                       "  public int hashCode() {\n" +
+                       "    return super.hashCode();\n" +
+                       "  }\n" +
+                       "}";
+    assertEquals("Special anonymous class replacement", expected2, replace(in2, what, by2, false));
+    assertTrue(true);
+  }
+
   public void testClassReplacement() {
     options.setToReformatAccordingToStyle(true);
 
@@ -1029,7 +1076,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               " */\n" +
                               "public interface X {\n" +
                               "    public static final String HEADER = Headers.HEADER;\n" +
-                              "    \n" +
+                              "\n" +
                               "}";
 
     assertEquals("Replacing interface with interface, saving comments properly", expectedResult13, replace(s34, s35, s36, true));
@@ -1039,7 +1086,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   public void _testClassReplacement3() {
     String s37 = "class A { int a = 1; void B() {} int C(char ch) { int z = 1; } int b = 2; }";
 
-    String s38 = "class 'A { '_T* '_M*('_PT* '_PN*) { '_S*; } '_O* }";
+    String s38 = "class 'A { '_T '_M*('_PT '_PN*) { '_S*; } '_O* }";
     String s39 = "class $A$ { $T$ $M$($PT$ $PN$) { System.out.println(\"$M$\"); $S$; } $O$ }";
 
     String expectedResult14 = "class A { int a = 1; void B( ) { System.out.println(\"B\");  } int C(char ch) { System.out.println(\"C\"); int z = 1; } int b = 2;}";
