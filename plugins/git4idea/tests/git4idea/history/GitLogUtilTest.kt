@@ -9,8 +9,8 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
 import git4idea.config.GitVersion
-import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.history.GitCommitRequirements.DiffRenameLimit
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.test.*
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
@@ -64,9 +64,8 @@ class GitLogUtilTest : GitSingleRepoTest() {
     git("mv fileToRename.txt renamedFile.txt")
     repo.addCommit("Rename fileToRename.txt")
 
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
-                               GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES),
-                               false)
+    GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
+                                                              GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)
     assertTrue(lastCommit!!.changes.all { !it.isRenamed })
@@ -110,8 +109,8 @@ class GitLogUtilTest : GitSingleRepoTest() {
     repo.commit("merge")
 
     val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
-                               GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
+    GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
+                                                              GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
 
     assertNotNull(lastCommit)

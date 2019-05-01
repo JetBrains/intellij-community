@@ -36,4 +36,21 @@ class ExtendedButtonFixture(robot: Robot, button: JButton) : JButtonFixture(robo
     super.click()
   }
 
+  fun clickUntil(timeout: Timeout = Timeouts.defaultTimeout, isClickSuccessful: ()->Boolean){
+    waitUntil("repeat click until it is successful", timeout = timeout){
+      try {
+        super.click()
+        isClickSuccessful()
+      }
+      catch (ignore: IllegalStateException){
+        true
+      }
+      catch (ignore: NullPointerException) {
+        // if button disappears at once after getting the NPE from fest might occur
+        // but it's ok - nothing to wait anymore
+        true
+      }
+    }
+  }
+
 }

@@ -323,7 +323,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(tree);
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);

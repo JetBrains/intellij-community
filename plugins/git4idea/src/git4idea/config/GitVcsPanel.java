@@ -14,10 +14,11 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -65,7 +66,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JCheckBox myWarnAboutDetachedHead;
   private JTextField myProtectedBranchesField;
   private JBLabel myProtectedBranchesLabel;
-  private JComboBox myUpdateMethodComboBox;
+  private JComboBox<UpdateMethod> myUpdateMethodComboBox;
   private JCheckBox myUpdateBranchInfoCheckBox;
   private JFormattedTextField myBranchUpdateTimeField;
   private JPanel myBranchTimePanel;
@@ -189,7 +190,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
     myUpdateBranchInfoCheckBox.setSelected(projectSettings.shouldUpdateBranchInfo());
     boolean branchInfoSupported = isBranchInfoSupported();
-    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    myUpdateBranchInfoCheckBox.setEnabled(Registry.is("git.update.incoming.outgoing.info") && branchInfoSupported);
     UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
     updateSupportedBranchInfo();
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
@@ -286,6 +287,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
+    if (!Registry.is("git.update.incoming.outgoing.info")) return;
     boolean branchInfoSupported = isBranchInfoSupported();
     myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
     UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
@@ -302,6 +304,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private boolean isUpdateBranchSettingsModified(@NotNull GitVcsSettings projectSettings) {
+    if (!Registry.is("git.update.incoming.outgoing.info")) return false;
     return projectSettings.getBranchInfoUpdateTime() != (Integer)myBranchUpdateTimeField.getValue() ||
            projectSettings.shouldUpdateBranchInfo() != myUpdateBranchInfoCheckBox.isSelected();
   }
@@ -317,13 +320,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     textField.getEmptyText().setText("Auto-detected: " + myExecutableManager.getDetectedExecutable());
     myGitField = new TextFieldWithBrowseButton(textField);
     myProtectedBranchesField = new ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
-    myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<>(UpdateMethod.class));
-    myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {
-      @Override
-      public void customize(JList list, UpdateMethod value, int index, boolean selected, boolean hasFocus) {
-        setText(StringUtil.capitalize(StringUtil.toLowerCase(value.name().replace('_', ' '))));
-      }
-    });
+    myUpdateMethodComboBox = new ComboBox<>(new EnumComboBoxModel<>(UpdateMethod.class));
+    myUpdateMethodComboBox.setRenderer(SimpleListCellRenderer.create("", value ->
+      StringUtil.capitalize(StringUtil.toLowerCase(value.name().replace('_', ' ')))));
     myIncomingOutgoingSettingPanel = new JPanel(new BorderLayout());
     NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
     numberFormatter.setMinimum(1);

@@ -27,7 +27,7 @@ class ScheduledForRemovalElementsTest {
   fun test() {
     var s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS
     <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass()
-    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> = AnnotatedClass()
+    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>()
     s = annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedFieldInAnnotatedClass 
     annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedMethodInAnnotatedClass() 
     s = NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS 

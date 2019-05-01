@@ -307,7 +307,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         filterCollection.with(VcsLogFilterObject.fromPaths(filesForRoot))
       }
 
-      val matchingCommits = providers[root]!!.getCommitsMatchingFilter(root, rootSpecificCollection, maxCount)
+      val matchingCommits = providers.getValue(root).getCommitsMatchingFilter(root, rootSpecificCollection, maxCount)
       commits.addAll(matchingCommits.map { commit -> CommitId(commit.id, root) })
     }
 

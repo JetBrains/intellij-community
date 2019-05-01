@@ -1,12 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ide.fileTemplates.impl
 
-import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
-import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler
-import com.intellij.ide.fileTemplates.FileTemplate
-import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.fileTemplates.FileTemplateUtil
-import com.intellij.ide.fileTemplates.JavaTemplateUtil
+import com.intellij.ide.fileTemplates.*
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 import com.intellij.ide.fileTemplates.impl.FTManager
 import com.intellij.openapi.Disposable
@@ -15,7 +10,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaDirectoryService
@@ -28,6 +22,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.PathKt
 import com.intellij.util.properties.EncodingAwareProperties
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -234,7 +229,7 @@ class FileTemplatesTest extends IdeaTestCase {
       //noinspection GroovyAccessibility
       String name = FTManager.encodeFileName("test", "ext.has.dots")
       File file = createTempFile(name, "test")
-      FileUtil.loadFile(new File(file.getAbsolutePath()), CharsetToolkit.UTF8_CHARSET)
+      FileUtil.loadFile(new File(file.getAbsolutePath()), StandardCharsets.UTF_8)
       LOG.debug("File loaded: " + file.getAbsolutePath())
       File dir = new File(file.getParent())
       File[] files = dir.listFiles()

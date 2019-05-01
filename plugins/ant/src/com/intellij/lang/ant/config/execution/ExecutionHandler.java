@@ -228,6 +228,7 @@ public final class ExecutionHandler {
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
+    handler.putUserData(AntRunProfileState.MESSAGE_VIEW, errorView);
     handler.addProcessListener(new ProcessAdapter() {
       private final StringBuilder myUnprocessedStdErr = new StringBuilder();
 

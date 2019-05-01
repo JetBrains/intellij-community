@@ -36,7 +36,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl");
   private final Project myProject;
-  private final WritingAccessProvider[] myAccessProviders;
   protected boolean myClearReadOnlyInTests;
 
   public static class State {
@@ -45,9 +44,8 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   private State myState = new State();
 
-  public ReadonlyStatusHandlerImpl(Project project) {
+  public ReadonlyStatusHandlerImpl(@NotNull Project project) {
     myProject = project;
-    myAccessProviders = WritingAccessProvider.getProvidersForProject(myProject);
   }
 
   @Override
@@ -84,14 +82,16 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     files = new ArrayList<>(realFiles);
 
-    for (final WritingAccessProvider accessProvider : myAccessProviders) {
-      Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !accessProvider.isPotentiallyWritable(virtualFile));
+    if (!myProject.isDefault()) {
+      for (final WritingAccessProvider accessProvider : WritingAccessProvider.EP_NAME.getIterable(myProject)) {
+        Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !accessProvider.isPotentiallyWritable(virtualFile));
 
-      if (denied.isEmpty()) {
-        denied = accessProvider.requestWriting(files);
-      }
-      if (!denied.isEmpty()) {
-        return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), accessProvider.getReadOnlyMessage());
+        if (denied.isEmpty()) {
+          denied = accessProvider.requestWriting(files);
+        }
+        if (!denied.isEmpty()) {
+          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), accessProvider.getReadOnlyMessage());
+        }
       }
     }
 

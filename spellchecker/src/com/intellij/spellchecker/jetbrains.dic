@@ -46,6 +46,7 @@ backend
 backref
 backtrace
 barcode
+baseclass
 basedir
 basename
 bashrc
@@ -69,6 +70,7 @@ bson
 btree
 buffered
 buffering
+bugprone
 buildable
 builtin
 bzip
@@ -139,8 +141,10 @@ couchbase
 coursecreator
 covariant
 cplusplus
+cppcoreguidelines
 cron
 ctrl
+cstyle
 cubemx
 customizer
 customizers
@@ -193,6 +197,7 @@ dumpfile
 dword
 dylib
 easymock
+ecma
 ehcache
 elseif
 elsif
@@ -255,11 +260,14 @@ github
 gitlab
 globals
 google
+googletest
 goto
 gradle
 grapheme
 graphemes
+grayscale
 greenplum
+greyscale
 gruntfile
 gruntfiles
 guid
@@ -281,6 +289,7 @@ hazelcast
 hdiv
 helvetica
 holdability
+hicpp
 hostname
 hprof
 href
@@ -309,6 +318,9 @@ initrans
 injectable
 inline
 innodb
+inode
+inode's
+inodes
 inout
 instancetype
 instantiable
@@ -483,6 +495,7 @@ nocopy
 nocreate
 nocycle
 nodegroup
+nodiscard
 noduplicate
 noexcept
 nohistory
@@ -785,6 +798,7 @@ subpackages
 subpage
 subpartition
 subpartitions
+subpixel
 subscripting
 subsequence
 subsequences

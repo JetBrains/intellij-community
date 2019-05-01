@@ -23,6 +23,8 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
+import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -50,7 +52,7 @@ import java.util.*;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
-public class GitLogProvider implements VcsLogProvider {
+public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
   public static final TObjectHashingStrategy<VcsRef> DONT_CONSIDER_SHA = new TObjectHashingStrategy<VcsRef>() {
@@ -314,19 +316,6 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
-    throws VcsException {
-    if (!isRepositoryReady(root)) {
-      return;
-    }
-
-    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root),
-                                                                   DiffRenameLimit.REGISTRY,
-                                                                   DiffInMergeCommits.DIFF_TO_PARENTS, false);
-    GitLogUtil.readFullDetails(myProject, root, commitConsumer, requirements, true, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
-  }
-
-  @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
@@ -335,29 +324,15 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root),
+    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(myRepositoryManager, root),
                                                                    DiffRenameLimit.GIT_CONFIG,
-                                                                   DiffInMergeCommits.DIFF_TO_PARENTS, true);
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, false, commitConsumer);
+                                                                   DiffInMergeCommits.DIFF_TO_PARENTS);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, commitConsumer);
   }
 
-  @Override
-  public void readFullDetails(@NotNull VirtualFile root,
-                              @NotNull List<String> hashes,
-                              @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer,
-                              boolean isForIndexing) throws VcsException {
-    if (!isRepositoryReady(root)) {
-      return;
-    }
-
-    DiffRenameLimit renameLimit = isForIndexing ? DiffRenameLimit.REGISTRY : DiffRenameLimit.INFINITY;
-    GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root), renameLimit,
-                                                                   DiffInMergeCommits.DIFF_TO_PARENTS, false);
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, isForIndexing, commitConsumer);
-  }
-
-  private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+  static boolean shouldIncludeRootChanges(@NotNull GitRepositoryManager manager,
+                                          @NotNull VirtualFile root) {
+    GitRepository repository = manager.getRepositoryForRoot(root);
     if (repository == null) return true;
     return !repository.getInfo().isShallow();
   }
@@ -630,6 +605,12 @@ public class GitLogProvider implements VcsLogProvider {
     return null;
   }
 
+  @NotNull
+  @Override
+  public VcsLogIndexer getIndexer() {
+    return new GitLogIndexer(myProject, myRepositoryManager);
+  }
+
   public static boolean isIndexingOn() {
     return Registry.is("vcs.log.index.git");
   }
@@ -639,7 +620,11 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   private boolean isRepositoryReady(@NotNull VirtualFile root) {
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    return isRepositoryReady(myRepositoryManager, root);
+  }
+
+  static boolean isRepositoryReady(@NotNull GitRepositoryManager manager, @NotNull VirtualFile root) {
+    GitRepository repository = manager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return false;

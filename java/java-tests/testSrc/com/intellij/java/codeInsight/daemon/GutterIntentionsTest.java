@@ -6,7 +6,9 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.List;
@@ -62,4 +64,11 @@ public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
     Set<String> names = descriptors.stream().map(descriptor -> descriptor.getDisplayName()).collect(Collectors.toSet());
     assertEquals(descriptors.size(), names.size());
   }
+
+  public void testFixesOnTop() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo extends Bo<caret>o {\n" +
+                                                     "  public static void main(String[] args) {}" +
+                                                     "}");
+    List<IntentionAction> actions = myFixture.getAvailableIntentions();
+    assertThat(actions.get(0).getText()).startsWith("Create class ");  }
 }

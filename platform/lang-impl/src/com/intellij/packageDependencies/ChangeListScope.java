@@ -47,6 +47,6 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
 
   @Override
   public int getWeight() {
-    return AllIcons.Scope.ChangedFilesAll == getIcon() ? 1 : 0;
+    return AllIcons.Scope.ChangedFilesAll == getIcon() ? 0 : 1;
   }
 }

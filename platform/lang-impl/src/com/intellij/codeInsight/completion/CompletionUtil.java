@@ -100,19 +100,13 @@ public class CompletionUtil {
   }
 
   public static String findIdentifierPrefix(PsiElement insertedElement, int offset, ElementPattern<Character> idPart,
-                                             ElementPattern<Character> idStart) {
-    if(insertedElement == null) return "";
-    final String text = insertedElement.getText();
-
+                                            ElementPattern<Character> idStart) {
+    if (insertedElement == null) return "";
     int startOffset = insertedElement.getTextRange().getStartOffset();
-    return findInText(offset, startOffset, idPart, idStart, text);
+    return findInText(offset, startOffset, idPart, idStart, insertedElement.getNode().getChars());
   }
 
-  public static String findIdentifierPrefix(String wholeText, int offset, ElementPattern<Character> idPart,
-                                             ElementPattern<Character> idStart) {
-    return findInText(offset, 0, idPart, idStart, wholeText);
-  }
-
+  @SuppressWarnings("unused") // used in Rider
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {
     final String text = document.getText();
@@ -120,10 +114,10 @@ public class CompletionUtil {
   }
 
   @NotNull
-  private static String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, String text) {
+  private static String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, CharSequence text) {
     final int offsetInElement = offset - startOffset;
     int start = offsetInElement - 1;
-    while (start >=0 ) {
+    while (start >=0) {
       if (!idPart.accepts(text.charAt(start))) break;
       --start;
     }
@@ -131,7 +125,7 @@ public class CompletionUtil {
       start++;
     }
 
-    return text.substring(start + 1, offsetInElement).trim();
+    return text.subSequence(start + 1, offsetInElement).toString().trim();
   }
 
   @Nullable

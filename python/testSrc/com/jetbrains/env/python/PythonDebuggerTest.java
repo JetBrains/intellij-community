@@ -828,6 +828,51 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testMultiprocessPool() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_pool.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForOutput("Done");
+        assertFalse(output().contains("KeyboardInterrupt"));
+      }
+    });
+  }
+
+  @Test
+  public void testPythonSubprocessWithCParameter() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_python_subprocess_with_c_parameter.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Hello!");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron", "-jython");
+      }
+    });
+  }
+
+  @Test
   public void testPyQtQThreadInheritor() {
     Assume.assumeFalse("Don't run under Windows",UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
@@ -1903,6 +1948,61 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForPause();
         waitForOutput("This property is deprecated!");
+      }
+    });
+  }
+
+  @Test
+  public void testExecutableScriptDebug() {
+    
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_executable_script_debug.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_executable_script_debug_helper.py"), 4);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Subprocess exited with return code: 0");
+      }
+    });
+  }
+
+  @Test
+  public void testDebugConsolePytest() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_debug_console_pytest.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 4);
+      }
+
+      @Override
+      protected boolean usePytestRunner() {
+        return true;
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        consoleExec("print('a = %s' % a)");
+        waitForOutput("a = 1");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pytest");
       }
     });
   }

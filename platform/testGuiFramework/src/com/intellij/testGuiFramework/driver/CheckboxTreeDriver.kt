@@ -28,11 +28,13 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
 
   private fun CheckboxTree.clickRow(path: TreePath, calculatePoint: (Rectangle, Rectangle) -> Point){
     val checkbox = getCheckboxComponent(this, path) ?: throw ComponentLookupException("Unable to find checkBox for a ExtCheckboxTree with path ${path.path.joinToString()}")
-    val pathBounds = this.getPathBounds(path)
-    val point = calculatePoint(checkbox.bounds, pathBounds)
+    val point = GuiTestUtilKt.computeOnEdt {
+      val pathBounds = GuiTestUtilKt.computeOnEdt { this.getPathBounds(path) }!!
+       calculatePoint(checkbox.bounds, pathBounds)
+    }
     this.scrollToPath(path)
     this.makeVisible(path)
-    robot.click(this, point)
+    robot.click(this, point!!)
     robot.waitForIdle()
 
   }
@@ -47,7 +49,7 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
 
   override fun getLabelXCoord(jTree: JTree, path: TreePath): Int {
     val checkBox = getCheckboxComponent(jTree as CheckboxTree, path) ?: throw ComponentLookupException("Unable to find checkBox for a ExtCheckboxTree with path $path")
-    val pathBounds = jTree.getPathBounds(path)
+    val pathBounds = GuiTestUtilKt.computeOnEdt { jTree.getPathBounds(path) }!!
 
     return pathBounds.x + checkBox.bounds.width + 2
   }

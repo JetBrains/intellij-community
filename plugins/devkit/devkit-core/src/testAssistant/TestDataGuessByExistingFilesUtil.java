@@ -34,6 +34,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FindSymbolParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -264,7 +265,7 @@ public class TestDataGuessByExistingFilesUtil {
         return StringUtil.containsIgnoreCase(name, testName);
       }
     };
-    model.processNames(processor, false);
+    model.processNames(processor, FindSymbolParameters.simple(model.getProject(), false));
     return processor.getResults();
   }
 

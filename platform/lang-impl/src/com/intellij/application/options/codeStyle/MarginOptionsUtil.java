@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,29 +44,19 @@ class MarginOptionsUtil {
   }
 
   static void customizeWrapOnTypingCombo(@NotNull JComboBox<String> wrapOnTypingCombo, @NotNull CodeStyleSettings settings) {
-    wrapOnTypingCombo.setRenderer(new WrapOnTypingListCellRenderer(settings));
+    wrapOnTypingCombo.setRenderer(SimpleListCellRenderer.create("", value -> {
+      for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES.length; i++) {
+        if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES[i] == CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
+          if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS[i].equals(value)) {
+            return getDefaultWrapOnTypingText(settings);
+          }
+        }
+      }
+      return value;
+    }));
   }
 
   static String getDefaultValueText(@NotNull String value) {
     return ApplicationBundle.message("settings.default.value.prefix", value);
-  }
-
-  static class WrapOnTypingListCellRenderer extends ListCellRendererWrapper<String> {
-    private final CodeStyleSettings mySettings;
-
-    WrapOnTypingListCellRenderer(@NotNull CodeStyleSettings settings) {
-      mySettings = settings;
-    }
-
-    @Override
-    public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-      for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES.length; i ++) {
-        if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES[i] == CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
-          if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS[i].equals(value)) {
-            setText(getDefaultWrapOnTypingText(mySettings));
-          }
-        }
-      }
-    }
   }
 }

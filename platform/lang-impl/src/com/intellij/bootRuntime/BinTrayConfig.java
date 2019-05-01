@@ -4,5 +4,6 @@ package com.intellij.bootRuntime;
 public interface BinTrayConfig {
   String subject = "jetbrains";
   String repoName = "intellij-jdk";
+  String jbrRepoName = "intellij-jbr";
   String urlPattern = "https://dl.bintray.com/%s/%s/%s";
 }

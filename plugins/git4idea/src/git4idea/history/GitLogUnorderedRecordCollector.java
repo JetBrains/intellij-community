@@ -21,20 +21,22 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class GitLogUnorderedRecordCollector extends GitLogRecordCollector {
+class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressedRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogUnorderedRecordCollector.class);
-  private static final int STATUS_LINES_THRESHOLD = 20_000;
+  private static final int STATUS_LINES_THRESHOLD = 200_000;
 
-  @NotNull private final MultiMap<String, GitLogRecord> myHashToIncompleteRecords = MultiMap.createLinked();
+  @NotNull private final MultiMap<String, GitCompressedRecord> myHashToIncompleteRecords = MultiMap.createLinked();
   private int myIncompleteStatusLinesCount = 0;
 
   protected GitLogUnorderedRecordCollector(@NotNull Project project,
                                            @NotNull VirtualFile root,
-                                           @NotNull Consumer<List<GitLogRecord>> consumer) {
+                                           @NotNull Consumer<List<GitCompressedRecord>> consumer) {
     super(project, root, consumer);
   }
 
@@ -66,9 +68,14 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector {
   }
 
   @Override
-  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<GitLogRecord> records) {
+  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<GitCompressedRecord> records) {
     myHashToIncompleteRecords.put(hash, records);
-    records.forEach(r -> myIncompleteStatusLinesCount += r.getStatusInfos().size());
+    records.forEach(r -> myIncompleteStatusLinesCount += r.getChanges().size() + r.getRenames().size());
+  }
+
+  @Override
+  protected GitCompressedRecord createEmptyCopy(@NotNull GitCompressedRecord record) {
+    return new GitCompressedRecord(record.getOptions(), new TIntObjectHashMap<>(), new TIntIntHashMap(), 0, record.isSupportsRawBody());
   }
 
   @Override

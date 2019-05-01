@@ -2,14 +2,15 @@
 package org.jetbrains.plugins.gradle.execution.build.output;
 
 import com.intellij.build.output.BuildOutputParser;
+import com.intellij.build.output.JavacOutputParser;
+import com.intellij.build.output.KotlincOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,12 +23,14 @@ public class GradleOutputParserProvider implements ExternalSystemOutputParserPro
   }
 
   @Override
-  public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTask task) {
-    if (task.getId().getType().equals(ExternalSystemTaskType.RESOLVE_PROJECT)) {
-      return ContainerUtil.list(new GradleSyncOutputParser());
+  public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTaskId taskId) {
+    List<BuildOutputParser> parsers = new SmartList<>();
+    if (taskId.getType().equals(ExternalSystemTaskType.RESOLVE_PROJECT)) {
+      parsers.add(new GradleSyncOutputParser());
     }
-    else {
-      return Collections.emptyList();
-    }
+    parsers.add(new GradleBuildScriptErrorParser());
+    parsers.add(new JavacOutputParser());
+    parsers.add(new KotlincOutputParser());
+    return parsers;
   }
 }

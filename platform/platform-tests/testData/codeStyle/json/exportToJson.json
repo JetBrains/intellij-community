@@ -7,7 +7,11 @@
       "formatter_on_tag": "@formatter:on",
       "formatter_tags_accept_regexp": false,
       "formatter_tags_enabled": false,
+      "indent_size": 4,
+      "indent_style": "space",
       "max_line_length": 120,
+      "smart_tabs": false,
+      "tab_width": 4,
       "visual_guides": [
         42,
         62

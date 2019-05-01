@@ -92,6 +92,13 @@ public abstract class DiffRequestFactory {
                                                   @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
+  public abstract MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable String title,
+                                                  @NotNull List<String> contentTitles) throws InvalidDiffRequestException;
+
+  @NotNull
   public abstract TextMergeRequest createTextMergeRequest(@Nullable Project project,
                                                           @NotNull VirtualFile output,
                                                           @NotNull List<byte[]> byteContents,

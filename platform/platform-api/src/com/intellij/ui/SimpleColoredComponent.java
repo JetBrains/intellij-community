@@ -109,6 +109,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return new MyIterator();
   }
 
+  @NotNull
+  public ColoredIterator iterator(int fromIndex) {
+    MyIterator iterator = new MyIterator();
+    iterator.myIndex = fromIndex - 1;
+    return iterator;
+  }
+
   @SuppressWarnings("unused")
   public boolean isIconOnTheRight() {
     return myIconOnTheRight;
@@ -404,7 +411,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     Font font = getBaseFont();
 
     final FontMetrics metrics = getFontMetrics(font);
-    int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
+    int textHeight = Math.max(getMinHeight(), metrics.getHeight()); //avoid too narrow rows
 
     Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     textHeight += borderInsets.top + borderInsets.bottom;
@@ -418,6 +425,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     return height;
+  }
+
+  protected int getMinHeight() {
+    return JBUI.scale(16);
   }
 
   private Rectangle computePaintArea() {
@@ -855,7 +866,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         else if (attributes.isClickable()) {
           fgColor = ObjectUtils.notNull(attributes.getFgColor(), UIUtil.getLabelForeground());
           Color bg = ObjectUtils.notNull(attributes.getBgColor(), UIUtil.getLabelBackground());
-          drawClickableFrag(g, x1, x2, height, bg);
+          drawClickableFrag(g, x1, x2, height, bg, attributes.isHovered());
         }
         else {
           continue;
@@ -881,15 +892,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     g.fillRect(x, y, width, height);
   }
 
-  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, Color bg) {
+  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, Color bg, boolean hovered) {
     boolean darcula = UIUtil.isUnderDarcula();
     Color c1 = darcula ? bg.brighter() : bg;
     Color c2 = darcula ? bg : bg.darker();
     GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-    g.setPaint(UIUtil.getGradientPaint(x1 + 1, 2, c1, x1 + 1, height - 5, c2));
     RoundRectangle2D.Float shape = new RoundRectangle2D.Float(x1 + 1, 2, x2 - x1 - 2, height - 4, 4, 4);
-    g.fill(shape);
+    if (hovered) {
+      g.setPaint(UIUtil.getGradientPaint(x1 + 1, 2, c1, x1 + 1, height - 5, c2));
+      g.fill(shape);
+    }
     g.setColor(new JBColor(Gray.xCC, new Color(0x757b80)));
     g.draw(shape);
     c.restore();
@@ -1086,7 +1099,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @NotNull
     SimpleTextAttributes getTextAttributes();
 
+    @Nullable
+    Object getTag();
+
     int split(int offset, @NotNull SimpleTextAttributes attributes);
+
+    void setFragment(@NotNull String text);
+
+    void setTag(@Nullable Object tag);
+
+    void setTextAttributes(@NotNull SimpleTextAttributes attributes);
   }
 
   private class MyIterator implements ColoredIterator {
@@ -1120,6 +1142,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
     }
 
+    @Nullable
+    @Override
+    public Object getTag() {
+      synchronized (myFragments) {
+        return myFragments.get(myIndex).tag;
+      }
+    }
+
     @Override
     public int split(int offset, @NotNull SimpleTextAttributes attributes) {
       synchronized (myFragments) {
@@ -1143,7 +1173,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         return myOffset;
       }
     }
-
     @Override
     public boolean hasNext() {
       synchronized (myFragments) {
@@ -1163,6 +1192,27 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setFragment(@NotNull String text) {
+      synchronized (myFragments) {
+        myFragments.get(myIndex).text = text;
+      }
+    }
+
+    @Override
+    public void setTag(@Nullable Object tag) {
+      synchronized (myFragments) {
+        myFragments.get(myIndex).tag = tag;
+      }
+    }
+
+    @Override
+    public void setTextAttributes(@NotNull SimpleTextAttributes attributes) {
+      synchronized (myFragments) {
+        myFragments.get(myIndex).attributes = attributes;
+      }
     }
   }
 

@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  * {@code RecursionManager} assists in distinguishing this situation and allowing caching outside that loop, but disallowing it inside.<p></p>
  *
  * To prevent caching incorrect values, please create a {@code private static final} field of {@link #createGuard} call, and then use
- * {@link RecursionGuard#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
+ * {@link RecursionManager#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
  * on it.<p></p>
  *
  * Note that the above only helps with idempotent recursion loops, that is, the ones that stabilize after one iteration, so that
@@ -73,12 +73,13 @@ public class RecursionManager {
   /**
    * @param id just some string to separate different recursion prevention policies from each other
    * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
+   * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
   @NotNull
-  public static RecursionGuard createGuard(@NonNls final String id) {
-    return new RecursionGuard() {
+  public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
+    return new RecursionGuard<Key>() {
       @Override
-      public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation) {
+      public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
         MyKey realKey = new MyKey(id, key, true);
         final CalculationStack stack = ourStack.get();
 
@@ -131,15 +132,16 @@ public class RecursionManager {
 
       @NotNull
       @Override
-      public List<Object> currentStack() {
-        ArrayList<Object> result = new ArrayList<>();
+      public List<Key> currentStack() {
+        ArrayList<Key> result = new ArrayList<>();
         LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
         for (MyKey pair : map.keySet()) {
           if (pair.guardId.equals(id)) {
-            result.add(pair.userObject);
+            //noinspection unchecked
+            result.add((Key)pair.userObject);
           }
         }
-        return result;
+        return Collections.unmodifiableList(result);
       }
 
       @Override

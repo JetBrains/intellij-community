@@ -26,7 +26,6 @@ import java.util.Set;
 
 public class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
-  private static final int TOKEN_LENGTH_LIMIT = Registry.intValue("ide.spellchecker.token.limit", 400000);
 
   @NotNull
   @Override
@@ -104,9 +103,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           }
         }
 
-        if (element.getTextLength() > TOKEN_LENGTH_LIMIT) {
-          return;
-        }
         tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
       }
     };

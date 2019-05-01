@@ -15,14 +15,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -49,7 +51,7 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
     PsiType returnType = PsiTypesUtil.getMethodReturnType(block);
     if (returnType == null) return null;
 
-    List<PsiReturnStatement> returns = findReturns(block);
+    List<PsiReturnStatement> returns = Arrays.asList(PsiUtil.findReturnStatements(block));
     indicator.checkCanceled();
     indicator.setFraction(0.1);
     FinishMarker marker = FinishMarker.defineFinishMarker(block, returnType, returns);
@@ -58,16 +60,21 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
     PsiCodeBlock copy = (PsiCodeBlock)block.copy();
     indicator.checkCanceled();
     indicator.setFraction(0.3);
-    convertReturns(project, copy, returnType, marker, returns.size(), indicator);
+    PsiLocalVariable variable = convertReturns(project, copy, returnType, marker, returns.size(), indicator);
+    if (variable != null) {
+      PsiJavaToken end = Objects.requireNonNull(copy.getRBrace());
+      copy.addBefore(JavaPsiFacade.getElementFactory(project).createStatementFromText("return " + variable.getName() + ";", copy), end);
+    }
+
     return copy;
   }
 
-  private static void convertReturns(@NotNull Project project,
-                                     PsiCodeBlock block,
-                                     PsiType returnType,
-                                     FinishMarker marker,
-                                     int count,
-                                     ProgressIndicator indicator) {
+  public static PsiLocalVariable convertReturns(@NotNull Project project,
+                                                PsiCodeBlock block,
+                                                PsiType returnType,
+                                                FinishMarker marker,
+                                                int count,
+                                                ProgressIndicator indicator) {
     ExitContext exitContext = new ExitContext(block, returnType, marker);
     int i=0;
 
@@ -80,8 +87,9 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
       ReturnReplacementContext.replaceSingleReturn(project, block, exitContext, returnStatement);
     }
     indicator.setFraction(0.9);
-    exitContext.declareVariables();
+    PsiLocalVariable resultVariable = exitContext.declareVariables();
     indicator.setFraction(0.92);
+    return resultVariable;
   }
 
   @Override
@@ -137,28 +145,6 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
     Visitor visitor = new Visitor();
     block.accept(visitor);
     return visitor.myReturnStatement;
-  }
-
-  @NotNull
-  private static List<PsiReturnStatement> findReturns(PsiCodeBlock block) {
-    List<PsiReturnStatement> result = new ArrayList<>();
-    block.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
-        super.visitReturnStatement(statement);
-        result.add(statement);
-      }
-
-      @Override
-      public void visitExpression(PsiExpression expression) {}
-
-      @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
-
-      @Override
-      public void visitClass(PsiClass aClass) {}
-    });
-    return result;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

@@ -53,6 +53,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,11 +97,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Configure test from data file. Data file is usual java, xml or whatever file that needs to be tested except it
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
-   * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param relativePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
-  protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
+  protected void configureByFile(@TestDataFile @NonNls @NotNull String relativePath) {
     try {
-      String fullPath = getTestDataPath() + filePath;
+      String fullPath = getTestDataPath() + relativePath;
       final File ioFile = new File(fullPath);
       checkCaseSensitiveFS(fullPath, ioFile);
       String fileText = FileUtilRt.loadFile(ioFile, CharsetToolkit.UTF8, true);
@@ -206,8 +207,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @NotNull
   private static Document setupFileEditorAndDocument(@NotNull String fileName, @NotNull String fileText) throws IOException {
-    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
-    EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
+    EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, StandardCharsets.UTF_8);
     PostprocessReformattingAspect.getInstance(ourProject).doPostponedFormatting();
     deleteVFile();
 
@@ -317,7 +318,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     String fileText;
     try {
      checkCaseSensitiveFS(fullPath, ioFile);
-      fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8_CHARSET);
+      fileText = FileUtil.loadFile(ioFile, StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

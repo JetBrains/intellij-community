@@ -26,7 +26,7 @@ import java.util.List;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;
-  private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.of(ArtifactKind.ARTIFACT);
+  private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.noneOf(ArtifactKind.class);
   private boolean includeTransitiveDependencies;
   private List<String> myExcludedDependencies;
 

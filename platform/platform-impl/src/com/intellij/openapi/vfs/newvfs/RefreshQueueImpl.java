@@ -81,7 +81,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     myEventCounter.eventHappened(session);
   }
 
-  private void doScan(RefreshSessionImpl session) {
+  private void doScan(@NotNull RefreshSessionImpl session) {
     try {
       updateSessionMap(session, true);
       session.scan();
@@ -91,7 +91,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private void updateSessionMap(RefreshSession session, boolean add) {
+  private void updateSessionMap(@NotNull RefreshSession session, boolean add) {
     long id = session.getId();
     if (id != 0) {
       synchronized (mySessions) {
@@ -135,5 +135,9 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @Override
-  public void dispose() { }
+  public void dispose() {
+    synchronized (mySessions) {
+      mySessions.forEachValue(session -> { ((RefreshSessionImpl)session).cancel(); return true; });
+    }
+  }
 }

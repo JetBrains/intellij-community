@@ -17,8 +17,9 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.Collections;
+import java.util.function.Supplier;
 
-class InlineMethodHandler extends JavaInlineActionHandler {
+public class InlineMethodHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
   private InlineMethodHandler() {
@@ -31,8 +32,27 @@ class InlineMethodHandler extends JavaInlineActionHandler {
 
   @Override
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
-    PsiMethod method = (PsiMethod)element.getNavigationElement();
-    final PsiCodeBlock methodBody = method.getBody();
+    performInline(project, editor, (PsiMethod)element.getNavigationElement(), false);
+  }
+
+  /**
+   * Try to inline method, displaying UI or error message if necessary
+   * @param project project where method is declared
+   * @param editor active editor where cursor might point to the call site 
+   * @param method method to be inlined
+   * @param allowInlineThisOnly if true, only call-site at cursor will be suggested 
+   *                            (in this case caller must check that cursor points to the valid reference)
+   */
+  public static void performInline(Project project, Editor editor, PsiMethod method, boolean allowInlineThisOnly) {
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+
+    PsiCodeBlock methodBody = method.getBody();
+    Supplier<PsiCodeBlock> specialization = InlineMethodSpecialization.forReference(reference);
+    if (specialization != null) {
+      allowInlineThisOnly = true;
+      methodBody = specialization.get();
+    }
+
     if (methodBody == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -48,23 +68,11 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       return;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (reference != null) {
       final PsiElement refElement = reference.getElement();
-      if (!isEnabledForLanguage(refElement.getLanguage())) {
+      if (!isJavaLanguage(refElement.getLanguage())) {
         String message = RefactoringBundle
           .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
-        return;
-      }
-    }
-    boolean allowInlineThisOnly = false;
-    if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
-      if (reference != null && InlineUtil.getTailCallType(reference) != InlineUtil.TailCallType.None) {
-        allowInlineThisOnly = true;
-      }
-      else {
-        String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
         return;
       }

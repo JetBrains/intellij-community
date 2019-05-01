@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -58,6 +59,15 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
       LOG.warn(io)
     }
   }
+
+  override fun isPotentiallyIgnoredFile(file: VirtualFile): Boolean =
+    runReadAction {
+      if (project.isDisposed) return@runReadAction false
+
+      val filePath = VcsUtil.getFilePath(file)
+      return@runReadAction IgnoredFileProvider.IGNORE_FILE.extensions.any { it.isIgnoredFile(project, filePath) }
+    }
+
 
   private fun removeConfigurationFromVcsIgnore(project: Project, configurationName: String) {
     val projectFileOrConfigDir =
@@ -123,4 +133,5 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
       throw UnsupportedOperationException("Default project not supported")
     }
   }
+
 }

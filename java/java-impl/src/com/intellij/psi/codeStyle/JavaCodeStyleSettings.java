@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -121,6 +122,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION;
 
+  @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
 

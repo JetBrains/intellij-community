@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.parser;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -933,28 +932,8 @@ public class GeneratedParserUtilBase {
     public Parser tokenAdvancer = TOKEN_ADVANCER;
     public boolean altMode;
 
-    final LimitedPool<Variant> VARIANTS = new LimitedPool<>(VARIANTS_POOL_SIZE, new LimitedPool.ObjectFactory<Variant>() {
-      @NotNull
-      @Override
-      public Variant create() {
-        return new Variant();
-      }
-
-      @Override
-      public void cleanup(@NotNull Variant o) {
-      }
-    });
-    final LimitedPool<Frame> FRAMES = new LimitedPool<>(FRAMES_POOL_SIZE, new LimitedPool.ObjectFactory<Frame>() {
-      @NotNull
-      @Override
-      public Frame create() {
-        return new Frame();
-      }
-
-      @Override
-      public void cleanup(@NotNull Frame o) {
-      }
-    });
+    final LimitedPool<Variant> VARIANTS = new LimitedPool<>(VARIANTS_POOL_SIZE, () -> new Variant());
+    final LimitedPool<Frame> FRAMES = new LimitedPool<>(FRAMES_POOL_SIZE, () -> new Frame());
 
     public static ErrorState get(PsiBuilder builder) {
       return ((Builder)builder).state;

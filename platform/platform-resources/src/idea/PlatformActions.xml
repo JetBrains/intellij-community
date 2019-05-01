@@ -571,16 +571,6 @@
           <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
           <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
         </group>
-        <group id="Macros" popup="true">
-          <group id="StandardMacroActions">
-            <action id="PlaybackLastMacro" class="com.intellij.ide.actionMacro.actions.PlaybackLastMacroAction"/>
-            <action id="StartStopMacroRecording" class="com.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction"/>
-            <action id="EditMacros" class="com.intellij.ide.actionMacro.actions.EditMacrosAction"/>
-            <action id="PlaySavedMacrosAction" class="com.intellij.ide.actionMacro.actions.PlaySavedMacros"/>
-          </group>
-          <separator/>
-          <group id="MacrosGroup" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
-        </group>
         <reference ref="EditorToggleColumnMode"/>
         <group id="EditSelectGroup">
           <action id="$SelectAll" class="com.intellij.ide.actions.SelectAllAction"/>
@@ -599,6 +589,16 @@
           </group>
         </group>
         <reference ref="TemplateParametersNavigation"/>
+        <group id="Macros" popup="true">
+          <group id="StandardMacroActions">
+            <action id="PlaybackLastMacro" class="com.intellij.ide.actionMacro.actions.PlaybackLastMacroAction"/>
+            <action id="StartStopMacroRecording" class="com.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction"/>
+            <action id="EditMacros" class="com.intellij.ide.actionMacro.actions.EditMacrosAction"/>
+            <action id="PlaySavedMacrosAction" class="com.intellij.ide.actionMacro.actions.PlaySavedMacros"/>
+          </group>
+          <separator/>
+          <group id="MacrosGroup" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
+        </group>
         <separator/>
         <action id="EmojiAndSymbols" class="com.intellij.ide.actions.MacEmojiAndSymbolsInputAction"/>
       </group>
@@ -612,6 +612,8 @@
         <separator/>
         <group id="ViewRecentActions">
           <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
+          <action id="SwitcherToggleCheckBox" class="com.intellij.ide.actions.Switcher$ToggleCheckBoxAction"
+                  text="Toggle Show Only Edited Files"/>
           <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
           <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>
         </group>
@@ -630,6 +632,7 @@
           <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
           <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
           <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+          <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
         </group>
 
         <group id="EditorToggleActions" popup="true">
@@ -739,17 +742,7 @@
           <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
           <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
           <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
-          <group id="TabsPlacementGroup" popup="true">
-            <action id="TabsPlacementTop" class="com.intellij.ide.actions.TabsPlacementAction$Top"/>
-            <action id="TabsPlacementBottom" class="com.intellij.ide.actions.TabsPlacementAction$Bottom"/>
-            <action id="TabsPlacementLeft" class="com.intellij.ide.actions.TabsPlacementAction$Left"/>
-            <action id="TabsPlacementRight" class="com.intellij.ide.actions.TabsPlacementAction$Right"/>
-            <action id="TabsPlacementNone" class="com.intellij.ide.actions.TabsPlacementAction$None"/>
-            <separator/>
-            <action id="ShowTabsInSingleRow" text="Show Tabs In Single Row" class="com.intellij.ide.actions.ShowTabsInSingleRowAction"/>
-          </group>
-          <action id="TabsAlphabeticalMode" class="com.intellij.ide.actions.TabsAlphabeticalModeSwitcher" text="Sort Tabs By Filename"/>
-          <action id="AddNewTabToTheEndMode" class="com.intellij.ide.actions.TabsAddedToTheEndSwitcher"/>
+          <action id="ConfigureEditorTabs" class="com.intellij.ide.actions.ConfigureEditorTabsAction"/>
         </group>
 
         <group id="Notifications" popup="true">
@@ -840,7 +833,6 @@
       <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
-      <reference ref="ChangeFileEncodingAction"/>
     </group>
 
     <group id="BasicEditorPopupMenu">
@@ -871,9 +863,7 @@
       <action id="OpenEditorInOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
       <reference ref="PinActiveEditorTab"/>
-      <reference ref="TabsPlacementGroup"/>
-      <reference ref="TabsAlphabeticalMode"/>
-      <reference ref="AddNewTabToTheEndMode"/>
+      <reference ref="ConfigureEditorTabs"/>
       <separator/>
       <reference ref="NextTab"/>
       <reference ref="PreviousTab"/>

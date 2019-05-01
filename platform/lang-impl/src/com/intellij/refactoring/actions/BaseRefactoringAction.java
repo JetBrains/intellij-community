@@ -15,7 +15,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -43,6 +42,14 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   @Override
   public boolean startInTransaction() {
     return true;
+  }
+
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context,
+                                                        @NotNull String place) {
+    return isAvailableOnElementInEditorAndFile(element, editor, file, context);
   }
 
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
@@ -174,7 +181,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
 
       boolean isVisible = ContainerUtil.find(languages, myLanguageCondition) != null;
       if (isVisible) {
-        boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext);
+        boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext, e.getPlace());
         if (!isEnabled) {
           disableAction(e);
         }
@@ -227,7 +234,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   }
 
   protected boolean isAvailableForLanguage(Language language) {
-    return language.isKindOf(StdFileTypes.JAVA.getLanguage());
+    return true;
   }
 
   protected boolean isAvailableForFile(PsiFile file) {

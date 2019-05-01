@@ -157,7 +157,10 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
         suitableVersions.add(version);
       }
     }
-    return suitableVersions.isEmpty() ? "RELEASE" : Collections.max(suitableVersions, VersionComparatorUtil.COMPARATOR);
+    if (suitableVersions.isEmpty()) {
+      return mavenId.getVersion() == null ? "RELEASE" : mavenId.getVersion();
+    }
+    return Collections.max(suitableVersions, VersionComparatorUtil.COMPARATOR);
   }
 
   @Nullable

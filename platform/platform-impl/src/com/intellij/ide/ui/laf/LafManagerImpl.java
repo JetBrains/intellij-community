@@ -470,14 +470,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     uiDefaults.put("Balloon.error.textInsets", new JBInsets(3, 8, 3, 8).asUIResource());
-    if (Registry.is("ide.tree.ui.experimental")) {
-      uiDefaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
-      uiDefaults.put("Tree.repaintWholeRow", true);
-    }
 
     patchFileChooserStrings(uiDefaults);
 
     patchLafFonts(uiDefaults);
+
+    patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
 
@@ -534,6 +532,31 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
+  }
+
+  private static void patchTreeUI(UIDefaults defaults) {
+    if (Registry.is("ide.tree.ui.experimental")) {
+      defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
+      defaults.put("Tree.repaintWholeRow", true);
+    }
+    if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
+      defaults.put("Tree.collapsedIcon", LafIconLookup.getIcon("treeCollapsed"));
+      defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"));
+    }
+    if (isUnsupported(defaults.getIcon("Tree.expandedIcon"))) {
+      defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
+      defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
+    }
+  }
+
+  /**
+   * @param icon an icon retrieved from L&F
+   * @return {@code true} if an icon is not specified or if it is declared in some Swing L&F
+   * (such icons do not have a variant to paint in selected row)
+   */
+  private static boolean isUnsupported(@Nullable Icon icon) {
+    String name = icon == null ? null : icon.getClass().getName();
+    return name == null || name.startsWith("javax.swing.plaf.") || name.startsWith("com.sun.java.swing.plaf.");
   }
 
   private static void patchHiDPI(UIDefaults defaults) {

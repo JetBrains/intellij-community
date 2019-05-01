@@ -12,8 +12,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.settingsRepository.IcsApplicationLoadListener"/>
-    <projectService serviceInterface="org.jetbrains.settingsRepository.ProjectId"
-                    serviceImplementation="org.jetbrains.settingsRepository.ProjectId"/>
+    <projectService serviceImplementation="org.jetbrains.settingsRepository.ProjectId"/>
 
     <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="ics"
                              key="ics.settings" bundle="messages.IcsBundle"/>

@@ -4,12 +4,9 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OffsetIcon;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.*;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -98,6 +95,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   protected ComboPopup createPopup() {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
+      //noinspection unchecked
       return new DarculaJBPopupComboPopup<Object>(comboBox);
     }
     return new CustomComboPopup(comboBox);
@@ -285,14 +283,29 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     Icon icon = null;
     Insets iPad = null;
+    Border border = null;
     if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent scc = (SimpleColoredComponent)c;
-      iPad = scc.getIpad();
-      scc.setIpad(JBUI.emptyInsets());
-      icon = scc.getIcon();
-      if (!scc.isIconOnTheRight() && icon instanceof OffsetIcon) {
-        scc.setIcon(((OffsetIcon)icon).getIcon());
+      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+      iPad = cc.getIpad();
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
+      cc.setIpad(JBUI.emptyInsets());
+      icon = cc.getIcon();
+      if (!cc.isIconOnTheRight()) {
+        cc.setIcon(OffsetIcon.getOriginalIcon(icon));
       }
+    }
+    else if (c instanceof JLabel) {
+      JLabel cc = (JLabel)c;
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
+      icon = cc.getIcon();
+      cc.setIcon(OffsetIcon.getOriginalIcon(icon));
+    }
+    else if (c instanceof JComponent) {
+      JComponent cc = (JComponent)c;
+      border = cc.getBorder();
+      cc.setBorder(JBUI.Borders.empty());
     }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
@@ -303,9 +316,19 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent scc = (SimpleColoredComponent)c;
-      scc.setIpad(iPad);
-      scc.setIcon(icon);
+      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+      cc.setIpad(iPad);
+      cc.setIcon(icon);
+      cc.setBorder(border);
+    }
+    else if (c instanceof JLabel) {
+      JLabel cc = (JLabel)c;
+      cc.setBorder(border);
+      cc.setIcon(icon);
+    }
+    else if (c instanceof JComponent) {
+      JComponent cc = (JComponent)c;
+      cc.setBorder(border);
     }
   }
 
@@ -576,8 +599,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected Rectangle rectangleForCurrentValue() {
-    Rectangle rect = super.rectangleForCurrentValue();
+    Rectangle rect = new Rectangle(comboBox.getSize());
+    Insets i = getInsets();
+
+    JBInsets.removeFrom(rect, i);
+    rect.width -= arrowButton != null ? (arrowButton.getWidth() - i.left) : rect.height;
     JBInsets.removeFrom(rect, padding);
+
     rect.width += comboBox.isEditable() ? 0 : padding.right;
     return rect;
   }
@@ -591,11 +619,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configurePopup() {
       super.configurePopup();
-
       Border border = UIManager.getBorder("ComboPopup.border");
-      if (border != null) {
-        setBorder(border);
-      }
+      setBorder(border != null ? border :
+                SystemInfo.isMac ? JBUI.Borders.empty() :
+                IdeBorderFactory.createBorder());
+      putClientProperty("JComboBox.isCellEditor", DarculaUIUtil.isTableCellEditor(comboBox));
     }
 
     @Override
@@ -638,49 +666,48 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configureList() {
       super.configureList();
-      wrapRenderer();
+      list.setBackground(comboBox.isEditable() ? UIManager.getColor("TextField.background")
+                                               : UIManager.getColor("Label.background"));
+      //noinspection unchecked
+      list.setCellRenderer(new MyDelegateRenderer());
+    }
+
+    protected void customizeListRendererComponent(JComponent component) {
+      component.setBorder(JBUI.Borders.empty(2, 8));
     }
 
     @Override
-
     protected PropertyChangeListener createPropertyChangeListener() {
       PropertyChangeListener listener = super.createPropertyChangeListener();
       return new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
           listener.propertyChange(evt);
-          if ("renderer".equals(evt.getPropertyName())) {
-            wrapRenderer();
+          if ("renderer".equals(evt.getPropertyName()) ||
+              "editable".equals(evt.getPropertyName())) {
+            configureList();
+            if (isVisible()) {
+              hide();
+            }
           }
         }
       };
     }
 
-    @SuppressWarnings("unchecked")
-    protected void wrapRenderer() {
-      ListCellRenderer<Object> renderer = list.getCellRenderer();
-      if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
-        list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
-      }
-    }
-  }
-
-  private static class ComboBoxRendererWrapper<T> implements ListCellRenderer<T> {
-    private final ListCellRenderer<T> myRenderer;
-
-    ComboBoxRendererWrapper(@NotNull ListCellRenderer<T> renderer) {
-      myRenderer = renderer;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      return new NonOpaquePanel((JComponent)c) {
-        @Override
-        public Dimension getPreferredSize() {
-          return UIUtil.updateListRowHeight(super.getPreferredSize());
+    private class MyDelegateRenderer implements ListCellRenderer {
+      @Override
+      public Component getListCellRendererComponent(JList list,
+                                                    Object value,
+                                                    int index,
+                                                    boolean isSelected,
+                                                    boolean cellHasFocus) {
+        //noinspection unchecked
+        Component component = comboBox.getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (component instanceof JComponent) {
+          customizeListRendererComponent((JComponent)component);
         }
-      };
+        return component;
+      }
     }
   }
 }

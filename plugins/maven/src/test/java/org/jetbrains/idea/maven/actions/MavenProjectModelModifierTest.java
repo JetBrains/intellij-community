@@ -42,9 +42,6 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   }
 
   public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -127,9 +124,6 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   }
 
   public void testAddModuleDependency() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -147,9 +141,6 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   }
 
   public void testAddLibraryDependency() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +

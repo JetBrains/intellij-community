@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
@@ -146,7 +147,7 @@ public class PluginLogo {
         }
 
         File[] files = libFile.listFiles();
-        if (files == null || files.length == 0) {
+        if (ArrayUtil.isEmpty(files)) {
           putIcon(idPlugin, lazyIcon, null, null);
           return;
         }
@@ -207,8 +208,8 @@ public class PluginLogo {
   }
 
   private static boolean tryLoadDirIcons(@NotNull String idPlugin, @NotNull LazyPluginLogoIcon lazyIcon, @NotNull File path) {
-    PluginLogoIconProvider light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + PLUGIN_ICON));
-    PluginLogoIconProvider dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + PLUGIN_ICON_DARK));
+    PluginLogoIconProvider light = tryLoadIcon(path, true);
+    PluginLogoIconProvider dark = tryLoadIcon(path, false);
 
     if (light != null || dark != null) {
       putIcon(idPlugin, lazyIcon, light, dark);
@@ -226,8 +227,8 @@ public class PluginLogo {
       return false;
     }
     try (ZipFile zipFile = new ZipFile(path)) {
-      PluginLogoIconProvider light = tryLoadIcon(zipFile, PLUGIN_ICON);
-      PluginLogoIconProvider dark = tryLoadIcon(zipFile, PLUGIN_ICON_DARK);
+      PluginLogoIconProvider light = tryLoadIcon(zipFile, true);
+      PluginLogoIconProvider dark = tryLoadIcon(zipFile, false);
       if (put || light != null || dark != null) {
         putIcon(idPlugin, lazyIcon, light, dark);
         return true;
@@ -279,15 +280,25 @@ public class PluginLogo {
   }
 
   @Nullable
+  private static PluginLogoIconProvider tryLoadIcon(@NotNull File dirFile, boolean light) {
+    return tryLoadIcon(new File(dirFile, getIconFileName(light)));
+  }
+
+  @Nullable
   private static PluginLogoIconProvider tryLoadIcon(@NotNull File iconFile) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     return iconFile.exists() && iconFile.length() > 0 ? loadFileIcon(() -> new FileInputStream(iconFile)) : null;
   }
 
   @Nullable
-  private static PluginLogoIconProvider tryLoadIcon(@NotNull ZipFile zipFile, @NotNull String name) {
-    ZipEntry iconEntry = zipFile.getEntry(PluginManagerCore.META_INF + name);
+  private static PluginLogoIconProvider tryLoadIcon(@NotNull ZipFile zipFile, boolean light) {
+    ZipEntry iconEntry = zipFile.getEntry(getIconFileName(light));
     return iconEntry == null ? null : loadFileIcon(() -> zipFile.getInputStream(iconEntry));
+  }
+
+  @NotNull
+  static String getIconFileName(boolean light) {
+    return PluginManagerCore.META_INF + (light ? PLUGIN_ICON : PLUGIN_ICON_DARK);
   }
 
   @Nullable

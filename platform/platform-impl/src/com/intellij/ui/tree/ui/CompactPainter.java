@@ -5,6 +5,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Component;
 import java.awt.Graphics;
 
 final class CompactPainter implements Control.Painter {
@@ -39,7 +40,7 @@ final class CompactPainter implements Control.Painter {
   }
 
   @Override
-  public void paint(@NotNull Graphics g, int x, int y, int width, int height,
+  public void paint(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height,
                     @NotNull Control control, int depth, boolean leaf, boolean expanded, boolean selected) {
     if (depth <= 0) return; // do not paint
     if (!paintLines && leaf) return; // nothing to paint
@@ -61,7 +62,7 @@ final class CompactPainter implements Control.Painter {
       }
     }
     if (leaf) return; // do not paint control for a leaf node
-    control.paint(g, controlX, y, controlWidth, height, expanded, selected);
+    control.paint(c, g, controlX, y, controlWidth, height, expanded, selected);
   }
 
   private int getLeftIndent() {

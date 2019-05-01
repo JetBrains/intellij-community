@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -831,60 +832,96 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.name");
+      return CommonQuickFixBundle.message("fix.eliminate.folded.if.present.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.description");
+      return CommonQuickFixBundle.message("fix.eliminate.folded.if.present.description");
     }
 
     @Nullable
     @Override
     public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
-      PsiLambdaExpression mapLambda = getLambda(call.getArgumentList().getExpressions()[0]);
-      if (mapLambda == null) return null;
-      PsiMethodCallExpression maybeIfPresentCall = ExpressionUtils.getCallForQualifier(call);
-      if (!OPTIONAL_IF_PRESENT.test(maybeIfPresentCall)) return null;
-      PsiLambdaExpression ifPresentOuterLambda = getLambda(maybeIfPresentCall.getArgumentList().getExpressions()[0]);
-      if (ifPresentOuterLambda == null) return null;
-      PsiExpression argument = LambdaUtil.extractSingleExpressionFromBody(ifPresentOuterLambda.getBody());
-      PsiMethodCallExpression insideLambdaCall = tryCast(argument, PsiMethodCallExpression.class);
-      if (insideLambdaCall == null) return null;
-      if (!OPTIONAL_IF_PRESENT.test(insideLambdaCall)) return null;
-      return new Context(mapLambda, call, insideLambdaCall, maybeIfPresentCall);
+      PsiExpression outerIfPresentQualifier = call.getMethodExpression().getQualifierExpression();
+      PsiMethodCallExpression qualifierCall = tryCast(outerIfPresentQualifier, PsiMethodCallExpression.class);
+
+      PsiLambdaExpression outerIfPresentArgument = tryCast(call.getArgumentList().getExpressions()[0], PsiLambdaExpression.class);
+      if (outerIfPresentArgument == null) return null;
+      if (outerIfPresentArgument.getParameterList().getParametersCount() != 1) return null;
+      PsiParameter parameter = outerIfPresentArgument.getParameterList().getParameters()[0];
+      if (parameter == null) return null;
+      String outerIfPresentParameterName = parameter.getName();
+      if (outerIfPresentParameterName == null) return null;
+      PsiExpression outerIfPresentBodyExpr = LambdaUtil.extractSingleExpressionFromBody(outerIfPresentArgument.getBody());
+      PsiMethodCallExpression outerIfPresentBody = tryCast(outerIfPresentBodyExpr, PsiMethodCallExpression.class);
+      if (!OPTIONAL_IF_PRESENT.test(outerIfPresentBody)) return null;
+      PsiExpression innerIfPresentQualifier = outerIfPresentBody.getMethodExpression().getQualifierExpression();
+      PsiExpression nonTrivialQualifier = ExpressionUtils.isReferenceTo(innerIfPresentQualifier, parameter) ? null : innerIfPresentQualifier;
+      PsiExpression innerIfPresentArgument = outerIfPresentBody.getArgumentList().getExpressions()[0];
+
+      PsiMethodCallExpression mapBefore = null;
+      if (OPTIONAL_MAP.test(qualifierCall)) {
+        // case when map(Value::getOptional).ifPresent(p -> p.ifPresent(...))
+        if (isOptionalTypeParameter(qualifierCall.getType())) {
+          mapBefore = qualifierCall;
+        }
+      }
+      return new Context(mapBefore, nonTrivialQualifier, outerIfPresentParameterName, innerIfPresentArgument);
+    }
+
+    private static boolean isOptionalTypeParameter(@Nullable PsiType type) {
+      PsiClassType classType = tryCast(type, PsiClassType.class);
+      if (classType == null) return false;
+      if (classType.getParameterCount() != 1) return false;
+      PsiType typeParameter = classType.getParameters()[0];
+      PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(typeParameter);
+      if (parameterClass == null) return false;
+      return JAVA_UTIL_OPTIONAL.equals(parameterClass.getQualifiedName());
     }
 
     @Override
     public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull Context context) {
+      PsiMethodCallExpression mapBefore = context.myMapBefore;
       CommentTracker ct = new CommentTracker();
-      PsiExpression qualifier = Objects.requireNonNull(context.myMapCall.getMethodExpression().getQualifierExpression());
-      String text = ct.text(qualifier) + ".flatMap(" + ct.text(context.myMapLambda) + ")" + ".ifPresent" + ct.text(context.myInnerIfPresentCall.getArgumentList());
-      PsiElement result = ct.replaceAndRestoreComments(context.myOuterIfPresentCall, text);
+      StringBuilder sb = new StringBuilder();
+      PsiExpression qualifer = call.getMethodExpression().getQualifierExpression();
+      assert qualifer != null;
+      sb.append(ct.text(qualifer)).append(".");
+      if (mapBefore != null) {
+        PsiExpression mapArgument = mapBefore.getArgumentList().getExpressions()[0];
+        sb.append("flatMap(").append(ct.text(mapArgument)).append(").");
+      }
+      PsiExpression lambdaBodyAfter = context.myMapLambdaBodyAfter;
+      if (lambdaBodyAfter != null) {
+        sb.append("flatMap(").append(context.myOuterIfPresentVarName).append("->").append(ct.text(lambdaBodyAfter)).append(").");
+      }
+      sb.append("ifPresent(").append(ct.text(context.myInnerIfPresentArgument)).append(")");
+      PsiElement result = ct.replaceAndRestoreComments(call, sb.toString());
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
 
     @NotNull
     @Override
     public CallMatcher getMatcher() {
-      return OPTIONAL_MAP;
+      return OPTIONAL_IF_PRESENT;
     }
 
-    private static class Context {
-      private final @NotNull PsiExpression myMapLambda;
-      private final @NotNull PsiMethodCallExpression myMapCall;
-      private final @NotNull PsiMethodCallExpression myInnerIfPresentCall;
-      private final @NotNull PsiMethodCallExpression myOuterIfPresentCall;
+    class Context {
+      @Nullable PsiMethodCallExpression myMapBefore;
+      @Nullable PsiExpression myMapLambdaBodyAfter;
+      @NotNull String myOuterIfPresentVarName;
+      @NotNull PsiExpression myInnerIfPresentArgument;
 
-      private Context(@NotNull PsiExpression lambda,
-                      @NotNull PsiMethodCallExpression mapCall,
-                      @NotNull PsiMethodCallExpression innerIfPresentCall,
-                      @NotNull PsiMethodCallExpression outerIfPresentCall) {
-        myMapLambda = lambda;
-        myMapCall = mapCall;
-        myInnerIfPresentCall = innerIfPresentCall;
-        myOuterIfPresentCall = outerIfPresentCall;
+      Context(@Nullable PsiMethodCallExpression mapBefore,
+              @Nullable PsiExpression mapLambdaBodyAfter,
+              @NotNull String outerIfPresentVarName,
+              @NotNull PsiExpression innerIfPresentArgument) {
+        myMapBefore = mapBefore;
+        myMapLambdaBodyAfter = mapLambdaBodyAfter;
+        myOuterIfPresentVarName = outerIfPresentVarName;
+        myInnerIfPresentArgument = innerIfPresentArgument;
       }
     }
   }

@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.vcs.git" />
+    <orderEntry type="library" name="change-reminder-prediction-model" level="project" />
   </component>
 </module>

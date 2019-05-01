@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
@@ -21,6 +22,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
@@ -145,7 +150,7 @@ public class CommonCodeStyleSettings {
     return LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(myLanguage);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     DefaultJDOMExternalizer.readExternal(this, element);
     if (myIndentOptions != null) {
       Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
@@ -160,7 +165,7 @@ public class CommonCodeStyleSettings {
     mySoftMargins.deserializeFrom(element);
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     CommonCodeStyleSettings defaultSettings = getDefaultSettings();
     Set<String> supportedFields = getSupportedFields();
     if (supportedFields != null) {
@@ -327,8 +332,10 @@ public class CommonCodeStyleSettings {
   public static final int NEXT_LINE_IF_WRAPPED = 5;
 
   @MagicConstant(intValues = {END_OF_LINE, NEXT_LINE, NEXT_LINE_SHIFTED, NEXT_LINE_SHIFTED2, NEXT_LINE_IF_WRAPPED})
+  @Retention(RetentionPolicy.RUNTIME)
   public @interface BraceStyleConstant {}
 
+  @Property(externalName = "block_brace_style")
   @BraceStyleConstant public int BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int CLASS_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
@@ -812,11 +819,17 @@ public class CommonCodeStyleSettings {
 
   //----------------- WRAPPING ---------------------------
 
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.FIELD)
+  public @interface WrapConstant {
+  }
+
   public static final int DO_NOT_WRAP = 0x00;
   public static final int WRAP_AS_NEEDED = 0x01;
   public static final int WRAP_ALWAYS = 0x02;
   public static final int WRAP_ON_EVERY_ITEM = 0x04;
 
+  @WrapConstant
   public int CALL_PARAMETERS_WRAP = DO_NOT_WRAP;
   public boolean PREFER_PARAMETERS_WRAP = false;
   @Property(externalName = "call_parameters_new_line_after_left_paren")
@@ -824,24 +837,31 @@ public class CommonCodeStyleSettings {
   @Property(externalName = "call_parameters_right_paren_on_new_line")
   public boolean CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int METHOD_PARAMETERS_WRAP = DO_NOT_WRAP;
   @Property(externalName = "method_parameters_new_line_after_left_paren")
   public boolean METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
   @Property(externalName = "method_parameters_right_paren_on_new_line")
   public boolean METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int RESOURCE_LIST_WRAP = DO_NOT_WRAP;
   @Property(externalName = "resource_list_new_line_after_left_paren")
   public boolean RESOURCE_LIST_LPAREN_ON_NEXT_LINE = false;
   @Property(externalName = "resource_list_right_paren_on_new_line")
   public boolean RESOURCE_LIST_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int EXTENDS_LIST_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int THROWS_LIST_WRAP = DO_NOT_WRAP;
 
+  @WrapConstant
   public int EXTENDS_KEYWORD_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int THROWS_KEYWORD_WRAP = DO_NOT_WRAP;
 
+  @WrapConstant
   public int METHOD_CALL_CHAIN_WRAP = DO_NOT_WRAP;
   public boolean WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
 
@@ -850,12 +870,15 @@ public class CommonCodeStyleSettings {
   @Property(externalName = "parentheses_expression_right_paren_on_new_line")
   public boolean PARENTHESES_EXPRESSION_RPAREN_WRAP = false;
 
+  @WrapConstant
   public int BINARY_OPERATION_WRAP = DO_NOT_WRAP;
   public boolean BINARY_OPERATION_SIGN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int TERNARY_OPERATION_WRAP = DO_NOT_WRAP;
   public boolean TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public boolean MODIFIER_LIST_WRAP = false;
 
   public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
@@ -864,18 +887,21 @@ public class CommonCodeStyleSettings {
   public boolean KEEP_SIMPLE_CLASSES_IN_ONE_LINE = false;
   public boolean KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
 
+  @WrapConstant
   public int FOR_STATEMENT_WRAP = DO_NOT_WRAP;
   @Property(externalName = "for_statement_new_line_after_left_paren")
   public boolean FOR_STATEMENT_LPAREN_ON_NEXT_LINE = false;
   @Property(externalName = "for_statement_right_paren_on_new_line")
   public boolean FOR_STATEMENT_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int ARRAY_INITIALIZER_WRAP = DO_NOT_WRAP;
   @Property(externalName = "array_initializer_new_line_after_left_brace")
   public boolean ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = false;
   @Property(externalName = "array_initializer_right_brace_on_new_line")
   public boolean ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
   public boolean PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
 
@@ -884,6 +910,7 @@ public class CommonCodeStyleSettings {
 
   public boolean WRAP_COMMENTS = false;
 
+  @WrapConstant
   public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
   public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
 
@@ -906,10 +933,15 @@ public class CommonCodeStyleSettings {
 
   //-------------- Annotation formatting settings-------------------------------------------
 
+  @WrapConstant
   public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
 
   @Property(externalName = "space_before_annotation_parameter_list")
@@ -920,6 +952,7 @@ public class CommonCodeStyleSettings {
 
 
   //-------------------------Enums----------------------------------------------------------
+  @WrapConstant
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
 
   //-------------------------Force rearrange settings---------------------------------------
@@ -975,24 +1008,29 @@ public class CommonCodeStyleSettings {
     private boolean myOverrideLanguageOptions;
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
       deserialize(element);
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       serialize(element, DEFAULT_INDENT_OPTIONS);
     }
 
     public void serialize(@NotNull Element indentOptionsElement, @Nullable IndentOptions defaultOptions) {
-      XmlSerializer.serializeObjectInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
-        @Override
-        protected void configure(@NotNull Object o) {
-          if (o instanceof IndentOptions && defaultOptions != null) {
-            ((IndentOptions)o).copyFrom(defaultOptions);
+      SerializationFilter filter = null;
+      if (defaultOptions != null) {
+        //noinspection deprecation
+        filter = new SkipDefaultValuesSerializationFilters() {
+          @Override
+          protected void configure(@NotNull Object o) {
+            if (o instanceof IndentOptions) {
+              ((IndentOptions)o).copyFrom(defaultOptions);
+            }
           }
-        }
-      });
+        };
+      }
+      XmlSerializer.serializeObjectInto(this, indentOptionsElement, filter);
     }
 
     public void deserialize(Element indentOptionsElement) {

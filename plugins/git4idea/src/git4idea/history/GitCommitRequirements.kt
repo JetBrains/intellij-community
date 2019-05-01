@@ -5,8 +5,7 @@ import com.intellij.openapi.util.registry.Registry
 
 class GitCommitRequirements(val includeRootChanges: Boolean = true,
                             val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GIT_CONFIG,
-                            val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF,
-                            val preserveOrder: Boolean = true) {
+                            val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
 
   fun configParameters(): List<String> {
     val result = mutableListOf<String>()

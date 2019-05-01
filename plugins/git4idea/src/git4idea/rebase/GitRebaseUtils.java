@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.repo.Repository;
@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -21,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -213,7 +213,7 @@ public class GitRebaseUtils {
     File nextFile = new File(rebaseDir, "next");
     int next;
     try {
-      next = Integer.parseInt(FileUtil.loadFile(nextFile, CharsetToolkit.UTF8_CHARSET).trim());
+      next = Integer.parseInt(FileUtil.loadFile(nextFile, StandardCharsets.UTF_8).trim());
     }
     catch (Exception e) {
       LOG.warn("Failed to load next commit number from file " + nextFile.getPath(), e);
@@ -222,7 +222,7 @@ public class GitRebaseUtils {
     File commitFile = new File(rebaseDir, String.format("%04d", next));
     String hash = null;
     String subject = null;
-    try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(commitFile), CharsetToolkit.UTF8_CHARSET))) {
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(commitFile), StandardCharsets.UTF_8))) {
       String line;
       while ((line = in.readLine()) != null) {
         if (line.startsWith("From ")) {

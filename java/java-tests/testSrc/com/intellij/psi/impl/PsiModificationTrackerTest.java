@@ -15,7 +15,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -35,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -161,7 +165,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
   }
 
   public void testClassShouldNotAppearWithoutEvents_WithPsi() throws IOException {
-    final VirtualFile file = createTempFile("java", null, "", CharsetToolkit.UTF8_CHARSET);
+    final VirtualFile file = createTempFile("java", null, "", StandardCharsets.UTF_8);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
@@ -194,7 +198,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     final PsiModificationTracker tracker = psiManager.getModificationTracker();
 
-    final VirtualFile file = createTempFile("java", null, "", CharsetToolkit.UTF8_CHARSET);
+    final VirtualFile file = createTempFile("java", null, "", StandardCharsets.UTF_8);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     assertNull(facade.findClass("Foo", allScope));
@@ -405,7 +409,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
   private PsiFile addFileToProject(String fileName, String text) throws IOException {
     File file = new File(getProject().getBasePath(), fileName);
     file.getParentFile().mkdirs();
-    setContentOnDisk(file, null, text, CharsetToolkit.UTF8_CHARSET);
+    setContentOnDisk(file, null, text, StandardCharsets.UTF_8);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     return PsiManager.getInstance(getProject()).findFile(virtualFile);
   }

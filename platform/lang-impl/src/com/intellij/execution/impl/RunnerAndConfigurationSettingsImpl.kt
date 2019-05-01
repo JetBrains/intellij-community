@@ -11,8 +11,8 @@ import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -318,11 +318,19 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     val runners = THashSet<ProgramRunner<*>>()
     runners.addAll(runnerSettings.settings.keys)
     runners.addAll(configurationPerRunnerSettings.settings.keys)
+    var runnerFound = false
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
         val runnerWarning = doCheck { configuration.checkRunnerSettings(runner, runnerSettings.settings[runner], configurationPerRunnerSettings.settings[runner]) }
-        if (warning == null && runnerWarning != null) warning = runnerWarning
+        if (runnerWarning != null) {
+          if (warning == null) warning = runnerWarning
+        } else {
+          runnerFound = true // there is at least one runner to run specified configuration
+        }
       }
+    }
+    if (executor != null && executor != DefaultRunExecutor.getRunExecutorInstance() && !runnerFound) {
+      throw RuntimeConfigurationError(executor.id + ": there are no runners for " + configuration)
     }
     if (executor != null) {
       val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }

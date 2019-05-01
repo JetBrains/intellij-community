@@ -21,7 +21,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,7 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 class OutputTabAdapter extends ProcessAdapter {
     private static final int CONNECT_TIMEOUT = Integer.parseInt(System.getProperty("xslt.connect.timeout", "8000"));
@@ -64,7 +64,7 @@ class OutputTabAdapter extends ProcessAdapter {
                         return;
                     }
 
-                    final InputStreamReader reader = new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET);
+                    final InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
                     final HighlightingProcessHandler process = new HighlightingProcessHandler(reader) {
                         private boolean mySelectionChanged;
 

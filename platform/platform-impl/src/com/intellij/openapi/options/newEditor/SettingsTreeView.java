@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -21,7 +22,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.tree.ui.Control;
 import com.intellij.ui.tree.ui.DefaultControl;
-import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.CachingSimpleNode;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.GraphicsUtil;
@@ -74,8 +78,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     .setRestartTimerOnAdd(true);
 
   private Configurable myQueuedConfigurable;
-  private boolean myPaintInternalInfo;
-
   private MyControl myControl;
 
   public SettingsTreeView(SettingsFilter filter, ConfigurableGroup[] groups) {
@@ -123,8 +125,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         if (myHeader == null) {
           myHeader = new JLabel();
           myHeader.setForeground(UIUtil.getTreeForeground());
-          myHeader.setIconTextGap(ICON_GAP);
-          myHeader.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
+          myHeader.setIconTextGap(JBUI.scale(ICON_GAP));
+          myHeader.setBorder(JBUI.Borders.empty(2, 10 + getLeftMargin(0), 0, 0));
         }
         myHeader.setFont(myTree.getFont());
         myHeader.setIcon(getIcon(null));
@@ -168,18 +170,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         select(node == null ? null : node.myConfigurable);
       }
     });
-    if (Registry.is("show.configurables.ids.in.settings")) {
-      new HeldDownKeyListener() {
-        @Override
-        protected void heldKeyTriggered(JComponent component, boolean pressed) {
-          myPaintInternalInfo = pressed;
-          SettingsTreeView.this.setMinimumSize(null);
-          // an easy way to repaint the tree
-          ((Tree)component).setCellRenderer(new MyRenderer());
-        }
-      }.installOn(myTree);
-    }
-
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
@@ -222,7 +212,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (expanded != null) control.paint(g, x, y, getIconWidth(), getIconHeight(), expanded, false);
+        if (expanded != null) control.paint(c, g, x, y, getIconWidth(), getIconHeight(), expanded, false);
       }
     }
   }
@@ -560,13 +550,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     Pair<Component, ConfigurableTreeRenderer.Layout> myRenderInfo;
 
     MyRenderer() {
-      setLayout(new BorderLayout(ICON_GAP, 0));
+      setLayout(new BorderLayout(JBUI.scale(ICON_GAP - 1), 0));
       myNodeIcon.setName(NODE_ICON);
       myTextLabel.setOpaque(false);
+      myTextLabel.setIpad(JBUI.insets(1, 0));
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
-      setBorder(BorderFactory.createEmptyBorder(1, 10, 3, 10));
+      setBorder(JBUI.Borders.empty(1, 10, 3, 10));
     }
 
     @Override
@@ -633,7 +624,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         nodeIcon = getIcon((DefaultMutableTreeNode)value);
       }
       myNodeIcon.setIcon(nodeIcon);
-      if (node != null && myPaintInternalInfo) {
+      if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
         String id = node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getId() :
                     node.myConfigurable instanceof SearchableConfigurable ? ((SearchableConfigurable)node.myConfigurable).getId() :
                     node.myConfigurable.getClass().getSimpleName();
@@ -885,7 +876,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     @Override
     protected int getRowX(int row, int depth) {
-      return getLeftMargin(depth - 1);
+      return JBUI.scale(getLeftMargin(depth - 1));
     }
   }
 

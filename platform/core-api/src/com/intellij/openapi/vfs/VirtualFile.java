@@ -41,7 +41,6 @@ import java.nio.charset.Charset;
  * @see VirtualFileManager
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
-  static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   /**
@@ -318,8 +317,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @return the {@link FileType} of this file.
-   * Returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if file type cannot be determined (i.e. file type is not registered via {@link FileTypeRegistry}).
+   * Returns the {@link FileType} of this file, or {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if a type cannot be determined
+   * (i.e. file type is not registered via {@link FileTypeRegistry}).
    */
   @NotNull
   public FileType getFileType() {
@@ -738,7 +737,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public boolean isRecursiveOrCircularSymLink() {
     if (!is(VFileProperty.SYMLINK)) return false;
-    VirtualFile resolved = getCanonicalFile();;
+    VirtualFile resolved = getCanonicalFile();
     // invalid symlink
     if (resolved == null) return false;
     // if it's recursive

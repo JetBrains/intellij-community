@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -113,18 +114,15 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     Map<AnAction, GroupMapping> keymapActionGroups = new HashMap<>();
     collectActions(keymapActionGroups, keymapOthers, emptyList(), true);
-    for (AnAction action : keymapActionGroups.keySet()) {
-      // Let menu groups have priority over keymap (and do not introduce ambiguity)
-      if (!myActionGroups.containsKey(action)) {
-        myActionGroups.put(action, keymapActionGroups.get(action));
-      }
-    }
+    // Let menu groups have priority over keymap (and do not introduce ambiguity)
+    keymapActionGroups.forEach(myActionGroups::putIfAbsent);
   }
 
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
-    if (myProject != null && !myProject.isDisposed() && myEditor != null && !myEditor.isDisposed()) {
+    if (myProject != null && !myProject.isDisposed() && !DumbService.isDumb(myProject) &&    
+        myEditor != null && !myEditor.isDisposed()) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
       ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
       if (children != null) {
@@ -148,11 +146,13 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.enabled.actions.found");
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.actions.found");
@@ -266,6 +266,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
   }
 
+  @NotNull
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new GotoActionListCellRenderer(this::getGroupName);
@@ -324,7 +325,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   @NotNull
-  public Object[] getElementsByName(String id, boolean checkBoxState, String pattern) {
+  public Object[] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 

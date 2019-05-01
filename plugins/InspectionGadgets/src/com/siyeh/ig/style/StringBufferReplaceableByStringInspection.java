@@ -33,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARSEQUENCE;
+import static com.intellij.util.ObjectUtils.tryCast;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -173,7 +176,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             final CommentTracker tracker = new CommentTracker();
             final StringBuilder stringExpression = buildStringExpression(stringBuilderExpression, tracker, new StringBuilder());
             if (stringExpression != null) {
-              tracker.replaceExpressionAndRestoreComments(stringBuilderExpression, stringExpression.toString());
+              String replacement = addConversionToStringIfNecessary(stringBuilderExpression, stringExpression.toString());
+              tracker.replaceExpressionAndRestoreComments(stringBuilderExpression, replacement);
             }
           }
         }
@@ -236,7 +240,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           return;
         }
       }
-      final String expressionText = builder.toString().trim();
+      final String expressionText = addConversionToStringIfNecessary(element, builder.toString());
       final PsiExpression lastExpression = expressions.get(expressions.size() - 1);
       final PsiStatement statement = PsiTreeUtil.getParentOfType(lastExpression, PsiStatement.class);
       if (statement == null) {
@@ -260,6 +264,43 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       else {
         tracker.replaceExpressionAndRestoreComments(lastExpression, expressionText, toDelete);
       }
+    }
+
+    @NotNull
+    private static String addConversionToStringIfNecessary(PsiElement context, String concatText) {
+      concatText = concatText.trim();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+      PsiExpression expression = factory.createExpressionFromText(concatText, context);
+      PsiPolyadicExpression concat = tryCast(expression, PsiPolyadicExpression.class);
+      if (concat != null && concat.getOperationTokenType().equals(JavaTokenType.PLUS)) {
+        PsiExpression[] operands = concat.getOperands();
+        if (operands[0] != null && !TypeUtils.isJavaLangString(operands[0].getType()) && !TypeUtils.isJavaLangString(operands[1].getType())) {
+          operands[0].replace(factory.createExpressionFromText(convertToString(operands[0]), context));
+          return concat.getText();
+        }
+      }
+      else if (!TypeUtils.isJavaLangString(expression.getType())) {
+        return convertToString(expression);
+      }
+      return concatText;
+    }
+
+    @NotNull
+    private static String convertToString(PsiExpression expression) {
+      PsiType type = expression.getType();
+      PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(expression);
+      if (stripped != null) {
+        expression = stripped;
+      }
+      if (type instanceof PsiPrimitiveType && expression instanceof PsiLiteralExpression) {
+        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+        Object value = literalExpression.getValue();
+        if (value instanceof Character) {
+          return '"' + StringUtil.escapeStringCharacters(value.toString()) + '"';
+        }
+        return "\"" + value + '"';
+      }
+      return "String.valueOf(" + expression.getText() + ")";
     }
 
     private static boolean isVariableInitializer(PsiExpression expression) {
@@ -289,7 +330,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
           if (!PsiType.INT.equals(type)) {
-            if (type != null && type.equalsToText("java.lang.CharSequence")) {
+            if (type != null && type.equalsToText(JAVA_LANG_CHARSEQUENCE)) {
               result.append("String.valueOf(").append(tracker.textWithComments(argument)).append(')');
             }
             else {
@@ -346,59 +387,19 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
           final String argumentText = tracker.textWithComments(argument);
-          boolean needConvertToString = result.length() == 0;
-          if (needConvertToString) {
-            final PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(methodCallExpression);
-            if (nextCall != null && "append".equals(nextCall.getMethodExpression().getReferenceName())) {
-              final PsiExpression[] args = nextCall.getArgumentList().getExpressions();
-              needConvertToString = args.length == 0 || !TypeUtils.isJavaLangString(args[0].getType());
-            }
-          }
           appendFormattedPlusIfNeeded(argument, result, commentsBefore);
-          if (!needConvertToString) {
-            if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
-                (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
-              result.append('(').append(argumentText).append(')');
-            }
-            else if (type instanceof PsiArrayType) {
-              result.append("String.valueOf(").append(argumentText).append(')');
-            }
-            else {
-              if (result.length() > 0 && StringUtil.startsWithChar(argumentText, '+')) {
-                result.append(' ');
-              }
-              result.append(argumentText);
-            }
+          if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
+              (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
+            result.append('(').append(argumentText).append(')');
+          }
+          else if (type instanceof PsiArrayType) {
+            result.append("String.valueOf(").append(argumentText).append(')');
           }
           else {
-            if (type instanceof PsiPrimitiveType) {
-              if (argument instanceof PsiLiteralExpression) {
-                final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
-                if (PsiType.CHAR.equals(literalExpression.getType())) {
-                  result.append('"');
-                  final Character c = (Character)literalExpression.getValue();
-                  if (c != null) {
-                    result.append(StringUtil.escapeStringCharacters(c.toString()));
-                  }
-                  result.append('"');
-                }
-                else {
-                  result.append('"').append(literalExpression.getValue()).append('"');
-                }
-              }
-              else {
-                result.append("String.valueOf(").append(argumentText).append(")");
-              }
+            if (StringUtil.startsWithChar(argumentText, '+')) {
+              result.append(' ');
             }
-            else if (ParenthesesUtils.getPrecedence(argument) >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-              result.append('(').append(argumentText).append(')');
-            }
-            else if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-              result.append("String.valueOf(").append(argumentText).append(")");
-            }
-            else {
-              result.append(argumentText);
-            }
+            result.append(argumentText);
           }
         }
       }

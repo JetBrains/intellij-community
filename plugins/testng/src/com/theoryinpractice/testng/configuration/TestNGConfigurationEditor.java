@@ -136,14 +136,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     }
     myTestKind.setModel(testKindModel);
     myTestKind.addActionListener(e -> TestNGConfigurationEditor.this.model.setType((TestType)myTestKind.getSelectedItem()));
-    myTestKind.setRenderer(new ListCellRendererWrapper<TestType>() {
-                             @Override
-                             public void customize(JList list, TestType value, int index, boolean selected, boolean hasFocus) {
-                               if (value != null) {
-                                 setText(value.getPresentableName());
-                               }
-                             }
-                           });
+    myTestKind.setRenderer(SimpleListCellRenderer.create("", value -> value.getPresentableName()));
     registerListener(new JRadioButton[]{packagesInProject, packagesInModule, packagesAcrossModules}, null);
     packagesInProject.addChangeListener(e -> evaluateModuleClassPath());
 

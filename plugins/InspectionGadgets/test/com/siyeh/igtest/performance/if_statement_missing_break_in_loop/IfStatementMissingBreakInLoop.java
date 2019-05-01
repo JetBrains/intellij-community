@@ -112,6 +112,15 @@ public class IfStatementMissingBreakInLoop {
     }
   }
 
+  public void emptyThenBranch(String[] array) {
+    boolean found = false;
+    for(int i = 0; i < array.length; i++) {
+      if (i == 0) {
+        // found = true;
+      }
+    }
+  }
+
   static class Nested {
 
     private final String field = "foo";

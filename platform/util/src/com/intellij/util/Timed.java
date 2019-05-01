@@ -27,7 +27,7 @@ abstract class Timed<T> implements Disposable {
   protected T myT;
   private boolean myPolled;
 
-  protected Timed(@Nullable final Disposable parentDisposable) {
+  Timed(@Nullable final Disposable parentDisposable) {
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
     }

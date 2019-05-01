@@ -43,8 +43,8 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
     PsiReference last = ArrayUtil.getLastElement(references);
     if (last != null && (!(last instanceof ResolvingHint) || ((ResolvingHint)last).canResolveTo(PsiDocCommentOwner.class))) {
       PsiElement resolved = last.resolve();
-      if (resolved != null) {
-        DeprecationInspectionBase.checkDeprecated(resolved, psiElement, last.getRangeInElement(), false, false, true, false,
+      if (resolved instanceof PsiModifierListOwner) {
+        DeprecationInspectionBase.checkDeprecated((PsiModifierListOwner)resolved, psiElement, last.getRangeInElement(), false, false, true, false,
                                                   holder, false, ProblemHighlightType.LIKE_DEPRECATED);
       }
     }

@@ -3,19 +3,16 @@ package org.jetbrains.idea.maven.onlinecompletion.model;
 
 import java.util.EnumSet;
 
-import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.ALL_VERSIONS;
-
 public class SearchParameters {
 
   public enum Flags {
     ALL_VERSIONS("requesting all versions"),
-    FULL_RESOLVE("should not return partially resolved artifacts"),
     NOT_DEDUPLICATE("Deduplication will not be called");
 
     Flags(String desc) {}
   }
 
-  public static final SearchParameters DEFAULT = new SearchParameters(20, 1000, EnumSet.noneOf(Flags.class));
+  public static final SearchParameters DEFAULT = new SearchParameters(200, 1000, EnumSet.noneOf(Flags.class));
   private final int maxResults;
   private final long millisToWait;
   private final EnumSet<Flags> myFlags;

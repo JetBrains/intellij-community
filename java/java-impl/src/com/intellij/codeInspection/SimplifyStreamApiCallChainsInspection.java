@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -469,7 +469,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     public PsiElement simplify(PsiMethodCallExpression streamMethodCall) {
       PsiMethodCallExpression collectionStreamCall = getQualifierMethodCall(streamMethodCall);
       if (collectionStreamCall == null) return null;
-      PsiExpression collectionExpression = collectionStreamCall.getMethodExpression().getQualifierExpression();
+      PsiExpression collectionExpression = ExpressionUtils.getEffectiveQualifier(collectionStreamCall.getMethodExpression());
       if (collectionExpression == null) return null;
       collectionStreamCall.replace(collectionExpression);
       ExpressionUtils.bindCallTo(streamMethodCall, myReplacementMethod);
@@ -479,6 +479,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(STREAM_FOR_EACH, call -> {
         PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        if (qualifierCall == null || ExpressionUtils.getEffectiveQualifier(qualifierCall.getMethodExpression()) == null) return null;
         if (COLLECTION_STREAM.test(qualifierCall)) {
           return new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), FOR_EACH_METHOD, true);
         }
@@ -1772,7 +1773,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     static final CallMatcher COLLECTOR_JOINING = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining")
       .parameterCount(0);
     static final CallMatcher COLLECTOR_JOINING_DELIMITER = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining")
-      .parameterTypes("java.lang.CharSequence");
+      .parameterTypes(JAVA_LANG_CHARSEQUENCE);
 
     @Override
     public String getName() {
@@ -1803,7 +1804,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         argList = StreamEx.of(args, 1, args.length - 1).map(ct::text).joining();
       }
       else if (COLLECTION_STREAM.matches(qualifier)) {
-        PsiExpression collection = ExpressionUtils.getQualifierOrThis(qualifier.getMethodExpression());
+        PsiExpression collection = ExpressionUtils.getEffectiveQualifier(qualifier.getMethodExpression());
+        if (collection == null) return null;
         argList = ct.text(collection);
       }
       else {
@@ -1821,9 +1823,10 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (extractDelimiter(call) == null) return null;
         PsiMethodCallExpression qualifier = getQualifierMethodCall(call);
         if (qualifier == null) return null;
-        if (ARRAYS_STREAM.matches(qualifier) || COLLECTION_STREAM.matches(qualifier)) {
+        if (ARRAYS_STREAM.matches(qualifier) || 
+            (COLLECTION_STREAM.matches(qualifier) && ExpressionUtils.getEffectiveQualifier(qualifier.getMethodExpression()) != null)) {
           PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
-          if (InheritanceUtil.isInheritor(elementType, "java.lang.CharSequence")) {
+          if (InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHARSEQUENCE)) {
             return new JoiningStringsFix();
           }
         }
@@ -1908,11 +1911,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (PsiUtil.skipParenthesizedExprDown(argumentExpressions[1]) != call) return null;
         PsiExpression delimiter = argumentExpressions[0];
         if (delimiter == null) return null;
-        if(!InheritanceUtil.isInheritor(delimiter.getType(), "java.lang.CharSequence")) return null;
+        if(!InheritanceUtil.isInheritor(delimiter.getType(), JAVA_LANG_CHARSEQUENCE)) return null;
         PsiMethodCallExpression stream = getQualifierMethodCall(call);
         if (stream == null) return null;
         PsiType elementType = StreamApiUtil.getStreamElementType(stream.getType());
-        if (!InheritanceUtil.isInheritor(elementType, "java.lang.CharSequence")) return null;
+        if (!InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHARSEQUENCE)) return null;
         return new Context(maybeJoinCall, delimiter, argument);
       }
     }

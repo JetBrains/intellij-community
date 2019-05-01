@@ -12,9 +12,7 @@ import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.util.StopWatch;
-import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -34,7 +32,6 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
-
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
@@ -42,6 +39,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
   @Nullable private final GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
+  @Nullable private final GitConflictsHolder myConflictsHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
 
@@ -60,14 +58,19 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this, myRepositoryFiles);
       Disposer.register(this, myUntrackedFilesHolder);
+
       myIgnoredRepositoryFilesHolder =
         new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
       myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(getProject()));
+
+      myConflictsHolder = new GitConflictsHolder(this);
+      Disposer.register(this, myConflictsHolder);
     }
     else {
       myUntrackedFilesHolder = null;
       myIgnoredRepositoryFilesHolder = null;
+      myConflictsHolder = null;
     }
   }
 
@@ -121,6 +124,15 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       throw new IllegalStateException("Using untracked files holder with light git repository instance " + this);
     }
     return myUntrackedFilesHolder;
+  }
+
+  @NotNull
+  @Override
+  public GitConflictsHolder getConflictsHolder() {
+    if (myConflictsHolder == null) {
+      throw new IllegalStateException("Using conflicts holder with light git repository instance " + this);
+    }
+    return myConflictsHolder;
   }
 
   @Override
@@ -283,7 +295,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
       if(myProject.isDisposed()) return;
 
-      VcsFileUtil.markFilesDirty(myProject, ContainerUtil.newArrayList(ignoredPaths));
       myChangesViewI.scheduleRefresh();
     }
   }

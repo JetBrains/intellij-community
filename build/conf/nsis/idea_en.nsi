@@ -17,6 +17,7 @@ LangString prompt_delete_settings ${LANG_ENGLISH} "${MUI_PRODUCT} will be uninst
 LangString text_delete_settings ${LANG_ENGLISH} "Please confirm if you would like to delete the caches and settings:"
 LangString confirm_delete_caches ${LANG_ENGLISH} "Delete ${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR} caches and local history"
 LangString confirm_delete_settings ${LANG_ENGLISH} "Delete ${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR} settings and installed plugins"
+LangString confirm_delete_rider_buildtools ${LANG_ENGLISH} "Delete ${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR} build tools frameworks"
 
 ; Installation message boxes
 LangString current_version_already_installed ${LANG_ENGLISH} "Current version of ${MUI_PRODUCT} is already installed. Do you wish to continue?"
@@ -26,4 +27,4 @@ LangString uninstall_previous_installations_prompt ${LANG_ENGLISH} "Select the $
 LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected folder of ${MUI_PRODUCT} installation. Probably uninstall.exe was moved from the installation folder."
 LangString empty_or_upgrade_folder ${LANG_ENGLISH} "Please select an empty folder."
 LangString application_running ${LANG_ENGLISH} "$INSTDIR is running. Close the application and retry the installation."
-LangString download_jre_32bit_version ${LANG_ENGLISH} "Download and install JBR x86"
+LangString download_jre_32bit_version ${LANG_ENGLISH} "Download and install 32-bit JetBrains Runtime"

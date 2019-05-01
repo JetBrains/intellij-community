@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -25,6 +24,7 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
+import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -175,7 +176,11 @@ public class GradleExecutionHelper {
     String buildRootDir = buildEnvironment == null ? null : buildEnvironment.getBuildIdentifier().getRootDir().getPath();
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
-    operation.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+    operation.addProgressListener(gradleProgressListener,
+                                  OperationType.GENERIC,
+                                  OperationType.PROJECT_CONFIGURATION,
+                                  OperationType.TASK,
+                                  OperationType.TEST);
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
@@ -428,7 +433,7 @@ public class GradleExecutionHelper {
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory, projectDir);
           }
           break;
       }
@@ -499,7 +504,7 @@ public class GradleExecutionHelper {
   }
 
   public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
-    byte[] contentBytes = content.getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
     int contentLength = contentBytes.length;
     return FileUtil.findSequentFile(new File(FileUtil.getTempDirectory()), filePrefix, GradleConstants.EXTENSION, file -> {
       try {
@@ -509,7 +514,7 @@ public class GradleExecutionHelper {
           return true;
         }
         if (contentLength != file.length()) return false;
-        return content.equals(FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET));
+        return content.equals(FileUtil.loadFile(file, StandardCharsets.UTF_8));
       }
       catch (IOException ignore) {
         // Skip file with access issues. Will attempt to check the next file

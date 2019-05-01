@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <name>Git Integration</name>
+  <name>Git</name>
   <id>Git4Idea</id>
   <description>
       <![CDATA[
@@ -105,6 +105,7 @@
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick" text="Abort Cherry-Pick"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
+      <action id="Git.Cleanup.Branches" class="git4idea.branch.GitCleanupBranchesAction" text="Cleanup Branches" internal="true"/>.
     </group>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
@@ -213,62 +214,38 @@
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
-    <projectService
-        serviceInterface="git4idea.annotate.GitAnnotationProvider"
-        serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
-    <projectService
-        serviceInterface="git4idea.diff.GitDiffProvider"
-        serviceImplementation="git4idea.diff.GitDiffProvider"/>
-    <projectService
-        serviceInterface="git4idea.checkin.GitCheckinEnvironment"
-        serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
-    <projectService
-        serviceInterface="git4idea.status.GitChangeProvider"
-        serviceImplementation="git4idea.status.GitChangeProvider"/>
-    <projectService
-        serviceInterface="git4idea.history.GitHistoryProvider"
-        serviceImplementation="git4idea.history.GitHistoryProvider"/>
-    <projectService
-        serviceInterface="git4idea.rollback.GitRollbackEnvironment"
-        serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
-    <projectService
-        serviceInterface="git4idea.config.GitVcsSettings"
-        serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
+    <projectService serviceImplementation="git4idea.diff.GitDiffProvider"/>
+    <projectService serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
+    <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
+    <projectService serviceImplementation="git4idea.history.GitHistoryProvider"/>
+    <projectService serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
+    <projectService serviceImplementation="git4idea.config.GitVcsSettings"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
-    <projectService
-        serviceInterface="git4idea.config.GitExecutableValidator"
-        serviceImplementation="git4idea.config.GitExecutableValidator"/>
+    <projectService serviceImplementation="git4idea.config.GitExecutableValidator"/>
     <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
-    <projectService serviceInterface="git4idea.config.GitExecutableProblemsNotifier"
-                    serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
+    <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
 
-    <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
-                        serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"
-                        serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
-    <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"
-                        serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
+    <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
+    <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl" />
-    <applicationService serviceInterface="git4idea.rebase.GitRebaseEditorService"
-                        serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
-    <applicationService serviceInterface="git4idea.config.SSHConnectionSettings"
-                        serviceImplementation="git4idea.config.SSHConnectionSettings"/>
-    <applicationService serviceInterface="git4idea.remote.GitRememberedInputs"
-                        serviceImplementation="git4idea.remote.GitRememberedInputs"/>
+    <applicationService serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
+    <applicationService serviceImplementation="git4idea.config.SSHConnectionSettings"/>
+    <applicationService serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
     <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
     <applicationService serviceInterface="git4idea.GitPlatformFacade"
                         serviceImplementation="git4idea.GitPlatformFacadeImpl" />
-    <applicationService serviceInterface="git4idea.DialogManager"
-                        serviceImplementation="git4idea.DialogManager" />
+    <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
@@ -279,6 +256,19 @@
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
     <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
+    <editorNotificationProvider implementation="git4idea.conflicts.MergeConflictResolveUtil$NotificationProvider"/>
+
+    <!-- Git ignore lang -->
+    <fileTypeFactory
+        implementation="git4idea.ignore.GitIgnoreFileTypeFactory"/>
+    <lang.parserDefinition language="GitIgnore"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <codeInsight.lineMarkerProvider language="GitIgnore"
+                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.IgnoreDirectoryMarkerProvider"/>
+    <lang.braceMatcher language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
+    <lang.commenter language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
+     <!--END Git ignore lang-->
+
   </extensions>
 
   <extensionPoints>
@@ -288,4 +278,10 @@
                     interface="git4idea.push.GitPushProcessCustomizationFactory" />
     <extensionPoint qualifiedName="Git4Idea.GitCheckinExplicitMovementProvider" interface="git4idea.checkin.GitCheckinExplicitMovementProvider"/>
   </extensionPoints>
+
+  <project-components>
+    <component>
+      <implementation-class>git4idea.conflicts.GitConflictsToolWindowManager</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>

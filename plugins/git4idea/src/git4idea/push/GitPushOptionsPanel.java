@@ -18,7 +18,7 @@ package git4idea.push;
 import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +46,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     myPushTags.setSelected(defaultMode != null);
 
     myPushTagsMode = new ComboBox<>(GitPushTagMode.getValues());
-    myPushTagsMode.setRenderer(new ListCellRendererWrapper<GitPushTagMode>() {
-      @Override
-      public void customize(JList list, GitPushTagMode value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getTitle());
-      }
-    });
+    myPushTagsMode.setRenderer(SimpleListCellRenderer.create("", GitPushTagMode::getTitle));
     myPushTagsMode.setEnabled(myPushTags.isSelected());
     if (defaultMode != null) {
       myPushTagsMode.setSelectedItem(defaultMode);

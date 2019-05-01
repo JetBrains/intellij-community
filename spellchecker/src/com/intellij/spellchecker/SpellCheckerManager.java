@@ -3,6 +3,7 @@ package com.intellij.spellchecker;
 
 import com.google.common.collect.Maps;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -258,6 +259,7 @@ public class SpellCheckerManager implements Disposable {
   private void fireDictionaryChanged(@NotNull EditableDictionary dictionary) {
     myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
     restartInspections();
+    SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(project, false), false);
     project.save();
   }
 

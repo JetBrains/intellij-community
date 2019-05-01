@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -40,6 +41,8 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
+
+  private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   init {
     runReadAction {
@@ -126,7 +129,11 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> =
-    changeListManager.unversionedFiles.filter { isUnder(files, it) }
+    changeListManager.unversionedFiles
+      .asSequence()
+      .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
+      .filter { isUnder(files, it) }
+      .toSet()
 
   override fun rememberForAllProjects() {}
 

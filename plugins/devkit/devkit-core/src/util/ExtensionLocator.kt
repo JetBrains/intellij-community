@@ -10,7 +10,7 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
-import com.intellij.util.xml.DomUtil
+import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import java.util.*
@@ -31,26 +31,19 @@ internal fun processExtensionDeclarations(name: String, project: Project, strict
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   PsiSearchHelper.getInstance(project).processElementsWithWord(
     { element, offsetInElement ->
-      if (element !is XmlTag) {
+      val elementAtOffset = (element as? XmlTag)?.findElementAt(offsetInElement) ?: return@processElementsWithWord true
+      if (strictMatch) {
+        if (!elementAtOffset.textMatches(name)) {
+          return@processElementsWithWord true
+        }
+      }
+      else if (!StringUtil.contains(elementAtOffset.text, name)) {
         return@processElementsWithWord true
       }
 
-      val elementAtOffset = element.findElementAt(offsetInElement)
-      if (elementAtOffset == null) {
-        return@processElementsWithWord true
-      }
-
-      val foundText = elementAtOffset.text
-      if (!strictMatch && !StringUtil.contains(foundText, name)) {
-        return@processElementsWithWord true
-      }
-      if (strictMatch && !StringUtil.equals(foundText, name)) {
-        return@processElementsWithWord true
-      }
-
-      val dom = DomUtil.getDomElement(element) as? Extension ?: return@processElementsWithWord true
-      callback(dom, element)
-    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, true /* case-sensitive */)
+      val extension = DomManager.getDomManager(project).getDomElement(element) as? Extension ?: return@processElementsWithWord true
+      callback(extension, element)
+    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, /* case-sensitive = */ true)
 }
 
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {

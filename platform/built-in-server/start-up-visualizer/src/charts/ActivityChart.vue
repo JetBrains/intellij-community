@@ -5,9 +5,10 @@
 
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
-  import {ActivityChartManager, ComponentChartManager} from "./ActivityChartManager"
+  import {ActivityChartManager} from "./ActivityChartManager"
   import {ActivityChartType, chartDescriptors} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
+  import {ComponentChartManager} from "@/charts/ComponentChartManager"
 
   @Component
   export default class ActivityChart extends BaseChartComponent<ActivityChartManager> {

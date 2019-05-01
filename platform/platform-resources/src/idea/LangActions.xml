@@ -40,6 +40,12 @@
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
 
+    <group id="ShowIntentionsGroup" compact="true">
+      <reference ref="ShowIntentionActions"/>
+      <separator/>
+      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </group>
+
     <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
     <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Find"/>
 
@@ -144,6 +150,7 @@
       <separator/>
       <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.ShowNavBarAction"/>
+      <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
@@ -623,7 +630,7 @@
       <reference ref="CompareTwoFiles"/>
     </group>
 
-    <group id="EditorPopupMenu1.FindRefactor">
+    <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
@@ -1165,15 +1172,19 @@
       <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
               text="Ungroup Configurations" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
+      <separator/>
     </group>
 
-    <group id="ServiceViewTreeToolbar"/>
+    <group id="ServiceViewTreeToolbar">
+      <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
+             class="com.intellij.ide.actions.NonEmptyActionGroup"/>
+    </group>
     <group id="ServiceViewNodeToolbar">
-      <group class="com.intellij.execution.services.ServiceView$ItemToolbarActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup"/>
       <separator/>
     </group>
     <group id="ServiceViewNodePopup">
-      <group class="com.intellij.execution.services.ServiceView$ItemPopupActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup"/>
       <separator/>
     </group>
 

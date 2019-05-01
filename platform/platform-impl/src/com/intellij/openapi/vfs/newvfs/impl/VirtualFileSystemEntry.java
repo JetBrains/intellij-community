@@ -46,7 +46,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
 
-  @NotNull
+  @NotNull // except NULL_VIRTUAL_FILE
   final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
   final int myId;
@@ -64,6 +64,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   // for NULL_FILE
   private VirtualFileSystemEntry() {
+    // although in general mySegment is always @NotNull, in this case we made an exception to be able to instantiate special singleton NULL_VIRTUAL_FILE
     //noinspection ConstantConditions
     mySegment = null;
     myParent = null;

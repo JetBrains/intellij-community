@@ -9,6 +9,8 @@ except:
     xrange = range
 
 
+PYTHON_NAMES = ['python', 'jython', 'pypy']
+
 #===============================================================================
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
@@ -45,8 +47,13 @@ def _get_host_port():
 
 
 def _is_managed_arg(arg):
-    if arg.endswith('pydevd.py'):
-        return True
+    return arg.endswith('pydevd.py')
+
+
+def _is_already_patched(args):
+    for arg in args:
+        if 'pydevd' in arg:
+            return True
     return False
 
 
@@ -68,15 +75,35 @@ def is_python_args(args):
     return len(args) > 0 and is_python(args[0])
 
 
+def is_executable(path):
+    return os.access(os.path.abspath(path), os.EX_OK)
+
+
+def starts_with_python_shebang(path):
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    for name in PYTHON_NAMES:
+                        if line.startswith('#!/usr/bin/env %s' % name):
+                            return True
+                    return False
+    except UnicodeDecodeError:
+        return False
+    except:
+        traceback.print_exc()
+        return False
+
+
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
     filename = os.path.basename(path).lower()
-    for name in ['python', 'jython', 'pypy']:
+    for name in PYTHON_NAMES:
         if filename.find(name) != -1:
             return True
-
-    return False
+    return sys.platform != 'win32' and is_executable(path) and starts_with_python_shebang(path)
 
 
 def remove_quotes_from_args(args):
@@ -135,9 +162,20 @@ def patch_args(args):
             return args
 
         if is_python(args[0]):
+
+            for name in PYTHON_NAMES:
+                if args[0].find(name) != -1:
+                    break
+            else:
+                # Executable file with Python shebang.
+                args.insert(0, sys.executable)
+
             ind_c = get_c_option_index(args)
 
             if ind_c != -1:
+                if _is_already_patched(args):
+                    return args
+
                 host, port = _get_host_port()
 
                 if port is not None:
@@ -306,6 +344,29 @@ def patch_arg_str_win(arg_str):
     log_debug("New args: %s" % arg_str)
     return arg_str
 
+
+def patch_fork_exec_executable_list(args, other_args):
+    # When calling a Python executable script with `subprocess.call` the latest uses the first argument as an executable for `fork_exec`.
+    # This leads to `subprocess.call(["foo.py", "bar", "baz"])` after patching the args will be transformed into something like
+    # foo.py pydevd.py --port 59043 --client 127.0.0.1 --multiproc --file foo.py bar baz.
+    # To fix the issue we need to look inside the `fork_exec` executable list and, if necessary, replace an executable script with Python.
+    i = 0
+    for arg in args:
+        i += 1
+        if arg == '--file':
+            break
+    else:
+        return other_args
+    executable_list = other_args[0]
+    if args[i].encode() in executable_list:
+        return ((sys.executable.encode(),),) + other_args[1:]
+    return other_args
+
+
+def patch_path(path):
+    return sys.executable if is_python(path) else path
+
+
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
         original_name = 'original_' + funcname
@@ -346,7 +407,7 @@ def create_execl(original_name):
         args = patch_args(args)
         if is_python_args(args):
             send_process_will_be_substituted()
-        return getattr(os, original_name)(path, *args)
+        return getattr(os, original_name)(patch_path(path), *args)
     return new_execl
 
 
@@ -359,7 +420,7 @@ def create_execv(original_name):
         import os
         if is_python_args(args):
             send_process_will_be_substituted()
-        return getattr(os, original_name)(path, patch_args(args))
+        return getattr(os, original_name)(patch_path(path), patch_args(args))
     return new_execv
 
 
@@ -372,7 +433,7 @@ def create_execve(original_name):
         import os
         if is_python_args(args):
             send_process_will_be_substituted()
-        return getattr(os, original_name)(path, patch_args(args), env)
+        return getattr(os, original_name)(patch_path(path), patch_args(args), env)
     return new_execve
 
 
@@ -421,7 +482,7 @@ def create_fork_exec(original_name):
         import _posixsubprocess  # @UnresolvedImport
         args = patch_args(args)
         send_process_created_message()
-        return getattr(_posixsubprocess, original_name)(args, *other_args)
+        return getattr(_posixsubprocess, original_name)(args, *patch_fork_exec_executable_list(args, other_args))
     return new_fork_exec
 
 

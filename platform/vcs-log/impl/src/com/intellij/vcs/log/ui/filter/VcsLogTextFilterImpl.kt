@@ -4,7 +4,9 @@ package com.intellij.vcs.log.ui.filter
 import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.visible.filters.caseSensitiveText
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VcsLogTextFilterImpl internal constructor(private val text: String,
                                                 private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
   @Deprecated("Use VcsLogFilterObject.fromPattern instead")

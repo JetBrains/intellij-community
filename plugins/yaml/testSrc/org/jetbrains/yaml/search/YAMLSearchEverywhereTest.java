@@ -3,7 +3,6 @@ package org.jetbrains.yaml.search;
 
 import com.intellij.ide.actions.searcheverywhere.ContributorSearchResult;
 import com.intellij.mock.MockProgressIndicator;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -12,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLUtil;
+import org.jetbrains.yaml.navigation.YAMLKeyNavigationItem;
 import org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor;
 import org.jetbrains.yaml.psi.YAMLPsiElement;
 
@@ -61,10 +61,8 @@ public class YAMLSearchEverywhereTest extends LightPlatformCodeInsightFixtureTes
     StringBuilder builder = new StringBuilder();
     for (String request : requests) {
       addRequestToResult(builder, request);
-      ContributorSearchResult<Object> result = contributor.search(request, true, null, new MockProgressIndicator(), 15);
-      for (Object obj : result.getItems()) {
-        assert(obj instanceof NavigationItem);
-        NavigationItem item = (NavigationItem)obj;
+      ContributorSearchResult<YAMLKeyNavigationItem> result = contributor.search(request, new MockProgressIndicator(), 15);
+      for (YAMLKeyNavigationItem item : result.getItems()) {
         item.navigate(true);
         PsiElement element = myFixture.getElementAtCaret();
         assert(element instanceof YAMLPsiElement);

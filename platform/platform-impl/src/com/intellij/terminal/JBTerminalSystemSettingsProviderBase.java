@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
@@ -140,6 +140,14 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   @NotNull
   public KeyStroke[] getShowTabsKeyStrokes() {
     return getKeyStrokesByActionId(ShowContentAction.ACTION_ID);
+  }
+
+  public KeyStroke[] getMoveTabRightKeyStrokes() {
+    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabRight");
+  }
+
+  public KeyStroke[] getMoveTabLeftKeyStrokes() {
+    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabLeft");
   }
 
   protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
@@ -282,6 +290,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       throw new IllegalStateException();
     }
 
+    @NotNull
     @Override
     public Font getFont(EditorFontType key) {
       if (myFontsMap != null) {

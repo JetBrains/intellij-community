@@ -2,11 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
-import com.intellij.codeInspection.dataFlow.ContractValue;
-import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,13 +31,13 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         PsiExpression[] args = call.getArgumentList().getExpressions();
         // Avoid method resolve if no argument is a candidate for obvious non-null warning
         // (checking this is easier than resolving and calls without arguments are excluded at all)
-        if (!ContainerUtil.exists(args, arg -> getObviouslyNonNullExplanation(PsiUtil.skipParenthesizedExprDown(arg)) != null)) return;
+        if (!ContainerUtil.exists(args, arg -> TrackingRunner.getObviouslyNonNullExplanation(PsiUtil.skipParenthesizedExprDown(arg)) != null)) return;
         NullCheckParameter nullCheckParameter = NullCheckParameter.fromCall(call);
         if (nullCheckParameter == null) return;
         if (!ExpressionUtils.isVoidContext(call) && !nullCheckParameter.myReturnsParameter) return;
         if (args.length <= nullCheckParameter.myIndex) return;
         PsiExpression nullArg = PsiUtil.skipParenthesizedExprDown(args[nullCheckParameter.myIndex]);
-        String explanation = getObviouslyNonNullExplanation(nullArg);
+        String explanation = TrackingRunner.getObviouslyNonNullExplanation(nullArg);
         if (explanation == null) return;
         if(nullCheckParameter.myNull) {
           holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.always.fail.message", explanation));
@@ -51,19 +48,6 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         }
       }
     };
-  }
-
-  @Nullable
-  private static String getObviouslyNonNullExplanation(PsiExpression arg) {
-    if (arg == null || ExpressionUtils.isNullLiteral(arg)) return null;
-    if (arg instanceof PsiNewExpression) return "newly created object";
-    if (arg instanceof PsiLiteralExpression) return "literal";
-    if (arg.getType() instanceof PsiPrimitiveType) return "a value of primitive type '" + arg.getType().getCanonicalText() + "'";
-    if (arg instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)arg).getOperationTokenType() == JavaTokenType.PLUS) {
-      return "concatenation";
-    }
-    if (arg instanceof PsiThisExpression) return "'this' object";
-    return null;
   }
 
   static class NullCheckParameter {

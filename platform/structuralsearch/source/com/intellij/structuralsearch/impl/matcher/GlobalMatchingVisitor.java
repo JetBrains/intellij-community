@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -65,7 +65,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   @Override
-  protected boolean doMatchInAnyOrder(NodeIterator elements, NodeIterator elements2) {
+  protected boolean doMatchInAnyOrder(@NotNull NodeIterator elements, @NotNull NodeIterator elements2) {
     return matchContext.getPattern().getHandler(elements.current()).matchInAnyOrder(
       elements,
       elements2,
@@ -172,12 +172,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @return if they are equal and false otherwise
    */
   @Override
-  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
-    final PsiElement current = patternNodes.current();
+  public boolean matchSequentially(@NotNull NodeIterator patternNodes, @NotNull NodeIterator matchNodes) {
     if (!patternNodes.hasNext()) {
       while (matchNodes.current() instanceof PsiComment) matchNodes.advance();
       return !matchNodes.hasNext();
     }
+    final PsiElement current = patternNodes.current();
     return matchContext.getPattern().getHandler(current).matchSequentially(patternNodes, matchNodes, matchContext);
   }
 
@@ -186,7 +186,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    *
    * @param elements the element for which the sons are looked for match
    */
-  public void matchContext(final NodeIterator elements) {
+  public void matchContext(@NotNull NodeIterator elements) {
     if (matchContext == null) {
       return;
     }

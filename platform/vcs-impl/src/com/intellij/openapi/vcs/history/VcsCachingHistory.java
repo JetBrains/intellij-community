@@ -159,8 +159,7 @@ public class VcsCachingHistory {
       }
     }
 
-    VcsRevisionNumber firstCachedRevision = cached.getRevisionList().get(0).getRevisionNumber();
-    if (currentRevision != null && firstCachedRevision.equals(currentRevision)) {
+    if (cached.getRevisionList().get(0).getRevisionNumber().equals(currentRevision)) {
       return cached;
     }
     return null;
@@ -248,7 +247,6 @@ public class VcsCachingHistory {
 
   private static class CollectingHistoryPartner implements VcsHistorySessionConsumer {
     @NotNull private final Project myProject;
-    @NotNull private final FilePath myFilePath;
     @NotNull private final Consumer<? super VcsHistorySession> myContinuation;
     @NotNull private final LimitHistoryCheck myCheck;
 
@@ -257,9 +255,8 @@ public class VcsCachingHistory {
     private CollectingHistoryPartner(@NotNull Project project, @NotNull FilePath path,
                                      @NotNull Consumer<? super VcsHistorySession> continuation) {
       myProject = project;
-      myFilePath = path;
       myContinuation = continuation;
-      myCheck = new LimitHistoryCheck(myProject, myFilePath.getPath());
+      myCheck = new LimitHistoryCheck(myProject, path.getPath());
     }
 
     @Override

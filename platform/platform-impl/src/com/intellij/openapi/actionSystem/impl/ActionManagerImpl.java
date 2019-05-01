@@ -45,7 +45,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -120,7 +119,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final KeymapManagerEx myKeymapManager;
-  private final DataManager myDataManager;
   private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
   private MyTimer myTimer;
   private int myRegisteredActionsCount;
@@ -132,12 +130,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final AnActionListener messageBusPublisher;
   private int myAnonymousGroupIdCounter;
 
-  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
+  ActionManagerImpl(@NotNull KeymapManager keymapManager) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
-    myDataManager = dataManager;
 
     registerPluginActions();
-    messageBusPublisher = messageBus.syncPublisher(AnActionListener.TOPIC);
+    messageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
@@ -438,7 +435,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, myKeymapManager);
+    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myKeymapManager);
   }
 
   private void registerPluginActions() {
@@ -531,7 +528,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public JComponent createButtonToolbar(@NotNull final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
-    return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
+    return new ButtonToolbarImpl(actionPlace, messageActionGroup);
   }
 
   @Override

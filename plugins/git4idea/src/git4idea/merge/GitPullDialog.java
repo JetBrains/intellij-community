@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
@@ -50,7 +50,7 @@ public class GitPullDialog extends DialogWrapper {
   private JCheckBox mySquashCommitCheckBox;
   private JCheckBox myNoFastForwardCheckBox;
   private JCheckBox myAddLogInformationCheckBox;
-  private JComboBox myRemote;
+  private JComboBox<GitRemote> myRemote;
   private JButton myGetBranchesButton;
   private ElementsChooser<String> myBranchChooser;
   private final Project myProject;
@@ -283,30 +283,27 @@ public class GitPullDialog extends DialogWrapper {
    * @param defaultRemote a default remote
    * @return a list cell renderer for virtual files (it renders presentable URL
    */
-  public ListCellRendererWrapper<GitRemote> getGitRemoteListCellRenderer(final String defaultRemote) {
-    return new ListCellRendererWrapper<GitRemote>() {
-      @Override
-      public void customize(final JList list, final GitRemote remote, final int index, final boolean selected, final boolean hasFocus) {
-        final String text;
-        if (remote == null) {
-          text = GitBundle.getString("util.remote.renderer.none");
-        }
-        else if (".".equals(remote.getName())) {
-          text = GitBundle.getString("util.remote.renderer.self");
+  public ListCellRenderer<GitRemote> getGitRemoteListCellRenderer(final String defaultRemote) {
+    return SimpleListCellRenderer.create((label, remote, index) -> {
+      final String text;
+      if (remote == null) {
+        text = GitBundle.getString("util.remote.renderer.none");
+      }
+      else if (".".equals(remote.getName())) {
+        text = GitBundle.getString("util.remote.renderer.self");
+      }
+      else {
+        String key;
+        if (defaultRemote != null && defaultRemote.equals(remote.getName())) {
+          key = "util.remote.renderer.default";
         }
         else {
-          String key;
-          if (defaultRemote != null && defaultRemote.equals(remote.getName())) {
-            key = "util.remote.renderer.default";
-          }
-          else {
-            key = "util.remote.renderer.normal";
-          }
-          text = GitBundle.message(key, remote.getName(), remote.getFirstUrl());
+          key = "util.remote.renderer.normal";
         }
-        setText(text);
+        text = GitBundle.message(key, remote.getName(), remote.getFirstUrl());
       }
-    };
+      label.setText(text);
+    });
   }
 
   public VirtualFile gitRoot() {

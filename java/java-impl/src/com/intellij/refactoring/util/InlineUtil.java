@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,10 +33,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.inline.InlineTransformer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -326,9 +327,15 @@ public class InlineUtil {
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    PsiElement callParent = methodCall.getParent();
+    PsiElement callParent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
       return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)callParent)) {
+      PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
+      if (negationParent instanceof PsiReturnStatement || negationParent instanceof PsiLambdaExpression) {
+        return TailCallType.Invert;
+      }
     }
     if (callParent instanceof PsiExpressionStatement) {
       PsiStatement curElement = (PsiStatement)callParent;
@@ -340,6 +347,7 @@ public class InlineUtil {
           if (blockParent instanceof PsiMethod || blockParent instanceof PsiLambdaExpression) return TailCallType.Simple;
           if (!(blockParent instanceof PsiBlockStatement)) return TailCallType.None;
           parent = blockParent.getParent();
+          if (parent instanceof PsiLoopStatement) return TailCallType.Continue;
         }
         if (!(parent instanceof PsiLabeledStatement) && !(parent instanceof PsiIfStatement)) return TailCallType.None;
         curElement = (PsiStatement)parent;
@@ -511,7 +519,71 @@ public class InlineUtil {
     }
   }
 
+  /**
+   * Extracts side effects from return statements, replacing them with simple {@code return;} or {@code continue;}
+   * while preserving semantics.
+   * 
+   * @param method method to process
+   * @param replaceWithContinue if true, returns will be replaced with {@code continue}.
+   */
+  public static void extractReturnValues(PsiMethod method, boolean replaceWithContinue) {
+    PsiCodeBlock block = Objects.requireNonNull(method.getBody());
+    PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
+    for (PsiReturnStatement returnStatement : returnStatements) {
+      final PsiExpression returnValue = returnStatement.getReturnValue();
+      if (returnValue != null) {
+        List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);
+        CommentTracker ct = new CommentTracker();
+        sideEffects.forEach(ct::markUnchanged);
+        PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, returnValue);
+        ct.delete(returnValue);
+        if (statements.length > 0) {
+          PsiStatement lastAdded = BlockUtils.addBefore(returnStatement, statements);
+          // Could be wrapped into {}, so returnStatement might be non-physical anymore
+          returnStatement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiReturnStatement.class));
+        }
+        ct.insertCommentsBefore(returnStatement);
+      }
+      if (ControlFlowUtils.blockCompletesWithStatement(block, returnStatement)) {
+        new CommentTracker().deleteAndRestoreComments(returnStatement);
+      } else if (replaceWithContinue) {
+        new CommentTracker().replaceAndRestoreComments(returnStatement, "continue;");
+      }
+    }
+  }
+
   public enum TailCallType {
-    None, Simple, Return
+    None(null), 
+    Simple((methodCopy, callSite, returnType) -> {
+      extractReturnValues(methodCopy, false);
+      return null;
+    }), 
+    Continue((methodCopy, callSite, returnType) -> {
+      extractReturnValues(methodCopy, true);
+      return null;
+    }),
+    Invert((methodCopy, callSite, returnType) -> {
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements(methodCopy)) {
+        PsiExpression value = statement.getReturnValue();
+        if (value != null) {
+          CommentTracker ct = new CommentTracker();
+          ct.replaceAndRestoreComments(value, BoolUtils.getNegatedExpressionText(value, ct));
+        }
+      }
+      return null;
+    }),
+    Return((methodCopy, callSite, returnType) -> null);
+    
+    @Nullable
+    private final InlineTransformer myTransformer;
+
+    TailCallType(@Nullable InlineTransformer transformer) {
+      myTransformer = transformer;
+    }
+
+    @Nullable
+    public InlineTransformer getTransformer() {
+      return myTransformer;
+    }
   }
 }

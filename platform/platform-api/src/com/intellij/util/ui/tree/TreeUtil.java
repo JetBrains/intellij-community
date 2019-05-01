@@ -21,13 +21,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -718,6 +721,8 @@ public final class TreeUtil {
 
   @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
+    TreeUI ui = tree.getUI();
+    if (ui != null && ui.getClass().getName().equals("com.intellij.ui.tree.ui.DefaultTreeUI")) return;
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -1449,7 +1454,7 @@ public final class TreeUtil {
   private static void internalSelectPath(@NotNull JTree tree, @NotNull TreePath path) {
     assert EventQueue.isDispatchThread();
     tree.setSelectionPath(path);
-    internalScroll(tree, path);
+    scrollToVisible(tree, path, true);
   }
 
   /**
@@ -1472,23 +1477,67 @@ public final class TreeUtil {
     if (paths.isEmpty()) return;
     tree.setSelectionPaths(paths.toArray(new TreePath[0]));
     for (TreePath path : paths) {
-      if (internalScroll(tree, path)) {
+      if (scrollToVisible(tree, path, true)) {
         break;
       }
     }
   }
 
-  private static boolean internalScroll(@NotNull JTree tree, @NotNull TreePath path) {
+  /**
+   * @param tree     a tree to scroll
+   * @param path     a visible tree path to scroll
+   * @param centered {@code true} to show the specified path
+   * @return {@code false} if a path is hidden (under a collapsed parent)
+   */
+  @Contract("_, null, _ -> false")
+  public static boolean scrollToVisible(@NotNull JTree tree, @NotNull TreePath path, boolean centered) {
     assert EventQueue.isDispatchThread();
-    int row = tree.getRowForPath(path);
-    if (row == -1) {
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds == null) {
       LOG.debug("cannot scroll to: ", path);
       return false;
     }
-    else {
-      showRowCentred(tree, row);
+    Container parent = tree.getParent();
+    if (parent instanceof JViewport) {
+      int width = parent.getWidth();
+      if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
+        bounds.x = -tree.getX();
+        bounds.width = width;
+      }
+      else {
+        bounds.width = Math.min(bounds.width, width / 2);
+        bounds.x -= JBUI.scale(20); // TODO: calculate a control width
+        if (bounds.x < 0) {
+          bounds.width += bounds.x;
+          bounds.x = 0;
+        }
+      }
+      int height = parent.getHeight();
+      if (height > bounds.height && height < tree.getHeight()) {
+        if (centered || height < bounds.height * 5) {
+          bounds.y -= (height - bounds.height) / 2;
+          bounds.height = height;
+        }
+        else {
+          bounds.y -= bounds.height * 2;
+          bounds.height *= 5;
+        }
+        if (bounds.y < 0) {
+          bounds.height += bounds.y;
+          bounds.y = 0;
+        }
+        int y = bounds.y + bounds.height - tree.getHeight();
+        if (y > 0) bounds.height -= y;
+      }
     }
+    scrollToVisibleWithAccessibility(tree, bounds);
     return true;
+  }
+
+  private static void scrollToVisibleWithAccessibility(@NotNull JTree tree, @NotNull Rectangle bounds) {
+    tree.scrollRectToVisible(bounds);
+    AccessibleContext context = tree.getAccessibleContext();
+    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
   }
 
   /**

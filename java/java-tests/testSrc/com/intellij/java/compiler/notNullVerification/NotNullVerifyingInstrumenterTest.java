@@ -290,7 +290,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testMalformedBytecode() throws Exception {
-    Class<?> testClass = prepareTest(false, AnnotationUtil.NOT_NULL);
+    Class<?> testClass = prepareTest();
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null",
                               null, testClass.getMethod("main"));
   }
@@ -323,53 +323,45 @@ public abstract class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testNoCheckForConstant() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
   @Test
   public void testNoCheckForNewObject() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
   @Test
   public void testNoCheckForNewConstructorCall() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
   @Test
   public void testNoCheckForNewArray() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
   @Test
   public void testNoCheckForNewMultiArray() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
   @Test
   public void testNoCheckForPrivateNotNullMethodCall() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
   @Test
   public void testNoCheckForFinalNotNullMethodCall() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
   @Test
   public void testNoCheckForStaticNotNullMethodCall() throws Exception {
-    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
-    assertNotNull(test);
+    verifyNotInstrumented();
   }
 
-  private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
+  protected static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
     String exceptionText = null;
     try {
       if (member instanceof Constructor) {
@@ -388,15 +380,19 @@ public abstract class NotNullVerifyingInstrumenterTest {
     assertEquals(expectedError, exceptionText);
   }
 
-  private Class<?> prepareTest() throws IOException {
+  protected Class<?> prepareTest() throws IOException {
     return prepareTest(false, AnnotationUtil.NOT_NULL);
   }
 
-  private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
+  protected Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
     return prepareTest(withDebugInfo, true, notNullAnnotations);
   }
 
-  private Class<?> prepareTest(boolean withDebugInfo, boolean expectInstrumented, String... notNullAnnotations) throws IOException {
+  protected void verifyNotInstrumented() throws IOException {
+    prepareTest(false, false, AnnotationUtil.NOT_NULL);
+  }
+
+  protected Class<?> prepareTest(boolean withDebugInfo, boolean expectInstrumented, String... notNullAnnotations) throws IOException {
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
     File classesDir = tempDir.newFolder("output");

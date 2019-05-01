@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.CopyableIcon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -20,6 +21,7 @@ import com.intellij.util.ui.JBUIScale.Scale;
 import com.intellij.util.ui.JBUIScale.ScaleType;
 import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -101,9 +103,7 @@ public class JBUI {
     SYSTEM_SCALE_FACTOR.set(sysScale);
   }
 
-  /**
-   * For internal usage.
-   */
+  @ApiStatus.Internal
   public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<Float>() {
     @Nullable
     @Override
@@ -670,7 +670,7 @@ public class JBUI {
 
       @NotNull
       public static Color inactiveUnderlineColor() {
-        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0xABABAB, 0x7A7A7A));
+        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0x9ca7b8, 0x747a80));
       }
 
       @NotNull
@@ -691,6 +691,12 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color uncoloredTabSelectedColor() {
+        return JBColor.namedColor("DefaultTabs.uncoloredTabSelectedColor",
+                                  new JBColor(0xFAFAFA, 0x4E5254));
+      }
+
+      @NotNull
       public static Color hoverColor() {
         return JBColor.namedColor("DefaultTabs.hoverColor",
                                   new JBColor(0xD9D9D9,
@@ -701,7 +707,7 @@ public class JBUI {
       public static Color inactiveMaskColor() {
         return JBColor.namedColor("DefaultTabs.inactiveMaskColor",
                                   new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
-                                              ColorUtil.withAlpha(Color.BLACK, .13)));
+                                              ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
 
       }
     }
@@ -719,6 +725,12 @@ public class JBUI {
       @NotNull
       public static Color inactiveUnderlineColor() {
         return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
+      }
+
+      @NotNull
+      public static Color uncoloredTabSelectedColor() {
+        return JBColor.namedColor("EditorTabs.uncoloredTabSelectedColor",
+                                  DefaultTabs.uncoloredTabSelectedColor());
       }
 
       @NotNull
@@ -1127,6 +1139,31 @@ public class JBUI {
                        : UIUtil.getPanelBackground();
       }
     }
+
+    public static class NewClassDialog {
+      @NotNull
+      public static Color searchFieldBackground() {
+        return JBColor.namedColor("NewClass.SearchField.background", 0xffffff);
+      }
+
+      @NotNull
+      public static Color panelBackground() {
+        return JBColor.namedColor("NewClass.Panel.background", 0xf2f2f2);
+      }
+
+      @NotNull
+      public static Color bordersColor() {
+        return JBColor.namedColor(
+          "TextField.borderColor",
+          JBColor.namedColor("Component.borderColor", new JBColor(0xbdbdbd, 0x646464))
+        );
+      }
+
+      @NotNull
+      public static int fieldsSeparatorWidth() {
+        return getInt("NewClass.separatorWidth", JBUI.scale(10));
+      }
+    }
   }
 
 
@@ -1152,6 +1189,17 @@ public class JBUI {
    */
 
   /**
+   * @deprecated Use {@link JBUIScale.ScaleType}.
+   */
+  @Deprecated
+  public enum ScaleType {
+    USR_SCALE,
+    SYS_SCALE,
+    OBJ_SCALE,
+    PIX_SCALE
+  }
+
+  /**
    * @deprecated Use {@link JBUIScale.UserScaleContext}.
    */
   @Deprecated
@@ -1163,6 +1211,16 @@ public class JBUI {
 
     public boolean update(@NotNull Scale scale) {
       return setScale(scale);
+    }
+
+    public double getScale(@NotNull ScaleType type) {
+      switch (type) {
+        case USR_SCALE: return usrScale.value();
+        case SYS_SCALE: return 1d;
+        case OBJ_SCALE: return objScale.value();
+        case PIX_SCALE: return pixScale;
+      }
+      return 1f; // unreachable
     }
   }
 
@@ -1195,6 +1253,16 @@ public class JBUI {
     protected ScaleContext(@NotNull Scale scale) {
       setScale(scale);
     }
+
+    public double getScale(@NotNull ScaleType type) {
+      switch (type) {
+        case USR_SCALE: return usrScale.value();
+        case SYS_SCALE: return sysScale.value();
+        case OBJ_SCALE: return objScale.value();
+        case PIX_SCALE: return pixScale;
+      }
+      return 1f; // unreachable
+    }
   }
 
   /**
@@ -1203,4 +1271,16 @@ public class JBUI {
   @Deprecated
   @SuppressWarnings("AbstractClassNeverImplemented")
   public abstract static class JBIcon extends JBScalableIcon {}
+
+  /**
+   * @deprecated Use {@link JBCachingScalableIcon}.
+   */
+  @Deprecated
+  public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends JBCachingScalableIcon<T> {
+    protected CachingScalableJBIcon() {}
+
+    public CachingScalableJBIcon(CachingScalableJBIcon icon) {
+      super(icon);
+    }
+  }
 }

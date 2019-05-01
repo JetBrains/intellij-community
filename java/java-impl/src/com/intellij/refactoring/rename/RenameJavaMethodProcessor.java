@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -152,11 +151,12 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  @Override
   @NotNull
-  public Collection<PsiReference> findReferences(@NotNull final PsiElement element) {
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
-    return MethodReferencesSearch.search((PsiMethod)element, projectScope, true).findAll();
+  @Override
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInCommentsAndStrings) {
+    return MethodReferencesSearch.search((PsiMethod)element, searchScope, true).findAll();
   }
 
   @Override

@@ -22,11 +22,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -59,20 +61,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-      Messages.setTestDialog(TestDialog.DEFAULT);
-      removeFromLocalRepository("test");
-      ExternalSystemTestCase.deleteBuildSystemDirectory();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myProjectsManager = null;
-      myProjectsTree = null;
-      super.tearDown();
-    }
+    new RunAll(
+      () -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests(),
+      () -> Messages.setTestDialog(TestDialog.DEFAULT),
+      () -> removeFromLocalRepository("test"),
+      () -> ExternalSystemTestCase.deleteBuildSystemDirectory(),
+      () -> myProjectsManager = null,
+      () -> myProjectsTree = null,
+      () -> super.tearDown()
+    ).run();
   }
 
   @Override
@@ -400,6 +397,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems());
       }
     }
+
+    MavenSyncConsole syncConsole = myProjectsManager.getSyncConsole();
+    assertEquals(0, syncConsole.runningProcesses());
+    assertTrue(syncConsole.isFinished());
+
   }
 
   protected void readProjects(List<VirtualFile> files, String... profiles) {

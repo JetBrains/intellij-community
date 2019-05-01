@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -80,8 +80,8 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           }
         }
 
+        @NotNull
         @Override
-        @Nullable
         public NotificationInfo getNotificationInfo() {
           return new NotificationInfo("Maven", "Maven Task Finished", "");
         }
@@ -162,10 +162,11 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
                                            @NotNull String workingDirPath,
                                            @NotNull String title,
                                            long executionId) {
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) return null;
-      return doCreateConsole(title, workingDirPath, project, executionId);
-    });
+    boolean isDisposed = ReadAction.compute(() -> project.isDisposed());
+    if (isDisposed) {
+      return null;
+    }
+    return doCreateConsole(title, workingDirPath, project, executionId);
   }
 
   private void updateTargetFolders() {

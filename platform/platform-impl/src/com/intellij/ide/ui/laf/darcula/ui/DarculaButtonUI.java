@@ -46,7 +46,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   public static boolean isSquare(Component c) {
-    return c instanceof JButton && "square".equals(((JButton)c).getClientProperty("JButton.buttonType"));
+    return c instanceof AbstractButton && "square".equals(((AbstractButton)c).getClientProperty("JButton.buttonType"));
   }
 
   public static boolean isDefaultButton(JComponent c) {
@@ -110,7 +110,8 @@ public class DarculaButtonUI extends BasicButtonUI {
 
         if (!c.hasFocus() && !isSmallComboButton(c) && c.isEnabled() && UIManager.getBoolean("Button.paintShadow")) {
           Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor",
-                                                                                          new Color(0xa6a6a680, true)));
+                                                  new JBColor(new Color(0xa6a6a633, true), new Color(0x36363680, true))));
+
           int shadowWidth = JBUI.scale(JBUI.getInt("Button.shadowWidth", 2));
           g2.setColor(isDefaultButton(c) ? JBColor.namedColor("Button.default.shadowColor", shadowColor) : shadowColor);
           g2.fill(new RoundRectangle2D.Float(bw, bw + shadowWidth, r.width - bw * 2, r.height - bw * 2, arc, arc));

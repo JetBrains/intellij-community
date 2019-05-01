@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.api;
 
 import com.intellij.psi.PsiElement;
@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Same as {@link PsiPolyVariantReference} but returns {@link GroovyResolveResult}.
@@ -24,8 +26,13 @@ public interface GroovyReference extends PsiPolyVariantReference {
 
   @NotNull
   default GroovyResolveResult advancedResolve() {
-    GroovyResolveResult[] results = multiResolve(false);
-    return results.length == 1 ? results[0] : EmptyGroovyResolveResult.INSTANCE;
+    Collection<? extends GroovyResolveResult> results = resolve(false);
+    if (results.size() == 1) {
+      return getFirstItem(results);
+    }
+    else {
+      return EmptyGroovyResolveResult.INSTANCE;
+    }
   }
 
   /**

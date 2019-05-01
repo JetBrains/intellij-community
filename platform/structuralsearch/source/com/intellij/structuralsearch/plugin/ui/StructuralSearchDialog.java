@@ -61,6 +61,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.TextTransferable;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +72,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -270,7 +270,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         if (myReplace) {
           setTextForEditor(text, myReplaceCriteriaEdit);
         }
-        myScopePanel.setScope(null);
+        myScopePanel.setScopesFromContext();
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
@@ -323,7 +323,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myReplacePanel = createReplacePanel();
     myReplacePanel.setVisible(myReplace);
 
-    myScopePanel = new ScopePanel(getProject());
+    myScopePanel = new ScopePanel(getProject(), myDisposable);
     if (!myEditConfigOnly) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
       myScopePanel.setScopeConsumer(scope -> initiateValidation());
@@ -461,15 +461,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     myRecursive = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
     myRecursive.setVisible(!myReplace);
     myMatchCase = new JCheckBox(FindBundle.message("find.popup.case.sensitive"), true);
-    final List<FileType> types = new ArrayList<>();
-    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
-        types.add(fileType);
-      }
-    }
-    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     myFileType = UIUtil.detectFileType(mySearchContext);
-    myFileTypesComboBox = new FileTypeSelector(types);
+    myFileTypesComboBox = new FileTypeSelector();
     myFileTypesComboBox.setMinimumAndPreferredWidth(200);
     myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myContext);
     myFileTypesComboBox.addItemListener(new ItemListener() {
@@ -700,7 +693,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     reportMessage(null, false, mySearchCriteriaEdit);
     if (myReplace) {
       try {
-        Replacer.checkSupportedReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
+        Replacer.checkReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
       }
       catch (UnsupportedPatternException ex) {
         reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
@@ -806,16 +799,25 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
+  /**
+   * @param text  the text to try and load a configuration from
+   * @return {@code true}, if some configuration was found, even if it was broken or corrupted {@code false} otherwise.
+   */
   boolean loadConfiguration(String text) {
     if (text == null) {
       return false;
     }
-    final Configuration configuration = ConfigurationUtil.fromXml(text);
-    if (configuration == null) {
-      return false;
+    try {
+      final Configuration configuration = ConfigurationUtil.fromXml(text);
+      if (configuration == null) {
+        return false;
+      }
+      loadConfiguration(configuration);
+      securityCheck();
     }
-    loadConfiguration(configuration);
-    securityCheck();
+    catch (JDOMException e) {
+      ApplicationManager.getApplication().invokeLater(() -> reportMessage(e.getMessage(), false, myOptionsToolbar));
+    }
     return true;
   }
 
@@ -823,10 +825,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     myConfiguration = createConfiguration(configuration);
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     setSearchTargets(matchOptions);
-    final SearchScope scope = matchOptions.getScope();
-    if (scope != null) {
-      myScopePanel.setScope(scope);
-    }
+    myScopePanel.setScopesFromContext();
+    SearchScope scope = matchOptions.getScope();
+    if (scope != null) myScopePanel.setScope(scope);
 
     UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 

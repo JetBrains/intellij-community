@@ -21,7 +21,7 @@ import java.util.EnumSet;
 
 public enum ArtifactKind {
   ARTIFACT("", "jar"), SOURCES("sources", "jar"), JAVADOC("javadoc", "jar"),
-  ANNOTATIONS("annotations", "zip"), AAR_ARTIFACT("", "aar");
+  ANNOTATIONS("annotations", "zip"), AAR_ARTIFACT("", "aar"), POM("", "pom");
 
   private final String myClassifier;
   private final String myExtension;
@@ -49,15 +49,25 @@ public enum ArtifactKind {
     }
     return null;
   }
-  
-  @NotNull
-  public static EnumSet<ArtifactKind> kindsOf(boolean sources, boolean javadoc) {
+
+  public static EnumSet<ArtifactKind> kindsOf(boolean sources, boolean javadoc, String... artifactPackaging) {
     EnumSet<ArtifactKind> result = EnumSet.noneOf(ArtifactKind.class);
     if (sources) {
       result.add(SOURCES);
     }
     if (javadoc) {
       result.add(JAVADOC);
+    }
+    if (artifactPackaging.length == 0 || artifactPackaging.length == 1 && artifactPackaging[0] == null) {
+      result.add(ARTIFACT);
+    }
+    else {
+      for (String packaging : artifactPackaging) {
+        final ArtifactKind artifact = find(ARTIFACT.getClassifier(), packaging);
+        if (artifact != null) {
+          result.add(artifact);
+        }
+      }
     }
     return result;
   }

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,8 +27,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -37,9 +36,6 @@ import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class LibraryImpl extends TraceableDisposable implements LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
   @NonNls public static final String LIBRARY_NAME_ATTR = "name";
@@ -47,7 +43,6 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
   @NonNls private static final String PROPERTIES_ELEMENT = "properties";
-  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private static final String EXCLUDED_ROOTS_TAG = "excluded";
   private String myName;
   private final LibraryTable myLibraryTable;
@@ -83,8 +78,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
     if (from.myKind != null && from.myProperties != null) {
       myProperties = myKind.createDefaultProperties();
-      //noinspection unchecked
-      myProperties.loadState(from.myProperties.getState());
+      Object state = from.myProperties.getState();
+      if (state != null) {
+        //noinspection unchecked
+        myProperties.loadState(state);
+      }
     }
     for (OrderRootType rootType : getAllRootTypes()) {
       final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);
@@ -371,8 +369,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       LOG.assertTrue(myProperties != null, "Properties is 'null' in library with kind " + myKind);
       final Object state = myProperties.getState();
       if (state != null) {
-        final Element propertiesElement = XmlSerializer.serializeIfNotDefault(state, SERIALIZATION_FILTERS);
-        if (!JDOMUtil.isEmpty(propertiesElement)) {
+        final Element propertiesElement = XmlSerializer.serialize(state);
+        if (propertiesElement != null) {
           element.addContent(propertiesElement.setName(PROPERTIES_ELEMENT));
         }
       }

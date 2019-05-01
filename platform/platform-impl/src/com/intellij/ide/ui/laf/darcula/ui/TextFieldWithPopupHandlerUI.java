@@ -118,8 +118,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
-    Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null || UIUtil.getParentOfType(JSpinner.class, c) != null ?
-                    JBUI.emptyInsets() : getDefaultMargins();
+    Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null ||
+                    UIUtil.getParentOfType(JSpinner.class, c) != null ||
+                    UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBUI.emptyInsets() : getDefaultMargins();
 
     JBInsets.removeFrom(bounds, c.getInsets());
     JBInsets.removeFrom(bounds, margin);
@@ -129,16 +130,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (holder.extension.isIconBeforeText()) {
         int offset = holder.extension.getAfterIconOffset();
         holder.bounds.x = bounds.x;
-        bounds.width -= holder.bounds.width + gap;
-        bounds.x += holder.bounds.width + gap + offset;
 
-        margin.left += holder.bounds.width + gap + offset;
+        int extensionWidth = holder.bounds.width + gap + offset;
+        bounds.x += extensionWidth;
+        bounds.width -= extensionWidth;
+        margin.left += extensionWidth;
       }
       else {
-        bounds.width -= holder.bounds.width + gap;
-        holder.bounds.x = bounds.x + bounds.width + gap;
+        holder.bounds.x = bounds.x + bounds.width - holder.bounds.width;
 
-        margin.right += holder.bounds.width + gap;
+        int extensionWidth = holder.bounds.width + gap;
+        bounds.width -= extensionWidth;
+        margin.right += extensionWidth;
       }
       int top = (bounds.height - holder.bounds.height) / 2;
       if (top > gap) {
@@ -329,6 +332,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           action = null;
         }
         setCursor(action != null ? Cursor.HAND_CURSOR : Cursor.TEXT_CURSOR);
+      }
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      if (!icons.isEmpty()) {
+        handleMouse(e, false);
       }
     }
 
@@ -526,6 +536,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         }
       }
       else if ("search".equals(variant)) {
+        Object extension = getComponent().getClientProperty("search.extension");
+        if (extension instanceof Extension) {
+          addExtension((Extension)extension);
+        }
         addExtension(new SearchExtension());
         addExtension(new ClearExtension());
       }

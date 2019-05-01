@@ -6,7 +6,6 @@ import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -38,10 +36,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class FocusManagerImpl extends IdeFocusManager implements Disposable {
+public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
-
-  private final Application myApp;
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
@@ -63,15 +59,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private IdeFrame myLastFocusedFrame;
 
   @SuppressWarnings("UnusedParameters")  // the dependencies are needed to ensure correct loading order
-  public FocusManagerImpl(WindowManager wm, UiActivityMonitor monitor) {
-    myApp = ApplicationManager.getApplication();
+  public FocusManagerImpl() {
+    UiActivityMonitor.getInstance();
+
     myQueue = IdeEventQueue.getInstance();
 
     myFocusedComponentAlarm = new EdtAlarm();
     myForcedFocusRequestsAlarm = new EdtAlarm();
 
     final AppListener myAppListener = new AppListener();
-    myApp.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof FocusEvent) {
@@ -337,8 +334,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
-
-  static class EdtAlarm {
+  final static class EdtAlarm {
     private final Set<EdtRunnable> myRequests = new HashSet<>();
 
     public void cancelAllRequests() {
@@ -426,8 +422,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public boolean isFocusTransferEnabled() {
-    if (Registry.is("focus.fix.lost.cursor")) return true;
-    return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
+    if (Registry.is("focus.fix.lost.cursor")) {
+      return true;
+    }
+    return ApplicationManager.getApplication().isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
   }
 
   private static void assertDispatchThread() {

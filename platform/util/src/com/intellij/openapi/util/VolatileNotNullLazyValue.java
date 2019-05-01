@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("VolatileNotNullLazyValue");
   private volatile T myValue;
 
   @Override
@@ -33,7 +32,7 @@ public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
   public final T getValue() {
     T value = myValue;
     if (value == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = compute();
       if (stamp.mayCacheNow()) {
         myValue = value;

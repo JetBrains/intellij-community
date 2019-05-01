@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.vcs.commit.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +32,8 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   public CommitDialogSettingsPanel(@NotNull Project project) {
     myProject = project;
     myMoveToFailedCommitChangeListModel = new EnumComboBoxModel<>(VcsShowConfirmationOption.Value.class);
-    myMoveToFailedCommitChangeList.setRenderer(new ListCellRendererWrapper<VcsShowConfirmationOption.Value>() {
-      @Override
-      public void customize(JList list, VcsShowConfirmationOption.Value value, int index, boolean selected, boolean hasFocus) {
-        setText(getConfirmationOptionText(value));
-      }
-    });
+    myMoveToFailedCommitChangeList.setRenderer(
+      SimpleListCellRenderer.create("", CommitDialogSettingsPanel::getConfirmationOptionText));
     myMoveToFailedCommitChangeList.setModel(myMoveToFailedCommitChangeListModel);
   }
 

@@ -9,10 +9,12 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.toCommaSeparatedString;
+
 public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<PackageEntryTable> {
 
-  public static final String BLANK_LINE_ENTRY = "blank_line";
-  public static final String STATIC_PREFIX = "static";
+  public static final char BLANK_LINE_CHAR = '|';
+  public static final String STATIC_PREFIX = "$";
 
   public JavaPackageEntryTableAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
@@ -24,8 +26,12 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     PackageEntryTable entryTable = new PackageEntryTable();
     for (String strValue : strList) {
       String parseStr = strValue.trim();
-      if (BLANK_LINE_ENTRY.equals(parseStr)) {
-        entryTable.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      if (parseStr.length() > 0 && parseStr.charAt(0) == BLANK_LINE_CHAR) {
+        for (int i = 0; i < parseStr.length(); i ++) {
+          if (parseStr.charAt(i) == BLANK_LINE_CHAR) {
+            entryTable.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+          }
+        }
       }
       else {
         boolean isStatic = false;
@@ -56,12 +62,12 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     List<String> externalList = ContainerUtil.newArrayList();
     for (PackageEntry entry : value.getEntries()) {
       if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-        externalList.add(BLANK_LINE_ENTRY);
+        externalList.add(String.valueOf(BLANK_LINE_CHAR));
       }
       else {
         StringBuilder entryBuilder = new StringBuilder();
         if (entry.isStatic()) {
-          entryBuilder.append(STATIC_PREFIX + " ");
+          entryBuilder.append("$");
         }
         if (entry.isSpecial()) {
           entryBuilder.append("*");
@@ -76,5 +82,11 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
       }
     }
     return externalList;
+  }
+
+  @Nullable
+  @Override
+  protected String valueToString(@NotNull List<String> value) {
+    return toCommaSeparatedString(value);
   }
 }

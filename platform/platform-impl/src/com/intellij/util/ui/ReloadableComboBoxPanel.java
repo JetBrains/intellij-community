@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
-  protected JComboBox myComboBox;
+  protected JComboBox<T> myComboBox;
   protected JPanel myActionPanel;
   private JPanel myMainPanel;
 
@@ -18,8 +18,8 @@ public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
   }
 
   @NotNull
-  protected JComboBox createValuesComboBox() {
-    return new ComboBox();
+  protected JComboBox<T> createValuesComboBox() {
+    return new ComboBox<T>();
   }
 
   @NotNull

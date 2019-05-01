@@ -621,7 +621,7 @@ public class GradleProjectResolverUtil {
           for (ProjectDependencyInfo projectDependencyInfo: projectDependencyInfos) {
             ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, projectDependencyInfo.myModuleData);
             moduleDependencyData.setScope(dependencyScope);
-            if (projectDependencyInfo.mySourceSet != null && "test".equals(projectDependencyInfo.mySourceSet.getName())) {
+            if (projectDependencyInfo.mySourceSet != null && isTestSourceSet(projectDependencyInfo.mySourceSet)) {
               moduleDependencyData.setProductionOnTestDependency(true);
             }
             moduleDependencyData.setOrder(mergedDependency.getClasspathOrder());
@@ -722,6 +722,11 @@ public class GradleProjectResolverUtil {
                             ideProject);
       }
     }
+  }
+
+  private static boolean isTestSourceSet(@NotNull ExternalSourceSet sourceSet) {
+    if (sourceSet.getSources().isEmpty()) return false;
+    return sourceSet.getSources().keySet().stream().allMatch(IExternalSystemSourceType::isTest);
   }
 
   private static Collection<File> collectProcessedArtifacts(Collection<ProjectDependencyInfo> infos) {

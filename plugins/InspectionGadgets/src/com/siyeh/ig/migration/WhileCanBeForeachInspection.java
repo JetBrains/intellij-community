@@ -120,7 +120,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         return;
       }
       final PsiReferenceExpression methodExpression = initializer.getMethodExpression();
-      final PsiExpression collection = ParenthesesUtils.stripParentheses(ExpressionUtils.getQualifierOrThis(methodExpression));
+      final PsiExpression collection = ParenthesesUtils.stripParentheses(ExpressionUtils.getEffectiveQualifier(methodExpression));
       if (collection == null) {
         return;
       }

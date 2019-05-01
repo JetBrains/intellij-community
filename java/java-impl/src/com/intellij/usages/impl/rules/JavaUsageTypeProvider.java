@@ -22,7 +22,6 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -234,7 +233,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
         if (isAnonymousClassOf(psiNewExpression.getAnonymousClass(), targets)) {
           return UsageType.CLASS_ANONYMOUS_NEW_OPERATOR;
         }
-        if (ExpressionUtils.isArrayCreationExpression(psiNewExpression)) {
+        if (psiNewExpression.isArrayCreation()) {
           return UsageType.CLASS_NEW_ARRAY;
         }
         return UsageType.CLASS_NEW_OPERATOR;
@@ -253,6 +252,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+    if (classReference instanceof PsiMethodReferenceExpression) return false;
     final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
       return qualifiesToTargetClasses((PsiJavaCodeReferenceElement)qualifier, targets) && classReference.resolve() instanceof PsiClass;

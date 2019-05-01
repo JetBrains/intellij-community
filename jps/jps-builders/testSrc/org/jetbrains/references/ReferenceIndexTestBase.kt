@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.IndexId
 import com.intellij.util.indexing.impl.MapIndexStorage
@@ -45,11 +44,11 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   }
 
   protected fun changeFileContent(name: String, changesSourceFile: String) {
-    changeFile("m/" + name, FileUtil.loadFile(File(testDataRootPath + "/" + getTestName(true) + "/" + changesSourceFile), CharsetToolkit.UTF8_CHARSET))
+    changeFile("m/" + name, FileUtil.loadFile(File(testDataRootPath + "/" + getTestName(true) + "/" + changesSourceFile), Charsets.UTF_8))
   }
 
   protected fun addFile(name: String): String {
-    return createFile("m/" + name, FileUtil.loadFile(File(getTestDataPath() + name), CharsetToolkit.UTF8_CHARSET))
+    return createFile("m/" + name, FileUtil.loadFile(File(getTestDataPath() + name), Charsets.UTF_8))
   }
 
 

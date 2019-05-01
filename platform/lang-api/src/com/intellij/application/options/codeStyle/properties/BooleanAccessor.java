@@ -39,4 +39,10 @@ public class BooleanAccessor extends CodeStyleFieldAccessor<Boolean,Boolean> imp
   public List<String> getChoices() {
     return BOOLEAN_VALS;
   }
+
+  @Nullable
+  @Override
+  protected String valueToString(@NotNull Boolean value) {
+    return String.valueOf(value);
+  }
 }

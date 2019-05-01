@@ -440,7 +440,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return labelRenderer;
   }
 
-  private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer{
+  private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, XValuePresentationProvider {
     private static final Key<ValueDescriptorImpl> KEY_DESCRIPTOR = Key.create("KEY_DESCRIPTOR");
     private static final Key<ValueDescriptorImpl> VALUE_DESCRIPTOR = Key.create("VALUE_DESCRIPTOR");
 
@@ -517,7 +517,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       }
     }
 
-    @Nullable
+    @NotNull
     @Override
     public XValuePresentation getPresentation(ValueDescriptorImpl descriptor) {
       boolean inCollection = descriptor instanceof ArrayElementDescriptor;

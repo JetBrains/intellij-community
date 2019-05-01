@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.reporting.isSendAllowed
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.util.Alarm
 import com.intellij.util.Time
@@ -23,6 +24,7 @@ class SenderComponent(private val sender: StatisticSender, private val statusHel
 
     try {
       ApplicationManager.getApplication().executeOnPooledThread {
+        if(!isSendAllowed()) return@executeOnPooledThread
         statusHelper.updateStatus()
         if (statusHelper.isServerOk()) {
           val dataServerUrl = statusHelper.dataServerUrl()

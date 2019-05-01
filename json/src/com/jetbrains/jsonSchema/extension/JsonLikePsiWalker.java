@@ -14,6 +14,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -55,7 +56,8 @@ public interface JsonLikePsiWalker {
 
   default boolean acceptsEmptyRoot() { return false; }
 
-  @Nullable PsiElement getRoot(@NotNull PsiFile file);
+  @Nullable
+  Collection<PsiElement> getRoots(@NotNull PsiFile file);
 
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {

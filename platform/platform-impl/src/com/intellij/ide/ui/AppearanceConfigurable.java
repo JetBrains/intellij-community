@@ -22,7 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -68,9 +68,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myFontSizeCombo.setEditable(true);
     myComponent.myPresentationModeFontSize.setEditable(true);
 
-    //noinspection unchecked
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
-    myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
+    myComponent.myLafComboBox.setRenderer(SimpleListCellRenderer.create("", UIManager.LookAndFeelInfo::getName));
 
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
     myComponent.myAntialiasingInEditor.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
@@ -488,7 +487,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myWindowShortcutsCheckBox;
     private JCheckBox myShowToolStripesCheckBox;
     private JCheckBox myShowMemoryIndicatorCheckBox;
-    private JComboBox myLafComboBox;
+    private JComboBox<UIManager.LookAndFeelInfo> myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
 
     private JCheckBox myMoveMouseOnDefaultButtonCheckBox;
@@ -547,29 +546,29 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
   }
 
-  private static class AAListCellRenderer extends ListCellRendererWrapper<AntialiasingType> {
+  private static class AAListCellRenderer extends SimpleListCellRenderer<AntialiasingType> {
     private static final Object SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
     private static final Object GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-    private final boolean useEditorAASettings;
+    private final boolean myUseEditorFont;
 
-    AAListCellRenderer(boolean useEditorAASettings) {
-      this.useEditorAASettings = useEditorAASettings;
+    AAListCellRenderer(boolean useEditorFont) {
+      myUseEditorFont = useEditorFont;
     }
 
     @Override
-    public void customize(JList list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
+    public void customize(JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
       if (value == AntialiasingType.SUBPIXEL) {
-        GraphicsUtil.generatePropertiesForAntialiasing(SUBPIXEL_HINT, this::setClientProperty);
+        GraphicsUtil.setAntialiasingType(this, SUBPIXEL_HINT);
       }
       else if (value == AntialiasingType.GREYSCALE) {
-        GraphicsUtil.generatePropertiesForAntialiasing(GREYSCALE_HINT, this::setClientProperty);
+        GraphicsUtil.setAntialiasingType(this, GREYSCALE_HINT);
       }
       else if (value == AntialiasingType.OFF) {
-        GraphicsUtil.generatePropertiesForAntialiasing(null, this::setClientProperty);
+        GraphicsUtil.setAntialiasingType(this, null);
       }
 
-      if (useEditorAASettings) {
+      if (myUseEditorFont) {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         setFont(new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize()));
       }

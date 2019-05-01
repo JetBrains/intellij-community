@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,7 +9,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
@@ -127,22 +128,12 @@ public class GitUIUtil {
   /**
    * @return a list cell renderer for virtual files (it renders presentable URL)
    */
-  public static ListCellRendererWrapper<VirtualFile> getVirtualFileListCellRenderer() {
-    return new ListCellRendererWrapper<VirtualFile>() {
-      @Override
-      public void customize(JList list, VirtualFile file, int index, boolean selected, boolean hasFocus) {
-        setText(file == null ? "(invalid)" : file.getPresentableUrl());
-      }
-    };
+  public static ListCellRenderer<VirtualFile> getVirtualFileListCellRenderer() {
+    return SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl);
   }
 
-  public static ListCellRendererWrapper<GitRepository> getRepositoryListCellRenderer() {
-    return new ListCellRendererWrapper<GitRepository>() {
-      @Override
-      public void customize(JList list, GitRepository repository, int index, boolean selected, boolean hasFocus) {
-        setText(repository == null ? "(invalid)" : repository.getPresentableUrl());
-      }
-    };
+  public static ListCellRenderer<GitRepository> getRepositoryListCellRenderer() {
+    return SimpleListCellRenderer.create("(invalid)", Repository::getPresentableUrl);
   }
 
   /**

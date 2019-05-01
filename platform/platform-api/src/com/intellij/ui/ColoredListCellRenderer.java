@@ -9,6 +9,11 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
+ * SimpleColoredComponent-based list cell renderer.
+ *
+ * @see SimpleListCellRenderer for a simpler JBLabel-based variant.
+ * @see ListCellBackgroundSupplier for different background color.
+ *
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
@@ -27,7 +32,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     clear();
     setFont(list.getFont());
     mySelected = selected;
-    myForeground = isEnabled() ? list.getForeground() : UIManager.getColor("Label.disabledForeground");
+    myForeground = isEnabled() ? list.getForeground() : UIUtil.getLabelDisabledForeground();
     mySelectionForeground = list.getSelectionForeground();
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
@@ -85,22 +90,20 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
 
   protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);
 
-  /**
-   * Copied AS IS
-   *
-   * @see DefaultListCellRenderer#isOpaque()
-   */
-  @Override
-  public boolean isOpaque() {
-    Color back = getBackground();
-    Component p = getParent();
-    if (p != null) {
-      p = p.getParent();
-    }
-    // p should now be the JList.
-    boolean colorMatch = (back != null) && (p != null) &&
-                         back.equals(p.getBackground()) &&
-                         p.isOpaque();
-    return !colorMatch && super.isOpaque();
-  }
+  // @formatter:off
+  @Override public void validate() {}
+  @Override public void invalidate() {}
+  @Override public void repaint() {}
+  @Override public void revalidate() {}
+  @Override public void repaint(long tm, int x, int y, int width, int height) {}
+  @Override public void repaint(Rectangle r) {}
+  @Override public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {}
+  @Override public void firePropertyChange(String propertyName, char oldValue, char newValue) {}
+  @Override public void firePropertyChange(String propertyName, short oldValue, short newValue) {}
+  @Override public void firePropertyChange(String propertyName, int oldValue, int newValue) {}
+  @Override public void firePropertyChange(String propertyName, long oldValue, long newValue) {}
+  @Override public void firePropertyChange(String propertyName, float oldValue, float newValue) {}
+  @Override public void firePropertyChange(String propertyName, double oldValue, double newValue) {}
+  @Override public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
+  // @formatter:on
 }

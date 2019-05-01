@@ -271,13 +271,11 @@ public class CommitPanel extends JBPanel {
   }
 
   private class RootPanel extends Wrapper {
-    private final JComponent myReferent;
     @Nullable private ColorIcon myIcon;
     @Nullable private String myTooltipText;
 
     RootPanel(@NotNull JComponent component) {
-      myReferent = component;
-      setVerticalSizeReferent(myReferent);
+      setVerticalSizeReferent(component);
       addMouseMotionListener(new MouseAdapter() {
         @Override
         public void mouseMoved(MouseEvent e) {

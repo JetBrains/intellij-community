@@ -21,11 +21,11 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
-import com.intellij.util.Alarm;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.newImpl.table.TableLayout;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -143,6 +143,7 @@ public class JBTabsImpl extends JComponent
   private boolean myTabLabelActionsAutoHide;
 
   private final TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
+  private Disposable myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
   private IdeGlassPane myGlassPane;
   @NonNls private static final String LAYOUT_DONE = "Layout.done";
   @NonNls public static final String STRETCHED_BY_WIDTH = "Layout.stretchedByWidth";
@@ -302,8 +303,7 @@ public class JBTabsImpl extends JComponent
               @Override
               public void run() {
                 if (!myMouseInsideTabsArea) {
-                  mySingleRowLayout.scrollSelectionInView();
-                  doLayout();
+                  doLayoutTwice();
                 }
               }
             }, 500);
@@ -360,7 +360,9 @@ public class JBTabsImpl extends JComponent
         if (!myTestMode) {
           final IdeGlassPane gp = IdeGlassPaneUtil.find(child);
           if (gp != null) {
-            gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, child);
+            myTabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener");
+            Disposer.register(child, myTabActionsAutoHideListenerDisposable);
+            gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
             myGlassPane = gp;
           }
 
@@ -402,20 +404,24 @@ public class JBTabsImpl extends JComponent
     }
     boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
-    boolean wasSingleRow = isSingleRow();
     if (oldHideTabsIfNeed != newHideTabsIfNeed) {
-      if (mySingleRowLayout != null) {
-        remove(mySingleRowLayout.myLeftGhost);
-        remove(mySingleRowLayout.myRightGhost);
-      }
-      mySingleRowLayout = createSingleRowLayout();
-      if (wasSingleRow) {
-        myLayout = mySingleRowLayout;
-      }
-      add(mySingleRowLayout.myLeftGhost);
-      add(mySingleRowLayout.myRightGhost);
-      relayout(true, true);
+      updateRowLayout();
     }
+  }
+
+  private void updateRowLayout() {
+    boolean wasSingleRow = isSingleRow();
+    if (mySingleRowLayout != null) {
+      remove(mySingleRowLayout.myLeftGhost);
+      remove(mySingleRowLayout.myRightGhost);
+    }
+    mySingleRowLayout = createSingleRowLayout();
+    if (wasSingleRow) {
+      myLayout = mySingleRowLayout;
+    }
+    add(mySingleRowLayout.myLeftGhost);
+    add(mySingleRowLayout.myRightGhost);
+    relayout(true, true);
   }
 
   protected SingleRowLayout createSingleRowLayout() {
@@ -557,7 +563,8 @@ public class JBTabsImpl extends JComponent
     removeTimerUpdate();
 
     if (ScreenUtil.isStandardAddRemoveNotify(this) && myGlassPane != null) {
-      myGlassPane.removeMouseMotionPreprocessor(myTabActionsAutoHideListener);
+      Disposer.dispose(myTabActionsAutoHideListenerDisposable);
+      myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
       myGlassPane = null;
     }
   }
@@ -876,6 +883,16 @@ public class JBTabsImpl extends JComponent
     return info;
   }
 
+  // Looks hacky but makes selected tab scrolled to visible area precisely
+  private void doLayoutTwice() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      doLayout();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        doLayout();
+      });
+    });
+  }
+
   protected TabLabel createTabLabel(TabInfo info) {
     return new TabLabel(this, info);
   }
@@ -1150,6 +1167,7 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
+      doLayoutTwice();
     }
     else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
       updateColor(tabInfo);
@@ -1558,6 +1576,7 @@ public class JBTabsImpl extends JComponent
       }
 
       if (isSingleRow()) {
+        mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
         OnePixelDivider divider = mySplitter.getDivider();
@@ -2749,6 +2768,7 @@ public class JBTabsImpl extends JComponent
   @Override
   public JBTabsPresentation setSupportsCompression(boolean supportsCompression) {
     mySupportsCompression = supportsCompression;
+    updateRowLayout();
     return this;
   }
 

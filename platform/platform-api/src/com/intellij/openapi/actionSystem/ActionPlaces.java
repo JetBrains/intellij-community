@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +19,12 @@ public abstract class ActionPlaces {
   public static final String TOOLBAR = "toolbar";
   public static final String POPUP = "popup";
 
-  /**
-   * consider to use {@link #isMainMenuOrActionSearch(String)} instead
-   */
+  // prefer isMainMenuOrActionSearch(String) for the following places
+  public static final String KEYBOARD_SHORTCUT = "keyboard shortcut";
+  public static final String MOUSE_SHORTCUT = "mouse shortcut";
+  public static final String FORCE_TOUCH = "force touch";
   public static final String MAIN_MENU = "MainMenu";
+
   public static final String MAIN_TOOLBAR = "MainToolbar";
   public static final String EDITOR_POPUP = "EditorPopup";
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
@@ -143,12 +133,16 @@ public abstract class ActionPlaces {
 
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
+  public static final String REFACTORING_QUICKLIST = "RefactoringQuickList";
+
   public static boolean isMainMenuOrActionSearch(String place) {
-    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place);
+    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
+           KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
   }
 
   private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
-    UNKNOWN, TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
+    UNKNOWN, KEYBOARD_SHORTCUT, MOUSE_SHORTCUT, FORCE_TOUCH,
+    TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
     PROJECT_VIEW_TOOLBAR, STATUS_BAR_PLACE, ACTION_SEARCH, TESTTREE_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR,
     METHOD_HIERARCHY_VIEW_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, RUNNER_TOOLBAR, DEBUGGER_TOOLBAR, USAGE_VIEW_TOOLBAR,
     STRUCTURE_VIEW_TOOLBAR, NAVIGATION_BAR_TOOLBAR, TODO_VIEW_TOOLBAR, COMPILER_MESSAGES_TOOLBAR,
@@ -181,8 +175,21 @@ public abstract class ActionPlaces {
     return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place);
   }
 
+  public static boolean isMainMenuOrShortcut(@NotNull String place) {
+    return MAIN_MENU.equals(place) || KEYBOARD_SHORTCUT.equals(place);
+  }
+
   @NotNull
   public static String getActionGroupPopupPlace(@Nullable String actionId) {
     return actionId == null ? POPUP : POPUP_PREFIX + actionId;
+  }
+
+  /**
+   * Returns true if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
+   * (Used to avoid duplicate processing of the same action.)
+   */
+  @ApiStatus.Internal
+  public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
+    return SystemInfo.isMacSystemMenu && isMainMenuOrShortcut(e.getPlace());
   }
 }

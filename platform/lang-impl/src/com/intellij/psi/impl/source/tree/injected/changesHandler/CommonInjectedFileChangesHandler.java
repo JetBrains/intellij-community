@@ -12,11 +12,12 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
+public class CommonInjectedFileChangesHandler extends AbstractMarkerBasedInjectedFileChangesHandler {
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>> myMarkers =
     ContainerUtil.newLinkedList();
 
@@ -26,17 +27,28 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
                                           PsiFile injectedFile) {
     super(editor, newDocument, injectedFile);
 
+    myMarkers.addAll(getMarkersFromShreds(shreds));
+  }
+
+  @NotNull
+  protected ArrayList<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>> getMarkersFromShreds(List<? extends PsiLanguageInjectionHost.Shred> shreds) {
+    ArrayList<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>> result =
+      new ArrayList<>(shreds.size());
+
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     int curOffset = -1;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       final RangeMarker rangeMarker = localRangeMarkerFromShred(shred);
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
       PsiLanguageInjectionHost host = shred.getHost();
+      if (host == null) {
+        throw getReportException("host should not be null", null, null);
+      }
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
       Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>> markers =
         Trinity.create(origMarker, rangeMarker, elementPointer);
-      myMarkers.add(markers);
+      result.add(markers);
 
       origMarker.setGreedyToRight(true);
       rangeMarker.setGreedyToRight(true);
@@ -46,14 +58,9 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
       }
       curOffset = origMarker.getEndOffset();
     }
+    return result;
   }
 
-  @NotNull
-  protected RangeMarker localRangeMarkerFromShred(PsiLanguageInjectionHost.Shred shred) {
-    return myNewDocument.createRangeMarker(
-      shred.getRange().getStartOffset() + shred.getPrefix().length(),
-      shred.getRange().getEndOffset() - shred.getSuffix().length());
-  }
 
   @Override
   public boolean isValid() {
@@ -118,6 +125,8 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
     return false;
   }
 
+  @NotNull
+  @Override
   protected List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>> getMarkers() {
     return myMarkers;
   }

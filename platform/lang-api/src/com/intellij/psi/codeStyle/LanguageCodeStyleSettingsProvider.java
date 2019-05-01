@@ -401,4 +401,18 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
     return Collections.emptyList();
   }
+
+  /**
+   * Tells is the provider supports external formats such as Json and .editorconfig. By default it is assumed that language
+   * code style settings use a standard way to define settings, namely via public fields which have a straightforward mapping
+   * between the fields and human-readable stored values without extra transformation. If not, the provider must implement
+   * {@code getAccessor()} method for fields using magic constants, specially encoded strings and etc. and
+   * {@code getAdditionalAccessors()} method for non-stanard properties using their own {@code writer/readExternal() methods}
+   * for serialization.
+   * @return True (default) if standard properties are supported, false to disable language settings to avoid export
+   * partial, non-readable etc. data till proper accessors are implemented.
+   */
+  public boolean supportsExternalFormats() {
+    return true;
+  }
 }

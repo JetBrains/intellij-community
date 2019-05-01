@@ -755,8 +755,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  @Deprecated
   public final void setLineStyleAngled() {
-    UIUtil.setLineStyleAngled(this);
   }
 
   @NotNull

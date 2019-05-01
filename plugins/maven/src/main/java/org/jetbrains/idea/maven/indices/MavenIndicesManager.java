@@ -17,6 +17,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -96,7 +97,7 @@ public class MavenIndicesManager implements Disposable {
     myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
       @Override
       public void indexIsBroken(@NotNull MavenSearchIndex index) {
-        if(index instanceof MavenIndex) {
+        if (index instanceof MavenIndex) {
           scheduleUpdate(null, Collections.singletonList((MavenIndex)index), false);
         }
       }
@@ -161,8 +162,21 @@ public class MavenIndicesManager implements Disposable {
     }
   }
 
+  public synchronized @Nullable
+  MavenIndex createIndexForLocalRepo(Project project, File localRepository) {
+    MavenIndices indicesObjectCache = getIndicesObject();
+
+    try {
+      return indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
+    }
+    catch (MavenIndexException e) {
+      MavenLog.LOG.warn(e);
+      return null;
+    }
+  }
+
   public synchronized List<MavenIndex> ensureIndicesExist(Project project,
-                                                                Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
+                                                          Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
     // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
     LinkedHashSet<MavenIndex> result = new LinkedHashSet<>();
 
@@ -175,9 +189,9 @@ public class MavenIndicesManager implements Disposable {
   private void addArtifact(File artifactFile, String relativePath) {
     String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
-    MavenSearchIndex index = getIndicesObject().find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
-    if (index instanceof MavenIndex) {
-      ((MavenIndex)index).addArtifact(artifactFile);
+    MavenIndex index = getIndicesObject().find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
+    if (index != null) {
+      index.addArtifact(artifactFile);
     }
   }
 
@@ -220,7 +234,7 @@ public class MavenIndicesManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           indicator.setIndeterminate(false);
-          doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator));
+          doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator,null));
         }
         catch (MavenProcessCanceledException ignore) {
         }
@@ -232,7 +246,10 @@ public class MavenIndicesManager implements Disposable {
     return promise;
   }
 
-  private void doUpdateIndices(final Project projectOrNull, List<MavenSearchIndex> indices, boolean fullUpdate, MavenProgressIndicator indicator)
+  private void doUpdateIndices(final Project projectOrNull,
+                               List<MavenSearchIndex> indices,
+                               boolean fullUpdate,
+                               MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     MavenLog.LOG.assertTrue(!fullUpdate || projectOrNull != null);
 

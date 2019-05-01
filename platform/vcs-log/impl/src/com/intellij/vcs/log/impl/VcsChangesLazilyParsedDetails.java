@@ -19,28 +19,28 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
  * because {@link Change} holds {@link LocalFilePath} which makes costly refreshes and type detections.
  */
-public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
+public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
-  private static final WeakStringInterner ourPathsInterner = new WeakStringInterner();
-  private static final Changes EMPTY_CHANGES = new EmptyChanges();
+  protected static final Changes EMPTY_CHANGES = new EmptyChanges();
   @NotNull private final ChangesParser myChangesParser;
   @NotNull private final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
@@ -53,18 +53,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
     myChangesParser = changesParser;
     myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
-  }
-
-  @NotNull
-  @Override
-  public Map<String, Change.Type> getModifiedPaths(int parent) {
-    return myChanges.get().getModifiedPaths(parent);
-  }
-
-  @NotNull
-  @Override
-  public Collection<Couple<String>> getRenamedPaths(int parent) {
-    return myChanges.get().getRenamedPaths(parent);
   }
 
   @NotNull
@@ -91,7 +79,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }
   }
 
-  @Override
   public int size() {
     int size = 0;
     Changes changes = myChanges.get();
@@ -112,28 +99,12 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     return size;
   }
 
-  @Override
-  public boolean hasRenames() {
-    return true;
-  }
-
-  @NotNull
-  protected Changes getChangesHolder() {
-    return myChanges.get();
-  }
-
   public interface Changes {
     @NotNull
     Collection<Change> getMergedChanges() throws VcsException;
 
     @NotNull
     Collection<Change> getChanges(int parent) throws VcsException;
-
-    @NotNull
-    Map<String, Change.Type> getModifiedPaths(int parent);
-
-    @NotNull
-    Collection<Couple<String>> getRenamedPaths(int parent);
   }
 
   protected static class EmptyChanges implements Changes {
@@ -148,24 +119,10 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     public Collection<Change> getChanges(int parent) {
       return ContainerUtil.emptyList();
     }
-
-    @NotNull
-    @Override
-    public Map<String, Change.Type> getModifiedPaths(int parent) {
-      return Collections.emptyMap();
-    }
-
-    @NotNull
-    @Override
-    public Collection<Couple<String>> getRenamedPaths(int parent) {
-      return ContainerUtil.emptyList();
-    }
   }
 
   protected class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
-    // without interner each commit will have it's own instance of this string
-    @NotNull private final String myRootPrefix = ourPathsInterner.intern(getRoot().getPath() + "/");
     @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
     @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
 
@@ -210,37 +167,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @Override
     public Collection<Change> getChanges(int parent) throws VcsException {
       return parseChanges().getChanges(parent);
-    }
-
-    @NotNull
-    @Override
-    public Map<String, Change.Type> getModifiedPaths(int parent) {
-      Map<String, Change.Type> changes = ContainerUtil.newHashMap();
-      for (VcsFileStatusInfo status : myChangesOutput.get(parent)) {
-        String secondPath = status.getSecondPath();
-        if (secondPath == null) {
-          changes.put(absolutePath(status.getFirstPath()), status.getType());
-        }
-      }
-      return changes;
-    }
-
-    @NotNull
-    @Override
-    public Collection<Couple<String>> getRenamedPaths(int parent) {
-      Set<Couple<String>> renames = ContainerUtil.newHashSet();
-      for (VcsFileStatusInfo status : myChangesOutput.get(parent)) {
-        String secondPath = status.getSecondPath();
-        if (secondPath != null) {
-          renames.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(secondPath)));
-        }
-      }
-      return renames;
-    }
-
-    @NotNull
-    private String absolutePath(@NotNull String path) {
-      return myRootPrefix + path;
     }
 
     @NotNull
@@ -322,36 +248,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @Override
     public Collection<Change> getChanges(int parent) {
       return myChanges.get(parent);
-    }
-
-    @NotNull
-    @Override
-    public Map<String, Change.Type> getModifiedPaths(int parent) {
-      Map<String, Change.Type> changes = ContainerUtil.newHashMap();
-
-      for (Change change : getChanges(parent)) {
-        Change.Type type = change.getType();
-        if (!type.equals(Change.Type.MOVED)) {
-          if (change.getAfterRevision() != null) changes.put(change.getAfterRevision().getFile().getPath(), type);
-          if (change.getBeforeRevision() != null) changes.put(change.getBeforeRevision().getFile().getPath(), type);
-        }
-      }
-
-      return changes;
-    }
-
-    @NotNull
-    @Override
-    public Collection<Couple<String>> getRenamedPaths(int parent) {
-      Set<Couple<String>> renames = ContainerUtil.newHashSet();
-      for (Change change : getChanges(parent)) {
-        if (change.getType().equals(Change.Type.MOVED)) {
-          if (change.getAfterRevision() != null && change.getBeforeRevision() != null) {
-            renames.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
-          }
-        }
-      }
-      return renames;
     }
   }
 

@@ -90,7 +90,7 @@ internal class LightweightComposer(private val parser: Parser) {
   private fun composeScalarNode(anchor: String?): Node {
     val event = parser.event as ScalarEvent
     // tag cannot be null, use STR
-    val node = ScalarNode(Tag.STR, false, event.value, null, null, event.style)
+    val node = ScalarNode(Tag.STR, false, event.value, null, null, event.scalarStyle)
     if (anchor != null) {
       anchors.set(anchor, node)
     }

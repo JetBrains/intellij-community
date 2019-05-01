@@ -13,8 +13,10 @@ import java.nio.file.Paths
 private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
 private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
-  override val isUseVfsForWrite: Boolean
-    get() = false
+  override val configuration = object: FileBasedStorageConfiguration by defaultFileBasedStorageConfiguration {
+    override val isUseVfsForWrite: Boolean
+      get() = false
+  }
 
   public override fun loadLocalData(): Element? {
     val element = super.loadLocalData() ?: return null
@@ -51,14 +53,16 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
 }
 
 // cannot be `internal`, used in Upsource
-class DefaultProjectStoreImpl(override val project: Project, private val pathMacroManager: PathMacroManager) : ChildlessComponentStore() {
+class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponentStore() {
   // see note about default state in project store
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
-  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+  private val storage by lazy {
+    DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, PathMacroManager.getInstance(project))
+  }
 
-  override val storageManager: StateStorageManager = object : StateStorageManager {
+  override val storageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
       get() = null
 
@@ -81,9 +85,9 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
   override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
-  fun getStateCopy(): Element? = storage.loadLocalData()
+  fun getStateCopy() = storage.loadLocalData()
 
-  override fun getPathMacroManagerForDefaults() = pathMacroManager
+  override fun getPathMacroManagerForDefaults() = PathMacroManager.getInstance(project)
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 

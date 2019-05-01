@@ -43,8 +43,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
   public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<>("ChooseByNamePattern");
 
-  private Component myOldFocusOwner = null;
-  private boolean myShowListForEmptyPattern = false;
+  private Component myOldFocusOwner;
+  private boolean myShowListForEmptyPattern;
   private final boolean myMayRequestCurrentWindow;
   private final ChooseByNamePopup myOldPopup;
   private ActionMap myActionMap;
@@ -333,13 +333,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   //space character in the end of pattern forces full matches search
   private static final String fullMatchSearchSuffix = " ";
 
+  @NotNull
   @Override
-  public String transformPattern(String pattern) {
+  public String transformPattern(@NotNull String pattern) {
     final ChooseByNameModel model = getModel();
     return getTransformedPattern(pattern, model);
   }
 
-  public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
+  @NotNull
+  public static String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
     String rawPattern = pattern;
 
     Pattern regex = null;
@@ -455,7 +457,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myRepaintQueue.queue(new Update(this) {
       @Override
       public void run() {
-        ChooseByNamePopup.this.repaintListImmediate();
+        repaintListImmediate();
       }
     });
   }

@@ -23,4 +23,7 @@ public interface IgnoredFileContentProvider {
 
   @NotNull
   String buildUnignoreContent(@NotNull String ignorePattern);
+
+  @NotNull
+  String buildIgnoreGroupDescription(@NotNull IgnoredFileProvider ignoredFileProvider);
 }

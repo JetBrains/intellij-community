@@ -47,6 +47,7 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.importing.MavenImporter;
@@ -65,6 +66,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
+
 
 public class MavenProjectsTree {
 
@@ -535,7 +537,6 @@ public class MavenProjectsTree {
       return;
     }
     updateStack.push(mavenProject);
-
     process.setText(ProjectBundle.message("maven.reading.pom", mavenProject.getPath()));
     process.setText2("");
 
@@ -1281,6 +1282,7 @@ public class MavenProjectsTree {
             if (FileUtil.pathsEqual(mavenProject.getDirectory(), cause.getDirectory())) {
               showNotificationInvalidConfig(project, mavenProject, cause.getMessage());
               mavenProject.setConfigFileError(cause.getMessage());
+              MavenProjectsManager.getInstance(myProject).getSyncConsole().addRootError(RunnerBundle.message("maven.invalid.config.file", cause.getMessage()), cause);
             }
           }
         }
@@ -1354,6 +1356,7 @@ public class MavenProjectsTree {
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project).resolveProject(
       generalSettings, embedder, files, explicitProfiles, myProjectLocator);
 
+    MavenUtil.notifySyncForUnresolved(project, results);
     for (MavenProjectReaderResult result : results) {
       MavenProject mavenProjectCandidate = null;
       for (MavenProject mavenProject : mavenProjects) {
@@ -1404,6 +1407,11 @@ public class MavenProjectsTree {
             filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
           }
         }
+        if(artifacts.isEmpty()) {
+          process.startTask(MavenSyncConsole.PLUGINS_RESOLVE_PREFIX + each.getMavenId());
+          process.completeTask(MavenSyncConsole.PLUGINS_RESOLVE_PREFIX + each.getMavenId(), "Cannot Resolve plugin");
+        }
+
       }
 
       mavenProject.resetCache();
@@ -1605,7 +1613,10 @@ public class MavenProjectsTree {
     }
 
     public void fireUpdatedIfNecessary() {
-      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) return;
+      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
+        //MavenProjectsManager.getInstance(myProject).getSyncConsole().finishImport();
+        return;
+      }
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
                                          ? Collections.emptyList()
                                          : new ArrayList<>(deletedProjects);
@@ -1755,7 +1766,7 @@ public class MavenProjectsTree {
     }
 
     default void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                         @Nullable NativeMavenProjectHolder nativeMavenProject) {
+                                 @Nullable NativeMavenProjectHolder nativeMavenProject) {
     }
 
     default void pluginsResolved(@NotNull MavenProject project) {
@@ -1778,8 +1789,8 @@ public class MavenProjectsTree {
     @Override
     public boolean equals(MavenCoordinate o1, MavenCoordinate o2) {
       return Comparing.equal(o1.getArtifactId(), o2.getArtifactId())
-        && Comparing.equal(o1.getVersion(), o2.getVersion())
-        && Comparing.equal(o1.getGroupId(), o2.getGroupId());
+             && Comparing.equal(o1.getVersion(), o2.getVersion())
+             && Comparing.equal(o1.getGroupId(), o2.getGroupId());
     }
   }
 }

@@ -69,7 +69,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   }
 
   @Override
-  protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
+  protected LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads,
                                               @NotNull PsiClass containingClass,
                                               boolean shouldImport) {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);

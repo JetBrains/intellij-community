@@ -8,7 +8,7 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
-import com.intellij.util.withPrevious
+import com.intellij.util.containers.withPrevious
 
 internal class CreateMethodFromJavaUsageRequest(
   methodCall: PsiMethodCallExpression,

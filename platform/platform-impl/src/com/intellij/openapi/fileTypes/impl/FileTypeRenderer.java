@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
+public class FileTypeRenderer extends SimpleListCellRenderer<FileType> {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
 
@@ -34,21 +34,20 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   }
 
   @Override
-  public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
+  public void customize(JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    final Icon icon = type.getIcon();
+    Icon icon = value.getIcon();
     if (icon != null) {
       layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
     }
 
     setIcon(layeredIcon);
 
-    String description = type.getDescription();
+    String description = value.getDescription();
     String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
     if (isDuplicated(description)) {
-      setText(trimmedDescription + " (" + type.getName() + ")");
-
+      setText(trimmedDescription + " (" + value.getName() + ")");
     }
     else {
       setText(trimmedDescription);

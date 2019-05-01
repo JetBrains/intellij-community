@@ -4,7 +4,7 @@
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[
-      This plugin enables <a href="http://www.oracle.com/technetwork/java/javafx/overview/index.html">JavaFX</a> support.
+      Enables <a href="http://www.oracle.com/technetwork/java/javafx/overview/index.html">JavaFX</a> support.
       The following features are available:
         <ul>
         <li>Dedicated file type.</li>

@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -391,7 +391,7 @@ public class GitBranchUtil {
       String head;
       try {
         File headFile = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)).getRepositoryFiles().getHeadFile();
-        head = FileUtil.loadFile(headFile, CharsetToolkit.UTF8_CHARSET).trim();
+        head = FileUtil.loadFile(headFile, StandardCharsets.UTF_8).trim();
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ?
                Collections.singletonList(head.substring(prefix.length())) :

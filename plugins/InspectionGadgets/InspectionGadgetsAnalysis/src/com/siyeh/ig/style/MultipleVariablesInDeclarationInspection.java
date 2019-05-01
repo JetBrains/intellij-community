@@ -92,7 +92,9 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
       }
       if (highlightType == ProblemHighlightType.INFORMATION
           || InspectionProjectProfileManager.isInformationLevel(getShortName(), statement)) {
-        registerError(statement, highlightType);
+        if (isOnTheFly()) {
+          registerError(statement, highlightType);
+        }
       }
       else {
         final PsiElement nameIdentifier = ((PsiVariable)declaredElements[0]).getNameIdentifier();
@@ -137,7 +139,14 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
       else {
         highlightType = ProblemHighlightType.WARNING;
       }
-      registerError(informationLevel || highlightType == ProblemHighlightType.INFORMATION ? field : field.getNameIdentifier(), highlightType);
+      if (informationLevel || highlightType == ProblemHighlightType.INFORMATION) {
+        if (isOnTheFly()) {
+          registerError(field, highlightType);
+        }
+      }
+      else {
+        registerError(field.getNameIdentifier(), highlightType);
+      }
     }
   }
 }

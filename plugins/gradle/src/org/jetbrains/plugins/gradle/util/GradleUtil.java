@@ -118,6 +118,14 @@ public class GradleUtil {
       if(!isEmpty(distPathBase)) {
         wrapperConfiguration.setDistributionBase(distPathBase);
       }
+      String zipStorePath = props.getProperty(WrapperExecutor.ZIP_STORE_PATH_PROPERTY);
+      if(!isEmpty(zipStorePath)) {
+        wrapperConfiguration.setZipPath(zipStorePath);
+      }
+      String zipStoreBase = props.getProperty(WrapperExecutor.ZIP_STORE_BASE_PROPERTY);
+      if(!isEmpty(zipStoreBase)) {
+        wrapperConfiguration.setZipBase(zipStoreBase);
+      }
       return wrapperConfiguration;
     }
     catch (Exception e) {

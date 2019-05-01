@@ -38,8 +38,6 @@ public abstract class LightToolWindowManager implements Disposable {
   protected volatile ToolWindow myToolWindow;
 
   public final String myEditorModeKey;
-  private ToggleEditorModeAction myLeftEditorModeAction;
-  private ToggleEditorModeAction myRightEditorModeAction;
 
   private MessageBusConnection myConnection;
 
@@ -47,16 +45,13 @@ public abstract class LightToolWindowManager implements Disposable {
     myProject = project;
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
-    ProjectUtil.runWhenProjectOpened(project, () -> {
-      initToolWindow();
-
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+    ProjectUtil.runWhenProjectOpened(project, () -> StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+      (DumbAwareRunnable)() -> {
         if (getEditorMode() == null) {
           initListeners();
           bindToDesigner(getActiveDesigner());
         }
-      });
-    });
+      }));
   }
 
   private void initListeners() {
@@ -135,15 +130,9 @@ public abstract class LightToolWindowManager implements Disposable {
   public AnAction createGearActions() {
     DefaultActionGroup group = new DefaultActionGroup("In Editor Mode", true);
 
-    if (myLeftEditorModeAction == null) {
-      myLeftEditorModeAction = createToggleAction(ToolWindowAnchor.LEFT);
-    }
-    group.add(myLeftEditorModeAction);
-
-    if (myRightEditorModeAction == null) {
-      myRightEditorModeAction = createToggleAction(ToolWindowAnchor.RIGHT);
-    }
-    group.add(myRightEditorModeAction);
+    group.add(createToggleAction(ToolWindowAnchor.LEFT));
+    group.add(createToggleAction(ToolWindowAnchor.RIGHT));
+    group.add(createToggleAction(null));
 
     return group;
   }

@@ -28,6 +28,8 @@ import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
+import com.intellij.util.xml.stubs.XIncludeStub;
+import com.intellij.xml.util.XmlIncludeHandler;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -44,6 +46,13 @@ class DomStubBuilderVisitor {
   }
   
   void visitXmlElement(XmlElement element, ElementStub parent, int index) {
+
+    if (XmlIncludeHandler.isXInclude(element)) {
+      XmlTag tag = (XmlTag)element;
+      new XIncludeStub(parent, tag.getAttributeValue("href"), tag.getAttributeValue("xpointer"));
+      return;
+    }
+
     DomInvocationHandler handler = myManager.getDomHandler(element);
     if (handler == null || handler.getAnnotation(Stubbed.class) == null && !handler.getChildDescription().isStubbed()) return;
 

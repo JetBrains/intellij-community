@@ -187,7 +187,7 @@ public class IconUtil {
       return icon;
     }
     FileType fileType = vFile.getFileType();
-    if (vFile.isDirectory() && vFile.isInLocalFileSystem() && !(fileType instanceof DirectoryFileType)) {
+    if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return PlatformIcons.FOLDER_ICON;
     }
     return fileType.getIcon();
@@ -205,20 +205,11 @@ public class IconUtil {
   @NotNull
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(createEmptyIconLike(PlatformIcons.CLASS_ICON_PATH), 0);
+    baseIcon.setIcon(EmptyIcon.create(PlatformIcons.CLASS_ICON), 0);
     if (showVisibility) {
-      baseIcon.setIcon(createEmptyIconLike(PlatformIcons.PUBLIC_ICON_PATH), 1);
+      baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);
     }
     return baseIcon;
-  }
-
-  @NotNull
-  private static Icon createEmptyIconLike(@NotNull String baseIconPath) {
-    Icon baseIcon = IconLoader.findIcon(baseIconPath);
-    if (baseIcon == null) {
-      return EmptyIcon.ICON_16;
-    }
-    return EmptyIcon.create(baseIcon);
   }
 
   private static class FileIconProviderHolder {

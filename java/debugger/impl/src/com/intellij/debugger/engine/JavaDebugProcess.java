@@ -376,7 +376,7 @@ public class JavaDebugProcess extends XDebugProcess {
         ui.addListener(new ContentManagerAdapter() {
           @Override
           public void selectionChanged(@NotNull ContentManagerEvent event) {
-            if (event != null && event.getContent() == memoryViewContent) {
+            if (event.getContent() == memoryViewContent) {
               classesFilteredView.setActive(memoryViewContent.isSelected(), managerThread);
             }
           }

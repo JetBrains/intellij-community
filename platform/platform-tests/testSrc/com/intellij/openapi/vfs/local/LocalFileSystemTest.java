@@ -36,6 +36,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -326,19 +327,24 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileLength() throws IOException {
-    File file = FileUtil.createTempFile("test", "txt");
-    FileUtil.writeToFile(file, "hello");
-    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
-    assertNotNull(virtualFile);
-    String s = VfsUtilCore.loadText(virtualFile);
-    assertEquals("hello", s);
-    assertEquals(5, virtualFile.getLength());
+    File file = File.createTempFile("test", "txt");
+    try {
+      FileUtil.writeToFile(file, "hello");
+      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
+      assertNotNull(virtualFile);
+      String s = VfsUtilCore.loadText(virtualFile);
+      assertEquals("hello", s);
+      assertEquals(5, virtualFile.getLength());
 
-    FileUtil.writeToFile(file, "new content");
-    ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
-    s = VfsUtilCore.loadText(virtualFile);
-    assertEquals("new content", s);
-    assertEquals(11, virtualFile.getLength());
+      FileUtil.writeToFile(file, "new content");
+      ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
+      s = VfsUtilCore.loadText(virtualFile);
+      assertEquals("new content", s);
+      assertEquals(11, virtualFile.getLength());
+    }
+    finally {
+      FileUtil.delete(file);
+    }
   }
 
   @Test
@@ -346,7 +352,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     GeneralSettings settings = GeneralSettings.getInstance();
     boolean safeWrite = settings.isUseSafeWrite();
     SafeWriteRequestor requestor = new SafeWriteRequestor() { };
-    byte[] testData = "hello".getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] testData = "hello".getBytes(StandardCharsets.UTF_8);
 
     try {
       settings.setUseSafeWrite(false);

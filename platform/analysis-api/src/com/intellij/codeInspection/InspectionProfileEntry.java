@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -19,7 +19,6 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
@@ -35,18 +34,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-/**
- * @author anna
- */
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
+  private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
-  private static final SerializationFilter DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
   private static Set<String> ourBlackList;
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer;
@@ -234,7 +230,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#key
    * @see InspectionEP#bundle
    */
-  @Nls
   @NotNull
   public String getDisplayName() {
     if (myNameProvider != null) {
@@ -291,7 +286,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * This method is called each time UI is shown.
    *
-   * @return null if no UI options required.
+   * @return {@code null} if no UI options required.
    */
   @Nullable
   public JComponent createOptionsPanel() {
@@ -330,7 +325,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    */
   public void writeSettings(@NotNull Element node) {
     if (useNewSerializer()) {
-      //noinspection deprecation
       XmlSerializer.serializeObjectInto(this, node, getSerializationFilter());
     }
     else {
@@ -355,7 +349,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       return;
     }
 
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
@@ -387,13 +381,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Nullable
   @Deprecated
   protected SerializationFilter getSerializationFilter() {
-    return DEFAULT_FILTER;
+    return XmlSerializer.getDefaultSerializationFilter();
   }
 
   /**
-   * Override this method to return a html inspection description. Otherwise it will be loaded from resources using ID.
+   * Override this method to return a HTML inspection description. Otherwise it will be loaded from resources using ID.
    *
-   * @return hard-code inspection description.
+   * @return hard-coded inspection description.
    */
   @Nullable
   public String getStaticDescription() {

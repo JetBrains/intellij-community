@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.*;
@@ -72,19 +58,16 @@ public class GroovyPatterns extends PsiJavaPatterns {
       }
     });
   }
-  
+
   public static GroovyElementPattern.Capture<GroovyPsiElement> rightOfAssignment(final ElementPattern<? extends GroovyPsiElement> value,
                                                                                  final GroovyAssignmentExpressionPattern assignment) {
     return new GroovyElementPattern.Capture<>(new InitialPatternCondition<GroovyPsiElement>(GroovyPsiElement.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         if (!(o instanceof GroovyPsiElement)) return false;
-
         PsiElement parent = ((GroovyPsiElement)o).getParent();
         if (!(parent instanceof GrAssignmentExpression)) return false;
-
         if (((GrAssignmentExpression)parent).getRValue() != o) return false;
-
         return assignment.accepts(parent, context) && value.accepts(o, context);
       }
     });
@@ -108,7 +91,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return new GroovyNamedArgumentPattern();
   }
 
-  public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(@Nullable final ElementPattern<? extends String> namePattern) {
+  public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(@Nullable final ElementPattern<String> namePattern) {
     return new GroovyElementPattern.Capture<>(new InitialPatternCondition<GrArgumentLabel>(GrArgumentLabel.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
@@ -122,15 +105,14 @@ public class GroovyPatterns extends PsiJavaPatterns {
             }
           }
         }
-
         return false;
       }
     });
   }
 
-  public static GroovyMethodCallPattern methodCall(final ElementPattern<? extends String> names, final String className) {
-    return new GroovyMethodCallPattern().withMethodName(names)
-      .withMethod(psiMethod().with(new PatternCondition<PsiMethod>("psiMethodClassNameCondition") {
+  public static GroovyMethodCallPattern methodCall(final ElementPattern<String> names, final String className) {
+    return GroovyMethodCallPattern.INSTANCE.withMethodName(names).withMethod(
+      psiMethod().with(new PatternCondition<PsiMethod>("psiMethodClassNameCondition") {
         @Override
         public boolean accepts(@NotNull PsiMethod psiMethod, ProcessingContext context) {
           PsiClass containingClass = psiMethod.getContainingClass();
@@ -141,11 +123,12 @@ public class GroovyPatterns extends PsiJavaPatterns {
           }
           return false;
         }
-      }));
+      })
+    );
   }
 
   public static GroovyMethodCallPattern methodCall() {
-    return new GroovyMethodCallPattern();
+    return GroovyMethodCallPattern.INSTANCE;
   }
 
   public static PsiFilePattern.Capture<GroovyFile> groovyScript() {

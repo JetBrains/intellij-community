@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -109,8 +109,14 @@ public class PythonPathEditor extends SdkPathEditor {
   }
 
   @Override
-  protected ListCellRenderer createListCellRenderer(JBList list) {
-    return new PythonPathListCellRenderer(super.createListCellRenderer(list), myPathListModel);
+  protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList list) {
+    return SimpleListCellRenderer.create("", value -> {
+      String suffix = myPathListModel.getPresentationSuffix(value);
+      if (suffix.length() > 0) {
+        suffix = "  " + suffix;
+      }
+      return getPresentablePath(value) + suffix;
+    });
   }
 
   @Override
@@ -289,25 +295,6 @@ public class PythonPathEditor extends SdkPathEditor {
 
     public boolean isExcluded(VirtualFile path) {
       return myExcluded.contains(path);
-    }
-  }
-
-
-  private class PythonPathListCellRenderer extends ListCellRendererWrapper<VirtualFile> {
-    private final PathListModel model;
-
-    PythonPathListCellRenderer(final ListCellRenderer listCellRenderer, PathListModel model) {
-      super();
-      this.model = model;
-    }
-
-    @Override
-    public void customize(JList list, VirtualFile value, int index, boolean selected, boolean hasFocus) {
-      String suffix = model.getPresentationSuffix(value);
-      if (suffix.length() > 0) {
-        suffix = "  " + suffix;
-      }
-      setText(value != null ? getPresentablePath(value) + suffix : "");
     }
   }
 

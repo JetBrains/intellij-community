@@ -7,9 +7,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.IgnoreSettingsType;
+import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
+import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -17,16 +21,22 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
+/**
+ * @deprecated idea-level ignores will be removed
+ */
+@Deprecated
+@Ignore
 public class IgnoreIdeaLevelTest extends PlatformTestCase {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
@@ -400,7 +410,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     myClManager.addDirectoryToIgnoreImplicitly(fs.myABase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myCBase.getPath());
-    ConvertExcludedToIgnoredTest.assertIgnoredDirectories(myProject, fs.myABase);
+    assertIgnoredDirectories(myProject, fs.myABase);
   }
 
   @Test
@@ -409,7 +419,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myCBase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myABase.getPath());
-    ConvertExcludedToIgnoredTest.assertIgnoredDirectories(myProject, fs.myABase);
+    assertIgnoredDirectories(myProject, fs.myABase);
   }
 
   @Test
@@ -418,7 +428,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     myClManager.getIgnoredFilesComponent().setDirectoriesManuallyRemovedFromIgnored(Collections.singleton(fs.myBBase.getPath()));
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myCBase.getPath());
-    ConvertExcludedToIgnoredTest.assertIgnoredDirectories(myProject, fs.myCBase);
+    assertIgnoredDirectories(myProject, fs.myCBase);
   }
 
   @Test
@@ -426,14 +436,14 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myCBase.getPath());
-    ConvertExcludedToIgnoredTest.assertIgnoredDirectories(myProject, fs.myCBase, fs.myBBase);
+    assertIgnoredDirectories(myProject, fs.myCBase, fs.myBBase);
     
     myClManager.removeImplicitlyIgnoredDirectory(fs.myCBase.getPath());
-    ConvertExcludedToIgnoredTest.assertIgnoredDirectories(myProject, fs.myBBase);
+    assertIgnoredDirectories(myProject, fs.myBBase);
 
     // removing parent directory exclude should not affect child excludes
     myClManager.removeImplicitlyIgnoredDirectory(fs.myBBase.getParent().getPath());
-    ConvertExcludedToIgnoredTest.assertIgnoredDirectories(myProject, fs.myBBase);
+    assertIgnoredDirectories(myProject, fs.myBBase);
   }
 
   private void printIgnored() {
@@ -449,7 +459,16 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     }
   }
 
-  public VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
+  private static void assertIgnoredDirectories(@NotNull Project project, @NotNull VirtualFile... expectedIgnoredDirs) {
+    List<String> expectedIgnoredPaths = new ArrayList<>();
+    for (VirtualFile dir : expectedIgnoredDirs) {
+      expectedIgnoredPaths.add(dir.getPath()+"/");
+    }
+    List<String> actualIgnoredPaths = ContainerUtil.map2List(ChangeListManagerImpl.getInstanceImpl(project).getFilesToIgnore(), bean -> bean.getPath());
+    assertSameElements(actualIgnoredPaths, expectedIgnoredPaths);
+  }
+
+  private VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
     return VcsTestUtil.createFile(myProject, parent, name, content);
   }
 }

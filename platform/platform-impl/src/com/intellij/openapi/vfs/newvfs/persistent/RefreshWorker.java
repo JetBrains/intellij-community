@@ -110,12 +110,13 @@ public class RefreshWorker {
       }
 
       if (file.isDirectory()) {
-        boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
+        VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
+        boolean fullSync = directory.allChildrenLoaded();
         if (fullSync) {
-          fullDirRefresh(fs, persistence, strategy, (VirtualDirectoryImpl)file);
+          fullDirRefresh(fs, persistence, strategy, directory);
         }
         else {
-          partialDirRefresh(fs, strategy, (VirtualDirectoryImpl)file);
+          partialDirRefresh(fs, strategy, directory);
         }
       }
       else {
@@ -144,6 +145,7 @@ public class RefreshWorker {
                               @NotNull TObjectHashingStrategy<String> strategy,
                               @NotNull VirtualDirectoryImpl dir) {
     while (true) {
+      checkCancelled(dir);
       // obtaining directory snapshot
       Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
       if (result == null) return;
@@ -189,6 +191,7 @@ public class RefreshWorker {
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
+        checkCancelled(dir);
         if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
           if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
@@ -206,6 +209,7 @@ public class RefreshWorker {
         }
 
         for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
+          checkCancelled(dir);
           VirtualFile child = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
@@ -229,6 +233,7 @@ public class RefreshWorker {
                                  @NotNull TObjectHashingStrategy<String> strategy,
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
+      checkCancelled(dir);
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
         ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
@@ -263,6 +268,7 @@ public class RefreshWorker {
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
+        checkCancelled(dir);
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
           if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
@@ -298,7 +304,7 @@ public class RefreshWorker {
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    return new ChildInfo(-1, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
   private static class RefreshCancelledException extends RuntimeException { }

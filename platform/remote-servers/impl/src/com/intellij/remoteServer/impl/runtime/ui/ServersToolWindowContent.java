@@ -133,7 +133,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
 
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new NodeRenderer());
-    myTree.setLineStyleAngled();
 
     getMainPanel().add(createTopToolbar(actionGroups.getSecondaryToolbarID()), BorderLayout.NORTH);
     getMainPanel().add(createMainToolbar(actionGroups.getMainToolbarID()), BorderLayout.WEST);

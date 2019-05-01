@@ -5,7 +5,9 @@ import java.util.List;
 
 public class Main {
   private static String test(List<String> list) {
-    return list == null ? null : list.stream().filter(str -> str.contains("x")).find<caret>First().orElse(null);
+    return list == null ? // if list is null 
+           null :  // return null
+           list.stream().filter(str -> str.contains("x")).find<caret>First().orElse(null); // otherwise not null
   }
 
   public static void main(String[] args) {

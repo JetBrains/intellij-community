@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
@@ -39,7 +40,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.Disposable;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -261,13 +265,19 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+    return getComponentInstancesOfType(baseClass, false);
+  }
+
+  @NotNull
+  public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     List<T> result = null;
     // we must use instances only from our adapter (could be service or extension point or something else)
     for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter &&
           ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
+        ComponentConfigComponentAdapter adapter = (ComponentConfigComponentAdapter)componentAdapter;
         //noinspection unchecked
-        T instance = (T)((ComponentConfigComponentAdapter)componentAdapter).myInitializedComponentInstance;
+        T instance = (T)(createIfNotYet ? adapter.getComponentInstance(myPicoContainer) : (T)adapter.myInitializedComponentInstance);
         if (instance != null) {
           if (result == null) {
             result = new ArrayList<>();
@@ -463,9 +473,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     @Override
-    public Object getComponentInstance(@NotNull PicoContainer picoContainer)
-      throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
-
+    public Object getComponentInstance(@NotNull PicoContainer picoContainer) {
       Object instance = myInitializedComponentInstance;
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       if (instance != null || myDisposed) {
@@ -480,7 +488,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          long startTime = StartUpMeasurer.getCurrentTime();
+          Activity activity = createMeasureActivity(picoContainer);
           instance = super.getComponentInstance(picoContainer);
 
           if (myInitializing) {
@@ -508,7 +516,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            ParallelActivity.COMPONENT.record(startTime, instance.getClass(), DefaultPicoContainer.getActivityLevel(picoContainer));
+            if (activity != null) {
+              activity.end();
+            }
           }
           finally {
             myInitializing = false;
@@ -524,6 +534,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
 
       return instance;
+    }
+
+    @Nullable
+    private Activity createMeasureActivity(@NotNull PicoContainer picoContainer) {
+      Level level = DefaultPicoContainer.getActivityLevel(picoContainer);
+      if (level == Level.APPLICATION || (level == Level.PROJECT && activityNamePrefix() != null)) {
+        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level);
+      }
+      return null;
     }
 
     @Override

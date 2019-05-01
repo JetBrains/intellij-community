@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.swingBuilder;
 
 import com.google.common.collect.ImmutableMap;
@@ -806,10 +806,11 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass aClass,
+                                     @Nullable PsiClass aClass,
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
+    if (aClass == null) return;
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
 
     MultiMap<String, PsiMethod> methodMap = aClass.getUserData(KEY);

@@ -33,7 +33,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,8 +78,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       return new UsageInfo[] { new UsageInfo(myCallToInline) };
     }
     Set<UsageInfo> usages = new HashSet<>();
-    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
-    for (PsiReference reference : ReferencesSearch.search(myClass, searchScope)) {
+    for (PsiReference reference : ReferencesSearch.search(myClass, myRefactoringScope)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
@@ -88,13 +86,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     if (qName != null) {
       List<UsageInfo> nonCodeUsages = new ArrayList<>();
       if (mySearchInComments) {
-        TextOccurrencesUtil.addUsagesInStringsAndComments(myClass, qName, nonCodeUsages,
-                                                      new NonCodeUsageInfoFactory(myClass, qName));
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myClass, myRefactoringScope, qName, nonCodeUsages,
+                                                          new NonCodeUsageInfoFactory(myClass, qName));
       }
 
-      if (mySearchInNonJavaFiles) {
-        TextOccurrencesUtil.addTextOccurences(myClass, qName, searchScope, nonCodeUsages,
-                                              new NonCodeUsageInfoFactory(myClass, qName));
+      if (mySearchInNonJavaFiles && myRefactoringScope instanceof GlobalSearchScope) {
+        TextOccurrencesUtil.addTextOccurrences(myClass, qName, (GlobalSearchScope)myRefactoringScope,
+                                               nonCodeUsages, new NonCodeUsageInfoFactory(myClass, qName));
       }
       usages.addAll(nonCodeUsages);
     }
@@ -273,7 +271,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   private void replaceNewOrType(final PsiNewExpression psiNewExpression, final PsiClassType superType) {
     try {
-      if (!ExpressionUtils.isArrayCreationExpression(psiNewExpression)) {
+      if (!psiNewExpression.isArrayCreation()) {
         new InlineToAnonymousConstructorProcessor(myClass, psiNewExpression, superType).run();
       }
       else {

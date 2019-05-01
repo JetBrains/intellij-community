@@ -31,7 +31,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -48,7 +47,6 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -156,8 +154,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        TreePath clickPath =
-          getUI() instanceof WideSelectionTreeUI ? getClosestPathForLocation(e.getX(), e.getY()) : getPathForLocation(e.getX(), e.getY());
+        TreePath clickPath = WideSelectionTreeUI.isWideSelection(ChangesTree.this)
+                             ? getClosestPathForLocation(e.getX(), e.getY())
+                             : getPathForLocation(e.getX(), e.getY());
         if (clickPath == null) return false;
 
         final int row = getRowForLocation(e.getPoint().x, e.getPoint().y);
@@ -283,13 +282,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setSelectedChanges(oldSelection);
   }
 
-  private void setChildIndent(boolean isFlat) {
-    BasicTreeUI treeUI = (BasicTreeUI)getUI();
-
-    treeUI.setLeftChildIndent(!isFlat ? UIUtil.getTreeLeftChildIndent() : 0);
-    treeUI.setRightChildIndent(!isFlat ? UIUtil.getTreeRightChildIndent() : 0);
-  }
-
   private boolean isCurrentModelFlat() {
     boolean isFlat = true;
     Enumeration enumeration = getRoot().depthFirstEnumeration();
@@ -315,7 +307,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
       setModel(model);
       myIsModelFlat = isCurrentModelFlat();
-      setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
+      setShowsRootHandles(!myGroupingSupport.isNone() || !myIsModelFlat);
 
       if (myKeepTreeState) {
         //noinspection ConstantConditions
@@ -335,6 +327,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   protected void resetTreeState() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (hasAtLeastNodes(this, 30000)) {
+      TreeUtil.collapseAll(this, 1);
+      return;
+    }
+
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;
@@ -366,6 +364,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       setSelectionRow(selectedTreeRow);
     }
     TreeUtil.showRowCentered(this, selectedTreeRow, false);
+  }
+
+  private static boolean hasAtLeastNodes(@NotNull Tree tree, int nodeNumber) {
+    return TreeUtil.treeTraverser(tree).traverse().take(nodeNumber).size() >= nodeNumber;
   }
 
   public void selectFile(@Nullable VirtualFile toSelect) {

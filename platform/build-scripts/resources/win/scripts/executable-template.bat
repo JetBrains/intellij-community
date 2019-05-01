@@ -33,6 +33,8 @@ IF NOT "%JDK%" == "" (
   IF EXIST "%JDK%" GOTO check
 )
 
+IF EXIST "%IDE_HOME%\jbr" SET JDK=%IDE_HOME%\jbr
+IF EXIST "%JDK%" GOTO check
 IF EXIST "%IDE_HOME%\jre64" SET JDK=%IDE_HOME%\jre64
 IF EXIST "%JDK%" GOTO check
 IF EXIST "%IDE_HOME%\jre32" SET JDK=%IDE_HOME%\jre32
@@ -56,7 +58,11 @@ IF NOT EXIST "%JAVA_EXE%" (
 
 SET JRE=%JDK%
 IF EXIST "%JRE%\jre" SET JRE=%JDK%\jre
-IF EXIST "%JRE%\lib\amd64" SET BITS=64
+IF EXIST "%JRE%\lib\amd64" (
+  SET BITS=64
+) ELSE (
+  IF EXIST "%JRE%\lib\jrt-fs.jar" SET BITS=64
+)
 
 :: ---------------------------------------------------------------------
 :: Collect JVM options and properties.

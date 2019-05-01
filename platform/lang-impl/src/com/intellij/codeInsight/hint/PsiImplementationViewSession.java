@@ -65,6 +65,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     return ImplementationViewSessionFactory.EP_NAME.findExtensionOrFail(PsiImplementationSessionViewFactory.class);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
@@ -75,6 +76,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     return myElement;
   }
 
+  @Override
   @NotNull
   public List<ImplementationViewElement> getImplementationElements() {
     return ContainerUtil.map(myImpls, PsiImplementationViewElement::new);
@@ -91,6 +93,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     return myEditor;
   }
 
+  @Override
   @Nullable
   public VirtualFile getFile() {
     return myFile;

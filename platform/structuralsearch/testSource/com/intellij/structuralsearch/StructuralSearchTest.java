@@ -2384,13 +2384,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}" +
                     "interface ABC {" +
                     "  void m();" +
+                    "}" +
+                    "interface KLM {" +
+                    "}" +
+                    "interface I {" +
+                    "  void m();" +
                     "}";
 
     String pattern1 = "interface '_Class {  default '_ReturnType 'MethodName+('_ParameterType '_Parameter*);}";
     assertEquals("should find default method", 1, findMatchesCount(source, pattern1));
 
     String pattern2 = "interface 'Class {  default '_ReturnType '_MethodName{0,0}('_ParameterType '_Parameter*);}";
-    assertEquals("should find interface without default methods", 1, findMatchesCount(source, pattern2));
+    assertEquals("should find interface without default methods", 3, findMatchesCount(source, pattern2));
 
     String pattern3 = "default '_ReturnType 'MethodName('_ParameterType '_Parameter*);";
     assertEquals("find naked default method", 1, findMatchesCount(source, pattern3));
@@ -2423,6 +2428,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should find Runnable method references", 4, findMatchesCount(source, pattern5));
   }
 
+  public void testNoException() {
+    String s = "class X {" +
+               "  void x(String[] tt, String[] ss, String s) {}" +
+               "}";
+    assertEquals("don't throw exception during matching", 0,
+                 findMatchesCount(s, "void '_Method('_ParameterType '_Parameter*, '_LastType[] '_lastParameter);"));
+  }
+
   public void testNoUnexpectedException() {
     String source = "";
 
@@ -2444,7 +2457,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, pattern3);
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
-
   }
 
   public void testInvalidPatternWarnings() {
@@ -3185,17 +3197,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testForStatement() {
     String in = "class X {{" +
                 "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
                 "  " +
                 "  for (;;) {}" +
                 "  for (int i = 0; ;) {}" +
                 "  for (int i = 0; true; ) {}" +
                 "}}";
-    assertEquals("find all for loops", 4, findMatchesCount(in, "for(;;) '_st;"));
+    assertEquals("find all for loops", 7, findMatchesCount(in, "for(;;) '_st;"));
     assertEquals("find loops without initializers", 1, findMatchesCount(in, "for('_init{0,0};;) '_st;"));
     assertEquals("find loops without condition", 2, findMatchesCount(in, "for(;'_cond{0,0};) '_st;"));
     assertEquals("find loops without update", 3, findMatchesCount(in, "for(;;'_update{0,0}) '_st;"));
-    assertEquals("find all for loops 2", 4, findMatchesCount(in, "for('_init?;;) '_st;"));
-    assertEquals("find all for loops 3", 4, findMatchesCount(in, "for(;;'_update?) '_st;"));
-    assertEquals("find all for loops 4", 4, findMatchesCount(in, "for(;'_cond?;) '_st;"));
+    assertEquals("find all for loops 2", 7, findMatchesCount(in, "for('_init?;;) '_st;"));
+    assertEquals("find all for loops 3", 7, findMatchesCount(in, "for(;;'_update?) '_st;"));
+    assertEquals("find all for loops 4", 7, findMatchesCount(in, "for(;'_cond?;) '_st;"));
+    assertEquals("find loops with initializer, condition and update", 4, findMatchesCount(in, "for ('_init; '_cond; '_update) '_st;"));
+
+    String in2 = "class X {{" +
+                 "  int i = 0, j = 0;" +
+                 "  for (i=1, j=1;; i++, j++) {}" +
+                 "  for (;; i++, j++) {}" +
+                 "  for (i=1;;i++){}" +
+                 "}}";
+    assertEquals("find for loops with 2 initializer expressions", 1, findMatchesCount(in2, "for ('_init{2,2};;) '_st;"));
+    assertEquals("find for loops with 2 initializer expressions 2", 1, findMatchesCount(in2, "for ('_init1, '_init2;;) '_st;"));
+    assertEquals("find for loops with 2 update expressions", 2, findMatchesCount(in2, "for (;;'_update{2,2}) '_st;"));
+    assertEquals("find for loops with 2 update expressions 2", 2, findMatchesCount(in2, "for (;;'_update1, '_update2) '_st;"));
   }
 }

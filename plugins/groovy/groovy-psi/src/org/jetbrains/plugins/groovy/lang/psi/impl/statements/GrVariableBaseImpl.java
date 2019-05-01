@@ -41,8 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends GrStubElementBase<T> implements GrVariable, StubBasedPsiElement<T> {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl");
 
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("grVariableInitializer");
-
   protected GrVariableBaseImpl(ASTNode node) {
     super(node);
   }
@@ -151,7 +149,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
     }
 
     if (initializer != null) {
-      PsiType initializerType = ourGuard.doPreventingRecursion(this, true, initializer::getType);
+      PsiType initializerType = RecursionManager.doPreventingRecursion(this, true, initializer::getType);
       if (declaredType == null) return initializerType;
       if (initializerType instanceof PsiClassType && TypesUtil.isAssignable(declaredType, initializerType, this)) {
         return initializerType;

@@ -234,15 +234,46 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testNotAStatement() {
-    doTestConflict("Inlined result would contain parse errors");
+    doTest();
   }
 
+  public void testNotAStatement2() {
+    doTest();
+  }
+  
+  public void testNotAStatement3() {
+    doTest();
+  }
+  
+  public void testNotAStatement4() {
+    doTest();
+  }
+  
+  public void testForContinue() {
+    doTest();
+  }
+  
+  public void testSingleReturn1() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testSingleReturn1NotFinal() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testSingleReturn2() {
+    doTestAssertBadReturn();
+  }
 
   public void testInSuperCall() {
     doTestConflict("Inline cannot be applied to multiline method in constructor call");
   }
 
   public void testMethodReferenceInsideMethodCall() {
+    doTest();
+  }
+  
+  public void testVolatilePassed() {
     doTest();
   }
 
@@ -391,6 +422,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testPrivateFieldInSuperClassInSameFile() {
     doTest();
   }
+  
+  public void testWidenArgument() {
+    doTest();
+  }
 
   public void testInlineMultipleOccurrencesInFieldInitializer() {
     doTest();
@@ -435,6 +470,54 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testNotTailCallInsideIf() {
     doTestAssertBadReturn();
   }
+  
+  public void testConvertToSingleReturnWithFinished() {
+    doTestAssertBadReturn();
+  }
+
+  public void testConvertToSingleReturnWithFinishedUnusedResult() {
+    doTestAssertBadReturn();
+  }
+
+  public void testUnusedResult() {
+    doTest();
+  }
+  
+  public void testReuseResultVar() {
+    doTest();
+  }
+
+  public void testSpecializeClassGetName() {
+    doTest();
+  }
+  
+  public void testBooleanModelSimple() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testBooleanModelMultiReturns() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testBooleanModelIfElse() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelIfElse2() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelContinue() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelFinalCondition() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testInvertMethod() {
+    doTest();
+  }
 
   @Override
   protected Sdk getProjectJDK() {
@@ -464,7 +547,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   private void doTestAssertBadReturn() {
     @NonNls String fileName = configure();
-    performAction(new MockInlineMethodOptions(), false, true);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> performAction(new MockInlineMethodOptions(), false, true));
+    checkResultByFile(fileName + ".after");
   }
 
   @NotNull
@@ -496,10 +580,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
       assertTrue("Bad returns not found", condition);
     } else {
       assertFalse("Bad returns found", condition);
-      final InlineMethodProcessor processor =
-        new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode,
-                                  !options.isKeepTheDeclaration());
-      processor.run();
     }
+    final InlineMethodProcessor processor =
+      new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode,
+                                !options.isKeepTheDeclaration());
+    processor.run();
   }
 }

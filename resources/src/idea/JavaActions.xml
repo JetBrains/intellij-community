@@ -184,11 +184,6 @@
       <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
 
-    <reference ref="Compile">
-      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
-    </reference>
-
-
     <group id="EditorTabCompileGroup">
       <reference ref="Compile"/>
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="before" relative-to-action="RunContextPopupGroup"/>
@@ -542,7 +537,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
-      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
+      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 

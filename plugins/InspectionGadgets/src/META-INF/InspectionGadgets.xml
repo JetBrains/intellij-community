@@ -2391,7 +2391,7 @@
                      implementationClass="com.siyeh.ig.controlflow.SimplifiableEqualsExpressionInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringBufferReplaceableByString" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.style.StringBufferReplaceableByStringInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="TypeParameterExplicitlyExtendsObject" shortName="TypeParameterExtendsObject"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="type.parameter.extends.object.display.name"

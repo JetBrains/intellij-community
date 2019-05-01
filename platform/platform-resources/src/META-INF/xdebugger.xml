@@ -28,11 +28,9 @@
 
     <projectService serviceImplementation="com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager"/>
 
-    <projectService serviceInterface="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory"
-                    serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory"/>
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory"/>
 
-    <projectService serviceInterface="com.intellij.xdebugger.impl.XDebuggerHistoryManager"
-                    serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
 
     <applicationConfigurable groupId="build" dynamic="true" groupWeight="120" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle"
                              id="project.propDebugger" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>

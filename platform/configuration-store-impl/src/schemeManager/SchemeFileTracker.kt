@@ -4,6 +4,7 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.LOG
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.StoreReloadManagerImpl
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,6 +30,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
         is VFileContentChangeEvent -> {
           val file = event.file
           if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
+            LOG.debug { "CHANGED ${file.path}" }
             list.add(UpdateScheme(file))
           }
         }
@@ -38,7 +40,9 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
             handleDirectoryCreated(event, list)
           }
           else if (schemeManager.canRead(event.childName) && isMyDirectory(event.parent)) {
-            event.file?.let {
+            val virtualFile = event.file
+            LOG.debug { "CREATED ${event.path} (virtualFile: ${if (virtualFile == null) "not " else ""}found)" }
+            virtualFile?.let {
               list.add(AddScheme(it))
             }
           }
@@ -50,6 +54,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
             handleDirectoryDeleted(file, list)
           }
           else if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
+            LOG.debug { "DELETED ${file.path}" }
             list.add(RemoveScheme(file.name))
           }
         }
@@ -63,6 +68,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
 
   private fun isMyFileWithoutParentCheck(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
 
+  @Suppress("MoveVariableDeclarationIntoWhen")
   private fun isMyDirectory(parent: VirtualFile): Boolean {
     val virtualDirectory = schemeManager.cachedVirtualDirectory
     return when (virtualDirectory) {
@@ -75,7 +81,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     if (!StringUtil.equals(file.nameSequence, schemeManager.ioDirectory.fileName.toString())) {
       return
     }
-
+    LOG.debug { "DIR DELETED ${file.path}" }
     if (file == schemeManager.virtualDirectory) {
       list.add(RemoveAllSchemes())
     }
@@ -87,9 +93,12 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     }
 
     val dir = schemeManager.virtualDirectory
-    if (event.file != dir) {
+    val virtualFile = event.file
+    if (virtualFile != dir) {
       return
     }
+
+    LOG.debug { "DIR CREATED ${virtualFile?.path}" }
 
     for (file in dir!!.children) {
       if (isMyFileWithoutParentCheck(file)) {
@@ -99,12 +108,12 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
   }
 }
 
-internal data class UpdateScheme(val file: VirtualFile) : SchemeChangeEvent {
+internal data class UpdateScheme(override val file: VirtualFile) : SchemeChangeEvent, SchemeAddOrUpdateEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
   }
 }
 
-private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
+private data class AddScheme(override val file: VirtualFile) : SchemeChangeEvent, SchemeAddOrUpdateEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
     if (!file.isValid) {
       return
@@ -121,8 +130,10 @@ private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent 
   }
 }
 
-private data class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
+internal data class RemoveScheme(val fileName: String) : SchemeChangeEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+    LOG.assertTrue(!schemaLoader.isInitialized())
+
     // do not schedule scheme file removing because file was already removed
     val scheme = schemeManager.removeFirstScheme(isScheduleToDelete = false) {
       fileName == getSchemeFileName(schemeManager, it)
@@ -131,8 +142,10 @@ private data class RemoveScheme(private val fileName: String) : SchemeChangeEven
   }
 }
 
-private class RemoveAllSchemes : SchemeChangeEvent {
+internal class RemoveAllSchemes : SchemeChangeEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+    LOG.assertTrue(!schemaLoader.isInitialized())
+
     schemeManager.cachedVirtualDirectory = null
     // do not schedule scheme file removing because files were already removed
     schemeManager.removeExternalizableSchemesFromRuntimeState()

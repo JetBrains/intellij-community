@@ -39,7 +39,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   protected synchronized Collection<Language> getFilterItems() {
     final Collection<Language> result = super.getFilterItems();
     if (result == null) {
-      return result;
+      return null;
     }
     final Collection<Language> items = new HashSet<>(result);
     items.add(Language.ANY);
@@ -56,11 +56,13 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
     return IdeBundle.message("checkbox.include.non.project.symbols", IdeUICustomization.getInstance().getProjectConceptName());
   }
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.matches.found.in.project", IdeUICustomization.getInstance().getProjectConceptName());
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.matches.found");
@@ -83,7 +85,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   }
 
   @Override
-  public String getFullName(final Object element) {
+  public String getFullName(@NotNull final Object element) {
     for(ChooseByNameContributor c: getContributors()) {
       if (c instanceof GotoClassContributor) {
         String result = ((GotoClassContributor) c).getQualifiedName((NavigationItem) element);

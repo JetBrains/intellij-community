@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributes
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
+import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.lexer.EditorConfigLexerAdapter
 import org.editorconfig.language.psi.EditorConfigElementTypes
 
@@ -41,7 +42,7 @@ object EditorConfigSyntaxHighlighter : SyntaxHighlighterBase() {
   private val COMMENT_KEYS = arrayOf(COMMENT)
   private val EMPTY_KEYS = emptyArray<TextAttributesKey>()
 
-  override fun getHighlightingLexer() = EditorConfigLexerAdapter()
+  override fun getHighlightingLexer() = EditorConfigLexerFactory.getAdapter()
 
   override fun getTokenHighlights(tokenType: IElementType) = when (tokenType) {
     EditorConfigElementTypes.SEPARATOR,

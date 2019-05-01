@@ -73,6 +73,18 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testclosures$param7() throws Throwable { doTest() }
 
+  void testclosures$withDefaultParam1() throws Throwable { doTest() }
+
+  void testclosures$withDefaultParam2() throws Throwable { doTest() }
+
+  //IDEA-210585
+  void _testclosures$withDefaultParam3() throws Throwable { doTest() }
+
+  //IDEA-210585
+  void _testclosures$withDefaultParam4() throws Throwable { doTest() }
+
+  void testclosures$withDefaultParam5() throws Throwable { doTest() }
+
   void testconditional$con1() throws Throwable { doTest() }
 
   void testconditional$con2() throws Throwable { doTest() }

@@ -80,23 +80,17 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     };
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    getComboBox().setRenderer(new ListCellRendererWrapper<DirectoryChooser.ItemWrapper>() {
-      @Override
-      public void customize(JList list,
-                            DirectoryChooser.ItemWrapper itemWrapper,
-                            int index,
-                            boolean selected,
-                            boolean hasFocus) {
-        if (itemWrapper != NULL_WRAPPER && itemWrapper != null) {
-          setIcon(itemWrapper.getIcon(fileIndex));
+    getComboBox().setRenderer(SimpleListCellRenderer.<DirectoryChooser.ItemWrapper>create(
+      (label, itemWrapper, index) -> {
+      if (itemWrapper != NULL_WRAPPER && itemWrapper != null) {
+        label.setIcon(itemWrapper.getIcon(fileIndex));
 
-          setText(itemWrapper.getRelativeToProjectPath());
-        }
-        else {
-          setText(LEAVE_IN_SAME_SOURCE_ROOT);
-        }
+        label.setText(itemWrapper.getRelativeToProjectPath());
       }
-    });
+      else {
+        label.setText(LEAVE_IN_SAME_SOURCE_ROOT);
+      }
+    }));
     final VirtualFile initialSourceRoot =
       initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
     final VirtualFile[] selection = new VirtualFile[]{initialSourceRoot};

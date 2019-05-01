@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +32,6 @@ import java.util.function.Supplier;
  * @author pegov
  */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
-  public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
   private boolean myAlphabeticalModeChanged = false;
   @Nullable
@@ -39,16 +39,12 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
-    Registry.get(TABS_ALPHABETICAL_KEY).addListener(new RegistryValueListener.Adapter() {
-
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          resetTabsCache();
-          relayout(true, false);
-        });
-      }
-    }, parent);
+    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(UISettingsListener.TOPIC, (settings) -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        resetTabsCache();
+        relayout(true, false);
+      });
+    });
     setSupportsCompression(true);
   }
 
@@ -161,7 +157,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
     if (myAlphabeticalModeChanged) {
       return super.isAlphabeticalMode();
     }
-    return Registry.is(TABS_ALPHABETICAL_KEY);
+    return UISettings.getInstance().getSortTabsAlphabetically();
   }
 
   @Override
@@ -173,10 +169,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   @Override
   public void setEmptySpaceColorCallback(@NotNull Supplier<Color> callback) {
     myEmptySpaceColorCallback = callback;
-  }
-
-  public static void setEditorTabsAlphabeticalMode(boolean on) {
-    Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
   }
 
   @Override

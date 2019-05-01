@@ -55,7 +55,13 @@ public class MutationSignature {
     StreamEx<PsiExpression> elements =
       IntStreamEx.range(Math.min(myParameters.length, MethodCallUtils.isVarArgCall(call) ? args.length - 1 : args.length))
         .filter(idx -> myParameters[idx]).elements(args);
-    return myThis ? elements.prepend(ExpressionUtils.getQualifierOrThis(call.getMethodExpression())) : elements;
+    if (myThis) {
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+      if (qualifier != null) {
+        return elements.prepend(qualifier);
+      }
+    }
+    return elements;
   }
 
   /**

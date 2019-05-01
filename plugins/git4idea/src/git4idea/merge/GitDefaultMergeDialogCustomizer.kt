@@ -30,7 +30,7 @@ open class GitDefaultMergeDialogCustomizer(
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
     val repos = GitUtil.getRepositoriesForFiles(project, files)
 
-    val mergeBranches = repos.map { resolveMergeBranch(it) }
+    val mergeBranches = repos.map { resolveMergeBranch(it)?.presentable }
     if (mergeBranches.any { it != null }) {
       return buildString {
         append("<html>Merging ")
@@ -45,7 +45,7 @@ open class GitDefaultMergeDialogCustomizer(
     if (rebaseOntoBranches.any { it != null }) {
       val singleCurrentBranch = getSingleCurrentBranchName(repos)
       val singleOntoBranch = rebaseOntoBranches.toSet().singleOrNull()
-      return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch)
+      return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch?.branchName, singleOntoBranch?.hash)
     }
 
     val cherryPickCommitDetails = repos.map { loadCherryPickCommitDetails(it) }
@@ -62,7 +62,7 @@ open class GitDefaultMergeDialogCustomizer(
         }
         if (singleCherryPick != null) {
           append("made by ${XmlStringUtil.escapeString(singleCherryPick.authorName)}<br/>")
-          append("<code>${XmlStringUtil.escapeString(singleCherryPick.commitMessage)}</code>")
+          append("<code>\"${XmlStringUtil.escapeString(singleCherryPick.commitMessage)}\"</code>")
         }
       }
     }
@@ -82,7 +82,7 @@ open class GitDefaultMergeDialogCustomizer(
 
     val branchBeingMerged = resolveMergeBranch(repository) ?: resolveRebaseOntoBranch(repository)
     if (branchBeingMerged != null) {
-      return getDefaultRightPanelTitleForBranch(branchBeingMerged, revisionNumber)
+      return getDefaultRightPanelTitleForBranch(branchBeingMerged.branchName, branchBeingMerged.hash)
     }
 
     val cherryPickHead = try {
@@ -115,44 +115,58 @@ open class GitDefaultMergeDialogCustomizer(
   private data class CherryPickDetails(val shortHash: String, val authorName: String, val commitMessage: String)
 }
 
-fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, ontoBranch: Boolean = true): String {
+fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, baseHash: Hash?): String {
   return buildString {
     append("<html>Rebasing ")
-    append(rebasingBranch?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b> " } ?: "")
-    append(baseBranch?.let { "onto ${if (ontoBranch) "branch " else ""}<b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
+    if (rebasingBranch != null) append("branch <b>${XmlStringUtil.escapeString(rebasingBranch)}</b> ")
+    append("onto ")
+    appendBranchName(baseBranch, baseHash)
   }
 }
 
 fun getDefaultLeftPanelTitleForBranch(branchName: String): String {
-  return "<html>${XmlStringUtil.escapeString(DiffBundle.message("merge.version.title.our"))}, branch <b>${
-         XmlStringUtil.escapeString(branchName)}</b>"
+  return "<html>${XmlStringUtil.escapeString(DiffBundle.message("merge.version.title.our"))}, branch <b>" +
+         "${XmlStringUtil.escapeString(branchName)}</b>"
 }
 
-fun getDefaultRightPanelTitleForBranch(branchName: String, revisionNumber: VcsRevisionNumber?, ontoBranch: Boolean = true) : String {
-  var title = "<html>Changes from ${if (ontoBranch) "branch " else ""}<b>${XmlStringUtil.escapeString(branchName)}</b>"
-  if (revisionNumber is GitRevisionNumber) title += ", revision ${revisionNumber.shortRev}"
-  return title
+fun getDefaultRightPanelTitleForBranch(branchName: String?, baseHash: Hash?): String {
+  return buildString {
+    append("<html>Changes from ")
+    appendBranchName(branchName, baseHash)
+  }
 }
 
+private fun StringBuilder.appendBranchName(branchName: String?, hash: Hash?) {
+  if (branchName != null) {
+    append("branch <b>${XmlStringUtil.escapeString(branchName)}</b>")
+    if (hash != null) append(", revision ${hash.toShortString()}")
+  }
+  else if (hash != null) {
+    append("<b>${hash.toShortString()}</b>")
+  }
+  else {
+    append("diverging branches")
+  }
+}
 
 private fun resolveMergeBranchOrCherryPick(repository: GitRepository): String? {
   val mergeBranch = resolveMergeBranch(repository)
-  if (mergeBranch != null) return mergeBranch
+  if (mergeBranch != null) return mergeBranch.presentable
 
   val rebaseOntoBranch = resolveRebaseOntoBranch(repository)
-  if (rebaseOntoBranch != null) return rebaseOntoBranch
+  if (rebaseOntoBranch != null) return rebaseOntoBranch.presentable
 
   val cherryHead = tryResolveRef(repository, CHERRY_PICK_HEAD)
   if (cherryHead != null) return "cherry-pick"
   return null
 }
 
-private fun resolveMergeBranch(repository: GitRepository): String? {
+private fun resolveMergeBranch(repository: GitRepository): RefInfo? {
   val mergeHead = tryResolveRef(repository, MERGE_HEAD) ?: return null
   return resolveBranchName(repository, mergeHead)
 }
 
-private fun resolveRebaseOntoBranch(repository: GitRepository): String? {
+private fun resolveRebaseOntoBranch(repository: GitRepository): RefInfo? {
   val rebaseDir = GitRebaseUtils.getRebaseDir(repository.project, repository.root) ?: return null
   val ontoHash = try {
     FileUtil.loadFile(File(rebaseDir, "onto")).trim()
@@ -165,10 +179,10 @@ private fun resolveRebaseOntoBranch(repository: GitRepository): String? {
   return resolveBranchName(repo, HashImpl.build(ontoHash))
 }
 
-private fun resolveBranchName(repository: GitRepository, hash: Hash): String {
+private fun resolveBranchName(repository: GitRepository, hash: Hash): RefInfo {
   var branches: Collection<GitBranch> = repository.branches.findLocalBranchesByHash(hash)
   if (branches.isEmpty()) branches = repository.branches.findRemoteBranchesByHash(hash)
-  return branches.singleOrNull()?.name ?: hash.toShortString()
+  return RefInfo(hash, branches.singleOrNull()?.name)
 }
 
 private fun tryResolveRef(repository: GitRepository, ref: String): Hash? {
@@ -193,4 +207,8 @@ fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? {
     .mapNotNull { repo -> repo.currentBranchName }
     .distinct()
     .singleOrNull()
+}
+
+private data class RefInfo(val hash: Hash, val branchName: String?) {
+  val presentable: String = branchName ?: hash.toShortString()
 }

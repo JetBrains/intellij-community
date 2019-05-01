@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -53,8 +39,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
@@ -75,7 +61,6 @@ public class ActionsTree {
 
   private String myFilter = null;
 
-  private boolean myPaintInternalInfo;
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
 
   public ActionsTree() {
@@ -159,17 +144,6 @@ public class ActionsTree {
     });
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    if (Registry.is("show.configurables.ids.in.settings")) {
-      new HeldDownKeyListener() {
-        @Override
-        protected void heldKeyTriggered(JComponent component, boolean pressed) {
-          myPaintInternalInfo = pressed;
-          // an easy way to repaint the tree
-          ((Tree)component).setCellRenderer(new KeymapsRenderer());
-        }
-      }.installOn(myTree);
-    }
-
     myComponent = ScrollPaneFactory.createScrollPane(myTree,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -331,7 +305,7 @@ public class ActionsTree {
 
     Shortcut[] oldShortcuts = oldKeymap.getShortcuts(actionId);
     Shortcut[] newShortcuts = newKeymap.getShortcuts(actionId);
-    return !Comparing.equal(oldShortcuts, newShortcuts);
+    return !Arrays.equals(oldShortcuts, newShortcuts);
   }
 
   private static boolean isGroupChanged(Group group, Keymap oldKeymap, Keymap newKeymap) {
@@ -619,7 +593,7 @@ public class ActionsTree {
         if (!myHaveLink) {
           Color background = UIUtil.getTreeBackground(selected, true);
           SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
-          if (actionId != null && myPaintInternalInfo) {
+          if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
             String pluginName = myPluginNames.get(actionId);
             if (pluginName != null) {
               Group parentGroup = (Group)((DefaultMutableTreeNode)node.getParent()).getUserObject();

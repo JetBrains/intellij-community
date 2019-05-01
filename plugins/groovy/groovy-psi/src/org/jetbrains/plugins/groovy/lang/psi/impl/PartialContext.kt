@@ -5,14 +5,15 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver
-import com.intellij.util.Function
 import gnu.trove.THashMap
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.createDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType
+import java.util.function.Function
 
-class PartialContext(private val types: Map<VariableDescriptor, PsiType>) : InferenceContext {
+class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : InferenceContext {
 
   private val myCache = THashMap<Any, Any>()
 
@@ -27,7 +28,7 @@ class PartialContext(private val types: Map<VariableDescriptor, PsiType>) : Infe
   override fun getVariableType(ref: GrReferenceExpression): PsiType? {
     val descriptor = ref.createDescriptor()
     if (types.containsKey(descriptor)) {
-      return types[descriptor]
+      return types[descriptor]?.resultType
     }
     else {
       return null
@@ -48,7 +49,7 @@ class PartialContext(private val types: Map<VariableDescriptor, PsiType>) : Infe
 
   override fun <T : GroovyPsiElement> getExpressionType(element: T, calculator: Function<in T, out PsiType>): PsiType? {
     return doGetCachedValue(Pair(element, "type")) {
-      calculator.`fun`(element)
+      calculator.apply(element)
     }
   }
 }

@@ -2,6 +2,9 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,8 +14,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.uast.UastVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
 import java.util.List;
@@ -27,15 +34,6 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
   @NotNull
   protected abstract List<String> getAnnotations();
 
-  protected abstract void createProblem(@NotNull PsiReference reference,
-                                        @NotNull PsiModifierListOwner annotatedTarget,
-                                        @NotNull List<PsiAnnotation> annotations,
-                                        @NotNull ProblemsHolder holder);
-
-  protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
-    return isLibraryElement(element);
-  }
-
   @NotNull
   @Override
   public JPanel createOptionsPanel() {
@@ -44,22 +42,20 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
   }
 
   @NotNull
+  protected abstract AnnotatedApiUsageProcessor buildAnnotatedApiUsageProcessor(@NotNull ProblemsHolder holder);
+
+  @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!isApplicable(holder.getFile(), holder.getProject())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    return new AnnotatedElementVisitorBase(myIgnoreInsideImports, getAnnotations()) {
-      @Override
-      public void processAnnotatedTarget(@NotNull PsiReference reference,
-                                         @NotNull PsiModifierListOwner annotatedTarget,
-                                         @NotNull List<PsiAnnotation> annotations) {
-        if (AnnotatedElementInspectionBase.this.shouldProcessElement(annotatedTarget)) {
-          createProblem(reference, annotatedTarget, annotations, holder);
-        }
-      }
-    };
+    AnnotatedApiUsageProcessor annotatedApiProcessor = buildAnnotatedApiUsageProcessor(holder);
+    AnnotatedApiUsageProcessorBridge processorBridge = new AnnotatedApiUsageProcessorBridge(
+      myIgnoreInsideImports, getAnnotations(), annotatedApiProcessor
+    );
+    return new UastVisitorAdapter(new ApiUsageUastVisitor(processorBridge), true);
   }
 
   private boolean isApplicable(@Nullable PsiFile file, @Nullable Project project) {
@@ -82,11 +78,56 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
     return DeprecationInspectionBase.getPresentableName(psiElement);
   }
 
-  private static boolean isLibraryElement(@NotNull PsiElement element) {
+  protected static boolean isLibraryElement(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
     VirtualFile containingVirtualFile = PsiUtilCore.getVirtualFile(element);
     return containingVirtualFile != null && ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
+  }
+
+  private static final class AnnotatedApiUsageProcessorBridge implements ApiUsageProcessor {
+    private final boolean myIgnoreInsideImports;
+    private final List<String> myAnnotations;
+    private final AnnotatedApiUsageProcessor myAnnotatedApiProcessor;
+
+    private AnnotatedApiUsageProcessorBridge(boolean ignoreInsideImports,
+                                             @NotNull List<String> annotations,
+                                             @NotNull AnnotatedApiUsageProcessor annotatedApiProcessor) {
+      myIgnoreInsideImports = ignoreInsideImports;
+      myAnnotations = annotations;
+      myAnnotatedApiProcessor = annotatedApiProcessor;
+    }
+
+    @Override
+    public void processImportReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target) {
+      if (!myIgnoreInsideImports) {
+        maybeProcessAnnotatedTarget(sourceNode, target);
+      }
+    }
+
+    @Override
+    public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
+      maybeProcessAnnotatedTarget(sourceNode, target);
+    }
+
+    @Override
+    public void processConstructorInvocation(@NotNull UElement sourceNode,
+                                                   @NotNull PsiClass instantiatedClass,
+                                                   @Nullable PsiMethod constructor,
+                                                   @Nullable UClass subclassDeclaration) {
+      if (constructor == null || !maybeProcessAnnotatedTarget(sourceNode, constructor)) {
+        maybeProcessAnnotatedTarget(sourceNode, instantiatedClass);
+      }
+    }
+
+    private boolean maybeProcessAnnotatedTarget(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target) {
+      List<PsiAnnotation> annotations = AnnotationUtil.findAllAnnotations(target, myAnnotations, false);
+      if (annotations.isEmpty()) {
+        return false;
+      }
+      myAnnotatedApiProcessor.processAnnotatedTarget(sourceNode, target, annotations);
+      return true;
+    }
   }
 }

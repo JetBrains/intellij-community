@@ -340,7 +340,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       errorMessage.setOpaque(false);
       errorPanel.add(errorMessage);
 
-      Ref<Boolean> enableAction = new Ref<>();
+      Ref<String> enableAction = new Ref<>();
       errorMessage.setText(PluginManagerConfigurableNew.getErrorMessage(myPluginsModel, myPlugin, enableAction));
 
       if (!enableAction.isNull()) {
@@ -372,7 +372,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       return;
     }
 
-    button.addActionListener(e -> myPluginsModel.installOrUpdatePlugin(myPlugin, install));
+    button.addActionListener(e -> myPluginsModel.installOrUpdatePlugin(myPlugin, install ? null : myPlugin));
 
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
       showProgress(false);

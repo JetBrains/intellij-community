@@ -56,6 +56,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
+  override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
+  override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
 
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
@@ -72,20 +74,11 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   }
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
-    addNoteOrComment(noteComponent(text, linkHandler))
+    rootRow.createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
   override fun commentRow(text: String) {
-    addNoteOrComment(ComponentPanelBuilder.createCommentComponent(text, true))
-  }
-
-  private fun addNoteOrComment(component: JComponent) {
-    val cc = CC()
-    cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
-
-    val row = rootRow.createChildRow(label = null, noGrid = true)
-    row.addComponent(component, lazyOf(cc))
+    rootRow.createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
   }
 
   fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {

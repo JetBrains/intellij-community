@@ -209,6 +209,7 @@ public class RefreshSessionImpl extends RefreshSession {
     mySemaphore.waitFor();
   }
 
+  @NotNull
   private List<VFileEvent> mergeEventsAndReset() {
     Set<VFileEvent> mergedEvents = new LinkedHashSet<>(myEvents);
     List<VFileEvent> events = new ArrayList<>(mergedEvents);

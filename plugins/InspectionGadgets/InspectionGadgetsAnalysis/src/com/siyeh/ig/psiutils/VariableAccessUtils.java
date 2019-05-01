@@ -515,6 +515,20 @@ public class VariableAccessUtils {
     return false;
   }
 
+  /**
+   * @param var variable to check
+   * @return true if given variable doesn't need to be effectively final (i.e. not used inside lambdas/classes)
+   */
+  @Contract("null -> false")
+  public static boolean canUseAsNonFinal(PsiLocalVariable var) {
+    if (var == null) return false;
+    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
+    return block != null && ReferencesSearch.search(var).allMatch(ref -> {
+      PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
+      return context == null || PsiTreeUtil.isAncestor(context, block, false);
+    });
+  }
+
   private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final Set<PsiVariable> usedVariables = new HashSet<>();

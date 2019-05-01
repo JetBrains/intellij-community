@@ -106,9 +106,13 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   protected abstract fun scanTurnedOff(): Boolean
 
   override fun startRescan() {
+    startRescan(null)
+  }
+
+  override fun startRescan(actionAfterRescan: Runnable?) {
     if (scanTurnedOff()) return
 
-    queueIgnoreUpdate(isFullRescan = true) {
+    queueIgnoreUpdate(isFullRescan = true, doAfterRescan = actionAfterRescan) {
       doRescan()
     }
   }
@@ -137,7 +141,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  private fun queueIgnoreUpdate(isFullRescan: Boolean, action: () -> Set<FilePath>) {
+  private fun queueIgnoreUpdate(isFullRescan: Boolean, doAfterRescan: Runnable? = null, action: () -> Set<FilePath>) {
     //full rescan should have the same update identity, so multiple full rescans can be swallowed instead of spawning new threads
     val updateIdentity = if (isFullRescan) "${rescanIdentityName}_full" else ObjectUtils.sentinel(rescanIdentityName)
     updateQueue.queue(object : Update(updateIdentity) {
@@ -150,6 +154,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
             val ignored = action()
             inUpdateMode.set(false)
             fireUpdateFinished(ignored)
+            doAfterRescan?.run()
           }
         })
     })

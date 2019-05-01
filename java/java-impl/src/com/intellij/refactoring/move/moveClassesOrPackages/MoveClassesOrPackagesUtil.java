@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
@@ -41,6 +42,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -53,24 +55,33 @@ public class MoveClassesOrPackagesUtil {
   private MoveClassesOrPackagesUtil() {
   }
 
+  /** @deprecated Use {@link MoveClassesOrPackagesUtil#findUsages(PsiElement, SearchScope, boolean, boolean, String)} */
+  @Deprecated
   public static UsageInfo[] findUsages(final PsiElement element,
                                        boolean searchInStringsAndComments,
                                        boolean searchInNonJavaFiles,
                                        final String newQName) {
-    PsiManager manager = element.getManager();
+    return findUsages(element, GlobalSearchScope.projectScope(element.getProject()),
+                      searchInStringsAndComments, searchInNonJavaFiles, newQName);
+  }
 
+  @NotNull
+  public static UsageInfo[] findUsages(@NotNull PsiElement element,
+                                       @NotNull SearchScope searchScope,
+                                       boolean searchInStringsAndComments,
+                                       boolean searchInNonJavaFiles,
+                                       String newQName) {
     ArrayList<UsageInfo> results = new ArrayList<>();
     Set<PsiReference> foundReferences = new HashSet<>();
 
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    for (PsiReference reference : ReferencesSearch.search(element, projectScope, false)) {
+    for (PsiReference reference : ReferencesSearch.search(element, searchScope, false)) {
       TextRange range = reference.getRangeInElement();
       if (foundReferences.contains(reference)) continue;
       results.add(new MoveRenameUsageInfo(reference.getElement(), reference, range.getStartOffset(), range.getEndOffset(), element, false));
       foundReferences.add(reference);
     }
 
-    findNonCodeUsages(searchInStringsAndComments, searchInNonJavaFiles, element, newQName, results);
+    findNonCodeUsages(element, searchScope, searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
     preprocessUsages(results);
     return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
@@ -81,14 +92,27 @@ public class MoveClassesOrPackagesUtil {
     }
   }
 
+  /** @deprecated Use {@link MoveClassesOrPackagesUtil#findNonCodeUsages(PsiElement, SearchScope, boolean, boolean, String, Collection)} */
+  @Deprecated
   public static void findNonCodeUsages(boolean searchInStringsAndComments,
                                        boolean searchInNonJavaFiles,
                                        final PsiElement element,
                                        final String newQName,
                                        ArrayList<? super UsageInfo> results) {
+    findNonCodeUsages(element, GlobalSearchScope.projectScope(element.getProject()),
+                      searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
+  }
+
+  public static void findNonCodeUsages(@NotNull PsiElement element,
+                                       @NotNull SearchScope searchScope,
+                                       boolean searchInStringsAndComments,
+                                       boolean searchInNonJavaFiles,
+                                       String newQName,
+                                       @NotNull Collection<? super UsageInfo> results) {
     final String stringToSearch = getStringToSearch(element);
     if (stringToSearch == null) return;
-    TextOccurrencesUtil.findNonCodeUsages(element, stringToSearch, searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
+    TextOccurrencesUtil.findNonCodeUsages(element, searchScope, stringToSearch,
+                                          searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
   }
 
   private static String getStringToSearch(PsiElement element) {
@@ -111,12 +135,13 @@ public class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  public static PsiPackage doMovePackage(PsiPackage aPackage, MoveDestination moveDestination)
-    throws IncorrectOperationException {
+  public static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
+                                         @NotNull SearchScope searchScope,
+                                         @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
 
     final String newPrefix;
-    if ("".equals(targetPackage.getQualifiedName())) {
+    if (targetPackage.getQualifiedName().isEmpty()) {
       newPrefix = "";
     }
     else {
@@ -315,33 +340,30 @@ public class MoveClassesOrPackagesUtil {
     return directory;
   }
 
-  public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
-                                             final List<? extends VirtualFile> contentSourceRoots,
-                                             final PsiDirectory initialDirectory) {
+  @Nullable
+  public static VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
+                                             @NotNull List<? extends VirtualFile> contentSourceRoots,
+                                             @Nullable PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
     LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
     Map<PsiDirectory, String> relativePathsToCreate = new HashMap<>();
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
-    final PsiDirectory selectedDirectory = DirectoryChooserUtil.chooseDirectory(
+    PsiDirectory selectedDir = DirectoryChooserUtil.chooseDirectory(
       targetDirectories.toArray(PsiDirectory.EMPTY_ARRAY),
       initialDirectory,
       project,
-      relativePathsToCreate
-    );
+      relativePathsToCreate);
 
-    if (selectedDirectory == null) return null;
-    final VirtualFile virt = selectedDirectory.getVirtualFile();
-    final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virt);
-    LOG.assertTrue(sourceRootForFile != null);
-    return sourceRootForFile;
+    VirtualFile vDir = selectedDir == null ? null : selectedDir.getVirtualFile();
+    return vDir == null ? null : ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(vDir);
   }
 
-  public static void buildDirectoryList(PackageWrapper aPackage,
-                                        List<? extends VirtualFile> contentSourceRoots,
-                                        LinkedHashSet<? super PsiDirectory> targetDirectories,
-                                        Map<PsiDirectory, String> relativePathsToCreate) {
+  public static void buildDirectoryList(@NotNull PackageWrapper aPackage,
+                                        @NotNull List<? extends VirtualFile> contentSourceRoots,
+                                        @NotNull LinkedHashSet<? super PsiDirectory> targetDirectories,
+                                        @NotNull Map<PsiDirectory, String> relativePathsToCreate) {
 
     final PsiDirectory[] directories = aPackage.getDirectories();
     sourceRoots:

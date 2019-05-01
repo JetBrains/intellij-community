@@ -3,9 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
@@ -23,7 +21,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Path
 
-abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: StateSplitter,
+abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: com.intellij.openapi.components.StateSplitter,
                                          protected val pathMacroSubstitutor: PathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
   protected var componentName: String? = null
 
@@ -75,7 +73,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 }
 
 open class DirectoryBasedStorage(private val dir: Path,
-                                 @Suppress("DEPRECATION") splitter: StateSplitter,
+                                 @Suppress("DEPRECATION") splitter: com.intellij.openapi.components.StateSplitter,
                                  pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
   override val isUseVfsForWrite: Boolean
     get() = true
@@ -103,7 +101,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     private var copiedStorageData: MutableMap<String, Any>? = null
 
     private val dirtyFileNames = SmartHashSet<String>()
-    private var someFileRemoved = false
+    private var isSomeFileRemoved = false
 
     override fun setSerializedState(componentName: String, element: Element?) {
       storage.componentName = componentName
@@ -133,7 +131,7 @@ open class DirectoryBasedStorage(private val dir: Path,
         if (copiedStorageData == null) {
           copiedStorageData = originalStates.toMutableMap()
         }
-        someFileRemoved = true
+        isSomeFileRemoved = true
         copiedStorageData!!.remove(key)
       }
     }
@@ -158,7 +156,7 @@ open class DirectoryBasedStorage(private val dir: Path,
       var dir = storage.virtualFile
       if (copiedStorageData!!.isEmpty()) {
         if (dir != null && dir.exists()) {
-          deleteFile(this, dir)
+          dir.delete(this)
         }
         storage.setStorageData(stateMap)
         return
@@ -172,7 +170,7 @@ open class DirectoryBasedStorage(private val dir: Path,
       if (!dirtyFileNames.isEmpty) {
         saveStates(dir, stateMap)
       }
-      if (someFileRemoved && dir.exists()) {
+      if (isSomeFileRemoved && dir.exists()) {
         deleteFiles(dir)
       }
 
@@ -200,16 +198,15 @@ open class DirectoryBasedStorage(private val dir: Path,
     }
 
     private fun deleteFiles(dir: VirtualFile) {
-      runWriteAction {
-        for (file in dir.children) {
-          val fileName = file.name
-          if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {
-            if (file.isWritable) {
-              file.delete(this)
-            }
-            else {
-              throw ReadOnlyModificationException(file, null)
-            }
+      val copiedStorageData = copiedStorageData!!
+      for (file in dir.children) {
+        val fileName = file.name
+        if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
+          if (file.isWritable) {
+            file.delete(this)
+          }
+          else {
+            throw ReadOnlyModificationException(file, null)
           }
         }
       }
@@ -219,6 +216,8 @@ open class DirectoryBasedStorage(private val dir: Path,
   private fun setStorageData(newStates: StateMap) {
     storageDataRef.set(newStates)
   }
+
+  override fun toString() = "${javaClass.simpleName}(file=${virtualFile?.path}, componentName=$componentName)"
 }
 
 private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {

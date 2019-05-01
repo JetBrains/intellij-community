@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -43,7 +44,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       title = IdeBundle.message("title.new.directory");
     }
 
-    Messages.showInputDialog(project, message, title, Messages.getQuestionIcon(), validator.getInitialText(), validator);
+    String initialText = validator.getInitialText();
+    Messages.showInputDialog(project, message, title, null, initialText, validator, TextRange.from(initialText.length(), 0));
 
     final PsiElement result = validator.getCreatedElement();
     if (result != null) {

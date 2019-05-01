@@ -242,7 +242,6 @@ public class MigrationPanel extends JPanel implements Disposable {
     tree.setCellRenderer(rootsTreeCellRenderer);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(tree);
 
     TreeUtil.installActions(tree);
     TreeUtil.expandAll(tree);

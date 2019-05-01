@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -57,7 +56,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
       if (row >= 0) {
         val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
         val (paths, excluded) = refiner.refine(row, path)
-        if (!excluded.isEmpty()) {
+        if (excluded.isNotEmpty()) {
           LOG.info("Excluding ${excluded.size} commits from history for ${startPath.path}")
           val hidden = hideCommits(controller, permanentGraphInfo, excluded)
           if (!hidden) LOG.error("Could not hide excluded commits from history for ${startPath.path}")
@@ -257,13 +256,13 @@ abstract class FileNamesData(startPaths: Collection<FilePath>) {
 
     while (newPaths.isNotEmpty()) {
       val commits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
-      newPaths.associateTo(commits) { kotlin.Pair(it, getAffectedCommits(it)) }
+      newPaths.associateTo(commits) { Pair(it, getAffectedCommits(it)) }
       affectedCommits.putAll(commits)
       newPaths.clear()
 
       collectAdditionsDeletions(commits) { ad ->
         if (commitToRename[ad.commits].any { rename -> ad.matches(rename) }) return@collectAdditionsDeletions
-        findRename(ad.parent, ad.child, ad::matches)?.let { files ->
+        findRename(ad.parent, ad.child, ad.filePath, ad.isAddition)?.let { files ->
           val rename = Rename(files.first, files.second, ad.parent, ad.child)
           commitToRename.putValue(ad.commits, rename)
           val otherPath = rename.getOtherPath(ad)!!
@@ -366,14 +365,14 @@ abstract class FileNamesData(startPaths: Collection<FilePath>) {
 
   fun getChanges(filePath: FilePath, commit: Int) = affectedCommits[filePath]?.get(commit)
 
-  fun forEach(action: (FilePath, Int, TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>) -> Unit) = affectedCommits.forEach(action)
+  fun forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) = affectedCommits.forEach(action)
 
   fun removeAll(commits: List<Int>) {
     affectedCommits.forEach { _, commitsMap -> commitsMap.removeAll(commits) }
   }
 
-  abstract fun findRename(parent: Int, child: Int, accept: (Couple<FilePath>) -> Boolean): Couple<FilePath>?
-  abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>
+  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>?
+  abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>
 }
 
 private class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
@@ -390,11 +389,6 @@ private class AdditionDeletion(val filePath: FilePath, val child: Int, val paren
       else FILE_PATH_HASHING_STRATEGY.equals(rename.filePath2, filePath)
     }
     return false
-  }
-
-  fun matches(files: Couple<FilePath>): Boolean {
-    return (isAddition && FILE_PATH_HASHING_STRATEGY.equals(files.second, filePath)) ||
-           (!isAddition && FILE_PATH_HASHING_STRATEGY.equals(files.first, filePath))
   }
 
   override fun equals(other: Any?): Boolean {
@@ -477,7 +471,7 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
   }
 }
 
-internal fun Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>>.forEach(action: (FilePath, Int, TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>) -> Unit) {
+internal fun Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>.forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) {
   forEach { (filePath, affectedCommits) ->
     affectedCommits.forEachEntry { commit, changesMap ->
       action(filePath, commit, changesMap)

@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
@@ -19,14 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,9 +94,9 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
       splitter.setFirstComponent(myEditor.getComponent());
       splitter.setSecondComponent(myPreview.getComponent());
 
-
-      myToolbarWrapper = new SplitEditorToolbar(splitter);
+      myToolbarWrapper = createMarkdownToolbarWrapper(splitter);
       myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)(myEditor).getEditor().getGutter()));
+      Disposer.register(this, myToolbarWrapper);
 
       if (myPreview instanceof TextEditor) {
         myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)((TextEditor)myPreview).getEditor().getGutter()));
@@ -117,6 +111,24 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
       myComponent = JBUI.Panels.simplePanel(splitter).addToTop(myToolbarWrapper);
     }
     return myComponent;
+  }
+
+  @NotNull
+  private SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
+    final ActionToolbar leftToolbar = createToolbar();
+    if (leftToolbar != null) {
+      leftToolbar.setTargetComponent(targetComponentForActions);
+    }
+
+    ActionGroup group = new DefaultActionGroup(
+      new ChangeViewModeAction(Layout.SHOW_EDITOR),
+      new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW),
+      new ChangeViewModeAction(Layout.SHOW_PREVIEW)
+    );
+    ActionToolbar rightToolbar = ActionManager.getInstance().createActionToolbar("TextEditorWithPreview", group, true);
+    rightToolbar.setTargetComponent(targetComponentForActions);
+
+    return new SplitEditorToolbar(leftToolbar, rightToolbar);
   }
 
   @Override
@@ -204,6 +216,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
       myEditor.removePropertyChangeListener(delegate);
       myPreview.removePropertyChangeListener(delegate);
     }
+  }
+
+  @NotNull
+  public TextEditor getTextEditor() {
+    return myEditor;
+  }
+
+  public Layout getLayout() {
+    return myLayout;
   }
 
   static class MyFileEditorState implements FileEditorState {
@@ -294,84 +315,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
         myMap.put(listener, Pair.create(oldPair.getFirst() - 1, oldPair.getSecond()));
       }
       return oldPair.getSecond();
-    }
-  }
-
-  public class SplitEditorToolbar extends JPanel implements Disposable {
-    private final ActionToolbar myRightToolbar;
-
-    private final List<EditorGutterComponentEx> myGutters = new ArrayList<>();
-
-    private final ComponentAdapter myAdjustToGutterListener = new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        adjustSpacing();
-      }
-
-      @Override
-      public void componentShown(ComponentEvent e) {
-        adjustSpacing();
-      }
-
-      @Override
-      public void componentHidden(ComponentEvent e) {
-        adjustSpacing();
-      }
-    };
-
-    public SplitEditorToolbar(@NotNull final JComponent targetComponentForActions) {
-      super(new BorderLayout());
-
-      final ActionToolbar leftToolbar = createToolbar();
-      if (leftToolbar != null) {
-        leftToolbar.setTargetComponent(targetComponentForActions);
-        add(leftToolbar.getComponent(), BorderLayout.WEST);
-      }
-
-      ActionGroup group = new DefaultActionGroup(
-        new ChangeViewModeAction(Layout.SHOW_EDITOR),
-        new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW),
-        new ChangeViewModeAction(Layout.SHOW_PREVIEW)
-      );
-      myRightToolbar = ActionManager.getInstance().createActionToolbar("TextEditorWithPreview", group, true);
-      myRightToolbar.setTargetComponent(targetComponentForActions);
-      add(myRightToolbar.getComponent(), BorderLayout.EAST);
-
-      addComponentListener(myAdjustToGutterListener);
-    }
-
-    public void addGutterToTrack(@NotNull EditorGutterComponentEx gutterComponentEx) {
-      myGutters.add(gutterComponentEx);
-
-      gutterComponentEx.addComponentListener(myAdjustToGutterListener);
-    }
-
-    public void refresh() {
-      adjustSpacing();
-      myRightToolbar.updateActionsImmediately();
-    }
-
-    private void adjustSpacing() {
-      EditorGutterComponentEx leftMostGutter = null;
-      for (EditorGutterComponentEx gutter : myGutters) {
-        if (!gutter.isShowing()) {
-          continue;
-        }
-        if (leftMostGutter == null || leftMostGutter.getX() > gutter.getX()) {
-          leftMostGutter = gutter;
-        }
-      }
-
-      revalidate();
-      repaint();
-    }
-
-    @Override
-    public void dispose() {
-      removeComponentListener(myAdjustToGutterListener);
-      for (EditorGutterComponentEx gutter : myGutters) {
-        gutter.removeComponentListener(myAdjustToGutterListener);
-      }
     }
   }
 

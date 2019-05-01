@@ -52,6 +52,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
@@ -203,6 +205,8 @@ public class TerminalView {
     }
 
     JBTerminalWidget finalTerminalWidget = terminalWidget;
+    MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
+    MoveTerminalToolWindowTabRightAction moveTabRightAction = new MoveTerminalToolWindowTabRightAction();
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override
       public void onNewSession() {
@@ -247,6 +251,26 @@ public class TerminalView {
         DataContext dataContext = DataManager.getInstance().getDataContext(toolWindow.getComponent());
         AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
         action.actionPerformed(event);
+      }
+
+      @Override
+      public void moveTabRight() {
+        moveTabRightAction.move(toolWindow.getContentManager().getSelectedContent());
+      }
+
+      @Override
+      public void moveTabLeft() {
+        moveTabLeftAction.move(toolWindow.getContentManager().getSelectedContent());
+      }
+
+      @Override
+      public boolean canMoveTabRight() {
+        return moveTabRightAction.isAvailable(toolWindow.getContentManager().getSelectedContent());
+      }
+
+      @Override
+      public boolean canMoveTabLeft() {
+        return moveTabLeftAction.isAvailable(toolWindow.getContentManager().getSelectedContent());
       }
     });
 

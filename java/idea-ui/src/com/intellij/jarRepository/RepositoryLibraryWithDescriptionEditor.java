@@ -51,7 +51,8 @@ public class RepositoryLibraryWithDescriptionEditor
     boolean wasGeneratedName =
       RepositoryLibraryType.getInstance().getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
     final EnumSet<ArtifactKind> artifactKinds = ArtifactKind.kindsOf(libraryHasSources(myEditorComponent.getLibraryEditor()),
-                                                                     libraryHasJavaDocs(myEditorComponent.getLibraryEditor()));
+                                                                     libraryHasJavaDocs(myEditorComponent.getLibraryEditor()),
+                                                                     properties.getPackaging());
     if (libraryHasExternalAnnotations(myEditorComponent.getLibraryEditor())) {
       artifactKinds.add(ArtifactKind.ANNOTATIONS);
     }

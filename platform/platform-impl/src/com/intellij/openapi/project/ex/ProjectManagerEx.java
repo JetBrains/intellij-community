@@ -100,4 +100,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   public abstract Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException;
+
+  @NotNull
+  public abstract String[] getAllExcludedUrls();
 }

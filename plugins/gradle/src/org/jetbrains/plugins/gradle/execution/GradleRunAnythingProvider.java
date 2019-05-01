@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.FindSymbolParameters;
 import groovyjarjarcommonscli.Option;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -89,11 +90,18 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
 
   @Nullable
   private CommandLineInfo parseCommandLine(@NotNull String commandLine) {
-    String prefix = notNullize(substringBeforeLast(commandLine, " "), getHelpCommand()).trim() + ' ';
+    String helpCommand = getHelpCommand();
+    if (helpCommand.startsWith(commandLine)) {
+      commandLine = helpCommand;
+    }
+    else if (!commandLine.startsWith(helpCommand)) {
+      return null;
+    }
+    String prefix = notNullize(substringBeforeLast(commandLine, " "), helpCommand).trim() + ' ';
     String toComplete = notNullize(substringAfterLast(commandLine, " "));
     List<String> commands = ContainerUtil.filter(prefix.trim().split(" "), it -> !it.isEmpty());
     if (commands.isEmpty()) return null;
-    if (!commands.get(0).equals(getHelpCommand())) return null;
+    if (!commands.get(0).equals(helpCommand)) return null;
     String externalProjectName = commands.size() > 1 ? commands.get(1) : "";
     return new CommandLineInfo(prefix, toComplete, externalProjectName, commands.subList(1, commands.size()));
   }
@@ -172,7 +180,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
     String callChain = toComplete.isEmpty() || !toComplete.contains(".") ? "*" : substringBeforeLast(toComplete, ".");
     Project project = fetchProject(dataContext);
     ChooseByNameModelEx model = new GotoClassModel2(project);
-    model.processNames(it -> processor.process(callChain + "." + it), false);
+    model.processNames(it -> processor.process(callChain + "." + it), FindSymbolParameters.simple(project, false));
   }
 
   private static List<TaskOption> getTaskOptions(@NotNull DataContext dataContext,

@@ -1188,7 +1188,7 @@ public class UIUtil {
 
   @NotNull
   public static Color getInactiveTextColor() {
-    return JBColor.namedColor("Component.infoForeground", JBColor.GRAY);
+    return JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
   }
 
   /**
@@ -1368,12 +1368,12 @@ public class UIUtil {
     return UIManager.getBorder("Table.focusCellHighlightBorder");
   }
 
+  @Deprecated
   public static void setLineStyleAngled(@NotNull final ClientPropertyHolder component) {
-    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
+  @Deprecated
   public static void setLineStyleAngled(@NotNull final JTree component) {
-    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
   public static Color getTableFocusCellForeground() {
@@ -1440,47 +1440,49 @@ public class UIUtil {
   public static Icon getTreeNodeIcon(boolean expanded, boolean selected, boolean focused) {
     boolean white = selected && focused || isUnderDarcula();
 
-    Icon selectedIcon = getTreeSelectedExpandedIcon();
-    Icon notSelectedIcon = getTreeExpandedIcon();
+    Icon expandedDefault = getTreeExpandedIcon();
+    Icon collapsedDefault = getTreeCollapsedIcon();
+    Icon expandedSelected = getTreeSelectedExpandedIcon();
+    Icon collapsedSelected = getTreeSelectedCollapsedIcon();
 
-    int width = Math.max(selectedIcon.getIconWidth(), notSelectedIcon.getIconWidth());
-    int height = Math.max(selectedIcon.getIconWidth(), notSelectedIcon.getIconWidth());
+    int width = Math.max(
+      Math.max(expandedDefault.getIconWidth(), collapsedDefault.getIconWidth()),
+      Math.max(expandedSelected.getIconWidth(), collapsedSelected.getIconWidth()));
+    int height = Math.max(
+      Math.max(expandedDefault.getIconHeight(), collapsedDefault.getIconHeight()),
+      Math.max(expandedSelected.getIconHeight(), collapsedSelected.getIconHeight()));
 
-    return new CenteredIcon(expanded ? white ? getTreeSelectedExpandedIcon() : getTreeExpandedIcon()
-                                     : white ? getTreeSelectedCollapsedIcon() : getTreeCollapsedIcon(),
+    return new CenteredIcon(!white
+                            ? expanded ? expandedDefault : collapsedDefault
+                            : expanded ? expandedSelected : collapsedSelected,
                             width, height, false);
   }
 
+  @NotNull
   public static Icon getTreeCollapsedIcon() {
     return UIManager.getIcon("Tree.collapsedIcon");
   }
 
+  @NotNull
   public static Icon getTreeExpandedIcon() {
     return UIManager.getIcon("Tree.expandedIcon");
   }
 
+  @Deprecated
   public static Icon getTreeIcon(boolean expanded) {
     return expanded ? getTreeExpandedIcon() : getTreeCollapsedIcon();
   }
 
+  @NotNull
   public static Icon getTreeSelectedCollapsedIcon() {
-    if (isUnderAquaBasedLookAndFeel() ||
-        isUnderDarcula() ||
-        isUnderIntelliJLaF() &&
-        !isUnderWin10LookAndFeel()) {
-      return AllIcons.Mac.Tree_white_right_arrow;
-    }
-    return getTreeCollapsedIcon();
+    Icon icon = UIManager.getIcon("Tree.collapsedSelectedIcon");
+    return icon != null ? icon : getTreeCollapsedIcon();
   }
 
+  @NotNull
   public static Icon getTreeSelectedExpandedIcon() {
-    if (isUnderAquaBasedLookAndFeel() ||
-        isUnderDarcula() ||
-        isUnderIntelliJLaF() &&
-        !isUnderWin10LookAndFeel()) {
-      return AllIcons.Mac.Tree_white_down_arrow;
-    }
-    return getTreeExpandedIcon();
+    Icon icon = UIManager.getIcon("Tree.expandedSelectedIcon");
+    return icon != null ? icon : getTreeExpandedIcon();
   }
 
   public static Border getTableHeaderCellBorder() {
@@ -3492,6 +3494,7 @@ public class UIUtil {
    * @see SwingUtilities#getAncestorOfClass
    */
   @Nullable
+  @Contract(pure = true)
   public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
     while (component != null) {
       if (type.isInstance(component)) {

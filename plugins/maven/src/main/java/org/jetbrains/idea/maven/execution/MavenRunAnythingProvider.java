@@ -51,7 +51,10 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
       return emptyList();
     }
 
-    if (!pattern.startsWith(getHelpCommand())) {
+    if (getHelpCommand().startsWith(pattern)) {
+      pattern = getHelpCommand();
+    }
+    else if (!pattern.startsWith(getHelpCommand())) {
       return emptyList();
     }
 

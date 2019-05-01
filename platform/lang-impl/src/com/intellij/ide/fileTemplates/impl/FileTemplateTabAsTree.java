@@ -48,8 +48,6 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     myTree = new Tree(treeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
-
     myTree.expandPath(TreeUtil.getPathFromRoot(myRoot));
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new MyTreeCellRenderer());

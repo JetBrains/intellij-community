@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.codeStyle.json;
 import com.google.gson.*;
 import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.openapi.options.SchemeExporter;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ public class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme>
   public static final String CODE_STYLE_JSON_EXT = "codestyle.json";
 
   @Override
-  public void exportScheme(@NotNull CodeStyleScheme scheme, @NotNull OutputStream outputStream) {
+  public void exportScheme(@Nullable Project project, @NotNull CodeStyleScheme scheme, @NotNull OutputStream outputStream) {
     exportScheme(scheme, outputStream, null);
   }
 

@@ -26,33 +26,18 @@ public class SharedMapForwardIndex implements ForwardIndex {
 
   // only verification purpose
   @Nullable
-  private final AbstractForwardIndexAccessor<?, ?, ?, ?> myAccessor;
+  private final AbstractForwardIndexAccessor<?, ?, ?> myAccessor;
 
   public SharedMapForwardIndex(@NotNull IndexExtension<?, ?, ?> extension,
-                               @Nullable AbstractForwardIndexAccessor<?, ?, ?, ?> accessor,
-                               @NotNull File verificationIndexStorageFile,
-                               boolean verificationIndexWantNonNegativeIntegralValues,
+                               @Nullable AbstractForwardIndexAccessor<?, ?, ?> accessor,
+                               @Nullable File verificationIndexStorageFile,
                                boolean verificationIndexHasChunks) throws IOException {
     myIndexId = (ID<?, ?>)extension.getName();
-    if (!SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS) {
+    if (verificationIndexStorageFile != null && (!SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS)) {
       Boolean old = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
       try {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!verificationIndexHasChunks);
-        mySanityVerificationIndex = new PersistentMapBasedForwardIndex(verificationIndexStorageFile) {
-          @NotNull
-          @Override
-          protected PersistentHashMap<Integer, ByteArraySequence> createMap(File file) throws IOException {
-            return new PersistentHashMap<Integer, ByteArraySequence>(file,
-                                                                     EnumeratorIntegerDescriptor.INSTANCE,
-                                                                     ByteSequenceDataExternalizer.INSTANCE,
-                                                                     4096) {
-              @Override
-              protected boolean wantNonNegativeIntegralValues() {
-                return verificationIndexWantNonNegativeIntegralValues;
-              }
-            };
-          }
-        };
+        mySanityVerificationIndex = new PersistentMapBasedForwardIndex(verificationIndexStorageFile);
       }
       catch (IOException e) {
         IOUtil.deleteAllFilesStartingWith(verificationIndexStorageFile);

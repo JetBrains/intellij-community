@@ -247,9 +247,11 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
 
   private static List<TextRange> findContinuation(int mainRangeStartOffset, CharSequence text, IndexPattern[] allIndexPatterns,
                                                   List<CommentRange> commentRanges, int commentNum) {
+    CommentRange commentRange = commentRanges.get(commentNum);
     int lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, mainRangeStartOffset - 1, "\n") + 1;
     int lineEndOffset = CharArrayUtil.shiftForwardUntil(text, mainRangeStartOffset, "\n");
     int offsetInLine = mainRangeStartOffset - lineStartOffset;
+    int maxCommentStartOffsetInLine = Math.max(0, commentRange.startOffset - lineStartOffset);
     List<TextRange> result = new ArrayList<>();
     outer:
     while (lineEndOffset < text.length()) {
@@ -258,18 +260,15 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       int refOffset = lineStartOffset + offsetInLine;
       int continuationStartOffset = CharArrayUtil.shiftForward(text, refOffset, lineEndOffset, WHITESPACE);
       if (continuationStartOffset == refOffset || continuationStartOffset >= lineEndOffset) break;
-      if (continuationStartOffset >= commentRanges.get(commentNum).endOffset) {
+      if (continuationStartOffset >= commentRange.endOffset) {
         commentNum++;
-        if (commentNum >= commentRanges.size() ||
-            continuationStartOffset < commentRanges.get(commentNum).startOffset ||
-            continuationStartOffset >= commentRanges.get(commentNum).endOffset) {
-          break;
-        }
+        if (commentNum >= commentRanges.size()) break;
+        commentRange = commentRanges.get(commentNum);
+        if (continuationStartOffset < commentRange.startOffset || continuationStartOffset >= commentRange.endOffset) break;
       }
-      CommentRange commentRange = commentRanges.get(commentNum);
       int commentStartOffset = Math.max(lineStartOffset, commentRange.startOffset);
       int continuationEndOffset = Math.min(lineEndOffset, commentRange.endOffset);
-      if (refOffset < commentStartOffset ||
+      if (refOffset < commentStartOffset || commentStartOffset > lineStartOffset + maxCommentStartOffsetInLine ||
           CharArrayUtil.shiftBackward(text, commentStartOffset, refOffset - 1,
                                       WHITESPACE + commentRange.allowedContinuationPrefixChars) + 1 != commentStartOffset) {
         break;

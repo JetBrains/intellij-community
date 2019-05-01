@@ -18,7 +18,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.EvaluatedXmlName;
-import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
@@ -34,9 +33,6 @@ import java.util.List;
 public abstract class DomGenericInfoEx implements DomGenericInfo {
 
   public abstract boolean checkInitialized();
-
-  @Nullable
-  public abstract Invocation createInvocation(final JavaMethod method);
 
   @Override
   @NotNull

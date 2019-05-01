@@ -24,6 +24,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.fileTypes.impl.SvgFileType;
+import org.intellij.images.util.ImageInfo;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ import java.io.IOException;
 /**
  * @author spleaner
  */
-public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfoIndex.ImageInfo> {
+public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo> {
   private static final long ourMaxImageSize = (long)(Registry.get("ide.index.image.max.size").asDouble() * 1024 * 1024);
 
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
@@ -98,39 +99,5 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   @Override
   public int getVersion() {
     return 8;
-  }
-
-  public static class ImageInfo {
-    public int width;
-    public int height;
-    public int bpp;
-
-    public ImageInfo(int width, int height, int bpp) {
-      this.width = width;
-      this.height = height;
-      this.bpp = bpp;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ImageInfo imageInfo = (ImageInfo)o;
-
-      if (bpp != imageInfo.bpp) return false;
-      if (height != imageInfo.height) return false;
-      if (width != imageInfo.width) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = width;
-      result = 31 * result + height;
-      result = 31 * result + bpp;
-      return result;
-    }
   }
 }

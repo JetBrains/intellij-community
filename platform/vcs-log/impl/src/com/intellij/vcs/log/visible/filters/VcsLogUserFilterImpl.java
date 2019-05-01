@@ -10,12 +10,14 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   private static final Logger LOG = Logger.getInstance(VcsLogUserFilterImpl.class);
 

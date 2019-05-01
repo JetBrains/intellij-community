@@ -5,11 +5,13 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
+import com.intellij.uast.UastVisitorAdapter
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
@@ -70,7 +72,12 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     if (targetedSinceUntilRanges.isEmpty()) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
-    return MissingRecentApiVisitor(holder, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, targetedSinceUntilRanges)
+    return UastVisitorAdapter(
+      ApiUsageUastVisitor(
+        MissingRecentApiUsageProcessor(holder, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, targetedSinceUntilRanges)
+      ),
+      true
+    )
   }
 
   override fun createOptionsPanel(): JComponent {
@@ -113,8 +120,8 @@ class MissingRecentApiInspection : LocalInspectionTool() {
   private fun getSinceUntilRange(pluginXml: XmlFile): SinceUntilRange? {
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml) ?: return null
     val ideaVersion = ideaPlugin.rootElement.ideaVersion
-    val sinceBuild = ideaVersion.sinceBuild.stringValue.orEmpty().let { BuildNumber.fromStringOrNull(it) }
-    val untilBuild = ideaVersion.untilBuild.stringValue.orEmpty().let { BuildNumber.fromStringOrNull(it) }
+    val sinceBuild = ideaVersion.sinceBuild.value
+    val untilBuild = ideaVersion.untilBuild.value
     return SinceUntilRange(sinceBuild, untilBuild)
   }
 

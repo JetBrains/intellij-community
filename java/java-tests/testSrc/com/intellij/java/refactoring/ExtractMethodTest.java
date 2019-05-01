@@ -263,10 +263,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   private void doTestWithJava17() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.JDK_1_7);
+  }
+
+  private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
     LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     LanguageLevel oldLevel = projectExtension.getLanguageLevel();
     try {
-      projectExtension.setLanguageLevel(LanguageLevel.JDK_1_7);
+      projectExtension.setLanguageLevel(languageLevel);
       doTest();
     }
     finally {
@@ -701,7 +705,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testMethod2Interface() throws Exception {
-    doTest();
+    doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
   
   public void testMethod2InterfaceFromStatic() throws Exception {
@@ -1364,6 +1368,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testCallChainExpression() throws Exception {
+    doTest();
+  }
+
+  public void testFromDefaultMethodInInterface() throws Exception {
+    doTest();
+  }
+
+  public void testFromPrivateMethodInInterface() throws Exception {
+    doTest();
+  }
+
+  public void testFromStaticMethodInInterface() throws Exception {
     doTest();
   }
 

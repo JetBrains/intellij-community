@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -133,38 +133,32 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull final ActionGroup actionGroup,
                            boolean horizontal,
-                           @NotNull DataManager dataManager,
-                           @NotNull ActionManagerEx actionManager,
                            @NotNull KeymapManagerEx keymapManager) {
-    this(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, false);
+    this(place, actionGroup, horizontal, false, keymapManager, false);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons,
-                           @NotNull DataManager dataManager,
-                           @NotNull ActionManagerEx actionManager,
                            @NotNull KeymapManagerEx keymapManager) {
-    this(place, actionGroup, horizontal, decorateButtons, dataManager, actionManager, keymapManager, false);
+    this(place, actionGroup, horizontal, decorateButtons, keymapManager, false);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            final boolean horizontal,
                            final boolean decorateButtons,
-                           @NotNull DataManager dataManager,
-                           @NotNull ActionManagerEx actionManager,
                            @NotNull KeymapManagerEx keymapManager,
                            boolean updateActionsNow) {
     super(null);
-    myActionManager = actionManager;
+    myActionManager = ActionManagerEx.getInstanceEx();
     myPlace = place;
     myActionGroup = actionGroup;
     myVisibleActions = new ArrayList<>();
-    myDataManager = dataManager;
+    myDataManager = DataManager.getInstance();
     myDecorateButtons = decorateButtons;
-    myUpdater = new ToolbarUpdater(actionManager, keymapManager, this) {
+    myUpdater = new ToolbarUpdater(keymapManager, this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
         ActionToolbarImpl.this.updateActionsImpl(transparentOnly, forced);
@@ -525,8 +519,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       final int maxWidth = getMaxButtonWidth();
       final int maxHeight = getMaxButtonHeight();
 
+      int offset = 0;
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        int offset = 0;
         for (int i = 0; i < componentCount; i++) {
           final Rectangle r = bounds.get(i);
           r.setBounds(insets.left + offset, insets.top + (height - maxHeight) / 2, maxWidth, maxHeight);
@@ -534,7 +528,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
       }
       else {
-        int offset = 0;
         for (int i = 0; i < componentCount; i++) {
           final Rectangle r = bounds.get(i);
           r.setBounds(insets.left + (width - maxWidth) / 2, insets.top + offset, maxWidth, maxHeight);
@@ -696,13 +689,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     int heightToFit = sizeToFit.height - insets.top - insets.bottom;
 
     if (myAdjustTheSameSize) {
+      final int maxWidth = getMaxButtonWidth();
+      final int maxHeight = getMaxButtonHeight();
+      int xOffset = 0;
+      int yOffset = 0;
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        final int maxWidth = getMaxButtonWidth();
-        final int maxHeight = getMaxButtonHeight();
 
         // Lay components out
-        int xOffset = 0;
-        int yOffset = 0;
         int maxRowWidth = getMaxRowWidth(widthToFit, maxWidth);
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
@@ -717,12 +710,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
       }
       else {
-        final int maxWidth = getMaxButtonWidth();
-        final int maxHeight = getMaxButtonHeight();
 
         // Lay components out
-        int xOffset = 0;
-        int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
         final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height() / 3);
         for (int i = 0; i < componentCount; i++) {
@@ -1232,7 +1221,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       group = outside;
     }
 
-    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myDataManager, myActionManager, myUpdater.getKeymapManager(), this) {
+    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myUpdater.getKeymapManager(), this) {
       @Override
       protected void onOtherActionPerformed() {
         hidePopup();
@@ -1353,11 +1342,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     PopupToolbar(@NotNull String place,
                  @NotNull ActionGroup actionGroup,
                  final boolean horizontal,
-                 @NotNull DataManager dataManager,
-                 @NotNull ActionManagerEx actionManager,
                  @NotNull KeymapManagerEx keymapManager,
                  @NotNull JComponent parent) {
-      super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
+      super(place, actionGroup, horizontal, false, keymapManager, true);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       setBorder(myParent.getBorder());

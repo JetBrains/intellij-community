@@ -17,10 +17,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -46,6 +43,9 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
   }
 
   private static boolean isThisQualifierPossible(PsiExpression memberAccessExpression, @NotNull PsiMember member) {
+    if (member.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
     final PsiClass memberClass = member.getContainingClass();
     if (memberClass == null) {
       return false;
@@ -59,8 +59,8 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
       containingClass = ClassUtils.getContainingClass(containingClass);
     }
     while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true));
-    // qualified this needed, which is not possible on local or anonymous class.
-    return containingClass != null && !PsiUtil.isLocalOrAnonymousClass(containingClass);
+    // qualified this needed, which is not possible on anonymous class.
+    return containingClass != null && !(containingClass instanceof PsiAnonymousClass);
   }
 
   @Override
@@ -75,7 +75,8 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
     if (expression.getQualifierExpression() != null) {
       return;
     }
-    final PsiExpression thisQualifier = ExpressionUtils.getQualifierOrThis(expression);
+    final PsiExpression thisQualifier = ExpressionUtils.getEffectiveQualifier(expression);
+    if (!(thisQualifier instanceof PsiThisExpression)) return;
     CommentTracker commentTracker = new CommentTracker();
     @NonNls final String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);

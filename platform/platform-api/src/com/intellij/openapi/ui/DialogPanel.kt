@@ -12,6 +12,8 @@ class DialogPanel : JPanel {
   var preferredFocusedComponent: JComponent? = null
   var validateCallbacks: List<() -> ValidationInfo?> = emptyList()
   var applyCallbacks: List<() -> Unit> = emptyList()
+  var resetCallbacks: List<() -> Unit> = emptyList()
+  var isModifiedCallbacks: List<() -> Boolean> = emptyList()
 
   constructor() : super()
   constructor(layout: LayoutManager?) : super(layout)
@@ -20,5 +22,15 @@ class DialogPanel : JPanel {
     for (applyCallback in applyCallbacks) {
       applyCallback()
     }
+  }
+
+  fun reset() {
+    for (resetCallback in resetCallbacks) {
+      resetCallback()
+    }
+  }
+
+  fun isModified(): Boolean {
+    return isModifiedCallbacks.any { it() }
   }
 }

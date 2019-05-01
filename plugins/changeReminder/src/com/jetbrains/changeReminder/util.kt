@@ -16,17 +16,21 @@ import git4idea.GitCommit
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.history.GitCommitRequirements
-import git4idea.history.GitCommitRequirements.*
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits
+import git4idea.history.GitCommitRequirements.DiffRenameLimit
 import git4idea.history.GitLogUtil
 
-fun CheckinProjectPanel.isAmend(): Boolean {
-  if (this !is CommitChangeListDialog) return false
-  val gitCheckinOptions = this.additionalComponents
-                            .filterIsInstance(GitCheckinEnvironment.GitCheckinOptions::class.java)
-                            .firstOrNull()
-                          ?: return false
-  return gitCheckinOptions.isAmend
+private fun CheckinProjectPanel.gitCheckinOptions(): GitCheckinEnvironment.GitCheckinOptions? {
+  if (this !is CommitChangeListDialog) return null
+  return additionalComponents
+           .filterIsInstance(GitCheckinEnvironment.GitCheckinOptions::class.java)
+           .firstOrNull()
+         ?: return null
 }
+
+fun CheckinProjectPanel.isAmend(): Boolean = this.gitCheckinOptions()?.isAmend ?: false
+
+fun CheckinProjectPanel.author(): String? = this.gitCheckinOptions()?.author
 
 fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Collection<FilePath>> {
   val rootFiles = HashMap<VirtualFile, HashSet<FilePath>>()
@@ -47,17 +51,15 @@ fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Coll
 
 fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<String>, commitConsumer: (GitCommit) -> Unit) {
   val requirements = GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES,
-                                           diffInMergeCommits = DiffInMergeCommits.NO_DIFF,
-                                           preserveOrder = false)
-  GitLogUtil.readFullDetailsForHashes(project, root, GitVcs.getInstance(project), hashes.toList(),
-                                      requirements, false, Consumer<GitCommit> {
+                                           diffInMergeCommits = DiffInMergeCommits.NO_DIFF)
+  GitLogUtil.readFullDetailsForHashes(project, root, hashes.toList(), requirements, Consumer<GitCommit> {
     commitConsumer(it)
   })
 }
 
 fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { ChangesUtil.getFilePath(it) }
 
-fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) = this.mapNotNull {
+internal fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) = this.mapNotNull {
   val currentChange = changeListManager.getChange(it)
   when {
     currentChange != null -> PredictedChange(currentChange)

@@ -1,10 +1,10 @@
 <idea-plugin>
   <id>org.jetbrains.idea.maven</id>
 
-  <name>Maven Integration</name>
+  <name>Maven</name>
   <description>
     <![CDATA[
-      This plugin provides <a href="http://maven.apache.org/">Maven</a> support.
+      Provides <a href="http://maven.apache.org/">Maven</a> support.
       The following features are available:
         <ul>
         <li>Maven Projects tool window.</li>
@@ -39,8 +39,8 @@
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-
     <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar"/>
+    <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.config.MavenConfigFileTypeFactory"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
@@ -150,9 +150,6 @@
 
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionProvider"/>
-
-    <completion.contributor language="XML"
-                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenArtifactCompletionContributor"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 
@@ -354,8 +351,7 @@
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
-    <executionEnvironmentProvider
-        implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
   </extensions>
 
   <project-components>
@@ -374,9 +370,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.tasks.MavenShortcutsManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenImportNotifier</implementation-class>

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,21 +6,20 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author mike
- */
-public class ServiceBean implements PluginAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.ServiceBean");
+public final class ServiceBean implements PluginAware {
+  private static final Logger LOG = Logger.getInstance(ServiceBean.class);
 
-  @Attribute("serviceInterface")
+  @Attribute
   public String serviceInterface;
   private PluginDescriptor myPluginDescriptor;
 
-  public static <T> List<T> loadServicesFromBeans(final ExtensionPointName<? extends ServiceBean> epName, Class<T> componentClass) {
+  public static <T> List<T> loadServicesFromBeans(@NotNull ExtensionPointName<ServiceBean> epName, @NotNull Class<T> componentClass) {
     final List<T> components = new ArrayList<>();
     for (ServiceBean exportableBean : epName.getExtensionList()) {
       final String serviceClass = exportableBean.serviceInterface;
@@ -50,12 +48,13 @@ public class ServiceBean implements PluginAware {
     return components;
   }
 
-  @Override
-  public void setPluginDescriptor(final PluginDescriptor pluginDescriptor) {
-    myPluginDescriptor = pluginDescriptor;
-  }
-
+  @Transient
   public PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
+  }
+
+  @Override
+  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
   }
 }

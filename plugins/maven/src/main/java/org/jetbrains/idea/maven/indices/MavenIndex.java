@@ -38,7 +38,6 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-@Deprecated
 public class MavenIndex implements MavenSearchIndex {
   private static final String CURRENT_VERSION = "5";
 
@@ -196,25 +195,19 @@ public class MavenIndex implements MavenSearchIndex {
   }
 
   private void doOpen() throws Exception {
-    try {
-      File dataDir;
-      if (myDataDirName == null) {
-        dataDir = createNewDataDir();
-        myDataDirName = dataDir.getName();
-      }
-      else {
-        dataDir = new File(myDir, myDataDirName);
-        dataDir.mkdirs();
-      }
-      if (myData != null) {
-        myData.close(true);
-      }
-      myData = new IndexData(dataDir);
+    File dataDir;
+    if (myDataDirName == null) {
+      dataDir = createNewDataDir();
+      myDataDirName = dataDir.getName();
     }
-    catch (Exception e) {
-      cleanupBrokenData();
-      throw e;
+    else {
+      dataDir = new File(myDir, myDataDirName);
+      dataDir.mkdirs();
     }
+    if (myData != null) {
+      myData.close(true);
+    }
+    myData = new IndexData(dataDir);
   }
 
   private void cleanupBrokenData() {
@@ -443,6 +436,9 @@ public class MavenIndex implements MavenSearchIndex {
       final StringBuilder builder = new StringBuilder();
       MavenIndicesProcessor mavenIndicesProcessor = artifacts -> {
         for (IndexedMavenId id : artifacts) {
+          if ("pom.lastUpdated".equals(id.packaging)) {
+            continue;
+          }
           builder.setLength(0);
 
           builder.append(id.groupId).append(":").append(id.artifactId);

@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -17,7 +18,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 /**
  * @author mikhail.sokolov
@@ -37,15 +37,15 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   public void testDeadlocks() {
-    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
-    contributorsMap.put(new ReadActionContributor<>("readAction1", 0, 150, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16")), 10);
-    contributorsMap.put(new ReadActionContributor<>("readAction2", 100, 100, Arrays.asList("ri21", "ri22", "ri23", "ri24", "ri25")), 10);
-    contributorsMap.put(new WriteActionContributor<>("writeAction1", 300, 50, Arrays.asList("wi11", "wi12", "wi13", "wi14")), 10);
+    Map<SearchEverywhereContributor<Object>, Integer> contributorsMap = new HashMap<>();
+    contributorsMap.put(new ReadActionContributor("readAction1", 0, 150, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16")), 10);
+    contributorsMap.put(new ReadActionContributor("readAction2", 100, 100, Arrays.asList("ri21", "ri22", "ri23", "ri24", "ri25")), 10);
+    contributorsMap.put(new WriteActionContributor("writeAction1", 300, 50, Arrays.asList("wi11", "wi12", "wi13", "wi14")), 10);
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {
       if (!collector.awaitFinish(4000)) {
@@ -63,16 +63,17 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   public void testWriteActionPriority() {
-    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
-    ReadActionContributor<Object> action1 = new ReadActionContributor<>("readAction1", 100, 150, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16"));
-    ReadActionContributor<Object> action2 = new ReadActionContributor<>("readAction2", 500, 100, Arrays.asList("ri21", "ri22", "ri23", "ri24"));
+    Map<SearchEverywhereContributor<Object>, Integer> contributorsMap = new HashMap<>();
+    ReadActionContributor
+      action1 = new ReadActionContributor("readAction1", 100, 150, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16"));
+    ReadActionContributor action2 = new ReadActionContributor("readAction2", 500, 100, Arrays.asList("ri21", "ri22", "ri23", "ri24"));
     contributorsMap.put(action1, 10);
     contributorsMap.put(action2, 10);
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {
       Application application = ApplicationManager.getApplication();
@@ -97,14 +98,14 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   public void testCancelOnWaiting() {
-    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
-    contributorsMap.put(new ReadActionContributor<>("readAction1", 0, 0, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16")), 5);
-    contributorsMap.put(new WriteActionContributor<>("writeAction1", 500, 0, Arrays.asList("wi11", "wi12", "wi13", "wi14")), 5);
+    Map<SearchEverywhereContributor<Object>, Integer> contributorsMap = new HashMap<>();
+    contributorsMap.put(new ReadActionContributor("readAction1", 0, 0, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16")), 5);
+    contributorsMap.put(new WriteActionContributor("writeAction1", 500, 0, Arrays.asList("wi11", "wi12", "wi13", "wi14")), 5);
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
-    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst", false, ignrd -> null);
+    ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {
       if (!collector.awaitFinish(4000)) {
@@ -154,7 +155,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     }
   }
 
-  private static abstract class TestContributor<T> implements SearchEverywhereContributor<T> {
+  private static abstract class TestContributor implements SearchEverywhereContributor<Object> {
     protected final String name;
     protected final long initDelay;
     protected final long eachItemDelay;
@@ -177,12 +178,6 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     @Override
     public String getGroupName() {
       return name;
-    }
-
-    @Nullable
-    @Override
-    public String includeNonProjectItemsText() {
-      return null;
     }
 
     @Override
@@ -208,12 +203,12 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     @NotNull
     @Override
-    public ListCellRenderer getElementsRenderer(@NotNull JList list) {
+    public ListCellRenderer<? super Object> getElementsRenderer() {
       return new DefaultListCellRenderer();
     }
   }
 
-  private static class ReadActionContributor<T> extends TestContributor<T> {
+  private static class ReadActionContributor extends TestContributor {
 
     private int count = 0;
 
@@ -223,10 +218,8 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     @Override
     public void fetchElements(@NotNull String pattern,
-                              boolean everywhere,
-                              @Nullable SearchEverywhereContributorFilter<T> filter,
                               @NotNull ProgressIndicator progressIndicator,
-                              @NotNull Function<Object, Boolean> consumer) {
+                              @NotNull Processor<? super Object> consumer) {
       try {
         Thread.sleep(initDelay);
       }
@@ -239,7 +232,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
         try {
           for (Object item : items) {
             progressIndicator.checkCanceled();
-            consumer.apply(item);
+            consumer.process(item);
             Thread.sleep(eachItemDelay);
           }
         }
@@ -253,7 +246,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     }
   }
 
-  private static class WriteActionContributor<T> extends TestContributor<T> {
+  private static class WriteActionContributor extends TestContributor {
 
     protected WriteActionContributor(String name, long initDelay, long eachItemDelay, List<Object> items) {
       super(name, initDelay, eachItemDelay, items);
@@ -261,15 +254,13 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     @Override
     public void fetchElements(@NotNull String pattern,
-                              boolean everywhere,
-                              @Nullable SearchEverywhereContributorFilter<T> filter,
                               @NotNull ProgressIndicator progressIndicator,
-                              @NotNull Function<Object, Boolean> consumer) {
+                              @NotNull Processor<? super Object> consumer) {
       try {
         Thread.sleep(initDelay);
         for (Object item : items) {
           ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(() -> {}));
-          consumer.apply(item);
+          consumer.process(item);
           Thread.sleep(eachItemDelay);
         }
       }

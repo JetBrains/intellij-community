@@ -72,6 +72,11 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Actions.Menu_open);

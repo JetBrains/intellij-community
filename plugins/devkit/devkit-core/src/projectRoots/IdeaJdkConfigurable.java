@@ -14,7 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -119,14 +119,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                                               GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     wholePanel.add(myInternalJres, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.EAST,
                                                           GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
-    myInternalJres.setRenderer(new ListCellRendererWrapper<Sdk>() {
-      @Override
-      public void customize(JList list, Sdk value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-          setText(value.getName());
-        }
-      }
-    });
+    myInternalJres.setRenderer(SimpleListCellRenderer.create("", Sdk::getName));
 
     myInternalJres.addItemListener(e -> {
       if (myFreeze) return;

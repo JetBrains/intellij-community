@@ -152,7 +152,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     if (!onlyUserSchemas) {
       // prefer schema-schema if it is specified in "$schema" property
       schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
-      if (isSchemaUrl(schemaUrl)) {
+      if (JsonFileResolver.isSchemaUrl(schemaUrl)) {
         final VirtualFile virtualFile = resolveFromSchemaProperty(schemaUrl, file);
         if (virtualFile != null) return Collections.singletonList(virtualFile);
       }
@@ -297,8 +297,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     // this hack is needed to handle user-defined mappings via urls
     // we cannot perform that inside corresponding provider, because it leads to recursive component dependency
     // this way we're preventing http files when a built-in schema exists
-    if (!JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas()
-        && schemaFile instanceof HttpVirtualFile) {
+    if (schemaFile instanceof HttpVirtualFile && (!JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas()
+                                                  || JsonFileResolver.isSchemaUrl(schemaFile.getUrl()))) {
       String url = schemaFile.getUrl();
       VirtualFile first1 = getLocalSchemaByUrl(url);
       return first1 != null ? first1 : schemaFile;
@@ -357,14 +357,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   private static boolean isSchemaProvider(JsonSchemaFileProvider provider) {
-    VirtualFile schemaFile = provider.getSchemaFile();
-    if (!(schemaFile instanceof HttpVirtualFile)) return false;
-    String url = schemaFile.getUrl();
-    return isSchemaUrl(url);
-  }
-
-  private static boolean isSchemaUrl(@Nullable String url) {
-    return url != null && url.startsWith("http://json-schema.org/") && (url.endsWith("/schema") || url.endsWith("/schema#"));
+    return JsonFileResolver.isSchemaUrl(provider.getRemoteSource());
   }
 
   @Override
@@ -547,7 +540,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static VirtualFile getSchemaForProvider(@NotNull Project project, @NotNull JsonSchemaFileProvider provider) {
     if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isPreferRemoteSchemas()) {
       final String source = provider.getRemoteSource();
-      if (source != null && !source.endsWith("!")) {
+      if (source != null && !source.endsWith("!") && !JsonFileResolver.isSchemaUrl(source)) {
         return VirtualFileManager.getInstance().findFileByUrl(source);
       }
     }

@@ -6,11 +6,13 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.util.ui.tree.TreeUtil
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
 import org.fest.swing.driver.JTreeLocation
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.LocationUnavailableException
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -36,11 +38,18 @@ class TreeTableFixture(robot: Robot, target: TreeTable) :
     }
   }
 
+  fun expandTopLevel(){
+    TreeUtil.expand(target().tree, 1)
+  }
+
   fun isPathPresent(vararg pathStrings: String): Boolean {
     return try {
       val tree = target().tree
       ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
       true
+    }
+    catch (notFound: LocationUnavailableException) {
+      false
     }
     catch (notFound: ComponentLookupException) {
       false
@@ -53,15 +62,18 @@ class TreeTableFixture(robot: Robot, target: TreeTable) :
 
       val tree = target().tree
       val path = ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
-
-      var x = target().location.x + (0 until column).sumBy { target().columnModel.getColumn(it).width }
-      x += target().columnModel.getColumn(column).width / 3
-      val y = JTreeLocation().pathBoundsAndCoordinates(tree, path).second.y
+      val clickPoint = GuiTestUtilKt.computeOnEdt {
+        var x = target().location.x + (0 until column).sumBy { target().columnModel.getColumn(it).width }
+        x += target().columnModel.getColumn(column).width / 3
+        val y = JTreeLocation().pathBoundsAndCoordinates(tree, path).second.y
+        Point(x, y)
+      }!!
 
       val visibleHeight = target().visibleRect.height
-      target().scrollRectToVisible(Rectangle(Point(0, y + visibleHeight / 2), Dimension(0, 0)))
 
-      robot().click(target(), Point(x, y), MouseButton.LEFT_BUTTON, 1)
+      target().scrollRectToVisible(Rectangle(Point(0, clickPoint.y + visibleHeight / 2), Dimension(0, 0)))
+
+      robot().click(target(), clickPoint, MouseButton.LEFT_BUTTON, 1)
     }
   }
 }

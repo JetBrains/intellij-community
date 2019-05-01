@@ -18,14 +18,16 @@ package org.jetbrains.plugins.gradle.service.execution;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
+import org.gradle.tooling.events.FinishEvent;
+import org.gradle.tooling.events.OperationResult;
+import org.gradle.tooling.events.StatusEvent;
+import org.gradle.tooling.events.task.TaskProgressEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,10 +39,10 @@ import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
  * @author Vladislav.Soroka
  */
 public class GradleProgressListener implements ProgressListener, org.gradle.tooling.events.ProgressListener {
+  private final Map<Object, BuildPhase> myEventIds = new HashMap<>();
   private final ExternalSystemTaskNotificationListener myListener;
   private final ExternalSystemTaskId myTaskId;
-  private final Map<String, Long> myStatusEventIds = new HashMap<>();
-  private final String myBuildRootDir;
+  private final Map<Object, Long> myStatusEventIds = new HashMap<>();
   private final int myOperationId;
 
   public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener,
@@ -53,112 +55,126 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
                                 @Nullable String buildRootDir) {
     myListener = listener;
     myTaskId = taskId;
-    myBuildRootDir = buildRootDir;
     myOperationId = taskId.hashCode() + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
+  }
+
+  @Override
+  public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
+    String operationId = myOperationId + "_";
+    GradleProgressEventConverter.EventId eventId = GradleProgressEventConverter.getEventId(event, operationId);
+
+    if (eventId.parentId == null) {
+      ExternalSystemTaskNotificationEvent progressBuildEvent = GradleProgressEventConverter.createProgressBuildEvent(myTaskId, myTaskId, event);
+      myListener.onStatusChange(progressBuildEvent);
+      sendProgressToOutput(event);
+    }
+    else {
+      BuildPhase buildPhase = myEventIds.get(eventId.parentId);
+      if (buildPhase == null) {
+        String operationName = event.getDescriptor().getName();
+        buildPhase = BuildPhase.find(operationName);
+        if (buildPhase != null) {
+          myListener.onStatusChange(GradleProgressEventConverter.createProgressBuildEvent(myTaskId, myTaskId, event));
+        }
+      }
+      if (event instanceof TaskProgressEvent) {
+        ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(
+          myTaskId, event, new GradleProgressEventConverter.EventId(eventId.id, myTaskId));
+        myListener.onStatusChange(notificationEvent);
+        buildPhase = BuildPhase.RUN_TASKS;
+      }
+
+      if (buildPhase != null) {
+        myEventIds.put(eventId.id, buildPhase);
+      }
+    }
   }
 
   @Override
   public void statusChanged(ProgressEvent event) {
     String eventDescription = event.getDescription();
     myListener.onStatusChange(new ExternalSystemTaskNotificationEvent(myTaskId, eventDescription));
-    if (StringUtil.equals("Starting Gradle Daemon", eventDescription)) {
-      reportGradleDaemonStartingEvent(eventDescription);
-    }
+    reportGradleDaemonStartingEvent(eventDescription);
   }
 
-  @Override
-  public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
-    if (!GradleEnvironment.GRADLE_PROGRESS_VERBOSE_EVENTS) {
-      String displayName = event.getDisplayName();
-      if (displayName.startsWith("Resolve ")) return;
-      if (displayName.startsWith("Apply plugin ")) return;
-      if (displayName.startsWith("Apply script ")) return;
-      if (displayName.startsWith("Notify ") && displayName.contains(" listeners")) return;
-      if (displayName.startsWith("Realize task ")) return;
-      if (displayName.startsWith("Metadata of ")) return;
-      if (displayName.equals("Snapshot task inputs")) return;
-      if (displayName.startsWith("Build model ")) return;
-    }
-
-    ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event, myOperationId + "_");
-    if (notificationEvent instanceof ExternalSystemTaskExecutionEvent) {
-      ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();
-      if (progressEvent.getParentEventId() == null && "Run build".equals(event.getDescriptor().getName())) {
-        OperationDescriptor operationDescriptor = progressEvent.getDescriptor();
-        if (operationDescriptor instanceof OperationDescriptorImpl) {
-          ((OperationDescriptorImpl)operationDescriptor).setHint(myBuildRootDir);
+  private void sendProgressToOutput(org.gradle.tooling.events.ProgressEvent progressEvent) {
+    final String operationName = progressEvent.getDescriptor().getName();
+    if (progressEvent instanceof StatusEvent) {
+      StatusEvent statusEvent = ((StatusEvent)progressEvent);
+      if ("bytes".equals(statusEvent.getUnit())) {
+        Long oldProgress = myStatusEventIds.get(operationName);
+        if (oldProgress == null) {
+          String totalSizeInfo = statusEvent.getTotal() > 0 ? (" (" + formatFileSize(statusEvent.getTotal()) + ")") : "";
+          myListener.onTaskOutput(myTaskId, operationName + totalSizeInfo + "\n", true);
+          myStatusEventIds.put(operationName, 0L);
         }
-      }
-    }
-
-    myListener.onStatusChange(notificationEvent);
-    if (notificationEvent instanceof ExternalSystemTaskExecutionEvent) {
-      ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();
-      if (progressEvent instanceof ExternalSystemStatusEvent) {
-        ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
-        if ("bytes".equals(statusEvent.getUnit())) {
-          Long oldProgress = myStatusEventIds.get(statusEvent.getEventId());
-          if (oldProgress == null) {
-            String totalSizeInfo = statusEvent.getTotal() > 0 ? (" (" + formatFileSize(statusEvent.getTotal()) + ")") : "";
-            myListener.onTaskOutput(myTaskId, statusEvent.getDisplayName() + totalSizeInfo + "\n", true);
-            myStatusEventIds.put(statusEvent.getEventId(), 0L);
-          }
-          else {
-            double fraction = (double)statusEvent.getProgress() / statusEvent.getTotal();
-            int progressBarSize = 14;
-            int progress = (int)(fraction * progressBarSize + 0.5);
-            if (oldProgress != progress) {
-              myStatusEventIds.put(statusEvent.getEventId(), (long)progress);
-              if (statusEvent.getTotal() > 0) {
-                int remaining = progressBarSize - progress;
-                remaining = remaining < 0 ? 0 : remaining;
-                int offset = 3 - ((int)Math.log10(fraction * 100) + 1);
-                offset = offset < 0 ? 0 : offset;
-                myListener.onTaskOutput(
-                  myTaskId,
-                  "\r[" + StringUtil.repeat(" ", offset) + (int)(fraction * 100) + "%" + ']' + " " +
-                  "[ " + StringUtil.repeat("=", progress * 4 - 3) + ">" + StringUtil.repeat(" ", remaining * 4) + " ] " +
-                  formatFileSize(statusEvent.getProgress()), true);
-              }
-              else {
-                myListener.onTaskOutput(myTaskId, formatFileSize(statusEvent.getProgress()) + "\n", true);
-              }
+        else {
+          double fraction = (double)statusEvent.getProgress() / statusEvent.getTotal();
+          int progressBarSize = 14;
+          int progress = (int)(fraction * progressBarSize + 0.5);
+          if (oldProgress != progress) {
+            myStatusEventIds.put(operationName, (long)progress);
+            if (statusEvent.getTotal() > 0) {
+              int remaining = progressBarSize - progress;
+              remaining = remaining < 0 ? 0 : remaining;
+              int offset = 3 - ((int)Math.log10(fraction * 100) + 1);
+              offset = offset < 0 ? 0 : offset;
+              myListener.onTaskOutput(
+                myTaskId,
+                "\r[" + StringUtil.repeat(" ", offset) + (int)(fraction * 100) + "%" + ']' + " " +
+                "[ " + StringUtil.repeat("=", progress * 4 - 3) + ">" + StringUtil.repeat(" ", remaining * 4) + " ] " +
+                formatFileSize(statusEvent.getProgress()), true);
+            }
+            else {
+              myListener.onTaskOutput(myTaskId, formatFileSize(statusEvent.getProgress()) + "\n", true);
             }
           }
         }
       }
-      else {
-        if (progressEvent instanceof ExternalSystemFinishEvent) {
-          ExternalSystemFinishEvent finishEvent = (ExternalSystemFinishEvent)progressEvent;
-          if (myStatusEventIds.containsKey(finishEvent.getEventId())) {
-            OperationResult operationResult = finishEvent.getOperationResult();
-            String duration = StringUtil.formatDuration(operationResult.getEndTime() - operationResult.getStartTime());
-            myListener.onTaskOutput(myTaskId, "\n" + finishEvent.getDisplayName() + " succeeded, took " + duration + "\n", true);
-            myListener.onTaskOutput(myTaskId, "Unzipping ...\n\n", true);
-            myStatusEventIds.remove(finishEvent.getEventId());
-          }
+    }
+    else {
+      if (progressEvent instanceof FinishEvent) {
+        FinishEvent finishEvent = (FinishEvent)progressEvent;
+        if (myStatusEventIds.containsKey(operationName)) {
+          OperationResult operationResult = finishEvent.getResult();
+          String duration = StringUtil.formatDuration(operationResult.getEndTime() - operationResult.getStartTime());
+          myListener.onTaskOutput(myTaskId, "\r" + finishEvent.getDisplayName() + " succeeded, took " + duration + "\n", true);
+          myStatusEventIds.remove(operationName);
         }
       }
     }
   }
 
   private void reportGradleDaemonStartingEvent(String eventDescription) {
-    ExternalSystemTaskExecutionEvent startDaemonEvent;
-    Long startTime = myStatusEventIds.get(eventDescription);
-    if (startTime == null) {
-      startTime = System.currentTimeMillis();
-      startDaemonEvent = new ExternalSystemTaskExecutionEvent(
-        myTaskId, new ExternalSystemStartEventImpl<>(eventDescription, null,
-                                                     new OperationDescriptorImpl(eventDescription, startTime)));
-      myStatusEventIds.put(eventDescription, startTime);
-    }
-    else {
+    if (StringUtil.equals("Starting Gradle Daemon", eventDescription)) {
       long eventTime = System.currentTimeMillis();
-      startDaemonEvent = new ExternalSystemTaskExecutionEvent(
-        myTaskId, new ExternalSystemFinishEventImpl<>(eventDescription, null,
-                                                      new OperationDescriptorImpl(eventDescription, eventTime),
-                                                      new SuccessResultImpl(startTime, eventTime, false)));
+      Long startTime = myStatusEventIds.remove(eventDescription);
+      if (startTime == null) {
+        myListener.onTaskOutput(myTaskId, "Gradle Daemon starting...", true);
+        myStatusEventIds.put(eventDescription, eventTime);
+      }
+      else {
+        String duration = StringUtil.formatDuration(eventTime - startTime);
+        myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", true);
+      }
     }
-    myListener.onStatusChange(startDaemonEvent);
+  }
+
+  private enum BuildPhase {
+    LOAD("Load build"), CONFIGURE("Configure build"), RUN_TASKS("Run tasks");
+
+    private final String myOperationName;
+
+    BuildPhase(String operationName) {
+      myOperationName = operationName;
+    }
+
+    @Nullable
+    public static BuildPhase find(@NotNull String operationName) {
+      for (BuildPhase phase : BuildPhase.values()) {
+        if (phase.myOperationName.equals(operationName)) return phase;
+      }
+      return null;
+    }
   }
 }

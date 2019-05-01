@@ -35,5 +35,13 @@ class ExcessiveRangeCheck {
     if(<warning descr="Can be replaced with 'map.size() != 2'">map.size() == 0 || map.size() == 1 || map.size() > 2</warning>) {}
     if(<warning descr="Can be replaced with 'map.size() != 1'">map.isEmpty() || map.size() > 1</warning>) {}
   }
+  
+  public void testSideEffect() {
+    if (get() == 0 && get() == 0) {
+      
+    }
+  }
 
+  
+  native int get();
 }

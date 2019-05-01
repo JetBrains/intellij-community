@@ -34,9 +34,10 @@ import java.util.List;
 import java.util.Set;
 
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
+  @NotNull
   private final Module myModule;
 
-  public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
+  public ModuleFileIndexImpl(@NotNull Module module, @NotNull DirectoryIndex directoryIndex) {
     super(directoryIndex, FileTypeRegistry.getInstance());
     myModule = module;
   }
@@ -78,8 +79,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInProject(fileOrDir) && myModule.equals(info.getModule());
+    return isInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
   }
 
   @Override
@@ -157,7 +157,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   private static class FakeOrderEntry implements OrderEntry {
     private final Module myOwnerModule;
 
-    FakeOrderEntry(Module ownerModule) {
+    FakeOrderEntry(@NotNull Module ownerModule) {
       myOwnerModule = ownerModule;
     }
 
@@ -204,5 +204,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     public boolean isSynthetic() {
       throw new IncorrectOperationException();
     }
+  }
+
+  @Override
+  boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+    return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
   }
 }

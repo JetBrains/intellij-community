@@ -10,12 +10,9 @@ import org.jetbrains.yaml.psi.impl.YAMLKeyValueImpl;
 
 import javax.swing.*;
 
-class YAMLKeyNavigationItem implements NavigationItem {
-  @NotNull
+public class YAMLKeyNavigationItem implements NavigationItem {
   private final Navigatable myNavigatable;
-  @NotNull
   private final String myName;
-  @NotNull
   private final VirtualFile myFile;
 
   YAMLKeyNavigationItem(@NotNull Navigatable navigatable, @NotNull String name, @NotNull VirtualFile file) {

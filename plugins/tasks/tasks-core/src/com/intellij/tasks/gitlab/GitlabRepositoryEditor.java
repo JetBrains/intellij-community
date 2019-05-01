@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.TaskUiUtil;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
@@ -24,7 +25,7 @@ import static com.intellij.tasks.gitlab.GitlabRepository.UNSPECIFIED_PROJECT;
 public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepository> {
 
   private JBLabel myProjectLabel;
-  private ComboBox myProjectComboBox;
+  private ComboBox<GitlabProject> myProjectComboBox;
 
 
   public GitlabRepositoryEditor(Project project, GitlabRepository repository, Consumer<? super GitlabRepository> changeListener) {
@@ -53,8 +54,8 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
   @Override
   protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
-    myProjectComboBox = new ComboBox(300);
-    myProjectComboBox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Set server URL and token first"));
+    myProjectComboBox = new ComboBox<>(300);
+    myProjectComboBox.setRenderer(SimpleListCellRenderer.create("Set server URL and token first", GitlabProject::getName));
     myProjectLabel.setLabelFor(myProjectComboBox);
     return new FormBuilder().addLabeledComponent(myProjectLabel, myProjectComboBox).getPanel();
   }

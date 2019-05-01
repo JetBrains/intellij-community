@@ -62,6 +62,7 @@ private val referenceWasCapitalized: Key<Boolean> = Key.create("groovy.parse.ref
 private val typeWasPrimitive: Key<Boolean> = Key.create("groovy.parse.type.was.primitive")
 private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.ref.had.type.arguments")
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
+private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -184,6 +185,14 @@ fun setRefHadTypeArguments(builder: PsiBuilder, level: Int): Boolean {
   }
   return true
 }
+
+fun closureParameter(builder: PsiBuilder, level: Int, parameterParser: Parser): Boolean {
+  return builder.withKey(parseClosureParameter, true) {
+    parameterParser.parse(builder, level)
+  }
+}
+
+fun isClosureParameter(builder: PsiBuilder, level: Int): Boolean = builder[parseClosureParameter]
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {
   return builder.withKey(parseArguments, true) {

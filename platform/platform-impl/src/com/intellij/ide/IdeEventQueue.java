@@ -34,7 +34,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
@@ -70,7 +70,7 @@ public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
-  public static final boolean JAVA_11_OR_LATER = SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
@@ -370,22 +370,10 @@ public class IdeEventQueue extends EventQueue {
     if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
       e = metaEvent;
     }
-    if (JAVA_11_OR_LATER && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH && !isAltGrExpected((KeyEvent)e)) {
-      ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
-    }
-    if (JAVA_11_OR_LATER && e instanceof InputEvent && ((InputEvent)e).isAltGraphDown() && !isAltGrExpected((InputEvent)e)) {
-      try {
-        Field field = InputEvent.class.getDeclaredField("modifiers");
-        field.setAccessible(true);
-        int modifiers = field.getInt(e);
-        modifiers |= InputEvent.ALT_MASK;
-        modifiers |= InputEvent.ALT_DOWN_MASK;
-        modifiers &= ~InputEvent.ALT_GRAPH_MASK;
-        modifiers &= ~InputEvent.ALT_GRAPH_DOWN_MASK;
-        field.setInt(e, modifiers);
-      }
-      catch (Exception ignored) {
-      }
+    if (JAVA11_ON_MAC && e instanceof InputEvent) {
+      // disable AltGr on Mac because this key is not supported by macOS
+      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+      IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
     }
 
     boolean wasInputEvent = myIsInInputEvent;
@@ -1148,7 +1136,7 @@ public class IdeEventQueue extends EventQueue {
     String message = myFrequentEventDetector.getMessageOnEvent(event);
     if (message != null) {
       // we can't log right here, because logging has locks inside, and postEvents can deadlock if it's blocked by anything (IDEA-161322)
-      AppExecutorUtil.getAppExecutorService().execute(() -> myFrequentEventDetector.logMessage(message));
+      NonUrgentExecutor.getInstance().execute(() -> myFrequentEventDetector.logMessage(message));
     }
 
     boolean typeAheadEnabled = Registry.is("action.aware.typeAhead");
@@ -1408,13 +1396,5 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     r.run();
-  }
-
-  private static boolean isAltGrExpected(InputEvent event) {
-    if (SystemInfo.isMac) return false; // never use AltGr on Mac
-    if (!SystemInfo.isWindows) return true; // default behaviour on Linux
-    if (Registry.is("actionSystem.force.alt.gr")) return true;
-    if (!Registry.is("actionSystem.fix.alt.gr")) return false;
-    return IdeKeyEventDispatcher.isAltGrLayout(event.getComponent());
   }
 }

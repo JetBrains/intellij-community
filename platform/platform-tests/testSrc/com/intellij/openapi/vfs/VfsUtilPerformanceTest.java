@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -197,7 +198,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   private void doAsyncRefreshTest() throws Exception {
     int N = 1_000;
-    byte[] data = "xxx".getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] data = "xxx".getBytes(StandardCharsets.UTF_8);
 
     File temp = myTempDir.newFolder();
     LocalFileSystem fs = LocalFileSystem.getInstance();
@@ -310,7 +311,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     return temp;
   }
 
-  private static void processEvents(List<VFileEvent> events) {
+  private static void processEvents(List<? extends VFileEvent> events) {
     WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
   }
 

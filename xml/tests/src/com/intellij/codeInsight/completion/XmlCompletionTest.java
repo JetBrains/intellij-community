@@ -657,6 +657,11 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     basicDoTest("");
   }
 
+  public void testUnqualifiedElement() {
+    myFixture.copyFileToProject("UnqualifiedElement.xsd");
+    myFixture.testCompletionVariants("UnqualifiedElement.xml", "code");
+  }
+
   public void testDoNotSuggestExistingAttributes() {
     myFixture.configureByFile("DoNotSuggestExistingAttributes.xml");
     myFixture.completeBasic();

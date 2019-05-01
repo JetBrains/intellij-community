@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -18,7 +19,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
-import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -32,6 +32,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit
 import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = logger<ComponentStoreImpl>()
+private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
 
 internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   val w1 = if (o1.deprecated) 1 else 0
@@ -92,7 +94,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       if (component is PersistentStateComponent<*>) {
         componentName = initPersistenceStateComponent(component, getStateSpec(component), isService)
       }
-      else if (component is JDOMExternalizable) {
+      else if (component is com.intellij.openapi.util.JDOMExternalizable) {
         componentName = ComponentManagerImpl.getComponentName(component)
         initJdomExternalizable(component, componentName)
       }
@@ -134,8 +136,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
 
+  internal suspend inline fun <T> withEdtContext(crossinline task: suspend () -> T): T {
+    return withEdtContext(storageManager.componentManager, task)
+  }
+
   internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
-    return withContext(createStoreEdtCoroutineContext(listOfNotNull(storageManager.componentManager?.let { InTransactionRule(it) }))) {
+    return withEdtContext {
       val errors = SmartList<Throwable>()
       val manager = doCreateSaveSessionManagerAndCommitComponents(forceSavingAllSettings, errors)
       saveResult.addErrors(errors)
@@ -173,7 +179,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (info.isModificationTrackingSupported) {
           currentModificationCount = info.currentModificationCount
           if (currentModificationCount == info.lastModificationCount) {
-            LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
+            SAVE_MOD_LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
             if (isUseModificationCount) {
               continue
             }
@@ -185,7 +191,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             info.lastSaved = nowInSeconds
           }
           else {
-            LOG.debug { "Skip $name: was already saved in last ${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
+            SAVE_MOD_LOG.debug { "Skip $name: was already saved in last ${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
             continue
           }
         }
@@ -245,7 +251,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun commitComponent(session: SaveSessionProducerManager, info: ComponentInfo, componentName: String?) {
     val component = info.component
     @Suppress("DEPRECATION")
-    if (component is JDOMExternalizable) {
+    if (component is com.intellij.openapi.util.JDOMExternalizable) {
       val effectiveComponentName = componentName ?: ComponentManagerImpl.getComponentName(component)
       storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
         session.getProducer(it)?.setState(component, effectiveComponentName, component)
@@ -278,7 +284,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {
+  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, componentName: String): String? {
     doAddComponent(componentName, component, null)
 
     if (loadPolicy != StateLoadPolicy.LOAD) {
@@ -495,13 +501,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val componentNames = SmartHashSet<String>()
     for (storage in changedStorages) {
-      try {
+      LOG.runAndLogException {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
         // not saved -> user does own modification -> new (on disk) state will be overwritten and not applied
         storage.analyzeExternalChangesAndUpdateIfNeed(componentNames)
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
       }
     }
 
@@ -601,4 +604,15 @@ internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: Save
   createSaveSessionManagerAndSaveComponents(result, forceSavingAllSettings)
     .save()
     .appendTo(result)
+}
+
+internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, crossinline task: suspend () -> T): T {
+  return withContext(storeEdtCoroutineContext) {
+    @Suppress("NullableBooleanElvis")
+    if (disposable?.isDisposed ?: false) {
+      throw CancellationException()
+    }
+
+    task()
+  }
 }

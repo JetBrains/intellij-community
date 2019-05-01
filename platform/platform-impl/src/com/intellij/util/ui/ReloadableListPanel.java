@@ -7,18 +7,17 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class ReloadableListPanel<T> extends ReloadablePanel<T> {
-  protected JList myList;
+  protected JList<T> myList;
   private JPanel myMainPanel;
   private JPanel myActionPanel;
 
   @Override
-  @SuppressWarnings("unchecked")
   public T getSelectedValue() {
-    return (T)myList.getSelectedValue();
+    return myList.getSelectedValue();
   }
 
   protected void createList() {
-    myList = new JBList();
+    myList = new JBList<>();
   }
 
   @NotNull

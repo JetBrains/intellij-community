@@ -30,13 +30,13 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ComponentsKt;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
@@ -44,13 +44,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -72,19 +72,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final String STACKTRACE_ATTACHMENT = "stacktrace.txt";
   private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
-  private static List<Developer> ourDevelopersList = Collections.emptyList();
+  private static final String DISABLE_PLUGIN_URL = "#disable";
+  private static final String EA_PLUGIN_ID = "com.intellij.sisyphus";
 
   private final MessagePool myMessagePool;
   private final Project myProject;
-  private final boolean myInternalMode;
+  private final boolean myAssigneeVisible;
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
   private int myIndex, myLastIndex = -1;
+  private Long myDevelopersTimestamp;
 
   private JLabel myCountLabel;
-  private HyperlinkLabel.Croppable myInfoLabel;
-  private HyperlinkLabel.Croppable myDisableLink;
-  private HyperlinkLabel.Croppable myForeignPluginWarningLabel;
+  private JTextComponent myInfoLabel;
+  private JTextComponent myForeignPluginWarningLabel;
   private JTextArea myCommentArea;
   private AttachmentsList myAttachmentsList;
   private JTextArea myAttachmentArea;
@@ -93,20 +94,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private HideableDecorator myNoticeDecorator;
   private JEditorPane myNoticeArea;
   private ComboBox<Developer> myAssigneeCombo;
-  private HyperlinkLabel myCredentialsLabel;
+  private JTextComponent myCredentialsLabel;
 
   IdeErrorsDialog(@NotNull MessagePool messagePool, @Nullable Project project, @Nullable LogMessage defaultMessage) {
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
-    myInternalMode = ApplicationManager.getApplication().isInternal();
+    myAssigneeVisible = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
     init();
     setCancelButtonText(CommonBundle.message("close.action.name"));
 
-    if (myInternalMode) {
+    if (myAssigneeVisible) {
       loadDevelopersList();
     }
 
@@ -121,27 +122,42 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void loadDevelopersList() {
-    if (!ourDevelopersList.isEmpty()) {
-      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(ourDevelopersList));
+    ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
+    Developers developers = configurable.getDeveloper();
+    if (developers != null && developers.isUpToDateAt(System.currentTimeMillis())) {
+      setDevelopers(developers);
     }
     else {
       new Task.Backgroundable(null, "Loading Developers List", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
-            //noinspection AssignmentToStaticFieldFromInstanceMethod
-            ourDevelopersList = developers;
+            Developers updatedDevelopers = new Developers(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
             UIUtil.invokeLaterIfNeeded(() -> {
+              configurable.setDeveloper(updatedDevelopers);
               if (isShowing()) {
-                myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers));
+                setDevelopers(updatedDevelopers);
               }
             });
           }
-          catch (UnknownHostException e) { LOG.debug(e); }
+          catch (UnknownHostException e) {
+            LOG.debug(e);
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (isShowing()) {
+                setDevelopers(developers);
+              }
+            });
+          }
           catch (IOException e) { LOG.warn(e); }
         }
       }.queue();
+    }
+  }
+
+  private void setDevelopers(@Nullable Developers developers) {
+    if (developers != null) {
+      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers.getDevelopers()));
+      myDevelopersTimestamp = developers.getTimestamp();
     }
   }
 
@@ -171,17 +187,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected JComponent createNorthPanel() {
     myCountLabel = new JBLabel();
-    myInfoLabel = new HyperlinkLabel.Croppable();
-
-    myDisableLink = new HyperlinkLabel.Croppable();
-    myDisableLink.setHyperlinkText(UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")));
-    myDisableLink.addHyperlinkListener(e -> {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+    myInfoLabel = ComponentsKt.htmlComponent("", null, null, null, false, e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL.equals(e.getDescription())) {
         disablePlugin();
       }
+      else {
+        BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
+      }
     });
-
-    myForeignPluginWarningLabel = new HyperlinkLabel.Croppable();
+    myForeignPluginWarningLabel = ComponentsKt.htmlComponent();
 
     JPanel controls = new JPanel(new BorderLayout());
     controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
@@ -190,10 +204,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, CENTER, NONE, JBUI.insets(2), 0, 0));
-    panel.add(myInfoLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(myDisableLink, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(new JPanel(), new GridBagConstraints(3, 0, 1, 1, 1.0, 0.0, CENTER, BOTH, JBUI.emptyInsets(), 0, 0));  // expander
-    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 3, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myInfoLabel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -257,14 +269,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    if (myInternalMode) {
+    if (myAssigneeVisible) {
       myAssigneeCombo = new ComboBox<>();
-      myAssigneeCombo.setRenderer(new ListCellRendererWrapper<Developer>() {
-        @Override
-        public void customize(JList list, Developer value, int index, boolean selected, boolean hasFocus) {
-          setText(value == null ? "<none>" : value.getDisplayText());
-        }
-      });
+      myAssigneeCombo.setRenderer(SimpleListCellRenderer.create("<none>", Developer::getDisplayText));
       myAssigneeCombo.setPrototypeDisplayValue(new Developer(0, StringUtil.repeatSymbol('-', 30)));
       myAssigneeCombo.addItemListener(e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -284,8 +291,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAssigneePanel.add(myAssigneeCombo);
     }
 
-    myCredentialsLabel = new HyperlinkLabel();
-    myCredentialsLabel.addHyperlinkListener(e -> {
+    myCredentialsLabel = ComponentsKt.htmlComponent("", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JetBrainsAccountDialogKt.askJBAccountCredentials(getRootPane(), null);
         updateControls();
@@ -315,7 +321,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
     JPanel accountRow = new JPanel(new BorderLayout());
-    if (myInternalMode) accountRow.add(myAssigneePanel, BorderLayout.WEST);
+    if (myAssigneeVisible) accountRow.add(myAssigneePanel, BorderLayout.WEST);
     accountRow.add(myCredentialsLabel, BorderLayout.EAST);
     myNoticePanel = new JPanel(new GridBagLayout());
     myNoticePanel.add(new JBLabel(UIUtil.getBalloonWarningIcon()), new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTH, NONE, JBUI.insets(7, 0, 0, 5), 0, 0));
@@ -344,7 +350,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<>();
-    if (myInternalMode && myProject != null && !myProject.isDefault()) {
+    if (myAssigneeVisible && myProject != null && !myProject.isDefault()) {
       AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
         actions.add(new AnalyzeAction(action));
@@ -414,7 +420,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     updateLabels(cluster);
     updateDetails(cluster);
-    if (myInternalMode) {
+    if (myAssigneeVisible) {
       updateAssigneePanel(cluster);
     }
     updateCredentialsPanel(submitter);
@@ -432,7 +438,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     Throwable t = message.getThrowable();
     if (t instanceof MessagePool.TooManyErrorsException) {
       myInfoLabel.setText(t.getMessage());
-      myDisableLink.setVisible(false);
       myForeignPluginWarningLabel.setVisible(false);
       myNoticePanel.setVisible(false);
       return;
@@ -442,7 +447,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     IdeaPluginDescriptor plugin = cluster.plugin;
 
     StringBuilder info = new StringBuilder();
-    String url = null;
 
     if (pluginId != null) {
       String name = plugin != null ? plugin.getName() : pluginId.toString();
@@ -456,6 +460,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof AbstractMethodError) {
       info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
     }
+    else if (t instanceof Freeze) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.freeze"));
+    }
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
@@ -468,42 +475,37 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
       appendSubmissionInformation(submissionInfo, info);
       info.append('.');
-      url = submissionInfo.getURL();
     }
     else if (message.isSubmitting()) {
       info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
     }
 
-    myInfoLabel.setHtmlText(XmlStringUtil.wrapInHtml(info));
-    myInfoLabel.setHyperlinkTarget(url);
-    myInfoLabel.setToolTipText(url);
+    if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
+      info.append(' ').append("<a href=\"" + DISABLE_PLUGIN_URL + "\">").append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
+    }
 
-    myDisableLink.setVisible(pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString()));
+    myInfoLabel.setText(info.toString());
 
     ErrorReportSubmitter submitter = cluster.submitter;
     if (submitter == null && plugin != null && !PluginManagerMain.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
-      String contactUrl = plugin.getVendorUrl();
-      String contactEmail = plugin.getVendorEmail();
-      if (!StringUtil.isEmpty(vendor) && !StringUtil.isEmpty(contactUrl)) {
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.vendor", vendor));
-        myForeignPluginWarningLabel.setHyperlinkTarget(contactUrl);
+      String vendorUrl = plugin.getVendorUrl();
+      if (StringUtil.isEmptyOrSpaces(vendorUrl)) {
+        String vendorEmail = plugin.getVendorEmail();
+        if (!StringUtil.isEmptyOrSpaces(vendorEmail)) {
+          vendorUrl = "mailto:" + StringUtil.trimStart(vendorEmail, "mailto:");
+        }
       }
-      else if (!StringUtil.isEmpty(contactUrl)) {
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown"));
-        myForeignPluginWarningLabel.setHyperlinkTarget(contactUrl);
+      if (!StringUtil.isEmpty(vendor) && !StringUtil.isEmpty(vendorUrl)) {
+        myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl));
       }
-      else if (!StringUtil.isEmpty(contactEmail)) {
-        contactEmail = StringUtil.trimStart(contactEmail, "mailto:");
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.vendor", contactEmail));
-        myForeignPluginWarningLabel.setHyperlinkTarget("mailto:" + contactEmail);
+      else if (!StringUtil.isEmptyOrSpaces(vendorUrl)) {
+        myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl));
       }
       else {
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning"));
-        myForeignPluginWarningLabel.setHyperlinkTarget(null);
+        myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown"));
       }
-      myForeignPluginWarningLabel.setToolTipText(contactUrl);
     }
     else {
       myForeignPluginWarningLabel.setVisible(false);
@@ -543,7 +545,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePanel(MessageCluster cluster) {
-    if (cluster.submitter instanceof ITNReporter) {
+    if (cluster.submitter instanceof ITNReporter && !(cluster.first.getThrowable() instanceof Freeze)) {
       myAssigneePanel.setVisible(true);
       myAssigneeCombo.setEnabled(cluster.isUnsent());
       Integer assignee = cluster.first.getAssigneeId();
@@ -551,8 +553,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myAssigneeCombo.setSelectedIndex(-1);
       }
       else {
-        Condition<Developer> lookup = d -> Objects.equals(assignee, d.getId());
-        myAssigneeCombo.setSelectedIndex(ContainerUtil.indexOf(ourDevelopersList, lookup));
+        int assigneeIndex = getAssigneeIndex(assignee);
+        if (assigneeIndex != -1) {
+          myAssigneeCombo.setSelectedIndex(assigneeIndex);
+        }
+        else {
+          cluster.first.setAssigneeId(null);
+        }
       }
     }
     else {
@@ -560,15 +567,25 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
+  private int getAssigneeIndex(Integer assigneeId) {
+    for (int index = 0; index < myAssigneeCombo.getItemCount(); index++) {
+      if (Objects.equals(assigneeId, myAssigneeCombo.getItemAt(index).getId())) {
+        return index;
+      }
+    }
+
+    return -1;
+  }
+
   private void updateCredentialsPanel(ErrorReportSubmitter submitter) {
     if (submitter instanceof ITNReporter) {
       myCredentialsLabel.setVisible(true);
       Credentials credentials = ErrorReportConfigurable.getCredentials();
       if (credentials != null && credentials.getUserName() != null) {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
+        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
       }
       else {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
+        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
       }
     }
     else {
@@ -581,6 +598,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter == null) return false;
     AbstractMessage message = cluster.first;
 
+    message.setAssigneeVisible(myAssigneeVisible);
+    message.setDevelopersTimestamp(myDevelopersTimestamp);
     message.setSubmitting(true);
 
     String notice = submitter.getPrivacyNoticeText();

@@ -18,7 +18,6 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -540,7 +539,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final JLabel myTitle = new JLabel();
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
       Component cmp = null;
       if (isMoreItem(index)) {
         cmp = RunAnythingMore.get(isSelected);
@@ -548,12 +547,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(isSelected);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
-          p.setBackground(UIUtil.getListBackground(isSelected));
+          p.setBackground(UIUtil.getListBackground(isSelected, true));
           p.add(cmp, BorderLayout.CENTER);
           cmp = p;
         }
@@ -650,6 +649,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
         if (isHelpMode(mySearchField.getText())) {
           buildHelpGroups(myListModel);
+          updatePopup();
           return;
         }
 
@@ -916,7 +916,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     res.setOpaque(false);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.addAction(new RunAnythingShowFilterAction(this));
+    actionGroup.addAction(new RunAnythingShowFilterAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -953,8 +953,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class RunAnythingShowFilterAction extends ShowFilterAction {
-    private RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
-      super(parentDisposable, myProject);
+
+    @NotNull
+    @Override
+    public String getDimensionServiceKey() {
+      return "RunAnythingAction_Filter_Popup";
     }
 
     @Override

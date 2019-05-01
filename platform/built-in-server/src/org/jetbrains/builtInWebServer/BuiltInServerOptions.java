@@ -79,7 +79,7 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
 
   public static final class MyCustomPortServerManager extends CustomPortServerManagerBase {
     @Override
-    public void cannotBind(Exception e, int port) {
+    public void cannotBind(@NotNull Exception e, int port) {
       BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue().createNotification("Cannot start built-in HTTP server on custom port " +
                                                                                 port + ". " +
                                                                                 "Please ensure that port is free (or check your firewall settings) and restart " +

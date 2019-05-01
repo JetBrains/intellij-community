@@ -12,13 +12,11 @@ import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diff.impl.mergeTool.MergeVersion
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileTooBigException
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
@@ -37,7 +35,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.NonNls
@@ -125,13 +122,9 @@ open class MultipleFileMergeDialog(
       }
 
       row {
-        scrollPane(MyTable(tableModel).also {
+        scrollPane(MergeConflictsTreeTable(tableModel).also {
           table = it
-          it.tree.isRootVisible = false
           it.setTreeCellRenderer(virtualFileRenderer)
-          if (tableModel.columnCount > 1) {
-            it.setShowColumns(true)
-          }
           it.rowHeight = virtualFileRenderer.preferredSize.height
         }, growX, growY, pushX, pushY)
 
@@ -195,45 +188,6 @@ open class MultipleFileMergeDialog(
     override fun getTooltipText() = base.tooltipText ?: columnName
   }
 
-  private class MyTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
-
-    init {
-      getTableHeader().reorderingAllowed = false
-    }
-
-    override fun doLayout() {
-      if (getTableHeader().resizingColumn == null) {
-        updateColumnSizes()
-      }
-      super.doLayout()
-    }
-
-    private fun updateColumnSizes() {
-      for ((index, columnInfo) in tableModel.columns.withIndex()) {
-        val column = columnModel.getColumn(index)
-        columnInfo.maxStringValue?.let {
-          val width = calcColumnWidth(it, columnInfo)
-          column.preferredWidth = width
-        }
-      }
-
-      var size = width
-      val fileColumn = 0
-      for (i in 0 until tableModel.columns.size) {
-        if (i == fileColumn) continue
-        size -= columnModel.getColumn(i).preferredWidth
-      }
-
-      columnModel.getColumn(fileColumn).preferredWidth = Math.max(size, JBUI.scale(200))
-    }
-
-    private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
-      val columnName = StringUtil.shortenTextWithEllipsis(columnInfo.name, 15, 7, true)
-      return Math.max(getFontMetrics(font).stringWidth(maxStringValue),
-                      getFontMetrics(tableHeader.font).stringWidth(columnName)) + columnInfo.additionalWidth
-    }
-  }
-
   private fun toggleGroupByDirectory(state: Boolean) {
     groupByDirectory = state
     val firstSelectedFile = getSelectedFiles().firstOrNull()
@@ -245,10 +199,10 @@ open class MultipleFileMergeDialog(
   }
 
   private fun updateTree() {
-    val factory = if (project != null && groupByDirectory)
-      ChangesGroupingSupport.getFactory(project, ChangesGroupingSupport.DIRECTORY_GROUPING)
-    else
-      NoneChangesGroupingFactory
+    val factory = when {
+      project != null && groupByDirectory -> ChangesGroupingSupport.getFactory(project, ChangesGroupingSupport.DIRECTORY_GROUPING)
+      else -> NoneChangesGroupingFactory
+    }
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
     tableModel.setRoot(model.root as TreeNode)
     TreeUtil.expandAll(table.tree)
@@ -456,7 +410,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun checkMarkModifiedProject(file: VirtualFile) {
-    MergeVersion.MergeDocumentVersion.reportProjectFileChangeIfNeeded(project, file)
+    MergeUtil.reportProjectFileChangeIfNeeded(project, file)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = table

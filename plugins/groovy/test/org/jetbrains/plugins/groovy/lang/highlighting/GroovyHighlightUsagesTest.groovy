@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -20,7 +20,7 @@ class GroovyHighlightUsagesTest extends LightGroovyTestCase {
     final List<HighlightInfoType> severitiesHighlightInfoTypes = [ELEMENT_UNDER_CARET_READ, ELEMENT_UNDER_CARET_WRITE]
   }
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   final String basePath = TestUtils.testDataPath + 'highlighting/usages/'
 

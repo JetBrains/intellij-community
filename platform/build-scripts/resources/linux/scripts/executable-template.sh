@@ -57,7 +57,7 @@ cd "$OLDPWD"
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ./jbr, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
@@ -74,9 +74,12 @@ if [ -z "$JDK" -a -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; t
 fi
 
 if [ -z "$JDK" -a "$OS_TYPE" = "Linux" ] ; then
-  BUNDLED_JRE="$IDE_HOME/jre64"
+  BUNDLED_JRE="$IDE_HOME/jbr"
   if [ ! -d "$BUNDLED_JRE" ]; then
-    BUNDLED_JRE="$IDE_HOME/jre"
+    BUNDLED_JRE="$IDE_HOME/jre64"
+    if [ ! -d "$BUNDLED_JRE" ]; then
+      BUNDLED_JRE="$IDE_HOME/jre"
+    fi
   fi
   if [ -x "$BUNDLED_JRE/bin/java" ] && "$BUNDLED_JRE/bin/java" -version > /dev/null 2>&1 ; then
     JDK="$BUNDLED_JRE"

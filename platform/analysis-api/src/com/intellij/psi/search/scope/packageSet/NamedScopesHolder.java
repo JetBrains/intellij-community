@@ -63,11 +63,6 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     Disposer.register(parentDisposable, () -> myScopeListeners.remove(scopeListener));
   }
 
-  @Deprecated
-  public void removeScopeListener(@NotNull ScopeListener scopeListener) {
-    myScopeListeners.remove(scopeListener);
-  }
-
   public void fireScopeListeners() {
     for (ScopeListener listener : myScopeListeners) {
       listener.scopesChanged();

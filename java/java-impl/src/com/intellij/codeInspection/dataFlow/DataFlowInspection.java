@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.pom.java.LanguageLevel;
@@ -74,6 +75,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   @Override
   protected LocalQuickFix createMutabilityViolationFix(PsiElement violation, boolean onTheFly) {
     return WrapWithMutableCollectionFix.createFix(violation, onTheFly);
+  }
+
+  @Nullable
+  @Override
+  protected LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+    return new FindDfaProblemCauseFix(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, IGNORE_ASSERT_STATEMENTS, anchor, problemType);
   }
 
   @Nullable
@@ -158,6 +165,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       if (!ExpressionUtils.isNullLiteral(qualifier) && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
         fixes.add(new SurroundWithRequireNonNullFix(qualifier));
+      }
+      
+      if (onTheFly && !ExpressionUtils.isNullLiteral(qualifier)) {
+        ContainerUtil.addIfNotNull(fixes, createExplainFix(qualifier, new TrackingRunner.NullableDfaProblemType()));
       }
 
       ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));

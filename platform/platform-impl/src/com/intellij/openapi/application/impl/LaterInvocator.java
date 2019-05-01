@@ -86,10 +86,6 @@ public class LaterInvocator {
     }
   }
 
-  public static void removeModalityStateListener(@NotNull ModalityStateListener listener) {
-    ourModalityStateMulticaster.removeListener(listener);
-  }
-  
   private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = ContainerUtil.createConcurrentWeakMap();
 
   @NotNull

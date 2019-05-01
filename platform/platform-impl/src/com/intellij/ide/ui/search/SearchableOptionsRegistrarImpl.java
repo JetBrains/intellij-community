@@ -436,6 +436,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
           for (String word : words) {
             if (!hit.contains(word)) {
               theBest = false;
+              break;
             }
           }
           if (theBest) return description.getPath();

@@ -134,7 +134,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
             .dataContext(null)
             .activeTarget()
             .build();
-        ProgramRunnerUtil.executeConfiguration(environment, true, true);
+        ProgramRunnerUtil.executeConfiguration(environment, false, true);
       }
       catch (ExecutionException e) {
         fail(e.getMessage());

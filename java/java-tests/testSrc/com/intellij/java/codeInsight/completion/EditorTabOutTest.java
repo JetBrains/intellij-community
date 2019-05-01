@@ -90,6 +90,15 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
                 "}");
   }
 
+  public void testSemicolon() {
+    configureJava("class C { void m() { System.exi<caret> } }");
+    complete("exit");
+    checkResult("class C { void m() { System.exit(<caret>); } }");
+    type('1');
+    tabOut();
+    checkResult("class C { void m() { System.exit(1);<caret> } }");
+  }
+
   private void tabOut() {
     myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
   }

@@ -48,12 +48,19 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   }
 
   public EventLogExternalSettingsService(@NotNull String recorderId) {
-    super(getConfigUrl(recorderId), null);
+    super(getConfigUrl(recorderId, false), null);
+  }
+
+  public EventLogExternalSettingsService(@NotNull String recorderId, boolean isTest) {
+    super(getConfigUrl(recorderId, isTest), null);
   }
 
   @NotNull
-  private static String getConfigUrl(@NotNull String recorderId) {
+  private static String getConfigUrl(@NotNull String recorderId, boolean isTest) {
     final String templateUrl = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
+    if (isTest) {
+      return String.format(templateUrl, "test/" + recorderId);
+    }
     return String.format(templateUrl, recorderId);
   }
 
@@ -116,12 +123,16 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
 
   @Nullable
   protected FUSWhitelist getWhitelistedGroups() {
-    final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
-    if (approvedGroupsServiceUrl == null) {
-      return null;
-    }
-    final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    final String productUrl = getWhiteListProductUrl();
+    if (productUrl == null) return null;
     return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getCurrentBuild());
+  }
+
+  @Nullable
+  public String getWhiteListProductUrl() {
+    final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
+    if (approvedGroupsServiceUrl == null) return null;
+    return approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
   }
 
   @NotNull

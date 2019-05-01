@@ -86,7 +86,7 @@ public class VfsData {
           killInvalidatedFiles();
         }
       }
-    });
+    }, ApplicationManager.getApplication());
   }
 
   private void killInvalidatedFiles() {

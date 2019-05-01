@@ -77,12 +77,11 @@ private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastC
 private fun isCallExpressionParameter(argumentExpression: UExpression,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>): Boolean {
-  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) as? UCallExpressionEx ?: return false
+  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) ?: return false
   if (call.kind !in constructorOrMethodCall) return false
-  return call.getArgumentForParameter(parameterIndex) == unwrapPolyadic(argumentExpression) && callPattern.accepts(call)
+  return call.getArgumentForParameter(parameterIndex)?.let(::wrapULiteral) == wrapULiteral(argumentExpression)
+         && callPattern.accepts(call)
 }
-
-private val GUARD = RecursionManager.createGuard("isPropertyAssignCall")
 
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>): Boolean {
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
@@ -95,7 +94,7 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
     is UReferenceExpression -> leftOperand
     else -> return false
   }
-  val references = GUARD.doPreventingRecursion(argument, false) {
+  val references = RecursionManager.doPreventingRecursion(argument, false) {
     uastReference.sourcePsi?.references // via `sourcePsi` because of KT-27385
   } ?: return false
   return references.any { methodPattern.accepts(it.resolve()) }
@@ -173,7 +172,7 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
     callParameter(parameterIndex, callExpression().withResolvedMethod(methodPattern, multiResolve))
 
   fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = filter { self ->
-    val aae: UArrayAccessExpression = unwrapPolyadic(self).uastParent as? UArrayAccessExpression ?: return@filter false
+    val aae: UArrayAccessExpression = self.uastParent as? UArrayAccessExpression ?: return@filter false
     val receiverClass = (aae.receiver.getExpressionType() as? PsiClassType)?.resolve() ?: return@filter false
     receiverClassPattern.accepts(receiverClass)
   }

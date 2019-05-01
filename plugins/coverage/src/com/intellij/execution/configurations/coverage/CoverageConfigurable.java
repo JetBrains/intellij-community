@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.ClassFilterEditor;
@@ -60,7 +60,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private MyClassFilterEditor myClassFilterEditor;
   private MyClassFilterEditor myExcludeClassFilterEditor;
   private JLabel myCoverageNotSupportedLabel;
-  private JComboBox myCoverageRunnerCb;
+  private JComboBox<CoverageRunnerItem> myCoverageRunnerCb;
   private JPanel myRunnerPanel;
   private JCheckBox myTrackPerTestCoverageCb;
   private JCheckBox myTrackTestSourcesCb;
@@ -209,14 +209,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
         runnersModel.addElement(new CoverageRunnerItem(runner));
       }
     }
-    myCoverageRunnerCb.setRenderer(new ListCellRendererWrapper<CoverageRunnerItem>() {
-      @Override
-      public void customize(JList list, CoverageRunnerItem value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-          setText(value.getPresentableName());
-        }
-      }
-    });
+    myCoverageRunnerCb.setRenderer(SimpleListCellRenderer.create("", CoverageRunnerItem::getPresentableName));
     myCoverageRunnerCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {

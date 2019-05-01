@@ -1,13 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * <p>Identifies a line separator:
@@ -27,7 +26,7 @@ public enum LineSeparator {
 
   LineSeparator(@NotNull String separatorString) {
     mySeparatorString = separatorString;
-    myBytes = separatorString.getBytes(CharsetToolkit.UTF8_CHARSET);
+    myBytes = separatorString.getBytes(StandardCharsets.UTF_8);
   }
 
   @NotNull

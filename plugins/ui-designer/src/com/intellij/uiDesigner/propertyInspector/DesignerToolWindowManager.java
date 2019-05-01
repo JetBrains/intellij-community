@@ -34,6 +34,9 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     if (manager.isEditorMode()) {
       return (DesignerToolWindow)manager.getContent(designer);
     }
+    if (manager.myToolWindowPanel == null) {
+      manager.initToolWindow();
+    }
     return manager.myToolWindowPanel;
   }
 

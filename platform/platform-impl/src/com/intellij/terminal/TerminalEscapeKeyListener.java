@@ -45,7 +45,7 @@ public class TerminalEscapeKeyListener {
       DataContext dataContext = DataManager.getInstance().getDataContext(myTerminalPanel);
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
       if (project != null && !project.isDisposed()) {
-        if (isTerminaToolWindow(dataContext.getData(PlatformDataKeys.TOOL_WINDOW)) &&
+        if (isTerminalToolWindow(dataContext.getData(PlatformDataKeys.TOOL_WINDOW)) &&
             !Registry.is("terminal.escape.moves.focus.to.editor")) {
           return; // For example, vi key bindings configured in terminal
         }
@@ -55,7 +55,7 @@ public class TerminalEscapeKeyListener {
     }
   }
 
-  private static boolean isTerminaToolWindow(@Nullable ToolWindow toolWindow) {
+  private static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
     return toolWindow instanceof ToolWindowImpl && "Terminal".equals(((ToolWindowImpl)toolWindow).getId());
   }
 }

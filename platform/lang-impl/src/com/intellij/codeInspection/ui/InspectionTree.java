@@ -74,7 +74,6 @@ public class InspectionTree extends Tree {
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
     setRootVisible(false);
-    UIUtil.setLineStyleAngled(this);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getSelectionModel().addTreeSelectionListener(e -> {
         if (isUnderQueueUpdate()) return;

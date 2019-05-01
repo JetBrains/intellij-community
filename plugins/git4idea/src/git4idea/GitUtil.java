@@ -56,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -163,7 +164,7 @@ public class GitUtil {
     int attempt = 1;
     while (true) {
       try {
-        return new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET);
+        return new String(file.contentsToByteArray(), StandardCharsets.UTF_8);
       }
       catch (IOException e) {
         LOG.info(String.format("IOException while reading %s (attempt #%s)", file, attempt));
@@ -562,6 +563,18 @@ public class GitUtil {
             break;
           case 'n':
             rc.append('\n');
+            break;
+          case 'r':
+            rc.append('\r');
+            break;
+          case 'a':
+            rc.append('\u0007');
+            break;
+          case 'b':
+            rc.append('\b');
+            break;
+          case 'f':
+            rc.append('\f');
             break;
           case '"':
             rc.append('"');

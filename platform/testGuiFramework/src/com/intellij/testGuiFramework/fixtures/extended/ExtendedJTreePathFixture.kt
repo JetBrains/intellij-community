@@ -98,7 +98,7 @@ import javax.swing.tree.TreePath
   })
 
   fun expandPath() {
-    myDriver.expandPath(tree, path)
+    step("expand path ${path.path.toList()}") { myDriver.expandPath(tree, path) }
   }
 
   fun isPathSelected(): Boolean = myDriver.isPathSelected(tree, path)
@@ -120,7 +120,9 @@ import javax.swing.tree.TreePath
             }
           }
           cachePaths[partialList] = partialPath!!
-          myDriver.expandPath(tree, cachePaths.getValue(partialList))
+          step("expand partial path ${cachePaths.getValue(partialList)} for partial list $partialList") {
+            myDriver.expandPath(tree, cachePaths.getValue(partialList))
+          }
         }
       }
     }

@@ -68,8 +68,8 @@ public abstract class DirectoryInfo {
   public abstract String getUnloadedModuleName();
 
   /**
-   * if {@code dir} is excluded and there are content entries under the {@code dir}, process them all and
-   * @return processing result
+   * if {@code dir} is excluded and there are content entries under the {@code dir}, process them all (as long as {@code processor} returns true) and
+   * @return true if all called processors returned true, and false otherwise
    */
   public abstract boolean processContentBeneathExcluded(@NotNull VirtualFile dir, @NotNull Processor<? super VirtualFile> processor);
 }

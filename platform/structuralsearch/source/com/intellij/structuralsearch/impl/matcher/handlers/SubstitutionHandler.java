@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -116,7 +116,7 @@ public class SubstitutionHandler extends MatchingHandler {
     return null;
   }
 
-  private boolean validateOneMatch(final PsiElement match, int start, int end, final MatchResult result, final MatchContext matchContext) {
+  private boolean validateOneMatch(PsiElement match, int start, int end, MatchResult result, MatchContext matchContext) {
     if (!myRepeatedVar) {
       return true;
     }
@@ -135,7 +135,11 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   }
 
-  public boolean validate(final PsiElement match, int start, int end, MatchContext context) {
+  public boolean validate(PsiElement match, MatchContext context) {
+    return validate(match, 0, -1, context);
+  }
+
+  public boolean validate(PsiElement match, int start, int end, MatchContext context) {
     if (match == null || predicate != null && !predicate.match(match, start, end, context)) {
       return false;
     }
@@ -173,16 +177,16 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean match(final PsiElement node, final PsiElement match, MatchContext context) {
-    if (!super.match(node,match,context)) return false;
+  public boolean match(PsiElement node, PsiElement match, MatchContext context) {
+    if (!super.match(node, match, context)) return false;
 
     return matchHandler == null ?
            context.getMatcher().match(node, match):
-           matchHandler.match(node,match,context);
+           matchHandler.match(node, match, context);
   }
 
-  public boolean handle(final PsiElement match, MatchContext context) {
-    return handle(match,0,-1,context);
+  public void addResult(@NotNull PsiElement match, MatchContext context) {
+    addResult(match, 0, -1, context);
   }
 
   public void addResult(@NotNull PsiElement match, int start, int end, MatchContext context) {
@@ -226,8 +230,12 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   }
 
-  public boolean handle(final PsiElement match, int start, int end, MatchContext context) {
-    if (!validate(match,start,end,context)) {
+  public boolean handle(PsiElement match, MatchContext context) {
+    return handle(match, 0, -1, context);
+  }
+
+  public boolean handle(PsiElement match, int start, int end, MatchContext context) {
+    if (!validate(match, start, end, context)) {
       myNestedResult = null;
       
       //if (maxOccurs==1 && minOccurs==1) {
@@ -243,7 +251,7 @@ public class SubstitutionHandler extends MatchingHandler {
     return true;
   }
 
-  private MatchResultImpl createMatch(@NotNull final PsiElement match, int start, int end) {
+  private MatchResultImpl createMatch(@NotNull PsiElement match, int start, int end) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(match);
     assert profile != null;
     final String image = profile.getText(match, start, end);
@@ -373,7 +381,7 @@ public class SubstitutionHandler extends MatchingHandler {
         if (patternNodes.hasNext()) {
           final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
 
-          while(matchedOccurs >= minOccurs) {
+          while(matchedOccurs >= minOccurs && patternNodes.hasNext()) {
             if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
               totalMatchedOccurs = matchedOccurs;
               // match found
@@ -391,15 +399,14 @@ public class SubstitutionHandler extends MatchingHandler {
             removeLastResults(matchedOccurs, context);
           }
           patternNodes.rewind();
-          return false;
         } else {
           // match found
           if (handler.isMatchSequentiallySucceeded(matchNodes)) {
             return checkSameOccurrencesConstraint(context);
           }
           removeLastResults(matchedOccurs, context);
-          return false;
         }
+        return false;
       } else {
         patternNodes.advance();
 
@@ -486,7 +493,7 @@ public class SubstitutionHandler extends MatchingHandler {
     return super.shouldAdvanceThePatternFor(patternElement,matchedElement);
   }
 
-  public void setNestedResult(final MatchResultImpl nestedResult) {
+  public void setNestedResult(MatchResultImpl nestedResult) {
     myNestedResult = nestedResult;
   }
 

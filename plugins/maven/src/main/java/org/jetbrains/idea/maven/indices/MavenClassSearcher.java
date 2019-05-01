@@ -12,7 +12,6 @@ import org.jetbrains.idea.maven.server.MavenServerIndexer;
 import java.util.*;
 
 import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.ALL_VERSIONS;
-import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.FULL_RESOLVE;
 
 public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
@@ -21,7 +20,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
     DependencySearchService service = MavenProjectIndicesManager.getInstance(project).getSearchService();
     List<MavenDependencyCompletionItemWithClass> items = service.findClasses(pattern, new SearchParameters(1000, 10000, EnumSet
-      .of(FULL_RESOLVE, ALL_VERSIONS)));
+      .of(ALL_VERSIONS)));
     return processResults(items, maxResult);
   }
 

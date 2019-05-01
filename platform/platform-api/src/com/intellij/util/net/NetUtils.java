@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
@@ -159,7 +160,7 @@ public class NetUtils {
       indicator.setIndeterminate(expectedContentLength <= 0);
     }
     CountingGZIPInputStream gzipStream = ObjectUtils.tryCast(inputStream, CountingGZIPInputStream.class);
-    final byte[] buffer = new byte[8 * 1024];
+    final byte[] buffer = FileUtilRt.getThreadLocalBuffer();
     int count;
     int bytesWritten = 0;
     long bytesRead = 0;

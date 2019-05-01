@@ -2,6 +2,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -55,7 +56,7 @@ public @interface Storage {
    */
   ThreeState useSaveThreshold() default ThreeState.UNSURE;
 
-  // internal use only
+  @ApiStatus.Internal
   boolean exclusive() default false;
 
   /**

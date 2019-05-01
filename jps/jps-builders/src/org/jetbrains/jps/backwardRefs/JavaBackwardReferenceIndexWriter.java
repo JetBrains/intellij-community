@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -33,7 +34,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
     super(index);
   }
 
-  public static void closeIfNeed(boolean clearIndex) {
+  public synchronized static void closeIfNeed(boolean clearIndex) {
     if (ourInstance != null) {
       File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
@@ -77,6 +78,9 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
 
       if (CompilerReferenceIndex.exists(buildDir) || isRebuild) {
         ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, false));
+        ShutDownTracker.getInstance().registerShutdownTask(() -> {
+          closeIfNeed(false);
+        });
       }
     } else {
       CompilerReferenceIndex.removeIndexFiles(buildDir);

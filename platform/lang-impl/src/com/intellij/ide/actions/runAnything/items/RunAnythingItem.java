@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.runAnything.items;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -20,6 +21,19 @@ public abstract class RunAnythingItem {
    *
    * @param isSelected true if item is selected in the list
    */
+  @Deprecated
+  @Nullable
+  public Component createComponent(boolean isSelected) {
+    return null;
+  }
+
+  /**
+   * Creates current item {@link Component}
+   *
+   * @param pattern    search field input field
+   * @param isSelected true if item is selected in the list
+   * @param hasFocus   true if item has focus in the list
+   */
   @NotNull
-  public abstract Component createComponent(boolean isSelected);
+  public abstract Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus);
 }

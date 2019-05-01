@@ -34,8 +34,7 @@
     <applicationConfigurable groupId="language" instance="com.jetbrains.rest.editor.RestConfigurable"
                              id="restructured.text.topic"
                              displayName="ReStructured Text"/>
-    <applicationService serviceInterface="com.jetbrains.rest.editor.RestSettings"
-        serviceImplementation="com.jetbrains.rest.editor.RestSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.rest.editor.RestSettings"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">

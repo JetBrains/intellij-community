@@ -408,6 +408,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                              InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
       }
     }
+    if (reporter.isOnTheFly()) {
+      ContainerUtil.addIfNotNull(fixes, createExplainFix(ref, new TrackingRunner.ValueDfaProblemType(value)));
+    }
 
     String valueText;
     ProblemHighlightType type;
@@ -679,14 +682,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     reporter.registerProblem(toHighlight, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
-  private static void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
+  private void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     for (TypeCastInstruction instruction : visitor.getClassCastExceptionInstructions()) {
       PsiTypeCastExpression typeCast = instruction.getExpression();
       PsiExpression operand = typeCast.getOperand();
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
-      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()));
+      if (reporter.isOnTheFly()) {
+        reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()),
+                                 createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
+      }
     }
   }
 
@@ -751,10 +757,19 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       }
       ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     }
+    if (reporter.isOnTheFly() && psiAnchor instanceof PsiExpression) {
+      ContainerUtil.addIfNotNull(fixes, createExplainFix(
+        (PsiExpression)psiAnchor, new TrackingRunner.ValueDfaProblemType(evaluatesToTrue)));
+    }
     String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
                                                "dataflow.message.constant.condition.when.reached" :
                                                "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
     reporter.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+  }
+
+  @Nullable
+  protected LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+    return null;
   }
 
   private static boolean isCoveredBySurroundingFix(PsiElement anchor, boolean evaluatesToTrue) {

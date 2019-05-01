@@ -58,6 +58,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -865,7 +866,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
-    Set<VirtualFile> fileSet = newConcurrentSet();
+    Set<VirtualFile> fileSet = newHashSet();
     fileSet.addAll(map2SetNotNull(changes, Change::getVirtualFile));
     myShelvingFiles = fileSet;
   }
@@ -1021,7 +1022,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                          final String path,
                                          final List<? extends FilePatch> remainingPatches,
                                          CommitContext commitContext) {
-    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8_CHARSET)) {
+    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path), StandardCharsets.UTF_8)) {
       UnifiedDiffWriter.write(project, remainingPatches, writer, "\n", commitContext);
     }
     catch (IOException e) {
@@ -1170,7 +1171,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @NotNull
   public Collection<VirtualFile> getShelvingFiles() {
-    return newArrayList(ContainerUtil.notNullize(myShelvingFiles));
+    return new HashSet<>(ContainerUtil.notNullize(myShelvingFiles));
   }
 
   private void removeFromList(@NotNull final ShelvedChangeList listCopy,

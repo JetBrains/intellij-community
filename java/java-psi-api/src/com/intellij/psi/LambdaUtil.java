@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * @author anna
  */
 public class LambdaUtil {
-  public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
+  public static final RecursionGuard<PsiParameter> ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
   public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance(LambdaUtil.class);
 
@@ -600,7 +600,8 @@ public class LambdaUtil {
   public static boolean isExpressionStatementExpression(PsiElement body) {
     return body instanceof PsiAssignmentExpression ||
            PsiUtil.isIncrementDecrementOperation(body) ||
-           body instanceof PsiCallExpression ||
+           body instanceof PsiMethodCallExpression || //method invocation
+           body instanceof PsiNewExpression && !((PsiNewExpression)body).isArrayCreation() || //class instance creation
            body instanceof PsiReferenceExpression && !body.isPhysical();
   }
 

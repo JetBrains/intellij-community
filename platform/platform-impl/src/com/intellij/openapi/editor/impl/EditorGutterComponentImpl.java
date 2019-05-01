@@ -591,12 +591,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
-      int caretLine = convertor.execute(myEditor.getCaretModel().getLogicalPosition().line);
+      int caretLogicalLine = myEditor.getCaretModel().getLogicalPosition().line;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
         if (!visLinesIterator.startsWithSoftWrap()) {
-          int logLine = convertor.execute(visLinesIterator.getStartLogicalLine());
-          if (logLine >= 0) {
+          int logicalLine = visLinesIterator.getStartLogicalLine();
+          int lineToDisplay = convertor.execute(logicalLine);
+          if (lineToDisplay >= 0) {
             int startY = visLinesIterator.getY();
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
@@ -605,11 +606,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               g.setColor(color);
             }
 
-            if (colorUnderCaretRow != null && caretLine == logLine) {
+            if (colorUnderCaretRow != null && caretLogicalLine == logicalLine) {
               g.setColor(colorUnderCaretRow);
             }
 
-            String s = String.valueOf(logLine + 1);
+            String s = String.valueOf(lineToDisplay + 1);
             int textOffset = isMirrored() ?
                              offset - getLineNumberAreaWidth() - 1 :
                              offset - g.getFontMetrics().stringWidth(s);
@@ -670,7 +671,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       while (true) {
         if (lastDocHighlighter == null && docHighlighters.hasNext()) {
           lastDocHighlighter = docHighlighters.next();
-          if (!lastDocHighlighter.isValid() || lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
+          if (lastDocHighlighter.getAffectedAreaStartOffset() > endOffset) {
             lastDocHighlighter = null;
             continue;
           }
@@ -682,7 +683,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
         if (lastEditorHighlighter == null && editorHighlighters.hasNext()) {
           lastEditorHighlighter = editorHighlighters.next();
-          if (!lastEditorHighlighter.isValid() || lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
+          if (lastEditorHighlighter.getAffectedAreaStartOffset() > endOffset) {
             lastEditorHighlighter = null;
             continue;
           }
@@ -1780,7 +1781,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     if (clickAction != null) {
       if (PluginInfoDetectorKt.getPluginInfo(renderer.getClass()).isSafeToReport()) {
-        FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getClass().getCanonicalName());
+        FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getFeatureId());
       }
 
       performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext());
@@ -1938,6 +1939,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2) {
     myLineNumberConvertor = lineNumberConvertor1 != null ? lineNumberConvertor1 : value -> value;
     myAdditionalLineNumberConvertor = lineNumberConvertor2;
+    repaint();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -36,6 +36,10 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     presentation.setDescription(PathUtil.toSystemDependentName(projectPath));
   }
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -58,11 +62,6 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
       return;
     }
     RecentProjectsManagerBase.getInstanceEx().doOpenProject(myProjectPath, project, forceOpenInNewFrame);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setText(getProjectName(), false);
   }
 
   @SystemIndependent

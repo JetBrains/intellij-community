@@ -144,6 +144,8 @@ public class JsonCachedValues {
 
   private static List<JsonSchemaCatalogEntry> computeSchemaCatalog(PsiFile catalog) {
     if (!catalog.isValid()) return null;
+    VirtualFile virtualFile = catalog.getVirtualFile();
+    if (virtualFile == null || !virtualFile.isValid()) return null;
     JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> ((JsonFile)catalog).getTopLevelValue());
     if (!(value instanceof JsonObject)) return null;
 
