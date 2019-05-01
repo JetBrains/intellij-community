@@ -581,11 +581,15 @@ public class SearchUtil {
     }
 
     for (Configurable configurable : result) {
-      //noinspection deprecation
-      if (!(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible()) {
+      if (isAcceptable(configurable)) {
         consumer.accept(configurable);
       }
     }
+  }
+
+  public static boolean isAcceptable(@NotNull Configurable configurable) {
+    //noinspection deprecation
+    return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
   }
 
   private static void addChildren(@NotNull Configurable configurable, @NotNull List<? super Configurable> list) {
