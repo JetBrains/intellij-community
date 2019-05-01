@@ -49,7 +49,9 @@
     <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
     <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.bash.BashErrorFilter"/>
+
     <highlightUsagesHandlerFactory implementation="com.intellij.bash.highlighting.BashOccurrencesHighlightingFactory"/>
+    <renameHandler implementation="com.intellij.bash.BashRenameHandler"/>
 
     <intentionAction>
       <className>com.intellij.bash.rename.BashRenameIntention</className>
@@ -59,7 +61,5 @@
   <actions>
     <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
             description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
-    <action id="BashSelectAllOccurrences" class="com.intellij.bash.rename.BashSelectAllOccurrencesAction"
-            use-shortcut-of="RenameElement"/>
   </actions>
 </idea-plugin>
