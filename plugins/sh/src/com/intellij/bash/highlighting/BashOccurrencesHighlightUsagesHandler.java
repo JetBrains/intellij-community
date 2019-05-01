@@ -31,8 +31,11 @@ public class BashOccurrencesHighlightUsagesHandler extends HighlightUsagesHandle
     TextRange textRange = BashTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(myEditor);
     if (textRange != null) {
       CharSequence documentText = myEditor.getDocument().getImmutableCharSequence();
-      List<TextRange> occurrences = BashTextOccurrencesUtil.findAllOccurrences(documentText,
-          textRange.subSequence(documentText), true);
+      boolean hasSelection = myEditor.getCaretModel().getPrimaryCaret().hasSelection();
+      List<TextRange> occurrences = BashTextOccurrencesUtil.findAllOccurrences(
+          documentText,
+          textRange.subSequence(documentText),
+          !hasSelection);
       myReadUsages.addAll(occurrences);
     }
   }

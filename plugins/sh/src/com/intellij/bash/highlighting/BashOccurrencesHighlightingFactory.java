@@ -13,9 +13,8 @@ public class BashOccurrencesHighlightingFactory extends HighlightUsagesHandlerFa
   @Nullable
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
-    if (file instanceof BashFile) {
-      return new BashOccurrencesHighlightUsagesHandler(editor, file);
-    }
-    return null;
+    return file instanceof BashFile
+        ? new BashOccurrencesHighlightUsagesHandler(editor, file)
+        : null;
   }
 }
