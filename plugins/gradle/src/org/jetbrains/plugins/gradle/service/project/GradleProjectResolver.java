@@ -36,12 +36,12 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
-import org.gradle.tooling.*;
+import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
@@ -214,6 +214,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
     final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
+    boolean requiresTaskInitalization = false;
     for (GradleProjectResolverExtension resolverExtension = tracedResolverChain;
          resolverExtension != null;
          resolverExtension = resolverExtension.getNext()) {
@@ -251,47 +252,34 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       catch (Throwable t) {
         LOG.warn(t);
       }
+
+      // see if anything requires Gradle tasks to be run
+      try {
+        requiresTaskInitalization |= resolverExtension.requiresTaskRunning();
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
+      }
     }
-
-    BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);
-
     File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
     if (initScript != null) {
       executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     }
 
-    GradleExecutionHelper.prepare(buildActionExecutor, resolverCtx.getExternalSystemTaskId(),
-                                  executionSettings, resolverCtx.getListener(), resolverCtx.getConnection());
+    BuildActionRunner buildActionRunner =
+      new BuildActionRunner(resolverCtx, projectImportAction, requiresTaskInitalization, executionSettings, myHelper);
     resolverCtx.checkCancelled();
-    ProjectImportAction.AllModels allModels;
 
     final long startTime = System.currentTimeMillis();
+    ProjectImportAction.AllModels allModels;
     try {
-      buildActionExecutor.withCancellationToken(resolverCtx.getCancellationTokenSource().token());
-      allModels = buildActionExecutor.run();
-      if (allModels == null) {
-        throw new IllegalStateException("Unable to get project model for the project: " + resolverCtx.getProjectPath());
-      }
+      allModels = buildActionRunner.fetchModels(() -> {
+        for (GradleProjectResolverExtension resolver = tracedResolverChain; resolver != null; resolver = resolver.getNext()) {
+          resolver.buildFinished();
+        }
+      });
       performanceTrace.addTrace(allModels.getPerformanceTrace());
-    }
-    catch (UnsupportedVersionException unsupportedVersionException) {
-      resolverCtx.checkCancelled();
-
-      // Old gradle distribution version used (before ver. 1.8)
-      // fallback to use ModelBuilder gradle tooling API
-      Class<? extends IdeaProject> aClass = resolverCtx.isPreviewMode() ? BasicIdeaProject.class : IdeaProject.class;
-      ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(
-        aClass,
-        resolverCtx.getExternalSystemTaskId(),
-        executionSettings,
-        resolverCtx.getConnection(),
-        resolverCtx.getListener());
-
-      final IdeaProject ideaProject = modelBuilder.get();
-      allModels = new ProjectImportAction.AllModels(ideaProject);
-      performanceTrace.addTrace(allModels.getPerformanceTrace());
-    }
-    finally {
+    } finally {
       final long timeInMs = (System.currentTimeMillis() - startTime);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
