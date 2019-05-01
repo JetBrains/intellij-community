@@ -122,7 +122,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       myInjectedFile = newInjectedFile
     }
 
-    markers.forEach { it.hostMarker.dispose(); it.fragmentMarker.dispose() }
+    markers.forEach { it.dispose() }
     markers.clear()
 
     //some hostless shreds could exist for keeping guarded values
