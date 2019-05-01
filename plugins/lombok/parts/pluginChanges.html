@@ -1,4 +1,9 @@
 <ul>
+  <li>0.26
+    <ol>
+      <li></li>
+    </ol>
+  </li>
   <li>0.25
     <ol>
       <li>Fixed #406: Added delombok support for @UtilityClass</li>
@@ -55,7 +60,9 @@
       <li>Fixed #144: Find usages on field should find usages of builder/wither methods</li>
       <li>Fixed #186: Find usages doesn't work (for example Accessors with Setter/Getter)</li>
       <li>Fixed #295: Refactor Rename misses @Builder methods</li>
-      <li>Fixed #450: @Builder doesn't mark generated builder 'setters' as @Deprecated if the source field is deprecated</li>
+      <li>Fixed #450: @Builder doesn't mark generated builder 'setters' as @Deprecated if the source field is
+        deprecated
+      </li>
       <li>Fixed #497: Lombok plugin breaks creating Intellij IDEA postfix expressions</li>
       <li>Fixed #499: @Builder does not respect @Accessors on fields</li>
     </ol>
@@ -83,7 +90,8 @@
   <li>0.16
     <ol>
       <li>Fixed #210: Changing log annotation requires restart of Intellij to work</li>
-      <li>Fixed #270: Compile errors after moving an @Setter annotation by using IntelliJ move keyboard shortcut ⌥⇧↑</li>
+      <li>Fixed #270: Compile errors after moving an @Setter annotation by using IntelliJ move keyboard shortcut ⌥⇧↑
+      </li>
       <li>Fixed #365: [Feature request]IDEA .var suffix feature replacement</li>
       <li>Fixed #379: StackOverflowException occurs sporadically when plugin enabled</li>
       <li>Fixed #419: Stackoverflow in Intellij because of recursive delegation in @Delegate</li>
@@ -135,13 +143,17 @@
       <li>Fixed #254: Properties from lombok.config does not involve on suggestion list</li>
       <li>Fixed #259: Support JBoss Logging (new in Lombok 1.16.10)</li>
       <li>Fixed #262: When lombok.accessors.chain=true setters show void return value</li>
-      <li>Fixed #268: Lombok Dependency is possible outdated' message even when 'Enable lombok version warning' is unchecked.</li>
+      <li>Fixed #268: Lombok Dependency is possible outdated' message even when 'Enable lombok version warning' is
+        unchecked.
+      </li>
     </ol>
   </li>
   <li>0.12
     <ol>
       <li>Added support for transparent changing of visibility of existing fields and variables for IntelliJ 2016.2</li>
-      <li>Fixed #56: Missing auto-generated modifiers on fields and class shown in the "Structure" window when using `@Value`</li>
+      <li>Fixed #56: Missing auto-generated modifiers on fields and class shown in the "Structure" window when using
+        `@Value`
+      </li>
       <li>Fixed #137: Private visibility added by @Value not respected by IDE.</li>
       <li>Fixed #143: Support UtilityClass</li>
       <li>Fixed #147: @FieldDefaults(makeFinal = true) and bitwise operators produce an error message</li>
@@ -178,7 +190,8 @@
       <li>Fixed #151: Builder issues with Accessors</li>
       <li>Fixed #153: IntelliJ produces warning when specifying generic type on val declaration</li>
       <li>Fixed #156: Exception in @Singular handling</li>
-      <li>Fixed #165: Can't correctly resolve multiple @Builder methods in same class having partial implementations</li>
+      <li>Fixed #165: Can't correctly resolve multiple @Builder methods in same class having partial implementations
+      </li>
       <li>Fixed #172: "Lombok needs a default constructor in the base class" error in enum</li>
       <li>Fixed #175: Added support for @Tolerate for @Getter and @Setter</li>
       <li>Fixed #177: Null pointer in intellij version 15.0.3</li>
@@ -311,7 +324,9 @@
   <li>0.8.2
     <ol>
       <li>Added support for "topic" annotation value of all @Log annotations (Lombok >= 1.12.6)</li>
-      <li>Added validation of static fields/methods of @Delegate annotation (@Delegate is legal only on instance fields or no-argument instance methods)</li>
+      <li>Added validation of static fields/methods of @Delegate annotation (@Delegate is legal only on instance fields
+        or no-argument instance methods)
+      </li>
       <li>Fixed #19: Slf4j in static context</li>
       <li>Fixed #29: Renaming a class with the @Log* annotation adds extra qualification to calls</li>
       <li>Fixed #31: Prevent errors with invalid identifiers for builderClassName in @Builder annotation</li>
@@ -331,9 +346,13 @@
   <li>0.8.0
     <ol>
       <li>Added refactoring action for Lombok @Log and friends, @Getter and @Setter methods</li>
-      <li>Added refactoring actions to Delombok @Data, @Value, @Wither, @Constructors, @Getter, @Setter, @EqualsAndHashCode, @ToString and @Log annotations</li>
+      <li>Added refactoring actions to Delombok @Data, @Value, @Wither, @Constructors, @Getter, @Setter,
+        @EqualsAndHashCode, @ToString and @Log annotations
+      </li>
       <li>Fixed problem with renaming fields in class containing lombok @Getter and @Setter</li>
-      <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
+      <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes
+        with @Value
+      </li>
     </ol>
   </li>
   <li>0.7.3
@@ -361,7 +380,8 @@
   </li>
   <li>0.6.5
     <ol>
-      <li>Issue #20 Fixed Using @Delegate together with generic methods produced red underlining in the editor window</li>
+      <li>Issue #20 Fixed Using @Delegate together with generic methods produced red underlining in the editor window
+      </li>
       <li>Issue #29 Fixed @Delegate leads to exception in LombokLightParameter</li>
       <li>Issue #37 and #59 Fixed @EqualsAndHashCode inspection for callSuper parameter</li>
       <li>Issue #54 Valid code produces inspections errors - anonymous instance, partial implementation</li>
@@ -399,7 +419,9 @@
       <li>Issue #23 Initial support for IntelliJ 12</li>
       <li>Issue #12 Added support for "Singleton" and "EnumId" annotations from lombok-pg</li>
       <li>Fixed Issue #27 "@EqualsAndHashCode on final classes: Should not have a canEquals in that case."</li>
-      <li>Fixed Issue #28 "Getters and setters should be generated even if the method exists with different parameter count"</li>
+      <li>Fixed Issue #28 "Getters and setters should be generated even if the method exists with different parameter
+        count"
+      </li>
     </ol>
   </li>
   <li>0.4
@@ -426,8 +448,12 @@
     <ol>
       <li>Added inspections for lombok annotations.</li>
       <li>Added some simple QuickFixes for lombok inspections.</li>
-      <li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.</li>
-      <li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor</li>
+      <li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate
+        methods.
+      </li>
+      <li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of
+        @Delegate and @XXXConstructor
+      </li>
       <li>General bug fixing and many improvements</li>
     </ol>
   </li>
