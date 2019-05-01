@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.impl.source.tree.injected.changesHandler.AbstractMarkerBasedInjectedFileChangesHandlerKt;
+import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandlerKt;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,7 +100,7 @@ public class TemporaryPlacesRegistry {
         if (range == null) return true;
         PsiFile file = place.elementPointer.getContainingFile();
         if (file == null) return true;
-        PsiLanguageInjectionHost newHost = AbstractMarkerBasedInjectedFileChangesHandlerKt.getInjectionHostAtRange(file, range);
+        PsiLanguageInjectionHost newHost = CommonInjectedFileChangesHandlerKt.getInjectionHostAtRange(file, range);
         if (newHost == null) return true;
 
         newHost.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
