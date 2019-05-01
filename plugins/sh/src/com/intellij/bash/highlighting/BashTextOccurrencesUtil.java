@@ -27,7 +27,7 @@ public class BashTextOccurrencesUtil {
   }
 
   private static boolean isWordPartCondition(char ch) {
-    return Character.isLetterOrDigit(ch) || StringUtil.containsChar("_.", ch);
+    return ch == '_' || Character.isLetterOrDigit(ch);
   }
 
   @NotNull
