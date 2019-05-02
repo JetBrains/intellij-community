@@ -79,7 +79,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
         () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
-    Disposer.register(this, ApplicationManager.getApplication());
+    Disposer.register(ApplicationManager.getApplication(), this);
   }
 
   @NotNull
