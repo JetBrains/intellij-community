@@ -33,7 +33,7 @@ public class JavaFxSdkSetupNotificationTest extends SdkSetupNotificationTestBase
 
   public void testNoJavaFx() {
     final EditorNotificationPanel panel = configureBySdkAndText(IdeaTestUtil.getMockJdk17(), false, "sample.fxml", SAMPLE_FXML);
-    assertSdkSetupPanelShown(panel, "The JavaFX runtime is not configured");
+    assertSdkSetupPanelShown(panel, "Setup SDK");
   }
 
   @NotNull
