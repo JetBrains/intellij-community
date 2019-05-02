@@ -57,6 +57,18 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   @Override
+  protected void tearDown() throws Exception {
+    try {
+      if (dictDir.exists()) {
+        WriteAction.run(() -> dictDir.delete(this));
+      }
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
+  @Override
   protected String getBasePath() {
     return Paths.get(getSpellcheckerTestDataPath(), "inspection", "dictionary").toString();
   }
@@ -176,9 +188,19 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testMoveDict() throws IOException {
-    doBeforeCheck();
-    WriteAction.run(() -> getTestDictionaryFile().move(this, getProject().getBaseDir()));
-    doAfterCheck();
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> getTestDictionaryFile().move(this, getProject().getBaseDir()));
+      doAfterCheck();
+    }
+    finally {
+      WriteAction.run(() -> {
+        final VirtualFile child = getProject().getBaseDir().findChild(TEST_DIC);
+        if (child.exists()) {
+          child.delete(this);
+        }
+      });
+    }
   }
 
   public void testRenameToDict() throws IOException {
@@ -213,8 +235,18 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testMoveDictDir() throws IOException {
-    doBeforeCheck();
-    WriteAction.run(() -> dictDir.move(this, getProject().getBaseDir().createChildDirectory(this, "new_dir")));
-    doAfterCheck();
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> dictDir.move(this, getProject().getBaseDir().createChildDirectory(this, "new_dir")));
+      doAfterCheck();
+    }
+    finally {
+      WriteAction.run(() -> {
+        final VirtualFile dir = getProject().getBaseDir().findChild("new_dir");
+        if (dir.exists()) {
+          dir.delete(this);
+        }
+      });
+    }
   }
 }
