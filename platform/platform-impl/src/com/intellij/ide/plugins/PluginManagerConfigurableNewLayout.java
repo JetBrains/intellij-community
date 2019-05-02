@@ -36,6 +36,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.JBDimension;
@@ -665,9 +666,8 @@ public class PluginManagerConfigurableNewLayout
                   return;
                 }
 
-                for (String pluginId : PluginManagerConfigurableNew
-                  .requestToPluginRepository(PluginManagerConfigurableNew.createSearchUrl(parser.getUrlQuery(), 10000),
-                                             PluginManagerConfigurableNew.forceHttps())) {
+                Url url = PluginManagerConfigurableNew.createSearchUrl(parser.getUrlQuery(), 10000);
+                for (String pluginId : PluginManagerConfigurableNew.requestToPluginRepository(url)) {
                   IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
                   if (descriptor != null) {
                     result.descriptors.add(descriptor);
