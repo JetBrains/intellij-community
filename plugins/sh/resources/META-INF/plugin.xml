@@ -41,6 +41,8 @@
     <lang.formatter language="Bash" implementationClass="com.intellij.bash.formatter.BashFormatterModelBuilder"/>
     <postFormatProcessor implementation="com.intellij.bash.formatter.BashPostFormatProcessor"/>
 
+    <editorNotificationProvider implementation="com.intellij.bash.shellcheck.ShellcheckSetupNotificationProvider"/>
+
     <registryKey key="bash.shellcheck.path"/>
     <externalAnnotator language="Bash" implementationClass="com.intellij.bash.shellcheck.BashShellcheckExternalAnnotator"/>
     <localInspection groupName="Bash" language="Bash" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
