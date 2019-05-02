@@ -380,7 +380,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testInferredWithVarargs() {
     myFixture.configureByText(JavaFileType.INSTANCE, 
                               "import java.util.*; class C { void m(Object objects[], List<Object> list) { Collections.addAll(<caret>list, objects);} }");
-    assertEquals("<html>@NotNull Collection&lt;? super Object&gt; collection,</html><html> @NotNull Object... ts</html>", parameterPresentation(-1));
+    assertEquals("<html>@NotNull Collection&lt;? super Object&gt; collection, @NotNull Object... ts</html>", parameterPresentation(-1));
   }
 
   private void checkHighlighted(int lineIndex) {
@@ -450,7 +450,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "-\n" +
                       "<html><b>double v</b></html>\n" +
                       "-\n" +
-                      "<html><b>@NotNull char[] chars</b></html>\n" +
+                      "<html><b>char[] chars</b></html>\n" +
                       "-\n" +
                       "<html><b>@Nullable String s</b></html>\n" +
                       "-\n" +
