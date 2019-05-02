@@ -250,16 +250,24 @@ public class GitUnstashDialog extends DialogWrapper {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
     VirtualFile root = getGitRoot();
-    GitStashUtils.loadStashStack(myProject, root, stashInfo -> listModel.addElement(stashInfo));
-    myBranches.clear();
-    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-    if (repository != null) {
-      myBranches.addAll(GitBranchUtil.convertBranchesToNames(repository.getBranches().getLocalBranches()));
+    try {
+      for (StashInfo info: GitStashUtils.loadStashStack(myProject, root)) {
+        listModel.addElement(info);
+      }
+      myBranches.clear();
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+      if (repository != null) {
+        myBranches.addAll(GitBranchUtil.convertBranchesToNames(repository.getBranches().getLocalBranches()));
+      }
+      else {
+        LOG.error("Repository is null for root " + root);
+      }
+      myStashList.setSelectedIndex(0);
     }
-    else {
-      LOG.error("Repository is null for root " + root);
+    catch (VcsException e) {
+      LOG.warn(e);
+      Messages.showErrorDialog(myProject, "Couldn't show the list of stashes", e.getMessage());
     }
-    myStashList.setSelectedIndex(0);
   }
 
   private VirtualFile getGitRoot() {
