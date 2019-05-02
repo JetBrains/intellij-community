@@ -43,7 +43,6 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
 
-    private final XmlName OS_XML_NAME = new XmlName("os");
     private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
 
     @Override
@@ -73,8 +72,6 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
         registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
       }
-
-      registrar.registerGenericAttributeValueChildExtension(OS_XML_NAME, com.intellij.openapi.extensions.Extensions.OS.class);
     }
   };
 
