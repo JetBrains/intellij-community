@@ -1637,3 +1637,11 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "compile-testing",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/testing/compile/compile-testing/0.16:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/testing/compile/compile-testing/0.16:jar"],
+)
