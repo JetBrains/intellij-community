@@ -450,7 +450,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "-\n" +
                       "<html><b>double v</b></html>\n" +
                       "-\n" +
-                      "<html><b>char[] chars</b></html>\n" +
+                      "<html><b>@NotNull char[] chars</b></html>\n" +
                       "-\n" +
                       "<html><b>@Nullable String s</b></html>\n" +
                       "-\n" +
