@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -164,7 +165,8 @@ class FeatureUsageData {
   }
 
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
-    if (!platformDataKeys.contains(key))  data[key] = value
+    if (ApplicationManager.getApplication().isUnitTestMode || !platformDataKeys.contains(key)) data[key] = value
+
     return this
   }
 

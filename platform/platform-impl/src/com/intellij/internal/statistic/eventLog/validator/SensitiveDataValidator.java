@@ -30,6 +30,7 @@ public class SensitiveDataValidator {
 
   private final Semaphore mySemaphore;
   private final AtomicBoolean isWhiteListInitialized;
+  protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
   public static SensitiveDataValidator getInstance() {
     return me.getValue();
@@ -40,8 +41,6 @@ public class SensitiveDataValidator {
     isWhiteListInitialized = new AtomicBoolean(false);
     updateValidators(FUSWhiteListPersistence.getCachedWhiteList());
   }
-
-  protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
@@ -64,16 +63,6 @@ public class SensitiveDataValidator {
       validatedData.put(key, resultType == ACCEPTED ? entryValue : resultType.getDescription());
     }
     return validatedData;
-  }
-
-  private ValidationResultType validateEventData(@NotNull EventContext context,
-                                                 @Nullable WhiteListGroupRules whiteListRule,
-                                                 @NotNull String key,
-                                                 @NotNull Object entryValue) {
-    if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST;
-    if (whiteListRule == null) return UNDEFINED_RULE;
-    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return ACCEPTED;
-    return whiteListRule.validateEventData(key, entryValue, context);
   }
 
   public SensitiveDataValidator update() {
@@ -116,6 +105,16 @@ public class SensitiveDataValidator {
     }
 
     return whiteListRule.validateEventId(context);
+  }
+
+  private ValidationResultType validateEventData(@NotNull EventContext context,
+                                                 @Nullable WhiteListGroupRules whiteListRule,
+                                                 @NotNull String key,
+                                                 @NotNull Object entryValue) {
+    if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST;
+    if (whiteListRule == null) return UNDEFINED_RULE;
+    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return ACCEPTED;
+    return whiteListRule.validateEventData(key, entryValue, context);
   }
 
   @NotNull
