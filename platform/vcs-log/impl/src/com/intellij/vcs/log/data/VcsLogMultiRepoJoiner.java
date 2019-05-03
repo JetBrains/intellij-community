@@ -1,6 +1,6 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId
     }
     List<Commit> result = new ArrayList<>(size);
 
-    Map<Commit, Iterator<Commit>> nextCommits = ContainerUtil.newHashMap();
+    Map<Commit, Iterator<Commit>> nextCommits = new HashMap<>();
     for (List<Commit> log : logsFromRepos) {
       Iterator<Commit> iterator = log.iterator();
       if (iterator.hasNext()) {

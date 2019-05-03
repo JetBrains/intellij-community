@@ -708,7 +708,7 @@ public class GrClosureSignatureUtil {
 
   @NotNull
   public static MultiMap<MethodSignature, PsiMethod> findRawMethodSignatures(@NotNull PsiMethod[] methods, @NotNull PsiClass clazz) {
-    Map<PsiTypeParameter, PsiType> initialMap = ContainerUtil.newHashMap();
+    Map<PsiTypeParameter, PsiType> initialMap = new HashMap<>();
 
     for (PsiTypeParameter parameter : clazz.getTypeParameters()) {
       initialMap.put(parameter, null);
@@ -732,7 +732,7 @@ public class GrClosureSignatureUtil {
                                                    @NotNull PsiSubstitutor initialSubstitutor,
                                                    @NotNull PsiMethod actual) {
     if (actual.hasTypeParameters()) {
-      final HashMap<PsiTypeParameter, PsiType> map1 = ContainerUtil.newHashMap(initialMap);
+      final HashMap<PsiTypeParameter, PsiType> map1 = new HashMap<>(initialMap);
       for (PsiTypeParameter parameter : actual.getTypeParameters()) {
         map1.put(parameter, null);
       }

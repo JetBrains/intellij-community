@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
@@ -31,7 +31,8 @@ import static org.editorconfig.core.EditorConfig.OutPair;
 
 @SuppressWarnings("SameParameterValue")
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
-  private final static Map<String,List<String>> DEPENDENCIES = ContainerUtil.newHashMap();
+  private final static Map<String,List<String>> DEPENDENCIES = new HashMap<>();
+
   static {
     addDependency("indent_size", "continuation_indent_size");
   }

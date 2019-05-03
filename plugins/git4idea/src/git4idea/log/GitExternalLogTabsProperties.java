@@ -5,7 +5,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
 import com.intellij.vcs.log.impl.*;
@@ -13,10 +12,7 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.RecentGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @State(
   name = "Git.Log.External.Tabs.Properties",
@@ -59,7 +55,7 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
 
   public static class TabState extends VcsLogUiPropertiesImpl.State {
     @XCollection
-    public Map<String, List<RecentGroup>> RECENT_FILTERS = ContainerUtil.newHashMap();
+    public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
   }
 
   private class MyVcsLogUiProperties extends VcsLogUiPropertiesImpl<TabState> {

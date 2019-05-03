@@ -269,7 +269,7 @@ final class PaintersHelper implements Painter.Listener {
 
   private abstract static class ImagePainter extends AbstractPainter {
 
-    final Map<GraphicsConfiguration, Cached> cachedMap = ContainerUtil.newHashMap();
+    final Map<GraphicsConfiguration, Cached> cachedMap = new HashMap<>();
 
     void executePaint(@NotNull Graphics2D g,
                       @NotNull Component component,

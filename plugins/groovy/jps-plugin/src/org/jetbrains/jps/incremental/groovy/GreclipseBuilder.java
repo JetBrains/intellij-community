@@ -69,7 +69,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   @Nullable
   private ClassLoader createGreclipseLoader(@Nullable String jar) {
     if (StringUtil.isEmpty(jar)) return null;
-    
+
     if (jar.equals(myGreclipseJar)) {
       return myGreclipseLoader;
     }
@@ -164,10 +164,10 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
       StringWriter out = new StringWriter();
       StringWriter err = new StringWriter();
-      HashMap<String, List<String>> outputMap = ContainerUtil.newHashMap();
+      HashMap<String, List<String>> outputMap = new HashMap<>();
 
       boolean success = performCompilation(args, out, err, outputMap, context, chunk);
-      
+
       List<GroovycOutputParser.OutputItem> items = ContainerUtil.newArrayList();
       for (String src : outputMap.keySet()) {
         for (String classFile : outputMap.get(src)) {

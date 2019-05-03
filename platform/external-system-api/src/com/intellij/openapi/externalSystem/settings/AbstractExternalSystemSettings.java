@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
@@ -39,7 +25,7 @@ import java.util.function.Supplier;
  * support codebase.
  * <p/>
  * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured as necessary.
- *  
+ *
  * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemSettings<
@@ -52,8 +38,8 @@ public abstract class AbstractExternalSystemSettings<
   @NotNull private final Topic<L> myChangesTopic;
   private Supplier<Project> myProjectSupplier;
 
-  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
-  
+  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = new HashMap<String, PS>();
+
   @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettingsView
     = Collections.unmodifiableMap(myLinkedProjectsSettings);
 
@@ -97,9 +83,9 @@ public abstract class AbstractExternalSystemSettings<
     }
     copyExtraSettingsFrom(settings);
   }
-  
+
   protected abstract void copyExtraSettingsFrom(@NotNull SS settings);
-  
+
   @NotNull
   public Collection<PS> getLinkedProjectsSettings() {
     return myLinkedProjectsSettingsView.values();
@@ -129,10 +115,10 @@ public abstract class AbstractExternalSystemSettings<
     myLinkedProjectsSettings.put(settings.getExternalProjectPath(), settings);
     getPublisher().onProjectsLinked(Collections.singleton(settings));
   }
-  
+
   /**
    * Un-links given external project from the current ide project.
-   * 
+   *
    * @param linkedProjectPath  path of external project to be unlinked
    * @return                   {@code true} if there was an external project with the given config path linked to the current
    *                           ide project;
@@ -143,7 +129,7 @@ public abstract class AbstractExternalSystemSettings<
     if (removed == null) {
       return false;
     }
-    
+
     getPublisher().onProjectsUnlinked(Collections.singleton(linkedProjectPath));
     return true;
   }
@@ -157,7 +143,7 @@ public abstract class AbstractExternalSystemSettings<
     settings = ContainerUtil.filter(settings, ps -> ps.getExternalProjectPath() != null);
 
     List<PS> added = ContainerUtilRt.newArrayList();
-    Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
+    Map<String, PS> removed = new HashMap<String, PS>(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
     for (PS current : settings) {
       myLinkedProjectsSettings.put(current.getExternalProjectPath(), current);
@@ -199,7 +185,7 @@ public abstract class AbstractExternalSystemSettings<
   /**
    * Is assumed to check if given old settings external system-specific state differs from the given new one
    * and {@link #getPublisher() notify} listeners in case of the positive answer.
-   * 
+   *
    * @param old      old settings state
    * @param current  current settings state
    */
@@ -253,7 +239,7 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   public interface State<S> {
-    
+
     Set<S> getLinkedExternalProjectsSettings();
 
     void setLinkedExternalProjectsSettings(Set<S> settings);

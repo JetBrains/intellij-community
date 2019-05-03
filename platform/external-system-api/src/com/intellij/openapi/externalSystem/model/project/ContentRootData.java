@@ -1,10 +1,10 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +19,8 @@ public class ContentRootData extends AbstractExternalEntityData {
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> myData = ContainerUtilRt.newHashMap();
+  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> myData =
+    new HashMap<ExternalSystemSourceType, Collection<SourceRoot>>();
 
   @NotNull private final String myRootPath;
 

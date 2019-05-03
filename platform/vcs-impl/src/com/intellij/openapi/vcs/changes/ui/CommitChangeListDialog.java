@@ -96,7 +96,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
   @NotNull private final String myCommitActionName;
 
-  @NotNull private final Map<String, String> myListComments = newHashMap();
+  @NotNull private final Map<String, String> myListComments = new HashMap<>();
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitOptionsPanel myCommitOptions;

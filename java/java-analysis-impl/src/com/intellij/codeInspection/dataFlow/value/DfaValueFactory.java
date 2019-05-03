@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow.value;
 
@@ -20,10 +20,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMember;
 import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
@@ -31,9 +28,9 @@ import static com.intellij.patterns.StandardPatterns.or;
 
 public class DfaValueFactory {
   private final List<DfaValue> myValues = ContainerUtil.newArrayList();
-  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
-  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
-  private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
+  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = new HashMap<>();
+  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = new HashMap<>();
+  private final Map<PsiType, DfaPsiType> myDfaTypes = new HashMap<>();
   private final boolean myUnknownMembersAreNullable;
   private final FieldChecker myFieldChecker;
 

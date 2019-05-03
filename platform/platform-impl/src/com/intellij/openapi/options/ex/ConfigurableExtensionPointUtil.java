@@ -34,7 +34,7 @@ public class ConfigurableExtensionPointUtil {
   @NotNull
   public static List<Configurable> buildConfigurablesList(@NotNull List<ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
-    final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
+    final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<>();
     List<String> idsInEpOrder = ContainerUtil.newArrayList();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
@@ -94,7 +94,7 @@ public class ConfigurableExtensionPointUtil {
   @NotNull
   private static Map<String, List<String>> buildIdTree(@NotNull Map<String, ConfigurableWrapper> idToConfigurable,
                                                        @NotNull List<String> idsInEpOrder) {
-    Map<String, List<String>> tree = ContainerUtil.newHashMap();
+    Map<String, List<String>> tree = new HashMap<>();
     for (String id : idsInEpOrder) {
       ConfigurableWrapper wrapper = idToConfigurable.get(id);
       String parentId = wrapper.getParentId();

@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class SvnMergeInfoCache {
@@ -38,7 +39,7 @@ public class SvnMergeInfoCache {
 
   private SvnMergeInfoCache(@NotNull Project project) {
     myProject = project;
-    myCurrentUrlMapping = ContainerUtil.newHashMap();
+    myCurrentUrlMapping = new HashMap<>();
   }
 
   public static SvnMergeInfoCache getInstance(@NotNull Project project) {

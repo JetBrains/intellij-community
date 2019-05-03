@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,7 +62,7 @@ public class GrStubUtils {
   private static Map<String, String> getAliasMapping(@Nullable PsiFile file) {
     if (!(file instanceof GroovyFile)) return Collections.emptyMap();
     return CachedValuesManager.getCachedValue(file, () -> {
-      Map<String, String> mapping = ContainerUtil.newHashMap();
+      Map<String, String> mapping = new HashMap<>();
       for (GrImportStatement importStatement : ((GroovyFile)file).getImportStatements()) {
         String fqn = importStatement.getImportFqn();
         if (fqn != null && !importStatement.isStatic() && importStatement.isAliasedImport()) {

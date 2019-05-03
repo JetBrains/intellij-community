@@ -741,7 +741,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
 
     //store original dates to restore if needed
-    Map<ShelvedChangeList, Date> deletedListsWithOriginalDate = newHashMap();
+    Map<ShelvedChangeList, Date> deletedListsWithOriginalDate = new HashMap<>();
     for (ShelvedChangeList changeList : shelvedListsToDelete) {
       Date originalDate = changeList.DATE;
       if (changeList.isDeleted()) {

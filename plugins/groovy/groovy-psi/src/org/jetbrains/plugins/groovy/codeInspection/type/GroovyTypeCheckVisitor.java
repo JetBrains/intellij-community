@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -728,7 +729,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     }
     checkNamedArgumentsType(invocation);
   }
-  
+
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
@@ -826,7 +827,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitMethod(method);
 
     final PsiTypeParameter[] parameters = method.getTypeParameters();
-    final Map<PsiTypeParameter, PsiType> map = ContainerUtil.newHashMap();
+    final Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     for (PsiTypeParameter parameter : parameters) {
       final PsiClassType[] types = parameter.getSuperTypes();
       final PsiType bound = PsiIntersectionType.createIntersection(types);

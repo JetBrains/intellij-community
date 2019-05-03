@@ -9,13 +9,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.*;
 
 public class IntellijPropertyKindMap {
-  private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = ContainerUtil.newHashMap();
+  private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = new HashMap<>();
 
   static {
     collectCommonLanguageProperties();

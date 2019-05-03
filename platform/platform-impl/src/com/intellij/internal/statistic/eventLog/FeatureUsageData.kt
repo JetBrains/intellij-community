@@ -14,8 +14,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.psi.PsiFile
-import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
@@ -36,7 +34,7 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
-  private var data: MutableMap<String, Any> = ContainerUtil.newHashMap<String, Any>()
+  private var data: MutableMap<String, Any> = HashMap<String, Any>()
   companion object {
     val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
                                                               "lang", "current_file", "input_event", "place")

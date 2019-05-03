@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   public static class State {
     public boolean SHOW_DETAILS = false;
     public boolean SHOW_OTHER_BRANCHES = false;
-    public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
+    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
     public List<Integer> COLUMN_ORDER = ContainerUtil.newArrayList();
     public boolean SHOW_DIFF_PREVIEW = true;
   }

@@ -127,7 +127,7 @@ public class TextAttributesEffectsBuilder {
     if (myEffectsMap.isEmpty()) {
       return Collections.emptyMap();
     }
-    Map<EffectType, Color> result = ContainerUtil.newHashMap();
+    Map<EffectType, Color> result = new HashMap<>();
     myEffectsMap.forEach((key, val) -> {
       if (val != null) {
         result.put(val.effectType, val.effectColor);
@@ -150,7 +150,7 @@ public class TextAttributesEffectsBuilder {
       targetAttributes.setAdditionalEffects(Collections.emptyMap());
     }
     else {
-      Map<EffectType, Color> effectsMap = ContainerUtil.newHashMap();
+      Map<EffectType, Color> effectsMap = new HashMap<>();
       EffectDescriptor mainEffectDescriptor = allEffects.remove(0);
       targetAttributes.setEffectType(mainEffectDescriptor.effectType);
       targetAttributes.setEffectColor(mainEffectDescriptor.effectColor);

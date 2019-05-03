@@ -8,10 +8,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
@@ -45,7 +42,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public Map<String, Boolean> HIGHLIGHTERS = new TreeMap<>();
     public Map<String, List<String>> FILTERS = new TreeMap<>();
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
-    public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
+    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
     public List<Integer> COLUMN_ORDER = ContainerUtil.newArrayList();
   }
 

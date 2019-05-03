@@ -62,7 +62,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
   @NotNull
   private static final          Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE   =
-    ContainerUtilRt.newHashMap();
+    new HashMap<ArrangementSettingsToken, Set<ArrangementSettingsToken>>();
   @NotNull private static final Collection<Set<ArrangementSettingsToken>>                    MUTEXES             =
     ContainerUtilRt.newArrayList();
 

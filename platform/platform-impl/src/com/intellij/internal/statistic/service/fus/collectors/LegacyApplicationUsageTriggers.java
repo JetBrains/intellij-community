@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class LegacyApplicationUsageTriggers implements PersistentStateComponent<
   public final static class CounterState {
     @Property(surroundWithTag = false)
     @XCollection
-    Map<String, Integer> counts = ContainerUtil.newHashMap();
+    Map<String, Integer> counts = new HashMap<>();
   }
 
   @com.intellij.openapi.components.State(name = "UsageTrigger", storages = @Storage(

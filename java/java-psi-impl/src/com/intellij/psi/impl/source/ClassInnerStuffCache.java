@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -140,7 +141,7 @@ public class ClassInnerStuffCache {
     PsiMethod[] methods = getMethods();
     if (methods.length == 0) return Collections.emptyMap();
 
-    Map<String, List<PsiMethod>> collectedMethods = ContainerUtil.newHashMap();
+    Map<String, List<PsiMethod>> collectedMethods = new HashMap<>();
     for (PsiMethod method : methods) {
       List<PsiMethod> list = collectedMethods.get(method.getName());
       if (list == null) {

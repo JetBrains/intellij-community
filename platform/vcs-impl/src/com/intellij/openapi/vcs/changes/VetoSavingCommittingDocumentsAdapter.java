@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -13,8 +13,8 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ui.AbstractCommitter;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class VetoSavingCommittingDocumentsAdapter {
@@ -37,7 +37,7 @@ public class VetoSavingCommittingDocumentsAdapter {
   }
 
   private Map<Document, Project> getDocumentsBeingCommitted() {
-    Map<Document, Project> documentsToWarn = ContainerUtil.newHashMap();
+    Map<Document, Project> documentsToWarn = new HashMap<>();
     for (Document unsavedDocument : myFileDocumentManager.getUnsavedDocuments()) {
       final Object data = unsavedDocument.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY);
       if (data instanceof Project) {

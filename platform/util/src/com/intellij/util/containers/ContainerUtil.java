@@ -28,14 +28,22 @@ public class ContainerUtil extends ContainerUtilRt {
     return elements;
   }
 
+  /**
+   * @deprecated Use {@link HashMap#HashMap()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> HashMap<K, V> newHashMap() {
     return new HashMap<>();
   }
 
+  /**
+   * @deprecated Use {@link HashMap#HashMap(Map)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return new HashMap<>(map);
   }

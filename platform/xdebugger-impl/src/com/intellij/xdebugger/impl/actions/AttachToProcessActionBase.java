@@ -290,7 +290,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     Map<XAttachHost, LinkedHashSet<RecentItem>> recentItems = project.getUserData(RECENT_ITEMS_KEY);
 
     if (recentItems == null) {
-      project.putUserData(RECENT_ITEMS_KEY, recentItems = ContainerUtil.newHashMap());
+      project.putUserData(RECENT_ITEMS_KEY, recentItems = new HashMap<>());
     }
 
     XAttachHost host = item.getHost();

@@ -1,10 +1,10 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   public VcsLogColorManagerImpl(@NotNull Collection<VirtualFile> roots) {
     myRoots = new ArrayList<>(roots);
     Collections.sort(myRoots, Comparator.comparing(VirtualFile::getName));
-    myRoots2Colors = ContainerUtil.newHashMap();
+    myRoots2Colors = new HashMap<>();
     int i = 0;
     for (VirtualFile root : myRoots) {
       Color color;

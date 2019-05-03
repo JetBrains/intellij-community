@@ -46,14 +46,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
@@ -90,7 +89,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     super(mergeContext.getProject(), true);
     myMergeContext = mergeContext;
     myAllListsLoaded = allListsLoaded;
-    myStatusMap = synchronizedMap(newHashMap());
+    myStatusMap = synchronizedMap(new HashMap<>());
     myMergeChecker = mergeChecker;
     myAllStatusesCalculated = allStatusesCalculated;
     setTitle(title);

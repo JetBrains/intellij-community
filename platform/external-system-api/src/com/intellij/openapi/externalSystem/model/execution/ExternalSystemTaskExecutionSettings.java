@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -13,10 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
@@ -39,7 +36,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private String myVmOptions;
   private String myScriptParameters;
   @NotNull
-  private Map<String, String> myEnv =  ContainerUtilRt.newHashMap();
+  private Map<String, String> myEnv = new HashMap<String, String>();
   private boolean myPassParentEnvs = true;
 
   public ExternalSystemTaskExecutionSettings() {

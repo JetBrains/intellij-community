@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -178,7 +179,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     };
 
-    final Map<PsiModifierListOwner, LookupElement> staticMembers = ContainerUtil.newHashMap();
+    final Map<PsiModifierListOwner, LookupElement> staticMembers = new HashMap<>();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = GroovyCompletionUtil.getQualifierType(qualifier);
 

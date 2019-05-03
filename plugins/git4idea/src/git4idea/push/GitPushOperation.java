@@ -118,7 +118,7 @@ public class GitPushOperation {
     mySettings = GitVcsSettings.getInstance(myProject);
     myRepositoryManager = GitRepositoryManager.getInstance(myProject);
 
-    Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
+    Map<GitRepository, GitRevisionNumber> currentHeads = new HashMap<>();
     for (GitRepository repository : pushSpecs.keySet()) {
       repository.update();
       String head = repository.getCurrentRevision();
@@ -141,8 +141,8 @@ public class GitPushOperation {
     Map<GitRepository, String> preUpdatePositions = updateRootInfoAndRememberPositions();
     Boolean rebaseOverMergeProblemDetected = null;
 
-    final Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
-    Map<GitRepository, GitUpdateResult> updatedRoots = ContainerUtil.newHashMap();
+    final Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
+    Map<GitRepository, GitUpdateResult> updatedRoots = new HashMap<>();
 
     try {
       Collection<GitRepository> remainingRoots = myPushSpecs.keySet();
@@ -289,7 +289,7 @@ public class GitPushOperation {
                                               @NotNull Map<GitRepository, String> preUpdatePositions,
                                               @Nullable Label beforeUpdateLabel,
                                               @Nullable Label afterUpdateLabel) {
-    Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
+    Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : allRoots.entrySet()) {
       GitRepository repository = entry.getKey();

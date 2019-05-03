@@ -978,7 +978,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     bottomPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new JBColor(Gray._217, Gray._81)));
     main.add(bottomPanel, BorderLayout.SOUTH);
 
-    final HashMap<Object, JPanel> panelsMap = ContainerUtil.newHashMap();
+    final HashMap<Object, JPanel> panelsMap = new HashMap<>();
     ListSelectionListener selectionListener = e -> {
       if (e.getValueIsAdjusting()) {
         // Update when a change has been finalized.

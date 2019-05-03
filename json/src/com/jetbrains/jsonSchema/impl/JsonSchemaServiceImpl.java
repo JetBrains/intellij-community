@@ -232,7 +232,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     List<JsonSchemaCatalogEntry> schemas = myCatalogManager.getAllCatalogEntries();
     Collection<? extends JsonSchemaFileProvider> providers = myState.getProviders();
     List<JsonSchemaInfo> results = ContainerUtil.newArrayListWithCapacity(schemas.size() + providers.size());
-    Map<String, JsonSchemaInfo> processedRemotes = ContainerUtil.newHashMap();
+    Map<String, JsonSchemaInfo> processedRemotes = new HashMap<>();
     for (JsonSchemaFileProvider provider: providers) {
       if (provider.isUserVisible()) {
         final String remoteSource = provider.getRemoteSource();

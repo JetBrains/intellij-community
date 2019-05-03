@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -29,18 +29,20 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.areToolDescriptorsChanged;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements Disposable, UnnamedConfigurable {
   @NotNull private final Project myProject;
   @NotNull private final CommitMessageInspectionProfile myProfile;
   @NotNull private final List<ToolDescriptors> myInitialToolDescriptors = newArrayList();
-  @NotNull private final Map<HighlightDisplayKey, CommitMessageInspectionDetails> myToolDetails = newHashMap();
+  @NotNull private final Map<HighlightDisplayKey, CommitMessageInspectionDetails> myToolDetails = new HashMap<>();
   @NotNull private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group("");
   private InspectionProfileModifiableModel myModifiableModel;
   private InspectionsConfigTreeTable myInspectionsTable;

@@ -87,7 +87,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   public static class State {
     public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = new TreeMap<>();
     public LinkedHashSet<String> OPEN_TABS = newLinkedHashSet();
-    public Map<String, List<RecentGroup>> RECENT_FILTERS = newHashMap();
+    public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
   }
 
   public static class RecentGroup {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
@@ -196,7 +196,7 @@ public class TroveUtil {
 
   @NotNull
   public static <T> Map<T, TIntHashSet> group(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
-    Map<T, TIntHashSet> result = ContainerUtil.newHashMap();
+    Map<T, TIntHashSet> result = new HashMap<>();
     set.forEach(it -> {
       T key = function.apply(it);
       TIntHashSet values = result.get(key);

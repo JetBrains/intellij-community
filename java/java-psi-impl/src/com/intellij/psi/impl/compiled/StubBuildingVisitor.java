@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -786,7 +787,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   private static Function<String, String> createMapping(byte[] classBytes) {
-    final Map<String, Pair<String, String>> mapping = ContainerUtil.newHashMap();
+    final Map<String, Pair<String, String>> mapping = new HashMap<>();
 
     try {
       new ClassReader(classBytes).accept(new ClassVisitor(ASM_API) {

@@ -42,7 +42,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
-    myPartiallyMerged = newHashMap();
+    myPartiallyMerged = new HashMap<>();
     myMergeInfoLock = new Object();
     myMergeInfoMap = new TreeMap<>(reverseOrder());
   }

@@ -174,7 +174,7 @@ public class JavaModuleGraphUtil {
   }
 
   private static Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
-    Map<String, Set<String>> map = ContainerUtil.newHashMap();
+    Map<String, Set<String>> map = new HashMap<>();
     for (PsiPackageAccessibilityStatement statement : source.getExports()) {
       String pkg = statement.getPackageName();
       List<String> targets = statement.getModuleNames();
@@ -257,7 +257,7 @@ public class JavaModuleGraphUtil {
     }
 
     public Trinity<String, PsiJavaModule, PsiJavaModule> findConflict(PsiJavaModule source) {
-      Map<String, PsiJavaModule> exports = ContainerUtil.newHashMap();
+      Map<String, PsiJavaModule> exports = new HashMap<>();
       return processExports(source, (pkg, m) -> {
         PsiJavaModule existing = exports.put(pkg, m);
         return existing != null ? new Trinity<>(pkg, existing, m) : null;

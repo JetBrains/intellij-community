@@ -4,9 +4,9 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class ExpandMacroToPathMap extends PathMacroMap {
   private final Map<String, String> myPlainMap = new LinkedHashMap<>();
-  private final Map<String, String> myMacroExpands = ContainerUtil.newHashMap();
+  private final Map<String, String> myMacroExpands = new HashMap<>();
 
   public void addMacroExpand(@NotNull String macroName, @NotNull String path) {
     myMacroExpands.put(macroName, FileUtil.toSystemIndependentName(path));

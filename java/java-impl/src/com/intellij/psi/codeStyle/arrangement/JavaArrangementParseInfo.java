@@ -34,7 +34,7 @@ public class JavaArrangementParseInfo {
   private boolean myRebuildMethodDependencies;
 
   private final HashMap<PsiField, JavaElementArrangementEntry> myFields = new LinkedHashMap<>();
-  private final Map<PsiField, Set<PsiField>> myFieldDependencies = ContainerUtil.newHashMap();
+  private final Map<PsiField, Set<PsiField>> myFieldDependencies = new HashMap<>();
 
   @NotNull
   public List<JavaElementArrangementEntry> getEntries() {

@@ -19,14 +19,22 @@ import java.util.*;
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
 public class ContainerUtilRt {
+  /**
+   * @deprecated Use {@link HashMap#HashMap()}
+   */
   @NotNull
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static <K, V> HashMap<K, V> newHashMap() {
     return new HashMap<K, V>();
   }
 
+  /**
+   * @deprecated Use {@link HashMap#HashMap(Map)}
+   */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return new HashMap<K, V>(map);
   }
