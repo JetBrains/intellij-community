@@ -454,7 +454,7 @@ public class PluginManagerConfigurableNewLayout
                 }
                 return myTagsSorted;
               case "/sortBy:":
-                return ContainerUtil.list("downloads", "name", "rating", "updated");
+                return Arrays.asList("downloads", "name", "rating", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
                   myVendorsSorted = MyPluginModel.getVendors(getPluginRepositories());
@@ -871,7 +871,7 @@ public class PluginManagerConfigurableNewLayout
           @NotNull
           @Override
           protected List<String> getAttributes() {
-            return ContainerUtil.list("/downloaded", "/outdated", "/enabled", "/disabled", "/invalid", "/bundled", "/vendor:");
+            return Arrays.asList("/downloaded", "/outdated", "/enabled", "/disabled", "/invalid", "/bundled", "/vendor:");
           }
 
           @Nullable

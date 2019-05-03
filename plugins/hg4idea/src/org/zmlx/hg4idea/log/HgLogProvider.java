@@ -209,7 +209,7 @@ public final class HgLogProvider implements VcsLogProvider {
 
       Collection<String> branchNames = repository.getBranches().keySet();
       Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repository.getBookmarks());
-      Collection<String> predefinedNames = ContainerUtil.list(TIP_REFERENCE);
+      Collection<String> predefinedNames = Arrays.asList(TIP_REFERENCE);
 
       boolean atLeastOneBranchExists = false;
       for (String branchName : ContainerUtil.concat(branchNames, bookmarkNames, predefinedNames)) {

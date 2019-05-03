@@ -1032,7 +1032,7 @@ public class PluginManagerConfigurableNew
           case "repository:":
             return UpdateSettings.getInstance().getPluginHosts();
           case "sortBy:":
-            return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
+            return Arrays.asList("downloads", "name", "rating", "featured", "updated");
         }
         return null;
       }
@@ -1238,7 +1238,7 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       protected List<String> getAttributes() {
-        return ContainerUtil.list("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
+        return Arrays.asList("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
       }
 
       @Nullable

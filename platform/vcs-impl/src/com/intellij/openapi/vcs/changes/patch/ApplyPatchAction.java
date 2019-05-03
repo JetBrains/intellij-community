@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -44,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -181,8 +181,8 @@ public class ApplyPatchAction extends DumbAwareAction {
           if (leftPanelTitle == null) leftPanelTitle = VcsBundle.message("patch.apply.conflict.patched.version");
           if (rightPanelTitle == null) rightPanelTitle = VcsBundle.message("patch.apply.conflict.local.version");
 
-          List<String> contents = ContainerUtil.list(patchedContent, baseContent, localContent);
-          List<String> titles = ContainerUtil.list(leftPanelTitle, null, rightPanelTitle);
+          List<String> contents = Arrays.asList(patchedContent, baseContent, localContent);
+          List<String> titles = Arrays.asList(leftPanelTitle, null, rightPanelTitle);
 
           request = PatchDiffRequestFactory
             .createMergeRequest(project, document, file, contents, null, titles, callback);

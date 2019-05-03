@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -109,7 +109,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     final DocumentContent right = ThreeSide.RIGHT.select(contents);
     final DocumentContent output = mergeRequest.getOutputContent();
 
-    return ContainerUtil.list(left, output, right);
+    return Arrays.asList(left, output, right);
   }
 
   @NotNull

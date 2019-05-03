@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.configurable;
 
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.uniqueIndex;
@@ -29,7 +30,6 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel.buildVcsWrappersModel;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 
@@ -52,7 +52,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     super(project, false);
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myVcses = uniqueIndex(list(myVcsManager.getAllVcss()), VcsDescriptor::getName);
+    myVcses = uniqueIndex(Arrays.asList(myVcsManager.getAllVcss()), VcsDescriptor::getName);
     myVCSComboBox.setModel(buildVcsWrappersModel(project));
     myDirectoryTextField.addActionListener(
       new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS", myDirectoryTextField, project,

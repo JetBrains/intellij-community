@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
@@ -25,6 +25,7 @@ import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -167,22 +168,17 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @NotNull
   protected List<AnAction> createToolbarActions() {
-    return ContainerUtil.list(
-      myShowDiffAction
-    );
+    return Arrays.asList(myShowDiffAction);
   }
 
   @NotNull
   protected List<AnAction> createPopupMenuActions() {
-    return ContainerUtil.list(
-      myShowDiffAction
-    );
+    return Arrays.asList(myShowDiffAction);
   }
 
   @NotNull
   protected List<AnAction> createDiffActions() {
-    return ContainerUtil.list(
-    );
+    return Arrays.asList();
   }
 
   protected void onDoubleClick() {

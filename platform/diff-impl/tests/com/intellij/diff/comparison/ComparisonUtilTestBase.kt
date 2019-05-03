@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
@@ -24,7 +10,6 @@ import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
-import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 abstract class ComparisonUtilTestBase : DiffTestCase() {
@@ -335,17 +320,17 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
     fun default(vararg expected: Couple<IntPair>) {
       assertNull(changes.default)
-      changes.default = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
+      changes.default = listOf(*expected).map { Data(it.first, it.second) }
     }
 
     fun trim(vararg expected: Couple<IntPair>) {
       assertNull(changes.trim)
-      changes.trim = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
+      changes.trim = listOf(*expected).map { Data(it.first, it.second) }
     }
 
     fun ignore(vararg expected: Couple<IntPair>) {
       assertNull(changes.ignore)
-      changes.ignore = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
+      changes.ignore = listOf(*expected).map { Data(it.first, it.second) }
     }
 
 

@@ -447,7 +447,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
         Collection<GitBranch> branches = ContainerUtil
           .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
         Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-        Collection<String> predefinedNames = ContainerUtil.list(GitUtil.HEAD);
+        Collection<String> predefinedNames = Arrays.asList(GitUtil.HEAD);
 
         for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
           if (branchFilter.matches(branchName)) {

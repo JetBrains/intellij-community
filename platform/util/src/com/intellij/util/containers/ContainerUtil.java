@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -316,7 +316,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> collection) {
     return new HashSet<>(collection);
   }
-  
+
   @NotNull
   public static <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
     return ContainerUtilRt.newHashSet(iterator);
@@ -1392,7 +1392,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> append(@NotNull List<? extends T> list, @NotNull T... values) {
-    return concat(list, list(values));
+    return concat(list, Arrays.asList(values));
   }
 
   /**
@@ -1403,7 +1403,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> prepend(@NotNull List<? extends T> list, @NotNull T... values) {
-    return concat(list(values), list);
+    return concat(Arrays.asList(values), list);
   }
 
   /**
@@ -1880,7 +1880,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD 
+   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD
    */
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
     int size = a.length;
@@ -2181,9 +2181,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return items.subList(0, items.size() - 1);
   }
 
+  /**
+   * @deprecated Use {@link Arrays#asList(Object[])} )} )}
+   */
   @NotNull
   @SafeVarargs
   @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> list(@NotNull T... items) {
     return Arrays.asList(items);
   }

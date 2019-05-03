@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffContentFactory;
@@ -41,11 +27,11 @@ import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffRequest;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class PatchDiffRequestFactory {
@@ -87,8 +73,8 @@ public class PatchDiffRequestFactory {
       String baseContent = texts.getBase();
       String patchedContent = texts.getPatched();
 
-      return createDiffRequest(project, file, ContainerUtil.list(localContent, baseContent, patchedContent), null,
-                               ContainerUtil.list("Current Version", "Base Version", afterTitle));
+      return createDiffRequest(project, file, Arrays.asList(localContent, baseContent, patchedContent), null,
+                               Arrays.asList("Current Version", "Base Version", afterTitle));
     }
   }
 
@@ -147,8 +133,8 @@ public class PatchDiffRequestFactory {
                                                 @NotNull String patchedContent,
                                                 @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
-    List<String> titles = ContainerUtil.list(null, null, null);
-    List<String> contents = ContainerUtil.list(localContent, baseContent, patchedContent);
+    List<String> titles = Arrays.asList(null, null, null);
+    List<String> contents = Arrays.asList(localContent, baseContent, patchedContent);
 
     return createMergeRequest(project, document, file, contents, null, titles, callback);
   }
@@ -182,7 +168,7 @@ public class PatchDiffRequestFactory {
     String baseTitle = StringUtil.notNullize(titles.get(1), VcsBundle.message("patch.apply.conflict.merged.version"));
     String patchedTitle = StringUtil.notNullize(titles.get(2), VcsBundle.message("patch.apply.conflict.patched.version"));
 
-    List<String> actualTitles = ContainerUtil.list(localTitle, baseTitle, patchedTitle);
+    List<String> actualTitles = Arrays.asList(localTitle, baseTitle, patchedTitle);
 
     FileType fileType = file != null ? file.getFileType() : null;
     return DiffRequestFactory.getInstance().createMergeRequest(project, fileType, document, contents, windowTitle, actualTitles, callback);
