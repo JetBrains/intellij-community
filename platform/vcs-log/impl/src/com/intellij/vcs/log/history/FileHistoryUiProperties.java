@@ -12,10 +12,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
@@ -23,7 +20,7 @@ import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 @State(name = "Vcs.Log.History.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
-  @NotNull private final Collection<PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
+  @NotNull private final Collection<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
   private State myState = new State();
 
   public static class State {

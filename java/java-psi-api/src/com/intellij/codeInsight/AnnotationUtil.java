@@ -176,7 +176,7 @@ public class AnnotationUtil {
   @NotNull
   public static <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(@NotNull T element) {
     return CachedValuesManager.getCachedValue(element, () -> {
-      Set<PsiModifierListOwner> result = ContainerUtil.newLinkedHashSet();
+      Set<PsiModifierListOwner> result = new LinkedHashSet<>();
       if (element instanceof PsiMethod) {
         collectSuperMethods(result, ((PsiMethod)element).getHierarchicalMethodSignature(), element,
                             JavaPsiFacade.getInstance(element.getProject()).getResolveHelper());

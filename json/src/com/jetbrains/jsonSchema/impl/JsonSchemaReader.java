@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 
@@ -404,9 +404,10 @@ public class JsonSchemaReader {
   private static MyReader createRequired() {
     return (element, object, queue, virtualFile) -> {
       if (element instanceof JsonArrayValueAdapter) {
-        object.setRequired(ContainerUtil.newLinkedHashSet(((JsonArrayValueAdapter)element).getElements().stream()
-                             .filter(notEmptyString())
-                             .map(el -> StringUtil.unquoteString(el.getDelegate().getText())).collect(Collectors.toList())));
+        object.setRequired(new LinkedHashSet<>(((JsonArrayValueAdapter)element).getElements().stream()
+                                                 .filter(notEmptyString())
+                                                 .map(el -> StringUtil.unquoteString(el.getDelegate().getText()))
+                                                 .collect(Collectors.toList())));
       }
     };
   }

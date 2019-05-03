@@ -72,7 +72,7 @@ public class GrAnnotationCollector {
     final PsiManager manager = alias.getManager();
     final GrAnnotationNameValuePair[] attributes = alias.getParameterList().getAttributes();
 
-    Set<String> allUsedAttrs = ContainerUtil.newLinkedHashSet();
+    Set<String> allUsedAttrs = new LinkedHashSet<>();
     for (Map.Entry<String, Map<String, PsiNameValuePair>> entry : annotations.entrySet()) {
       final String qname = entry.getKey();
       final PsiClass resolved = JavaPsiFacade.getInstance(alias.getProject()).findClass(qname, alias.getResolveScope());
@@ -80,7 +80,7 @@ public class GrAnnotationCollector {
 
       final GrLightAnnotation annotation = new GrLightAnnotation(manager, alias.getLanguage(), qname, modifierList);
 
-      Set<String> usedAttrs = ContainerUtil.newLinkedHashSet();
+      Set<String> usedAttrs = new LinkedHashSet<>();
       for (GrAnnotationNameValuePair attr : attributes) {
         final String name = attr.getName() != null ? attr.getName() : "value";
         if (resolved.findMethodsByName(name, false).length > 0) {

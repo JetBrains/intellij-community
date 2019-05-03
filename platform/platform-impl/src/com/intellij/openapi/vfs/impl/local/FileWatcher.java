@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -44,9 +45,9 @@ public class FileWatcher {
   };
 
   static class DirtyPaths {
-    final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
-    final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
-    final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
+    final Set<String> dirtyPaths = new THashSet<>();
+    final Set<String> dirtyPathsRecursive = new THashSet<>();
+    final Set<String> dirtyDirectories = new THashSet<>();
 
     static final DirtyPaths EMPTY = new DirtyPaths();
 

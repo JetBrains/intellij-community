@@ -175,7 +175,7 @@ public class ArrangementUtil {
   }
 
   public static <T> Set<T> flatten(@NotNull Iterable<? extends Iterable<T>> data) {
-    Set<T> result = ContainerUtilRt.newHashSet();
+    Set<T> result = new HashSet<T>();
     for (Iterable<T> i : data) {
       for (T t : i) {
         result.add(t);

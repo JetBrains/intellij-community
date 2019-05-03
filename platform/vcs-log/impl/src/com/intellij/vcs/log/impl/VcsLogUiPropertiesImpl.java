@@ -26,7 +26,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX,
                              CommonUiProperties.COLUMN_ORDER);
-  private final Set<PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
+  private final Set<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
   @NotNull private final VcsLogApplicationSettings myAppSettings;
 
   public VcsLogUiPropertiesImpl(@NotNull VcsLogApplicationSettings appSettings) {

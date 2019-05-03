@@ -33,7 +33,7 @@ public class LiveVariablesAnalyzer {
   private final MultiMap<Instruction, Instruction> myBackwardMap;
   private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
     FactoryMap.create(closure -> {
-      final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
+      final Set<DfaVariableValue> result = new LinkedHashSet<>();
       closure.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {

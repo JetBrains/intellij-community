@@ -49,10 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -102,7 +99,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
     myIndexers = new HashMap<>();
-    myRoots = ContainerUtil.newLinkedHashSet();
+    myRoots = new LinkedHashSet<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
       VcsLogProvider provider = entry.getValue();

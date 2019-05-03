@@ -19,6 +19,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -550,7 +551,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
       return new AnnotationTextCollector(desc, myMapping, text -> {
-        if (myFilter == null) myFilter = ContainerUtil.newTroveSet();
+        if (myFilter == null) myFilter = new THashSet<>();
         myFilter.add(text);
         new PsiAnnotationStubImpl(myModList, text);
       });
@@ -675,7 +676,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         for (int i = 0; i < myParamCount + 1; i++) myFilters.add(null);
       }
       Set<String> filter = myFilters.get(index);
-      if (filter == null) myFilters.set(index, filter = ContainerUtil.newTroveSet());
+      if (filter == null) myFilters.set(index, filter = new THashSet<>());
       return filter.add(text);
     }
   }

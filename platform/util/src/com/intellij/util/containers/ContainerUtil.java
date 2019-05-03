@@ -372,8 +372,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return empty ? Collections.emptySet() : ContainerUtilRt.newHashSet(iterable);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashSet#LinkedHashSet()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> LinkedHashSet<T> newLinkedHashSet() {
     return new LinkedHashSet<>();
   }
@@ -391,8 +395,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedHashSet(elements);
   }
 
+  /**
+   * @deprecated Use {@link THashSet#THashSet()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> THashSet<T> newTroveSet() {
     return new THashSet<>();
   }
@@ -407,7 +415,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> THashSet<T> newTroveSet(@NotNull T... elements) {
-    return newTroveSet(Arrays.asList(elements));
+    return new THashSet<>(Arrays.asList(elements));
   }
 
   @SafeVarargs
@@ -423,8 +431,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashSet<>(elements, strategy);
   }
 
+  /**
+   * @deprecated Use {@link THashSet#THashSet(Collection)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> THashSet<T> newTroveSet(@NotNull Collection<? extends T> elements) {
     return new THashSet<>(elements);
   }
@@ -464,8 +476,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newTreeSet(elements);
   }
 
+  /**
+   * @deprecated Use {@link TreeSet#TreeSet(Comparator)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
     return new TreeSet<>(comparator);
   }

@@ -593,7 +593,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     do {
       final Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> globals = new HashMap<>();
       final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
-      final Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
+      final Set<RequestWithProcessor> locals = new LinkedHashSet<>();
       Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors = new THashMap<>();
       distributePrimitives(collectors, locals, globals, customs, localProcessors, progress);
       if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {

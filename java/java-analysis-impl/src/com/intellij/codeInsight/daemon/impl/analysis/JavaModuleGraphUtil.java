@@ -165,7 +165,7 @@ public class JavaModuleGraphUtil {
         DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
         Collection<Collection<PsiJavaModule>> components = builder.getComponents();
         if (!components.isEmpty()) {
-          return ContainerUtil.map(components, ContainerUtil::newLinkedHashSet);
+          return ContainerUtil.map(components, elements -> new LinkedHashSet<>(elements));
         }
       }
     }
@@ -178,7 +178,7 @@ public class JavaModuleGraphUtil {
     for (PsiPackageAccessibilityStatement statement : source.getExports()) {
       String pkg = statement.getPackageName();
       List<String> targets = statement.getModuleNames();
-      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : ContainerUtil.newTroveSet(targets));
+      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new THashSet<>(targets));
     }
     return map;
   }
@@ -195,7 +195,7 @@ public class JavaModuleGraphUtil {
    */
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
-    Set<String> transitiveEdges = ContainerUtil.newTroveSet();
+    Set<String> transitiveEdges = new THashSet<>();
 
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);

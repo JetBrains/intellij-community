@@ -121,7 +121,7 @@ class InferenceCache {
     int[] definitions = definitionMap.getDefinitions(varIndex);
     if (definitions == null) return Collections.emptySet();
 
-    LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = new LinkedHashSet<>();
     for (int defIndex : definitions) {
       Instruction write = myFlow[defIndex];
       if (write != instruction) {

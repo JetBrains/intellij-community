@@ -54,7 +54,6 @@ import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBro
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtilRt.emptyList;
-import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.getBunchSize;
@@ -97,7 +96,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     myRevisionsModel = new ListTableModel<>(new ColumnInfo[]{FAKE_COLUMN}, changeLists);
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<>(allStatusesCalculated);
-    myAlreadyMerged = newHashSet();
+    myAlreadyMerged = new HashSet<Change>();
     setOKButtonText("Merge Selected");
     initUI();
     init();

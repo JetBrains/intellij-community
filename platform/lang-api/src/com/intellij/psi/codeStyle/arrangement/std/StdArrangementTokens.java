@@ -4,13 +4,13 @@ package com.intellij.psi.codeStyle.arrangement.std;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,7 +60,7 @@ public class StdArrangementTokens {
       @NotNull
       @Override
       protected Set<ArrangementSettingsToken> compute() {
-        Set<ArrangementSettingsToken> result = ContainerUtilRt.newHashSet();
+        Set<ArrangementSettingsToken> result = new HashSet<ArrangementSettingsToken>();
         for (Field field : clazz.getFields()) {
           if (ArrangementSettingsToken.class.isAssignableFrom(field.getType())) {
             try {

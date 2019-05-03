@@ -1227,7 +1227,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private static Set<ReadWriteVariableInstruction> collectUsedVariableWithoutInitialization(GrTypeDefinition typeDefinition) {
-    final Set<ReadWriteVariableInstruction> vars = ContainerUtil.newLinkedHashSet();
+    final Set<ReadWriteVariableInstruction> vars = new LinkedHashSet<>();
     typeDefinition.acceptChildren(new GroovyRecursiveElementVisitor() {
       private void collectVars(Instruction[] flow) {
         ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, false);

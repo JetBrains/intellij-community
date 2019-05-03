@@ -138,7 +138,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Override
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    LinkedHashSet<String> messages = newLinkedHashSet();
+    LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);

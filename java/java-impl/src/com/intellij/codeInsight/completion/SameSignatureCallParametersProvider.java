@@ -20,11 +20,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -114,7 +114,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
 
   private static Set<Pair<PsiMethod, PsiSubstitutor>> getCallCandidates(PsiCall expression) {
     PsiMethod chosenMethod = CompletionMemory.getChosenMethod(expression);
-    Set<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.newLinkedHashSet();
+    Set<Pair<PsiMethod, PsiSubstitutor>> candidates = new LinkedHashSet<>();
     JavaResolveResult[] results;
     if (expression instanceof PsiMethodCallExpression) {
       results = ((PsiMethodCallExpression)expression).getMethodExpression().multiResolve(false);

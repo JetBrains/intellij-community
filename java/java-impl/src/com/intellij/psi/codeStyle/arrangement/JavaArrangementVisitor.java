@@ -13,7 +13,6 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +89,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   @NotNull
   private static Set<ArrangementSettingsToken> getGroupingRules(@NotNull ArrangementSettings settings) {
-    Set<ArrangementSettingsToken> groupingRules = ContainerUtilRt.newHashSet();
+    Set<ArrangementSettingsToken> groupingRules = new HashSet<ArrangementSettingsToken>();
     for (ArrangementGroupingRule rule : settings.getGroupings()) {
       groupingRules.add(rule.getGroupingType());
     }

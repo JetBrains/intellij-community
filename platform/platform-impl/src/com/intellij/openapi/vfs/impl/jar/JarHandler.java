@@ -23,6 +23,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.*;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -357,7 +358,7 @@ public class JarHandler extends ZipHandler {
       final List<String> invalidLibraryFilePaths = ContainerUtil.newArrayList();
       final List<String> allLibraryFilePaths = ContainerUtil.newArrayList();
       MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<>();
-      Set<String> validLibraryFilePathToJarSnapshotFilePaths = newTroveSet();
+      Set<String> validLibraryFilePathToJarSnapshotFilePaths = new THashSet<>();
 
       info.processKeys(new CommonProcessors.CollectProcessor<>(allLibraryFilePaths));
       for (String filePath:allLibraryFilePaths) {

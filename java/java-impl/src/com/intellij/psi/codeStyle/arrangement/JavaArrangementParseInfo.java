@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +80,7 @@ public class JavaArrangementParseInfo {
     Stack<Pair<PsiMethod, ArrangementEntryDependencyInfo>> toProcess
       = new Stack<>();
     toProcess.push(Pair.create(method, result));
-    Set<PsiMethod> usedMethods = ContainerUtilRt.newHashSet();
+    Set<PsiMethod> usedMethods = new HashSet<PsiMethod>();
     while (!toProcess.isEmpty()) {
       Pair<PsiMethod, ArrangementEntryDependencyInfo> pair = toProcess.pop();
       Set<PsiMethod> dependentMethods = myMethodDependencies.get(pair.first);

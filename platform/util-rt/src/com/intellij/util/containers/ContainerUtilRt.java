@@ -198,14 +198,22 @@ public class ContainerUtilRt {
     return collection;
   }
 
+  /**
+   * @deprecated Use {@link HashSet#HashSet(int)}
+   */
   @NotNull
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static <T> HashSet<T> newHashSet() {
     return new HashSet<T>();
   }
 
+  /**
+   * @deprecated Use {@link HashSet#HashSet(int)}
+   */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   public static <T> HashSet<T> newHashSet(int initialCapacity) {
     return new HashSet<T>(initialCapacity);
   }
@@ -233,12 +241,6 @@ public class ContainerUtilRt {
     return set;
   }
 
-  @Contract(value = " -> new", pure = true)
-  @NotNull
-  public static <T> LinkedHashSet<T> newLinkedHashSet() {
-    return new LinkedHashSet<T>();
-  }
-
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
@@ -255,8 +257,12 @@ public class ContainerUtilRt {
     return copy(new LinkedHashSet<T>(), elements);
   }
 
+  /**
+   * @deprecated Use {@link TreeSet#TreeSet()}
+   */
   @NotNull
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
   }
@@ -265,12 +271,6 @@ public class ContainerUtilRt {
   @Contract(value = "_ -> new", pure = true)
   public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
     return copy(new TreeSet<T>(), elements);
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
-    return new TreeSet<T>(comparator);
   }
 
   /**

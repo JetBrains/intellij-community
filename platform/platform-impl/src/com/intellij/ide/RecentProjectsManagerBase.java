@@ -618,7 +618,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     Set<String> openPaths;
     boolean forceNewFrame = true;
     synchronized (myStateLock) {
-      openPaths = ContainerUtil.newLinkedHashSet(myState.openPaths);
+      openPaths = new LinkedHashSet<>(myState.openPaths);
       if (openPaths.isEmpty()) {
         openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
         forceNewFrame = false;

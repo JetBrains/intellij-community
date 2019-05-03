@@ -121,7 +121,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   LinkedHashSet<EqClass> getNonTrivialEqClasses() {
     if (myCachedNonTrivialEqClasses != null) return myCachedNonTrivialEqClasses;
 
-    LinkedHashSet<EqClass> result = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<EqClass> result = new LinkedHashSet<>();
     for (EqClass eqClass : myEqClasses) {
       if (eqClass != null && eqClass.size() > 1) {
         result.add(eqClass);
@@ -1454,7 +1454,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushFields() {
-    Set<DfaVariableValue> vars = ContainerUtil.newLinkedHashSet(getChangedVariables());
+    Set<DfaVariableValue> vars = new LinkedHashSet<>(getChangedVariables());
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
         vars.addAll(aClass.getVariables(true));

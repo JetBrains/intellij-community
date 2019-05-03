@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +44,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
 
-    Set<VirtualFile> roots = ContainerUtil.newLinkedHashSet();
+    Set<VirtualFile> roots = new LinkedHashSet<>();
     if (hasOption(CONTENT)) {
       Set<Module> modules = calcModules();
-      myModules = ContainerUtil.newTroveSet(modules);
+      myModules = new THashSet<>(modules);
       for (Module m : modules) {
         for (ContentEntry entry : ModuleRootManager.getInstance(m).getContentEntries()) {
           ContainerUtil.addIfNotNull(roots, entry.getFile());
@@ -81,7 +82,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private Set<Module> calcModules() {
     // In the case that hasOption(CONTENT), the order of the modules set matters for
     // ordering the content roots, so use a LinkedHashSet
-    Set<Module> modules = ContainerUtil.newLinkedHashSet();
+    Set<Module> modules = new LinkedHashSet<>();
     OrderEnumerator en = getOrderEnumeratorForOptions();
     en.forEach(each -> {
       if (each instanceof ModuleOrderEntry) {
@@ -115,7 +116,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     Set<Module> allModules = myModules;
     if (allModules == null) {
-      myModules = allModules = ContainerUtil.newTroveSet(calcModules());
+      myModules = allModules = new THashSet<>(calcModules());
     }
     return allModules.contains(aModule);
   }

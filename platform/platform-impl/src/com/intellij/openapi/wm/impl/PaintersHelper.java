@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
@@ -39,7 +38,7 @@ import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getBackgroundSpec;
 final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
 
-  private final Set<Painter> myPainters = ContainerUtil.newLinkedHashSet();
+  private final Set<Painter> myPainters = new LinkedHashSet<>();
   private final Map<Painter, Component> myPainter2Component = new LinkedHashMap<>();
 
   private final JComponent myRootComponent;

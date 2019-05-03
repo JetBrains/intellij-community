@@ -298,7 +298,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     LinkedHashSet<RecentItem> hostRecentItems = recentItems.get(host);
 
     if(hostRecentItems == null) {
-      recentItems.put(host, ContainerUtil.newLinkedHashSet());
+      recentItems.put(host, new LinkedHashSet<>());
       hostRecentItems = recentItems.get(host);
     }
 

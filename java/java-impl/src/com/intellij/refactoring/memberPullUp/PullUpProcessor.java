@@ -147,8 +147,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   public void moveMembersToBase() throws IncorrectOperationException {
-    myMovedMembers = ContainerUtil.newLinkedHashSet();
-    myMembersAfterMove = ContainerUtil.newLinkedHashSet();
+    myMovedMembers = new LinkedHashSet<>();
+    myMembersAfterMove = new LinkedHashSet<>();
 
     // build aux sets
     for (MemberInfo info : myMembersToMove) {

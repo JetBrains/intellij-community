@@ -82,9 +82,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
     MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
-    MODIFIERS_BY_TYPE.put(GETTER, ContainerUtilRt.newHashSet());
-    MODIFIERS_BY_TYPE.put(SETTER, ContainerUtilRt.newHashSet());
-    MODIFIERS_BY_TYPE.put(OVERRIDDEN, ContainerUtilRt.newHashSet());
+    MODIFIERS_BY_TYPE.put(GETTER, new HashSet<ArrangementSettingsToken>());
+    MODIFIERS_BY_TYPE.put(SETTER, new HashSet<ArrangementSettingsToken>());
+    MODIFIERS_BY_TYPE.put(OVERRIDDEN, new HashSet<ArrangementSettingsToken>());
     MODIFIERS_BY_TYPE.put(INIT_BLOCK, ContainerUtilRt.newHashSet(STATIC));
 
     TYPES_WITH_DISABLED_ORDER.add(INIT_BLOCK);
