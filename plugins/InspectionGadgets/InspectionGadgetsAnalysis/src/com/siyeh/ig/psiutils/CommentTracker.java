@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -11,7 +11,9 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -78,9 +80,10 @@ public final class CommentTracker {
    * @param <T>     the type of the element
    * @return the passed argument
    */
-  public @NotNull <T extends PsiElement> T markUnchanged(@NotNull T element) {
+  @Contract("_ -> param1")
+  public <T extends PsiElement> T markUnchanged(@Nullable T element) {
     checkState();
-    addIgnored(element);
+    if (element != null) addIgnored(element);
     return element;
   }
 

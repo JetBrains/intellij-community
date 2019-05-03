@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -274,9 +274,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       PsiExpression valueExpression = breakStatement.getValueExpression();
       assert valueExpression != null;
       PsiStatement replacement = myFactory.createStatementFromText("return " + ct.text(valueExpression) + ";", breakStatement);
-      ct.markUnchanged(valueExpression);
-      ct.grabComments(breakStatement);
-      breakStatement.replace(replacement);
+      ct.replace(breakStatement, replacement);
     }
 
     @Override
@@ -298,11 +296,9 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct) {
       PsiExpression valueExpression = breakStatement.getValueExpression();
       assert valueExpression != null;
-      String assignText = myVariable.getName() + " = " + valueExpression.getText() + ";\n";
+      String assignText = myVariable.getName() + " = " + ct.text(valueExpression) + ";\n";
       PsiStatement assignment = myFactory.createStatementFromText(assignText, valueExpression);
-      ct.markUnchanged(valueExpression);
-      ct.grabComments(breakStatement);
-      PsiStatement newAssignment = (PsiStatement)breakStatement.replace(assignment);
+      PsiStatement newAssignment = (PsiStatement)ct.replace(breakStatement, assignment);
       BlockUtils.addAfter(newAssignment, myFactory.createStatementFromText("break;", null));
     }
 

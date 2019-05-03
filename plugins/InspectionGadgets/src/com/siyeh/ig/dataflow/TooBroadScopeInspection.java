@@ -395,11 +395,8 @@ public class TooBroadScopeInspection extends BaseInspection {
       CommentTracker tracker = new CommentTracker();
       if (commonParent instanceof PsiTryStatement) {
         PsiElement resourceReference = referenceElement.getParent();
-        if (initializer != null) {
-          tracker.markUnchanged(initializer);
-        }
         PsiResourceVariable resourceVariable = JavaPsiFacade.getElementFactory(project).createResourceVariable(
-          Objects.requireNonNull(variable.getName()), variable.getType(), initializer, variable);
+          Objects.requireNonNull(variable.getName()), variable.getType(), tracker.markUnchanged(initializer), variable);
         newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
         resourceReference.delete();
       }
@@ -470,7 +467,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
 
       final PsiType type = variable.getType();
-      final PsiDeclarationStatement newDeclaration = factory.createVariableDeclarationStatement(name, type, initializer != null ? tracker.markUnchanged(initializer) : null, variable);
+      final PsiDeclarationStatement newDeclaration = factory.createVariableDeclarationStatement(name, type, tracker.markUnchanged(initializer), variable);
       final PsiLocalVariable newVariable = (PsiLocalVariable)newDeclaration.getDeclaredElements()[0];
       final PsiModifierList newModifierList = newVariable.getModifierList();
       final PsiModifierList modifierList = variable.getModifierList();

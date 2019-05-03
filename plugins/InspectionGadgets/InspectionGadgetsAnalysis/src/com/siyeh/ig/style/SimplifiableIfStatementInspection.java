@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.*;
@@ -17,7 +17,6 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces;
@@ -113,7 +112,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       PsiLocalVariable var = tryCast(elements[0], PsiLocalVariable.class);
       if (var == null || var.getInitializer() != null || !ref.isReferenceTo(var)) return;
       CommentTracker ct = new CommentTracker();
-      var.setInitializer(ct.markUnchanged(Objects.requireNonNull(assignment.getRExpression())));
+      var.setInitializer(ct.markUnchanged(assignment.getRExpression()));
       ct.deleteAndRestoreComments(result);
     }
   }
