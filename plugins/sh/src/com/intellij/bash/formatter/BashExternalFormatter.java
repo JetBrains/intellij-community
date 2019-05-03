@@ -2,12 +2,15 @@ package com.intellij.bash.formatter;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.bash.codeStyle.BashCodeStyleSettings;
+import com.intellij.bash.lexer.BashTokenTypes;
+import com.intellij.bash.parser.BashShebangParserUtil;
 import com.intellij.bash.psi.BashFile;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.lang.ASTNode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -37,6 +40,7 @@ import java.util.List;
 // todo: rewrite with the future API, see IDEA-203568
 public class BashExternalFormatter implements ExternalFormatProcessor {
   private final static Logger LOG = Logger.getInstance(BashExternalFormatter.class);
+  private static final List<String> KNOWN_SHELLS = ContainerUtil.list("bash", "posix", "mksh");
 
   @Override
   public boolean activeForFile(@NotNull PsiFile file) {
@@ -77,7 +81,17 @@ public class BashExternalFormatter implements ExternalFormatProcessor {
     long before = document.getModificationStamp();
     documentManager.saveDocument(document);
 
+    String interpreter = "bash";
+    ASTNode shebang = psiFile.getNode().findChildByType(BashTokenTypes.SHEBANG);
+    if (shebang != null) {
+      String detectedInterpreter = BashShebangParserUtil.getInterpreter(shebang.getText());
+      if (KNOWN_SHELLS.contains(detectedInterpreter)) {
+        interpreter = detectedInterpreter;
+      }
+    }
+
     List<String> params = ContainerUtil.newSmartList();
+    params.add("-ln=" + interpreter);
     if (!settings.useTabCharacter(file.getFileType())) {
       int tabSize = settings.getIndentSize(file.getFileType());
       params.add("-i=" + tabSize);
