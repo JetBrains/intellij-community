@@ -16,18 +16,10 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumDataDescriptor;
@@ -42,23 +34,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
   @NonNls
   public static final ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
-
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static Collection<String> getSymbolNames(Project project) {
-    return FileBasedIndex.getInstance().getAllKeys(NAME, project);
-  }
-
-  public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
-    final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    final SymbolCollector collector = new SymbolCollector(name, project, scope);
-    FileBasedIndex.getInstance().processValues(NAME, name, null, collector, scope);
-    return collector.getResult();
-  }
 
   @Override
   @NotNull
@@ -196,63 +179,6 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
           myMap.put(value, Kind.ANYTHING);
         }
       }
-    }
-  }
-
-  private static class SymbolCollector implements FileBasedIndex.ValueProcessor<Kind> {
-    private final GlobalSearchScope myScope;
-    private final PsiManager myMgr;
-    private final String myName;
-
-    private final Collection<NavigationItem> myResult = new ArrayList<>();
-
-    SymbolCollector(String name, Project project, GlobalSearchScope scope) {
-      myMgr = PsiManager.getInstance(project);
-      myScope = scope;
-      myName = name;
-    }
-
-    @Override
-    public boolean process(@NotNull VirtualFile file, Kind kind) {
-      if (myScope.contains(file)) {
-        final PsiFile psiFile = myMgr.findFile(file);
-        if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {
-          final XmlTag[] tags;
-          try {
-            final XmlTag root = ((XmlFile)psiFile).getRootTag();
-            assert root != null;
-            if (kind == Kind.ANYTHING) {
-              final XmlTag[] v = root.findSubTags("variable", XsltSupport.XSLT_NS);
-              final XmlTag[] p = root.findSubTags("param", XsltSupport.XSLT_NS);
-              final XmlTag[] t = root.findSubTags("template", XsltSupport.XSLT_NS);
-              tags = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(v, p), t);
-            }
-            else {
-              tags = root.findSubTags(kind.name().toLowerCase(), XsltSupport.XSLT_NS);
-            }
-          }
-          catch (NullPointerException e) {
-            // something is null, don't bother
-            return true;
-          }
-
-          for (XmlTag tag : tags) {
-            assert XsltSupport.isXsltTag(tag);
-
-            final XsltElement el = kind.wrap(tag);
-            if (el instanceof PsiNamedElement && el instanceof NavigationItem) {
-              if (myName.equals(((PsiNamedElement)el).getName())) {
-                myResult.add((NavigationItem)el);
-              }
-            }
-          }
-        }
-      }
-      return true;
-    }
-
-    public NavigationItem[] getResult() {
-      return myResult.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
     }
   }
 }

@@ -15,44 +15,42 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class MavenGotoFileContributor implements ChooseByNameContributor {
+public class MavenGotoFileContributor implements ChooseByNameContributorEx {
   @Override
-  @NotNull
-  public String[] getNames(Project project, boolean includeNonProjectItems) {
-    List<String> result = new ArrayList<>();
-
-    for (MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
-      result.add(each.getMavenId().getArtifactId());
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    Project project = ObjectUtils.notNull(scope.getProject());
+    for (MavenProject p : MavenProjectsManager.getInstance(project).getProjects()) {
+      String id = p.getMavenId().getArtifactId();
+      if (id != null && !processor.process(id)) return;
     }
-
-    return ArrayUtil.toStringArray(result);
   }
 
   @Override
-  @NotNull
-  public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-    List<NavigationItem> result = new ArrayList<>();
-
-    for (final MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
-      if (name.equals(each.getMavenId().getArtifactId())) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(each.getFile());
-        if (psiFile != null) result.add(psiFile);
-      }
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
+    for (MavenProject each : MavenProjectsManager.getInstance(parameters.getProject()).getProjects()) {
+      VirtualFile file = each.getFile();
+      if (!parameters.getSearchScope().contains(file)) continue;
+      PsiFile psiFile = psiManager.findFile(file);
+      if (psiFile != null && !processor.process(psiFile)) return;
     }
-
-    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 }
