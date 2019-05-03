@@ -59,7 +59,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   @NotNull private final HashMap<PsiClass, Set<PsiField>> myCachedClassFields = new HashMap<>();
 
-  @NotNull private final Set<PsiComment> myProcessedSectionsComments = ContainerUtil.newHashSet();
+  @NotNull private final Set<PsiComment> myProcessedSectionsComments = new HashSet<>();
 
   JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                          @Nullable Document document,

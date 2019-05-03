@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -27,10 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -71,7 +68,7 @@ public class JavaGenerateMemberCompletionContributor {
   private static void suggestGeneratedMethods(CompletionResultSet result, PsiElement position, @Nullable PsiModifierList modifierList) {
     PsiClass parent = CompletionUtil.getOriginalElement(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiClass.class)));
     if (parent != null) {
-      Set<MethodSignature> addedSignatures = ContainerUtil.newHashSet();
+      Set<MethodSignature> addedSignatures = new HashSet<>();
       addGetterSetterElements(result, parent, addedSignatures);
       boolean generateDefaultMethods = modifierList != null && modifierList.hasModifierProperty(PsiModifier.DEFAULT);
       addSuperSignatureElements(parent, true, result, addedSignatures, generateDefaultMethods);
@@ -103,7 +100,7 @@ public class JavaGenerateMemberCompletionContributor {
               insertGenerationInfos(context, Collections.singletonList(new PsiGenerationInfo<>(prototype)));
             }
           }, false, parent));
-          
+
           if (count++ > 100) return;
         }
       }

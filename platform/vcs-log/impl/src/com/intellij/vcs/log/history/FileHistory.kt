@@ -8,7 +8,6 @@ import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
@@ -175,13 +174,13 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
   private val pathsForCommits = HashMap<Int, MaybeDeletedFilePath>()
 
-  fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<HashMap<Int, MaybeDeletedFilePath>, HashSet<Int>> {
+  fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<Map<Int, MaybeDeletedFilePath>, Set<Int>> {
     paths.push(startPath)
     LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph).walk(row, this)
 
-    val excluded = ContainerUtil.newHashSet<Int>()
-    pathsForCommits.forEach { commit, path ->
-      if (path != null && !historyData.affects(commit, path, true)) {
+    val excluded = THashSet<Int>()
+    for ((commit, path) in pathsForCommits) {
+      if (!historyData.affects(commit, path, true)) {
         excluded.add(commit)
       }
     }

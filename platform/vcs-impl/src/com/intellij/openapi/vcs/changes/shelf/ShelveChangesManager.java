@@ -104,7 +104,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     @Attribute("show_recycled")
     public boolean myShowRecycled;
     @XCollection
-    public Set<String> groupingKeys = newHashSet();
+    public Set<String> groupingKeys = new HashSet<>();
   }
 
   @Nullable
@@ -866,7 +866,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
-    Set<VirtualFile> fileSet = newHashSet();
+    Set<VirtualFile> fileSet = new HashSet<>();
     fileSet.addAll(map2SetNotNull(changes, Change::getVirtualFile));
     myShelvingFiles = fileSet;
   }

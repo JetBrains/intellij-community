@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,14 +69,14 @@ public class SnapshotVisiblePackBuilder {
 
   @NotNull
   private RefsModel createEmptyRefsModel() {
-    return new RefsModel(new HashMap<>(), ContainerUtil.newHashSet(), myStorage, new HashMap<>());
+    return new RefsModel(new HashMap<>(), new HashSet<>(), myStorage, new HashMap<>());
   }
 
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
                                     @NotNull Set<Integer> heads,
                                     @NotNull VisibleGraphImpl<Integer> visibleGraph,
                                     @NotNull Map<VirtualFile, VcsLogProvider> providers, int visibleRow, int visibleRange) {
-    Set<VcsRef> branchesAndHeads = ContainerUtil.newHashSet();
+    Set<VcsRef> branchesAndHeads = new HashSet<>();
 
     for (int row = Math.max(0, visibleRow - visibleRange);
          row < Math.min(visibleGraph.getLinearGraph().nodesCount(), visibleRow + visibleRange);
@@ -92,7 +93,7 @@ public class SnapshotVisiblePackBuilder {
     Map<VirtualFile, CompressedRefs> refs = new HashMap<>();
     for (VirtualFile root : providers.keySet()) {
       Set<VcsRef> refsForRoot = map.get(root);
-      refs.put(root, new CompressedRefs(refsForRoot == null ? ContainerUtil.newHashSet() : refsForRoot, myStorage));
+      refs.put(root, new CompressedRefs(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
     }
     return new RefsModel(refs, heads, myStorage, providers);
   }

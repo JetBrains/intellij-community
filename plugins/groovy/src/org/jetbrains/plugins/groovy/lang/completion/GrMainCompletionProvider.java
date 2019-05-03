@@ -44,10 +44,7 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.canResolveToPackage;
 
@@ -170,7 +167,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
                                     final PrefixMatcher matcher,
                                     final Consumer<? super LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-      final Set<LookupElement> added = ContainerUtil.newHashSet();
+      final Set<LookupElement> added = new HashSet<>();
       @Override
       public void consume(LookupElement element) {
         if (added.add(element)) {

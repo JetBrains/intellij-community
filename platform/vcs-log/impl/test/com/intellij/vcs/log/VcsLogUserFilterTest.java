@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -82,7 +82,7 @@ public abstract class VcsLogUserFilterTest {
   public void testSynonyms(@NotNull Set<Character> excludes) throws Exception {
     List<String> names = ContainerUtil.newArrayList();
 
-    Set<String> synonyms = ContainerUtil.newHashSet();
+    Set<String> synonyms = new HashSet<>();
     for (char c = ' '; c <= '~'; c++) {
       if (c == '\'' || c == '!' || c == '\\' || Character.isUpperCase(c) || excludes.contains(c)) continue;
       String name = "User" + c + "Userovich";

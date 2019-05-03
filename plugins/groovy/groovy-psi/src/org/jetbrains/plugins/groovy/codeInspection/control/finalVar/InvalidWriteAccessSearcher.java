@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -88,8 +89,8 @@ public class InvalidWriteAccessSearcher {
   }
 
   private static class MyData {
-    private final Set<VariableDescriptor> myInitialized = ContainerUtil.newHashSet();
-    private final Set<VariableDescriptor> myOverInitialized = ContainerUtil.newHashSet();
+    private final Set<VariableDescriptor> myInitialized = new HashSet<>();
+    private final Set<VariableDescriptor> myOverInitialized = new HashSet<>();
 
     MyData(List<? extends MyData> ins) {
       for (MyData data : ins) {

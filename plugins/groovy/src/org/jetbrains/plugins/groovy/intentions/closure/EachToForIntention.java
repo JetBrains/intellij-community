@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -33,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -113,7 +113,7 @@ public class EachToForIntention extends Intention {
     GrStatement body = forStatement.getBody();
     assert body != null;
 
-    final Set<String> usedLabels = ContainerUtil.newHashSet();
+    final Set<String> usedLabels = new HashSet<>();
     final Ref<Boolean> needLabel = Ref.create(false);
 
     body.accept(new GroovyRecursiveElementVisitor() {

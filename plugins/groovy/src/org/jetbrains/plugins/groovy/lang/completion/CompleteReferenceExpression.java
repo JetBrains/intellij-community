@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -546,7 +546,7 @@ public class CompleteReferenceExpression {
       List<GroovyResolveResult> list = new ArrayList<>(results.length);
       myPropertyNames.removeAll(myPreferredFieldNames);
 
-      Set<String> usedFields = ContainerUtil.newHashSet();
+      Set<String> usedFields = new java.util.HashSet<>();
       for (GroovyResolveResult result : results) {
         final PsiElement element = result.getElement();
         if (element instanceof PsiField) {

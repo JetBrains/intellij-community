@@ -42,8 +42,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
-
 @SuppressWarnings("Duplicates")
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   // option => array of packed OptionDescriptor
@@ -129,8 +127,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @NotNull
   private static Set<URL> findSearchableOptions() throws IOException, URISyntaxException {
-    final Set<URL> urls = newHashSet();
-    final Set<ClassLoader> visited = newHashSet();
+    final Set<URL> urls = new HashSet<>();
+    final Set<ClassLoader> visited = new HashSet<>();
     for (final IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (!plugin.isEnabled()) {
         continue;

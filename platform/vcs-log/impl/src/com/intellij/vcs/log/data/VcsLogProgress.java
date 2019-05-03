@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -20,8 +20,8 @@ import java.util.function.Consumer;
 public class VcsLogProgress implements Disposable {
   @NotNull private final Object myLock = new Object();
   @NotNull private final List<ProgressListener> myListeners = ContainerUtil.newArrayList();
-  @NotNull private final Set<VcsLogProgressIndicator> myTasksWithVisibleProgress = ContainerUtil.newHashSet();
-  @NotNull private final Set<ProgressIndicator> myTasksWithSilentProgress = ContainerUtil.newHashSet();
+  @NotNull private final Set<VcsLogProgressIndicator> myTasksWithVisibleProgress = new HashSet<>();
+  @NotNull private final Set<ProgressIndicator> myTasksWithSilentProgress = new HashSet<>();
   private boolean myDisposed = false;
 
   public VcsLogProgress(@NotNull Project project, @NotNull Disposable parent) {

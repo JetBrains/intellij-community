@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
 
 /**
@@ -207,7 +208,7 @@ public class LiveVariablesAnalyzer {
    * @return true if completed, false if "too complex"
    */
   private boolean runDfa(boolean forward, PairFunction<Instruction, BitSet, BitSet> handleState) {
-    Set<Instruction> entryPoints = ContainerUtil.newHashSet();
+    Set<Instruction> entryPoints = new HashSet<>();
     if (forward) {
       entryPoints.add(myInstructions[0]);
     } else {

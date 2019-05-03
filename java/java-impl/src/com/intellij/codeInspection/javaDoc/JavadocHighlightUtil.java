@@ -458,7 +458,7 @@ public class JavadocHighlightUtil {
   }
 
   private static <T> Set<T> set(Set<T> set) {
-    return set != null ? set : ContainerUtil.newHashSet();
+    return set != null ? set : new HashSet<>();
   }
 
   private static <T> List<T> list(List<T> list) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
@@ -157,7 +154,7 @@ public class IndexDataGetter {
 
     TIntHashSet filteredByUser = null;
     if (userFilter != null) {
-      Set<VcsUser> users = ContainerUtil.newHashSet();
+      Set<VcsUser> users = new HashSet<>();
       for (VirtualFile root : myRoots) {
         users.addAll(userFilter.getUsers(root));
       }

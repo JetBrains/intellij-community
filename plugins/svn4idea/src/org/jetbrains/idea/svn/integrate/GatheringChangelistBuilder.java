@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +22,7 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
     myVcs = vcs;
     myFiles = files;
     myChanges = ContainerUtil.newArrayList();
-    myCheckSet = ContainerUtil.newHashSet();
+    myCheckSet = new HashSet<>();
   }
 
   @Override

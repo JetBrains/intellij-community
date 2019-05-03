@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.IntIntFunction;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -100,9 +99,9 @@ public class TroveUtil {
 
   @NotNull
   public static Set<Integer> createJavaSet(@Nullable TIntHashSet set) {
-    if (set == null) return ContainerUtil.newHashSet();
+    if (set == null) return new HashSet<>();
 
-    Set<Integer> result = ContainerUtil.newHashSet(set.size());
+    Set<Integer> result = new HashSet<>(set.size());
     set.forEach(value -> {
       result.add(value);
       return true;

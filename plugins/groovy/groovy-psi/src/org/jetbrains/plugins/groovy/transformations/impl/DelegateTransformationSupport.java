@@ -65,7 +65,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
 
       if (!processor.myInterfaces) return;
 
-      Set<PsiClass> visited = ContainerUtil.newHashSet();
+      Set<PsiClass> visited = new HashSet<>();
       Queue<Pair<PsiClass, PsiSubstitutor>> queue = ContainerUtil.newLinkedList(Pair.create(delegate, delegateResult.getSubstitutor()));
 
       while (!queue.isEmpty()) {

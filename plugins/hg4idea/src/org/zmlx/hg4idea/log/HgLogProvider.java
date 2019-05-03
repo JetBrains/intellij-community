@@ -64,7 +64,7 @@ public final class HgLogProvider implements VcsLogProvider {
   @Override
   @NotNull
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException {
-    Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
+    Set<VcsUser> userRegistry = new HashSet<>();
     List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<>(userRegistry),
                                                                Collections.emptyList());
     for (TimedVcsCommit commit : commits) {

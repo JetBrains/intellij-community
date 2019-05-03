@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -16,10 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -53,7 +50,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
   }
 
   private static Collection<PsiJavaModule> filterVersions(Project project, Collection<PsiJavaModule> modules) {
-    Set<VirtualFile> filter = ContainerUtil.newHashSet();
+    Set<VirtualFile> filter = new HashSet<>();
 
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (PsiJavaModule module : modules) {

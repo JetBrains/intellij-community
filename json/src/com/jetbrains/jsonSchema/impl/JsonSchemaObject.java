@@ -218,7 +218,7 @@ public class JsonSchemaObject {
     if (selfType == null) return otherType;
     if (otherType == null) {
       if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
-        Set<JsonSchemaType> filteredVariants = ContainerUtil.newHashSet(otherTypeVariants.size());
+        Set<JsonSchemaType> filteredVariants = new HashSet<>(otherTypeVariants.size());
         for (JsonSchemaType variant : otherTypeVariants) {
           JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
           if (subtype != null) filteredVariants.add(subtype);
@@ -247,7 +247,7 @@ public class JsonSchemaObject {
     if (self == null) return other;
     if (other == null) return self;
 
-    Set<JsonSchemaType> resultSet = ContainerUtil.newHashSet(self.size());
+    Set<JsonSchemaType> resultSet = new HashSet<>(self.size());
     for (JsonSchemaType type : self) {
       JsonSchemaType merged = mergeTypes(type, null, other);
       if (merged != null) resultSet.add(merged);
@@ -315,7 +315,7 @@ public class JsonSchemaObject {
     if (other.myMaxProperties != null) myMaxProperties = other.myMaxProperties;
     if (other.myMinProperties != null) myMinProperties = other.myMinProperties;
     if (myRequired != null && other.myRequired != null) {
-      Set<String> set = ContainerUtil.newHashSet(myRequired.size() + other.myRequired.size());
+      Set<String> set = new HashSet<>(myRequired.size() + other.myRequired.size());
       set.addAll(myRequired);
       set.addAll(other.myRequired);
       myRequired = set;
@@ -520,7 +520,7 @@ public class JsonSchemaObject {
 
   private void addAdditionalPropsNotAllowedFor(String url, String pointer) {
     Set<String> newSet = myAdditionalPropertiesNotAllowedFor == null
-                             ? ContainerUtil.newHashSet()
+                             ? new HashSet<>()
                              : new HashSet<>(myAdditionalPropertiesNotAllowedFor);
     newSet.add(url + pointer);
     myAdditionalPropertiesNotAllowedFor = newSet;

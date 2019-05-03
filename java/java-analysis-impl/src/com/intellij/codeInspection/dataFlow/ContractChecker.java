@@ -17,10 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
 * @author peter
@@ -30,9 +27,9 @@ class ContractChecker {
     private final PsiMethod myMethod;
     private final StandardMethodContract myContract;
     private final boolean myOwnContract;
-    private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
-    private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
-    private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
+    private final Set<PsiElement> myViolations = new HashSet<>();
+    private final Set<PsiElement> myNonViolations = new HashSet<>();
+    private final Set<PsiElement> myFailures = new HashSet<>();
     private boolean myMayReturnNormally = false;
 
     ContractCheckerVisitor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {

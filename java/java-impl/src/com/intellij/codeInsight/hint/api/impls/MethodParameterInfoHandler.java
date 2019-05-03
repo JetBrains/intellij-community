@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -150,8 +150,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (candidates != null && candidates.length != 0) {
         Object currentMethodInfo = context.getHighlightedParameter();
         if (currentMethodInfo == null) currentMethodInfo = candidates[0];
-        PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() : 
-                             currentMethodInfo instanceof PsiElement ? (PsiElement) currentMethodInfo : 
+        PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() :
+                             currentMethodInfo instanceof PsiElement ? (PsiElement) currentMethodInfo :
                              null;
         if ((element instanceof PsiMethod)) {
           PsiMethod method = (PsiMethod)element;
@@ -183,7 +183,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                 highlightHints(context.getEditor(), null, -1, context.getCustomContext());
               }
               else {
-                int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(), 
+                int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(),
                                                                         context.getOffset(), JavaTokenType.COMMA);
                 TextRange textRange = expressionList.getTextRange();
                 if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
@@ -245,10 +245,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       int startY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getStartOffset())).y;
       int endY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getEndOffset())).y;
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      return startY > visibleArea.getMaxY() || endY < visibleArea.getMinY() ? null : new TextRange(0, document.getTextLength()); 
+      return startY > visibleArea.getMaxY() || endY < visibleArea.getMinY() ? null : new TextRange(0, document.getTextLength());
     }
     if (!Registry.is("editor.keep.completion.hints.longer")) return range;
-    return new TextRange(DocumentUtil.getLineStartOffset(range.getStartOffset(), document), 
+    return new TextRange(DocumentUtil.getLineStartOffset(range.getStartOffset(), document),
                          DocumentUtil.getLineEndOffset(range.getEndOffset(), document));
   }
 
@@ -385,7 +385,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
-      PsiMethod method = (PsiMethod)(highlightedCandidate instanceof CandidateInfo 
+      PsiMethod method = (PsiMethod)(highlightedCandidate instanceof CandidateInfo
                                      ? ((CandidateInfo)highlightedCandidate).getElement() : highlightedCandidate);
       if (!method.isVarArgs() && index > 0 && index >= method.getParameterList().getParametersCount()) context.setCurrentParameter(-1);
     }
@@ -442,7 +442,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
       }
     }
-    if (currentHint == context.getUserData(CURRENT_HINT) && 
+    if (currentHint == context.getUserData(CURRENT_HINT) &&
         Objects.equals(highlightedHints, context.getUserData(HIGHLIGHTED_HINTS))) return;
     resetHints(context);
     if (currentHint != null) {
@@ -488,7 +488,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static PsiSubstitutor getCandidateInfoSubstitutor(PsiElement argList, CandidateInfo candidate, boolean resolveResult) {
     Computable<PsiSubstitutor> computeSubstitutor =
       () -> candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()
-            ? ((MethodCandidateInfo)candidate).inferTypeArguments(resolveResult ? DefaultParameterTypeInferencePolicy.INSTANCE 
+            ? ((MethodCandidateInfo)candidate).inferTypeArguments(resolveResult ? DefaultParameterTypeInferencePolicy.INSTANCE
                                                                                 : CompletionParameterTypeInferencePolicy.INSTANCE, true)
             : candidate.getSubstitutor();
     if (resolveResult && candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()) {
@@ -578,8 +578,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return null;
   }
 
-  
-  
+
+
   private static CandidateInfo[] getMethods(PsiExpressionList argList) {
     final PsiCall call = getCall(argList);
     PsiResolveHelper helper = JavaPsiFacade.getInstance(argList.getProject()).getResolveHelper();
@@ -687,7 +687,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
       for (int j = 0; j < numParams; j++) {
         if (context.isSingleParameterInfo() && j != currentParameter) continue;
-        
+
         PsiParameter param = parms[j];
 
         int startOffset = buffer.length();
@@ -720,7 +720,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             }
             else {
               buffer.insert(0, "<table><tr><td valign='top'>")
-                .append("</td><td style='width:400px'>&nbsp;&nbsp;<i>").append(javaDoc).append("</i></td></tr></table>");              
+                .append("</td><td style='width:400px'>&nbsp;&nbsp;<i>").append(javaDoc).append("</i></td></tr></table>");
             }
           }
         }
@@ -771,7 +771,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
     int lastSize = buffer.length();
-    Set<String> shownAnnotations = ContainerUtil.newHashSet();
+    Set<String> shownAnnotations = new HashSet<>();
     for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, !DumbService.isDumb(owner.getProject()))) {
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {

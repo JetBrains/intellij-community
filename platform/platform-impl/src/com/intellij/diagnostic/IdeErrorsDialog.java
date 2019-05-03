@@ -901,7 +901,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return ((PicoPluginExtensionInitializationException)t).getPluginId();
     }
 
-    Set<String> visitedClassNames = ContainerUtil.newHashSet();
+    Set<String> visitedClassNames = new HashSet<>();
     for (StackTraceElement element : t.getStackTrace()) {
       if (element != null) {
         String className = element.getClassName();

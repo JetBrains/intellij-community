@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +65,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   @NotNull private static final Collection<Set<ArrangementSettingsToken>>                    MUTEXES             =
     ContainerUtilRt.newArrayList();
 
-  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER = ContainerUtil.newHashSet();
-  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH = ContainerUtil.newHashSet();
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER = new HashSet<>();
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH = new HashSet<>();
 
   static {
     Set<ArrangementSettingsToken> visibilityModifiers = ContainerUtilRt.newHashSet(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);

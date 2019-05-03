@@ -523,7 +523,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     private class MyInnerDiffWorker {
-      @NotNull private final Set<TextMergeChange> myScheduled = ContainerUtil.newHashSet();
+      @NotNull private final Set<TextMergeChange> myScheduled = new HashSet<>();
 
       @NotNull private final Alarm myAlarm = new Alarm(MyThreesideViewer.this);
       @Nullable private ProgressIndicator myProgress;

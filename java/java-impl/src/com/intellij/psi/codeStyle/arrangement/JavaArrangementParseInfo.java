@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -196,7 +195,7 @@ public class JavaArrangementParseInfo {
   public void registerFieldInitializationDependency(@NotNull PsiField fieldToInitialize, @NotNull PsiField usedInInitialization) {
     Set<PsiField> fields = myFieldDependencies.get(fieldToInitialize);
     if (fields == null) {
-      fields = ContainerUtil.newHashSet();
+      fields = new HashSet<>();
       myFieldDependencies.put(fieldToInitialize, fields);
     }
     fields.add(usedInInitialization);

@@ -50,7 +50,7 @@ public class ConfigurableExtensionPointUtil {
       }
     }
 
-    Set<String> visited = ContainerUtil.newHashSet();
+    Set<String> visited = new HashSet<>();
     Map<String, List<String>> idTree = buildIdTree(idToConfigurable, idsInEpOrder);
     // modify configurables (append children)
     // Before adding a child to a parent, all children of the child should be already added to the child,

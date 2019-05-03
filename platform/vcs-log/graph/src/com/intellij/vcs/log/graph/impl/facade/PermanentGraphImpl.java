@@ -172,7 +172,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       return new IntContainedInBranchCondition<>(branchNodes);
     }
     else {
-      final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
+      final Set<CommitId> branchNodes = new HashSet<>();
       myReachableNodes.walkDown(headIds, node -> branchNodes.add(myPermanentCommitsInfo.getCommitId(node)));
       return new ContainedInBranchCondition<>(branchNodes);
     }

@@ -283,8 +283,8 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
 
-    Set<VcsRef> refs = ContainerUtil.newHashSet();
-    Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
+    Set<VcsRef> refs = new HashSet<>();
+    Set<VcsCommitMetadata> commits = new HashSet<>();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
       String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
       DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);

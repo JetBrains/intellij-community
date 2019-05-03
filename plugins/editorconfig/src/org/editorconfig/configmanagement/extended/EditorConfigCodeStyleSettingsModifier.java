@@ -15,7 +15,6 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
-import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
@@ -76,7 +75,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(context.getLanguage());
     if (provider != null) {
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(context.getSettings());
-      Set<String> processed = ContainerUtil.newHashSet();
+      Set<String> processed = new HashSet<>();
       boolean isModified = processOptions(context, mapper, false, processed);
       isModified = processOptions(context, mapper, true, processed) || isModified;
       return isModified;

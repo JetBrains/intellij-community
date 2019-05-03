@@ -22,7 +22,6 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
@@ -56,7 +55,7 @@ public class VcsStructureChooser extends DialogWrapper {
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myRoots;
   @NotNull private final Map<VirtualFile, String> myModulesSet;
-  @NotNull private final Set<VirtualFile> mySelectedFiles = ContainerUtil.newHashSet();
+  @NotNull private final Set<VirtualFile> mySelectedFiles = new HashSet<>();
 
   @NotNull private final SelectionManager mySelectionManager;
 

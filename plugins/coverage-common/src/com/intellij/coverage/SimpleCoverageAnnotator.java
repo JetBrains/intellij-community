@@ -15,16 +15,12 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author traff
@@ -287,7 +283,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                           suite.isTrackTestFolders(),
                           index,
                           suite.getCoverageEngine(),
-                          ContainerUtil.newHashSet(),
+                          new HashSet<>(),
                           Collections.unmodifiableMap(normalizedFiles2Files));
   }
 

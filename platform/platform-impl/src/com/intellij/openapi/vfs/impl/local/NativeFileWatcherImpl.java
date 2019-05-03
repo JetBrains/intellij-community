@@ -35,10 +35,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -372,7 +369,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     private void processRemap() {
-      Set<Pair<String, String>> pairs = ContainerUtil.newHashSet();
+      Set<Pair<String, String>> pairs = new HashSet<>();
       for (int i = 0; i < myLines.size() - 1; i += 2) {
         pairs.add(Pair.create(myLines.get(i), myLines.get(i + 1)));
       }

@@ -328,8 +328,8 @@ public class BranchInfo {
   }
 
   private void fillMergedRevisions(String pathWithRevisionNumber, @NotNull MergeRangeList mergeRangeList) {
-    Set<Long> revisions = ContainerUtil.newHashSet();
-    Set<Long> nonInheritableRevisions = ContainerUtil.newHashSet();
+    Set<Long> revisions = new HashSet<>();
+    Set<Long> nonInheritableRevisions = new HashSet<>();
 
     for (MergeRange range : mergeRangeList.getRanges()) {
       // TODO: Seems there is no much sense in converting merge range to list of revisions - we need just implement smart search

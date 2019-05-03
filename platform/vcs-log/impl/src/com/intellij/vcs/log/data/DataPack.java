@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
@@ -40,7 +39,7 @@ public class DataPack extends DataPackBase {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
-      refsModel = new RefsModel(refs, ContainerUtil.newHashSet(), storage, providers);
+      refsModel = new RefsModel(refs, new HashSet<>(), storage, providers);
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
@@ -66,7 +65,7 @@ public class DataPack extends DataPackBase {
       }
     }
 
-    Set<Integer> heads = ContainerUtil.newHashSet();
+    Set<Integer> heads = new HashSet<>();
     for (GraphCommit<Integer> commit : commits) {
       if (!parents.contains(commit.getId())) {
         heads.add(commit.getId());
@@ -96,7 +95,7 @@ public class DataPack extends DataPackBase {
   @NotNull
   private static DataPack createEmptyInstance() {
     RefsModel emptyModel =
-      new RefsModel(new HashMap<>(), ContainerUtil.newHashSet(), VcsLogStorageImpl.EMPTY, new HashMap<>());
+      new RefsModel(new HashMap<>(), new HashSet<>(), VcsLogStorageImpl.EMPTY, new HashMap<>());
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
   }
 

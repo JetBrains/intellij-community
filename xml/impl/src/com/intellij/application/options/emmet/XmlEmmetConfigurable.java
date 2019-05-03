@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
@@ -22,10 +21,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable, Configurable.NoScroll {
   private JPanel myPanel;
@@ -151,7 +148,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
 
   @NotNull
   private Set<String> enabledFilters() {
-    Set<String> result = ContainerUtil.newHashSet();
+    Set<String> result = new HashSet<>();
     for (Map.Entry<String, JBCheckBox> checkbox : myFilterCheckboxes.entrySet()) {
       if (checkbox.getValue().isSelected()) {
         result.add(checkbox.getKey());

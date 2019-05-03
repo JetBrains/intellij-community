@@ -315,7 +315,7 @@ public class ResolveUtil {
     }
     Set<String> result = key == null ? null : cache.get(key);
     if (result == null) {
-      result = ContainerUtil.newHashSet();
+      result = new HashSet<>();
       collectSuperTypes(base, result, project);
       if (key != null) {
         cache.put(key, result);

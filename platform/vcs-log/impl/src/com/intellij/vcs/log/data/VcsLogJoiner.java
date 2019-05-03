@@ -97,11 +97,11 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
   private Set<Commit> getAllNewCommits(@NotNull List<? extends Commit> unsafeGreenPartSavedLog,
                                        @NotNull List<? extends Commit> firstBlock) {
-    Set<CommitId> existedCommitHashes = ContainerUtil.newHashSet();
+    Set<CommitId> existedCommitHashes = new HashSet<>();
     for (Commit commit : unsafeGreenPartSavedLog) {
       existedCommitHashes.add(commit.getId());
     }
-    Set<Commit> allNewsCommits = ContainerUtil.newHashSet();
+    Set<Commit> allNewsCommits = new HashSet<>();
     for (Commit newCommit : firstBlock) {
       if (!existedCommitHashes.contains(newCommit.getId())) {
         allNewsCommits.add(newCommit);

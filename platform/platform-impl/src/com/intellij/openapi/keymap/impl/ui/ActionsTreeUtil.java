@@ -54,7 +54,7 @@ public class ActionsTreeUtil {
   }
 
   public static Map<String, String> createPluginActionsMap() {
-    Set<PluginId> visited = ContainerUtil.newHashSet();
+    Set<PluginId> visited = new HashSet<>();
     Map<String, String> result = new HashMap<>();
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();

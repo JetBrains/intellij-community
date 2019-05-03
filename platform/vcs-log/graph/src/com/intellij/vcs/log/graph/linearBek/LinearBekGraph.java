@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -25,10 +11,7 @@ import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LinearBekGraph implements LinearGraph {
   @NotNull protected final LinearGraph myGraph;
@@ -74,7 +57,7 @@ public class LinearBekGraph implements LinearGraph {
   }
 
   public Collection<GraphEdge> expandEdge(@NotNull final GraphEdge edge) {
-    Set<GraphEdge> result = ContainerUtil.newHashSet();
+    Set<GraphEdge> result = new HashSet<>();
 
     assert edge.getType() == GraphEdgeType.DOTTED;
     myDottedEdges.removeEdge(edge);
@@ -115,7 +98,7 @@ public class LinearBekGraph implements LinearGraph {
     }
 
     public Collection<GraphEdge> getRemovedEdges() {
-      Set<GraphEdge> result = ContainerUtil.newHashSet();
+      Set<GraphEdge> result = new HashSet<>();
       Set<GraphEdge> hidden = myHiddenEdges.getEdges();
       result.addAll(ContainerUtil.filter(hidden, graphEdge -> graphEdge.getType() != GraphEdgeType.DOTTED));
       result.addAll(ContainerUtil.intersection(hidden, myLinearGraph.myDottedEdges.getEdges()));

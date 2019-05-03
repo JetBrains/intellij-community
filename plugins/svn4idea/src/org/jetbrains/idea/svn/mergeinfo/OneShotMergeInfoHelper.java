@@ -65,7 +65,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @Override
   @NotNull
   public MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
-    Set<String> notMergedPaths = newHashSet();
+    Set<String> notMergedPaths = new HashSet<>();
     boolean hasMergedPaths = false;
 
     for (String path : changeList.getAffectedPaths()) {

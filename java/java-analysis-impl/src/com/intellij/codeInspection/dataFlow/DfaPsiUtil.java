@@ -356,7 +356,7 @@ public class DfaPsiUtil {
           }
         };
         final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
-        Set<PsiField> notNullFields = ContainerUtil.newHashSet();
+        Set<PsiField> notNullFields = new HashSet<>();
         if (rc == RunnerResult.OK) {
           for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {
             if (entry.getValue()) {
@@ -389,7 +389,7 @@ public class DfaPsiUtil {
       @NotNull
       @Override
       public Result<MultiMap<PsiField, PsiExpression>> compute() {
-        final Set<String> fieldNames = ContainerUtil.newHashSet();
+        final Set<String> fieldNames = new HashSet<>();
         for (PsiField field : psiClass.getFields()) {
           ContainerUtil.addIfNotNull(fieldNames, field.getName());
         }

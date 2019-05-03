@@ -84,7 +84,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   private Set<String> calcExplicitModifiers() {
-    Set<String> explicitModifiers = ContainerUtil.newHashSet();
+    Set<String> explicitModifiers = new HashSet<>();
     PsiModifierListStub stub = getGreenStub();
     if (stub != null) {
       int mask = stub.getModifiersMask();
@@ -104,7 +104,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   private Set<String> calcImplicitModifiers(Set<String> explicitModifiers) {
-    Set<String> implicitModifiers = ContainerUtil.newHashSet();
+    Set<String> implicitModifiers = new HashSet<>();
     PsiElement parent = getParent();
     if (parent instanceof PsiClass) {
       PsiElement grandParent = parent.getContext();

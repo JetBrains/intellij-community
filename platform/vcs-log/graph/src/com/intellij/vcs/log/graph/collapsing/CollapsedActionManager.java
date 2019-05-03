@@ -169,7 +169,7 @@ class CollapsedActionManager {
       if (fragment == null) return null;
 
       Set<Integer> middleCompiledNodes = compiledFragmentGenerator.getMiddleNodes(fragment.upNodeIndex, fragment.downNodeIndex, true);
-      Set<GraphEdge> dottedCompiledEdges = ContainerUtil.newHashSet();
+      Set<GraphEdge> dottedCompiledEdges = new HashSet<>();
       for (Integer middleNodeIndex : middleCompiledNodes) {
         dottedCompiledEdges.addAll(ContainerUtil.filter(context.getCompiledGraph().getAdjacentEdges(middleNodeIndex, EdgeFilter.NORMAL_ALL),
                                                         edge -> edge.getType() == GraphEdgeType.DOTTED));

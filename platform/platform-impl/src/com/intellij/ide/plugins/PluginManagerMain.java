@@ -307,7 +307,7 @@ public abstract class PluginManagerMain implements Disposable {
       ProgressIndicator indicator = new EmptyProgressIndicator();
 
       List<String> hosts = RepositoryHelper.getPluginHosts();
-      Set<PluginId> unique = ContainerUtil.newHashSet();
+      Set<PluginId> unique = new HashSet<>();
       for (String host : hosts) {
         try {
           if (host == null || acceptHost(host)) {

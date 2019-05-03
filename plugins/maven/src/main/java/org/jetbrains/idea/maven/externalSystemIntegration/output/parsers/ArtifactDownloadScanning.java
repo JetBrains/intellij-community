@@ -7,13 +7,13 @@ import com.intellij.build.events.impl.FinishEventImpl;
 import com.intellij.build.events.impl.StartEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -21,7 +21,7 @@ public class ArtifactDownloadScanning implements MavenLoggedEventParser {
   private static final String DOWNLOADING = "Downloading";
   private static final String DOWNLOADED = "Downloaded";
 
-  private final Set<String> startedToDownload = ContainerUtil.newHashSet();
+  private final Set<String> startedToDownload = new HashSet<>();
 
   @Override
   public boolean supportsType(@Nullable LogMessageType type) {

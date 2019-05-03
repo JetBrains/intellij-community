@@ -51,7 +51,7 @@ public class CollectClassMembersUtil {
   }
 
   private static boolean checkClass(@NotNull PsiClass aClass) {
-    Set<PsiClass> visited = ContainerUtil.newHashSet();
+    Set<PsiClass> visited = new HashSet<>();
     Queue<PsiClass> queue = ContainerUtil.newLinkedList(aClass);
 
     while (!queue.isEmpty()) {

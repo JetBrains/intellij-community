@@ -133,7 +133,7 @@ public class JavaModuleGraphUtil {
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
-    Set<PsiJavaModule> projectModules = ContainerUtil.newHashSet();
+    Set<PsiJavaModule> projectModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       List<PsiJavaModule> descriptors = Stream.of(ModuleRootManager.getInstance(module).getSourceRoots(true))
         .map(root -> findDescriptorByFile(root, project))
@@ -269,7 +269,7 @@ public class JavaModuleGraphUtil {
     }
 
     private <T> T processExports(PsiJavaModule start, BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
-      return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, ContainerUtil.newHashSet(), processor) : null;
+      return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, new HashSet<>(), processor) : null;
     }
 
     private <T> T processExports(String name,

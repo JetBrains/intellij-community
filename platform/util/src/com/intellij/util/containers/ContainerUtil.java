@@ -317,14 +317,22 @@ public class ContainerUtil extends ContainerUtilRt {
     return new SmartList<>(elements);
   }
 
+  /**
+   * @deprecated Use {@link HashSet#HashSet()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> HashSet<T> newHashSet() {
     return new HashSet<>();
   }
 
+  /**
+   * @deprecated Use {@link HashSet#HashSet(int)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> HashSet<T> newHashSet(int initialCapacity) {
     return new HashSet<>(initialCapacity);
   }
@@ -343,7 +351,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated simply use {@code new HashSet<>(collection)}.
+   * @deprecated Use {@link HashSet#HashSet(Collection)}
    */
   @NotNull
   @Contract(pure=true)

@@ -70,7 +70,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @NotNull
   private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
-    Set<VirtualFile> reverseMap = ContainerUtil.newHashSet();
+    Set<VirtualFile> reverseMap = new HashSet<>();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
       boolean reverse;
       if (reverseOrDetect == ReverseRequest.DETECT) {
