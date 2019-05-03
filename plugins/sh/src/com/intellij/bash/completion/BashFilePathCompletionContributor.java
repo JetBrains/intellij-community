@@ -62,7 +62,7 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     int length = text.length();
     while (idEnd < length) {
       char ch = text.charAt(idEnd);
-      if (Character.isJavaIdentifierPart(ch) || ch == '.' || ch == '-') idEnd++;
+      if (Character.isJavaIdentifierPart(ch) || ch == '.' || ch == '-' || ch == '@') idEnd++;
       else if (idEnd < length - 1 && ch == '\\' && BashStringUtil.ORIGINS_SET.contains(text.charAt(idEnd + 1))) idEnd += 2;
       else return idEnd;
     }
