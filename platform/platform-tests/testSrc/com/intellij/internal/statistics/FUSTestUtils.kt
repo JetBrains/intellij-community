@@ -13,7 +13,7 @@ class WhitelistBuilder {
   }
 
   fun add(id: String, vararg versions: FUSWhitelist.VersionRange): WhitelistBuilder {
-    val versionsList = ContainerUtil.newArrayList<FUSWhitelist.VersionRange>()
+    val versionsList = mutableListOf<FUSWhitelist.VersionRange>()
     for (version in versions) {
       versionsList.add(version)
     }
