@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
@@ -10,7 +13,10 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.RecentGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 @State(
   name = "Git.Log.External.Tabs.Properties",
@@ -48,7 +54,7 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
 
   public static class State {
     @XMap
-    public Map<String, TabState> TAB_STATES = ContainerUtil.newTreeMap();
+    public Map<String, TabState> TAB_STATES = new TreeMap<>();
   }
 
   public static class TabState extends VcsLogUiPropertiesImpl.State {

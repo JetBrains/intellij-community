@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
 import com.intellij.ide.UiActivity;
@@ -34,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
@@ -50,7 +37,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
-  private final Map<Integer, Map<Update, Update>> myScheduledUpdates = ContainerUtil.newTreeMap();
+  private final Map<Integer, Map<Update, Update>> myScheduledUpdates = new TreeMap<>();
 
   private final Alarm myWaiterForMerge;
 
@@ -346,7 +333,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (myTrackUiActivity) {
       startActivity();
     }
-    
+
     if (myPassThrough) {
       update.run();
       finishActivity();
@@ -478,7 +465,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (myTrackUiActivity && !trackUiActivity) {
       finishActivity();
     }
-    
+
     myTrackUiActivity = trackUiActivity;
   }
 
@@ -490,8 +477,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private void finishActivity() {
     if (!myTrackUiActivity) return;
-    
-    UiActivityMonitor.getInstance().removeActivity(getActivityId());    
+
+    UiActivityMonitor.getInstance().removeActivity(getActivityId());
   }
 
   @NotNull
@@ -499,7 +486,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (myUiActivity == null) {
       myUiActivity = new UiActivity.AsyncBgOperation("UpdateQueue:" + myName + hashCode());
     }
-    
+
     return myUiActivity;
   }
 

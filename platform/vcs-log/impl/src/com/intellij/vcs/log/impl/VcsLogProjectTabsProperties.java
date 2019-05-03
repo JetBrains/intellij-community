@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -85,7 +85,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   }
 
   public static class State {
-    public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = newTreeMap();
+    public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = new TreeMap<>();
     public LinkedHashSet<String> OPEN_TABS = newLinkedHashSet();
     public Map<String, List<RecentGroup>> RECENT_FILTERS = newHashMap();
   }

@@ -66,8 +66,12 @@ public class ContainerUtilRt {
     return new HashMap<K, V>(initialCapacity);
   }
 
+  /**
+   * @deprecated Use {@link TreeMap#TreeMap()}
+   */
   @NotNull
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
     return new TreeMap<K, V>();
   }

@@ -53,14 +53,23 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newHashMap(keys, values);
   }
 
+  /**
+   * @deprecated Use {@link TreeMap#TreeMap()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
-    return ContainerUtilRt.newTreeMap();
+    return new TreeMap<>();
   }
 
+  /**
+   * @deprecated Use {@link TreeMap#TreeMap(Map)})}
+   */
+  @SuppressWarnings("unused")
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return new TreeMap<>(map);
   }
