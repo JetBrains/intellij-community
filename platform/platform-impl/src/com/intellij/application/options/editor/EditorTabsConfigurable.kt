@@ -33,7 +33,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
       titledRow(message("group.tab.appearance")) {
         row {
           cell {
-            Label(message("combobox.editor.tab.placement"))()
+            label(message("combobox.editor.tab.placement"))
             myEditorTabPlacement = comboBox(DefaultComboBoxModel<Int>(tabPlacements), uiSettings::editorTabPlacement,
                      renderer = SimpleListCellRenderer.create<Int> { label, value, _ ->
                        val text = when (value) {
@@ -69,7 +69,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
         row { checkBox(message("checkbox.show.tabs.tooltips"), uiSettings::showTabsTooltips).enableIfTabsVisible() }
         row {
           cell {
-            Label(message("tabs.close.button.placement"))()
+            label(message("tabs.close.button.placement"))
             comboBox(
               DefaultComboBoxModel<String>(arrayOf(LEFT, RIGHT, NONE)),
               { getCloseButtonPlacement(uiSettings) },
@@ -93,7 +93,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
       titledRow(message("group.tab.closing.policy")) {
         row {
           cell {
-            Label(message("editbox.tab.limit"))()
+            label(message("editbox.tab.limit"))
             intTextField(uiSettings::editorTabLimit, 4, EDITOR_TABS_RANGE)
           }
         }
