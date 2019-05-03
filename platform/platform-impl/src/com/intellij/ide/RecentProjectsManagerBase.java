@@ -17,6 +17,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -440,7 +441,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       displayName = myState.names.get(path);
     }
     if (StringUtil.isEmptyOrSpaces(displayName)) {
-      displayName = duplicates.contains(projectName) ? path : projectName;
+      displayName = duplicates.contains(projectName) ? FileUtil.toSystemDependentName(path) : projectName;
     }
 
     // It's better don't to remove non-existent projects. Sometimes projects stored
