@@ -342,7 +342,7 @@ public class SearchUtil {
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
     final Set<String> options = configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
-    if (options == null || options.isEmpty()) {
+    if (options.isEmpty()) {
       return text.toLowerCase(Locale.US).contains(option.toLowerCase(Locale.US));
     }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
