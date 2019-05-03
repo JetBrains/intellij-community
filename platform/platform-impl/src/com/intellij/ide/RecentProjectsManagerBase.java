@@ -342,7 +342,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   private Set<String> getDuplicateProjectNames(@NotNull Set<String> openedPaths, @NotNull Set<String> recentPaths) {
     Set<String> names = new THashSet<>();
     Set<String> duplicates = new THashSet<>();
-    for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+    for (String path : ContainerUtil.union(openedPaths, recentPaths)) {
       String name = getProjectName(path);
       if (!names.add(name)) {
         duplicates.add(name);
