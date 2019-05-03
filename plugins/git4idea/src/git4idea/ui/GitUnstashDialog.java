@@ -251,7 +251,10 @@ public class GitUnstashDialog extends DialogWrapper {
     listModel.clear();
     VirtualFile root = getGitRoot();
     try {
-      for (StashInfo info: GitStashUtils.loadStashStack(myProject, root)) {
+      List<StashInfo> listOfStashes = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> GitStashUtils.loadStashStack(myProject, root), "Loading List of Stashes", true, myProject);
+
+      for (StashInfo info: listOfStashes) {
         listModel.addElement(info);
       }
       myBranches.clear();
