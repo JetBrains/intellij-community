@@ -60,4 +60,13 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
     }
     return false;
   }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement[] elements) {
+    if (elements.length == 1) {
+      return "Move Member...";
+    }
+    return "Move Members...";
+  }
 }
