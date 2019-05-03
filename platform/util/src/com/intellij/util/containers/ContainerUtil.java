@@ -64,7 +64,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link TreeMap#TreeMap(Map)})}
+   * @deprecated Use {@link TreeMap#TreeMap(Map)}
    */
   @SuppressWarnings("unused")
   @NotNull
@@ -75,7 +75,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()})})}
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()}
    */
   @NotNull
   @Contract(pure=true)
@@ -85,7 +85,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)})})})}
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)}
    */
   @NotNull
   @Contract(pure=true)
@@ -95,7 +95,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)})})})})}
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
    */
   @NotNull
   @Contract(pure=true)
@@ -111,8 +111,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
+  /**
+   * @deprecated Use {@link THashMap#THashMap(Map)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> THashMap<K, V> newTroveMap() {
     return new THashMap<>();
   }
@@ -2203,7 +2207,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link Arrays#asList(Object[])} )} )}
+   * @deprecated Use {@link Arrays#asList(Object[])}
    */
   @NotNull
   @SafeVarargs

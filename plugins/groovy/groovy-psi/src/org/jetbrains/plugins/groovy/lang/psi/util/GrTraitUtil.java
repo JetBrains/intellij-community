@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +173,7 @@ public class GrTraitUtil {
     final PsiTypeParameter[] traitTypeParameters = trait.getTypeParameters();
     if (traitTypeParameters.length == 0) return ID_MAPPER;
 
-    final Map<String, PsiTypeParameter> substitutionMap = ContainerUtil.newTroveMap();
+    final Map<String, PsiTypeParameter> substitutionMap = new THashMap<>();
     for (PsiTypeParameter parameter : traitTypeParameters) {
       substitutionMap.put(parameter.getName(), parameter);
     }

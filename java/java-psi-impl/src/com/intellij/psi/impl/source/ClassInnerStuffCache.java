@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -149,7 +149,7 @@ public class ClassInnerStuffCache {
       list.add(method);
     }
 
-    Map<String, PsiMethod[]> cachedMethods = ContainerUtil.newTroveMap();
+    Map<String, PsiMethod[]> cachedMethods = new THashMap<>();
     for (Map.Entry<String, List<PsiMethod>> entry : collectedMethods.entrySet()) {
       List<PsiMethod> list = entry.getValue();
       cachedMethods.put(entry.getKey(), list.toArray(PsiMethod.EMPTY_ARRAY));

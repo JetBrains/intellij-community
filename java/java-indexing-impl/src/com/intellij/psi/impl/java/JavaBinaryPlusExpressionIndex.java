@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.BooleanDataDescriptor;
 import com.intellij.util.io.DataExternalizer;
@@ -58,7 +57,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
           result.add(offset);
         }
       });
-      THashMap<Boolean, PlusOffsets> resultMap = ContainerUtil.newTroveMap();
+      THashMap<Boolean, PlusOffsets> resultMap = new THashMap<>();
       resultMap.put(Boolean.TRUE, new PlusOffsets(result.toNativeArray()));
       return resultMap;
     };

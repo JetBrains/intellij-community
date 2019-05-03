@@ -18,6 +18,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -50,7 +51,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   protected DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
-    myDefaultVariableStates = ContainerUtil.newTroveMap();
+    myDefaultVariableStates = new THashMap<>();
     myEqClasses = ContainerUtil.newArrayList();
     myVariableStates = new LinkedHashMap<>();
     myDistinctClasses = new DistinctPairSet(this);

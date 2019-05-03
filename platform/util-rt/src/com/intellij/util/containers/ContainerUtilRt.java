@@ -77,7 +77,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link TreeMap#TreeMap(Map)})}
+   * @deprecated Use {@link TreeMap#TreeMap(Map)}
    */
   @SuppressWarnings("unused")
   @NotNull
@@ -88,7 +88,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()})})}
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()}
    */
   @NotNull
   @Contract(value = " -> new", pure = true)
@@ -98,7 +98,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)})})})}
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)}
    */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
@@ -108,7 +108,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)})})})})}
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
    */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
