@@ -591,6 +591,7 @@ public class ExpectedTypesProvider {
 
         PsiExpression rExpr = assignment.getRExpression();
         if (rExpr != null) {
+          //prevent using left expression to detect type of the right
           PsiType type = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(assignment, false, () -> rExpr.getType());
           if (type != null && type != PsiType.NULL) {
             if (type instanceof PsiClassType) {
@@ -1063,13 +1064,11 @@ public class ExpectedTypesProvider {
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
           Computable<PsiSubstitutor> computable = () -> info.inferSubstitutorFromArgs(policy, args);
-          substitutor = info.isInferencePossible() && targetMethod == method
-                        ? computable.compute()
-                        : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, computable);
+          substitutor = computable.compute();
           if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC) || info.getInferenceErrorMessage() != null) continue;
         }
         else {
-          substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, candidateInfo::getSubstitutor);
+          substitutor = candidateInfo.getSubstitutor();
         }
         if (substitutor == null) {
           return ExpectedTypeInfo.EMPTY_ARRAY;
@@ -1079,9 +1078,7 @@ public class ExpectedTypesProvider {
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
           Computable<PsiSubstitutor> computable = () -> ((MethodCandidateInfo)candidateInfo).inferSubstitutorFromArgs(policy, leftArgs);
-          substitutor = ((MethodCandidateInfo)candidateInfo).isInferencePossible() && targetMethod == method
-                        ? computable.compute()
-                        : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, computable);
+          substitutor = computable.compute();
           if (substitutor != null) {
             inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, set);
             if (set.size() >= myMaxCandidates) break;

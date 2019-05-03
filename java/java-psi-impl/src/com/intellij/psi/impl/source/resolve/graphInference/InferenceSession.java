@@ -169,15 +169,20 @@ public class InferenceSession {
       }
     }
   }
-
-  private static MethodCandidateInfo.CurrentCandidateProperties getCurrentProperties(PsiElement parent) {
+  
+  private static PsiExpressionList getArgumentList(PsiElement parent) {
     if (parent instanceof PsiCall) {
-      return MethodCandidateInfo.getCurrentMethod(((PsiCall)parent).getArgumentList());
+      return ((PsiCall)parent).getArgumentList();
     }
     if (parent instanceof PsiAnonymousClass) {
-      return getCurrentProperties(parent.getParent());
+      return getArgumentList(parent.getParent());
     }
     return null;
+  }
+
+  private static MethodCandidateInfo.CurrentCandidateProperties getCurrentProperties(PsiElement parent) {
+    PsiExpressionList argumentList = getArgumentList(parent);
+    return argumentList != null ? MethodCandidateInfo.getCurrentMethod(argumentList) : null;
   }
 
   /**
@@ -336,7 +341,8 @@ public class InferenceSession {
       return;
     }
 
-    if (properties != null && !properties.isApplicabilityCheck()) {
+    PsiExpressionList argumentList = getArgumentList(parent);
+    if (properties != null && argumentList != null && !MethodCandidateInfo.isOverloadCheck(argumentList)) {
       String expectedActualErrorMessage = null;
       final PsiMethod method = properties.getMethod();
       if (parent instanceof PsiCallExpression && PsiPolyExpressionUtil.isMethodCallPolyExpression((PsiExpression)parent, method)) {
@@ -365,7 +371,7 @@ public class InferenceSession {
         }
       }
       //proceed to B3 constraints
-      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {
+      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {//todo
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
         collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints,
@@ -830,7 +836,7 @@ public class InferenceSession {
         final PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
         if (argumentList != null) {
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
-          if (properties != null && properties.isApplicabilityCheck()) {
+          if (properties != null && MethodCandidateInfo.isOverloadCheck(argumentList)) {
             return getTypeByMethod(context, argumentList, properties.getMethod(), properties.getInfo().isVarargs(), properties.getInfo().getSiteSubstitutor(), inferParent);
           }
 
@@ -1118,7 +1124,7 @@ public class InferenceSession {
   }
 
   public void setUncheckedInContext() {
-    if (myContext != null && !MethodCandidateInfo.isOverloadCheck()) {
+    if (myContext != null && !MethodCandidateInfo.isOverloadCheck(getArgumentList(myContext))) {//todo
       myContext.putUserData(ERASED, myErased);
     }
   }

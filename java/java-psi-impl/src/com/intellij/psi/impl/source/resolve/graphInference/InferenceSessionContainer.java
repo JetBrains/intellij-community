@@ -59,7 +59,7 @@ public class InferenceSessionContainer {
       if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
           //But overload resolution can depend on type of lambda parameter. As it can't depend on lambda body,
           //traversing down would stop at lambda level and won't take into account overloaded method
-          !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argumentList)) {
+          !MethodCandidateInfo.isOverloadCheck(argumentList)) {
         final PsiCall topLevelCall = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(parent, false,
                                                                                           () -> {
                                                                                             if (parent instanceof PsiExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {

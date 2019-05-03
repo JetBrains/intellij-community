@@ -272,9 +272,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     final PsiElement argumentList = getMarkerList();
     final CurrentCandidateProperties alreadyThere =
-      map.put(argumentList, new CurrentCandidateProperties(this, applicabilityCheck));
+      map.put(argumentList, new CurrentCandidateProperties(this));
     try {
-      return computable.compute();
+      return applicabilityCheck
+             ? ourOverloadGuard.doPreventingRecursion(argumentList, false, computable) 
+             : computable.compute();
     }
     finally {
       if (alreadyThere == null) {
@@ -316,16 +318,9 @@ public class MethodCandidateInfo extends CandidateInfo{
 
         myApplicabilityError.remove();
         try {
-          Computable<PsiSubstitutor> computeSubst = () -> inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
           final PsiElement markerList = getMarkerList();
-          final PsiSubstitutor inferredSubstitutor = includeReturnConstraint || markerList == null || isOverloadCheck() 
-                                                     ? computeSubst.compute() 
-                                                     : ourOverloadGuard.doPreventingRecursion(markerList, true, computeSubst);
-          if (inferredSubstitutor == null) {
-            //todo log error
-            return mySubstitutor;
-          }
+          final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
           if (!stackStamp.mayCacheNow() ||
               isOverloadCheck() ||
               !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
@@ -369,6 +364,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     return !ourOverloadGuard.currentStack().isEmpty();
   }
 
+  public static boolean isOverloadCheck(PsiElement argumentList) {
+    return ourOverloadGuard.currentStack().contains(argumentList);
+  }
 
   public boolean isTypeArgumentsApplicable() {
     return isTypeArgumentsApplicable(() -> getSubstitutor(false));
@@ -494,16 +492,14 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public CurrentCandidateProperties createProperties() {
-    return new CurrentCandidateProperties(this, false);
+    return new CurrentCandidateProperties(this);
   }
 
   public static class CurrentCandidateProperties {
     private final MethodCandidateInfo myMethod;
-    private final boolean myApplicabilityCheck;
 
-    private CurrentCandidateProperties(MethodCandidateInfo info, boolean applicabilityCheck) {
+    private CurrentCandidateProperties(MethodCandidateInfo info) {
       myMethod = info;
-      myApplicabilityCheck = applicabilityCheck;
     }
 
     public PsiMethod getMethod() {
@@ -512,11 +508,6 @@ public class MethodCandidateInfo extends CandidateInfo{
 
     public MethodCandidateInfo getInfo() {
       return myMethod;
-    }
-
-
-    public boolean isApplicabilityCheck() {
-      return myApplicabilityCheck;
     }
   }
 

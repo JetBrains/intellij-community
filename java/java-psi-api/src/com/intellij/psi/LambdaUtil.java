@@ -775,9 +775,10 @@ public class LambdaUtil {
       if (psiCall == null) {
         break;
       }
-      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(psiCall.getArgumentList());
+      PsiExpressionList argumentList = psiCall.getArgumentList();
+      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
       if (properties != null) {
-        if (properties.isApplicabilityCheck() || lambdaExpression != null) {
+        if (MethodCandidateInfo.isOverloadCheck(argumentList) || lambdaExpression != null) {
           break;
         }
       }
