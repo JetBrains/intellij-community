@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -16,6 +17,8 @@ import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import static com.intellij.util.BitUtil.isSet;
 
 public abstract class Decompressor {
   /**
@@ -48,9 +51,10 @@ public abstract class Decompressor {
     }
 
     @Override
+    @SuppressWarnings("OctalInteger")
     protected Entry nextEntry() throws IOException {
-      TarArchiveEntry tarEntry = myStream.getNextTarEntry();
-      return tarEntry == null ? null : new Entry(tarEntry.getName(), tarEntry.isDirectory());
+      TarArchiveEntry te = myStream.getNextTarEntry();
+      return te == null ? null : new Entry(te.getName(), te.isDirectory(), isSet(te.getMode(), 0200), isSet(te.getMode(), 0100));
     }
 
     @Override
@@ -91,7 +95,7 @@ public abstract class Decompressor {
     @Override
     protected Entry nextEntry() {
       myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
-      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory());
+      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory(), true, false);
     }
 
     @Override
@@ -153,6 +157,12 @@ public abstract class Decompressor {
             try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
               FileUtil.copy(inputStream, outputStream);
             }
+            if (!entry.isWritable && !outputFile.setWritable(false, false)) {
+              throw new IOException("Can't make file read-only: " + outputFile);
+            }
+            if (entry.isExecutable && SystemInfo.isUnix && !outputFile.setExecutable(true, true)) {
+              throw new IOException("Can't make file executable: " + outputFile);
+            }
           }
           finally {
             closeEntryStream(inputStream);
@@ -175,10 +185,14 @@ public abstract class Decompressor {
   protected static class Entry {
     private final String name;
     private final boolean isDirectory;
+    private final boolean isWritable;
+    private final boolean isExecutable;
 
-    Entry(String name, boolean isDirectory) {
+    Entry(String name, boolean isDirectory, boolean isWritable, boolean isExecutable) {
       this.name = name;
       this.isDirectory = isDirectory;
+      this.isWritable = isWritable;
+      this.isExecutable = isExecutable;
     }
   }
 
