@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements PsiAssignmentExpression {
@@ -58,7 +59,14 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
 
   @Override
   public PsiType getType() {
-    return getLExpression().getType();
+    //15.26.1 left side must be variable/array access probably wrapped in parenthesis, otherwise it's an invalid expression
+    //because assignment expression itself is not a poly expression, its type may be calculated at any time
+    //thus it's important to ensure that type of left side is not calculated for invalid expression, e.g. bar() = ""
+    PsiExpression lExpression = PsiUtil.deparenthesizeExpression(getLExpression());
+    if (lExpression instanceof PsiReferenceExpression || lExpression instanceof PsiArrayAccessExpression) {
+      return lExpression.getType();
+    }
+    return null;
   }
 
   @Override
