@@ -440,7 +440,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                                            ContainerUtil.getFirstItem(getNonIgnoredProjects()));
           if (project != null) {
             scheduleForNextImport(Pair.create(project, MavenProjectChanges.ALL));
-            scheduleForNextResolve(Arrays.asList(project));
+            scheduleForNextResolve(Collections.singletonList(project));
           }
         }
 
@@ -1290,7 +1290,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       runWhenFullyOpen(module.getProject(), (manager) -> {
         MavenProject mavenProject = manager.findProject(module);
         if (mavenProject != null) {
-          manager.doScheduleUpdateProjects(Arrays.asList(mavenProject), true, false);
+          manager.doScheduleUpdateProjects(Collections.singletonList(mavenProject), true, false);
         }
       });
     }

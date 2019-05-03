@@ -273,12 +273,12 @@ public class TextDiffViewerUtil {
     @Override
     protected List<HighlightPolicy> getValueSubstitutes(@NotNull HighlightPolicy value) {
       if (value == HighlightPolicy.BY_WORD_SPLIT) {
-        return Arrays.asList(HighlightPolicy.BY_WORD);
+        return Collections.singletonList(HighlightPolicy.BY_WORD);
       }
       if (value == HighlightPolicy.DO_NOT_HIGHLIGHT) {
-        return Arrays.asList(HighlightPolicy.BY_LINE);
+        return Collections.singletonList(HighlightPolicy.BY_LINE);
       }
-      return Arrays.asList(HighlightPolicy.BY_WORD);
+      return Collections.singletonList(HighlightPolicy.BY_WORD);
     }
 
     @NotNull
@@ -314,12 +314,12 @@ public class TextDiffViewerUtil {
     @Override
     protected List<IgnorePolicy> getValueSubstitutes(@NotNull IgnorePolicy value) {
       if (value == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) {
-        return Arrays.asList(IgnorePolicy.IGNORE_WHITESPACES);
+        return Collections.singletonList(IgnorePolicy.IGNORE_WHITESPACES);
       }
       if (value == IgnorePolicy.FORMATTING) {
-        return Arrays.asList(IgnorePolicy.TRIM_WHITESPACES);
+        return Collections.singletonList(IgnorePolicy.TRIM_WHITESPACES);
       }
-      return Arrays.asList(IgnorePolicy.DEFAULT);
+      return Collections.singletonList(IgnorePolicy.DEFAULT);
     }
 
     @NotNull

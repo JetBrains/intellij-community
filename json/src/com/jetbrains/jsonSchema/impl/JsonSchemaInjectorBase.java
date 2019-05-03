@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class JsonSchemaInjectorBase implements MultiHostInjector {
@@ -28,6 +28,6 @@ public abstract class JsonSchemaInjectorBase implements MultiHostInjector {
   @NotNull
   @Override
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList((Class<JsonStringLiteral>[])new Class[]{JsonStringLiteral.class});
+    return Collections.singletonList(JsonStringLiteral.class);
   }
 }

@@ -1235,7 +1235,7 @@ public class MavenProjectsTree {
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    resolve(project, Arrays.asList(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
+    resolve(project, Collections.singletonList(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
   }
 
   public void resolve(@NotNull Project project,

@@ -760,18 +760,18 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
    */
   private void loadExtensions(MavenProject project, List<Exception> exceptions) {
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-    Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants = getLifecycleParticipants(Arrays.asList(project));
+    Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants = getLifecycleParticipants(Collections.singletonList(project));
     if (!lifecycleParticipants.isEmpty()) {
       LegacySupport legacySupport = getComponent(LegacySupport.class);
       MavenSession session = legacySupport.getSession();
       session.setCurrentProject(project);
       try {
         // the method can be removed
-        session.setAllProjects(Arrays.asList(project));
+        session.setAllProjects(Collections.singletonList(project));
       }
       catch (NoSuchMethodError ignore) {
       }
-      session.setProjects(Arrays.asList(project));
+      session.setProjects(Collections.singletonList(project));
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
         Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());

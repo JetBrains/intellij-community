@@ -198,13 +198,13 @@ public class PluginGroups {
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)
-    tree.put("Swing", Pair.create(PlatformImplIcons.Swing, Arrays.asList(
+    tree.put("Swing", Pair.create(PlatformImplIcons.Swing, Collections.singletonList(
       "com.intellij.uiDesigner"//TODO JavaFX?
     )));
     tree.put("Android", Pair.create(PlatformImplIcons.Android, Arrays.asList(
       "org.jetbrains.android",
       "com.intellij.android-designer")));
-    tree.put("Database Tools", Pair.create(PlatformImplIcons.DatabaseTools, Arrays.asList(
+    tree.put("Database Tools", Pair.create(PlatformImplIcons.DatabaseTools, Collections.singletonList(
       "com.intellij.database"
     )));
     tree.put("Other Tools", Pair.create(PlatformImplIcons.OtherTools, Arrays.asList(
@@ -219,7 +219,7 @@ public class PluginGroups {
       "org.jetbrains.plugins.yaml",
       "XSLT and XPath:XPathView,XSLT-Debugger"
     )));
-    tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Arrays.asList("DevKit")));
+    tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Collections.singletonList("DevKit")));
 
     initFeaturedPlugins(featuredPlugins);
   }

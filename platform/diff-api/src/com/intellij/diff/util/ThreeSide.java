@@ -89,6 +89,6 @@ public enum ThreeSide {
 
   @NotNull
   public static <T> List<T> map(@NotNull Function<? super ThreeSide, ? extends T> function) {
-    return Arrays.asList((T[])new Object[]{function.fun(LEFT), function.fun(BASE), function.fun(RIGHT)});
+    return Arrays.asList(function.fun(LEFT), function.fun(BASE), function.fun(RIGHT));
   }
 }

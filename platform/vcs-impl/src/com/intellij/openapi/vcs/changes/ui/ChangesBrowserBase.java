@@ -25,8 +25,8 @@ import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ChangesBrowserBase extends JPanel implements DataProvider {
@@ -168,17 +168,17 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @NotNull
   protected List<AnAction> createToolbarActions() {
-    return Arrays.asList(myShowDiffAction);
+    return Collections.singletonList(myShowDiffAction);
   }
 
   @NotNull
   protected List<AnAction> createPopupMenuActions() {
-    return Arrays.asList(myShowDiffAction);
+    return Collections.singletonList(myShowDiffAction);
   }
 
   @NotNull
   protected List<AnAction> createDiffActions() {
-    return Arrays.asList();
+    return Collections.emptyList();
   }
 
   protected void onDoubleClick() {

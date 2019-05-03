@@ -10,7 +10,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class YamlJsonSchemaLanguageInjector implements MultiHostInjector {
@@ -30,6 +30,6 @@ public class YamlJsonSchemaLanguageInjector implements MultiHostInjector {
   @NotNull
   @Override
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList((Class<YAMLScalar>[])new Class[]{YAMLScalar.class});
+    return Collections.singletonList(YAMLScalar.class);
   }
 }

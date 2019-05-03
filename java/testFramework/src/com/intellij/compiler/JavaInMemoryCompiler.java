@@ -30,7 +30,7 @@ public class JavaInMemoryCompiler {
   public Map<String, byte[]> compile(String className, @Language("JAVA") String code) {
     final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
     final Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new JavaSourceFromString(className, code));
-    final Iterable<String> options = Arrays.asList("-g"); // generate debugging info.
+    final Iterable<String> options = Collections.singletonList("-g"); // generate debugging info.
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final OutputStreamWriter out = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
     final Boolean success = myCompiler.getTask(out, myFileManager, diagnostics, options, null, compilationUnits).call();
