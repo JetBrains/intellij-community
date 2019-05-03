@@ -20,7 +20,7 @@ public class CommittedListsSequencesZipper {
 
   public CommittedListsSequencesZipper(@NotNull VcsCommittedListsZipper vcsPartner) {
     myVcsPartner = vcsPartner;
-    myInLocations = ContainerUtil.newArrayList();
+    myInLocations = new ArrayList<>();
     myInLists = new HashMap<>();
     myComparator = (o1, o2) -> Comparing.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
   }
@@ -34,7 +34,7 @@ public class CommittedListsSequencesZipper {
   @NotNull
   public List<CommittedChangeList> execute() {
     Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupingResult = myVcsPartner.groupLocations(myInLocations);
-    List<CommittedChangeList> result = ContainerUtil.newArrayList();
+    List<CommittedChangeList> result = new ArrayList<>();
 
     result.addAll(ContainerUtil.flatten(collectChangeLists(groupingResult.getSecond())));
     for (RepositoryLocationGroup group : groupingResult.getFirst()) {
@@ -46,7 +46,7 @@ public class CommittedListsSequencesZipper {
 
   @NotNull
   private List<List<CommittedChangeList>> collectChangeLists(@NotNull List<RepositoryLocation> locations) {
-    List<List<CommittedChangeList>> result = ContainerUtil.newArrayListWithCapacity(locations.size());
+    List<List<CommittedChangeList>> result = new ArrayList<>(locations.size());
 
     for (RepositoryLocation location : locations) {
       result.add(myInLists.get(location.toPresentableString()));
@@ -57,8 +57,8 @@ public class CommittedListsSequencesZipper {
 
   @NotNull
   private List<CommittedChangeList> mergeLocationGroupChangeLists(@NotNull RepositoryLocationGroup group) {
-    List<CommittedChangeList> result = ContainerUtil.newArrayList();
-    List<CommittedChangeList> equalLists = ContainerUtil.newArrayList();
+    List<CommittedChangeList> result = new ArrayList<>();
+    List<CommittedChangeList> equalLists = new ArrayList<>();
     CommittedChangeList previousList = null;
 
     for (CommittedChangeList list : Iterables.mergeSorted(collectChangeLists(group.getLocations()), myComparator)) {

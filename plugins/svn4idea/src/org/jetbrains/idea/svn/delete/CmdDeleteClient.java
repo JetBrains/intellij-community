@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.delete;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -42,7 +41,7 @@ public class CmdDeleteClient extends BaseSvnClient implements DeleteClient {
   @Override
   public long delete(@NotNull Url url, @NotNull String message) throws VcsException {
     Target target = Target.on(url);
-    List<String> parameters = ContainerUtil.newArrayList();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, target);
     parameters.add("--message");

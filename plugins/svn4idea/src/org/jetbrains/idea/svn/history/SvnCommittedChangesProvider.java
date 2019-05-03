@@ -45,7 +45,6 @@ import java.util.*;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
@@ -124,7 +123,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                  @NotNull RepositoryLocation location,
                                                  int maxCount) throws VcsException {
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
-    List<SvnChangeList> result = newArrayList();
+    List<SvnChangeList> result = new ArrayList<>();
     Url repositoryRoot = getRepositoryRoot(svnLocation);
     ThrowableConsumer<LogEntry, SvnBindException> resultConsumer =
       logEntry -> result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));

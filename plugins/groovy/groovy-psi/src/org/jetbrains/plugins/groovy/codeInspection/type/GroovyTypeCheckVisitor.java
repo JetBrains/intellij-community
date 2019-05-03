@@ -62,10 +62,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
@@ -515,7 +512,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     final ConversionResult result = TypesUtil.canAssign(expectedType, actualType, context, position);
     if (result == ConversionResult.OK) return;
 
-    final List<LocalQuickFix> fixes = ContainerUtil.newArrayList();
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     {
       fixes.add(new GrCastFix(expectedType, expression));
       final String varName = getLValueVarName(toHighlight);

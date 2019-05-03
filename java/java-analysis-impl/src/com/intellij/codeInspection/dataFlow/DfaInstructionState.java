@@ -75,7 +75,7 @@ class StateQueue {
     DfaInstructionState next = myQueue.peek();
     if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
 
-    List<DfaMemoryStateImpl> memoryStates = ContainerUtil.newArrayList();
+    List<DfaMemoryStateImpl> memoryStates = new ArrayList<>();
     memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
     while (!myQueue.isEmpty() && myQueue.peek().compareTo(state) == 0) {
       DfaMemoryState anotherState = myQueue.poll().getMemoryState();
@@ -93,7 +93,7 @@ class StateQueue {
         groups.putValue(memoryState.getSuperficialKey(), memoryState);
       }
 
-      memoryStates = ContainerUtil.newArrayList();
+      memoryStates = new ArrayList<>();
       for (Map.Entry<Object, Collection<DfaMemoryStateImpl>> entry : groups.entrySet()) {
         memoryStates.addAll(mergeGroup((List<DfaMemoryStateImpl>)entry.getValue()));
       }

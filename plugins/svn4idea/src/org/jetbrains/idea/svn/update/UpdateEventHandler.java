@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -20,6 +19,7 @@ import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +69,7 @@ public class UpdateEventHandler implements ProgressTracker {
    * TODO: UPDATE_STARTED event in some code paths.
    */
   public void startUpdate() {
-    myFilesWaitingForRevision.push(ContainerUtil.newArrayList());
+    myFilesWaitingForRevision.push(new ArrayList<>());
   }
 
   public void finishUpdate() {
@@ -170,7 +170,7 @@ public class UpdateEventHandler implements ProgressTracker {
       if (mySequentialUpdatesContext != null) {
         mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
       }
-      myFilesWaitingForRevision.push(ContainerUtil.newArrayList());
+      myFilesWaitingForRevision.push(new ArrayList<>());
       myExternalsCount++;
       myText = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
     }

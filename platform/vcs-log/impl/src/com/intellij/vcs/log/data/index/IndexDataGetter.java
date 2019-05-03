@@ -103,7 +103,7 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
       if (parentsIndexes == null) return null;
-      List<Hash> result = ContainerUtil.newArrayList();
+      List<Hash> result = new ArrayList<>();
       for (int parentIndex : parentsIndexes) {
         CommitId id = myLogStorage.getCommitId(parentIndex);
         if (id == null) return null;

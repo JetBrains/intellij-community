@@ -433,7 +433,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       return Collections.emptyList();
     }
 
-    List<String> filterParameters = ContainerUtil.newArrayList();
+    List<String> filterParameters = new ArrayList<>();
 
     VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
     VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
@@ -529,7 +529,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       }
     }
 
-    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
+    List<TimedVcsCommit> commits = new ArrayList<>();
     GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
                                 EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;

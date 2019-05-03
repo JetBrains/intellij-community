@@ -22,10 +22,7 @@ import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -98,7 +95,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
       }
     }.doFilter(ContainerUtil.newArrayList(committables));
     if (!childrenOfSomebody.isEmpty()) {
-      List<File> result = ContainerUtil.newArrayList();
+      List<File> result = new ArrayList<>();
       StatusClient statusClient = myFactory.createStatusClient();
 
       for (File file : committables) {

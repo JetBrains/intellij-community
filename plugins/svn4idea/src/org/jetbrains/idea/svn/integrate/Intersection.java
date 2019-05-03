@@ -6,13 +6,13 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.concat;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class Intersection {
 
@@ -20,7 +20,7 @@ public class Intersection {
   @NotNull private final Map<String, List<Change>> myChangesByLists = new HashMap<>();
 
   public void add(@NotNull LocalChangeList list, @NotNull Change change) {
-    myChangesByLists.computeIfAbsent(list.getName(), key -> newArrayList()).add(change);
+    myChangesByLists.computeIfAbsent(list.getName(), key -> new ArrayList<>()).add(change);
     myListComments.put(list.getName(), notNull(list.getComment(), list.getName()));
   }
 

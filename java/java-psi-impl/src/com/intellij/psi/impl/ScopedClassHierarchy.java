@@ -17,10 +17,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -73,7 +70,7 @@ class ScopedClassHierarchy {
 
   @NotNull
   private static List<PsiType> getSuperTypes(PsiClass psiClass) {
-    List<PsiType> superTypes = ContainerUtil.newArrayList();
+    List<PsiType> superTypes = new ArrayList<>();
     if (psiClass instanceof PsiAnonymousClass) {
       ContainerUtil.addIfNotNull(superTypes, ((PsiAnonymousClass)psiClass).getBaseClassType());
     }
@@ -144,7 +141,7 @@ class ScopedClassHierarchy {
   @NotNull
   private List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
     PsiUtilCore.ensureValid(myPlaceClass);
-    List<PsiClassType.ClassResolveResult> list = ContainerUtil.newArrayList();
+    List<PsiClassType.ClassResolveResult> list = new ArrayList<>();
     for (PsiClassType type : myPlaceClass.getSuperTypes()) {
       PsiUtil.ensureValidType(type);
       PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);

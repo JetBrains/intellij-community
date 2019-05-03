@@ -9,10 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ShowDiffContext {
   @NotNull private final DiffDialogHints myDialogHints;
@@ -54,12 +51,12 @@ public class ShowDiffContext {
   }
 
   public void addActions(@NotNull List<? extends AnAction> action) {
-    if (myActions == null) myActions = ContainerUtil.newArrayList();
+    if (myActions == null) myActions = new ArrayList<>();
     myActions.addAll(action);
   }
 
   public void addAction(@NotNull AnAction action) {
-    if (myActions == null) myActions = ContainerUtil.newArrayList();
+    if (myActions == null) myActions = new ArrayList<>();
     myActions.add(action);
   }
 

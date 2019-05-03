@@ -36,7 +36,7 @@ public class ContainingBranchesGetter {
   @NotNull private final VcsLogData myLogData;
 
   // other fields accessed only from EDT
-  @NotNull private final List<Runnable> myLoadingFinishedListeners = ContainerUtil.newArrayList();
+  @NotNull private final List<Runnable> myLoadingFinishedListeners = new ArrayList<>();
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
   @NotNull private Map<VirtualFile, Condition<Integer>> myConditions = new HashMap<>();
   private int myCurrentBranchesChecksum;

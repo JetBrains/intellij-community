@@ -39,10 +39,7 @@ import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitUtil.getRootsFromRepositories;
@@ -196,7 +193,7 @@ public class GitUpdateProcess {
     }
 
     // save local changes if needed (update via merge may perform without saving).
-    final Collection<VirtualFile> myRootsToSave = ContainerUtil.newArrayList();
+    final Collection<VirtualFile> myRootsToSave = new ArrayList<>();
     LOG.info("updateImpl: identifying if save is needed...");
     for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
       GitRepository repo = entry.getKey();
@@ -330,7 +327,7 @@ public class GitUpdateProcess {
     LOG.info("checking tracked branch configuration...");
 
     Map<GitRepository, GitLocalBranch> currentBranches = new LinkedHashMap<>();
-    List<GitRepository> detachedHeads = ContainerUtil.newArrayList();
+    List<GitRepository> detachedHeads = new ArrayList<>();
     for (GitRepository repository : myRepositories) {
       if (mySubmodulesInDetachedHead.containsKey(repository)) {
         LOG.debug("Repository " + repository + " is a submodule in detached HEAD state, not checking its tracked branch");
@@ -358,7 +355,7 @@ public class GitUpdateProcess {
     }
 
     Map<GitRepository, GitBranchPair> trackedBranches = new LinkedHashMap<>();
-    List<GitRepository> noTrackedBranch = ContainerUtil.newArrayList();
+    List<GitRepository> noTrackedBranch = new ArrayList<>();
     for (GitRepository repository: currentBranches.keySet()) {
       GitLocalBranch branch = currentBranches.get(repository);
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, branch);

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
@@ -433,7 +432,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @NotNull
   private static List<String> findClasses(@NotNull File jdkHome, boolean isJre) {
-    List<String> result = ContainerUtil.newArrayList();
+    List<String> result = new ArrayList<>();
 
     if (JdkUtil.isExplodedModularRuntime(jdkHome.getPath())) {
       File[] exploded = new File(jdkHome, "modules").listFiles();

@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 
 public class VcsLogProgress implements Disposable {
   @NotNull private final Object myLock = new Object();
-  @NotNull private final List<ProgressListener> myListeners = ContainerUtil.newArrayList();
+  @NotNull private final List<ProgressListener> myListeners = new ArrayList<>();
   @NotNull private final Set<VcsLogProgressIndicator> myTasksWithVisibleProgress = new HashSet<>();
   @NotNull private final Set<ProgressIndicator> myTasksWithSilentProgress = new HashSet<>();
   private boolean myDisposed = false;

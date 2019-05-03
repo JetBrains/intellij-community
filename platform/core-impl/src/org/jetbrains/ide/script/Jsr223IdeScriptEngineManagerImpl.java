@@ -52,7 +52,7 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @NotNull
   @Override
   public List<String> getFileExtensions(@Nullable String language) {
-    List<String> extensions = ContainerUtil.newArrayList();
+    List<String> extensions = new ArrayList<>();
     List<ScriptEngineFactory> factories = getScriptEngineManager().getEngineFactories();
     for (ScriptEngineFactory factory : factories) {
       if (language == null || factory.getLanguageName().equals(language)) {

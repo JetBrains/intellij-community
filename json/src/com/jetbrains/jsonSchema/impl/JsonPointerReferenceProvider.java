@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (!(element instanceof JsonStringLiteral)) return PsiReference.EMPTY_ARRAY;
-    List<PsiReference> refs = ContainerUtil.newArrayList();
+    List<PsiReference> refs = new ArrayList<>();
 
     List<Pair<TextRange, String>> fragments = ((JsonStringLiteral)element).getTextFragments();
     if (fragments.size() != 1)  return PsiReference.EMPTY_ARRAY;
@@ -136,7 +137,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
 
           @NotNull
           private Object[] collectCatalogVariants() {
-            List<LookupElement> elements = ContainerUtil.newArrayList();
+            List<LookupElement> elements = new ArrayList<>();
             final Project project = getElement().getProject();
             final List<JsonSchemaInfo> schemas = JsonSchemaService.Impl.get(project).getAllUserVisibleSchemas();
             for (JsonSchemaInfo schema : schemas) {

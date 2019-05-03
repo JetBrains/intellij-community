@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -92,7 +92,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
     groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component, impl);
 
-    ArrayList<AnAction> result = ContainerUtil.newArrayList();
+    ArrayList<AnAction> result = new ArrayList<>();
 
     if (view.getPresentation().isUsageTypeFilteringAvailable()) {
       GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);

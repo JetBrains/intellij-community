@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -338,7 +338,7 @@ public class Switcher extends AnAction implements DumbAware {
       twManager = ToolWindowManager.getInstance(project);
       CollectionListModel<ToolWindow> twModel = new CollectionListModel<>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
-      List<ToolWindow> windows = ContainerUtil.newArrayList();
+      List<ToolWindow> windows = new ArrayList<>();
       for (ActivateToolWindowAction action : actions) {
         ToolWindow tw = twManager.getToolWindow(action.getToolWindowId());
         if (tw.isAvailable()) {
@@ -1004,14 +1004,14 @@ public class Switcher extends AnAction implements DumbAware {
     void toggleShowEditedFiles() {
       myShowOnlyEditedFilesCheckBox.doClick();
     }
-    
+
     void setShowOnlyEditedFiles(boolean onlyEdited) {
       if (myShowOnlyEditedFilesCheckBox.isSelected() != onlyEdited) {
         myShowOnlyEditedFilesCheckBox.setSelected(onlyEdited);
       }
-      
+
       final boolean listWasSelected = files.getSelectedIndex() != -1;
-      
+
       final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(
         project, collectFiles(project, onlyEdited), toolWindows.getModel().getSize(), isPinnedMode());
       final int selectionIndex = filesAndSelection.getSecond();
@@ -1323,7 +1323,7 @@ public class Switcher extends AnAction implements DumbAware {
              + "</html>";
     }
   }
-  
+
   private static class VirtualFilesRenderer extends ColoredListCellRenderer<FileInfo> {
     private final SwitcherPanel mySwitcherPanel;
     boolean open;

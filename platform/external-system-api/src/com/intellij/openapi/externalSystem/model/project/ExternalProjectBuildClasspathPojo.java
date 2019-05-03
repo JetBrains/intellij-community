@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class ExternalProjectBuildClasspathPojo {
   @SuppressWarnings("UnusedDeclaration")
   public ExternalProjectBuildClasspathPojo() {
     // Used by IJ serialization
-    this("___DUMMY___", ContainerUtil.newArrayList(), new HashMap<>());
+    this("___DUMMY___", new ArrayList<>(), new HashMap<>());
   }
 
   public ExternalProjectBuildClasspathPojo(@NotNull String name,

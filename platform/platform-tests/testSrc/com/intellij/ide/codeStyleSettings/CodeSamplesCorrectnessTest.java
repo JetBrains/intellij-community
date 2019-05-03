@@ -9,14 +9,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType;
 
@@ -27,7 +23,7 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myErrorReports = ContainerUtil.newArrayList();
+    myErrorReports = new ArrayList<>();
     mySettingValues = SettingsType.values();
   }
 
@@ -69,7 +65,7 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
 
   private List<CodeSampleInfo> getSamplesToTest(@NotNull LanguageCodeStyleSettingsProvider provider) {
     Set<String> processedSamples = new HashSet<>();
-    List<CodeSampleInfo> sampleInfos = ContainerUtil.newArrayList();
+    List<CodeSampleInfo> sampleInfos = new ArrayList<>();
 
     for (SettingsType setting : mySettingValues) {
       String sample = provider.getCodeSample(setting);
@@ -90,7 +86,7 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
     if (file == null) {
       Language language = provider.getLanguage();
       LanguageFileType type = language.getAssociatedFileType();
-      if (type == null) return ContainerUtil.newArrayList();
+      if (type == null) return new ArrayList<>();
       file = myFixture.configureByText(type, sample);
     }
 

@@ -9,12 +9,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.BaseInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +27,8 @@ import java.util.regex.PatternSyntaxException;
  */
 public class MethodMatcher {
 
-  private final List<String> myMethodNamePatterns = ContainerUtil.newArrayList();
-  private final List<String> myClassNames = ContainerUtil.newArrayList();
+  private final List<String> myMethodNamePatterns = new ArrayList<>();
+  private final List<String> myClassNames = new ArrayList<>();
   private final Map<String, Pattern> myPatternCache = new HashMap<>();
   private final boolean myWriteDefaults;
   private final String myOptionName;

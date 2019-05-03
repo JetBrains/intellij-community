@@ -162,7 +162,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
   public List<AttachItem> collectAttachHostsItems(@NotNull final Project project,
                                                   @NotNull ProgressIndicator indicator) {
 
-    List<AttachItem> currentItems = ContainerUtil.newArrayList();
+    List<AttachItem> currentItems = new ArrayList<>();
 
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
@@ -189,7 +189,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
                                                           @NotNull XAttachHost host,
                                                           @NotNull Project project,
                                                           @NotNull UserDataHolder dataHolder) {
-    final List<AttachToProcessItem> result = ContainerUtil.newArrayList();
+    final List<AttachToProcessItem> result = new ArrayList<>();
     final List<RecentItem> recentItems = getRecentItems(host, project);
 
     for (int i = recentItems.size() - 1; i >= 0; i--) {
@@ -255,7 +255,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
                                                                @NotNull List<? extends XAttachDebuggerProvider> providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
-    List<AttachToProcessItem> currentItems = ContainerUtil.newArrayList();
+    List<AttachToProcessItem> currentItems = new ArrayList<>();
 
     for (ProcessInfo process : processInfos) {
 

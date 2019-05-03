@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +27,7 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +75,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   public Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(@NotNull Iterable<VirtualFile> files) {
     Map<VirtualFile, VcsRevisionNumber> result = new HashMap<>();
     Map<String, VirtualFile> items = new HashMap<>();
-    List<File> ioFiles = ContainerUtil.newArrayList();
+    List<File> ioFiles = new ArrayList<>();
 
     for (VirtualFile file : files) {
       File ioFile = virtualToIoFile(file);

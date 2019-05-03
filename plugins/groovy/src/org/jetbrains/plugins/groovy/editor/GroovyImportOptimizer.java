@@ -8,7 +8,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -194,7 +193,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
       });
 
-      List<GrImportStatement> explicated = ContainerUtil.newArrayList();
+      List<GrImportStatement> explicated = new ArrayList<>();
       for (String importedClass : importedClasses) {
         final String parentName = StringUtil.getPackageName(importedClass);
         if (!annotations.containsKey(importedClass) && !aliased.containsKey(importedClass)) {

@@ -291,7 +291,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       rebuildCommitPanels(selection);
       List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
+        List<Collection<VcsRef>> result = new ArrayList<>();
         for (Integer row : currentSelection) {
           result.add(myGraphTable.getModel().getRefsAtRow(row));
         }

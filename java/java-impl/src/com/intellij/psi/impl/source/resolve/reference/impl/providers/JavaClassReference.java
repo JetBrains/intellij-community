@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
@@ -240,7 +226,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   @NotNull
   public Object[] getVariants() {
-    List<Object> result = ContainerUtil.newArrayList();
+    List<Object> result = new ArrayList<>();
     for (PsiElement context : getCompletionContexts()) {
       if (context instanceof PsiPackage) {
         result.addAll(processPackage((PsiPackage)context));
@@ -259,7 +245,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private List<? extends PsiElement> getCompletionContexts() {
-    List<PsiElement> result = ContainerUtil.newArrayList();
+    List<PsiElement> result = new ArrayList<>();
 
     ContainerUtil.addIfNotNull(result, getCompletionContext());
 
@@ -293,7 +279,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @NotNull
   private List<LookupElement> processPackage(@NotNull PsiPackage aPackage) {
-    final ArrayList<LookupElement> list = ContainerUtil.newArrayList();
+    final ArrayList<LookupElement> list = new ArrayList<>();
     final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
     final GlobalSearchScope scope = getScope(getJavaContextFile());
     for (final PsiPackage subPackage : aPackage.getSubPackages(scope)) {

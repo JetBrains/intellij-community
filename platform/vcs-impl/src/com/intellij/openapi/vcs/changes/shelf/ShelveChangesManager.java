@@ -338,7 +338,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
    */
   @NotNull
   public Collection<String> checkAndMigrateOldPatchResourcesToNewSchemeStorage() {
-    Collection<String> nonMigratedPaths = newArrayList();
+    Collection<String> nonMigratedPaths = new ArrayList<>();
     for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
       File newPatchDir = new File(getShelfResourcesDirectory(), list.getName());
       // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
@@ -353,7 +353,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   private static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
                                                        @NotNull File targetDirectory,
                                                        boolean deleteOld) {
-    Collection<String> nonMigratedPaths = newArrayList();
+    Collection<String> nonMigratedPaths = new ArrayList<>();
     //try to copy/move .patch file
     File patchFile = new File(list.PATH);
     if (patchFile.exists()) {
@@ -848,7 +848,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes) {
-    final List<ShelvedChangeList> result = newArrayList();
+    final List<ShelvedChangeList> result = new ArrayList<>();
     new Task.Backgroundable(myProject, VcsBundle.getString("shelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -882,9 +882,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @NotNull
   private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes) {
-    List<String> failedChangeLists = newArrayList();
-    List<ShelvedChangeList> result = newArrayList();
-    List<Change> shelvedChanges = newArrayList();
+    List<String> failedChangeLists = new ArrayList<>();
+    List<ShelvedChangeList> result = new ArrayList<>();
+    List<Change> shelvedChanges = new ArrayList<>();
 
     try {
       SHELVED_FILES_LOCK.writeLock().lock();

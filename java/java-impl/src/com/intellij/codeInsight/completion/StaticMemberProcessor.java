@@ -94,7 +94,7 @@ public abstract class StaticMemberProcessor {
   }
 
   public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
-    final ArrayList<PsiMember> result = ContainerUtil.newArrayList();
+    final ArrayList<PsiMember> result = new ArrayList<>();
     for (final PsiClass psiClass : myStaticImportedClasses) {
       for (final PsiMethod method : psiClass.getAllMethods()) {
         if (matcher.prefixMatches(method.getName())) {

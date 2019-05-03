@@ -44,7 +44,6 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -1077,7 +1076,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static List<AnAction> flattenActionGroups(@NotNull final ActionGroup action) {
-    final ArrayList<AnAction> groups = ContainerUtil.newArrayList();
+    final ArrayList<AnAction> groups = new ArrayList<>();
     String groupName;
     for (AnAction anAction : action.getChildren(null)) {
       if (anAction instanceof ActionGroup) {

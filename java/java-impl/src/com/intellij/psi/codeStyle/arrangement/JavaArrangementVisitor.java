@@ -355,7 +355,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   @NotNull
   private static List<PsiComment> getComments(@NotNull PsiElement element) {
     PsiElement[] children = element.getChildren();
-    List<PsiComment> comments = ContainerUtil.newArrayList();
+    List<PsiComment> comments = new ArrayList<>();
 
     for (PsiElement e : children) {
       if (e instanceof PsiComment) {

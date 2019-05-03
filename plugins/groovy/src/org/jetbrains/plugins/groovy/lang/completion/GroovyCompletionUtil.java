@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -228,7 +229,7 @@ public class GroovyCompletionUtil {
                                                           boolean afterNew,
                                                           PrefixMatcher matcher,
                                                           PsiElement position) {
-    List<LookupElement> result = ContainerUtil.newArrayList();
+    List<LookupElement> result = new ArrayList<>();
     for (GroovyResolveResult candidate : candidates) {
       result.addAll(createLookupElements(candidate, afterNew, matcher, position));
       ProgressManager.checkCanceled();
@@ -241,7 +242,7 @@ public class GroovyCompletionUtil {
                                                           boolean afterNew,
                                                           PrefixMatcher matcher,
                                                           PsiElement position) {
-    List<LookupElement> result = ContainerUtil.newArrayList();
+    List<LookupElement> result = new ArrayList<>();
     for (GroovyResolveResult candidate : candidates) {
       result.addAll(createLookupElements(candidate, afterNew, matcher, position));
       ProgressManager.checkCanceled();

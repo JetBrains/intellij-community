@@ -2,13 +2,9 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.psi.PsiField;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class FieldDependenciesManager {
   private final Map<PsiField, Set<PsiField>> myFieldDependencies;
@@ -24,7 +20,7 @@ public class FieldDependenciesManager {
 
   @NotNull
   public List<ArrangementEntryDependencyInfo> getRoots() {
-    List<ArrangementEntryDependencyInfo> list = ContainerUtil.newArrayList();
+    List<ArrangementEntryDependencyInfo> list = new ArrayList<>();
 
     for (Map.Entry<PsiField, Set<PsiField>> entry : myFieldDependencies.entrySet()) {
       ArrangementEntryDependencyInfo currentInfo = myFieldInfosMap.get(entry.getKey());

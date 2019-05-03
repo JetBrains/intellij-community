@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -149,7 +148,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     List<GroovyMethodResult> array = getCandidatesInternal();
     if (array.size() == 1) return array.toArray(GroovyResolveResult.EMPTY_ARRAY);
 
-    List<GroovyMethodResult> result = ContainerUtil.newArrayList();
+    List<GroovyMethodResult> result = new ArrayList<>();
 
     Iterator<GroovyMethodResult> itr = array.iterator();
 

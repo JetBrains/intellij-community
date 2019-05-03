@@ -829,7 +829,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     );
 
     final Component myComponent;
-    final List<PropertyBean> myProperties = ContainerUtil.newArrayList();
+    final List<PropertyBean> myProperties = new ArrayList<>();
 
     InspectorTableModel(@NotNull Component c) {
       myComponent = c;

@@ -55,7 +55,7 @@ public class PushController implements Disposable {
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
   @Nullable private final Repository myCurrentlyOpenedRepository;
-  private final List<PrePushHandler> myHandlers = ContainerUtil.newArrayList();
+  private final List<PrePushHandler> myHandlers = new ArrayList<>();
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
@@ -499,7 +499,7 @@ public class PushController implements Disposable {
 
   @NotNull
   private List<PushInfo> preparePushDetails() {
-    List<PushInfo> allDetails = ContainerUtil.newArrayList();
+    List<PushInfo> allDetails = new ArrayList<>();
     Collection<MyRepoModel<?, ?, ?>> repoModels = getSelectedRepoNode();
 
     for (MyRepoModel<?, ?, ?> model : repoModels) {
@@ -509,7 +509,7 @@ public class PushController implements Disposable {
       }
       PushSpec<PushSource, PushTarget> pushSpec = new PushSpec<>(model.getSource(), target);
 
-      List<VcsFullCommitDetails> loadedCommits = ContainerUtil.newArrayList();
+      List<VcsFullCommitDetails> loadedCommits = new ArrayList<>();
       loadedCommits.addAll(model.getLoadedCommits());
       if (loadedCommits.isEmpty()) {
         //Note: loadCommits is cancellable - it tracks current thread's progress indicator under the hood!

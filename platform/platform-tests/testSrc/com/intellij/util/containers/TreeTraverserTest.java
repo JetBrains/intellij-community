@@ -169,7 +169,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testCursorIterableContract() {
-    List<Integer> list = ContainerUtil.newArrayList();
+    List<Integer> list = new ArrayList<>();
     JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
     for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(orig.iterator()))) {
       it.current();
@@ -183,7 +183,7 @@ public class TreeTraverserTest extends TestCase {
     JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
     JBIterator<JBIterator<Integer>> it = JBIterator.from(JBIterator.cursor(
       JBIterator.from(orig.iterator())).iterator());
-    List<Integer> list = ContainerUtil.newArrayList();
+    List<Integer> list = new ArrayList<>();
     while (it.advance()) {
       it.hasNext();
       list.add(it.current().current());
@@ -691,7 +691,7 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   public List<Integer> simpleTraverseExpand(TreeTraversal traversal) {
-    List<Integer> result = ContainerUtil.newArrayList();
+    List<Integer> result = new ArrayList<>();
     JBIterable<List<Integer>> iter = traversal.traversal((Function<List<Integer>, Iterable<List<Integer>>>)integers ->
       JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST)).fun(ContainerUtil.newArrayList(1));
     for (List<Integer> integers : iter) {
@@ -705,7 +705,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testTracingBfsLaziness() {
-    List<Integer> result = ContainerUtil.newArrayList();
+    List<Integer> result = new ArrayList<>();
     TreeTraversal.TracingIt<List<Integer>> it = TreeTraversal.TRACING_BFS.traversal((Function<List<Integer>, Iterable<List<Integer>>>)integers ->
         JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST)).fun(ContainerUtil.newArrayList(1)).typedIterator();
     while (it.advance()) {

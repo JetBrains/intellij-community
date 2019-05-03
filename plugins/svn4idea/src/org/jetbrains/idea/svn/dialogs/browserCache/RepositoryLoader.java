@@ -17,11 +17,11 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 
 class RepositoryLoader extends Loader {
@@ -87,7 +87,7 @@ class RepositoryLoader extends Loader {
 
   private class LoadTask extends Task.Backgroundable {
     @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
-    @NotNull private final List<DirectoryEntry> entries = newArrayList();
+    @NotNull private final List<DirectoryEntry> entries = new ArrayList<>();
     @Nullable private String error;
 
     private LoadTask(@NotNull Pair<RepositoryTreeNode, Expander> data) {

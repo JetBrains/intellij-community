@@ -69,7 +69,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   private final InjectionsTable myInjectionsTable;
   private final Map<String, LanguageInjectionSupport> mySupports = new LinkedHashMap<>();
   private final Map<String, AnAction> myEditActions = new LinkedHashMap<>();
-  private final List<AnAction> myAddActions = ContainerUtil.newArrayList();
+  private final List<AnAction> myAddActions = new ArrayList<>();
   private final JLabel myCountLabel;
 
   private final Configuration myConfiguration;

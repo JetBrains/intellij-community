@@ -27,10 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Base class for "Go To Symbol" contributors.
@@ -74,7 +71,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, boolean includeNonProjectItems) {
-    List<NavigationItem> result = ContainerUtil.newArrayList();
+    List<NavigationItem> result = new ArrayList<>();
     for (Module module : getAcceptableModules(project)) {
       addItems(module, name, result);
     }

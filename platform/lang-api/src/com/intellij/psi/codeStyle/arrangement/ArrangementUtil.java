@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCon
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
@@ -301,7 +300,7 @@ public class ArrangementUtil {
   //region Arrangement Sections
   @NotNull
   public static List<StdArrangementMatchRule> collectMatchRules(@NotNull List<? extends ArrangementSectionRule> sections) {
-    final List<StdArrangementMatchRule> matchRules = ContainerUtil.newArrayList();
+    final List<StdArrangementMatchRule> matchRules = new ArrayList<>();
     for (ArrangementSectionRule section : sections) {
       matchRules.addAll(section.getMatchRules());
     }

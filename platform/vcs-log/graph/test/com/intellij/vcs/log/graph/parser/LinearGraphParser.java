@@ -117,7 +117,7 @@ public class LinearGraphParser {
     @NotNull
     @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
-      List<GraphEdge> result = ContainerUtil.newArrayList();
+      List<GraphEdge> result = new ArrayList<>();
 
       for (GraphEdge upEdge : myUpEdges.get(nodeIndex)) {
         if (upEdge.getType().isNormalEdge() && filter.upNormal) result.add(upEdge);

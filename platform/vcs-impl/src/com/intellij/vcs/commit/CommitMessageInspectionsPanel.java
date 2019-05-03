@@ -29,6 +29,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +37,11 @@ import java.util.Map;
 import static com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.areToolDescriptorsChanged;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements Disposable, UnnamedConfigurable {
   @NotNull private final Project myProject;
   @NotNull private final CommitMessageInspectionProfile myProfile;
-  @NotNull private final List<ToolDescriptors> myInitialToolDescriptors = newArrayList();
+  @NotNull private final List<ToolDescriptors> myInitialToolDescriptors = new ArrayList<>();
   @NotNull private final Map<HighlightDisplayKey, CommitMessageInspectionDetails> myToolDetails = new HashMap<>();
   @NotNull private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group("");
   private InspectionProfileModifiableModel myModifiableModel;

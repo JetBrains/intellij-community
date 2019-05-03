@@ -75,7 +75,7 @@ public class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManage
   }
 
   private static PsiElement[] collectGStringOperands(GrString grString) {
-    final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
+    final ArrayList<PsiElement> operands = new ArrayList<>();
     processGString(grString, operands);
     return operands.toArray(PsiElement.EMPTY_ARRAY);
   }
@@ -85,7 +85,7 @@ public class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManage
   }
 
   private static PsiElement[] collectBinaryOperands(GrBinaryExpression expression) {
-    final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
+    final ArrayList<PsiElement> operands = new ArrayList<>();
     processBinary(expression, operands);
     return operands.toArray(PsiElement.EMPTY_ARRAY);
   }

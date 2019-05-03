@@ -900,7 +900,7 @@ public class ResolveUtil {
                                                                              @NotNull GrExpression[] expressionArguments,
                                                                              @NotNull GrClosableBlock[] closureArguments,
                                                                              @NotNull GrExpression arg) {
-    List<Pair<PsiParameter, PsiType>> expectedParams = ContainerUtil.newArrayList();
+    List<Pair<PsiParameter, PsiType>> expectedParams = new ArrayList<>();
 
     for (GroovyResolveResult variant : variants) {
       if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {

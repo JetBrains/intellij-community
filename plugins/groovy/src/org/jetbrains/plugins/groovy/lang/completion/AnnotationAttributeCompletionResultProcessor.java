@@ -8,7 +8,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -34,7 +33,7 @@ public class AnnotationAttributeCompletionResultProcessor {
       final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
 
       if (annotationCollector != null) {
-        final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
+        final ArrayList<GrAnnotation> annotations = new ArrayList<>();
         GrAnnotationCollector.collectAnnotations(annotations, myAnnotation, annotationCollector);
 
         Set<String> usedNames = new HashSet<>();

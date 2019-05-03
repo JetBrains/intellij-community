@@ -302,7 +302,7 @@ public abstract class PluginManagerMain implements Disposable {
     setDownloadStatus(true);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
+      List<IdeaPluginDescriptor> list = new ArrayList<>();
       Map<String, String> errors = new LinkedHashMap<>();
       ProgressIndicator indicator = new EmptyProgressIndicator();
 

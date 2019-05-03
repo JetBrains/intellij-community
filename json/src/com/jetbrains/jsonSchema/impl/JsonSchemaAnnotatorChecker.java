@@ -361,7 +361,7 @@ class JsonSchemaAnnotatorChecker {
   @NotNull
   private JsonValidationError.MissingMultiplePropsIssueData createMissingPropertiesData(@NotNull JsonSchemaObject schema,
                                                                                                HashSet<String> requiredNames) {
-    List<JsonValidationError.MissingPropertyIssueData> allProps = ContainerUtil.newArrayList();
+    List<JsonValidationError.MissingPropertyIssueData> allProps = new ArrayList<>();
     for (String req: requiredNames) {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
@@ -516,7 +516,7 @@ class JsonSchemaAnnotatorChecker {
       if (!value.isShouldBeIgnored()) checker.typeError(value.getDelegate(), null, getExpectedTypes(collection));
     }
     else {
-      final List<JsonSchemaObject> filtered = ContainerUtil.newArrayListWithCapacity(collection.size());
+      final List<JsonSchemaObject> filtered = new ArrayList<>(collection.size());
       for (JsonSchemaObject schema: collection) {
         if (!areSchemaTypesCompatible(schema, type)) continue;
         filtered.add(schema);
@@ -848,8 +848,8 @@ class JsonSchemaAnnotatorChecker {
 
   // returns the schema, selected for annotation
   private JsonSchemaObject processOneOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> oneOf) {
-    final List<JsonSchemaAnnotatorChecker> candidateErroneousCheckers = ContainerUtil.newArrayList();
-    final List<JsonSchemaObject> candidateErroneousSchemas = ContainerUtil.newArrayList();
+    final List<JsonSchemaAnnotatorChecker> candidateErroneousCheckers = new ArrayList<>();
+    final List<JsonSchemaObject> candidateErroneousSchemas = new ArrayList<>();
     final List<JsonSchemaObject> correct = new SmartList<>();
     for (JsonSchemaObject object : oneOf) {
       // skip it if something JS awaited, we do not process it currently
@@ -941,8 +941,8 @@ class JsonSchemaAnnotatorChecker {
 
   // returns the schema, selected for annotation
   private JsonSchemaObject processAnyOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> anyOf) {
-    final List<JsonSchemaAnnotatorChecker> candidateErroneousCheckers = ContainerUtil.newArrayList();
-    final List<JsonSchemaObject> candidateErroneousSchemas = ContainerUtil.newArrayList();
+    final List<JsonSchemaAnnotatorChecker> candidateErroneousCheckers = new ArrayList<>();
+    final List<JsonSchemaObject> candidateErroneousSchemas = new ArrayList<>();
 
     for (JsonSchemaObject object : anyOf) {
       final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, myOptions);

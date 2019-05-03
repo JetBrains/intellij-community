@@ -35,7 +35,7 @@ public class ConfigurableExtensionPointUtil {
   public static List<Configurable> buildConfigurablesList(@NotNull List<ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
     final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<>();
-    List<String> idsInEpOrder = ContainerUtil.newArrayList();
+    List<String> idsInEpOrder = new ArrayList<>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (isSuppressed(configurable, filter)) continue;
@@ -106,7 +106,7 @@ public class ConfigurableExtensionPointUtil {
         }
         List<String> children = tree.get(parentId);
         if (children == null) {
-          children = ContainerUtil.newArrayListWithCapacity(5);
+          children = new ArrayList<>(5);
           tree.put(parentId, children);
         }
         children.add(id);
@@ -315,11 +315,12 @@ public class ConfigurableExtensionPointUtil {
   private static List<Configurable> getConfigurables(Map<String, Node<ConfigurableWrapper>> tree, Node<ConfigurableWrapper> node) {
     if (node.myChildren == null) {
       if (node.myValue == null) {
-        return ContainerUtil.newArrayList(); // for group only
+        // for group only
+        return new ArrayList<>();
       }
       return null;
     }
-    List<Configurable> list = ContainerUtil.newArrayListWithCapacity(node.myChildren.size());
+    List<Configurable> list = new ArrayList<>(node.myChildren.size());
     for (Iterator<Object> iterator = node.myChildren.iterator(); iterator.hasNext(); iterator.remove()) {
       Object child = iterator.next();
       if (child instanceof Configurable) {

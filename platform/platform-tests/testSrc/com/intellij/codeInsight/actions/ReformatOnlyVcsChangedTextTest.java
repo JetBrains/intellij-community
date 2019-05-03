@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
@@ -37,11 +23,11 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockVcsContextFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -96,7 +82,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new MockPlainTextFormattingModelBuilder(),
                                                      getTestRootDisposable());
-    
+
     myMockPlainTextImportOptimizer = new MockPlainTextImportOptimizer();
     LanguageImportStatements.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer, getTestRootDisposable());
   }
@@ -320,7 +306,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     finally {
       OptimizeImportsAction.setProcessVcsChangedFilesInTests(false);
     }
-    
+
     assertTrue(isImportsOptimized(toModify));
     assertTrue(isImportsOptimized(toModify2));
     assertTrue(!isImportsOptimized(toKeep));
@@ -369,7 +355,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     assertTrue(getErrorMessage(expected, formatted), Arrays.equals(expected, formatted));
   }
-  
+
   private boolean isImportsOptimized(@NotNull PsiFile file) {
     return myMockPlainTextImportOptimizer.getProcessedFiles().contains(file);
   }
@@ -413,7 +399,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     @NotNull
     private List<Change> createChanges(@NotNull String committed, @NotNull PsiFile... files) {
-      List<Change> changes = ContainerUtil.newArrayList();
+      List<Change> changes = new ArrayList<>();
       for (PsiFile file : files) {
         changes.add(createChange(committed, file));
       }

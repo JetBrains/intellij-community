@@ -24,10 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq;
 import static com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq;
@@ -98,7 +95,7 @@ public class GrStubUtils {
   }
 
   public static String[] getAnnotationNames(PsiModifierListOwner psi) {
-    List<String> annoNames = ContainerUtil.newArrayList();
+    List<String> annoNames = new ArrayList<>();
     final PsiModifierList modifierList = psi.getModifierList();
     if (modifierList instanceof GrModifierList) {
       for (GrAnnotation annotation : ((GrModifierList)modifierList).getRawAnnotations()) {

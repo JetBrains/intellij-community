@@ -23,7 +23,6 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -86,7 +85,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private final JComboBox myCombobox;
 
   private final Map<String, RepositoryArtifactDescription> myCoordinates = new THashMap<>();
-  private final List<String> myShownItems = ContainerUtil.newArrayList();
+  private final List<String> myShownItems = new ArrayList<>();
   private final String myDefaultDownloadFolder;
 
   private String myFilterString;

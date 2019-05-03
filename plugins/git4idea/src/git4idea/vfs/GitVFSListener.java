@@ -34,7 +34,8 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.map2Map;
 
 public class GitVFSListener extends VcsVFSListener {
   /**
@@ -204,9 +205,9 @@ public class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected void performMoveRename(@NotNull final List<MovedFileInfo> movedFiles) {
-    List<FilePath> toAdd = newArrayList();
-    List<FilePath> toRemove = newArrayList();
-    List<MovedFileInfo> toForceMove = newArrayList();
+    List<FilePath> toAdd = new ArrayList<>();
+    List<FilePath> toRemove = new ArrayList<>();
+    List<MovedFileInfo> toForceMove = new ArrayList<>();
     for (MovedFileInfo movedInfo : movedFiles) {
       String oldPath = movedInfo.myOldPath;
       String newPath = movedInfo.myNewPath;
@@ -223,8 +224,8 @@ public class GitVFSListener extends VcsVFSListener {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<FilePath> dirtyPaths = newArrayList();
-          List<File> toRefresh = newArrayList();
+          List<FilePath> dirtyPaths = new ArrayList<>();
+          List<File> toRefresh = new ArrayList<>();
           //perform adding
           for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toAdd).entrySet()) {
             List<FilePath> files = toAddEntry.getValue();

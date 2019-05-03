@@ -14,7 +14,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
@@ -447,7 +446,7 @@ public class CompleteReferenceExpression {
 
       GroovyResolveResult result = (GroovyResolveResult)o;
       if (!result.isStaticsOK()) {
-        if (myInapplicable == null) myInapplicable = ContainerUtil.newArrayList();
+        if (myInapplicable == null) myInapplicable = new ArrayList<>();
         myInapplicable.add(result);
         return;
       }

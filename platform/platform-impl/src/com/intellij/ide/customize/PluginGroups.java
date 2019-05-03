@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 public class PluginGroups {
   static final String CORE = "Core";
   private static final int MAX_DESCR_LENGTH = 55;
-  
+
   public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
   final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
@@ -41,7 +41,7 @@ public class PluginGroups {
   private Runnable myLoadingCallback = null;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadDescriptors(null, ContainerUtil.newArrayList());
+    myAllPlugins = PluginManagerCore.loadDescriptors(null, new ArrayList<>());
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
       protected List<IdeaPluginDescriptor> doInBackground() throws Exception {

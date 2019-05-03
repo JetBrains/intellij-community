@@ -24,6 +24,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -165,10 +166,10 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         }
       }
 
-      List<MoreCommitsRequest> requestsToRun = ContainerUtil.newArrayList();
+      List<MoreCommitsRequest> requestsToRun = new ArrayList<>();
       if (state.getVisiblePack() != myState.getVisiblePack() && state.isValid()) {
         requestsToRun.addAll(state.getRequestsToRun());
-        state = state.withRequests(ContainerUtil.newArrayList());
+        state = state.withRequests(new ArrayList<>());
       }
 
       myTaskController.taskCompleted(state);
@@ -282,7 +283,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     private final boolean myIsValid;
 
     State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
-      this(filters, sortType, CommitCountStage.INITIAL, ContainerUtil.newArrayList(), VisiblePack.EMPTY, true);
+      this(filters, sortType, CommitCountStage.INITIAL, new ArrayList<>(), VisiblePack.EMPTY, true);
     }
 
     State(@NotNull VcsLogFilterCollection filters,

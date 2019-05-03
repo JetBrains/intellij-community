@@ -434,7 +434,7 @@ public class DvcsUtil {
       }
       List<VcsFullCommitDetails> commitsInRoot = groupedCommits.get(repository);
       if (commitsInRoot == null) {
-        commitsInRoot = ContainerUtil.newArrayList();
+        commitsInRoot = new ArrayList<>();
         groupedCommits.put(repository, commitsInRoot);
       }
       commitsInRoot.add(commit);

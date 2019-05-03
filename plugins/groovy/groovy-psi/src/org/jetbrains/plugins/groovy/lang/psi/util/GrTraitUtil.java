@@ -31,10 +31,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
@@ -66,7 +63,7 @@ public class GrTraitUtil {
 
   public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
-      List<PsiClass> result = ContainerUtil.newArrayList();
+      List<PsiClass> result = new ArrayList<>();
       InheritanceUtil.processSupers(trait, true, clazz -> {
         if (isTrait(clazz)) {
           PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "groovy.transform.SelfType");
@@ -117,7 +114,7 @@ public class GrTraitUtil {
   @NotNull
   public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
-      final Collection<PsiMethod> result = ContainerUtil.newArrayList();
+      final Collection<PsiMethod> result = new ArrayList<>();
       doCollectCompiledTraitMethods(trait, result);
       return CachedValueProvider.Result.create(result, trait);
     });
@@ -209,7 +206,7 @@ public class GrTraitUtil {
   @NotNull
   public static Collection<GrField> getCompiledTraitFields(@NotNull final ClsClassImpl trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
-      final Collection<GrField> result = ContainerUtil.newArrayList();
+      final Collection<GrField> result = new ArrayList<>();
       doCollectCompiledTraitFields(trait, result);
       return CachedValueProvider.Result.create(result, trait);
     });

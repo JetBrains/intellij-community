@@ -100,7 +100,7 @@ public class HgHistoryUtil {
     HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
 
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = new ArrayList<>();
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -148,7 +148,7 @@ public class HgHistoryUtil {
                                                    @NotNull VirtualFile root,
                                                    @NotNull VcsLogObjectsFactory factory,
                                                    @NotNull HgFileRevision revision) {
-    List<List<VcsFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
+    List<List<VcsFileStatusInfo>> reportedChanges = new ArrayList<>();
     reportedChanges.add(getStatusInfo(revision));
 
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
@@ -207,7 +207,7 @@ public class HgHistoryUtil {
       }
     }
 
-    List<VcsFileStatusInfo> result = ContainerUtil.newArrayList();
+    List<VcsFileStatusInfo> result = new ArrayList<>();
     for (HgChange change : changes) {
       Change.Type type = getType(change.getStatus());
       LOG.assertTrue(type != null, "Unsupported status for change " + change);

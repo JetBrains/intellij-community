@@ -13,10 +13,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -82,7 +79,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
 
     BemState nodeBemState = BEM_STATE.get(node);
     BemState bemState = extractBemStateFromClassName(className, elementSeparator, modifierSeparator);
-    List<String> result = ContainerUtil.newArrayList();
+    List<String> result = new ArrayList<>();
     if (!bemState.isEmpty()) {
       String nodeBlockValue = nodeBemState != null ? nodeBemState.getBlock() : null;
 

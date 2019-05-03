@@ -20,10 +20,7 @@ import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class VcsCherryPickAction extends DumbAwareAction {
   private static final String NAME = "Cherry-Pick";
@@ -88,7 +85,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
     for (CommitId commit : details) {
       List<Hash> hashes = result.get(commit.getRoot());
       if (hashes == null) {
-        hashes = ContainerUtil.newArrayList();
+        hashes = new ArrayList<>();
         result.put(commit.getRoot(), hashes);
       }
       hashes.add(commit.getHash());

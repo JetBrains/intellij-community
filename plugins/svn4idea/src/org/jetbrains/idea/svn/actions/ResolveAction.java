@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn.actions;
@@ -12,11 +12,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.util.containers.ContainerUtil.exists;
 
 public class ResolveAction extends BasicAction {
   @NotNull
@@ -40,7 +42,7 @@ public class ResolveAction extends BasicAction {
   @Override
   protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
     boolean hasDirs = exists(files, VirtualFile::isDirectory);
-    List<VirtualFile> fileList = newArrayList();
+    List<VirtualFile> fileList = new ArrayList<>();
     if (!hasDirs) {
       Collections.addAll(fileList, files);
     }

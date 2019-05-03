@@ -83,7 +83,7 @@ public class MvcModuleStructureUtil {
 
     root.refresh(false, true);
 
-    final List<Consumer<ContentEntry>> actions = ContainerUtil.newArrayList();
+    final List<Consumer<ContentEntry>> actions = new ArrayList<>();
 
     for (Map.Entry<JpsModuleSourceRootType<?>, Collection<String>> entry : structure.getSourceFolders().entrySet()) {
       JpsModuleSourceRootType<?> rootType = entry.getKey();
@@ -252,7 +252,7 @@ public class MvcModuleStructureUtil {
       appRoot.refresh(false, false);
     }
 
-    Collection<Consumer<ModifiableRootModel>> actions = ContainerUtil.newArrayList();
+    Collection<Consumer<ModifiableRootModel>> actions = new ArrayList<>();
     removeInvalidSourceRoots(actions, structure);
     cleanupDefaultLibrary(structure.myModule, actions, appRoots, structure.getUserLibraryName());
     moveupLibrariesFromMavenPlugin(structure.myModule, actions);
@@ -265,7 +265,7 @@ public class MvcModuleStructureUtil {
       }
     }
 
-    Collection<Consumer<ModifiableFacetModel>> facetActions = ContainerUtil.newArrayList();
+    Collection<Consumer<ModifiableFacetModel>> facetActions = new ArrayList<>();
     structure.setupFacets(facetActions, rootsToFacetSetup);
 
     return Pair.create(actions, facetActions);

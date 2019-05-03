@@ -28,10 +28,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
@@ -672,7 +669,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     private boolean accepted(int index, String text) {
       if (myFilters == null) {
-        myFilters = ContainerUtil.newArrayListWithCapacity(myParamCount + 1);
+        myFilters = new ArrayList<>(myParamCount + 1);
         for (int i = 0; i < myParamCount + 1; i++) myFilters.add(null);
       }
       Set<String> filter = myFilters.get(index);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -132,7 +132,7 @@ public class TipDialog extends DialogWrapper {
       VirtualFile[] pathToSelect = lastOpenedTip != null ? new VirtualFile[]{lastOpenedTip} : VirtualFile.EMPTY_ARRAY;
       VirtualFile[] choose = FileChooserFactory.getInstance().createFileChooser(descriptor, null, myTipPanel).choose(null, pathToSelect);
       if (choose.length > 0) {
-        ArrayList<TipAndTrickBean> tips = ContainerUtil.newArrayList();
+        ArrayList<TipAndTrickBean> tips = new ArrayList<>();
         for (VirtualFile file : choose) {
           TipAndTrickBean tip = new TipAndTrickBean();
           tip.fileName = file.getPath();

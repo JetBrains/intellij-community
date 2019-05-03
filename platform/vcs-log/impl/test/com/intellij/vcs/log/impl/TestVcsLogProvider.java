@@ -63,7 +63,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   public TestVcsLogProvider(@NotNull VirtualFile root) {
     myRoot = root;
-    myCommits = ContainerUtil.newArrayList();
+    myCommits = new ArrayList<>();
     myRefs = new HashSet<>();
     myRefManager = new MockRefManager();
     myFullLogSemaphore = new ReducibleSemaphore();

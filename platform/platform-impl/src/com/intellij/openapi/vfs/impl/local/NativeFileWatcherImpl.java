@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.sun.jna.Platform;
@@ -269,7 +268,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
     private WatcherOp myLastOp;
-    private final List<String> myLines = ContainerUtil.newArrayList();
+    private final List<String> myLines = new ArrayList<>();
 
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
       super(process, commandLine, CHARSET);

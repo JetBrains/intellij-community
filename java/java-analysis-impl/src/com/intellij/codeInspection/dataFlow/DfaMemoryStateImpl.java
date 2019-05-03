@@ -52,7 +52,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   protected DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
     myDefaultVariableStates = new THashMap<>();
-    myEqClasses = ContainerUtil.newArrayList();
+    myEqClasses = new ArrayList<>();
     myVariableStates = new LinkedHashMap<>();
     myDistinctClasses = new DistinctPairSet(this);
     myStack = new Stack<>();

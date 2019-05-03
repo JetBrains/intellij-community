@@ -140,7 +140,7 @@ public class JsonSchemaObject {
 
   public void completeInitialization(JsonValueAdapter jsonObject) {
     if (myIf != null) {
-      myIfThenElse = ContainerUtil.newArrayList();
+      myIfThenElse = new ArrayList<>();
       myIfThenElse.add(new IfThenElse(myIf, myThen, myElse));
     }
 
@@ -362,7 +362,7 @@ public class JsonSchemaObject {
   @Nullable
   private static <T> List<T> copyList(@Nullable List<T> target, @Nullable List<T> source) {
     if (source == null || source.isEmpty()) return target;
-    if (target == null) target = ContainerUtil.newArrayListWithCapacity(source.size());
+    if (target == null) target = new ArrayList<>(source.size());
     target.addAll(source);
     return target;
   }

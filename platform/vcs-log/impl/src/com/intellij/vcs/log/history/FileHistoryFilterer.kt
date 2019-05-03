@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -134,7 +133,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
       }
 
-      val commits = ContainerUtil.newArrayListWithCapacity<GraphCommit<Int>>(revisions.size)
+      val commits = ArrayList<GraphCommit<Int>>(revisions.size)
 
       val pathsMap = HashMap<Int, MaybeDeletedFilePath>()
       for (revision in revisions) {
@@ -154,7 +153,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
     private fun getFilteredRefs(dataPack: DataPack): Map<VirtualFile, CompressedRefs> {
       val compressedRefs = dataPack.refsModel.allRefsByRoot[root] ?: CompressedRefs(emptySet(), storage)
-      return mapOf(kotlin.Pair(root, compressedRefs))
+      return mapOf(Pair(root, compressedRefs))
     }
 
     private fun getIndex(revision: VcsFileRevision): Int {

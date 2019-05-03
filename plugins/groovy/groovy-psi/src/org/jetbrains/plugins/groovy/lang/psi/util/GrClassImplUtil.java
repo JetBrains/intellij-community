@@ -127,7 +127,7 @@ public class GrClassImplUtil {
   @NotNull
   public static PsiMethod[] getAllMethods(final GrTypeDefinition grType) {
     return CachedValuesManager.getCachedValue(grType, () -> {
-      List<PsiMethod> list = ContainerUtil.newArrayList();
+      List<PsiMethod> list = new ArrayList<>();
       getAllMethodsInner(grType, list, new HashSet<>());
       return CachedValueProvider.Result
         .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);

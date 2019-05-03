@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     public boolean SHOW_DETAILS = false;
     public boolean SHOW_OTHER_BRANCHES = false;
     public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
-    public List<Integer> COLUMN_ORDER = ContainerUtil.newArrayList();
+    public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public boolean SHOW_DIFF_PREVIEW = true;
   }
 

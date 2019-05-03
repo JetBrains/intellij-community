@@ -16,10 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GrMapTypeFromNamedArgs extends GrMapType {
 
@@ -55,7 +52,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     super(facade, scope);
 
     myStringEntries = new LinkedHashMap<>();
-    myOtherEntries = ContainerUtil.newArrayList();
+    myOtherEntries = new ArrayList<>();
     for (GrNamedArgument namedArg : namedArgs) {
       final GrArgumentLabel label = namedArg.getLabel();
       final GrExpression expression = namedArg.getExpression();

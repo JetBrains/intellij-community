@@ -47,7 +47,7 @@ public abstract class VcsLogUserFilterTest {
   }
 
   public void testWeirdCharacters() throws Exception {
-    List<String> names = ContainerUtil.newArrayList();
+    List<String> names = new ArrayList<>();
 
     for (Character c : UserNameRegex.EXTENDED_REGEX_CHARS) {
       String name = "user" + c + "userovich" + c.hashCode(); // hashCode is required so that uses wont be synonyms
@@ -80,7 +80,7 @@ public abstract class VcsLogUserFilterTest {
   }
 
   public void testSynonyms(@NotNull Set<Character> excludes) throws Exception {
-    List<String> names = ContainerUtil.newArrayList();
+    List<String> names = new ArrayList<>();
 
     Set<String> synonyms = new HashSet<>();
     for (char c = ' '; c <= '~'; c++) {
@@ -96,7 +96,7 @@ public abstract class VcsLogUserFilterTest {
     MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
 
-    List<String> synonymCommits = ContainerUtil.newArrayList();
+    List<String> synonymCommits = new ArrayList<>();
     for (VcsUser user : commits.keySet()) {
       if (synonyms.contains(user.getName())) synonymCommits.addAll(commits.get(user));
     }
@@ -228,7 +228,7 @@ public abstract class VcsLogUserFilterTest {
 
   @NotNull
   private List<VcsCommitMetadata> generateMetadata(@NotNull MultiMap<VcsUser, String> commits) {
-    List<VcsCommitMetadata> result = ContainerUtil.newArrayList();
+    List<VcsCommitMetadata> result = new ArrayList<>();
 
     for (VcsUser user : commits.keySet()) {
       for (String commit : commits.get(user)) {
@@ -246,7 +246,7 @@ public abstract class VcsLogUserFilterTest {
   private MultiMap<VcsUser, String> generateHistory(String... names) throws IOException {
     TestCase.assertTrue("Incorrect user names (should be pairs of users and emails) " + Arrays.toString(names), names.length % 2 == 0);
 
-    List<VcsUser> users = ContainerUtil.newArrayList();
+    List<VcsUser> users = new ArrayList<>();
     for (int i = 0; i < names.length / 2; i++) {
       users.add(myObjectsFactory.createUser(names[2 * i], names[2 * i + 1]));
     }

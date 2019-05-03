@@ -55,8 +55,8 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
     int start = Math.max(0, visibleRow - visibleRange);
     int end = Math.min(linearGraph.nodesCount(), start + 2 * visibleRange); // no more than 2*visibleRange commits;
 
-    List<GraphCommit<CommitId>> graphCommits = ContainerUtil.newArrayListWithCapacity(end - start);
-    List<CommitId> commitsIdMap = ContainerUtil.newArrayListWithCapacity(end - start);
+    List<GraphCommit<CommitId>> graphCommits = new ArrayList<>(end - start);
+    List<CommitId> commitsIdMap = new ArrayList<>(end - start);
 
     for (int row = start; row < end; row++) {
       int nodeId = linearGraph.getNodeId(row);
@@ -76,7 +76,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
     PermanentLinearGraphImpl newLinearGraph = PermanentLinearGraphBuilder.newInstance(graphCommits).build();
 
     int[] layoutIndexes = new int[end - start];
-    List<Integer> headNodeIndexes = ContainerUtil.newArrayList();
+    List<Integer> headNodeIndexes = new ArrayList<>();
 
     TObjectIntHashMap<CommitId> commitIdToInteger = reverseCommitIdMap(permanentCommitsInfo, permanentGraphSize);
     for (int row = start; row < end; row++) {

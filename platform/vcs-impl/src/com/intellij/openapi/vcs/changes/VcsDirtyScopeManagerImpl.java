@@ -270,7 +270,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);
     VcsInvalidated inProgress = calculateInvalidated(dirtBuilderInProgress);
-    Collection<FilePath> result = ContainerUtil.newArrayList();
+    Collection<FilePath> result = new ArrayList<>();
     for (FilePath fp : files) {
       if (invalidated.isFileDirty(fp) || inProgress.isFileDirty(fp)) {
         result.add(fp);

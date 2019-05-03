@@ -76,7 +76,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
 
   @NotNull private final Set<VirtualFile> myRoots = new HashSet<>();
-  @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
+  @NotNull private final List<Change> myChanges = new ArrayList<>();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new HashMap<>();
   @Nullable private Collection<FilePath> myAffectedPaths;
   @NotNull private final Wrapper myToolbarWrapper;

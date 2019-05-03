@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnFileSystemListener;
@@ -32,7 +31,7 @@ public class Reverter {
     myVcs = vcs;
     myHandler = createRevertHandler(exceptions, listener);
     myExceptions = exceptions;
-    myFromToModified = ContainerUtil.newArrayList();
+    myFromToModified = new ArrayList<>();
     myProperties = new HashMap<>();
   }
 

@@ -435,7 +435,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
     private List<Change> collectDetails(@NotNull List<Change> changes, @NotNull Set<Pair<Boolean, String>> duplicates)
       throws VcsException {
-      List<Change> result = ContainerUtil.newArrayList();
+      List<Change> result = new ArrayList<>();
 
       for (Change change : changes) {
         // directory statuses are already uploaded

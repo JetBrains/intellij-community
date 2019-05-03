@@ -274,7 +274,7 @@ public class HgRepositoryReader {
 
   @NotNull
   public List<HgNameWithHashInfo> readMQAppliedPatches() {
-    ArrayList<HgNameWithHashInfo> mqPatchRefs = ContainerUtil.newArrayList();
+    ArrayList<HgNameWithHashInfo> mqPatchRefs = new ArrayList<>();
     readReferences(new File(myMqInternalDir, "status"), mqPatchRefs);
     return mqPatchRefs;
   }

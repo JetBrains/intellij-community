@@ -8,14 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "GroovyConsoleState",
@@ -32,7 +28,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   }
 
   public static class MyState {
-    public Collection<Entry> list = ContainerUtil.newArrayList();
+    public Collection<Entry> list = new ArrayList<>();
   }
 
   private final ModuleManager myModuleManager;

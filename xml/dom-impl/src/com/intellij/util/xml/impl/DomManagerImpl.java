@@ -159,7 +159,7 @@ public final class DomManagerImpl extends DomManager {
       return Collections.emptyList();
     }
 
-    final List<DomEvent> events = ContainerUtil.newArrayList();
+    final List<DomEvent> events = new ArrayList<>();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

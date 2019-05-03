@@ -212,7 +212,7 @@ public class VcsLogUtil {
   public static List<? extends VcsFullCommitDetails> getDetails(@NotNull VcsLogProvider logProvider,
                                                                 @NotNull VirtualFile root,
                                                                 @NotNull List<String> hashes) throws VcsException {
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = new ArrayList<>();
     logProvider.readFullDetails(root, hashes, result::add);
     return result;
   }
@@ -265,7 +265,7 @@ public class VcsLogUtil {
   @NotNull
   public static List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
                                             @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
-    List<Change> changes = ContainerUtil.newArrayList();
+    List<Change> changes = new ArrayList<>();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
     for (VcsFullCommitDetails details : detailsListReversed) {
       changes.addAll(getChanges.fun(details));

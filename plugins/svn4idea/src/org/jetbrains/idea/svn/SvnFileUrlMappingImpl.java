@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -21,6 +21,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -42,7 +43,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @NotNull private final SvnMapping myMapping = new SvnMapping();
   // grouped; if there are several mappings one under another, will return the upmost
   @NotNull private final SvnMapping myMoreRealMapping = new SvnMapping();
-  @NotNull private final List<RootUrlInfo> myErrorRoots = newArrayList();
+  @NotNull private final List<RootUrlInfo> myErrorRoots = new ArrayList<>();
   @NotNull private final MyRootsHelper myRootsHelper;
   @NotNull private final Project myProject;
   @NotNull private final NestedCopiesHolder myNestedCopiesHolder = new NestedCopiesHolder();

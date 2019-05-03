@@ -17,7 +17,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -192,7 +191,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     }
 
-    final List<LookupElement> zeroPriority = ContainerUtil.newArrayList();
+    final List<LookupElement> zeroPriority = new ArrayList<>();
 
     PsiClass qualifierClass = com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     final boolean honorExcludes = qualifierClass == null || !JavaCompletionUtil.isInExcludedPackage(qualifierClass, false);

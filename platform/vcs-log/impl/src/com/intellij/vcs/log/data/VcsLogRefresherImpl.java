@@ -215,7 +215,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
     @NotNull
     private Collection<VirtualFile> getRootsToRefresh(@NotNull List<? extends RefreshRequest> requests) {
-      Collection<VirtualFile> rootsToRefresh = ContainerUtil.newArrayList();
+      Collection<VirtualFile> rootsToRefresh = new ArrayList<>();
       for (RefreshRequest request : requests) {
         if (request == RefreshRequest.RELOAD_ALL) {
           myCurrentDataPack = DataPack.EMPTY;
@@ -342,7 +342,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       new ProviderIterator() {
         @Override
         void each(@NotNull final VirtualFile root, @NotNull VcsLogProvider provider) throws VcsException {
-          final List<GraphCommit<Integer>> graphCommits = ContainerUtil.newArrayList();
+          final List<GraphCommit<Integer>> graphCommits = new ArrayList<>();
           VcsLogProvider.LogData data = provider.readAllHashes(root, commit -> graphCommits.add(compactCommit(commit, root)));
           logInfo.put(root, graphCommits);
           logInfo.put(root, data.getRefs());

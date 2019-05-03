@@ -6,9 +6,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +21,7 @@ public class ChildrenBlocksBuilder {
   }
 
   public List<Block> buildNodeChildBlocks(ASTNode node, BlockFactory factory) {
-    List<Block> blocks = ContainerUtil.newArrayList();
+    List<Block> blocks = new ArrayList<>();
 
     for (ASTNode child : node.getChildren(null)) {
       if (FormatterUtil.isWhitespaceOrEmpty(child) || child.getTextLength() == 0) {

@@ -182,8 +182,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedList(elements);
   }
 
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> ArrayList<T> newArrayList() {
     return new ArrayList<>();
   }
@@ -201,8 +205,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newArrayList(iterable);
   }
 
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList(int)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
     return new ArrayList<>(size);
   }

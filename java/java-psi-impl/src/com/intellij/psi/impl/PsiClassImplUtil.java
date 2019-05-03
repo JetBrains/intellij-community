@@ -349,7 +349,7 @@ public class PsiClassImplUtil {
     return ConcurrentFactoryMap.createMap(key -> {
       final Map<String, List<PsiMember>> map = new THashMap<>();
 
-      final List<PsiMember> allMembers = ContainerUtil.newArrayList();
+      final List<PsiMember> allMembers = new ArrayList<>();
       map.put(ALL, allMembers);
 
       ElementClassFilter filter = key == MemberType.CLASS ? ElementClassFilter.CLASS :

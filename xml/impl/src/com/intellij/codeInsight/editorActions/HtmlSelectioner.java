@@ -16,11 +16,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       result = super.select(e, editorText, cursorOffset, editor);
     }
     else {
-      result = ContainerUtil.newArrayList();
+      result = new ArrayList<>();
     }
 
     final PsiElement parent = e.getParent();

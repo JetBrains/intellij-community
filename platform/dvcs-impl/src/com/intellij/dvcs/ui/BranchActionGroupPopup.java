@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.icons.AllIcons;
@@ -28,7 +28,6 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.FontUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +38,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -65,7 +65,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   @Nullable private MyToolbarButton myRestoreSizeButton;
   @Nullable private MyToolbarButton mySettingsButton;
 
-  private final List<AnAction> mySettingsActions = ContainerUtil.newArrayList();
+  private final List<AnAction> mySettingsActions = new ArrayList<>();
   @Nullable private JPanel myTitleToolbarPanel;
 
   public BranchActionGroupPopup(@NotNull String title,
@@ -184,7 +184,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @NotNull
   private List<MoreAction> getMoreActions() {
-    List<MoreAction> result = ContainerUtil.newArrayList();
+    List<MoreAction> result = new ArrayList<>();
     ListPopupModel model = getListModel();
     for (int i = 0; i < model.getSize(); i++) {
       MoreAction moreAction = getSpecificAction(model.getElementAt(i), MoreAction.class);
@@ -243,7 +243,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     if (parentActionGroup instanceof BranchActionGroup) return Collections.emptyList();
 
     // add per repository branches into the model as Speed Search elements and show them only if regular items were not found by mask;
-    List<AnAction> speedSearchActions = ContainerUtil.newArrayList();
+    List<AnAction> speedSearchActions = new ArrayList<>();
     if (!isFirstLevel) speedSearchActions.add(new Separator(parentActionGroup.getTemplatePresentation().getText()));
     for (AnAction child : parentActionGroup.getChildren(null)) {
       if (child instanceof ActionGroup) {

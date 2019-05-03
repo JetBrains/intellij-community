@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -118,7 +117,7 @@ public class JarRepositoryManager {
                                                             JpsMavenRepositoryLibraryDescriptor libraryDescriptor) {
     RepositoryLibraryProperties props = new RepositoryLibraryProperties(libraryDescriptor);
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = props.getRepositoryLibraryDescriptor();
-    final Collection<OrderRoot> roots = ContainerUtil.newArrayList();
+    final Collection<OrderRoot> roots = new ArrayList<>();
     if (libDescriptor.getMavenId() != null) {
       roots.addAll(loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactoryEx;
@@ -250,7 +250,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
       shelvedLists.forEach(changeList -> {
-        List<ShelvedWrapper> shelvedChanges = newArrayList();
+        List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
         changeList.getChanges(myProject).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
         changeList.getBinaryFiles().stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
 
@@ -456,7 +456,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @NotNull
   public static List<ShelvedChangeList> getShelvedLists(@NotNull final DataContext dataContext) {
-    List<ShelvedChangeList> shelvedChangeLists = newArrayList();
+    List<ShelvedChangeList> shelvedChangeLists = new ArrayList<>();
     addAll(shelvedChangeLists, notNullize(SHELVED_CHANGELIST_KEY.getData(dataContext)));
     addAll(shelvedChangeLists, notNullize(SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext)));
     addAll(shelvedChangeLists, notNullize(SHELVED_DELETED_CHANGELIST_KEY.getData(dataContext)));

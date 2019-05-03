@@ -17,7 +17,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 public class SvnMapping {
   private static final Comparator<String> FILE_PATHS_COMPARATOR = (path1, path2) -> comparePaths(path1, path2);
 
-  @NotNull private final List<VirtualFile> myLonelyRoots = newArrayList();
+  @NotNull private final List<VirtualFile> myLonelyRoots = new ArrayList<>();
   @NotNull private final TreeMap<String, RootUrlInfo> myFile2UrlMap = new TreeMap<>(FILE_PATHS_COMPARATOR);
   @NotNull private final Map<Url, RootUrlInfo> myUrl2FileMap = new HashMap<Url, RootUrlInfo>();
   // no additional info. for caching only (convert roots)

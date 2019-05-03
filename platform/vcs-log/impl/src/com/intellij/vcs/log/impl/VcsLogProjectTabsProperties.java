@@ -64,7 +64,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
                                     @NotNull Collection<String> values) {
     List<RecentGroup> recentGroups = stateField.get(filterName);
     if (recentGroups == null) {
-      recentGroups = newArrayList();
+      recentGroups = new ArrayList<>();
       stateField.put(filterName, recentGroups);
     }
     RecentGroup group = new RecentGroup(values);
@@ -92,7 +92,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
 
   public static class RecentGroup {
     @XCollection
-    public List<String> FILTER_VALUES = newArrayList();
+    public List<String> FILTER_VALUES = new ArrayList<>();
 
     public RecentGroup() {
     }

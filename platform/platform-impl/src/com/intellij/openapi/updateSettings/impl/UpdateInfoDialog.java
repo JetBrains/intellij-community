@@ -142,7 +142,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<Action> actions = ContainerUtil.newArrayList();
+    List<Action> actions = new ArrayList<>();
 
     if (myPatches != null || myTestPatch != null) {
       boolean canRestart = ApplicationManager.getApplication().isRestartCapable();

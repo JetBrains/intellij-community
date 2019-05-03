@@ -11,7 +11,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   @NotNull
   @Override
   protected List<CodeStyleObjectDescriptor> getSupportedFields() {
-    List<CodeStyleObjectDescriptor> fieldsDescriptors = ContainerUtil.newArrayList();
+    List<CodeStyleObjectDescriptor> fieldsDescriptors = new ArrayList<>();
     IndentOptions indentOptions = getRootSettings().getCommonSettings(myLanguage).getIndentOptions();
     if (indentOptions != null) {
       fieldsDescriptors.add(new CodeStyleObjectDescriptor(indentOptions, getSupportedIndentOptions()));

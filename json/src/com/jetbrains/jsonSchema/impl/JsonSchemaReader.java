@@ -256,7 +256,7 @@ public class JsonSchemaReader {
     return (element, object, queue, virtualFile) -> {
       if (element instanceof JsonArrayValueAdapter) {
         final List<JsonValueAdapter> list = ((JsonArrayValueAdapter)element).getElements();
-        final List<JsonSchemaObject> members = ContainerUtil.newArrayListWithCapacity(list.size());
+        final List<JsonSchemaObject> members = new ArrayList<>(list.size());
         for (int i = 0; i < list.size(); i++) {
           JsonValueAdapter value = list.get(i);
           if (!(value.isObject())) continue;

@@ -12,10 +12,8 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SetKeywordsDialog extends DialogWrapper {
 
@@ -35,7 +33,7 @@ public class SetKeywordsDialog extends DialogWrapper {
 
   protected SetKeywordsDialog(Project project, @Nullable PropertyValue keywordsValue) {
     super(project, false);
-    myKeywordOptions = ContainerUtil.newArrayList();
+    myKeywordOptions = new ArrayList<>();
     myKeywordsValue = keywordsValue;
 
     setTitle("SVN Keywords");

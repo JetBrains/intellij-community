@@ -196,7 +196,7 @@ public final class HgLogProvider implements VcsLogProvider {
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
                                                        int maxCount) {
-    List<String> filterParameters = ContainerUtil.newArrayList();
+    List<String> filterParameters = new ArrayList<>();
 
     // branch filter and user filter may be used several times without delimiter
     VcsLogBranchFilter branchFilter = filterCollection.get(VcsLogFilterCollection.BRANCH_FILTER);

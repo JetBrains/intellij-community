@@ -15,6 +15,7 @@ import org.zmlx.hg4idea.log.HgLogProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class HgReadDetailsTest extends HgPlatformTest {
 
   public void testReadFullDetailsByHash() throws IOException, VcsException {
     Map<String, String> commits = generateCommits();
-    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> details = new ArrayList<>();
     myProvider.readFullDetails(projectRoot, ContainerUtil.newArrayList(commits.keySet()), details::add);
     assertSameElements(ContainerUtil.map(details, d -> d.getFullMessage() + "\n" + getChanges(d)), commits.values());
   }

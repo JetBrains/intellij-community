@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
 import one.util.streamex.StreamEx;
@@ -27,7 +26,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
 import static com.intellij.patterns.StandardPatterns.or;
 
 public class DfaValueFactory {
-  private final List<DfaValue> myValues = ContainerUtil.newArrayList();
+  private final List<DfaValue> myValues = new ArrayList<>();
   final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = new HashMap<>();
   final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = new HashMap<>();
   private final Map<PsiType, DfaPsiType> myDfaTypes = new HashMap<>();

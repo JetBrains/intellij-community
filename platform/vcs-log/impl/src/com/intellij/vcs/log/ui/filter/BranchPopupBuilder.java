@@ -107,7 +107,7 @@ public abstract class BranchPopupBuilder {
   private static class Groups {
     private final TreeMap<String, Collection<VcsRef>> favoriteGroups = new TreeMap<>();
     private final TreeMap<String, Collection<VcsRef>> singletonGroups = new TreeMap<>();
-    private final List<List<String>> recentGroups = ContainerUtil.newArrayList();
+    private final List<List<String>> recentGroups = new ArrayList<>();
     private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> expandedGroups =
       new TreeMap<>();
     private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> collapsedGroups =

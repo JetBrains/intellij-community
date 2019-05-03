@@ -35,7 +35,7 @@ public class GrAnnotationCollector {
 
     if (!mayHaveAnnotationCollector(rawAnnotations)) return rawAnnotations;
 
-    final List<GrAnnotation> result = ContainerUtil.newArrayList();
+    final List<GrAnnotation> result = new ArrayList<>();
     for (GrAnnotation annotation : rawAnnotations) {
       final PsiAnnotation annotationCollector = findAnnotationCollector(annotation);
       if (annotationCollector != null) {

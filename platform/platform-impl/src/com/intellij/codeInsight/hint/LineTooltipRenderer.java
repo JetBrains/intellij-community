@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
@@ -25,7 +11,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.ui.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
@@ -56,7 +41,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   /**
    * Html-like text for showing
-   * Please note that the tooltip size is calculated dynamically based on the html so 
+   * Please note that the tooltip size is calculated dynamically based on the html so
    * if the html content doesn't allow soft line breaks the tooltip can be too big for showing
    * e.g.
    * <br>
@@ -64,7 +49,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
    */
   @NonNls @Nullable protected String myText;
 
-  //is used for suppressing some events while processing links  
+  //is used for suppressing some events while processing links
   private volatile boolean myActiveLink;
   //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
@@ -157,7 +142,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       editorPane.setFocusable(true);
     }
 
-    ArrayList<AnAction> actions = ContainerUtil.newArrayList();
+    ArrayList<AnAction> actions = new ArrayList<>();
     JPanel grid = createMainPanel(hintHint, scrollPane, editorPane);
     if (ScreenReader.isActive()) {
       grid.setFocusTraversalPolicyProvider(true);

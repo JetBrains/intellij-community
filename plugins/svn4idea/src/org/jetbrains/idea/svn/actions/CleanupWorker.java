@@ -15,6 +15,7 @@ import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
@@ -30,7 +31,7 @@ public class CleanupWorker extends Task.Backgroundable {
 
   @NotNull protected final List<VirtualFile> myRoots;
   @NotNull private final SvnVcs myVcs;
-  @NotNull private final List<Pair<VcsException, VirtualFile>> myExceptions = newArrayList();
+  @NotNull private final List<Pair<VcsException, VirtualFile>> myExceptions = new ArrayList<>();
 
   public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots) {
     this(vcs, roots, null);

@@ -155,7 +155,7 @@ public class ConfigImportHelper {
       if (!homes.contains(configHome)) homes.add(configHome);
     }
 
-    List<Path> candidates = ContainerUtil.newArrayList();
+    List<Path> candidates = new ArrayList<>();
     for (Path dir : homes) {
       if (dir == null || !Files.isDirectory(dir)) continue;
 

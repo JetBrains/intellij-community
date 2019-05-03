@@ -26,10 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.getBranchPresentationBackground;
 
@@ -52,7 +50,7 @@ public class LabelPainter {
   @NotNull private final JComponent myComponent;
   @NotNull private final LabelIconCache myIconCache;
 
-  @NotNull private List<Pair<String, LabelIcon>> myLabels = ContainerUtil.newArrayList();
+  @NotNull private List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
   private int myHeight = JBUI.scale(22);
   private int myWidth = 0;
   @NotNull private Color myBackground = UIUtil.getTableBackground();
@@ -116,7 +114,7 @@ public class LabelPainter {
                                                                              boolean compact) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
-    List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
+    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
     if (compact) return calculateCompactPresentation(refGroups, fontMetrics, background, availableWidth);
@@ -131,7 +129,7 @@ public class LabelPainter {
                                                                                     int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
-    List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
+    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
     for (RefGroup group : refGroups) {
@@ -156,7 +154,7 @@ public class LabelPainter {
                                                                                  int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
-    List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
+    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
     int height = fontMetrics.getHeight();
@@ -210,7 +208,7 @@ public class LabelPainter {
       }
     }
 
-    List<Color> result = ContainerUtil.newArrayList();
+    List<Color> result = new ArrayList<>();
     for (Map.Entry<Color, Integer> entry : usedColors.entrySet()) {
       result.add(entry.getKey());
       if (entry.getValue() > 1) {
