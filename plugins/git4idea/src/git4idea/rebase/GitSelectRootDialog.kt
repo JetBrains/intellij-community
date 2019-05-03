@@ -23,7 +23,7 @@ class GitSelectRootDialog(project: Project,
   init {
     roots.forEach { rootComboBox.addItem(it) }
     rootComboBox.selectedItem = defaultRoot ?: guessCurrentRepository(project, roots)
-    rootComboBox.renderer = SimpleListCellRenderer.create("(invalid)", Function<GitRepository, String> { it.getPresentableUrl() })
+    rootComboBox.renderer = SimpleListCellRenderer.create("(invalid)", GitRepository::getPresentableUrl)
 
     setTitle(title)
     setOKButtonText(title)
