@@ -8,10 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.editor.markup.EffectType.*;
@@ -116,7 +114,7 @@ public class TextAttributesEffectsBuilder {
    */
   @NotNull
   List<EffectDescriptor> getDescriptorsList() {
-    return myEffectsMap.isEmpty() ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(myEffectsMap.values());
+    return myEffectsMap.isEmpty() ? ContainerUtil.emptyList() : new ArrayList<>(myEffectsMap.values());
   }
 
   /**

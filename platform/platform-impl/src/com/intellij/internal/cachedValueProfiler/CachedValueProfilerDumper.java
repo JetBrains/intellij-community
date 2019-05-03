@@ -4,7 +4,6 @@ package com.intellij.internal.cachedValueProfiler;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.ProfilingInfo;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +63,7 @@ public class CachedValueProfilerDumper {
 
     private TotalInfo(@NotNull StackTraceElement origin, @NotNull Collection<ProfilingInfo> infos) {
       myOrigin = origin;
-      myInfos = Collections.unmodifiableList(ContainerUtil.newArrayList(infos));
+      myInfos = Collections.unmodifiableList(new ArrayList<>(infos));
 
       myTotalLifeTime = myInfos.stream().mapToLong(value -> value.getLifetime()).sum();
       myTotalUseCount = myInfos.stream().mapToLong(value -> value.getUseCount()).sum();

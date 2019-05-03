@@ -183,7 +183,7 @@ public class ExceptionUtil {
         int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
         List<PsiClassType> thrownExceptions = getThrownExceptions(finallyBlock);
         if (!BitUtil.isSet(completionReasons, ControlFlowUtil.NORMAL_COMPLETION_REASON)) {
-          array = ContainerUtil.newArrayList(thrownExceptions);
+          array = new ArrayList<>(thrownExceptions);
         }
         else {
           addExceptions(array, thrownExceptions);
@@ -322,7 +322,7 @@ public class ExceptionUtil {
     else if (element instanceof PsiResourceListElement) {
       final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResourceListElement)element, topElement);
       if (!unhandled.isEmpty()) {
-        unhandledExceptions = ContainerUtil.newArrayList(unhandled);
+        unhandledExceptions = new ArrayList<>(unhandled);
       }
     }
 

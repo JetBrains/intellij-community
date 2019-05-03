@@ -293,7 +293,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     });
 
     sw.report();
-    return new LogDataImpl(refs, ContainerUtil.newArrayList(commits));
+    return new LogDataImpl(refs, new ArrayList<>(commits));
   }
 
   @Override

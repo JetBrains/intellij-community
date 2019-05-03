@@ -270,7 +270,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     for (Map.Entry<VirtualFile, Collection<String>> entry : rootsAndHashes.entrySet()) {
       VcsLogProvider logProvider = myLogProviders.get(entry.getKey());
       if (logProvider != null) {
-        List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
+        List<? extends T> details = readDetails(logProvider, entry.getKey(), new ArrayList<>(entry.getValue()));
         for (T data : details) {
           int index = myStorage.getCommitIndex(data.getId(), data.getRoot());
           result.put(index, data);

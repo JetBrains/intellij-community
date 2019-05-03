@@ -310,7 +310,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
     ModifierCache(@NotNull PsiFile file, @NotNull Set<String> modifiers) {
       this.file = file;
-      List<String> modifierList = ContainerUtil.newArrayList(modifiers);
+      List<String> modifierList = new ArrayList<>(modifiers);
       Collections.sort(modifierList);
       this.modifiers = ourInterner.intern(modifierList);
       this.modCount = getModCount();

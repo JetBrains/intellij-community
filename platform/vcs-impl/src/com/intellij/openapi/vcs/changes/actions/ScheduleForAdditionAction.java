@@ -193,7 +193,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
     // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
     // (inside the method) - so common add logic just needs to refresh statuses of parents
-    List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+    List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(new ArrayList<>(descendants));
     if (exs != null) exceptions.addAll(exs);
 
     allProcessedFiles.addAll(descendants);

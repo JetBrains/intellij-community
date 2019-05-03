@@ -22,7 +22,6 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.vcsUtil.VcsFileUtil.markFilesDirty;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
@@ -40,7 +39,7 @@ public class CleanupWorker extends Task.Backgroundable {
   public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots, @Nullable String title) {
     super(vcs.getProject(), notNull(title, message("action.Subversion.cleanup.progress.title")));
     myVcs = vcs;
-    myRoots = newArrayList(roots);
+    myRoots = new ArrayList<>(roots);
   }
 
   public void execute() {

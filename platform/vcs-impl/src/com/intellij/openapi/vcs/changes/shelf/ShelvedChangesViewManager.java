@@ -392,13 +392,13 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
       if (SHELVED_CHANGELIST_KEY.is(dataId)) {
-        return newArrayList(getSelectedLists(l -> !l.isRecycled() && !l.isDeleted()));
+        return new ArrayList<>((Collection<? extends ShelvedChangeList>)getSelectedLists(l -> !l.isRecycled() && !l.isDeleted()));
       }
       else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
-        return newArrayList(getSelectedLists(l -> l.isRecycled() && !l.isDeleted()));
+        return new ArrayList<>((Collection<? extends ShelvedChangeList>)getSelectedLists(l -> l.isRecycled() && !l.isDeleted()));
       }
       else if (SHELVED_DELETED_CHANGELIST_KEY.is(dataId)) {
-        return newArrayList(getSelectedLists(l -> l.isDeleted()));
+        return new ArrayList<>((Collection<? extends ShelvedChangeList>)getSelectedLists(l -> l.isDeleted()));
       }
       else if (SHELVED_CHANGE_KEY.is(dataId)) {
         return StreamEx.of(VcsTreeModelData.selected(myTree).userObjectsStream(ShelvedWrapper.class)).map(s -> s.getShelvedChange())

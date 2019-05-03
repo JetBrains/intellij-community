@@ -67,7 +67,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myStack = new Stack<>(toCopy.myStack);
     myDistinctClasses = new DistinctPairSet(this, toCopy.myDistinctClasses);
 
-    myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
+    myEqClasses = new ArrayList<>(toCopy.myEqClasses);
     myIdToEqClassesIndices = (MyIdMap)toCopy.myIdToEqClassesIndices.clone();
     myVariableStates = new LinkedHashMap<>(toCopy.myVariableStates);
 

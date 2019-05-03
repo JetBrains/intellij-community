@@ -63,7 +63,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
 
   protected void processCollectedRecords() {
     for (String hash : myHashToRecord.keySet()) {
-      ArrayList<R> records = ContainerUtil.newArrayList(notNull(myHashToRecord.get(hash)));
+      ArrayList<R> records = new ArrayList<>(notNull(myHashToRecord.get(hash)));
       R firstRecord = records.get(0);
       if (firstRecord.getParentsHashes().length != 0 && records.size() != firstRecord.getParentsHashes().length) {
         processIncompleteRecord(hash, records);
@@ -103,7 +103,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
     List<R> firstRecords = ContainerUtil.map(incompleteRecords.entrySet(), e -> ContainerUtil.getFirstItem(e.getValue()));
     Map<String, String> hashToTreeMap = getHashToTreeMap(project, root, firstRecords);
     for (String hash : incompleteRecords.keySet()) {
-      ArrayList<R> records = ContainerUtil.newArrayList(notNull(incompleteRecords.get(hash)));
+      ArrayList<R> records = new ArrayList<>(notNull(incompleteRecords.get(hash)));
       fillWithEmptyRecords(records, hashToTreeMap);
       consumer.consume(records);
     }

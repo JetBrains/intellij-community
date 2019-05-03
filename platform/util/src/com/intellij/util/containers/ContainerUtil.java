@@ -179,7 +179,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
-    final LinkedList<T> list = new LinkedList<T>();
+    final LinkedList<T> list = new LinkedList<>();
     Collections.addAll(list, elements);
     return list;
   }
@@ -397,9 +397,9 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
     if (elements instanceof Collection) {
       @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
-      return new LinkedHashSet<T>(collection);
+      return new LinkedHashSet<>(collection);
     }
-    return copy(new LinkedHashSet<T>(), elements);
+    return copy(new LinkedHashSet<>(), elements);
   }
 
   @SafeVarargs

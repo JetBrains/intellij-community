@@ -159,7 +159,7 @@ public class Command {
 
   @NotNull
   public List<String> getParameters() {
-    return ContainerUtil.newArrayList(myParameters);
+    return new ArrayList<>(myParameters);
   }
 
   public String getText() {

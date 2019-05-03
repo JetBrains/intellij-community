@@ -85,7 +85,7 @@ public class ClasspathBootstrap {
     catch (Throwable ignored) {
     }
 
-    return ContainerUtil.newArrayList(cp);
+    return new ArrayList<>(cp);
   }
 
   public static void appendJavaCompilerClasspath(Collection<? super String> cp, boolean includeEcj) {

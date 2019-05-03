@@ -46,7 +46,7 @@ public class LiveVariablesAnalyzer {
           super.visitElement(element);
         }
       });
-      return ContainerUtil.newArrayList(result);
+      return new ArrayList<>(result);
     });
 
   public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {

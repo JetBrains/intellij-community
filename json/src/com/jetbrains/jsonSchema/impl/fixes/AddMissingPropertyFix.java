@@ -110,7 +110,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
       boolean isSingle = myData.myMissingPropertyIssues.size() == 1;
       PsiElement processedElement = element;
       List<JsonValidationError.MissingPropertyIssueData> reverseOrder
-        = ContainerUtil.reverse(ContainerUtil.newArrayList(myData.myMissingPropertyIssues));
+        = ContainerUtil.reverse(new ArrayList<>(myData.myMissingPropertyIssues));
       for (JsonValidationError.MissingPropertyIssueData issue: reverseOrder) {
         Object defaultValueObject = issue.defaultValue;
         String defaultValue = defaultValueObject instanceof String ? StringUtil.wrapWithDoubleQuote(defaultValueObject.toString()) : null;

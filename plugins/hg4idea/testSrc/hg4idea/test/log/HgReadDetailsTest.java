@@ -45,7 +45,7 @@ public class HgReadDetailsTest extends HgPlatformTest {
   public void testReadFullDetailsByHash() throws IOException, VcsException {
     Map<String, String> commits = generateCommits();
     List<VcsFullCommitDetails> details = new ArrayList<>();
-    myProvider.readFullDetails(projectRoot, ContainerUtil.newArrayList(commits.keySet()), details::add);
+    myProvider.readFullDetails(projectRoot, new ArrayList<>(commits.keySet()), details::add);
     assertSameElements(ContainerUtil.map(details, d -> d.getFullMessage() + "\n" + getChanges(d)), commits.values());
   }
 

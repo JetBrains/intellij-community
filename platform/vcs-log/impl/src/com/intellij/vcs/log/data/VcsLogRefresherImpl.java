@@ -239,7 +239,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
             List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
             List<? extends GraphCommit<Integer>> joinedFullLog =
-              join(compoundLog, ContainerUtil.newArrayList(permanentGraph.getAllCommits()),
+              join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
                    currentRefs, allNewRefs);
             if (joinedFullLog == null) {
               commitCount *= 5;

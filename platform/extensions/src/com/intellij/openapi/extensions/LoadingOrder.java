@@ -3,7 +3,6 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -136,7 +135,7 @@ public class LoadingOrder {
       @NotNull
       @Override
       public Collection<Orderable> getNodes() {
-        List<Orderable> list = ContainerUtil.newArrayList(orderable);
+        List<Orderable> list = new ArrayList<>(orderable);
         Collections.reverse(list);
         return list;
       }

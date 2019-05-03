@@ -164,7 +164,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
-      final List<HgRepository> preselectedRepositories = ContainerUtil.newArrayList(repositoriesMap.keySet());
+      final List<HgRepository> preselectedRepositories = new ArrayList<>(repositoriesMap.keySet());
       GuiUtils.invokeLaterIfNeeded(() ->
                                      new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show(),
                                    ModalityState.defaultModalityState());

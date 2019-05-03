@@ -12,7 +12,8 @@ import java.util.*;
 import static com.intellij.openapi.util.SystemInfo.isFileSystemCaseSensitive;
 import static com.intellij.openapi.util.io.FileUtil.comparePaths;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.find;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 public class SvnMapping {
   private static final Comparator<String> FILE_PATHS_COMPARATOR = (path1, path2) -> comparePaths(path1, path2);
@@ -56,7 +57,7 @@ public class SvnMapping {
 
   @NotNull
   public List<RootUrlInfo> getAllCopies() {
-    return newArrayList(myFile2UrlMap.values());
+    return new ArrayList<>(myFile2UrlMap.values());
   }
 
   @Nullable

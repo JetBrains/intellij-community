@@ -8,11 +8,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -116,7 +116,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   @NotNull
   public final List<Request> peekRequests() {
     synchronized (LOCK) {
-      List<Request> requests = ContainerUtil.newArrayList(myAwaitingRequests);
+      List<Request> requests = new ArrayList<>(myAwaitingRequests);
       debug("Peeked requests: " + requests);
       return requests;
     }

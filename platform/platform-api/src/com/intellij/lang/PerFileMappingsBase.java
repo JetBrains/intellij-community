@@ -162,7 +162,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     Collection<VirtualFile> oldFiles;
     synchronized (myMappings) {
       myDeferredMappings = null;
-      oldFiles = ContainerUtil.newArrayList(myMappings.keySet());
+      oldFiles = new ArrayList<>(myMappings.keySet());
       myMappings.clear();
       myMappings.putAll(mappings);
       cleanup();

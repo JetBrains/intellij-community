@@ -47,7 +47,7 @@ public class RepositoryHelper {
    */
   @NotNull
   public static List<String> getPluginHosts() {
-    List<String> hosts = ContainerUtil.newArrayList(UpdateSettings.getInstance().getPluginHosts());
+    List<String> hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.add(null);  // main plugin repository
     return hosts;

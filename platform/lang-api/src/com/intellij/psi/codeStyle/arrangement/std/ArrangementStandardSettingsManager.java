@@ -150,7 +150,7 @@ public class ArrangementStandardSettingsManager {
       return myMatchingTokens;
     }
 
-    final List<CompositeArrangementSettingsToken> allTokens = ContainerUtil.newArrayList(myMatchingTokens);
+    final List<CompositeArrangementSettingsToken> allTokens = new ArrayList<>(myMatchingTokens);
     allTokens.add(myRuleAliasToken);
     return allTokens;
   }
@@ -176,7 +176,7 @@ public class ArrangementStandardSettingsManager {
     if (myRuleAliasMutex.isEmpty()) {
       return myMutexes;
     }
-    final List<Set<ArrangementSettingsToken>> allMutexes = ContainerUtil.newArrayList(myMutexes);
+    final List<Set<ArrangementSettingsToken>> allMutexes = new ArrayList<>(myMutexes);
     allMutexes.add(myRuleAliasMutex);
     return allMutexes;
   }

@@ -39,6 +39,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -271,7 +272,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     @NotNull private final List<String> myPatches;
 
     MyPatchModel(@NotNull List<String> names) {
-      myPatches = ContainerUtil.newArrayList(names);
+      myPatches = new ArrayList<>(names);
       readMqPatchesDetails();
     }
 

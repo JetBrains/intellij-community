@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
@@ -32,13 +32,13 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   public synchronized List<?> getChildren(Object parent) {
     if (parent == myRoot) return getTestClasses();
     if (parent instanceof Node.Clazz) {
-      return ContainerUtil.newArrayList(myTests.get((Node.Clazz)parent));
+      return new ArrayList<>((Collection<? extends Node.Method>)myTests.get((Node.Clazz)parent));
     }
     return Collections.emptyList();
   }
 
   synchronized List<Node<PsiClass>> getTestClasses() {
-    return ContainerUtil.newArrayList(myTestClasses);
+    return new ArrayList<>(myTestClasses);
   }
 
   @Override
@@ -73,7 +73,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     }
 
     List<Node.Method> testMethods = myTests.get(myTestClasses.get(idx));
-    int methodIdx = methodNode != null ? ReadAction.compute(() -> Collections.binarySearch(testMethods, methodNode, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()))) 
+    int methodIdx = methodNode != null ? ReadAction.compute(() -> Collections.binarySearch(testMethods, methodNode, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName())))
                                        : -1;
 
     Node.Method actualMethodNode;

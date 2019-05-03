@@ -96,7 +96,7 @@ public abstract class ChangesTreeList<T> extends ChangesTree {
       for (TreePath path : paths) {
         changes.addAll(getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent()));
       }
-      return ContainerUtil.newArrayList(changes);
+      return new ArrayList<>(changes);
     }
   }
 

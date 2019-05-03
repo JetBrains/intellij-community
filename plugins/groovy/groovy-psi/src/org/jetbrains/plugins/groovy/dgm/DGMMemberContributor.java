@@ -81,8 +81,8 @@ public class DGMMemberContributor {
 
   @NotNull
   private static Couple<List<String>> collectExtensions(@NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
-    List<String> instanceClasses = ContainerUtil.newArrayList(DEFAULT_INSTANCE_EXTENSIONS);
-    List<String> staticClasses = ContainerUtil.newArrayList(DEFAULT_STATIC_EXTENSIONS);
+    List<String> instanceClasses = new ArrayList<>(DEFAULT_INSTANCE_EXTENSIONS);
+    List<String> staticClasses = new ArrayList<>(DEFAULT_STATIC_EXTENSIONS);
     doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.groovy");
     doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.services");
     return Couple.of(instanceClasses, staticClasses);

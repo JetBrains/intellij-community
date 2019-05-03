@@ -96,7 +96,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     if (REQUESTS_DRAIN_NEEDED.compareAndSet(true, false)) {
       TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
         REQUESTS_DRAIN_NEEDED.set(true);
-        List<Map.Entry<VirtualFile, SubstitutionInfo>> set = ContainerUtil.newArrayList(ourReparsingRequests.entrySet());
+        List<Map.Entry<VirtualFile, SubstitutionInfo>> set = new ArrayList<>(ourReparsingRequests.entrySet());
         List<VirtualFile> files = new ArrayList<>(set.size());
         int id = 1;
         for (Map.Entry<VirtualFile, SubstitutionInfo> entry : set) {

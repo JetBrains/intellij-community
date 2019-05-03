@@ -528,7 +528,7 @@ class StateMerger {
     @Nullable
     private List<DfaMemoryStateImpl> getMergeResult() {
       if (hasMerges()) {
-        List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList(myMerged);
+        List<DfaMemoryStateImpl> result = new ArrayList<>(myMerged);
         for (DfaMemoryStateImpl state : myAllStates) {
           if (!myRemovedStates.contains(state)) {
             result.add(state);

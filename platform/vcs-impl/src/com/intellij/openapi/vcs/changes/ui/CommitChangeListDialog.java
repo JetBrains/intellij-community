@@ -141,11 +141,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
     if (executor == null) {
-      return commitChanges(project, newArrayList(changes), included, initialSelection, collectExecutors(project, changes), true, null,
+      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, collectExecutors(project, changes), true, null,
                            comment, null, true);
     }
     else {
-      return commitChanges(project, newArrayList(changes), included, initialSelection, singletonList(executor), false, null, comment, null,
+      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, singletonList(executor), false, null, comment, null,
                            true);
     }
   }
@@ -164,7 +164,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler) {
-    return commitChanges(project, newArrayList(changes), initialSelection, executors, showVcsCommit, comment, customResultHandler, true);
+    return commitChanges(project, new ArrayList<>(changes), initialSelection, executors, showVcsCommit, comment, customResultHandler, true);
   }
 
   public static boolean commitChanges(@NotNull Project project,
@@ -871,7 +871,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<Change> getSelectedChanges() {
-    return newArrayList(getIncludedChanges());
+    return new ArrayList<>(getIncludedChanges());
   }
 
   @NotNull

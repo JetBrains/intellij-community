@@ -6,13 +6,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,7 +28,7 @@ public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<Hg
   protected Set<VirtualFile> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
     Set<VirtualFile> ignored = new HashSet<>();
     ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(repository.getProject())
-                     .getFiles(repository.getRoot(), paths != null ? ContainerUtil.newArrayList(paths) : null));
+                     .getFiles(repository.getRoot(), paths != null ? new ArrayList<FilePath>(paths) : null));
     return ignored;
   }
 

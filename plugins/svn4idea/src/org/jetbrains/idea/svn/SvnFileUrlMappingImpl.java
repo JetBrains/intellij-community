@@ -22,13 +22,13 @@ import org.jetbrains.idea.svn.info.Info;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.util.containers.ContainerUtil.find;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
 import static org.jetbrains.idea.svn.SvnUtil.*;
@@ -157,14 +157,14 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Override
   public List<RootUrlInfo> getErrorRoots() {
     synchronized (myMonitor) {
-      return newArrayList(myErrorRoots);
+      return new ArrayList<>(myErrorRoots);
     }
   }
 
   @Override
   @NotNull
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
-    if (MyRootsHelper.isInProgress()) return newArrayList(result);
+    if (MyRootsHelper.isInProgress()) return new ArrayList<>(result);
 
     synchronized (myMonitor) {
       List<VirtualFile> cachedRoots = myMoreRealMapping.getUnderVcsRoots();
@@ -173,7 +173,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         myChecker.reportNoRoots(lonelyRoots);
       }
 
-      return newArrayList(cachedRoots.isEmpty() ? result : cachedRoots);
+      Collection<? extends VirtualFile> iterable = cachedRoots.isEmpty() ? result : cachedRoots;
+      return new ArrayList<>(iterable);
     }
   }
 

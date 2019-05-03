@@ -215,7 +215,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       ModalityState modality = ModalityState.defaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
-      List<GitRepository> preselectedRepositories = newArrayList(repositories);
+      List<GitRepository> preselectedRepositories = new ArrayList<>(repositories);
       GuiUtils.invokeLaterIfNeeded(
         () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
                                            GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),

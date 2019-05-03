@@ -611,7 +611,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       private void launchRediff(boolean trySync) {
         myStatusPanel.setBusy(true);
 
-        final List<TextMergeChange> scheduled = ContainerUtil.newArrayList(myScheduled);
+        final List<TextMergeChange> scheduled = new ArrayList<>(myScheduled);
         myScheduled.clear();
 
         List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
@@ -883,7 +883,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     private void applyNonConflictedChanges(@NotNull ThreeSide side) {
       executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
-        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
+        List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
         for (TextMergeChange change : allChanges) {
           if (!change.isConflict()) {
             resolveChangeAutomatically(change, side);
@@ -901,7 +901,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     private void applyResolvableConflictedChanges() {
       executeMergeCommand("Resolve Simple Conflicted Changes", true, null, () -> {
-        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
+        List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
         for (TextMergeChange change : allChanges) {
           resolveChangeAutomatically(change, ThreeSide.BASE);
         }

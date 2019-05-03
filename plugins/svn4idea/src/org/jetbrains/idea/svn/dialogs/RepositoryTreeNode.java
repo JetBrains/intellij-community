@@ -157,7 +157,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   @NotNull
   public List<TreeNode> getAllAlreadyLoadedChildren() {
-    return ContainerUtil.newArrayList(myChildren);
+    return new ArrayList<>(myChildren);
   }
 
   @NotNull

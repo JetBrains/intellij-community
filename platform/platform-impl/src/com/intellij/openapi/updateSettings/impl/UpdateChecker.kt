@@ -30,7 +30,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Url
 import com.intellij.util.Urls
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -204,7 +203,7 @@ object UpdateChecker {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
-    val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
+    val toUpdate = THashMap<PluginId, PluginDownloader>()
 
     val state = InstalledPluginsState.getInstance()
     outer@ for (host in RepositoryHelper.getPluginHosts()) {
@@ -237,7 +236,7 @@ object UpdateChecker {
    * we're importing the settings.
    */
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
-    val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
+    val updateable = THashMap<PluginId, IdeaPluginDescriptor>()
 
     updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateBy { it.pluginId }
 

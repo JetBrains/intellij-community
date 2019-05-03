@@ -331,7 +331,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     private static List<String> getBranchFilterValues(@NotNull VcsLogBranchFilter filter) {
-      return ContainerUtil.newArrayList(ContainerUtil.sorted(filter.getTextPresentation()));
+      return new ArrayList<>(ContainerUtil.sorted(filter.getTextPresentation()));
     }
 
     @NotNull
@@ -341,7 +341,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     private static List<String> getRangeFilterValues(@NotNull VcsLogRangeFilter rangeFilter) {
-      return ContainerUtil.newArrayList(rangeFilter.getTextPresentation());
+      return new ArrayList<>(rangeFilter.getTextPresentation());
     }
 
     @NotNull
@@ -504,7 +504,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected List<String> getFilter2Values(@NotNull VcsLogHashFilter filter) {
-      return ContainerUtil.newArrayList(filter.getHashes());
+      return new ArrayList<>(filter.getHashes());
     }
 
     @Nullable
@@ -674,7 +674,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
-      return ContainerUtil.newArrayList(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
+      return new ArrayList<>(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
     }
   }
 

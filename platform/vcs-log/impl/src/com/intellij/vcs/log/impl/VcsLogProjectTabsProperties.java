@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.map2List;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>, VcsLogTabsProperties {
@@ -56,7 +57,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
 
   @NotNull
   public List<String> getTabs() {
-    return newArrayList(myState.OPEN_TABS);
+    return new ArrayList<>(myState.OPEN_TABS);
   }
 
   public static void addRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField,

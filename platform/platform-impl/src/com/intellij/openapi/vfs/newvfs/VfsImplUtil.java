@@ -254,7 +254,7 @@ public class VfsImplUtil {
             else {
               Collection<String> affectedPaths = ourDominatorsMap.get(path);
               if (affectedPaths != null) {
-                affectedPaths = ContainerUtil.newArrayList(affectedPaths);  // defensive copying; original may be updated on invalidation
+                affectedPaths = new ArrayList<>(affectedPaths);  // defensive copying; original may be updated on invalidation
                 for (String affectedPath : affectedPaths) {
                   state = invalidate(state, affectedPath);
                 }

@@ -1149,7 +1149,7 @@ public class PluginManagerConfigurableNew
         }
         catch (Exception ignore) {
         }
-        return ContainerUtil.newArrayList(result);
+        return new ArrayList<>(result);
       }
 
       @Override

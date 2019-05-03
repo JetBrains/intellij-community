@@ -93,7 +93,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
         }
         return isAncestor;
       }
-    }.doFilter(ContainerUtil.newArrayList(committables));
+    }.doFilter(new ArrayList<>(committables));
     if (!childrenOfSomebody.isEmpty()) {
       List<File> result = new ArrayList<>();
       StatusClient statusClient = myFactory.createStatusClient();

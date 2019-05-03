@@ -14,7 +14,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +50,7 @@ public class TipDialog extends DialogWrapper {
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel();
-    myTipPanel.setTips(ContainerUtil.newArrayList(TipAndTrickBean.EP_NAME.getExtensionList()));
+    myTipPanel.setTips(new ArrayList<>(TipAndTrickBean.EP_NAME.getExtensionList()));
     myTipPanel.nextTip();
     setDoNotAskOption(myTipPanel);
     setHorizontalStretch(1.33f);

@@ -84,7 +84,7 @@ public class SimpleRefGroup implements RefGroup {
       RefGroup group = ContainerUtil.getFirstItem(result);
       if (group == null) {
         result.add(new SimpleRefGroup(firstRef.getType().isBranch() || showTagNames ? firstRef.getName() : "",
-                                      ContainerUtil.newArrayList(groupedRefs.values())));
+                                      new ArrayList<>(groupedRefs.values())));
       }
       else {
         group.getRefs().addAll(groupedRefs.values());
@@ -99,7 +99,7 @@ public class SimpleRefGroup implements RefGroup {
         }
         else {
           result.add(new SimpleRefGroup(showTagNames ? ObjectUtils.notNull(ContainerUtil.getFirstItem(entry.getValue())).getName() : "",
-                                        ContainerUtil.newArrayList(entry.getValue())));
+                                        new ArrayList<>(entry.getValue())));
         }
       }
     }

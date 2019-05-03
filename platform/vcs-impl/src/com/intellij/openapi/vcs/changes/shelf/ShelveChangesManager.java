@@ -227,7 +227,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void filterNonValidShelvedChangeLists() {
-    final List<ShelvedChangeList> allSchemes = newArrayList(mySchemeManager.getAllSchemes());
+    final List<ShelvedChangeList> allSchemes = new ArrayList<>(mySchemeManager.getAllSchemes());
     process(allSchemes, shelvedChangeList -> {
       if (!shelvedChangeList.isValid()) {
         mySchemeManager.removeScheme(shelvedChangeList);
@@ -733,7 +733,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                              @NotNull List<? extends ShelvedChange> changesToDelete,
                                              @NotNull List<? extends ShelvedBinaryFile> binariesToDelete) {
     // filter changes
-    ArrayList<ShelvedChangeList> shelvedListsFromChangesToDelete = newArrayList(shelvedListsFromChanges);
+    ArrayList<ShelvedChangeList> shelvedListsFromChangesToDelete = new ArrayList<>(shelvedListsFromChanges);
     shelvedListsFromChangesToDelete.removeAll(shelvedListsToDelete);
 
     if (shelvedListsFromChangesToDelete.size() + binariesToDelete.size() == 0 && shelvedListsToDelete.isEmpty()) {
@@ -970,9 +970,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : selectedChangeLists) {
           List<ShelvedChange> changesForChangelist =
-            newArrayList(intersection(changeList.getChanges(myProject), selectedChanges));
+            new ArrayList<>(intersection(changeList.getChanges(myProject), selectedChanges));
           List<ShelvedBinaryFile> binariesForChangelist =
-            newArrayList(intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
+            new ArrayList<>(intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
           boolean shouldUnshelveAllList = changesForChangelist.isEmpty() && binariesForChangelist.isEmpty();
           unshelveChangeList(changeList, shouldUnshelveAllList ? null : changesForChangelist,
                              shouldUnshelveAllList ? null : binariesForChangelist,
