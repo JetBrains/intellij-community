@@ -269,9 +269,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     while (node != null) {
       path.push(node.myDisplayName);
       SimpleNode parent = node.getParent();
-      node = parent instanceof MyNode
-             ? (MyNode)parent
-             : null;
+      node = parent instanceof MyNode ? (MyNode)parent : null;
     }
     return path;
   }
