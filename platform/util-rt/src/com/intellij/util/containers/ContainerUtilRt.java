@@ -150,6 +150,9 @@ public class ContainerUtilRt {
     return list;
   }
 
+  /**
+   * Use only for {@link Iterable}, for {@link Collection} please use {@link LinkedList#LinkedList(Collection)} directly.
+   */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {

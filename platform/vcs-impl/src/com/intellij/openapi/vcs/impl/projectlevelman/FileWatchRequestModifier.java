@@ -10,12 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newLinkedList;
+import java.util.*;
 
 public class FileWatchRequestModifier implements Runnable {
   private static final Logger LOG = Logger.getInstance(FileWatchRequestModifier.class);
@@ -37,10 +32,10 @@ public class FileWatchRequestModifier implements Runnable {
     if (!myProject.isInitialized() || myProject.isDisposed()) return;
     final List<VcsDirectoryMapping> copy = myNewMappings.getDirectoryMappings();
 
-    final List<VcsDirectoryMapping> added = newLinkedList(copy);
+    final List<VcsDirectoryMapping> added = new LinkedList<>(copy);
     added.removeAll(myDirectoryMappingWatches.keySet());
 
-    final List<VcsDirectoryMapping> deleted = newLinkedList(myDirectoryMappingWatches.keySet());
+    final List<VcsDirectoryMapping> deleted = new LinkedList<>(myDirectoryMappingWatches.keySet());
     deleted.removeAll(copy);
 
     final Map<String, VcsDirectoryMapping> toAdd = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
@@ -50,7 +45,7 @@ public class FileWatchRequestModifier implements Runnable {
       }
     }
 
-    final Collection<LocalFileSystem.WatchRequest> toRemove = newLinkedList();
+    final Collection<LocalFileSystem.WatchRequest> toRemove = new LinkedList<>();
     for (VcsDirectoryMapping mapping : deleted) {
       if (mapping.isDefaultMapping()) continue;
       final LocalFileSystem.WatchRequest removed = myDirectoryMappingWatches.remove(mapping);

@@ -165,8 +165,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new IdentityHashMap<>();
   }
 
+  /**
+   * @deprecated Use {@link LinkedList#LinkedList()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> LinkedList<T> newLinkedList() {
     return new LinkedList<>();
   }
@@ -175,12 +179,6 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
-    return ContainerUtilRt.newLinkedList(elements);
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
     return ContainerUtilRt.newLinkedList(elements);
   }
 

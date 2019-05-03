@@ -188,7 +188,7 @@ public class ExternalSystemApiUtil {
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
     MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<>();
-    Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
+    Queue<Collection<DataNode<?>>> queue = new LinkedList<>();
     queue.add(nodes);
     while (!queue.isEmpty()) {
       Collection<DataNode<?>> _nodes = queue.remove();

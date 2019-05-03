@@ -93,7 +93,7 @@ class InferenceCache {
                                                                @NotNull VariableDescriptor descriptor,
                                                                @NotNull Predicate<? super Instruction> predicate) {
     Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
-    LinkedList<Pair<Instruction, VariableDescriptor>> queue = ContainerUtil.newLinkedList();
+    LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
     while (!queue.isEmpty()) {
       Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
