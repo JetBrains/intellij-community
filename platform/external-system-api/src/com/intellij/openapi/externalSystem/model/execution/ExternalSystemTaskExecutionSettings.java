@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.Tag;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -26,9 +25,9 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
   @NotNull
-  private List<String> myTaskNames = ContainerUtilRt.newArrayList();
+  private List<String> myTaskNames = new ArrayList<String>();
   @NotNull
-  private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
+  private List<String> myTaskDescriptions = new ArrayList<String>();
 
   @Nullable private String myExecutionName;
   private String myExternalSystemIdString;

@@ -66,7 +66,6 @@ import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static git4idea.GitUtil.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -233,7 +232,7 @@ public class GitRebaseProcess {
     String repoName = getShortRepositoryName(repository);
     LOG.info("Rebasing root " + repoName + ", mode: " + notNull(customMode, "standard"));
 
-    Collection<GitRebaseUtils.CommitInfo> skippedCommits = newArrayList();
+    Collection<GitRebaseUtils.CommitInfo> skippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
     MultiMap<GitRepository, GitRebaseUtils.CommitInfo> allSkippedCommits = getSkippedCommits(alreadyRebased);
     boolean retryWhenDirty = false;
 

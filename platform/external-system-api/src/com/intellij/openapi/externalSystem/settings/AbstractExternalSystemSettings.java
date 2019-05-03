@@ -142,7 +142,7 @@ public abstract class AbstractExternalSystemSettings<
     // do not add invalid 'null' settings
     settings = ContainerUtil.filter(settings, ps -> ps.getExternalProjectPath() != null);
 
-    List<PS> added = ContainerUtilRt.newArrayList();
+    List<PS> added = new ArrayList<PS>();
     Map<String, PS> removed = new HashMap<String, PS>(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
     for (PS current : settings) {

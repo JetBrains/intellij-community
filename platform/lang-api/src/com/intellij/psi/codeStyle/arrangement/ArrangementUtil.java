@@ -287,7 +287,7 @@ public class ArrangementUtil {
 
   @NotNull
   public static List<CompositeArrangementSettingsToken> flatten(@NotNull CompositeArrangementSettingsToken base) {
-    List<CompositeArrangementSettingsToken> result = ContainerUtilRt.newArrayList();
+    List<CompositeArrangementSettingsToken> result = new ArrayList<CompositeArrangementSettingsToken>();
     Queue<CompositeArrangementSettingsToken> toProcess = ContainerUtilRt.newLinkedList(base);
     while (!toProcess.isEmpty()) {
       CompositeArrangementSettingsToken token = toProcess.remove();

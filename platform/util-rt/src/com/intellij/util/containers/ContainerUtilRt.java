@@ -185,12 +185,6 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
-    return new ArrayList<T>(size);
-  }
-
-  @NotNull
   private static <T, C extends Collection<T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
     for (T element : elements) {
       collection.add(element);

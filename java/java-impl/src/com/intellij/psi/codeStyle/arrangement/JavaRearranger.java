@@ -63,7 +63,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static final          Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE   =
     new HashMap<ArrangementSettingsToken, Set<ArrangementSettingsToken>>();
   @NotNull private static final Collection<Set<ArrangementSettingsToken>>                    MUTEXES             =
-    ContainerUtilRt.newArrayList();
+    new ArrayList<Set<ArrangementSettingsToken>>();
 
   private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER = new HashSet<>();
   private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH = new HashSet<>();
@@ -116,7 +116,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
 
   static {
     List<ArrangementGroupingRule> groupingRules = ContainerUtilRt.newArrayList(new ArrangementGroupingRule(GETTERS_AND_SETTERS));
-    List<StdArrangementMatchRule> matchRules = ContainerUtilRt.newArrayList();
+    List<StdArrangementMatchRule> matchRules = new ArrayList<StdArrangementMatchRule>();
     ArrangementSettingsToken[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
     for (ArrangementSettingsToken modifier : visibility) {
       and(matchRules, FIELD, STATIC, FINAL, modifier);
@@ -142,7 +142,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     and(matchRules, CLASS, STATIC);
     and(matchRules, CLASS);
 
-    List<StdArrangementRuleAliasToken> aliasTokens = ContainerUtilRt.newArrayList();
+    List<StdArrangementRuleAliasToken> aliasTokens = new ArrayList<StdArrangementRuleAliasToken>();
     aliasTokens.add(VISIBILITY);
     DEFAULT_SETTINGS = StdArrangementExtendableSettings.createByMatchRules(groupingRules, matchRules, aliasTokens);
   }

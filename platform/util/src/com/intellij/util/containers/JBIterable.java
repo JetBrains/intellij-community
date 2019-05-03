@@ -669,7 +669,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<List<E>> split(final int size, final boolean strict) {
     return split(size).filterMap(es -> {
-      List<E> list = es.addAllTo(ContainerUtilRt.newArrayListWithCapacity(size));
+      List<E> list = es.addAllTo(new ArrayList<E>(size));
       return strict && list.size() < size ? null : list;
     });
   }
@@ -796,7 +796,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> collect() {
     if (content instanceof Collection) return this;
-    return collect(ContainerUtilRt.newArrayList());
+    return collect(new ArrayList<E>());
   }
 
   /**
@@ -805,7 +805,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
-    ArrayList<E> list = addAllTo(ContainerUtilRt.newArrayList());
+    ArrayList<E> list = addAllTo(new ArrayList<E>());
     list.sort(comparator);
     return from(list);
   }

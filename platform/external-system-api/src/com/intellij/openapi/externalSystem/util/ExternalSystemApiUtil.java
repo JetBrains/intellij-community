@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
@@ -224,7 +223,7 @@ public class ExternalSystemApiUtil {
         continue;
       }
       if (result == null) {
-        result = ContainerUtilRt.newArrayList();
+        result = new ArrayList<DataNode<T>>();
       }
       result.add((DataNode<T>)child);
     }
