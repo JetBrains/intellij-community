@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  */
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard<PsiElement> ourOverloadGuard = RecursionManager.createGuard("overload.guard");
-  private static final ThreadLocal<Map<PsiElement, CurrentCandidateProperties>> CURRENT_CANDIDATE = ThreadLocal.withInitial(HashMap::new);
+  private static final ThreadLocal<Map<PsiElement, MethodCandidateInfo>> CURRENT_CANDIDATE = ThreadLocal.withInitial(HashMap::new);
   @ApplicabilityLevelConstant private volatile int myApplicabilityLevel;
   @ApplicabilityLevelConstant private volatile int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;
@@ -269,10 +269,9 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   private <T> T computeForOverloadedCandidate(final Computable<T> computable,
                                               boolean applicabilityCheck) {
-    Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
+    Map<PsiElement, MethodCandidateInfo> map = CURRENT_CANDIDATE.get();
     final PsiElement argumentList = getMarkerList();
-    final CurrentCandidateProperties alreadyThere =
-      map.put(argumentList, new CurrentCandidateProperties(this));
+    final MethodCandidateInfo alreadyThere = map.put(argumentList, this);
     try {
       return applicabilityCheck
              ? ourOverloadGuard.doPreventingRecursion(argumentList, false, computable) 
@@ -455,8 +454,8 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
 
-  public static CurrentCandidateProperties getCurrentMethod(PsiElement context) {
-    final Map<PsiElement, CurrentCandidateProperties> currentMethodCandidates = CURRENT_CANDIDATE.get();
+  public static MethodCandidateInfo getCurrentMethod(PsiElement context) {
+    final Map<PsiElement, MethodCandidateInfo> currentMethodCandidates = CURRENT_CANDIDATE.get();
     return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
   }
 
@@ -489,26 +488,6 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   public String getInferenceErrorMessageAssumeAlreadyComputed() {
     return myInferenceError;
-  }
-
-  public CurrentCandidateProperties createProperties() {
-    return new CurrentCandidateProperties(this);
-  }
-
-  public static class CurrentCandidateProperties {
-    private final MethodCandidateInfo myMethod;
-
-    private CurrentCandidateProperties(MethodCandidateInfo info) {
-      myMethod = info;
-    }
-
-    public PsiMethod getMethod() {
-      return myMethod.getElement();
-    }
-
-    public MethodCandidateInfo getInfo() {
-      return myMethod;
-    }
   }
 
   public static class ApplicabilityLevel {

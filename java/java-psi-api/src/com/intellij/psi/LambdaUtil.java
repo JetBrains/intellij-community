@@ -404,8 +404,8 @@ public class LambdaUtil {
 
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
-          final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
-          JavaResolveResult resolveResult = properties != null ? properties.getInfo() : PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
+          final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
+          JavaResolveResult resolveResult = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
           return getSubstitutedType(expression, tryToSubstitute, lambdaIdx, resolveResult);
         }
       }
@@ -776,8 +776,8 @@ public class LambdaUtil {
         break;
       }
       PsiExpressionList argumentList = psiCall.getArgumentList();
-      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
-      if (properties != null) {
+      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
+      if (currentMethod != null) {
         if (MethodCandidateInfo.isOverloadCheck(argumentList) || lambdaExpression != null) {
           break;
         }

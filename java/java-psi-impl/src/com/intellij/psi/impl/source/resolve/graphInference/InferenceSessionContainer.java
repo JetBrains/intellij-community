@@ -54,7 +54,7 @@ public class InferenceSessionContainer {
                               @NotNull final ParameterTypeInferencePolicy policy) {
     if (parent instanceof PsiCall) {
       final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
-      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
+      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
       //overload resolution can't depend on outer call => should not traverse to top
       if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
           //But overload resolution can depend on type of lambda parameter. As it can't depend on lambda body,
@@ -98,7 +98,7 @@ public class InferenceSessionContainer {
           }
 
           if (session != null) {
-            final PsiSubstitutor childSubstitutor = inferNested(parameters, arguments, (PsiCall)parent, properties, session);
+            final PsiSubstitutor childSubstitutor = inferNested(parameters, arguments, (PsiCall)parent, currentMethod, session);
             if (childSubstitutor != null) return childSubstitutor;
           }
           else if (topLevelCall instanceof PsiMethodCallExpression) {
@@ -116,7 +116,7 @@ public class InferenceSessionContainer {
   private static PsiSubstitutor inferNested(@NotNull final PsiParameter[] parameters,
                                             @NotNull final PsiExpression[] arguments,
                                             @NotNull final PsiCall parent,
-                                            @NotNull final MethodCandidateInfo.CurrentCandidateProperties properties,
+                                            @NotNull final MethodCandidateInfo currentMethod,
                                             @NotNull final InferenceSession parentSession) {
     final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
     if (errorMessages != null) {
@@ -127,7 +127,7 @@ public class InferenceSessionContainer {
     InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(parent);
     if (initialInferenceState != null) {
       final InferenceSession childSession = new InferenceSession(initialInferenceState);
-      return childSession.collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
+      return childSession.collectAdditionalAndInfer(parameters, arguments, currentMethod, compoundInitialState.getInitialSubstitutor());
     }
 
     //we do not investigate lambda return expressions when lambda's return type is already inferred (proper)
@@ -164,8 +164,8 @@ public class InferenceSessionContainer {
               //one of the grand parents were found in the top inference session
               //start from it as it is the top level call
               final InferenceSession sessionInsideLambda = new InferenceSession(initialInferenceState);
-              sessionInsideLambda.collectAdditionalAndInfer(methodParameters, argumentList.getExpressions(), ((MethodCandidateInfo)result).createProperties(), compoundInitialState.getInitialSubstitutor());
-              return inferNested(parameters, arguments, parent, properties, sessionInsideLambda);
+              sessionInsideLambda.collectAdditionalAndInfer(methodParameters, argumentList.getExpressions(), ((MethodCandidateInfo)result), compoundInitialState.getInitialSubstitutor());
+              return inferNested(parameters, arguments, parent, currentMethod, sessionInsideLambda);
             }
           }
           else {
@@ -234,7 +234,7 @@ public class InferenceSessionContainer {
         final InferenceSession topLevelSession =
           new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
         topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
-        topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result).createProperties());
+        topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result));
         return topLevelSession;
       });
     }

@@ -383,9 +383,9 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
     final boolean isExact = isExact();
     if (MethodCandidateInfo.isOverloadCheck(argsList)) {
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (candidateProperties != null) {
-        final PsiMethod method = candidateProperties.getMethod();
+      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argsList);
+      if (currentMethod != null) {
+        final PsiMethod method = currentMethod.getElement();
         if (isExact && !InferenceSession.isPertinentToApplicability(this, method)) {
           return true;
         }
