@@ -1,6 +1,8 @@
 package com.intellij.bash;
 
+import com.intellij.bash.psi.BashFile;
 import com.intellij.bash.rename.BashSelectAllOccurrencesHandler;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class BashRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
-    return true;
+    return dataContext.getData(CommonDataKeys.PSI_FILE) instanceof BashFile;
   }
 
   @Override
