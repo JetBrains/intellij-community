@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
+import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtil.copyDirectory;
+import static com.intellij.util.PathUtil.toSystemDependentName;
 
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String TEST_DIC = "test.dic";
@@ -41,19 +44,24 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     List<String> oldPaths = settings.getCustomDictionariesPaths();
     List<String> testDictionaries = new ArrayList<>();
     WriteAction.runAndWait(() -> {
-      dictDir = getProject().getBaseDir().createChildDirectory(this, getTestName(true));
-      copyDirectory(this, myFixture.copyDirectoryToProject(getTestName(true), getTestName(true)), dictDir, null);
+      dictDir = getProject().getBaseDir().createChildDirectory(this, getDictDirName());
+      copyDirectory(this, myFixture.copyDirectoryToProject(getTestName(true), getDictDirName()), dictDir, null);
     });
 
     VfsUtil.processFilesRecursively(dictDir, file -> {
       if (FileUtilRt.extensionEquals(file.getPath(), "dic")) {
-        testDictionaries.add(file.getPath());
+        testDictionaries.add(toSystemDependentName(file.getPath()));
       }
       return true;
     });
     settings.setCustomDictionariesPaths(testDictionaries);
     Disposer.register(getTestRootDisposable(), () -> settings.setCustomDictionariesPaths(oldPaths));
     spellCheckerManager.fullConfigurationReload();
+  }
+
+  @NotNull
+  private String getDictDirName() {
+    return getTestName(true) + "_dict";
   }
 
   @Override
