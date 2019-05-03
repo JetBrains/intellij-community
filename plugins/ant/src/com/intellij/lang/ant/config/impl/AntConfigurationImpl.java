@@ -36,6 +36,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -659,6 +660,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
       }
     }
+    GuiUtils.invokeLaterIfNeeded(() -> AntToolWindowFactory.updateAvailability(project),
+                                 ModalityState.defaultModalityState(),
+                                 project.getDisposed());
+
   }
 
   private AntWorkspaceConfiguration getAntWorkspaceConfiguration() {
