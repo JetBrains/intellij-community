@@ -262,24 +262,6 @@ public class ContainerUtilRt {
     return new TreeSet<T>(comparator);
   }
 
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  public static <T> Stack<T> newStack() {
-    return new Stack<T>();
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> Stack<T> newStack(@NotNull Collection<? extends T> elements) {
-    return new Stack<T>(elements);
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> Stack<T> newStack(@NotNull T... initial) {
-    return new Stack<T>(Arrays.asList(initial));
-  }
-
   /**
    * A variant of {@link Collections#emptyList()},
    * except that {@link #toArray()} here does not create garbage {@code new Object[0]} constantly.

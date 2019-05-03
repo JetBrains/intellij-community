@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
@@ -278,7 +278,7 @@ public class ExternalSystemApiUtil {
   public static void visit(@Nullable DataNode node, @NotNull Consumer<? super DataNode<?>> consumer) {
     if (node == null) return;
 
-    Stack<DataNode> toProcess = ContainerUtil.newStack(node);
+    Stack<DataNode> toProcess = new Stack<>(node);
     while (!toProcess.isEmpty()) {
       DataNode<?> node0 = toProcess.pop();
       consumer.consume(node0);

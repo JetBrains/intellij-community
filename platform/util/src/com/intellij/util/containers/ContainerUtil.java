@@ -2483,23 +2483,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return list;
   }
 
+  /**
+   * @deprecated Use {@link Stack#Stack()}
+   */
+  @SuppressWarnings("unused")
   @NotNull
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static <T> Stack<T> newStack() {
     return new Stack<>();
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> Stack<T> newStack(@NotNull Collection<? extends T> initial) {
-    return new Stack<>(initial);
-  }
-
-  @SafeVarargs
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> Stack<T> newStack(@NotNull T... initial) {
-    return new Stack<>(Arrays.asList(initial));
   }
 
   @NotNull

@@ -55,7 +55,7 @@ class RepositoryContentHandler extends DefaultHandler {
   @Override
   public void startDocument() {
     plugins = ContainerUtil.newArrayList();
-    categories = ContainerUtil.newStack();
+    categories = new Stack<>();
   }
 
   @Override
