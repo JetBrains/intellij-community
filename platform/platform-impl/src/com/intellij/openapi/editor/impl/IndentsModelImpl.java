@@ -17,8 +17,8 @@ import java.util.Map;
 
 public class IndentsModelImpl implements IndentsModel {
 
-  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = new HashMap<IntPair, IndentGuideDescriptor>();
-  private       List<IndentGuideDescriptor>         myIndents        = new ArrayList<IndentGuideDescriptor>();
+  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = new HashMap<>();
+  private       List<IndentGuideDescriptor>         myIndents        = new ArrayList<>();
   @NotNull private final EditorImpl myEditor;
 
   public IndentsModelImpl(@NotNull EditorImpl editor) {

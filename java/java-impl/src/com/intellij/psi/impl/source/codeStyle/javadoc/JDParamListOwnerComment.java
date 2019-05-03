@@ -41,7 +41,7 @@ public class JDParamListOwnerComment extends JDComment {
 
   public void addParameter(@NotNull String name, @Nullable String description) {
     if (myParamsList == null) {
-      myParamsList = new ArrayList<TagDescription>();
+      myParamsList = new ArrayList<>();
     }
     myParamsList.add(new TagDescription(name, description));
   }

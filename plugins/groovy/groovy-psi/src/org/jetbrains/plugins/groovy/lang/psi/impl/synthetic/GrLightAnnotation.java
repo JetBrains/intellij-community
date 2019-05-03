@@ -192,7 +192,7 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     }
 
     public void addAttribute(@NotNull GrAnnotationNameValuePair attribute) {
-      if (myAttributes == null) myAttributes = new ArrayList<GrAnnotationNameValuePair>();
+      if (myAttributes == null) myAttributes = new ArrayList<>();
       myAttributes.add(attribute);
       myCachedAttributes = null;
     }

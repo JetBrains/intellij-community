@@ -20,7 +20,7 @@ public class CompositeArrangementSettingsToken {
   private static final Function<ArrangementSettingsToken, CompositeArrangementSettingsToken> WRAPPER =
     token -> new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.<CompositeArrangementSettingsToken>emptyList());
 
-  @NotNull private final List<CompositeArrangementSettingsToken> myChildren = new ArrayList<CompositeArrangementSettingsToken>();
+  @NotNull private final List<CompositeArrangementSettingsToken> myChildren = new ArrayList<>();
 
   @NotNull private final ArrangementSettingsToken  myToken;
   @NotNull private final StdArrangementTokenUiRole myRole;

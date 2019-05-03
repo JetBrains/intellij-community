@@ -54,7 +54,7 @@ public class JDMethodComment extends JDParamListOwnerComment {
 
   public void addThrow(@NotNull String className, @Nullable String description) {
     if (myThrowsList == null) {
-      myThrowsList = new ArrayList<TagDescription>();
+      myThrowsList = new ArrayList<>();
     }
     myThrowsList.add(new TagDescription(className, description));
   }

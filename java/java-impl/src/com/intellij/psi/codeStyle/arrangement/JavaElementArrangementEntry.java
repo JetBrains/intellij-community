@@ -19,8 +19,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
   implements TypeAwareArrangementEntry, NameAwareArrangementEntry,ModifierAwareArrangementEntry
 {
 
-  @NotNull private final Set<ArrangementSettingsToken> myModifiers = new HashSet<ArrangementSettingsToken>();
-  @NotNull private final Set<ArrangementSettingsToken> myTypes     = new HashSet<ArrangementSettingsToken>();
+  @NotNull private final Set<ArrangementSettingsToken> myModifiers = new HashSet<>();
+  @NotNull private final Set<ArrangementSettingsToken> myTypes     = new HashSet<>();
 
   @NotNull private final  ArrangementSettingsToken myType;
   @Nullable private final String                   myName;

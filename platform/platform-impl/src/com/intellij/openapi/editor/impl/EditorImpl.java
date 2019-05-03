@@ -4223,8 +4223,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyColorSchemeDelegate extends DelegateColorScheme {
     private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final FontPreferencesImpl myConsoleFontPreferences = new FontPreferencesImpl();
-    private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = new HashMap<TextAttributesKey, TextAttributes>();
-    private final Map<ColorKey, Color>                   myOwnColors       = new HashMap<ColorKey, Color>();
+    private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = new HashMap<>();
+    private final Map<ColorKey, Color>                   myOwnColors       = new HashMap<>();
     private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap;
     private int myMaxFontSize = EditorFontsConstants.getMaxEditorFontSize();

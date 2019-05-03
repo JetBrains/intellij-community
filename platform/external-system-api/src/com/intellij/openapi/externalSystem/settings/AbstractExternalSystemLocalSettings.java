@@ -151,7 +151,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   private void pruneOutdatedEntries() {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(myExternalSystemId);
     assert manager != null;
-    Set<String> pathsToForget = new HashSet<String>();
+    Set<String> pathsToForget = new HashSet<>();
     for (ExternalProjectPojo pojo : state.availableProjects.keySet()) {
       pathsToForget.add(pojo.getPath());
     }

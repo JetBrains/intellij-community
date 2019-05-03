@@ -24,8 +24,8 @@ import java.util.List;
 public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<>();
-  @NotNull private final List<String> myEffectiveFontFamilies = new ArrayList<String>();
-  @NotNull private final List<String> myRealFontFamilies = new ArrayList<String>();
+  @NotNull private final List<String> myEffectiveFontFamilies = new ArrayList<>();
+  @NotNull private final List<String> myRealFontFamilies = new ArrayList<>();
 
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;

@@ -60,7 +60,7 @@ class ForkedGroovyc implements GroovycFlavor {
 
     JpsGroovySettings settings = JpsGroovycRunner.getGroovyCompilerSettings(context);
 
-    List<String> vmParams = new ArrayList<String>();
+    List<String> vmParams = new ArrayList<>();
     vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", String.valueOf(Utils.suggestForkedCompilerHeapSize())) + "m");
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
     //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");

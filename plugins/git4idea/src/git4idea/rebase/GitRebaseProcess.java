@@ -232,7 +232,7 @@ public class GitRebaseProcess {
     String repoName = getShortRepositoryName(repository);
     LOG.info("Rebasing root " + repoName + ", mode: " + notNull(customMode, "standard"));
 
-    Collection<GitRebaseUtils.CommitInfo> skippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
+    Collection<GitRebaseUtils.CommitInfo> skippedCommits = new ArrayList<>();
     MultiMap<GitRepository, GitRebaseUtils.CommitInfo> allSkippedCommits = getSkippedCommits(alreadyRebased);
     boolean retryWhenDirty = false;
 

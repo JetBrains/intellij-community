@@ -64,7 +64,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
 
-  Map<ColorKey, Color> myColorsMap = new HashMap<ColorKey, Color>();
+  Map<ColorKey, Color> myColorsMap = new HashMap<>();
   Map<String, TextAttributes> myAttributesMap = new THashMap<>();
 
   @NonNls private static final String EDITOR_FONT       = "font";

@@ -377,7 +377,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
       private static Vector prepareChildren(Component parent) {
-        Vector<ComponentNode> result = new Vector<ComponentNode>();
+        Vector<ComponentNode> result = new Vector<>();
         if (parent instanceof Container) {
           for (Component component : ((Container)parent).getComponents()) {
             result.add(new ComponentNode(component));

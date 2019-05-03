@@ -20,7 +20,7 @@ public class ContentRootData extends AbstractExternalEntityData {
   private static final long serialVersionUID = 1L;
 
   @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> myData =
-    new HashMap<ExternalSystemSourceType, Collection<SourceRoot>>();
+    new HashMap<>();
 
   @NotNull private final String myRootPath;
 

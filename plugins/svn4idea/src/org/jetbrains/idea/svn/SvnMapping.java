@@ -20,7 +20,7 @@ public class SvnMapping {
 
   @NotNull private final List<VirtualFile> myLonelyRoots = new ArrayList<>();
   @NotNull private final TreeMap<String, RootUrlInfo> myFile2UrlMap = new TreeMap<>(FILE_PATHS_COMPARATOR);
-  @NotNull private final Map<Url, RootUrlInfo> myUrl2FileMap = new HashMap<Url, RootUrlInfo>();
+  @NotNull private final Map<Url, RootUrlInfo> myUrl2FileMap = new HashMap<>();
   // no additional info. for caching only (convert roots)
   @NotNull private final ClearableLazyValue<List<VirtualFile>> myPreCalculatedUnderVcsRoots = new ClearableLazyValue<List<VirtualFile>>() {
     @NotNull

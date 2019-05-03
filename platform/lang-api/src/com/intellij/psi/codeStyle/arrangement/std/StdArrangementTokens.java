@@ -23,7 +23,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
  */
 public class StdArrangementTokens {
 
-  private static final Map<String, StdArrangementSettingsToken>  TOKENS_BY_ID = new HashMap<String, StdArrangementSettingsToken>();
+  private static final Map<String, StdArrangementSettingsToken>  TOKENS_BY_ID = new HashMap<>();
 
   /**
    * Forces nested classes initialization - otherwise it's possible that, say, {@link #byId(String)} returns null for valid
@@ -60,7 +60,7 @@ public class StdArrangementTokens {
       @NotNull
       @Override
       protected Set<ArrangementSettingsToken> compute() {
-        Set<ArrangementSettingsToken> result = new HashSet<ArrangementSettingsToken>();
+        Set<ArrangementSettingsToken> result = new HashSet<>();
         for (Field field : clazz.getFields()) {
           if (ArrangementSettingsToken.class.isAssignableFrom(field.getType())) {
             try {

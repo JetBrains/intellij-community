@@ -422,7 +422,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   public static PsiElement[] collectVariableUsages(GrVariable variable, PsiElement scope) {
-    final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
+    final List<PsiElement> list = Collections.synchronizedList(new ArrayList<>());
     if (scope instanceof GroovyScriptClass) {
       scope = scope.getContainingFile();
     }

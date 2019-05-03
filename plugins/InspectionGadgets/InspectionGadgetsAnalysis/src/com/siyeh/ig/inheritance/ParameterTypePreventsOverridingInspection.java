@@ -123,7 +123,7 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
           continue;
         }
         final PsiParameter[] superParameters = superParameterList.getParameters();
-        final Map<PsiTypeElement, PsiClassType> problemTypeElements = new HashMap<PsiTypeElement, PsiClassType>(2);
+        final Map<PsiTypeElement, PsiClassType> problemTypeElements = new HashMap<>(2);
         for (int i = 0; i < parameters.length; i++) {
           final PsiParameter parameter = parameters[i];
           final PsiParameter superParameter = superParameters[i];

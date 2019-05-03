@@ -150,7 +150,7 @@ class EDTGuard implements InvocationHandler {
   @NotNull
   public static <T, O extends Watchable> T create(@NotNull final O target, final ProcessHandler process) {
     final Pair<LinkedBlockingQueue<Call>, LinkedBlockingQueue<Call.Result>> queue =
-      Pair.create(new LinkedBlockingQueue<Call>(10), new LinkedBlockingQueue<Call.Result>());
+      Pair.create(new LinkedBlockingQueue<>(10), new LinkedBlockingQueue<>());
 
     final Thread thread = new Thread("Async Invocation Thread for " + process) {
       @Override

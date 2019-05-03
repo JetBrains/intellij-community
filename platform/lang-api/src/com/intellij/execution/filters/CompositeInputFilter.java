@@ -18,7 +18,7 @@ import java.util.List;
 public class CompositeInputFilter implements InputFilter {
   private static final Logger LOG = Logger.getInstance(CompositeInputFilter.class);
 
-  private final List<InputFilterWrapper> myFilters = new ArrayList<InputFilterWrapper>();
+  private final List<InputFilterWrapper> myFilters = new ArrayList<>();
   private final DumbService myDumbService;
 
   public CompositeInputFilter(@NotNull Project project) {

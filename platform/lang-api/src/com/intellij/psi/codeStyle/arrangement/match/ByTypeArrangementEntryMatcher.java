@@ -22,7 +22,7 @@ import java.util.Set;
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementAtomMatchCondition> myTypes = new HashSet<ArrangementAtomMatchCondition>();
+  @NotNull private final Set<ArrangementAtomMatchCondition> myTypes = new HashSet<>();
 
   public ByTypeArrangementEntryMatcher(@NotNull ArrangementAtomMatchCondition interestedType) {
     myTypes.add(interestedType);

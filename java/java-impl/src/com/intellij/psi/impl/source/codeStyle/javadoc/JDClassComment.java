@@ -42,7 +42,7 @@ public class JDClassComment extends JDParamListOwnerComment {
 
   public void addAuthor(@NotNull String author) {
     if (myAuthorsList == null) {
-      myAuthorsList = new ArrayList<String>();
+      myAuthorsList = new ArrayList<>();
     }
     myAuthorsList.add(author);
   }

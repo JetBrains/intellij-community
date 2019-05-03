@@ -286,7 +286,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       return;
     }
 
-    Stack<TreeElement> toCheck = new Stack<TreeElement>();
+    Stack<TreeElement> toCheck = new Stack<>();
     toCheck.push(myStructureViewComponent.getTreeModel().getRoot());
 
     while (!toCheck.isEmpty()) {

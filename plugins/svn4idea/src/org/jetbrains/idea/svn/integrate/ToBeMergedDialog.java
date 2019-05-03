@@ -96,7 +96,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     myRevisionsModel = new ListTableModel<>(new ColumnInfo[]{FAKE_COLUMN}, changeLists);
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<>(allStatusesCalculated);
-    myAlreadyMerged = new HashSet<Change>();
+    myAlreadyMerged = new HashSet<>();
     setOKButtonText("Merge Selected");
     initUI();
     init();

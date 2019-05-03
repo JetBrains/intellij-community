@@ -370,7 +370,7 @@ public class JsonSchemaObject {
   @Nullable
   private static <K, V> Map<K, V> copyMap(@Nullable Map<K, V> target, @Nullable Map<K, V> source) {
     if (source == null || source.isEmpty()) return target;
-    if (target == null) target = new HashMap<K, V>(source.size());
+    if (target == null) target = new HashMap<>(source.size());
     target.putAll(source);
     return target;
   }

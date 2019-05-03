@@ -1289,7 +1289,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
-  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<Keymap>(null);
+  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<>(null);
 
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;

@@ -30,7 +30,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = Logger.getInstance(DataNode.class);
 
-  @NotNull private final List<DataNode<?>> myChildren = new ArrayList<DataNode<?>>();
+  @NotNull private final List<DataNode<?>> myChildren = new ArrayList<>();
   @NotNull private transient List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
   @NotNull private transient UserDataHolderBase myUserData = new UserDataHolderBase();
 

@@ -579,7 +579,7 @@ public class SMTestProxy extends AbstractTestProxy {
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = new ArrayList<SMTestProxy>();
+    final List<SMTestProxy> result = new ArrayList<>();
 
     result.addAll(allChildren);
 

@@ -94,8 +94,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
 
-    myTheirsChanges = new ArrayList<Change>();
-    myTheirsBinaryChanges = new ArrayList<Change>();
+    myTheirsChanges = new ArrayList<>();
+    myTheirsBinaryChanges = new ArrayList<>();
     myTextPatches = emptyList();
   }
 
@@ -229,7 +229,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void applyBinaryChanges() throws VcsException {
-    List<FilePath> dirtyPaths = new ArrayList<FilePath>();
+    List<FilePath> dirtyPaths = new ArrayList<>();
     for (Change change : myTheirsBinaryChanges) {
       try {
         WriteAction.runAndWait(() -> {
@@ -328,7 +328,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private List<Change> convertPaths(@NotNull List<Change> changes) throws VcsException {
     initAddOption();
 
-    List<Change> result = new ArrayList<Change>();
+    List<Change> result = new ArrayList<>();
     for (Change change : changes) {
       if (isUnderOldDir(change, myOldFilePath)) {
         result

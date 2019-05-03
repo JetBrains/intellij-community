@@ -80,7 +80,7 @@ public class JavaArrangementParseInfo {
     Stack<Pair<PsiMethod, ArrangementEntryDependencyInfo>> toProcess
       = new Stack<>();
     toProcess.push(Pair.create(method, result));
-    Set<PsiMethod> usedMethods = new HashSet<PsiMethod>();
+    Set<PsiMethod> usedMethods = new HashSet<>();
     while (!toProcess.isEmpty()) {
       Pair<PsiMethod, ArrangementEntryDependencyInfo> pair = toProcess.pop();
       Set<PsiMethod> dependentMethods = myMethodDependencies.get(pair.first);

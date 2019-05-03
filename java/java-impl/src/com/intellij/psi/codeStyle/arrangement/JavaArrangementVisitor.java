@@ -27,7 +27,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   private static final String NULL_CONTENT = "no content";
 
-  private static final Map<String, ArrangementSettingsToken> MODIFIERS = new HashMap<String, ArrangementSettingsToken>();
+  private static final Map<String, ArrangementSettingsToken> MODIFIERS = new HashMap<>();
 
   static {
     MODIFIERS.put(PsiModifier.PUBLIC, PUBLIC);
@@ -89,7 +89,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   @NotNull
   private static Set<ArrangementSettingsToken> getGroupingRules(@NotNull ArrangementSettings settings) {
-    Set<ArrangementSettingsToken> groupingRules = new HashSet<ArrangementSettingsToken>();
+    Set<ArrangementSettingsToken> groupingRules = new HashSet<>();
     for (ArrangementGroupingRule rule : settings.getGroupings()) {
       groupingRules.add(rule.getGroupingType());
     }

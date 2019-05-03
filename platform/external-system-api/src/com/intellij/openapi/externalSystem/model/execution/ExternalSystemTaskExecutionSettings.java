@@ -25,9 +25,9 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
   @NotNull
-  private List<String> myTaskNames = new ArrayList<String>();
+  private List<String> myTaskNames = new ArrayList<>();
   @NotNull
-  private List<String> myTaskDescriptions = new ArrayList<String>();
+  private List<String> myTaskDescriptions = new ArrayList<>();
 
   @Nullable private String myExecutionName;
   private String myExternalSystemIdString;
@@ -35,7 +35,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private String myVmOptions;
   private String myScriptParameters;
   @NotNull
-  private Map<String, String> myEnv = new HashMap<String, String>();
+  private Map<String, String> myEnv = new HashMap<>();
   private boolean myPassParentEnvs = true;
 
   public ExternalSystemTaskExecutionSettings() {

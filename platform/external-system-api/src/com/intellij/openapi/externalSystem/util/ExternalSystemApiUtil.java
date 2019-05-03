@@ -223,7 +223,7 @@ public class ExternalSystemApiUtil {
         continue;
       }
       if (result == null) {
-        result = new ArrayList<DataNode<T>>();
+        result = new ArrayList<>();
       }
       result.add((DataNode<T>)child);
     }

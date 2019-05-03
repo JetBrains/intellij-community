@@ -35,7 +35,7 @@ public class TextAttributesEffectsBuilder {
     .put(BOLD_DOTTED_LINE, UNDERLINE_SLOT)
     .build();
 
-  private final Map<EffectSlot, EffectDescriptor> myEffectsMap = new HashMap<EffectSlot, EffectDescriptor>(EffectSlot.values().length);
+  private final Map<EffectSlot, EffectDescriptor> myEffectsMap = new HashMap<>(EffectSlot.values().length);
 
   private TextAttributesEffectsBuilder() {}
 

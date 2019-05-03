@@ -19,7 +19,7 @@ public class ParametersListUtil {
   public static final Function<String, List<String>> DEFAULT_LINE_PARSER = text -> parse(text, true);
   public static final Function<List<String>, String> DEFAULT_LINE_JOINER = strings -> StringUtil.join(strings, " ");
   public static final Function<String, List<String>> COLON_LINE_PARSER = text -> {
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     final StringTokenizer tokenizer = new StringTokenizer(text, ";", false);
     while (tokenizer.hasMoreTokens()) {
       result.add(tokenizer.nextToken());
@@ -107,7 +107,7 @@ public class ParametersListUtil {
   public static List<String> parse(@NotNull String parameterString, boolean keepQuotes, boolean supportSingleQuotes) {
     parameterString = parameterString.trim();
 
-    final ArrayList<String> params = new ArrayList<String>();
+    final ArrayList<String> params = new ArrayList<>();
     if (parameterString.isEmpty()) {
       return params;
     }

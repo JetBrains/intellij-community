@@ -38,7 +38,7 @@ public abstract class AbstractExternalSystemSettings<
   @NotNull private final Topic<L> myChangesTopic;
   private Supplier<Project> myProjectSupplier;
 
-  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = new HashMap<String, PS>();
+  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = new HashMap<>();
 
   @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettingsView
     = Collections.unmodifiableMap(myLinkedProjectsSettings);
@@ -142,8 +142,8 @@ public abstract class AbstractExternalSystemSettings<
     // do not add invalid 'null' settings
     settings = ContainerUtil.filter(settings, ps -> ps.getExternalProjectPath() != null);
 
-    List<PS> added = new ArrayList<PS>();
-    Map<String, PS> removed = new HashMap<String, PS>(myLinkedProjectsSettings);
+    List<PS> added = new ArrayList<>();
+    Map<String, PS> removed = new HashMap<>(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
     for (PS current : settings) {
       myLinkedProjectsSettings.put(current.getExternalProjectPath(), current);

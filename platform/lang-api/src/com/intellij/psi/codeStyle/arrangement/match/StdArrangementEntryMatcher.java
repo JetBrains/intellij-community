@@ -113,7 +113,7 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
    */
   public static class StdMatcherBuilderImpl implements StdMatcherBuilder {
 
-    @NotNull private final List<ArrangementEntryMatcher> myMatchers  = new ArrayList<ArrangementEntryMatcher>();
+    @NotNull private final List<ArrangementEntryMatcher> myMatchers  = new ArrayList<>();
     /**
      * Maps token type to all arrangement tokens that were encountered so far by parsing conditions with
      * {@link #onCondition(ArrangementAtomMatchCondition) onCondition} calls.

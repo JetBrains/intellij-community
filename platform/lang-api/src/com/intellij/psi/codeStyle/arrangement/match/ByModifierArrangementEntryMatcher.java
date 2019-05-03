@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementAtomMatchCondition> myModifiers = new HashSet<ArrangementAtomMatchCondition>();
+  @NotNull private final Set<ArrangementAtomMatchCondition> myModifiers = new HashSet<>();
 
   public ByModifierArrangementEntryMatcher(@NotNull ArrangementAtomMatchCondition interestedModifier) {
     myModifiers.add(interestedModifier);

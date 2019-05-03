@@ -58,7 +58,7 @@ public class KeyboardLayoutUtil {
 
 
   private static class HardCoded {
-    private static final Map<Character, Character> LL = new HashMap<Character, Character>(33);
+    private static final Map<Character, Character> LL = new HashMap<>(33);
 
     static {
       // keyboard layouts in lowercase
