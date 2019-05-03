@@ -56,8 +56,12 @@ public class ContainerUtilRt {
     return map;
   }
 
+  /**
+   * @deprecated Use {@link HashMap#HashMap(int)}
+   */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
     return new HashMap<K, V>(initialCapacity);
   }
@@ -396,7 +400,7 @@ public class ContainerUtilRt {
     }
     return list;
   }
-  
+
   /**
    * @return read-only list consisting key-value pairs of a map
    */

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -371,7 +370,7 @@ public class JsonSchemaObject {
   @Nullable
   private static <K, V> Map<K, V> copyMap(@Nullable Map<K, V> target, @Nullable Map<K, V> source) {
     if (source == null || source.isEmpty()) return target;
-    if (target == null) target = ContainerUtilRt.newHashMap(source.size());
+    if (target == null) target = new HashMap<K, V>(source.size());
     target.putAll(source);
     return target;
   }
@@ -880,7 +879,7 @@ public class JsonSchemaObject {
         }
         continue;
       }
-      
+
       current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(part);
     }
     return current;
