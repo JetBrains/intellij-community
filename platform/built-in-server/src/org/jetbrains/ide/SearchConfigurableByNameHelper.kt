@@ -3,54 +3,66 @@ package org.jetbrains.ide
 
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.project.Project
+import java.util.*
 
 // search by full name, not partially (not by words)
-internal class SearchConfigurableByNameHelper(name: String, project: Project) {
+class SearchConfigurableByNameHelper(name: String, val rootGroup: ConfigurableGroup) {
   private val names = name.splitToSequence('|').map { it.trim() }.toList()
-  val rootGroup = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
 
-  private val currentNamePath: MutableList<String> = ArrayList()
+  private val stack = ArrayDeque<Item>()
 
-  private var result: Configurable? = null
+  constructor(name: String, project: Project) : this(name, ConfigurableExtensionPointUtil.getConfigurableGroup(project, true))
 
   fun searchByName(): Configurable? {
-    addChildren(rootGroup)
-    return result
+    stack.add(Item(rootGroup, null))
+
+    while (true) {
+      val item = stack.pollFirst() ?: break
+      val result = processChildren(item)
+      if (result != null) {
+        return result
+      }
+    }
+    return null
   }
 
-  private fun addChildren(parent: Configurable.Composite): Boolean {
-    for (child in parent.configurables) {
-      if (SearchUtil.isAcceptable(child) && isMatched(child)) {
-        result = child
-        return false
+  private fun processChildren(parent: Item): Configurable? {
+    for (child in parent.configurable.configurables) {
+      if (SearchUtil.isAcceptable(child) && isMatched(child, parent)) {
+        return child
       }
 
       if (child is Configurable.Composite) {
-        currentNamePath.add(child.displayName)
-        if (!addChildren(child)) {
-          return false
-        }
-        currentNamePath.removeAt(currentNamePath.size - 1)
+        // do not go deeper until current level is not processed
+        stack.add(Item(child, parent))
       }
     }
-
-    return true
+    return null
   }
 
-  private fun isMatched(child: Configurable): Boolean {
-    if (child.displayName != names.last()) {
+  private fun isMatched(child: Configurable, parent: Item): Boolean {
+    if (names.size > 1 && parent.parent == null) {
       return false
     }
 
-    var pathIndex = currentNamePath.size - 1
+    if (!names.last().equals(child.displayName, ignoreCase = true)) {
+      return false
+    }
+
+    var currentParent: Item = parent
     for (i in (names.size - 2) downTo 0) {
-      val currentName = currentNamePath.getOrNull(pathIndex--) ?: return false
-      if (currentName != names[i]) {
+      val currentName = (currentParent.configurable as Configurable).displayName
+      if (!names[i].equals(currentName, ignoreCase = true)) {
         return false
       }
+
+      currentParent = currentParent.parent ?: return false
     }
     return true
   }
 }
+
+private data class Item(val configurable: Configurable.Composite, val parent: Item?)

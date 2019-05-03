@@ -120,6 +120,7 @@ public class ConfigurableExtensionPointUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return the root configurable group that represents a tree of settings
    */
+  @NotNull
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
     if (!withIdeSettings && project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
