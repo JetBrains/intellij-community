@@ -52,6 +52,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.IncludedXmlTag;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
@@ -266,6 +267,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     for (Map.Entry<String, Collection<Dependency>> entry : dependencies.entrySet()) {
       if (entry.getValue().size() > 1) {
         for (Dependency dependency : entry.getValue()) {
+          if (dependency.getXmlTag() instanceof IncludedXmlTag) continue;
           highlightRedundant(dependency, DevKitBundle.message("inspections.plugin.xml.duplicated.dependency", entry.getKey()),
                              ProblemHighlightType.ERROR, holder);
         }
