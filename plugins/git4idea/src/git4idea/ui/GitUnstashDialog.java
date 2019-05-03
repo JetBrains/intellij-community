@@ -164,26 +164,30 @@ public class GitUnstashDialog extends DialogWrapper {
     myViewButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final VirtualFile root = getGitRoot();
-        String resolvedStash;
+        VirtualFile root = getGitRoot();
         String selectedStash = getSelectedStash().getStash();
         try {
-          GitLineHandler h = new GitLineHandler(project, root, GitCommand.REV_LIST);
-          h.setSilent(true);
-          h.addParameters("--timestamp", "--max-count=1", selectedStash);
-          h.endOptions();
-          final String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-          resolvedStash = GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
+          String hash = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            () -> resolveHashOfStash(root, selectedStash), "Loading Stash Details", true, project);
+          GitUtil.showSubmittedFiles(myProject, hash, root, true, false);
         }
         catch (VcsException ex) {
           GitUIUtil.showOperationError(myProject, ex, "resolving revision");
-          return;
         }
-        GitUtil.showSubmittedFiles(myProject, resolvedStash, root, true, false);
       }
     });
     init();
     updateDialogState();
+  }
+
+  @NotNull
+  private String resolveHashOfStash(@NotNull VirtualFile root, @NotNull String stash) throws VcsException {
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REV_LIST);
+    h.setSilent(true);
+    h.addParameters("--timestamp", "--max-count=1", stash);
+    h.endOptions();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
+    return  GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
   }
 
   /**
