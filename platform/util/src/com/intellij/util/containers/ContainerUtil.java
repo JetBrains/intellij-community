@@ -2074,7 +2074,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> set(@NotNull T ... items) {
-    return ContainerUtilRt.newHashSet(items);
+    return new HashSet<>(Arrays.asList(items));
   }
 
   public static <K, V> void putIfAbsent(final K key, @Nullable V value, @NotNull final Map<? super K, ? super V> result) {
@@ -2931,6 +2931,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
+    //noinspection deprecation
     return new SoftKeySoftValueHashMap<>(true);
   }
 
