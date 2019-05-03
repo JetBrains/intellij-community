@@ -11,7 +11,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
-
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
@@ -26,12 +25,12 @@ public class ShellcheckOptionsPanel {
   private ActionLink myShellcheckDownloadLink;
   private TextFieldWithBrowseButton myShellcheckSelector;
 
-  public ShellcheckOptionsPanel() {
+  ShellcheckOptionsPanel() {
     Project project = ProjectUtil.guessCurrentProject(getPanel());
     myShellcheckSelector.addBrowseFolderListener(BROWSE_SHELLCHECK_TITLE, "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
     myShellcheckSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent documentEvent) {
+      protected void textChanged(@NotNull DocumentEvent documentEvent) {
         String shellcheckPath = myShellcheckSelector.getText();
         BashShellcheckUtil.setShellcheckPath(shellcheckPath);
         myWarningPanel.setVisible(!BashShellcheckUtil.isValidPath(shellcheckPath));
@@ -53,7 +52,7 @@ public class ShellcheckOptionsPanel {
     });
   }
 
-  public JComponent getPanel() {
+  JComponent getPanel() {
     return myPanel;
   }
 }

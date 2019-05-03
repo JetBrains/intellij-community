@@ -1,7 +1,6 @@
 package com.intellij.bash;
 
 import com.intellij.bash.psi.*;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
