@@ -346,11 +346,18 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   @Nullable
-  public synchronized Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
-    if (prefix == null) return null;
+  public synchronized Set<OptionDescription> getAcceptableDescriptions(@Nullable String prefix) {
+    if (prefix == null) {
+      return null;
+    }
+
     final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
-    if (StringUtil.isEmptyOrSpaces(stemmedPrefix)) return null;
+    if (StringUtil.isEmptyOrSpaces(stemmedPrefix)) {
+      return null;
+    }
+
     loadHugeFilesIfNecessary();
+
     Set<OptionDescription> result = null;
     for (Map.Entry<CharSequence, long[]> entry : myStorage.entrySet()) {
       final long[] descriptions = entry.getValue();
