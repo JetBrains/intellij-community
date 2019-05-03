@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.options.ConfigurableBase;
+import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ public class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, Lis
 
   public ConsentConfigurable() {
     super("consents", "Data Sharing", "preferences.usage.statistics");
-    myConsents = new ArrayList<>(ConsentOptions.getInstance().getConsents().first);
+    myConsents = new ArrayList<>(AppUIUtil.loadConsentsForEditing());
   }
 
   @NotNull
@@ -23,6 +24,12 @@ public class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, Lis
 
   @Override
   protected ConsentSettingsUi createUi() {
-    return new ConsentSettingsUi(true);
+    return new ConsentSettingsUi(true) {
+      @Override
+      public void apply(@NotNull List<Consent> consents) {
+        super.apply(consents);
+        AppUIUtil.saveConsents(consents);
+      }
+    };
   }
 }
