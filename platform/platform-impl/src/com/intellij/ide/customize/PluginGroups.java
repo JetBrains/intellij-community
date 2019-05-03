@@ -120,7 +120,7 @@ public class PluginGroups {
       "com.intellij.vaadin",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
-      "Struts:StrutsAssistant,com.intellij.struts2",
+      "Struts:com.intellij.struts2",
       "com.intellij.hibernate",
       "Spring:com.intellij.spring.batch," +
       "com.intellij.spring.data," +
