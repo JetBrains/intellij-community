@@ -1,4 +1,6 @@
-# UI DSL
+# Kotlin UI DSL
+
+**Note:** This document covers the Kotlin UI DSL in IntelliJ IDEA 2019.2. A lot of the features described in this document are not available for plugins targeting earlier IntelliJ IDEA versions.
 
 ## Layout Structure
 
@@ -49,6 +51,17 @@ row {
 }
 ```
 
+To put a component on the right side of a grid row, use the `right` method:
+
+```kotlin
+row {
+  rememberCheckBox()
+  right {
+    link("Forgot password")
+  }
+}
+```
+
 
 ## Adding Components
 
@@ -82,6 +95,14 @@ If you want to add a component for which there are no factory methods, you can s
 
 ## Supported Components
 
+### Labels
+
+Use the `label` method:
+
+```kotlin
+label("Sample text")
+```
+
 ### Checkboxes
 
 See examples above.
@@ -102,7 +123,7 @@ If the selected radio button is controlled by multiple boolean properties, use `
 
 ```kotlin
 buttonGroup {
-  row { radioButton("The tab on the left")
+  row { radioButton("The tab on the left") }
   row { radioButton("The tab on the right", uiSettings::activeRightEditorOnClose) }
   row { radioButton("Most recently opened tab", uiSettings::activeMruEditorOnClose) }
 }
@@ -134,6 +155,15 @@ val panel = panel {
 }
 ```
 
+To specify the size of a text field, either pass the `columns` parameter as shown in the `intTextField` example above, or specify the `growPolicy` parameter:
+
+```kotlin
+val userField = JTextField(credentials?.userName)
+val panel = panel {
+    row("Username:") { userField(growPolicy = GrowPolicy.SHORT_TEXT) }
+}
+```
+
 ### Combo Boxes
 
 Use the `comboBox` method with either a bound property or a getter/setter pair:
@@ -144,7 +174,7 @@ comboBox(DefaultComboBoxModel<Int>(tabPlacements), uiSettings::editorTabPlacemen
 comboBox<PgpKey>(
   pgpListModel,
   { getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
-  { mySettings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null }
+  { mySettings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
 ```
 
 ### Spinners
@@ -155,6 +185,36 @@ Use the `spinner` method:
 spinner(retypeOptions::retypeDelay, minValue = 0, maxValue = 5000, step = 50)
 ```
 
+### Link Label
+
+Use the `link` method:
+
+```kotlin
+link("Forgot password?") {
+  BrowserUtil.browse("https://account.jetbrains.com/forgot-password")
+}
+```
+
+### Separators
+
+Use the `titledRow` method and put the controls under the separator into the nested block:
+
+```kotlin
+titledRow("Appearance") {
+  row { checkBox(...) }
+}
+```
+
+### Explanatory Text
+
+Use the `comment` parameter:
+
+```kotlin
+checkBox(message("checkbox.smart.tab.reuse"),
+       uiSettings::reuseNotModifiedTabs,
+       comment = message("checkbox.smart.tab.reuse.inline.help"))
+```
+
 ## Integrating panels with property bindings
 
 A panel returned by the `panel` method is an instance of `DialogPanel`. This base class supports the standard `apply`, `reset`, and `isModified` methods.
@@ -163,7 +223,30 @@ If you're using this panel as the main panel of a `DialogWrapper`, the `apply` m
 
 If you're using this panel to implement a `Configurable`, use `BoundConfigurable` as the base class. In this case, the `Configurable` methods will be automatically delegated to the panel.
 
-Example:
+## Enabling and Disabling Controls
+
+Use the `enableIf` method to bind the enabled state of a control to the values entered in other controls. The parameter of the method is a **predicate**.
+
+```kotlin
+checkBox("Show tabs in single row", uiSettings::scrollTabLayoutInEditor)
+  .enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP))
+```
+
+The available predicates are:
+  * `selected` to check the selected state of a checkbox or radio button
+  * `selectedValueIs` and `selectedValueMatches` to check the selected item in a combobox.
+  
+Predicates can be combined with `and` and `or` infix functions:
+
+```kotlin
+checkBox("Hide tabs if there is no space", uiSettings::hideTabsIfNeed)
+  .enableIf(myEditorTabPlacement.selectedValueMatches { it != UISettings.TABS_NONE } and
+              myScrollTabLayoutInEditorCheckBox.selected)
+```
+
+
+## Example
+
 ```kotlin
 val panel = panel {
   noteRow("Login to get notified when the submitted\nexceptions are fixed.")
