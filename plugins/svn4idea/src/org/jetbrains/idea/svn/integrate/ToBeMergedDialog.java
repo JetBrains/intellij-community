@@ -46,16 +46,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtilRt.emptyList;
-import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.getBunchSize;
@@ -90,7 +88,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     super(mergeContext.getProject(), true);
     myMergeContext = mergeContext;
     myAllListsLoaded = allListsLoaded;
-    myStatusMap = synchronizedMap(newHashMap());
+    myStatusMap = synchronizedMap(new HashMap<>());
     myMergeChecker = mergeChecker;
     myAllStatusesCalculated = allStatusesCalculated;
     setTitle(title);
@@ -98,7 +96,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     myRevisionsModel = new ListTableModel<>(new ColumnInfo[]{FAKE_COLUMN}, changeLists);
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<>(allStatusesCalculated);
-    myAlreadyMerged = newHashSet();
+    myAlreadyMerged = new HashSet<>();
     setOKButtonText("Merge Selected");
     initUI();
     init();

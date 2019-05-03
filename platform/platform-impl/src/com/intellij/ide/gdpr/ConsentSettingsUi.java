@@ -176,9 +176,6 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   public void apply(@NotNull List<Consent> consents) {
     consents.clear();
     consents.addAll(getState());
-    if (myPreferencesMode) {
-      ConsentOptions.getInstance().setConsents(consents);
-    }
   }
 
   @NotNull

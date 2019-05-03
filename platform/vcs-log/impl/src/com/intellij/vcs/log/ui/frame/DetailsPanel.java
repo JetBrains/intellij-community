@@ -269,7 +269,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     protected void onDetailsLoaded(@NotNull List<? extends VcsCommitMetadata> detailsList) {
       List<CommitId> ids = ContainerUtil.map(detailsList,
                                              detail -> new CommitId(detail.getId(), detail.getRoot()));
-      Set<String> unResolvedHashes = ContainerUtil.newHashSet();
+      Set<String> unResolvedHashes = new HashSet<>();
       List<CommitPresentation> presentations = ContainerUtil.map(detailsList,
                                                                  detail -> buildPresentation(myLogData.getProject(), detail,
                                                                                              unResolvedHashes));
@@ -291,7 +291,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       rebuildCommitPanels(selection);
       List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
+        List<Collection<VcsRef>> result = new ArrayList<>();
         for (Integer row : currentSelection) {
           result.add(myGraphTable.getModel().getRefsAtRow(row));
         }

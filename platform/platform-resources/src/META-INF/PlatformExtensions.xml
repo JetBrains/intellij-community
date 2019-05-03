@@ -433,6 +433,8 @@
     <statistics.counterUsagesCollector groupId="ui.tips" version="1"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="1"/>
 
+    <statistics.counterUsagesCollector groupId="new.project.wizard" version="1"/>
+
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>

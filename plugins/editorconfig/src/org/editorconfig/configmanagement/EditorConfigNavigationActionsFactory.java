@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.ide.actions.OpenFileAction;
@@ -9,20 +9,20 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class EditorConfigNavigationActionsFactory {
   private static final Key<EditorConfigNavigationActionsFactory> NAVIGATION_FACTORY_KEY = Key.create("editor.config.navigation.factory");
 
-  private final List<String> myEditorConfigFilePaths = ContainerUtil.newArrayList();
+  private final List<String> myEditorConfigFilePaths = new ArrayList<>();
 
   private static final Object INSTANCE_LOCK = new Object();
 
@@ -31,7 +31,7 @@ public class EditorConfigNavigationActionsFactory {
 
   @NotNull
   public List<AnAction> getNavigationActions(@NotNull Project project) {
-    final List<AnAction> actions = ContainerUtil.newArrayList();
+    final List<AnAction> actions = new ArrayList<>();
     synchronized (myEditorConfigFilePaths) {
       List<VirtualFile> editorConfigFiles = Utils.pathsToFiles(myEditorConfigFilePaths);
       for (VirtualFile editorConfigFile : editorConfigFiles) {

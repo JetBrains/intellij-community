@@ -54,7 +54,6 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  */
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
-  private final boolean myForceHttps;
   private final Collection<? extends PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
@@ -66,12 +65,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @NotNull BuildInfo newBuild,
                    @Nullable UpdateChain patches,
                    boolean enableLink,
-                   boolean forceHttps,
                    @Nullable Collection<? extends PluginDownloader> updatedPlugins,
                    @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
-    myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
     myPatches = patches;
@@ -98,7 +95,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
     super(true);
     myUpdatedChannel = channel;
-    myForceHttps = true;
     myUpdatedPlugins = null;
     myNewBuild = newBuild;
     myPatches = patches;
@@ -146,7 +142,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<Action> actions = ContainerUtil.newArrayList();
+    List<Action> actions = new ArrayList<>();
 
     if (myPatches != null || myTestPatch != null) {
       boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
@@ -201,7 +197,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         String[] command;
         try {
           if (myPatches != null) {
-            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), myForceHttps, indicator);
+            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
           else {

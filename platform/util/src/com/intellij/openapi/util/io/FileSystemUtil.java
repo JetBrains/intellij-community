@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +22,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -333,7 +329,7 @@ public class FileSystemUtil {
         Collection targetPermissions = getPermissions(targetPath);
         if (sourcePermissions != null && targetPermissions != null) {
           if (onlyPermissionsToExecute) {
-            Collection<Object> permissionsToSet = ContainerUtil.newHashSet();
+            Collection<Object> permissionsToSet = new HashSet<>();
             for (Object permission : targetPermissions) {
               if (!permission.toString().endsWith("_EXECUTE")) {
                 permissionsToSet.add(permission);

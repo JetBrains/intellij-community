@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
@@ -24,11 +24,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
@@ -241,8 +242,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report();
-    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), newLinkedHashSet(remotes),
-                           newHashMap(state.getLocalBranches()), newHashMap(state.getRemoteBranches()), newLinkedHashSet(trackInfos),
+    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
+                           new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
+                           new LinkedHashSet<>(trackInfos),
                            submodules, hooksInfo, isShallow);
   }
 

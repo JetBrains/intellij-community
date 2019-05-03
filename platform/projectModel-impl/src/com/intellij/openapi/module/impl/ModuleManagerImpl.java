@@ -1002,7 +1002,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
 
       List<Module> modules = new ArrayList<>();
-      Map<Module, String> oldNames = ContainerUtil.newHashMap();
+      Map<Module, String> oldNames = new HashMap<>();
       for (final Module module : modulesToBeRenamed) {
         oldNames.put(module, module.getName());
         moduleModel.myModules.remove(module.getName());

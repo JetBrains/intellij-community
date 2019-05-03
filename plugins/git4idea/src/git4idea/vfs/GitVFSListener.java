@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
@@ -34,7 +34,8 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.map2Map;
 
 public class GitVFSListener extends VcsVFSListener {
   /**
@@ -185,7 +186,7 @@ public class GitVFSListener extends VcsVFSListener {
   @Override
   protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
-      final Set<File> filesToRefresh = newHashSet();
+      final Set<File> filesToRefresh = new HashSet<>();
 
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
@@ -204,9 +205,9 @@ public class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected void performMoveRename(@NotNull final List<MovedFileInfo> movedFiles) {
-    List<FilePath> toAdd = newArrayList();
-    List<FilePath> toRemove = newArrayList();
-    List<MovedFileInfo> toForceMove = newArrayList();
+    List<FilePath> toAdd = new ArrayList<>();
+    List<FilePath> toRemove = new ArrayList<>();
+    List<MovedFileInfo> toForceMove = new ArrayList<>();
     for (MovedFileInfo movedInfo : movedFiles) {
       String oldPath = movedInfo.myOldPath;
       String newPath = movedInfo.myNewPath;
@@ -223,8 +224,8 @@ public class GitVFSListener extends VcsVFSListener {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<FilePath> dirtyPaths = newArrayList();
-          List<File> toRefresh = newArrayList();
+          List<FilePath> dirtyPaths = new ArrayList<>();
+          List<File> toRefresh = new ArrayList<>();
           //perform adding
           for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toAdd).entrySet()) {
             List<FilePath> files = toAddEntry.getValue();
@@ -265,7 +266,7 @@ public class GitVFSListener extends VcsVFSListener {
   private Set<File> executeDeletion(@NotNull VirtualFile root, @NotNull List<FilePath> files)
     throws VcsException {
     GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached");
-    Set<File> filesToRefresh = newHashSet();
+    Set<File> filesToRefresh = new HashSet<>();
     File rootFile = new File(root.getPath());
     for (FilePath p : files) {
       for (File f = p.getIOFile(); f != null && !FileUtil.filesEqual(f, rootFile); f = f.getParentFile()) {
@@ -279,7 +280,7 @@ public class GitVFSListener extends VcsVFSListener {
   private Set<File> executeForceMove(@NotNull VirtualFile root,
                                      @NotNull List<FilePath> files,
                                      @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
-    Set<File> toRefresh = newHashSet();
+    Set<File> toRefresh = new HashSet<>();
     for (FilePath file : files) {
       MovedFileInfo info = filesToMove.get(file);
       GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);

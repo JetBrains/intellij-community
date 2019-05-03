@@ -79,6 +79,23 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
+  @Nullable
+  @Override
+  public String getActionName(PsiElement[] elements) {
+    int classCount = 0, directoryCount = 0;
+    for (PsiElement element : elements) {
+      if (element instanceof PsiClass) classCount++;
+      else if (element instanceof PsiDirectory || element instanceof PsiPackage) directoryCount++;
+    }
+    if (directoryCount == 0) {
+      return classCount == 1 ? "Move Class..." : "Move Classes...";
+    }
+    if (classCount == 0) {
+      return directoryCount == 1 ? "Move Package or Directory..." : "Move Packages or Directories...";
+    }
+    return "Move Classes and Packages...";
+  }
+
   public static boolean invalid4Move(PsiElement element) {
     PsiFile parentFile;
     if (element instanceof PsiClassOwner) {

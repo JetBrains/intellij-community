@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -55,7 +55,7 @@ public class PushController implements Disposable {
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
   @Nullable private final Repository myCurrentlyOpenedRepository;
-  private final List<PrePushHandler> myHandlers = ContainerUtil.newArrayList();
+  private final List<PrePushHandler> myHandlers = new ArrayList<>();
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
@@ -108,12 +108,12 @@ public class PushController implements Disposable {
   }
 
   private void startLoadingCommits() {
-    Map<RepositoryNode, MyRepoModel> priorityLoading = ContainerUtil.newLinkedHashMap();
-    Map<RepositoryNode, MyRepoModel> others = ContainerUtil.newLinkedHashMap();
+    Map<RepositoryNode, MyRepoModel> priorityLoading = new LinkedHashMap<>();
+    Map<RepositoryNode, MyRepoModel> others = new LinkedHashMap<>();
     RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
     if (nodeForCurrentEditor != null) {
       MyRepoModel<?, ?, ?> currentRepoModel = myView2Model.get(nodeForCurrentEditor);
-      //for ASYNC with no preselected -> check current repo 
+      //for ASYNC with no preselected -> check current repo
       if (isPreChecked(currentRepoModel) || myPreselectedRepositories.isEmpty()) {
         // put current editor repo to be loaded at first
         priorityLoading.put(nodeForCurrentEditor, currentRepoModel);
@@ -499,7 +499,7 @@ public class PushController implements Disposable {
 
   @NotNull
   private List<PushInfo> preparePushDetails() {
-    List<PushInfo> allDetails = ContainerUtil.newArrayList();
+    List<PushInfo> allDetails = new ArrayList<>();
     Collection<MyRepoModel<?, ?, ?>> repoModels = getSelectedRepoNode();
 
     for (MyRepoModel<?, ?, ?> model : repoModels) {
@@ -509,7 +509,7 @@ public class PushController implements Disposable {
       }
       PushSpec<PushSource, PushTarget> pushSpec = new PushSpec<>(model.getSource(), target);
 
-      List<VcsFullCommitDetails> loadedCommits = ContainerUtil.newArrayList();
+      List<VcsFullCommitDetails> loadedCommits = new ArrayList<>();
       loadedCommits.addAll(model.getLoadedCommits());
       if (loadedCommits.isEmpty()) {
         //Note: loadCommits is cancellable - it tracks current thread's progress indicator under the hood!
@@ -616,7 +616,7 @@ public class PushController implements Disposable {
 
   @NotNull
   public Map<PushSupport, VcsPushOptionsPanel> createAdditionalPanels() {
-    Map<PushSupport, VcsPushOptionsPanel> result = ContainerUtil.newLinkedHashMap();
+    Map<PushSupport, VcsPushOptionsPanel> result = new LinkedHashMap<>();
     for (PushSupport support : myPushSupports) {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }

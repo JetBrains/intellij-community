@@ -9,8 +9,8 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
 import git4idea.config.GitVersion
-import git4idea.history.GitCommitRequirements.DiffRenameLimit
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
+import git4idea.history.GitCommitRequirements.DiffRenameLimit
 import git4idea.test.*
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
@@ -19,7 +19,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
   @Throws(Exception::class)
   fun testLoadingDetailsWithU0001Character() {
-    val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
+    val details = mutableListOf<VcsFullCommitDetails>()
 
     val message = "subject containing \u0001 symbol in it\n\ncommit body containing \u0001 symbol in it"
     touch("file.txt", "content")
@@ -37,7 +37,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     assumeTrue("Not testing: Git doesn't know --allow-empty-message in " + vcs.version,
                vcs.version.isLaterOrEqual(GitVersion(1, 7, 2, 0)))
 
-    val expected: MutableList<String> = ContainerUtil.newArrayList()
+    val expected: MutableList<String> = mutableListOf()
 
     val messageFile = "message.txt"
     touch(messageFile, "")
@@ -58,7 +58,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
   @Throws(Exception::class)
   fun `test readFullDetails without renames`() {
-    val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
+    val details = mutableListOf<VcsFullCommitDetails>()
     touch("fileToRename.txt", "content")
     repo.addCommit("Add fileToRename.txt")
     git("mv fileToRename.txt renamedFile.txt")
@@ -108,7 +108,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     repo.add(conflictedFile)
     repo.commit("merge")
 
-    val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
+    val details = mutableListOf<VcsFullCommitDetails>()
     GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
                                                               GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
     val lastCommit = ContainerUtil.getFirstItem(details)

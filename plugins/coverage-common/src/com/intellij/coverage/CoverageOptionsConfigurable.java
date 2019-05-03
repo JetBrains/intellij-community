@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions> implements SearchableConfigurable {
@@ -55,7 +55,7 @@ public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageO
   }
 
   private List<JComponent> collectExtensionOptionsComponents() {
-    List<JComponent> additionalPanels = ContainerUtil.newArrayList();
+    List<JComponent> additionalPanels = new ArrayList<>();
     for (CoverageOptions coverageOptions : getConfigurables()) {
       additionalPanels.add(coverageOptions.createComponent());
     }

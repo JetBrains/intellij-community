@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -141,7 +140,7 @@ public class JsonSchemaObject {
 
   public void completeInitialization(JsonValueAdapter jsonObject) {
     if (myIf != null) {
-      myIfThenElse = ContainerUtil.newArrayList();
+      myIfThenElse = new ArrayList<>();
       myIfThenElse.add(new IfThenElse(myIf, myThen, myElse));
     }
 
@@ -219,7 +218,7 @@ public class JsonSchemaObject {
     if (selfType == null) return otherType;
     if (otherType == null) {
       if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
-        Set<JsonSchemaType> filteredVariants = ContainerUtil.newHashSet(otherTypeVariants.size());
+        Set<JsonSchemaType> filteredVariants = new HashSet<>(otherTypeVariants.size());
         for (JsonSchemaType variant : otherTypeVariants) {
           JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
           if (subtype != null) filteredVariants.add(subtype);
@@ -248,7 +247,7 @@ public class JsonSchemaObject {
     if (self == null) return other;
     if (other == null) return self;
 
-    Set<JsonSchemaType> resultSet = ContainerUtil.newHashSet(self.size());
+    Set<JsonSchemaType> resultSet = new HashSet<>(self.size());
     for (JsonSchemaType type : self) {
       JsonSchemaType merged = mergeTypes(type, null, other);
       if (merged != null) resultSet.add(merged);
@@ -316,7 +315,7 @@ public class JsonSchemaObject {
     if (other.myMaxProperties != null) myMaxProperties = other.myMaxProperties;
     if (other.myMinProperties != null) myMinProperties = other.myMinProperties;
     if (myRequired != null && other.myRequired != null) {
-      Set<String> set = ContainerUtil.newHashSet(myRequired.size() + other.myRequired.size());
+      Set<String> set = new HashSet<>(myRequired.size() + other.myRequired.size());
       set.addAll(myRequired);
       set.addAll(other.myRequired);
       myRequired = set;
@@ -363,7 +362,7 @@ public class JsonSchemaObject {
   @Nullable
   private static <T> List<T> copyList(@Nullable List<T> target, @Nullable List<T> source) {
     if (source == null || source.isEmpty()) return target;
-    if (target == null) target = ContainerUtil.newArrayListWithCapacity(source.size());
+    if (target == null) target = new ArrayList<>(source.size());
     target.addAll(source);
     return target;
   }
@@ -371,7 +370,7 @@ public class JsonSchemaObject {
   @Nullable
   private static <K, V> Map<K, V> copyMap(@Nullable Map<K, V> target, @Nullable Map<K, V> source) {
     if (source == null || source.isEmpty()) return target;
-    if (target == null) target = ContainerUtilRt.newHashMap(source.size());
+    if (target == null) target = new HashMap<>(source.size());
     target.putAll(source);
     return target;
   }
@@ -521,7 +520,7 @@ public class JsonSchemaObject {
 
   private void addAdditionalPropsNotAllowedFor(String url, String pointer) {
     Set<String> newSet = myAdditionalPropertiesNotAllowedFor == null
-                             ? ContainerUtil.newHashSet()
+                             ? new HashSet<>()
                              : new HashSet<>(myAdditionalPropertiesNotAllowedFor);
     newSet.add(url + pointer);
     myAdditionalPropertiesNotAllowedFor = newSet;
@@ -880,7 +879,7 @@ public class JsonSchemaObject {
         }
         continue;
       }
-      
+
       current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(part);
     }
     return current;

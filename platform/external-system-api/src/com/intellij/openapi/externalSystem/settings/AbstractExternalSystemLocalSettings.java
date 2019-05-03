@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.components.StoragePathMacros;
@@ -15,7 +13,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +151,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   private void pruneOutdatedEntries() {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(myExternalSystemId);
     assert manager != null;
-    Set<String> pathsToForget = ContainerUtilRt.newHashSet();
+    Set<String> pathsToForget = new HashSet<>();
     for (ExternalProjectPojo pojo : state.availableProjects.keySet()) {
       pathsToForget.add(pojo.getPath());
     }

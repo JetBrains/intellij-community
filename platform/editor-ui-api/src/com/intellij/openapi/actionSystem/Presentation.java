@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.SmartFMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +131,7 @@ public final class Presentation implements Cloneable {
    * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
    *                           it's a plain text and no mnemonic will be used.
    */
-  public void setText(@Nullable String text, boolean mayContainMnemonic) {
+  public void setText(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text, boolean mayContainMnemonic) {
     TextWithMnemonic textWithMnemonic = null;
     if (text != null) {
       if (mayContainMnemonic) {
@@ -167,7 +168,7 @@ public final class Presentation implements Cloneable {
    * Sets the text with mnemonic.
    * @see #setText(String, boolean)
    */
-  public void setText(String text) {
+  public void setText(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
     setText(text, true);
   }
 
@@ -203,7 +204,7 @@ public final class Presentation implements Cloneable {
     return myDescription;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
     String oldDescription = myDescription;
     myDescription = description;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription, myDescription);

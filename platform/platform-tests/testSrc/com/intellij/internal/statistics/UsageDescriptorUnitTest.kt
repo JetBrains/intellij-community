@@ -3,8 +3,8 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ContainerUtil.newArrayList
+import gnu.trove.THashSet
 import org.junit.Assert
 import org.junit.Test
 
@@ -31,7 +31,7 @@ class UsageDescriptorUnitTest {
   }
 
   private fun doTestUniqueFilter(expectedSize: Int, all: List<UsageDescriptor>) {
-    val unique = ContainerUtil.newHashSet<UsageDescriptor>(all)
+    val unique = THashSet<UsageDescriptor>(all)
     Assert.assertTrue(unique.size == expectedSize)
     for (descriptor in all) {
       Assert.assertTrue(unique.contains(descriptor))

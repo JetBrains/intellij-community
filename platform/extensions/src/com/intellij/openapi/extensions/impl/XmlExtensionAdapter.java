@@ -146,7 +146,8 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
           String message = "Cannot create app level extension without pico container (class: " +
                            clazz.getName() +
                            "), please remove constructor parameters";
-          if (Objects.requireNonNull(getPluginDescriptor()).isBundled()) {
+          PluginDescriptor pluginDescriptor = Objects.requireNonNull(getPluginDescriptor());
+          if (pluginDescriptor.isBundled() && !pluginDescriptor.getPluginId().getIdString().equals("org.jetbrains.kotlin")) {
             LOG.error(message, e);
           }
           else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInspection.SuppressManager;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,9 +36,9 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
   private PsiElement myDeclarationHolder;
   private final Map<CompletionElement, CompletionElement> myResults = new LinkedHashMap<>();
   private final Set<CompletionElement> mySecondRateResults = ContainerUtil.newIdentityTroveSet();
-  private final Set<String> myShadowedNames = ContainerUtil.newHashSet();
-  private final Set<String> myCurrentScopeMethodNames = ContainerUtil.newHashSet();
-  private final Set<String> myFinishedScopesMethodNames = ContainerUtil.newHashSet();
+  private final Set<String> myShadowedNames = new HashSet<>();
+  private final Set<String> myCurrentScopeMethodNames = new HashSet<>();
+  private final Set<String> myFinishedScopesMethodNames = new HashSet<>();
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
@@ -344,6 +345,6 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
       return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext);
     }
   }
-  
+
   private enum StaticProblem { none, staticAfterInstance, instanceAfterStatic }
 }

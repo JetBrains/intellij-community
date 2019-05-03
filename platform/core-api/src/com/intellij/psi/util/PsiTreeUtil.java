@@ -1193,7 +1193,7 @@ public class PsiTreeUtil {
   public static List<PsiElement> getInjectedElements(@NotNull OuterLanguageElement outerLanguageElement) {
     PsiElement psi = outerLanguageElement.getContainingFile().getViewProvider().getPsi(outerLanguageElement.getLanguage());
     TextRange injectionRange = outerLanguageElement.getTextRange();
-    List<PsiElement> res = ContainerUtil.newArrayList();
+    List<PsiElement> res = new ArrayList<>();
 
     assert psi != null : outerLanguageElement;
     for (PsiElement element = psi.findElementAt(injectionRange.getStartOffset());

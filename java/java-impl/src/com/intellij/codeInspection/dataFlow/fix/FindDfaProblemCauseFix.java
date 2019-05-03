@@ -147,7 +147,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .setItemChosenCallback(cause -> ReadAction.run(() -> navigate(editor, file, cause.myCauseItem)))
+      .setItemChosenCallback(cause -> navigate(editor, file, cause.myCauseItem))
       .createPopup();
     popup.showInBestPositionFor(editor);
   }

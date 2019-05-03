@@ -9,7 +9,7 @@ import org.junit.Test;
 public class NSTLibTest extends TestCase {
   @Test
   public void testLoadingAndBasicFunctions() {
-    Assume.assumeTrue(NST.isSupportedOS());
+    Assume.assumeTrue("NST-unsupported OS", NST.isSupportedOS());
 
     NSTLibrary lib = null;
     try {
@@ -22,7 +22,7 @@ public class NSTLibTest extends TestCase {
     assertNotNull("Failed to load nst library for touchbar: native loader returns null", lib);
 
     // NOTE: it's difficult to promise correct library work in the system without running tb-server (this condition must be equals to isSettingsDomainExists())
-    Assume.assumeTrue(Utils.isTouchBarServerRunning());
+    Assume.assumeTrue("touch bar server not running", Utils.isTouchBarServerRunning());
 
     try {
       // small check that loaded library can create native objects

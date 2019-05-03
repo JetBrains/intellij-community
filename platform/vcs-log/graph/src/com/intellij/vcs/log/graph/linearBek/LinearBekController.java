@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -140,7 +126,7 @@ public class LinearBekController extends CascadeController {
     Set<LinearBekGraphBuilder.MergeFragment> toCollapse = collectFragmentsToCollapse(node);
     if (toCollapse.isEmpty()) return null;
 
-    Set<Integer> toHighlight = ContainerUtil.newHashSet();
+    Set<Integer> toHighlight = new HashSet<>();
     for (LinearBekGraphBuilder.MergeFragment fragment : toCollapse) {
       toHighlight.addAll(fragment.getAllNodes());
     }
@@ -179,11 +165,11 @@ public class LinearBekController extends CascadeController {
 
   @NotNull
   private Set<LinearBekGraphBuilder.MergeFragment> collectFragmentsToCollapse(GraphNode node) {
-    Set<LinearBekGraphBuilder.MergeFragment> result = ContainerUtil.newHashSet();
+    Set<LinearBekGraphBuilder.MergeFragment> result = new HashSet<>();
 
     int mergesCount = 0;
 
-    LinkedHashSet<Integer> toProcess = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<Integer> toProcess = new LinkedHashSet<>();
     toProcess.add(node.getNodeIndex());
     while (!toProcess.isEmpty()) {
       Integer i = ContainerUtil.getFirstItem(toProcess);

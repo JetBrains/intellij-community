@@ -25,7 +25,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
@@ -146,7 +145,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
       }
       else {
         boolean startsWithIs = categoryNode != null && categoryNode.getText().startsWith("Is");
-        Collection<LookupElement> result = ContainerUtil.newArrayList();
+        Collection<LookupElement> result = new ArrayList<>();
         for (String[] properties : RegExpLanguageHosts.getInstance().getAllKnownProperties(getElement())) {
           String name = ArrayUtil.getFirstElement(properties);
           if (name != null) {

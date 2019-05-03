@@ -290,7 +290,8 @@ public class HintManagerImpl extends HintManager {
                              boolean reviveOnEditorChange,
                              @PositionFlags short position) {
 
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, position));
+    HintHint hintHint = createHintHint(editor, p, hint, position).setShowImmediately(true);
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, hintHint);
   }
 
   public void showEditorHint(@NotNull final LightweightHint hint,

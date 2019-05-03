@@ -17,7 +17,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +139,7 @@ public class ConfigImportHelper {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
     // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
-    List<Path> homes = ContainerUtilRt.newArrayListWithCapacity(2);
+    List<Path> homes = new ArrayList<>(2);
     homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
     String nameWithSelector = StringUtil.notNullize(
       PathManager.getPathsSelector(),
@@ -155,7 +154,7 @@ public class ConfigImportHelper {
       if (!homes.contains(configHome)) homes.add(configHome);
     }
 
-    List<Path> candidates = ContainerUtil.newArrayList();
+    List<Path> candidates = new ArrayList<>();
     for (Path dir : homes) {
       if (dir == null || !Files.isDirectory(dir)) continue;
 

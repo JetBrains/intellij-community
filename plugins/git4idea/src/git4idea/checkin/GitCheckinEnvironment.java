@@ -138,7 +138,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Override
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    LinkedHashSet<String> messages = newLinkedHashSet();
+    LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
@@ -215,7 +215,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       ModalityState modality = ModalityState.defaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
-      List<GitRepository> preselectedRepositories = newArrayList(repositories);
+      List<GitRepository> preselectedRepositories = new ArrayList<>(repositories);
       GuiUtils.invokeLaterIfNeeded(
         () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
                                            GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),

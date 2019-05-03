@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -13,8 +13,7 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SetKeywordsDialog extends DialogWrapper {
 
@@ -34,7 +33,7 @@ public class SetKeywordsDialog extends DialogWrapper {
 
   protected SetKeywordsDialog(Project project, @Nullable PropertyValue keywordsValue) {
     super(project, false);
-    myKeywordOptions = ContainerUtil.newArrayList();
+    myKeywordOptions = new ArrayList<>();
     myKeywordsValue = keywordsValue;
 
     setTitle("SVN Keywords");
@@ -89,7 +88,7 @@ public class SetKeywordsDialog extends DialogWrapper {
    */
   @NotNull
   private static Set<String> parseKeywords(@Nullable PropertyValue keywordsValue) {
-    Set<String> result = ContainerUtil.newHashSet();
+    Set<String> result = new HashSet<>();
 
     if (keywordsValue != null) {
       for (String keyword : StringUtil.split(PropertyValue.toString(keywordsValue), " ")) {

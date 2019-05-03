@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
@@ -108,12 +109,12 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   private void updateFileName(List<? extends VirtualFile> selection) {
     for (VirtualFile file : selection) {
       if (file.isDirectory()) {
-        myPathTextField.getField().setText(file.getPath());
+        myPathTextField.getField().setText(VfsUtil.getReadableUrl(file));
       } else {
         myFileName.setText(file.getName());
         final VirtualFile parent = file.getParent();
         if (parent != null) {
-          myPathTextField.getField().setText(parent.getPath());
+          myPathTextField.getField().setText(VfsUtil.getReadableUrl(parent));
         }
       }
     }

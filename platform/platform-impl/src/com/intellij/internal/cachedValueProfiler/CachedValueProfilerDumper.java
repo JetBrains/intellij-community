@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.ProfilingInfo;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +15,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static java.time.temporal.ChronoField.*;
 
@@ -51,7 +47,7 @@ public class CachedValueProfilerDumper {
 
   @NotNull
   private List<TotalInfo> prepareInfo() {
-    List<TotalInfo> list = ContainerUtil.newArrayList();
+    List<TotalInfo> list = new ArrayList<>();
     myStorage.entrySet().forEach((entry) -> list.add(new TotalInfo(entry.getKey(), entry.getValue())));
 
     Collections.sort(list, Comparator.comparing(info -> ((double)info.getTotalUseCount()) / info.getInfos().size()));
@@ -67,7 +63,7 @@ public class CachedValueProfilerDumper {
 
     private TotalInfo(@NotNull StackTraceElement origin, @NotNull Collection<ProfilingInfo> infos) {
       myOrigin = origin;
-      myInfos = Collections.unmodifiableList(ContainerUtil.newArrayList(infos));
+      myInfos = Collections.unmodifiableList(new ArrayList<>(infos));
 
       myTotalLifeTime = myInfos.stream().mapToLong(value -> value.getLifetime()).sum();
       myTotalUseCount = myInfos.stream().mapToLong(value -> value.getUseCount()).sum();

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ApplyPatchSaveToFileExecutor.class);
@@ -86,7 +86,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
   @NotNull
   public static List<FilePatch> toOnePatchGroup(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
                                                 @NotNull VirtualFile newPatchBase) throws IOException {
-    List<FilePatch> result = newArrayList();
+    List<FilePatch> result = new ArrayList<>();
 
     for (Map.Entry<VirtualFile, Collection<TextFilePatchInProgress>> entry : patchGroups.entrySet()) {
       VirtualFile oldPatchBase = entry.getKey();

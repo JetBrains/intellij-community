@@ -402,7 +402,7 @@ public class GitBranchUtil {
       }
     }
 
-    Collection<String> branches = ContainerUtil.newArrayList();
+    Collection<String> branches = new ArrayList<>();
     // standard situation. output example:
     //  master
     //* my_feature

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.task;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,10 +32,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
@@ -113,7 +96,7 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
           String[] tasksArray;
           if (!args.isEmpty()) {
             // todo append --args only after JavaExec tasks
-            tasksArray = taskNames.stream().flatMap(task -> concat(list(task), args).stream()).toArray(String[]::new);
+            tasksArray = taskNames.stream().flatMap(task -> concat(Collections.singletonList(task), args).stream()).toArray(String[]::new);
           }
           else {
             tasksArray = ArrayUtil.toStringArray(taskNames);
@@ -133,7 +116,11 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
       catch (RuntimeException e) {
         LOG.debug("Gradle build launcher error", e);
         final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
-        throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
+        ExternalSystemException exception = projectResolverChain.getUserFriendlyError(e, projectPath, null);
+        if(exception.getCause() == null) {
+          exception.initCause(e);
+        }
+        throw exception;
       }
     };
     if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
@@ -168,7 +155,7 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,
                                               @Nullable String jvmAgentSetup,
                                               @NotNull GradleExecutionSettings effectiveSettings) {
-    final List<String> initScripts = newArrayList();
+    final List<String> initScripts = new ArrayList<>();
     final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -194,7 +181,9 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
         effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
       }
       catch (IOException e) {
-        throw new ExternalSystemException(e);
+        ExternalSystemException systemException = new ExternalSystemException(e);
+        systemException.initCause(e);
+        throw systemException;
       }
     }
 
@@ -212,7 +201,9 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
         effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
       }
       catch (IOException e) {
-        throw new ExternalSystemException(e);
+        ExternalSystemException externalSystemException = new ExternalSystemException(e);
+        externalSystemException.initCause(e);
+        throw externalSystemException;
       }
     }
   }

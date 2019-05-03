@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -58,7 +58,7 @@ public class KeyboardLayoutUtil {
 
 
   private static class HardCoded {
-    private static final Map<Character, Character> LL = ContainerUtilRt.newHashMap(33);
+    private static final Map<Character, Character> LL = new HashMap<>(33);
 
     static {
       // keyboard layouts in lowercase

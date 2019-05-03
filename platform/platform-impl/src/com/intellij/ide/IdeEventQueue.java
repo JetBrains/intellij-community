@@ -104,7 +104,7 @@ public class IdeEventQueue extends EventQueue {
   private WindowManagerEx myWindowManager;
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Set<Runnable> myReady = ContainerUtil.newHashSet();
+  private final Set<Runnable> myReady = new HashSet<>();
   private boolean myKeyboardBusy;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
@@ -1289,7 +1289,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
-  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<Keymap>(null);
+  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<>(null);
 
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;

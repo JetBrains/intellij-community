@@ -11,6 +11,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,6 +30,7 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("multiple.declaration.display.name");
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -45,8 +47,8 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("multiple.declaration.option"), "ignoreForLoopDeclarations");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("multiple.declaration.ignore.for.option"), "ignoreForLoopDeclarations");
     panel.addCheckbox(InspectionGadgetsBundle.message("multiple.declaration.array.only.option"), "onlyWarnArrayDimensions");
     return panel;
   }
@@ -63,6 +65,8 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
 
   private class MultipleDeclarationVisitor extends BaseInspectionVisitor {
 
+    MultipleDeclarationVisitor() {}
+
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
       super.visitDeclarationStatement(statement);
@@ -76,7 +80,7 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
         highlightType = ProblemHighlightType.INFORMATION;
       }
       else if (onlyWarnArrayDimensions) {
-        PsiVariable variable = (PsiVariable)declaredElements[0];
+        final PsiVariable variable = (PsiVariable)declaredElements[0];
         final PsiType baseType = variable.getType();
         boolean hasMultipleTypes = false;
         for (int i = 1; i < declaredElements.length; i++) {
@@ -129,7 +133,7 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
           while (nextField != null) {
             if (!baseType.equals(nextField.getType())) {
               registerVariableError(field);
-               return;
+              return;
             }
             nextField = DeclarationSearchUtils.findNextFieldInDeclaration(nextField);
           }

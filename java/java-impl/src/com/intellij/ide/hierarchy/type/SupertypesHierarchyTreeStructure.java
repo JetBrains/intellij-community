@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -7,10 +7,10 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +54,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
 
   @NotNull
   private static PsiClass[] getMetaAnnotations(@NotNull PsiClass psiClass) {
-    Set<PsiClass> supers = ContainerUtil.newHashSet();
+    Set<PsiClass> supers = new HashSet<>();
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation annotation : modifierList.getAnnotations()) {

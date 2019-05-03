@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,6 +17,8 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -81,14 +69,14 @@ public class SnapshotVisiblePackBuilder {
 
   @NotNull
   private RefsModel createEmptyRefsModel() {
-    return new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), myStorage, ContainerUtil.newHashMap());
+    return new RefsModel(new HashMap<>(), new HashSet<>(), myStorage, new HashMap<>());
   }
 
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
                                     @NotNull Set<Integer> heads,
                                     @NotNull VisibleGraphImpl<Integer> visibleGraph,
                                     @NotNull Map<VirtualFile, VcsLogProvider> providers, int visibleRow, int visibleRange) {
-    Set<VcsRef> branchesAndHeads = ContainerUtil.newHashSet();
+    Set<VcsRef> branchesAndHeads = new HashSet<>();
 
     for (int row = Math.max(0, visibleRow - visibleRange);
          row < Math.min(visibleGraph.getLinearGraph().nodesCount(), visibleRow + visibleRange);
@@ -102,10 +90,10 @@ public class SnapshotVisiblePackBuilder {
     }
 
     Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
-    Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
+    Map<VirtualFile, CompressedRefs> refs = new HashMap<>();
     for (VirtualFile root : providers.keySet()) {
       Set<VcsRef> refsForRoot = map.get(root);
-      refs.put(root, new CompressedRefs(refsForRoot == null ? ContainerUtil.newHashSet() : refsForRoot, myStorage));
+      refs.put(root, new CompressedRefs(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
     }
     return new RefsModel(refs, heads, myStorage, providers);
   }

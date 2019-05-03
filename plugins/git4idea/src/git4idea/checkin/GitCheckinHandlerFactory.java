@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitUtil;
@@ -202,7 +201,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private static Map<VirtualFile, Couple<String>> getDefinedUserNames(@NotNull final Project project,
                                                                         @NotNull final Collection<VirtualFile> roots,
                                                                         final boolean stopWhenFoundFirst) {
-      final Map<VirtualFile, Couple<String>> defined = ContainerUtil.newHashMap();
+      final Map<VirtualFile, Couple<String>> defined = new HashMap<>();
       ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git User Name", true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {

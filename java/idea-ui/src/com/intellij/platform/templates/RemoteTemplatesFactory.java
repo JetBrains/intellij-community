@@ -17,6 +17,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
+import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @TestOnly
-  public static MultiMap<String, ArchivedProjectTemplate> createFromText(@NotNull String value) throws IOException, JDOMException {
+  public static MultiMap<String, ArchivedProjectTemplate> createFromText(@NotNull @Language("XML") String value) throws IOException, JDOMException {
     return create(JDOMUtil.load(value));
   }
 

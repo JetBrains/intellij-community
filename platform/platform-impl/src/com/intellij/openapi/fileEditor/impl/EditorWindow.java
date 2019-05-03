@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -32,9 +31,11 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -900,7 +901,7 @@ public class EditorWindow {
 
     final Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
-    if (settings.getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
+    if (settings.getMarkModifiedTabsWithAsterisk()) {
       Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
       modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? crop : new EmptyIcon(7, 7);
       count++;
@@ -1112,7 +1113,7 @@ public class EditorWindow {
     final VirtualFile[] allFiles = getFiles();
     final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileList();
 
-    LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<VirtualFile> closingOrder = new LinkedHashSet<>();
 
     // first, we search for files not in history
     for (final VirtualFile file : allFiles) {

@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.StoringFixPresenter
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
+import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 
 class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
@@ -54,6 +55,56 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent())
     }
 
+  }
+
+  fun `test temp injection survive on host death and no edit in uninjected`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          class A {
+            void foo() {
+              String a = "{\"bca\":<caret> \n1}";
+            }
+          }
+      """.trimIndent())
+
+      InjectLanguageAction.invokeImpl(project,
+                                      myFixture.editor,
+                                      myFixture.file,
+                                      Injectable.fromLanguage(Language.findLanguageByID("JSON")))
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, editor, file)
+      val fragmentFile = quickEditHandler.newFile
+
+      TestCase.assertEquals("{\"bca\": \n1}", fragmentFile.text)
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+
+      fragmentFile.edit { insertString(text.indexOf(":"), "\n") }
+      checkResult("""
+          class A {
+            void foo() {
+              String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+      UnInjectLanguageAction.invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      injectionTestFixture.assertInjectedLangAtCaret(null)
+
+      TestCase.assertFalse(quickEditHandler.isValid)
+      fragmentFile.edit { insertString(text.indexOf(":"), "       ") }
+      checkResult("""
+          class A {
+            void foo() {
+              String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
+    }
   }
 
   fun `test delete in multiple hosts`() {

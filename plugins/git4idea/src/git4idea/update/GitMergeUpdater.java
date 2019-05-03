@@ -249,7 +249,7 @@ public class GitMergeUpdater extends GitUpdater {
     private final VirtualFile myRoot;
 
     MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
-      super(project, git, Collections.singleton(root), makeParams(project));
+      super(project, Collections.singleton(root), makeParams(project));
       myMerger = merger;
       myRoot = root;
     }

@@ -356,7 +356,7 @@ public abstract class PyEnvTestCase {
     private final List<Throwable> myExceptions = new ArrayList<>();
 
     @Override
-    public int show(final String message) {
+    public int show(@NotNull final String message) {
       myMessages.add(message);
       return 0;
     }

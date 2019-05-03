@@ -73,7 +73,6 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -4224,8 +4223,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyColorSchemeDelegate extends DelegateColorScheme {
     private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final FontPreferencesImpl myConsoleFontPreferences = new FontPreferencesImpl();
-    private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = ContainerUtilRt.newHashMap();
-    private final Map<ColorKey, Color>                   myOwnColors       = ContainerUtilRt.newHashMap();
+    private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = new HashMap<>();
+    private final Map<ColorKey, Color>                   myOwnColors       = new HashMap<>();
     private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap;
     private int myMaxFontSize = EditorFontsConstants.getMaxEditorFontSize();

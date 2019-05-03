@@ -43,6 +43,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
@@ -51,6 +52,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.IncludedXmlTag;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
@@ -260,6 +262,19 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (!hasRealPluginId(ideaPlugin)) return;
 
+    MultiMap<String, Dependency> dependencies = MultiMap.create();
+    ideaPlugin.getDependencies().forEach(dependency -> dependencies.putValue(dependency.getStringValue(), dependency));
+    for (Map.Entry<String, Collection<Dependency>> entry : dependencies.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        for (Dependency dependency : entry.getValue()) {
+          if (dependency.getXmlTag() instanceof IncludedXmlTag) continue;
+          highlightRedundant(dependency, DevKitBundle.message("inspections.plugin.xml.duplicated.dependency", entry.getKey()),
+                             ProblemHighlightType.ERROR, holder);
+        }
+      }
+    }
+
+    
     boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
 
     if (isNotIdeaProject &&
@@ -373,12 +388,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     boolean hasBeanClass = DomUtil.hasXml(extensionPoint.getBeanClass());
     boolean hasInterface = DomUtil.hasXml(extensionPoint.getInterface());
     if (hasBeanClass && hasInterface) {
-      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
-                           DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"), null);
+      highlightRedundant(extensionPoint.getBeanClass(),
+                         DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"),
+                         ProblemHighlightType.GENERIC_ERROR, holder);
+      highlightRedundant(extensionPoint.getInterface(),
+                         DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"),
+                         ProblemHighlightType.GENERIC_ERROR, holder);
     }
     else if (!hasBeanClass && !hasInterface) {
       holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
-                           DevKitBundle.message("inspections.plugin.xml.ep.missing.beanClass.and.interface"), null);
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.beanClass.and.interface"), null,
+                           new AddDomElementQuickFix<>(extensionPoint.getBeanClass()),
+                           new AddDomElementQuickFix<>(extensionPoint.getInterface()));
     }
   }
 

@@ -198,9 +198,7 @@ class DistributionJARsBuilder {
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
-    if ("false" != System.getenv("BUILD_THIRD_PARTY_LIB_LIST")) {
-      buildThirdPartyLibrariesList()
-    }
+    buildThirdPartyLibrariesList()
 
     def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
     if (loadingOrderFilePath != null) {
@@ -302,7 +300,7 @@ class DistributionJARsBuilder {
   }
 
   private void buildThirdPartyLibrariesList() {
-    buildContext.messages.block("Generate table of licenses for used third-party libraries") {
+    buildContext.executeStep("Generate table of licenses for used third-party libraries", BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP) {
       def generator = LibraryLicensesListGenerator.create(buildContext.messages,
                                                           buildContext.project,
                                                           buildContext.productProperties.allLibraryLicenses,
@@ -337,7 +335,9 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
 
-    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
+    buildContext.messages.block("Build platform JARs in lib directory") {
+      buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
+    }
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -363,7 +363,9 @@ class DistributionJARsBuilder {
   private void buildBundledPlugins() {
     def layoutBuilder = createLayoutBuilder()
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
-    buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
+    buildContext.messages.block("Build bundled plugins") {
+      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
+    }
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
@@ -385,10 +387,12 @@ class DistributionJARsBuilder {
           satisfiesBundlingRequirements(it, osFamily)
         }
 
-      if (!osSpecificPlugins.isEmpty()) {
+      if (!osSpecificPlugins.isEmpty() && buildContext.shouldBuildDistributionForOS(osFamily.osId)) {
         def layoutBuilder = createLayoutBuilder()
-        buildPlugins(layoutBuilder, osSpecificPlugins,
-                     "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
+          buildPlugins(layoutBuilder, osSpecificPlugins,
+                       "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        }
         usedModules.addAll(layoutBuilder.usedModules)
       }
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.collect.Iterables;
@@ -23,10 +9,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CommittedListsSequencesZipper {
 
@@ -37,8 +20,8 @@ public class CommittedListsSequencesZipper {
 
   public CommittedListsSequencesZipper(@NotNull VcsCommittedListsZipper vcsPartner) {
     myVcsPartner = vcsPartner;
-    myInLocations = ContainerUtil.newArrayList();
-    myInLists = ContainerUtil.newHashMap();
+    myInLocations = new ArrayList<>();
+    myInLists = new HashMap<>();
     myComparator = (o1, o2) -> Comparing.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
   }
 
@@ -51,7 +34,7 @@ public class CommittedListsSequencesZipper {
   @NotNull
   public List<CommittedChangeList> execute() {
     Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupingResult = myVcsPartner.groupLocations(myInLocations);
-    List<CommittedChangeList> result = ContainerUtil.newArrayList();
+    List<CommittedChangeList> result = new ArrayList<>();
 
     result.addAll(ContainerUtil.flatten(collectChangeLists(groupingResult.getSecond())));
     for (RepositoryLocationGroup group : groupingResult.getFirst()) {
@@ -63,7 +46,7 @@ public class CommittedListsSequencesZipper {
 
   @NotNull
   private List<List<CommittedChangeList>> collectChangeLists(@NotNull List<RepositoryLocation> locations) {
-    List<List<CommittedChangeList>> result = ContainerUtil.newArrayListWithCapacity(locations.size());
+    List<List<CommittedChangeList>> result = new ArrayList<>(locations.size());
 
     for (RepositoryLocation location : locations) {
       result.add(myInLists.get(location.toPresentableString()));
@@ -74,8 +57,8 @@ public class CommittedListsSequencesZipper {
 
   @NotNull
   private List<CommittedChangeList> mergeLocationGroupChangeLists(@NotNull RepositoryLocationGroup group) {
-    List<CommittedChangeList> result = ContainerUtil.newArrayList();
-    List<CommittedChangeList> equalLists = ContainerUtil.newArrayList();
+    List<CommittedChangeList> result = new ArrayList<>();
+    List<CommittedChangeList> equalLists = new ArrayList<>();
     CommittedChangeList previousList = null;
 
     for (CommittedChangeList list : Iterables.mergeSorted(collectChangeLists(group.getLocations()), myComparator)) {

@@ -179,7 +179,7 @@ public class ExpectedTypesProvider {
     }
     return null;
   }
-  
+
   @NotNull
   public static PsiType[] processExpectedTypes(@NotNull ExpectedTypeInfo[] infos,
                                                @NotNull PsiTypeVisitor<? extends PsiType> visitor, @NotNull Project project) {
@@ -270,14 +270,14 @@ public class ExpectedTypesProvider {
     private final int myMaxCandidates;
     private final ExpectedClassProvider myClassProvider;
     private final boolean myVoidable;
-    final List<ExpectedTypeInfo> myResult = ContainerUtil.newArrayList();
+    final List<ExpectedTypeInfo> myResult = new ArrayList<>();
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";
 
     private MyParentVisitor(PsiExpression expr,
                             boolean forCompletion,
                             ExpectedClassProvider classProvider,
                             boolean voidable,
-                            boolean usedAfter, 
+                            boolean usedAfter,
                             int maxCandidates) {
       myExpr = expr;
       myForCompletion = forCompletion;
@@ -510,7 +510,7 @@ public class ExpectedTypesProvider {
         PsiType type = statement.getIterationParameter().getType();
 
         if (PsiType.NULL.equals(type)) return;
-          
+
         PsiType arrayType = type.createArrayType();
         myResult.add(createInfoImpl(arrayType, arrayType));
 
@@ -671,7 +671,7 @@ public class ExpectedTypesProvider {
         if (candidates != null) {
           final PsiExpressionList argumentList = Objects.requireNonNull(newExpr.getArgumentList());
           CandidateInfo[] converted = ContainerUtil.map(candidates, candidate -> (CandidateInfo)candidate, CandidateInfo.EMPTY_ARRAY);
-          Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(converted, argumentList, myExpr, myForCompletion, 
+          Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(converted, argumentList, myExpr, myForCompletion,
                                                                              newExpr.resolveMethod()));
         }
         return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -147,8 +147,8 @@ public class MarkerType {
 
   @NotNull
   private static <E extends PsiElement> PsiElementProcessor.CollectElementsWithLimit<E> getProcessor(int limit, boolean set) {
-    return set ? new PsiElementProcessor.CollectElementsWithLimit<E>(limit, new THashSet<E>())
-               : new PsiElementProcessor.CollectElementsWithLimit<E>(limit);
+    return set ? new PsiElementProcessor.CollectElementsWithLimit<>(limit, new THashSet<>())
+               : new PsiElementProcessor.CollectElementsWithLimit<>(limit);
   }
 
   private static String getFunctionalImplementationTooltip(@NotNull PsiClass psiClass) {

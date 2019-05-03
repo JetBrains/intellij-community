@@ -315,7 +315,7 @@ public class ResolveUtil {
     }
     Set<String> result = key == null ? null : cache.get(key);
     if (result == null) {
-      result = ContainerUtil.newHashSet();
+      result = new HashSet<>();
       collectSuperTypes(base, result, project);
       if (key != null) {
         cache.put(key, result);
@@ -900,7 +900,7 @@ public class ResolveUtil {
                                                                              @NotNull GrExpression[] expressionArguments,
                                                                              @NotNull GrClosableBlock[] closureArguments,
                                                                              @NotNull GrExpression arg) {
-    List<Pair<PsiParameter, PsiType>> expectedParams = ContainerUtil.newArrayList();
+    List<Pair<PsiParameter, PsiType>> expectedParams = new ArrayList<>();
 
     for (GroovyResolveResult variant : variants) {
       if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {

@@ -181,6 +181,8 @@ public class MadTestingUtil {
     for (String shortId : except) {
       disableInspection(project, profile, shortId);
     }
+    // instantiate all tools to avoid extension loading in inconvenient moment
+    profile.getAllEnabledInspectionTools(project).forEach(state -> state.getTool().getTool());
 
     ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
     manager.addProfile(profile);

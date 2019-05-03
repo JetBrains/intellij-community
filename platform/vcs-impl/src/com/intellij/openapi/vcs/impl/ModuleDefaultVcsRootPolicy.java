@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.impl;
 
@@ -41,10 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * @author yole
@@ -64,7 +49,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   @Override
   @NotNull
   public Collection<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
-    Set<VirtualFile> result = newHashSet();
+    Set<VirtualFile> result = new HashSet<>();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (myBaseDir != null && vcsName.equals(mappingList.getVcsFor(myBaseDir))) {
       final AbstractVcs vcsFor = vcsManager.getVcsFor(myBaseDir);
@@ -143,7 +128,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   @NotNull
   @Override
   public Collection<VirtualFile> getDirtyRoots() {
-    Collection<VirtualFile> dirtyRoots = newHashSet();
+    Collection<VirtualFile> dirtyRoots = new HashSet<>();
 
     if (ProjectKt.isDirectoryBased(myProject)) {
       VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();

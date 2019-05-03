@@ -64,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class DiffRequestProcessor implements Disposable {
@@ -361,14 +362,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<AnAction> getNavigationActions() {
-    return ContainerUtil.list(
-      new MyPrevDifferenceAction(),
-      new MyNextDifferenceAction(),
-      new MyOpenInEditorAction(),
-      Separator.getInstance(),
-      new MyPrevChangeAction(),
-      new MyNextChangeAction()
-    );
+    return Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
+                         new MyPrevChangeAction(), new MyNextChangeAction());
   }
 
   @NotNull
@@ -376,10 +371,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     final DefaultActionGroup left = new DefaultActionGroup(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
     final DefaultActionGroup main = new DefaultActionGroup(new MyPrevChangeAction(), new MyNextChangeAction());
     TouchbarDataKeys.putActionDescriptor(main).setShowText(true).setShowImage(false).setMainGroup(true);
-    return ContainerUtil.list(
-      left,
-      main
-    );
+    return Arrays.asList(left, main);
   }
 
   //

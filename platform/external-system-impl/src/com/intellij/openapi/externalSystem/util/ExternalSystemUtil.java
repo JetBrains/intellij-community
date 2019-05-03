@@ -94,7 +94,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -102,15 +101,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
-import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Denis Zhdanov
@@ -124,7 +119,7 @@ public class ExternalSystemUtil {
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
-  @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
+  @NotNull private static final Map<String, String> RUNNER_IDS = new HashMap<>();
 
   public static final TObjectHashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
     new TObjectHashingStrategy<Pair<ProjectSystemId, File>>() {
@@ -276,7 +271,7 @@ public class ExternalSystemUtil {
       callback = spec.getCallback();
     }
 
-    Set<String> toRefresh = ContainerUtilRt.newHashSet();
+    Set<String> toRefresh = new HashSet<>();
     for (ExternalProjectSettings setting : projectsSettings) {
       // don't refresh project when auto-import is disabled if such behavior needed (e.g. on project opening when auto-import is disabled)
       if (!setting.isUseAutoImport() && spec.whenAutoImportEnabled()) continue;
@@ -729,7 +724,8 @@ public class ExternalSystemUtil {
         notificationData.getTitle(), notificationData.getMessage(),
         notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
     }
-    return new FailureResultImpl(list(new FailureImpl(notificationData.getMessage(), exception, notification, navigatable)));
+    return new FailureResultImpl(
+      Collections.singletonList(new FailureImpl(notificationData.getMessage(), exception, notification, navigatable)));
   }
 
   public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {

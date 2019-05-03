@@ -23,7 +23,7 @@ import org.junit.Test
 
 class FileHistoryTest {
 
-  fun LinearGraph.assert(startCommit: Int, startPath: FilePath, fileNamesData: FileNamesData, result: TestGraphBuilder.() -> Unit) {
+  fun LinearGraph.assert(startCommit: Int, startPath: FilePath, fileNamesData: FileHistoryData, result: TestGraphBuilder.() -> Unit) {
     val permanentGraphInfo = TestPermanentGraphInfo(this)
     val baseController = BaseController(permanentGraphInfo)
     val filteredController = object : FilteredController(baseController, permanentGraphInfo, fileNamesData.getCommits()) {}
@@ -405,8 +405,8 @@ private class FileNamesDataBuilder(private val path: FilePath) {
     return this
   }
 
-  fun build(): FileNamesData {
-    return object : FileNamesData(path) {
+  fun build(): FileHistoryData {
+    return object : FileHistoryData(path) {
       override fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>? {
         return renamesMap[Couple(parent, child)].find { FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.second else it.first, path) }
       }

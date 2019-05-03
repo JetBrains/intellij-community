@@ -16,8 +16,11 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -25,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
@@ -35,6 +39,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
 
   private final List<IdePopupEventDispatcher> myDispatchStack = ContainerUtil.createLockFreeCopyOnWriteList();
+  private boolean myIgnoreNextKeyTypedEvent;
 
   boolean isPopupActive() {
     for (IdePopupEventDispatcher each : myDispatchStack) {
@@ -79,6 +84,24 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         if (shouldCloseAllPopup) {
           closeAllPopups();
         }
+    }
+    else if (e instanceof KeyEvent) {
+      // the following is copied from IdeKeyEventDispatcher
+      KeyEvent keyEvent = (KeyEvent)e;
+      Object source = keyEvent.getSource();
+      if (myIgnoreNextKeyTypedEvent) {
+        if (KeyEvent.KEY_TYPED == e.getID()) return true;
+        myIgnoreNextKeyTypedEvent = false;
+      }
+      else if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == keyEvent.getModifiersEx() &&
+               Registry.is("ide.mac.alt.mnemonic.without.ctrl") && source instanceof Component) {
+        // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
+        if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) ||
+            IdeKeyEventDispatcher.hasMnemonicInWindow((Component)source, keyEvent)) {
+          myIgnoreNextKeyTypedEvent = true;
+          return false;
+        }
+      }
     }
 
     if (e instanceof KeyEvent || e instanceof MouseEvent) {

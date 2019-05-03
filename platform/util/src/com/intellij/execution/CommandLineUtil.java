@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -45,7 +46,7 @@ public class CommandLineUtil {
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
   @NotNull
   public static List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
-    List<String> commandLine = ContainerUtil.newArrayListWithCapacity(parameters.size() + 1);
+    List<String> commandLine = new ArrayList<>(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 

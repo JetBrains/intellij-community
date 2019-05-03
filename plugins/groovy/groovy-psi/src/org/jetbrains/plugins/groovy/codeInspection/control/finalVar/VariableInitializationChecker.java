@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -15,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +37,7 @@ public class VariableInitializationChecker {
                                                               @NotNull Instruction[] controlFlow) {
     Map<GroovyPsiElement, Boolean> map = KEY.getCachedValue(var);
     if (map == null) {
-      map = ContainerUtil.newHashMap();
+      map = new HashMap<>();
       KEY.putCachedValue(var, map);
     }
 

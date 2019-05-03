@@ -652,13 +652,13 @@ public class StringUtilTest {
 
   @Test
   public void testGetWordIndicesIn() {
-    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first second"));
-    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second"));
-    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second    "));
-    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first:second"));
-    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first-second"));
-    assertEquals(ContainerUtil.list(new TextRange(0, 12)), StringUtil.getWordIndicesIn("first-second", ContainerUtil.set(' ', '_', '.')));
-    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)),
+    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first second"));
+    assertEquals(Arrays.asList(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second"));
+    assertEquals(Arrays.asList(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second    "));
+    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first:second"));
+    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first-second"));
+    assertEquals(Arrays.asList(new TextRange(0, 12)), StringUtil.getWordIndicesIn("first-second", ContainerUtil.set(' ', '_', '.')));
+    assertEquals(Arrays.asList(new TextRange(0, 5), new TextRange(6, 12)),
                  StringUtil.getWordIndicesIn("first-second", ContainerUtil.set('-')));
   }
 

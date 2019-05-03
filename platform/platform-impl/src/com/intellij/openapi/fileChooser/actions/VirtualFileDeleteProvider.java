@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.CommonBundle;
@@ -16,12 +16,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 public final class VirtualFileDeleteProvider implements DeleteProvider {
@@ -46,7 +46,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
 
     Arrays.sort(files, FileComparator.getInstance());
 
-    List<String> problems = ContainerUtil.newLinkedList();
+    List<String> problems = new LinkedList<>();
     CommandProcessor.getInstance().executeCommand(project, () -> new Task.Modal(project, "Deleting Files...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

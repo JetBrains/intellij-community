@@ -89,7 +89,7 @@ public abstract class AmendComponent {
   @Nullable
   private String constructAmendedMessage() {
     Set<VirtualFile> selectedRoots = getVcsRoots(getSelectedFilePaths()); // get only selected files
-    LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<String> messages = new LinkedHashSet<>();
     if (myMessagesForRoots != null) {
       for (VirtualFile root : selectedRoots) {
         String message = myMessagesForRoots.get(root);

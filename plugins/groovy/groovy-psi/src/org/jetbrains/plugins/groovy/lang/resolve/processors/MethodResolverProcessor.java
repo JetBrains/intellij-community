@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -17,10 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD_PROPERTY;
@@ -110,7 +106,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
 
   protected boolean addInapplicableCandidate(@NotNull GroovyMethodResult candidate) {
     if (myInapplicableCandidates == null) {
-      myInapplicableCandidates = ContainerUtil.newLinkedHashSet();
+      myInapplicableCandidates = new LinkedHashSet<>();
     }
     return myInapplicableCandidates.add(candidate);
   }
@@ -138,7 +134,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
 
   private Set<GroovyMethodResult> filterCorrectParameterCount(Set<GroovyMethodResult> candidates) {
     if (myArgumentTypes == null) return candidates;
-    Set<GroovyMethodResult> result = ContainerUtil.newLinkedHashSet();
+    Set<GroovyMethodResult> result = new LinkedHashSet<>();
     for (GroovyMethodResult candidate : candidates) {
       if (candidate.getElement().getParameterList().getParametersCount() == myArgumentTypes.length) {
         result.add(candidate);
@@ -152,7 +148,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     List<GroovyMethodResult> array = getCandidatesInternal();
     if (array.size() == 1) return array.toArray(GroovyResolveResult.EMPTY_ARRAY);
 
-    List<GroovyMethodResult> result = ContainerUtil.newArrayList();
+    List<GroovyMethodResult> result = new ArrayList<>();
 
     Iterator<GroovyMethodResult> itr = array.iterator();
 

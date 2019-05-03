@@ -35,10 +35,7 @@ import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private TestRepository myRepository;
@@ -316,7 +313,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
 
-    List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
+    List<CheckinHandler> handlers = Arrays.asList(checkinHandler);
     SingleChangeListCommitter committer =
       new SingleChangeListCommitter(getProject(), changeList, changes, commitMessage, handlers, FunctionUtil.nullConstant(), null, "Commit",
                                     false);

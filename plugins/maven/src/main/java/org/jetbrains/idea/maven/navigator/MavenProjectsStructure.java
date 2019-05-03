@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -666,7 +666,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     public Navigatable getNavigatable() {
       if (myProject == null) return null;
-      final List<MavenDomProfile> profiles = ContainerUtil.newArrayList();
+      final List<MavenDomProfile> profiles = new ArrayList<>();
 
       // search in "Per User Maven Settings" - %USER_HOME%/.m2/settings.xml
       // and in "Global Maven Settings" - %M2_HOME%/conf/settings.xml

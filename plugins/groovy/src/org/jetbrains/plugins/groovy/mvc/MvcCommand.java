@@ -15,7 +15,7 @@ public class MvcCommand {
 
   public static final Collection<String> ourEnvironments = ContainerUtil.immutableList("prod", "test", "dev");
 
-  private final Map<String, String> myEnvVariables = ContainerUtil.newHashMap();
+  private final Map<String, String> myEnvVariables = new HashMap<>();
   private boolean myPassParentEnvs = true;
 
   private @Nullable String myEnv;

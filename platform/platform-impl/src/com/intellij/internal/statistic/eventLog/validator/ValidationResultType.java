@@ -8,6 +8,7 @@ public enum ValidationResultType {
   REJECTED("validation.unmatched_rule"),
   INCORRECT_RULE("validation.incorrect_rule"),
   UNDEFINED_RULE("validation.undefined_rule"),
+  UNREACHABLE_WHITELIST("validation.unreachable.whitelist"),
   PERFORMANCE_ISSUE("validation.performance_issue");
 
   private final String value;

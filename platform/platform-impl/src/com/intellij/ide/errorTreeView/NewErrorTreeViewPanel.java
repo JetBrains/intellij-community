@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
@@ -31,11 +29,9 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +44,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -206,10 +203,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
-  
+
   @NotNull public StatusText getEmptyText() {
     return myTree.getEmptyText();
-  } 
+  }
 
   @Override
   public Object getData(@NotNull String dataId) {
@@ -353,11 +350,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private List<ErrorTreeNodeDescriptor> getSelectedNodeDescriptors() {
-    TreePath[] paths = myTree.getSelectionPaths();
+    TreePath[] paths = myIsDisposed ? null : myTree.getSelectionPaths();
     if (paths == null) {
       return Collections.emptyList();
     }
-    List<ErrorTreeNodeDescriptor> result = ContainerUtil.newArrayList();
+    List<ErrorTreeNodeDescriptor> result = new ArrayList<>();
     for (TreePath path : paths) {
       DefaultMutableTreeNode lastPathNode = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = lastPathNode.getUserObject();
@@ -431,7 +428,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       messageView.getContentManager().removeContent(content, true);
     }
   }
-  
+
   public void setProgress(final String s, float fraction) {
     initProgressPanel();
     myProgressText = s;
@@ -444,7 +441,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     myProgressText = s;
     updateProgress();
   }
-  
+
   public void setFraction(final float fraction) {
     initProgressPanel();
     myFraction = fraction;
@@ -477,7 +474,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   }
 
-  
+
   private void initProgressPanel() {
     if (myProgressPanel == null) {
       myProgressPanel = new JPanel(new GridLayout(1, 2));

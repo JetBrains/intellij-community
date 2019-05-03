@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -107,7 +108,7 @@ public class ModuleHighlightUtil {
                                                                   Function<? super T, String> ref,
                                                                   @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
                                                                   List<? super HighlightInfo> results) {
-    Set<String> filter = ContainerUtil.newTroveSet();
+    Set<String> filter = new THashSet<>();
     for (T statement : statements) {
       String refText = ref.apply(statement);
       if (refText != null && !filter.add(refText)) {
@@ -276,7 +277,7 @@ public class ModuleHighlightUtil {
   static List<HighlightInfo> checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
-    Set<String> targets = ContainerUtil.newTroveSet();
+    Set<String> targets = new THashSet<>();
     for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
       String refText = refElement.getReferenceText();
       PsiJavaModuleReference ref = refElement.getReference();
@@ -322,7 +323,7 @@ public class ModuleHighlightUtil {
     PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
     PsiElement intTarget = intRef != null ? intRef.resolve() : null;
 
-    Set<String> filter = ContainerUtil.newTroveSet();
+    Set<String> filter = new THashSet<>();
     for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
       String refText = implRef.getQualifiedName();
       if (!filter.add(refText)) {

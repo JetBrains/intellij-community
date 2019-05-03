@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 
@@ -177,7 +177,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E... elements) {
-    return elements == null || elements.length == 0 ? JBIterable.empty() : from(ContainerUtilRt.newArrayList(elements));
+    return elements == null || elements.length == 0 ? empty() : from(ContainerUtilRt.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new Empty();
@@ -669,7 +669,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<List<E>> split(final int size, final boolean strict) {
     return split(size).filterMap(es -> {
-      List<E> list = es.addAllTo(ContainerUtilRt.newArrayListWithCapacity(size));
+      List<E> list = es.addAllTo(new ArrayList<>(size));
       return strict && list.size() < size ? null : list;
     });
   }
@@ -796,7 +796,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> collect() {
     if (content instanceof Collection) return this;
-    return collect(ContainerUtilRt.newArrayList());
+    return collect(new ArrayList<>());
   }
 
   /**
@@ -805,7 +805,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
-    ArrayList<E> list = addAllTo(ContainerUtilRt.newArrayList());
+    ArrayList<E> list = addAllTo(new ArrayList<>());
     list.sort(comparator);
     return from(list);
   }
@@ -834,9 +834,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final Set<E> toSet() {
-    Iterable<E> itt = asIterable();
-    if (itt == null) return Collections.singleton((E)content);
-    return Collections.unmodifiableSet(ContainerUtilRt.newLinkedHashSet(itt));
+    Iterable<E> iterable = asIterable();
+    if (iterable == null) {
+      return Collections.singleton((E)content);
+    }
+    return Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(iterable));
   }
 
   /**
@@ -856,7 +858,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final <K, V> Map<K, V> toMap(@NotNull Convertor<E, K> toKey, @NotNull Convertor<E, V> toValue) {
-    Map<K, V> map = ContainerUtil.newLinkedHashMap();
+    Map<K, V> map = new LinkedHashMap<>();
     for (E e : this) map.put(toKey.convert(e), toValue.convert(e));
     return map.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(map);
   }

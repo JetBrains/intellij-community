@@ -9,7 +9,6 @@ import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -151,7 +150,6 @@ public class PluginsAdvertiser implements StartupActivity {
     }
 
     return HttpRequests.request(url.addParameters(params))
-                       .forceHttps(IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection())
                        .productNameAsUserAgent()
                        .connect(requestProcessor, errorValue, LOG);
   }

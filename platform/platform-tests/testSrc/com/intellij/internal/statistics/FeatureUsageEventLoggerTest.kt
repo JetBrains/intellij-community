@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.*
-import com.intellij.util.containers.ContainerUtil
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -80,7 +79,7 @@ class FeatureUsageEventLoggerTest {
 
   @Test
   fun testEventWithData() {
-    val data = ContainerUtil.newHashMap<String, Any>()
+    val data = HashMap<String, Any>()
     data["type"] = "close"
     data["state"] = 1
 
@@ -93,7 +92,7 @@ class FeatureUsageEventLoggerTest {
 
   @Test
   fun testMergeEventWithData() {
-    val data = ContainerUtil.newHashMap<String, Any>()
+    val data = HashMap<String, Any>()
     data["type"] = "close"
     data["state"] = 1
 
@@ -111,7 +110,7 @@ class FeatureUsageEventLoggerTest {
 
   @Test
   fun testStateEventWithData() {
-    val data = ContainerUtil.newHashMap<String, Any>()
+    val data = HashMap<String, Any>()
     data["name"] = "myOption"
     data["value"] = true
     data["default"] = false
@@ -126,7 +125,7 @@ class FeatureUsageEventLoggerTest {
 
   @Test
   fun testDontMergeStateEventWithData() {
-    val data = ContainerUtil.newHashMap<String, Any>()
+    val data = HashMap<String, Any>()
     data["name"] = "myOption"
     data["value"] = true
     data["default"] = false

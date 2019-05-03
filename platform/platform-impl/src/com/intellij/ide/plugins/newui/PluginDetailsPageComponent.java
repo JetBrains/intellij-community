@@ -410,6 +410,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
       showProgress();
     }
+    else {
+      fullRepaint();
+    }
   }
 
   private void updateIcon() {
@@ -496,6 +499,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (myEnableDisableUninstallButton != null) {
       myEnableDisableUninstallButton.setText(title);
     }
+
+    fullRepaint();
   }
 
   private void doUninstall() {

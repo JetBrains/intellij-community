@@ -2,6 +2,7 @@
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
@@ -91,13 +92,13 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testRevertedWhenFileToDeleteIsLocked() throws Exception {
-    assumeTrue(Utils.IS_WINDOWS);
+    assumeTrue("windows-only", Utils.IS_WINDOWS);
     doLockedFileTest();
   }
 
   @Test
   public void testRevertedWhenFileToUpdateIsLocked() throws Exception {
-    assumeTrue(Utils.IS_WINDOWS);
+    assumeTrue("windows-only", Utils.IS_WINDOWS);
     FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
     doLockedFileTest();
   }
@@ -477,7 +478,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkAdded() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
 
@@ -486,7 +487,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRemoved() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
 
@@ -495,7 +496,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRenamed() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
     Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.lnk"));
@@ -505,7 +506,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRetargeted() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
     Utils.createLink("./Readme.txt", new File(myNewerDir, "Readme.link"));
@@ -579,7 +580,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testExecutableFlagChange() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    assumeFalse("windows-allergic", Utils.IS_WINDOWS);
 
     FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_executable"), "to_become_executable");
     FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_plain"), "to_become_plain");

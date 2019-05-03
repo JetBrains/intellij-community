@@ -58,7 +58,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
 
     PsiLanguageInjectionHost.Shred firstShred = ContainerUtil.getFirstItem(shreds);
     PsiLanguageInjectionHost.Shred lastShred = ContainerUtil.getLastItem(shreds);
-    myAltFullRange = myOrigDocument.createRangeMarker(
+    myAltFullRange = myHostDocument.createRangeMarker(
       firstShred.getHostRangeMarker().getStartOffset(),
       lastShred.getHostRangeMarker().getEndOffset());
     myAltFullRange.setGreedyToLeft(true);
@@ -72,12 +72,12 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
 
   @Override
   public void commitToOriginal(@NotNull DocumentEvent e) {
-    final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
-    String newText = myNewDocument.getText();
+    final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myHostDocument);
+    String newText = myFragmentDocument.getText();
     // prepare guarded blocks
     LinkedHashMap<String, String> replacementMap = new LinkedHashMap<>();
     int count = 0;
-    for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
+    for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myFragmentDocument).getGuardedBlocks())) {
       String replacement = o.getUserData(QuickEditHandler.REPLACEMENT_KEY);
       String tempText = "REPLACE" + (count++) + Long.toHexString(StringHash.calc(replacement));
       newText = newText.substring(0, o.getStartOffset()) + tempText + newText.substring(o.getEndOffset());
@@ -85,22 +85,22 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
     }
     // run preformat processors
     final int hostStartOffset = myAltFullRange.getStartOffset();
-    myEditor.getCaretModel().moveToOffset(hostStartOffset);
+    myHostEditor.getCaretModel().moveToOffset(hostStartOffset);
     for (CopyPastePreProcessor preProcessor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
-      newText = preProcessor.preprocessOnPaste(myProject, origPsiFile, myEditor, newText, null);
+      newText = preProcessor.preprocessOnPaste(myProject, origPsiFile, myHostEditor, newText, null);
     }
-    myOrigDocument.replaceString(hostStartOffset, myAltFullRange.getEndOffset(), newText);
+    myHostDocument.replaceString(hostStartOffset, myAltFullRange.getEndOffset(), newText);
     // replace temp strings for guarded blocks
     for (String tempText : replacementMap.keySet()) {
-      int idx = CharArrayUtil.indexOf(myOrigDocument.getCharsSequence(), tempText, hostStartOffset, myAltFullRange.getEndOffset());
-      myOrigDocument.replaceString(idx, idx + tempText.length(), replacementMap.get(tempText));
+      int idx = CharArrayUtil.indexOf(myHostDocument.getCharsSequence(), tempText, hostStartOffset, myAltFullRange.getEndOffset());
+      myHostDocument.replaceString(idx, idx + tempText.length(), replacementMap.get(tempText));
     }
     // JAVA: fix occasional char literal concatenation
-    fixDocumentQuotes(myOrigDocument, hostStartOffset - 1);
-    fixDocumentQuotes(myOrigDocument, myAltFullRange.getEndOffset());
+    fixDocumentQuotes(myHostDocument, hostStartOffset - 1);
+    fixDocumentQuotes(myHostDocument, myAltFullRange.getEndOffset());
 
     // reformat
-    PsiDocumentManager.getInstance(myProject).commitDocument(myOrigDocument);
+    PsiDocumentManager.getInstance(myProject).commitDocument(myHostDocument);
     try {
       CodeStyleManager.getInstance(myProject).reformatRange(
         origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
@@ -112,8 +112,8 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
     PsiElement newInjected = InjectedLanguageManager.getInstance(myProject).findInjectedElementAt(origPsiFile, hostStartOffset);
     DocumentWindow documentWindow = newInjected == null ? null : InjectedLanguageUtil.getDocumentWindow(newInjected);
     if (documentWindow != null) {
-      myEditor.getCaretModel().moveToOffset(documentWindow.injectedToHost(e.getOffset()));
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      myHostEditor.getCaretModel().moveToOffset(documentWindow.injectedToHost(e.getOffset()));
+      myHostEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
   }
 

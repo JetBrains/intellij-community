@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -308,13 +294,13 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private Couple<CheckedTreeNode> createRoot() {
     final Map<DataNode, DataNodeCheckedTreeNode> treeNodeMap = ContainerUtil.newIdentityTroveMap();
-    final Map<String, DataNode> ideGroupingMap = ContainerUtil.newTreeMap(); // need order for assigning parents
+    final Map<String, DataNode> ideGroupingMap = new TreeMap<>(); // need order for assigning parents
 
     final DataNodeCheckedTreeNode[] preselectedNode = {null};
     final DataNodeCheckedTreeNode[] rootModuleNode = {null};
 
     final MultiMap<String, String> moduleDependenciesMap = MultiMap.create();
-    final Map<String, DataNode<Identifiable>> modulesNodeMap = ContainerUtil.newHashMap();
+    final Map<String, DataNode<Identifiable>> modulesNodeMap = new HashMap<>();
 
     for (DataNode<ModuleDependencyData> moduleDependencyDataNode : ExternalSystemApiUtil.findAllRecursively(
       myProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE_DEPENDENCY)) {
@@ -451,7 +437,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   @NotNull
   private static Set<Key<? extends Identifiable>> getDependencyAwareDataKeys() {
-    Set<Key<? extends Identifiable>> result = ContainerUtil.newHashSet();
+    Set<Key<? extends Identifiable>> result = new HashSet<>();
     result.add(ProjectKeys.MODULE);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getDependencyAwareDataKeys());
@@ -580,7 +566,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         }
       }
 
-      final Set<DataNode<Identifiable>> deps = ContainerUtil.newHashSet();
+      final Set<DataNode<Identifiable>> deps = new HashSet<>();
       for (DataNode<Identifiable> selectedModule : selectedModules) {
         if (checked) {
           deps.addAll(ContainerUtil.filter(dependentNodeMap.get(selectedModule), node -> {

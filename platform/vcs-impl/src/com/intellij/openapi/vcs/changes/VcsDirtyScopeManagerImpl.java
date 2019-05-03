@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.components.ProjectComponent;
@@ -223,7 +223,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
     Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
 
-    Map<AbstractVcs, VcsDirtyScopeImpl> scopes = ContainerUtil.newHashMap();
+    Map<AbstractVcs, VcsDirtyScopeImpl> scopes = new HashMap<>();
     for (AbstractVcs key : keys) {
       VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject, isEverythingDirty);
       scopes.put(key, scope);
@@ -270,7 +270,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);
     VcsInvalidated inProgress = calculateInvalidated(dirtBuilderInProgress);
-    Collection<FilePath> result = ContainerUtil.newArrayList();
+    Collection<FilePath> result = new ArrayList<>();
     for (FilePath fp : files) {
       if (invalidated.isFileDirty(fp) || inProgress.isFileDirty(fp)) {
         result.add(fp);

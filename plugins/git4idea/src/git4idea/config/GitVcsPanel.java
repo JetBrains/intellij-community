@@ -186,7 +186,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myAddCherryPickSuffix.setSelected(projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits());
     myWarnAboutCrlf.setSelected(projectSettings.warnAboutCrlf());
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
-    myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
+    myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateMethod());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
     myUpdateBranchInfoCheckBox.setSelected(projectSettings.shouldUpdateBranchInfo());
     boolean branchInfoSupported = isBranchInfoSupported();
@@ -226,7 +226,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
             projectSettings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
             projectSettings.shouldPreviewPushOnCommitAndPush() != myPreviewPushOnCommitAndPush.isSelected() ||
             projectSettings.isPreviewPushProtectedOnly() != myPreviewPushProtectedOnly.isSelected() ||
-            projectSettings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
+            projectSettings.getUpdateMethod() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
             isUpdateBranchSettingsModified(projectSettings) ||
             !sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(sorted(getProtectedBranchesPatterns())));
   }
@@ -259,7 +259,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     projectSettings.setAddSuffixToCherryPicks(myAddCherryPickSuffix.isSelected());
     projectSettings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
     projectSettings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
-    projectSettings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
+    projectSettings.setUpdateMethod((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
     projectSettings.setPreviewPushOnCommitAndPush(myPreviewPushOnCommitAndPush.isSelected());
     projectSettings.setPreviewPushProtectedOnly(myPreviewPushProtectedOnly.isSelected());
 

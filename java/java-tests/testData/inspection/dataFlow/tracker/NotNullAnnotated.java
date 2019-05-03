@@ -1,6 +1,6 @@
 /*
 Value is always false (s1 == null)
-  's1' was assigned (s.trim())
+  's1' was assigned (=)
     Method 'trim' is externally annotated as 'non-null' (trim)
  */
 class Test {

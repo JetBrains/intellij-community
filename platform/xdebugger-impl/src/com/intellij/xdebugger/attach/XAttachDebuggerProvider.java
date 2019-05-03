@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,8 +24,8 @@ public interface XAttachDebuggerProvider {
    */
   @NotNull
   static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
-    return ContainerUtil.concat(ContainerUtil.newArrayList(EP.getExtensionList()),
-                                ContainerUtil.newArrayList(XLocalAttachDebuggerProvider.EP.getExtensionList()));
+    return ContainerUtil.concat(new ArrayList<>(EP.getExtensionList()),
+                                new ArrayList<>(XLocalAttachDebuggerProvider.EP.getExtensionList()));
   }
 
   /**

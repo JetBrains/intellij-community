@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_DIFF_PREVIEW;
@@ -15,7 +15,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = {@Storage("vcs.xml")})
 public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
-  @NotNull private final Set<VcsLogUiProperties.PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
+  @NotNull private final Set<VcsLogUiProperties.PropertiesChangeListener> myListeners = new LinkedHashSet<>();
   private State myState = new State();
 
   @Nullable

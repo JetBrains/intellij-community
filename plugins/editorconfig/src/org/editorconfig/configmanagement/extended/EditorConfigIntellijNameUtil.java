@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class EditorConfigIntellijNameUtil {
         }
         break;
       case COMMON:
-        List<String> names = ContainerUtil.newArrayList();
+        List<String> names = new ArrayList<>();
         names.add(GENERIC_OPTION_KEY_PREFIX + propertyName);
         names.add(getLanguageProperty(mapper, propertyName));
         return names;

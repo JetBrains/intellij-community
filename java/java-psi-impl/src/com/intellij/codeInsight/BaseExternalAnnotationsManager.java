@@ -64,7 +64,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
    */
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
-    return getExternalName(listOwner, false);
+    return PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
   }
 
   /**
@@ -176,7 +176,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private List<AnnotationData> collectExternalAnnotations(@NotNull Object cacheKey,
-                                                          @NotNull Supplier<List<AnnotationData>> dataSupplier) {
+                                                          @NotNull Supplier<? extends List<AnnotationData>> dataSupplier) {
     if (!hasAnyAnnotationsRoots()) return Collections.emptyList();
     List<AnnotationData> cached;
     while (true) {
@@ -248,7 +248,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @NotNull
-  private List<AnnotationData> doCollect(@NotNull String externalName, @NotNull List<PsiFile> annotationsFiles, boolean onlyWritable) {
+  private List<AnnotationData> doCollect(@NotNull String externalName, @NotNull List<? extends PsiFile> annotationsFiles, boolean onlyWritable) {
     SmartList<AnnotationData> result = new SmartList<>();
     for (PsiFile file : annotationsFiles) {
       if (!file.isValid()) continue;
@@ -470,7 +470,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     @Override
-    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+    public void startElement(String uri, String localName, String qName, Attributes attributes) {
       if ("item".equals(qName)) {
         myExternalName = attributes.getValue("name");
       }

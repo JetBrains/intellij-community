@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.treeView.FileNameComparator;
@@ -207,7 +207,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
-  public Stream<ChangesBrowserNode> getNodesUnderStream() {
+  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
     return toStream(preorderEnumeration());
   }
 
@@ -255,7 +255,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
-  private static StreamEx<ChangesBrowserNode> toStream(@NotNull Enumeration enumeration) {
+  private static StreamEx<ChangesBrowserNode<?>> toStream(@NotNull Enumeration enumeration) {
     //noinspection unchecked
     return StreamEx.<ChangesBrowserNode>of(enumeration);
   }

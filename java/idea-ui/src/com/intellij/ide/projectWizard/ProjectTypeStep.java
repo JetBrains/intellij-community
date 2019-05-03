@@ -54,8 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.net.URL;
 import java.util.HashMap;
@@ -70,9 +68,9 @@ import java.util.*;
 public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
 
-  public static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
+  private static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
     o -> o.getId();
-  public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
+  private static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
   private static final String PROJECT_WIZARD_GROUP = "project.wizard.group";
@@ -106,12 +104,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
-    myProjectTypeList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        updateSelection();
-      }
-    });
+    myProjectTypeList.addListSelectionListener(__ -> updateSelection());
     myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer<TemplatesGroup>(new ListItemDescriptorAdapter<TemplatesGroup>() {
       @Nullable
       @Override
@@ -187,19 +180,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       }
     };
 
-    myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        projectTypeChanged();
-      }
-    });
+    myProjectTypeList.getSelectionModel().addListSelectionListener(__ -> projectTypeChanged());
 
-    myTemplatesList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        updateSelection();
-      }
-    });
+    myTemplatesList.addListSelectionListener(__ -> updateSelection());
 
     for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
       ModuleBuilder builder = templatesGroup.getModuleBuilder();
@@ -239,7 +222,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
-  public static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
+  private static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     final MultiMap<TemplatesGroup, ProjectTemplate> groups = new MultiMap<>();
     for (ProjectTemplatesFactory factory : factories) {
@@ -351,7 +334,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   // new TemplatesGroup selected
-  public void projectTypeChanged() {
+  private void projectTypeChanged() {
     TemplatesGroup group = getSelectedGroup();
     if (group == null || group == myLastSelectedGroup) return;
     myLastSelectedGroup = group;
@@ -431,7 +414,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     showCard(TEMPLATES_CARD);
   }
 
-  private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates, boolean preserveSelection) {
+  private void setTemplatesList(TemplatesGroup group, Collection<? extends ProjectTemplate> templates, boolean preserveSelection) {
     List<ProjectTemplate> list = new ArrayList<>(templates);
     ModuleBuilder moduleBuilder = group.getModuleBuilder();
     if (moduleBuilder != null && !(moduleBuilder instanceof TemplateModuleBuilder)) {
@@ -463,7 +446,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   @Nullable
-  public ProjectTemplate getSelectedTemplate() {
+  private ProjectTemplate getSelectedTemplate() {
     return myCurrentCard == TEMPLATES_CARD ? myTemplatesList.getSelectedTemplate() : null;
   }
 
@@ -500,7 +483,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         throw new CommitStepException(null);
       }
     }
-    reportStatistics("new.project.wizard.finish");
+    reportStatistics("finish");
   }
 
   @Override
@@ -726,18 +709,19 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   @Override
   public void onStepLeaving() {
-    reportStatistics("new.project.wizard.attempt");
+    reportStatistics("attempt");
   }
 
   private void reportStatistics(String groupId) {
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
     FeatureUsageData data = new FeatureUsageData();
+    data.addData("projectType", group.isSafeToReport() ? group.getId() : "third-party");
     myFrameworksPanel.reportFeatureUsageData(data);
     ModuleWizardStep step = getCustomStep();
     if (step instanceof StatisticsAwareModuleWizardStep) {
       ((StatisticsAwareModuleWizardStep) step).reportFeatureUsageData(data);
     }
 
-    FUCounterUsageLogger.getInstance().logEvent(groupId, group.isSafeToReport() ? group.getId() : "third-party");
+    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", groupId, data);
   }
 }

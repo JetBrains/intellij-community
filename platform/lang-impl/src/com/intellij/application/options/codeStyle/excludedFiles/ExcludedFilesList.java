@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -18,13 +18,14 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -138,7 +139,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
 
   private List<NamedScope> getAvailableScopes() {
     Set<String> usedNames = getUsedScopeNames();
-    List<NamedScope> namedScopes = ContainerUtil.newArrayList();
+    List<NamedScope> namedScopes = new ArrayList<>();
     for (NamedScopesHolder holder : getScopeHolders()) {
       for (NamedScope scope : holder.getEditableScopes()) {
         if (!usedNames.contains(scope.getName())) {
@@ -150,7 +151,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
   }
 
   private Set<String> getUsedScopeNames() {
-    Set<String> usedScopeNames = ContainerUtil.newHashSet();
+    Set<String> usedScopeNames = new HashSet<>();
     for (int i =0 ; i < myModel.size(); i ++) {
       FileSetDescriptor descriptor = myModel.get(i);
       if (descriptor instanceof NamedScopeDescriptor) {
@@ -247,7 +248,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
   }
 
   private List<NamedScopesHolder> getScopeHolders() {
-    List<NamedScopesHolder> holders = ContainerUtil.newArrayList();
+    List<NamedScopesHolder> holders = new ArrayList<>();
     Project project = getScopeHolderProject();
     holders.add(DependencyValidationManager.getInstance(project));
     holders.add(NamedScopeManager.getInstance(project));

@@ -142,8 +142,8 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  private static void logElapsed(Runnable r) {
-    LOG.debug("Elapsed: " + PlatformTestUtil.measure(r) + "ms");
+  private static void logElapsed(ThrowableRunnable<RuntimeException> r) {
+    LOG.debug("Elapsed: " + TimeoutUtil.measureExecutionTime(r) + "ms");
   }
 
   public void testJobUtilRecursiveStress() {
@@ -510,7 +510,7 @@ public class JobUtilTest extends LightPlatformTestCase {
         // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread and we can't do anything
         mainThread.set(Thread.currentThread());
         try {
-          elapsed.set(PlatformTestUtil.measure(() -> ProgressManager.getInstance().runProcess(()-> {
+          elapsed.set(TimeoutUtil.measureExecutionTime(() -> ProgressManager.getInstance().runProcess(()-> {
             boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(/* more than 1 to pass through processIfTooFew */Arrays.asList(1, 1, 1, COARSENESS), indicator, delay -> {
               if (delay == COARSENESS) {
                 indicator.cancel(); // emulate job external cancel

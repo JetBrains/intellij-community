@@ -6,13 +6,13 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TerminalSignalUtil {
@@ -40,7 +40,7 @@ public class TerminalSignalUtil {
     if (!SystemInfo.isUnix || !JnaLoader.isLoaded()) {
       return callback.compute();
     }
-    List<Integer> ignored = ContainerUtil.newArrayList();
+    List<Integer> ignored = new ArrayList<>();
     LibC lib = null;
     try {
       lib = Native.load("c", LibC.class);

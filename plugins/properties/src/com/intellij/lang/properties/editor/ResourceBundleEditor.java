@@ -60,7 +60,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.JBUI;
@@ -287,7 +286,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       return;
     }
 
-    Stack<TreeElement> toCheck = ContainerUtilRt.newStack();
+    Stack<TreeElement> toCheck = new Stack<>();
     toCheck.push(myStructureViewComponent.getTreeModel().getRoot());
 
     while (!toCheck.isEmpty()) {

@@ -175,6 +175,18 @@ public class UrlUtilTest {
     }
     console.log(encodeURIComponent(s));
     */
-    assertEquals(expected, URLUtil.encodeURIComponent(str.toString()));
+    assertThat(URLUtil.encodeURIComponent(str.toString())).isEqualTo(expected);
+    assertThat(URLUtil.unescapePercentSequences(expected)).isEqualTo(str.toString());
+    assertThat(URLUtil.unescapePercentSequences(expected, 0, expected.length()).toString()).isEqualTo(str.toString());
+  }
+
+  @Test
+  public void testUnescapePercentSequences() {
+    String k = "foo%3F%25%26%3D";
+    String v = "bar%3F1%3D%25";
+    String query = k + "=" + v;
+    assertThat(URLUtil.unescapePercentSequences(query, 0, k.length()).toString()).isEqualTo("foo?%&=");
+    assertThat(URLUtil.unescapePercentSequences(v)).isEqualTo("bar?1=%");
+    assertThat(URLUtil.unescapePercentSequences(query, k.length() + 1, query.length()).toString()).isEqualTo("bar?1=%");
   }
 }

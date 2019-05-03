@@ -43,7 +43,6 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
 
-    private final XmlName OS_XML_NAME = new XmlName("os");
     private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
 
     @Override
@@ -73,13 +72,11 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
         registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
       }
-
-      registrar.registerGenericAttributeValueChildExtension(OS_XML_NAME, com.intellij.openapi.extensions.Extensions.OS.class);
     }
   };
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
-    Set<IdeaPlugin> result = ContainerUtil.newHashSet();
+    Set<IdeaPlugin> result = new HashSet<>();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
     collectDependencies(ideaPlugin, result, byId);
     result.addAll(byId.get(null));
@@ -404,7 +401,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static class MyRequired implements Required {
 
     private static final MyRequired INSTANCE = new MyRequired();
-    
+
     @Override
     public boolean value() {
       return true;

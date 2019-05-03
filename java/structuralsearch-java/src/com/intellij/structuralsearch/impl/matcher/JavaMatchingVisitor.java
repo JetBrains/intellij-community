@@ -484,7 +484,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final List<PsiElement> unmatchedElements = new SmartList<>(PsiTreeUtil.getChildrenOfTypeAsList(clazz2, PsiMember.class));
       unmatchedElements.removeAll(matchedElements);
       MatchingHandler unmatchedSubstitutionHandler = null;
-      for (PsiElement element = clazz.getFirstChild(); element != null; element = element.getNextSibling()) {
+      for (PsiElement element = clazz.getLBrace(); element != null; element = element.getNextSibling()) {
         if (element instanceof PsiTypeElement && element.getNextSibling() instanceof PsiErrorElement) {
           unmatchedSubstitutionHandler = javaPattern.getHandler(element);
           break;
@@ -1637,8 +1637,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (!myMatchingVisitor.setResult(myMatchingVisitor.match(comment, clazz2))) return;
     }
 
-    final PsiIdentifier identifier = clazz.getNameIdentifier();
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(identifier);
+    final PsiIdentifier identifier1 = clazz.getNameIdentifier();
+    final MatchContext context = myMatchingVisitor.getMatchContext();
+    CompiledPattern pattern = context.getPattern();
+    final boolean isTypedVar = pattern.isTypedVar(identifier1);
 
     final PsiModifierList modifierList = clazz.getModifierList();
     if (modifierList != null && modifierList.getTextLength() > 0) {
@@ -1648,18 +1650,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
 
-    if (myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.matchText(identifier, clazz2.getNameIdentifier())) &&
+    final PsiIdentifier identifier2 = clazz2.getNameIdentifier();
+    if (myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.matchText(identifier1, identifier2)) &&
                                     compareClasses(clazz, clazz2)) && isTypedVar) {
-      PsiElement id = clazz2.getNameIdentifier();
-      if (id == null) id = clazz2;
-      final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
+      final PsiElement matchElement = identifier2 == null ? clazz2 : identifier2;
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(identifier1);
+      final PsiElement result = clazz2 instanceof PsiAnonymousClass
+                                ? ((PsiAnonymousClass)clazz2).getBaseClassReference().getReferenceNameElement()
+                                : identifier2;
+      assert result != null;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, clazz2, handler))) {
-          handler.addResult(id, myMatchingVisitor.getMatchContext());
+        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier1, clazz2, handler))) {
+          handler.addResult(result, context);
         }
       }
-      else {
-        myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(identifier, id));
+      else if (myMatchingVisitor.setResult(handler.validate(matchElement, context))) {
+        handler.addResult(result, context);
       }
     }
   }

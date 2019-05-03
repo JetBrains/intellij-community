@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
@@ -58,7 +58,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
   @NotNull
   public static Set<UsageDescriptor> getDescriptors() {
     EditorColorsScheme currentScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
+    Set<UsageDescriptor> usages = new HashSet<>();
     if (currentScheme instanceof AbstractColorsScheme) {
       String schemeName = currentScheme.getName();
       if (schemeName.startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {

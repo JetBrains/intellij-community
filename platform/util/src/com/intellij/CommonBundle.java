@@ -47,7 +47,10 @@ public class CommonBundle extends BundleBase {
   }
 
   public static String messageOrDefault(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
-    if (bundle == null || !bundle.containsKey(key)) return replaceMnemonicAmpersand(defaultValue);
+    if (bundle == null) return defaultValue;
+    if (!bundle.containsKey(key)) {
+      return postprocessValue(bundle, useDefaultValue(bundle, key, defaultValue), params);
+    }
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 

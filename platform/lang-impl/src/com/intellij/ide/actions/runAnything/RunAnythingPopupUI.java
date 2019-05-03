@@ -61,10 +61,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
@@ -238,7 +236,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private DataContext createDataContext(@NotNull DataContext parentDataContext, boolean isAltPressed) {
-    Map<String, Object> map = ContainerUtil.newHashMap();
+    Map<String, Object> map = new HashMap<>();
     map.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory(getModule(), isAltPressed));
     map.put(EXECUTOR_KEY.getName(), getExecutor());
 
@@ -404,7 +402,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   public DataContext createDataContext(@NotNull AnActionEvent e) {
-    HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
+    HashMap<String, Object> dataMap = new HashMap<>();
     dataMap.put(CommonDataKeys.PROJECT.getName(), e.getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
     return createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
@@ -973,7 +971,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     @Override
     protected ElementsChooser<?> createChooser() {
       ElementsChooser<RunAnythingGroup> res =
-        new ElementsChooser<RunAnythingGroup>(ContainerUtil.newArrayList(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
+        new ElementsChooser<RunAnythingGroup>(new ArrayList<>(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
           @Override
           protected String getItemText(@NotNull RunAnythingGroup value) {
             return value.getTitle();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -47,6 +33,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -360,9 +347,9 @@ public class PsiClassImplUtil {
 
   private static ConcurrentMap<MemberType, Map<String, PsiMember[]>> createMembersMap(PsiClass psiClass, GlobalSearchScope scope) {
     return ConcurrentFactoryMap.createMap(key -> {
-      final Map<String, List<PsiMember>> map = ContainerUtil.newTroveMap();
+      final Map<String, List<PsiMember>> map = new THashMap<>();
 
-      final List<PsiMember> allMembers = ContainerUtil.newArrayList();
+      final List<PsiMember> allMembers = new ArrayList<>();
       map.put(ALL, allMembers);
 
       ElementClassFilter filter = key == MemberType.CLASS ? ElementClassFilter.CLASS :
@@ -394,7 +381,7 @@ public class PsiClassImplUtil {
 
       processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(), null, null, psiClass, false,
                                           PsiUtil.getLanguageLevel(psiClass), scope);
-      Map<String, PsiMember[]> result = ContainerUtil.newTroveMap();
+      Map<String, PsiMember[]> result = new THashMap<>();
       for (Map.Entry<String, List<PsiMember>> entry : map.entrySet()) {
         result.put(entry.getKey(), entry.getValue().toArray(PsiMember.EMPTY_ARRAY));
       }
@@ -514,7 +501,7 @@ public class PsiClassImplUtil {
             PsiUtilCore.ensureValid(candidateField);
             if (containingClass == null) {
               PsiElement parent = candidateField.getParent();
-              LOG.error("No class for field " + candidateField.getName() + " of " + candidateField.getClass() + 
+              LOG.error("No class for field " + candidateField.getName() + " of " + candidateField.getClass() +
                         ", parent " + parent + " of " + (parent == null ? null : parent.getClass()));
               continue;
             }

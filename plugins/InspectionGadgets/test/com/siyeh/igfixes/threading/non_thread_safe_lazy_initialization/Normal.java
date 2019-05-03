@@ -1,10 +1,11 @@
 public class Normal {
-    private static Object example;
+    private /*1*/ static /*2*/ Object /*3*/ example/*4*/;
 
     public static Object getInstance() {
-        if (example == null) {
-            example<caret> = new Object();
-        }
+        // 5
+        if (example == null) { //6
+            example<caret> = new Object(); //7
+        } //8
         return example
     }
 }

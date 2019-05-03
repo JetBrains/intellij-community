@@ -81,9 +81,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static void doAction(@NotNull ActionHint actionHint,
-                              String testFullPath,
-                              String testName,
-                              QuickFixTestCase quickFix) throws Exception {
+                              @NotNull String testFullPath,
+                              @NotNull String testName,
+                              @NotNull QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
@@ -108,7 +108,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  private static String getTestInfo(String testFullPath, QuickFixTestCase quickFix) {
+  private static String getTestInfo(@NotNull String testFullPath, @NotNull QuickFixTestCase quickFix) {
     String infos = StreamEx.of(quickFix.doHighlighting())
       .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
       .map(info -> {
@@ -131,7 +131,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
            "Infos: " + infos;
   }
 
-  protected void doAction(@NotNull ActionHint actionHint, final String testFullPath, final String testName)
+  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName)
     throws Exception {
     doAction(actionHint, testFullPath, testName, myWrapper);
   }

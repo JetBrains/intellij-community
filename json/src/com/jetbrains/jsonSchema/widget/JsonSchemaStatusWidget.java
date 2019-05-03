@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -119,7 +119,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     if (schemaFiles.size() != 1) {
-      final List<VirtualFile> userSchemas = ContainerUtil.newArrayList();
+      final List<VirtualFile> userSchemas = new ArrayList<>();
       if (hasConflicts(userSchemas, file)) {
         MyWidgetState state = new MyWidgetState(createMessage(schemaFiles, myService,
                                                                                                      "<br/>", "There are several JSON Schemas mapped to this file:<br/>",

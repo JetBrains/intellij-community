@@ -60,6 +60,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -70,7 +71,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_K
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.ui.IdeBorderFactory.createBorder;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.util.ui.UIUtil.addBorder;
@@ -439,7 +439,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     public boolean myShowFlatten = true;
 
     @XCollection
-    public Set<String> groupingKeys = newHashSet();
+    public Set<String> groupingKeys = new HashSet<>();
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;

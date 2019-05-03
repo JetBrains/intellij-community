@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.notification.Notification;
@@ -31,7 +17,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
@@ -39,15 +27,18 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
+import com.intellij.vcs.log.VcsLogIndexService;
+import com.intellij.vcs.log.VcsLogProperties;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
+import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
 import com.intellij.vcsUtil.VcsUtil;
@@ -58,9 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,13 +77,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @Nullable private final IndexDataGetter myDataGetter;
 
   @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController;
-  @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
-  @NotNull private final Map<VirtualFile, AtomicLong> myIndexingTime = ContainerUtil.newHashMap();
-  @NotNull private final Map<VirtualFile, AtomicInteger> myIndexingLimit = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = new HashMap<>();
+  @NotNull private final Map<VirtualFile, AtomicLong> myIndexingTime = new HashMap<>();
+  @NotNull private final Map<VirtualFile, AtomicInteger> myIndexingLimit = new HashMap<>();
 
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = ContainerUtil.newHashMap();
+  @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = new HashMap<>();
 
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage storage,
@@ -109,8 +98,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
-    myIndexers = ContainerUtil.newHashMap();
-    myRoots = ContainerUtil.newLinkedHashSet();
+    myIndexers = new HashMap<>();
+    myRoots = new LinkedHashSet<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
       VcsLogProvider provider = entry.getValue();
@@ -177,7 +166,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     for (VirtualFile root : commitsToIndex.keySet()) {
       myNumberOfTasks.get(root).incrementAndGet();
     }
-    myCommitsToIndex = ContainerUtil.newHashMap();
+    myCommitsToIndex = new HashMap<>();
 
     boolean isFull = full && myIndexStorage.isFresh();
     if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");

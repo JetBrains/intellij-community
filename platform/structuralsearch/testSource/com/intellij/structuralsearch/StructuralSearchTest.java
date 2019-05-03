@@ -794,7 +794,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     assertEquals("Variables initialized to null even when not present in search results", 1,
                  findMatchesCount(source3, "[script(\"args == null\")]new String('_args*)"));
-
+    String source4 = "class X {{\n" +
+                     "  // comment\n" +
+                     "  new /*!*/ Object() {};\n" +
+                     "}}";
+    assertEquals("expected variable of type anonymous class", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]new 'XX()"));
+    assertEquals("expected variable of type anonymous class 2", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
+    assertEquals("expected variable of type anonymous class 3", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiExpressionStatement\")]new Object() {};"));
+    assertEquals("expected variable of type anonymous class 4", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
   }
 
   public void testCheckScriptValidation() {
@@ -2964,6 +2975,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(3, findMatchesCount(source6, "'x:[exprtype( List )]"));
     assertEquals(1, findMatchesCount(source6, "'x:[exprtype( List<List<String>> )]"));
     assertEquals(2, findMatchesCount(source6, "'x:[exprtype( List<Garbage> )]"));
+
+    String source7 = "class X {{" +
+                     "  System.out.println(1.0 * 2 + 3 * 4);\n" +
+                     "}}";
+    assertEquals(1, findMatchesCount(source7, "[exprtype( int )]'_a * '_b"));
   }
 
   public void testSearchReferences() {

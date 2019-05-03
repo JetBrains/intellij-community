@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
 
 import java.util.Random;
@@ -141,7 +142,7 @@ public class ConcurrentBitSetTest extends TestCase {
     int N = 10000;
 
     for (int i=0; i<10; i++) {
-      long el = PlatformTestUtil.measure(() ->
+      long el = TimeoutUtil.measureExecutionTime(() ->
         IntStream.range(0,N).parallel().forEach(__-> {
           int r = 0;
           for (int j = 0; j < len; j++) {
@@ -167,7 +168,7 @@ public class ConcurrentBitSetTest extends TestCase {
     int N = 1000;
 
     for (int i=0; i<10; i++) {
-      long el = PlatformTestUtil.measure(() -> {
+      long el = TimeoutUtil.measureExecutionTime(() -> {
         int r = 0;
         for (int n = 0; n < N; n++) {
           for (int j = 0; j < len; j++) {

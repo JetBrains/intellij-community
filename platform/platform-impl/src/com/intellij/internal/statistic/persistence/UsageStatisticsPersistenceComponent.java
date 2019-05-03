@@ -20,11 +20,13 @@ import org.jetbrains.annotations.NotNull;
 public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent implements PersistentStateComponent<Element> {
   public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
 
+  private boolean isAllowedForEAP = true;
   private boolean isShowNotification = true;
   private @NotNull SendPeriod myPeriod = SendPeriod.DAILY;
 
   private static final String LAST_TIME_ATTR = "time";
   private static final String IS_ALLOWED_ATTR = "allowed";
+  private static final String IS_ALLOWED_EAP_ATTR = "allowedEap";
   private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
 
   public static UsageStatisticsPersistenceComponent getInstance() {
@@ -46,10 +48,13 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
       setSentTime(0);
     }
 
+    final String isAllowedEapValue = element.getAttributeValue(IS_ALLOWED_EAP_ATTR, "true");
+    isAllowedForEAP = StringUtil.isEmptyOrSpaces(isAllowedEapValue) || Boolean.parseBoolean(isAllowedEapValue);
+
     // compatibility: if was previously allowed, transfer the setting to the new place
     final String isAllowedValue = element.getAttributeValue(IS_ALLOWED_ATTR);
     if (!StringUtil.isEmptyOrSpaces(isAllowedValue) && Boolean.parseBoolean(isAllowedValue)) {
-      setAllowed(true);
+      ConsentOptions.getInstance().setSendingUsageStatsAllowed(true);
     }
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
@@ -68,6 +73,10 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     if (!isShowNotification()) {
       element.setAttribute(SHOW_NOTIFICATION_ATTR, "false");
     }
+
+    if (!isAllowedForEAP) {
+      element.setAttribute(IS_ALLOWED_EAP_ATTR, "false");
+    }
     return element;
   }
 
@@ -81,12 +90,19 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   public void setAllowed(boolean allowed) {
-    ConsentOptions.getInstance().setSendingUsageStatsAllowed(allowed);
+    final ConsentOptions options = ConsentOptions.getInstance();
+    if (options.isEAP()) {
+      isAllowedForEAP = allowed;
+    }
+    else {
+      options.setSendingUsageStatsAllowed(allowed);
+    }
   }
 
   @Override
   public boolean isAllowed() {
-    return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+    final ConsentOptions options = ConsentOptions.getInstance();
+    return options.isEAP() ? isAllowedForEAP : options.isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
   }
 
   public void setShowNotification(boolean showNotification) {

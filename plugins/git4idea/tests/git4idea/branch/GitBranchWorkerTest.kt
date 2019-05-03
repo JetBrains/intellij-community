@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
-import com.intellij.util.containers.ContainerUtil
 import git4idea.GitCommit
 import git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision
 import git4idea.branch.GitBranchUtil.getTrackInfoForBranch
@@ -247,7 +246,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   private fun `test untracked files overwritten by in first repo`(operation: String, untrackedFiles: Int) {
     branchWithCommit(myRepositories, "feature")
 
-    val files = ContainerUtil.newArrayList<String>()
+    val files = mutableListOf<String>()
     (0 until untrackedFiles).mapTo(files) { "untracked$it.txt" }
     untrackedFileOverwrittenBy(first, "feature", files)
 
@@ -278,7 +277,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val untracked = Arrays.asList<String>("untracked.txt")
     untrackedFileOverwrittenBy(second, "feature", untracked)
 
-    val untrackedPaths = ContainerUtil.newArrayList<String>()
+    val untrackedPaths = mutableListOf<String>()
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
       override fun showUntrackedFilesDialogWithRollback(operationName: String,
                                                         rollbackProposal: String,
@@ -309,7 +308,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val repoWithLocalChangesProblem = first
     val expectedChanges = prepareLocalChangesOverwrittenBy(repoWithLocalChangesProblem, numFiles)
 
-    val actualChanges = ContainerUtil.newArrayList<Change>()
+    val actualChanges = mutableListOf<Change>()
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
       override fun showSmartOperationDialog(project: Project,
                                             changes: List<Change>,
@@ -362,7 +361,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun prepareLocalChangesOverwrittenBy(repository: GitRepository, numFiles: Int = 1): List<String> {
-    val localChanges = ContainerUtil.newArrayList<String>()
+    val localChanges = mutableListOf<String>()
     (0 until numFiles).mapTo(localChanges) { String.format("local%d.txt", it) }
     localChangesOverwrittenByWithoutConflict(repository, "feature", localChanges)
     updateChangeListManager()

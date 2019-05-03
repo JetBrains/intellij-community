@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.highlighter.WorkspaceFileType;
@@ -1393,7 +1393,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     @NotNull
     @Override
     public Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project) {
-      Set<IgnoredFileBean> ignored = ContainerUtil.newLinkedHashSet();
+      Set<IgnoredFileBean> ignored = new LinkedHashSet<>();
 
       String shelfPath = ShelveChangesManager.getShelfPath(project);
       ignored.add(IgnoredBeanFactory.ignoreUnderDirectory(shelfPath, project));

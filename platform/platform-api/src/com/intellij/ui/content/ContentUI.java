@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,39 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public interface ContentUI extends Disposable {
   JComponent getComponent();
+
   void setManager(@NotNull ContentManager manager);
 
   boolean isSingleSelection();
+
   boolean isToSelectAddedContent();
+
   boolean canBeEmptySelection();
 
   void beforeDispose();
 
   boolean canChangeSelectionTo(@NotNull Content content, boolean implicit);
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   String getCloseActionName();
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   String getCloseAllButThisActionName();
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   String getPreviousContentActionName();
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   String getNextContentActionName();
 }

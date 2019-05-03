@@ -32,6 +32,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,7 +57,7 @@ import java.util.function.Supplier;
  */
 @ApiStatus.Experimental
 public class BuildView extends CompositeView<ExecutionConsole>
-  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode> {
+  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode>, OccurenceNavigator {
   public static final String CONSOLE_VIEW_NAME = "consoleView";
   private final AtomicReference<StartBuildEvent> myStartBuildEventRef = new AtomicReference<>();
   private final BuildDescriptor myBuildDescriptor;
@@ -365,17 +366,75 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return getEventView() != null;
   }
 
+  @NotNull
   @Override
   public Predicate<ExecutionNode> getFilter() {
     BuildTreeConsoleView eventView = getEventView();
-    return eventView == null ? null : eventView.getFilter();
+    return eventView == null ? executionNode -> true : eventView.getFilter();
   }
 
   @Override
-  public void setFilter(Predicate<ExecutionNode> filter) {
+  public void addFilter(@NotNull Predicate<ExecutionNode> filter) {
     BuildTreeConsoleView eventView = getEventView();
     if (eventView != null) {
-      eventView.setFilter(filter);
+      eventView.addFilter(filter);
     }
+  }
+
+  @Override
+  public void removeFilter(@NotNull Predicate<ExecutionNode> filter) {
+    BuildTreeConsoleView eventView = getEventView();
+    if (eventView != null) {
+      eventView.removeFilter(filter);
+    }
+  }
+
+  @Override
+  public boolean contains(@NotNull Predicate<ExecutionNode> filter) {
+    BuildTreeConsoleView eventView = getEventView();
+    return eventView != null && eventView.contains(filter);
+  }
+
+  @NotNull
+  private OccurenceNavigator getOccurenceNavigator() {
+    BuildTreeConsoleView eventView = getEventView();
+    if (eventView != null) return eventView;
+    ExecutionConsole executionConsole = getConsoleView();
+    if (executionConsole instanceof OccurenceNavigator) {
+      return (OccurenceNavigator)executionConsole;
+    }
+    return EMPTY;
+  }
+
+  @Override
+  public boolean hasNextOccurence() {
+    return getOccurenceNavigator().hasNextOccurence();
+  }
+
+  @Override
+  public boolean hasPreviousOccurence() {
+    return getOccurenceNavigator().hasPreviousOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goNextOccurence() {
+    return getOccurenceNavigator().goNextOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goPreviousOccurence() {
+    return getOccurenceNavigator().goPreviousOccurence();
+  }
+
+  @NotNull
+  @Override
+  public String getNextOccurenceActionName() {
+    return getOccurenceNavigator().getNextOccurenceActionName();
+  }
+
+  @NotNull
+  @Override
+  public String getPreviousOccurenceActionName() {
+    return getOccurenceNavigator().getPreviousOccurenceActionName();
   }
 }

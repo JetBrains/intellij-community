@@ -155,7 +155,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test commit unstaged case rename - case ignored on case insensitive system`() {
-    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+    assumeCaseInsensitiveSystem()
 
     tac("a.java", "old content")
     rm("a.java")
@@ -172,7 +172,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test commit wrongly staged case rename - case ignored on case insensitive system`() {
-    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+    assumeCaseInsensitiveSystem()
 
     tac("a.java", "old content")
     rm("a.java")
@@ -187,6 +187,10 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     repo.assertCommitted {
       modified("a.java")
     }
+  }
+
+  private fun assumeCaseInsensitiveSystem() {
+    assumeTrue("Case-insensitive system expected", !SystemInfo.isFileSystemCaseSensitive)
   }
 
   fun `test commit case rename + one staged file`() {
@@ -519,7 +523,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
 
   fun `test commit rename with conflicting staged rename`() {
     `assume version where git reset returns 0 exit code on success `()
-    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
+    assumeTrue("git.force.commit.using.staging.area only", Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
 
     tac("a.txt", "file content")
 
@@ -675,7 +679,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
 
   fun `test commit during unresolved merge conflict`() {
     `assume version where git reset returns 0 exit code on success `()
-    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // "--only" shows dialog in this case
+    assumeTrue("git.force.commit.using.staging.area only", Registry.`is`("git.force.commit.using.staging.area")) // "--only" shows dialog in this case
 
     createFileStructure(projectRoot, "a.txt")
     addCommit("created some file structure")
@@ -842,7 +846,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test file to directory renames`() {
-    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
+    assumeTrue("git.force.commit.using.staging.area only", Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
 
     tac("a_path", "file content 1")
     tac("b_path", "file content 2")

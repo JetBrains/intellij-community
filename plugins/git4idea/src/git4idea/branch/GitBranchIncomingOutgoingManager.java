@@ -216,7 +216,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @NotNull
   private Map<GitLocalBranch, Hash> calculateBranchesToPull(@NotNull GitRepository repository, boolean useForceAuthentication) {
-    Map<GitLocalBranch, Hash> result = newHashMap();
+    Map<GitLocalBranch, Hash> result = new HashMap<>();
     groupTrackInfoByRemotes(repository).entrySet()
       .forEach(entry -> result.putAll(calcBranchesToPullForRemote(repository, entry.getKey(), entry.getValue(),
                                                                   getAuthenticationMode(repository, entry.getKey(), useForceAuthentication))));
@@ -228,7 +228,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                                                 @NotNull GitRemote gitRemote,
                                                                 @NotNull Collection<GitBranchTrackInfo> trackInfoList,
                                                                 GitAuthenticationMode mode) {
-    Map<GitLocalBranch, Hash> result = newHashMap();
+    Map<GitLocalBranch, Hash> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
       lsRemote(repository, gitRemote, map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()), mode);
@@ -270,7 +270,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                      @NotNull GitRemote remote,
                                      @NotNull List<String> branchRefNames,
                                      @NotNull GitAuthenticationMode authenticationMode) {
-    Map<String, Hash> result = newHashMap();
+    Map<String, Hash> result = new HashMap<>();
 
     if (!supportsIncomingOutgoing()) return result;
     if (authenticationMode == NONE) {
@@ -317,7 +317,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @NotNull
   private Map<GitLocalBranch, Hash> calculateBranchesToPush(@NotNull GitRepository gitRepository) {
-    Map<GitLocalBranch, Hash> branchesToPush = newHashMap();
+    Map<GitLocalBranch, Hash> branchesToPush = new HashMap<>();
     GitBranchesCollection branchesCollection = gitRepository.getBranches();
     for (GitLocalBranch branch : branchesCollection.getLocalBranches()) {
       GitPushTarget pushTarget = GitPushSupport.getPushTargetIfExist(gitRepository, branch);
@@ -389,7 +389,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
           calcBranchesToPullForRemote(repository, remote, trackInfoByRemotes.get(remote), SILENT);
         myLocalBranchesToPull.compute(repository, (r, branchHashMap) -> {
           if (branchHashMap == null) {
-            return newHashMap(newBranchMap);
+            return new HashMap<>(newBranchMap);
           }
           else {
             branchHashMap.putAll(newBranchMap);

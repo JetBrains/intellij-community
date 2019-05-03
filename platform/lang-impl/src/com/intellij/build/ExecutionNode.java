@@ -57,9 +57,10 @@ public class ExecutionNode extends CachingSimpleNode {
   private static final Icon NODE_ICON_DEFAULT = ICON_16;
   private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS();
 
-  private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>(); //ContainerUtil.newSmartList();
+  private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>();
   private final AtomicInteger myErrors = new AtomicInteger();
   private final AtomicInteger myWarnings = new AtomicInteger();
+  private final AtomicInteger myInfos = new AtomicInteger();
   private long startTime;
   private long endTime;
   @Nullable
@@ -164,6 +165,7 @@ public class ExecutionNode extends CachingSimpleNode {
     myChildrenList.clear();
     myErrors.set(0);
     myWarnings.set(0);
+    myInfos.set(0);
     myResult = null;
     cleanUpCache();
   }
@@ -226,6 +228,16 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public boolean isRunning() {
     return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
+  }
+
+  public boolean hasWarnings() {
+    return myWarnings.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.WARNING);
+  }
+
+  public boolean hasInfos() {
+    return myInfos.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.INFO);
   }
 
   public boolean isFailed() {
@@ -293,25 +305,9 @@ public class ExecutionNode extends CachingSimpleNode {
     else if (kind == MessageEvent.Kind.WARNING) {
       myWarnings.incrementAndGet();
     }
-  }
-
-  ExecutionNode copy(ExecutionNode parent) {
-    ExecutionNode copy = new ExecutionNode(myProject, parent);
-    copy.startTime = startTime;
-    copy.endTime = endTime;
-    copy.myTitle = myTitle;
-    copy.myTooltip = myTooltip;
-    copy.myHint = myHint;
-    copy.myResult = myResult;
-    copy.myAutoExpandNode = myAutoExpandNode;
-    copy.myNavigatable = myNavigatable;
-    copy.myPreferredIconValue = myPreferredIconValue;
-    copy.myErrors.set(myErrors.get());
-    copy.myWarnings.set(myWarnings.get());
-    copy.myFilter = myFilter;
-    copy.myName = myName;
-    copy.myClosedIcon = myClosedIcon;
-    return copy;
+    else if (kind == MessageEvent.Kind.INFO) {
+      myInfos.incrementAndGet();
+    }
   }
 
   private String getCurrentHint() {

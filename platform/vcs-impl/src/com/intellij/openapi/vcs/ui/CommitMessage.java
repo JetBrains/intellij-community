@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -44,7 +45,6 @@ import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
 import static javax.swing.BorderFactory.createEmptyBorder;
@@ -131,7 +131,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @NotNull
   private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
-    Set<EditorCustomization> features = newHashSet();
+    Set<EditorCustomization> features = new HashSet<>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {

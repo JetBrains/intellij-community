@@ -71,7 +71,7 @@ public class PluginInstaller {
     List<String> hosts = ContainerUtil.newSmartList();
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
-    Map<PluginId, IdeaPluginDescriptor> allPlugins = ContainerUtil.newHashMap();
+    Map<PluginId, IdeaPluginDescriptor> allPlugins = new HashMap<>();
     for (String host : hosts) {
       try {
         List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, indicator);

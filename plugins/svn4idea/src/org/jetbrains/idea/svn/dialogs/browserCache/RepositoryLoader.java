@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -18,10 +17,11 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 
 class RepositoryLoader extends Loader {
@@ -32,7 +32,7 @@ class RepositoryLoader extends Loader {
   RepositoryLoader(@NotNull SvnRepositoryCache cache) {
     super(cache);
 
-    myLoadQueue = ContainerUtil.newLinkedList();
+    myLoadQueue = new LinkedList<>();
     myQueueProcessorActive = false;
   }
 
@@ -87,7 +87,7 @@ class RepositoryLoader extends Loader {
 
   private class LoadTask extends Task.Backgroundable {
     @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
-    @NotNull private final List<DirectoryEntry> entries = newArrayList();
+    @NotNull private final List<DirectoryEntry> entries = new ArrayList<>();
     @Nullable private String error;
 
     private LoadTask(@NotNull Pair<RepositoryTreeNode, Expander> data) {

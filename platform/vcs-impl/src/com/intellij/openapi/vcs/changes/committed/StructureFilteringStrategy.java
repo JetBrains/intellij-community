@@ -160,7 +160,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       Object userObject = node.getUserObject();
 
       if (userObject instanceof FilePath) {
-        result = ContainerUtil.list(((FilePath)userObject));
+        result = Collections.singletonList(((FilePath)userObject));
       }
       else if (userObject instanceof Module) {
         result = ContainerUtil.map(ModuleRootManager.getInstance((Module)userObject).getContentRoots(), VcsUtil::getFilePath);

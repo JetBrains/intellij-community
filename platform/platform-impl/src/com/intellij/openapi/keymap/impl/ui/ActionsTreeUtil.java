@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -54,8 +54,8 @@ public class ActionsTreeUtil {
   }
 
   public static Map<String, String> createPluginActionsMap() {
-    Set<PluginId> visited = ContainerUtil.newHashSet();
-    Map<String, String> result = ContainerUtil.newHashMap();
+    Set<PluginId> visited = new HashSet<>();
+    Map<String, String> result = new HashMap<>();
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();
       visited.add(id);

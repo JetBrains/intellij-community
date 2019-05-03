@@ -64,7 +64,7 @@ public final class HgLogProvider implements VcsLogProvider {
   @Override
   @NotNull
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException {
-    Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
+    Set<VcsUser> userRegistry = new HashSet<>();
     List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<>(userRegistry),
                                                                Collections.emptyList());
     for (TimedVcsCommit commit : commits) {
@@ -196,7 +196,7 @@ public final class HgLogProvider implements VcsLogProvider {
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
                                                        int maxCount) {
-    List<String> filterParameters = ContainerUtil.newArrayList();
+    List<String> filterParameters = new ArrayList<>();
 
     // branch filter and user filter may be used several times without delimiter
     VcsLogBranchFilter branchFilter = filterCollection.get(VcsLogFilterCollection.BRANCH_FILTER);
@@ -209,7 +209,7 @@ public final class HgLogProvider implements VcsLogProvider {
 
       Collection<String> branchNames = repository.getBranches().keySet();
       Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repository.getBookmarks());
-      Collection<String> predefinedNames = ContainerUtil.list(TIP_REFERENCE);
+      Collection<String> predefinedNames = Collections.singletonList(TIP_REFERENCE);
 
       boolean atLeastOneBranchExists = false;
       for (String branchName : ContainerUtil.concat(branchNames, bookmarkNames, predefinedNames)) {

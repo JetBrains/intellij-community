@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -41,7 +40,7 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
     final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
     if (annotationCollector == null) return null;
 
-    final ArrayList<GrAnnotation> aliasedAnnotations = ContainerUtil.newArrayList();
+    final ArrayList<GrAnnotation> aliasedAnnotations = new ArrayList<>();
     GrAnnotationCollector.collectAnnotations(aliasedAnnotations, annotation, annotationCollector);
     return aliasedAnnotations;
   }
@@ -53,7 +52,7 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
       return false;
     }
 
-    final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
+    final ArrayList<GrAnnotation> annotations = new ArrayList<>();
     final Set<String> usedAttributes = GrAnnotationCollector.collectAnnotations(annotations, annotation, annotationCollector);
 
     AliasedAnnotationHolder aliasedHolder = new AliasedAnnotationHolder(holder, annotation);

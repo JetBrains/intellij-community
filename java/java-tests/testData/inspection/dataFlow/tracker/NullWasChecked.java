@@ -1,6 +1,6 @@
 /*
 Value is always false (s == null)
-  Condition 's != null' was checked before (null == s)
+  's' is known to be 'non-null' from line #7 (null == s)
  */
 class Test {
   void test(String s) {

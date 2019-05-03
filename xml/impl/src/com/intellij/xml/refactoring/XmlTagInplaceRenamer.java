@@ -16,9 +16,12 @@
 
 package com.intellij.xml.refactoring;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -149,17 +152,7 @@ public class XmlTagInplaceRenamer {
     final ASTNode selected = pair.first;
     final ASTNode other = pair.second;
 
-    builder.replaceElement(selected.getPsi(), PRIMARY_VARIABLE_NAME, new EmptyExpression() {
-      @Override
-      public Result calculateQuickResult(final ExpressionContext context) {
-        return new TextResult(selected.getText());
-      }
-
-      @Override
-      public Result calculateResult(final ExpressionContext context) {
-        return new TextResult(selected.getText());
-      }
-    }, true);
+    builder.replaceElement(selected.getPsi(), PRIMARY_VARIABLE_NAME, new ConstantNode(selected.getText()), true);
 
     if (other != null) {
       builder.replaceElement(other.getPsi(), OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);

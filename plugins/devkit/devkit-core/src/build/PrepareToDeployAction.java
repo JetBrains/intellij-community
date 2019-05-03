@@ -61,7 +61,7 @@ public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
     if (module != null && PluginModuleType.isOfType(module)) {
-      doPrepare(Arrays.asList(module), e.getProject());
+      doPrepare(Collections.singletonList(module), e.getProject());
     }
   }
 

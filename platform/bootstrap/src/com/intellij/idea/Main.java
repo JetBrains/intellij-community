@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public class Main {
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final String[] NO_ARGS = {};
+  private static final String[] NO_ARGS = ArrayUtil.EMPTY_STRING_ARRAY;
   private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions");
   private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");

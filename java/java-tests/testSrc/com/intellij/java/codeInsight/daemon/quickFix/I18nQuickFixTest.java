@@ -18,7 +18,9 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.i18n.I18nInspection;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +44,12 @@ public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void beforeActionStarted(final String testName, final String contents) {
     myMustBeAvailableAfterInvoke = Comparing.strEqual(testName, "SystemCall.java");
+  }
+
+  @Override
+  public void runSingle() throws Throwable {
+    VfsGuardian.guard(FileUtil.toSystemIndependentName(PathManager.getCommunityHomePath()), getTestRootDisposable());
+    super.runSingle();
   }
 
   @Override

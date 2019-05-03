@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -40,16 +40,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
@@ -128,7 +123,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                  @NotNull RepositoryLocation location,
                                                  int maxCount) throws VcsException {
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
-    List<SvnChangeList> result = newArrayList();
+    List<SvnChangeList> result = new ArrayList<>();
     Url repositoryRoot = getRepositoryRoot(svnLocation);
     ThrowableConsumer<LogEntry, SvnBindException> resultConsumer =
       logEntry -> result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
@@ -339,7 +334,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     // TODO: could only be used with url targets - so we could not use "svn diff" here now for all cases (we could not use url with
     // TODO: concrete revision as there could be mixed revision working copy).
 
-    Set<FilePath> result = newHashSet();
+    Set<FilePath> result = new HashSet<>();
     File rootFile = root.getIOFile();
 
     myVcs.getFactory(rootFile).createStatusClient()

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -10,11 +10,11 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ExcludedFiles {
-  private final List<FileSetDescriptor> myDescriptors = ContainerUtil.newArrayList();
+  private final List<FileSetDescriptor> myDescriptors = new ArrayList<>();
   private final State myState = new State();
 
   public void serializeInto(@NotNull Element element) {

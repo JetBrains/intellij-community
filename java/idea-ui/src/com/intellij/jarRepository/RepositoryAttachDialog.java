@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
@@ -23,9 +23,9 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.THashMap;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NonNls;
@@ -84,8 +84,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private final JComboBox myCombobox;
 
-  private final Map<String, RepositoryArtifactDescription> myCoordinates = ContainerUtil.newTroveMap();
-  private final List<String> myShownItems = ContainerUtil.newArrayList();
+  private final Map<String, RepositoryArtifactDescription> myCoordinates = new THashMap<>();
+  private final List<String> myShownItems = new ArrayList<>();
   private final String myDefaultDownloadFolder;
 
   private String myFilterString;

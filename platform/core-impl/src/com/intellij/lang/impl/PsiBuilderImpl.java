@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -214,6 +214,21 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return null;
   }
 
+  @Nullable
+  public List<ProductionMarker> getProductions() {
+    return new AbstractList<ProductionMarker>() {
+      @Override
+      public ProductionMarker get(int index) {
+        return myProduction.getMarkerAt(index);
+      }
+
+      @Override
+      public int size() {
+        return myProduction.size();
+      }
+    };
+  }
+
   private interface Node extends LighterASTNode {
     int hc();
   }
@@ -256,7 +271,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     abstract WhitespacesAndCommentsBinder getBinder(boolean done);
 
     abstract void setLexemeIndex(int lexemeIndex, boolean done);
-    
+
     abstract int getLexemeIndex(boolean done);
   }
 
@@ -596,16 +611,16 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private TokenSequence getParsedTokenSequence() {
       int tokenCount = myEndIndex - myStartIndex;
       if (tokenCount == 1) return null; // not expand single lazy parseable token case
-      
+
       int[] lexStarts = new int[tokenCount + 1];
       System.arraycopy(myBuilder.myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
       int diff = myBuilder.myLexStarts[myStartIndex];
       for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
       lexStarts[tokenCount] = getEndOffset() - getStartOffset();
-      
+
       IElementType[] lexTypes = new IElementType[tokenCount + 1];
       System.arraycopy(myBuilder.myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
-      
+
       return new TokenSequence(lexStarts, lexTypes, tokenCount);
     }
   }
@@ -623,7 +638,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       myMessage = null;
     }
 
-    @NotNull
     @Override
     public WhitespacesAndCommentsBinder getBinder(boolean done) {
       assert !done;
@@ -650,6 +664,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public int getEndOffset() {
       return myBuilder.myLexStarts[myLexemeIndex] + myBuilder.myOffset;
+    }
+
+    @Override
+    public int getEndIndex() {
+      return getStartIndex();
     }
 
     @NotNull
@@ -889,7 +908,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @Override
   public void error(@NotNull String messageText) {
-    ProductionMarker lastMarker = myProduction.getStartingMarkerAt(myProduction.size() - 1);
+    ProductionMarker lastMarker = myProduction.getStartMarkerAt(myProduction.size() - 1);
     if (lastMarker instanceof ErrorItem && lastMarker.myLexemeIndex == myCurrentLexeme) {
       return;
     }
@@ -1008,7 +1027,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       LOG.error("Parser produced no markers. Text:\n" + myText);
     }
     // build tree only once to avoid threading issues in read-only PSI
-    StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartingMarkerAt(0));
+    StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartMarkerAt(0));
     if (rootMarker.myFirstChild != null) return rootMarker;
 
     myOptionalData.compact();
@@ -1018,14 +1037,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
-    final Stack<StartMarker> nodes = ContainerUtil.newStack();
+    final Stack<StartMarker> nodes = new Stack<>();
     nodes.push(rootMarker);
 
     int lastErrorIndex = -1;
     int maxDepth = 0;
     int curDepth = 0;
     for (int i = 1; i < myProduction.size(); i++) {
-      ProductionMarker item = myProduction.getStartingMarkerAt(i);
+      ProductionMarker item = myProduction.getStartMarkerAt(i);
 
       if (item instanceof StartMarker) {
         final StartMarker marker = (StartMarker)item;
@@ -1091,7 +1110,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     int lastIndex = 0;
 
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
-      ProductionMarker starting = myProduction.getStartingMarkerAt(i);
+      ProductionMarker starting = myProduction.getStartMarkerAt(i);
       if (starting instanceof StartMarker) {
         assertMarkersBalanced(((StartMarker)starting).isDone(), starting);
       }

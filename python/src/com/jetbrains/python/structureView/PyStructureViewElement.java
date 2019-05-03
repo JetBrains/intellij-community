@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -151,7 +150,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   private Collection<PyElement> getElementChildren(final PyElement element) {
-    Collection<PyElement> children = ContainerUtil.newLinkedHashSet();
+    Collection<PyElement> children = new LinkedHashSet<>();
     PyPsiUtils.assertValid(element);
     element.acceptChildren(new PyElementVisitor() {
       @Override

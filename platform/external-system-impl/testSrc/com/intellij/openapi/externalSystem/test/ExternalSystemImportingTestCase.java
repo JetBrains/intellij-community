@@ -372,7 +372,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   @NotNull
   private <T> List<T> getModuleDep(@NotNull String moduleName, @NotNull String depName, @NotNull Class<T> clazz) {
-    List<T> deps = ContainerUtil.newArrayList();
+    List<T> deps = new ArrayList<>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
       if (clazz.isInstance(e) && e.getPresentableName().equals(depName)) {
@@ -554,7 +554,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     final AtomicInteger counter = new AtomicInteger();
     Messages.setTestDialog(new TestDialog() {
       @Override
-      public int show(String message) {
+      public int show(@NotNull String message) {
         counter.set(counter.get() + 1);
         return 0;
       }
@@ -566,7 +566,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     final AtomicInteger counter = new AtomicInteger();
     Messages.setTestDialog(new TestDialog() {
       @Override
-      public int show(String message) {
+      public int show(@NotNull String message) {
         counter.set(counter.get() + 1);
         return 1;
       }

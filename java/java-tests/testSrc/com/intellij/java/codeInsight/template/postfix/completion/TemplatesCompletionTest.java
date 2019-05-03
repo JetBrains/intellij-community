@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template.postfix.completion;
 
 import com.intellij.JavaTestUtil;
@@ -16,6 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   @Override
   public void setUp() throws Exception {
@@ -28,7 +30,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     try {
       PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
       assertNotNull(settings);
-      settings.setProviderToDisabledTemplates(ContainerUtil.newHashMap());
+      settings.setProviderToDisabledTemplates(new HashMap<>());
       settings.setPostfixTemplatesEnabled(true);
       settings.setTemplatesCompletionEnabled(true);
     }

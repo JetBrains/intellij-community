@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.laf.intellij.MacIntelliJProgressBarUI;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -15,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.ui.JBColor.namedColor;
@@ -101,7 +101,7 @@ public abstract class ProgressStripeIcon implements Icon {
 
   @NotNull
   public static AsyncProcessIcon generateIcon(@NotNull JComponent component) {
-    List<Icon> result = ContainerUtil.newArrayList();
+    List<Icon> result = new ArrayList<>();
     for (int i = 0; i < 2 * JBUI.scale(GradientIcon.GRADIENT); i += JBUI.scale(TRANSLATE)) {
       result.add(new GradientIcon(component, i));
     }

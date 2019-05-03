@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -132,7 +118,7 @@ public class GitPushOperation {
     mySettings = GitVcsSettings.getInstance(myProject);
     myRepositoryManager = GitRepositoryManager.getInstance(myProject);
 
-    Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
+    Map<GitRepository, GitRevisionNumber> currentHeads = new HashMap<>();
     for (GitRepository repository : pushSpecs.keySet()) {
       repository.update();
       String head = repository.getCurrentRevision();
@@ -155,8 +141,8 @@ public class GitPushOperation {
     Map<GitRepository, String> preUpdatePositions = updateRootInfoAndRememberPositions();
     Boolean rebaseOverMergeProblemDetected = null;
 
-    final Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
-    Map<GitRepository, GitUpdateResult> updatedRoots = ContainerUtil.newHashMap();
+    final Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
+    Map<GitRepository, GitUpdateResult> updatedRoots = new HashMap<>();
 
     try {
       Collection<GitRepository> remainingRoots = myPushSpecs.keySet();
@@ -303,7 +289,7 @@ public class GitPushOperation {
                                               @NotNull Map<GitRepository, String> preUpdatePositions,
                                               @Nullable Label beforeUpdateLabel,
                                               @Nullable Label afterUpdateLabel) {
-    Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
+    Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : allRoots.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -322,7 +308,7 @@ public class GitPushOperation {
 
   @NotNull
   private Map<GitRepository, GitPushRepoResult> push(@NotNull List<GitRepository> repositories) {
-    Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newLinkedHashMap();
+    Map<GitRepository, GitPushRepoResult> results = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
       ResultWithOutput resultWithOutput = doPush(repository, spec);
@@ -443,15 +429,15 @@ public class GitPushOperation {
     UpdateMethod updateMethod = settings.getUpdateMethod();
     mySettings.setUpdateAllRootsIfPushRejected(settings.shouldUpdateAllRoots());
     if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
-        && mySettings.getUpdateType() != updateMethod && mySettings.getUpdateType() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
-      mySettings.setUpdateType(updateMethod);
+        && mySettings.getUpdateMethod() != updateMethod && mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
+      mySettings.setUpdateMethod(updateMethod);
     }
   }
 
   @NotNull
   private PushUpdateSettings readPushUpdateSettings() {
     boolean updateAllRoots = mySettings.shouldUpdateAllRootsIfPushRejected();
-    UpdateMethod updateMethod = mySettings.getUpdateType();
+    UpdateMethod updateMethod = mySettings.getUpdateMethod();
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
       updateMethod = GitUpdater.resolveUpdateMethod(myPushSpecs.keySet().iterator().next());

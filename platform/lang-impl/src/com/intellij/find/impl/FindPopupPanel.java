@@ -211,6 +211,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       };
       myDialog.setUndecorated(!Registry.is("ide.find.as.popup.decorated"));
 
+      Disposer.register(myProject, new Disposable() {
+        @Override
+        public void dispose() {
+          closeImmediately();
+        }
+      });
       Disposer.register(myDialog.getDisposable(), myDisposable);
 
       final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
@@ -341,6 +347,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   }
 
   protected boolean canBeClosed() {
+    if (myProject.isDisposed()) return true;
     if (!myCanClose.get()) return false;
     if (myIsPinned.get()) return false;
     if (!ApplicationManager.getApplication().isActive()) return false;
@@ -631,7 +638,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     DumbAwareAction.create(__ -> myReplaceAllButton.doClick()).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);
     myReplaceAllButton.setToolTipText(KeymapUtil.getKeystrokeText(REPLACE_ALL));
 
-    List<Shortcut> navigationKeyStrokes = ContainerUtil.newArrayList();
+    List<Shortcut> navigationKeyStrokes = new ArrayList<>();
     KeyStroke viewSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getViewSource());
     if (viewSourceKeyStroke != null && !Comparing.equal(viewSourceKeyStroke, ENTER_WITH_MODIFIERS) && !Comparing.equal(viewSourceKeyStroke, ENTER)) {
       navigationKeyStrokes.add(new KeyboardShortcut(viewSourceKeyStroke, null));
@@ -1499,7 +1506,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       int row = rows[i];
       Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
       if (valueAt instanceof Usage) {
-        if (result == null) result = ContainerUtil.newLinkedHashMap();
+        if (result == null) result = new LinkedHashMap<>();
         result.put(row, (Usage)valueAt);
       }
     }

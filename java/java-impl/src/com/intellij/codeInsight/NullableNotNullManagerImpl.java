@@ -240,8 +240,10 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       if (container instanceof PsiPackage) {
         PsiFile file = annotation.getContainingFile();
         ProjectFileIndex index = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
-        VirtualFile annotationRoot = index.getClassRootForFile(file.getVirtualFile());
-        VirtualFile ownerRoot = index.getClassRootForFile(owner.getContainingFile().getVirtualFile());
+        VirtualFile annotationFile = file.getVirtualFile();
+        VirtualFile annotationRoot = annotationFile == null ? null : index.getClassRootForFile(annotationFile);
+        VirtualFile ownerFile = owner.getContainingFile().getVirtualFile();
+        VirtualFile ownerRoot = ownerFile == null ? null : index.getClassRootForFile(ownerFile);
         if (ownerRoot != null && !ownerRoot.equals(annotationRoot)) {
           continue;
         }
