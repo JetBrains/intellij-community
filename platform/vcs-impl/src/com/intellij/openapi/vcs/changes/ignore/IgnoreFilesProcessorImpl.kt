@@ -31,7 +31,7 @@ import kotlin.concurrent.write
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
-class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
+class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: Disposable)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
@@ -41,7 +41,7 @@ class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-  init {
+  fun install() {
     runReadAction {
       if (!project.isDisposed) {
         changeListManager.addChangeListListener(this, parentDisposable)

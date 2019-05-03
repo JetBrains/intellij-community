@@ -1,12 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
-import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,9 +12,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -32,23 +28,27 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.map2Map;
 
 public class GitVFSListener extends VcsVFSListener {
-  /**
-   * More than zero if events are suppressed
-   */
-  private final AtomicInteger myEventsSuppressLevel = new AtomicInteger(0);
   private final Git myGit;
   private final GitVcsConsoleWriter myVcsConsoleWriter;
 
-  public GitVFSListener(@NotNull Project project, @NotNull GitVcs vcs, @NotNull  Git git, @NotNull GitVcsConsoleWriter vcsConsoleWriter) {
-    super(project, vcs);
+  private GitVFSListener(@NotNull GitVcs vcs, @NotNull Git git, @NotNull GitVcsConsoleWriter vcsConsoleWriter) {
+    super(vcs);
     myGit = git;
     myVcsConsoleWriter = vcsConsoleWriter;
+  }
+
+  @NotNull
+  public static GitVFSListener createInstance(@NotNull GitVcs vcs,
+                                              @NotNull Git git,
+                                              @NotNull GitVcsConsoleWriter vcsConsoleWriter) {
+    GitVFSListener listener = new GitVFSListener(vcs, git, vcsConsoleWriter);
+    listener.installListeners();
+    return listener;
   }
 
   /**
@@ -125,11 +125,6 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
-  @NotNull
-  private VcsRepositoryIgnoredFilesHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
-    return ObjectUtils.assertNotNull(GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
-  }
-
   /**
    * The version of execute add before overriding
    *
@@ -144,10 +139,6 @@ public class GitVFSListener extends VcsVFSListener {
   protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
     performAdding(ObjectsConvertor.vf2fp(new ArrayList<>(addedFiles)));
-  }
-
-  private GitVcs gitVcs() {
-    return ((GitVcs)myVcs);
   }
 
   private void performAdding(Collection<FilePath> filesToAdd) {

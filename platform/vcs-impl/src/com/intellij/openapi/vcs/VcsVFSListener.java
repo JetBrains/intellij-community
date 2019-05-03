@@ -67,28 +67,46 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
-  private final FilesProcessor myProjectConfigurationFilesProcessor;
-  protected final FilesProcessor myExternalFilesProcessor;
+  private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;
+  protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
-  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
-    myProject = project;
+  /**
+   * @see #installListeners()
+   */
+  protected VcsVFSListener(@NotNull AbstractVcs vcs) {
+    myProject = vcs.getProject();
     myVcs = vcs;
-    myChangeListManager = ChangeListManager.getInstance(project);
-    myVcsIgnoreManager = VcsIgnoreManager.getInstance(project);
+    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myVcsIgnoreManager = VcsIgnoreManager.getInstance(myProject);
 
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
-    project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
 
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
-    createIgnoredFilesProcessor();
+  }
+
+  /**
+   * @deprecated Use {@link #VcsVFSListener(AbstractVcs)} followed by {@link #installListeners()}
+   */
+  @Deprecated
+  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
+    this(vcs);
+    installListeners();
+  }
+
+  protected void installListeners() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+    myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
+
+    myProjectConfigurationFilesProcessor.install();
+    myExternalFilesProcessor.install();
+    new IgnoreFilesProcessorImpl(myProject, this).install();
   }
 
   @Override
@@ -336,12 +354,8 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected abstract boolean isDirectoryVersioningSupported();
 
-  private void createIgnoredFilesProcessor() {
-    new IgnoreFilesProcessorImpl(myProject, this);
-  }
-
   @SuppressWarnings("unchecked")
-  private FilesProcessor createExternalFilesProcessor() {
+  private ExternallyAddedFilesProcessorImpl createExternalFilesProcessor() {
     return new ExternallyAddedFilesProcessorImpl(myProject,
                                                  this,
                                                  myVcs,
@@ -352,7 +366,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   @SuppressWarnings("unchecked")
-  private FilesProcessor createProjectConfigurationFilesProcessor() {
+  private ProjectConfigurationFilesProcessorImpl createProjectConfigurationFilesProcessor() {
     return new ProjectConfigurationFilesProcessorImpl(myProject,
                                                       this,
                                                       myVcs.getDisplayName(),
