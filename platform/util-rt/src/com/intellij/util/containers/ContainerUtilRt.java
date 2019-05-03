@@ -142,14 +142,6 @@ public class ContainerUtilRt {
     return new LinkedList<T>();
   }
 
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
-    final LinkedList<T> list = new LinkedList<T>();
-    Collections.addAll(list, elements);
-    return list;
-  }
-
   /**
    * Use only for {@link Iterable}, for {@link Collection} please use {@link LinkedList#LinkedList(Collection)} directly.
    */
@@ -185,7 +177,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  private static <T, C extends Collection<T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
+  protected static <T, C extends Collection<T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
     for (T element : elements) {
       collection.add(element);
     }
@@ -239,16 +231,6 @@ public class ContainerUtilRt {
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
     return new LinkedHashSet<T>(Arrays.asList(elements));
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
-    if (elements instanceof Collection) {
-      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
-      return new LinkedHashSet<T>(collection);
-    }
-    return copy(new LinkedHashSet<T>(), elements);
   }
 
   /**

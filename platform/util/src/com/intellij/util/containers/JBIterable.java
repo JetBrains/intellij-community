@@ -177,7 +177,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E... elements) {
-    return elements == null || elements.length == 0 ? JBIterable.empty() : from(ContainerUtilRt.newArrayList(elements));
+    return elements == null || elements.length == 0 ? empty() : from(ContainerUtilRt.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new Empty();
@@ -669,7 +669,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<List<E>> split(final int size, final boolean strict) {
     return split(size).filterMap(es -> {
-      List<E> list = es.addAllTo(new ArrayList<E>(size));
+      List<E> list = es.addAllTo(new ArrayList<>(size));
       return strict && list.size() < size ? null : list;
     });
   }
@@ -796,7 +796,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> collect() {
     if (content instanceof Collection) return this;
-    return collect(new ArrayList<E>());
+    return collect(new ArrayList<>());
   }
 
   /**
@@ -805,7 +805,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
-    ArrayList<E> list = addAllTo(new ArrayList<E>());
+    ArrayList<E> list = addAllTo(new ArrayList<>());
     list.sort(comparator);
     return from(list);
   }
@@ -834,9 +834,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final Set<E> toSet() {
-    Iterable<E> itt = asIterable();
-    if (itt == null) return Collections.singleton((E)content);
-    return Collections.unmodifiableSet(ContainerUtilRt.newLinkedHashSet(itt));
+    Iterable<E> iterable = asIterable();
+    if (iterable == null) {
+      return Collections.singleton((E)content);
+    }
+    return Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(iterable));
   }
 
   /**

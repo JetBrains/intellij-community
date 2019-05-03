@@ -13,7 +13,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCon
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -174,7 +174,7 @@ public class ArrangementUtil {
   }
 
   public static <T> Set<T> flatten(@NotNull Iterable<? extends Iterable<T>> data) {
-    Set<T> result = new HashSet<T>();
+    Set<T> result = new HashSet<>();
     for (Iterable<T> i : data) {
       for (T t : i) {
         result.add(t);
@@ -185,7 +185,7 @@ public class ArrangementUtil {
 
   @NotNull
   public static Map<ArrangementSettingsToken, Object> extractTokens(@NotNull ArrangementMatchCondition condition) {
-    final Map<ArrangementSettingsToken, Object> result = new HashMap<ArrangementSettingsToken, Object>();
+    final Map<ArrangementSettingsToken, Object> result = new HashMap<>();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
@@ -287,8 +287,8 @@ public class ArrangementUtil {
 
   @NotNull
   public static List<CompositeArrangementSettingsToken> flatten(@NotNull CompositeArrangementSettingsToken base) {
-    List<CompositeArrangementSettingsToken> result = new ArrayList<CompositeArrangementSettingsToken>();
-    Queue<CompositeArrangementSettingsToken> toProcess = ContainerUtilRt.newLinkedList(base);
+    List<CompositeArrangementSettingsToken> result = new ArrayList<>();
+    Queue<CompositeArrangementSettingsToken> toProcess = ContainerUtil.newLinkedList(base);
     while (!toProcess.isEmpty()) {
       CompositeArrangementSettingsToken token = toProcess.remove();
       result.add(token);

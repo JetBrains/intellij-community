@@ -179,7 +179,9 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
-    return ContainerUtilRt.newLinkedList(elements);
+    final LinkedList<T> list = new LinkedList<T>();
+    Collections.addAll(list, elements);
+    return list;
   }
 
   /**
@@ -393,7 +395,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.newLinkedHashSet(elements);
+    if (elements instanceof Collection) {
+      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
+      return new LinkedHashSet<T>(collection);
+    }
+    return copy(new LinkedHashSet<T>(), elements);
   }
 
   @SafeVarargs
