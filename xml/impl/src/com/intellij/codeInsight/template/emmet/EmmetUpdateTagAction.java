@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbAware, PopupAction {
@@ -87,7 +88,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
 
       final Collection<String> classNames = ContainerUtil.newLinkedHashSet();
       ContainerUtil.addAll(classNames, HtmlUtil.splitClassNames(tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME)));
-      final Map<String, String> attributes = ContainerUtil.newLinkedHashMap();
+      final Map<String, String> attributes = new LinkedHashMap<>();
       final Ref<String> newTagName = Ref.create();
       processTags(file.getProject(), templateText, (tag1, firstTag) -> {
         if (firstTag && !abbreviation.isEmpty() && StringUtil.isJavaIdentifierPart(abbreviation.charAt(0))) {

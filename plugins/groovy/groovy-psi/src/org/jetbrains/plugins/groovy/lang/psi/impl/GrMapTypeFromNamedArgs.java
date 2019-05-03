@@ -38,7 +38,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     @NotNull
     @Override
     protected LinkedHashMap<String, PsiType> compute() {
-      LinkedHashMap<String, PsiType> result = ContainerUtil.newLinkedHashMap();
+      LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
       for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
         result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
       }
@@ -54,7 +54,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   public GrMapTypeFromNamedArgs(@NotNull JavaPsiFacade facade, @NotNull GlobalSearchScope scope, @NotNull GrNamedArgument[] namedArgs) {
     super(facade, scope);
 
-    myStringEntries = ContainerUtil.newLinkedHashMap();
+    myStringEntries = new LinkedHashMap<>();
     myOtherEntries = ContainerUtil.newArrayList();
     for (GrNamedArgument namedArg : namedArgs) {
       final GrArgumentLabel label = namedArg.getLabel();

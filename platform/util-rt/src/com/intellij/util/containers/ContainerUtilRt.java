@@ -76,26 +76,43 @@ public class ContainerUtilRt {
     return new TreeMap<K, V>();
   }
 
+  /**
+   * @deprecated Use {@link TreeMap#TreeMap(Map)})}
+   */
+  @SuppressWarnings("unused")
   @NotNull
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return new TreeMap<K, V>(map);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()})})}
+   */
   @NotNull
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<K, V>();
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)})})})}
+   */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
     return new LinkedHashMap<K, V>(capacity);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)})})})})}
+   */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return new LinkedHashMap<K, V>(map);
   }
@@ -103,7 +120,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_,_ -> new", pure = true)
   public static <K, V> LinkedHashMap<K,V> newLinkedHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
-    LinkedHashMap<K, V> map = newLinkedHashMap();
+    LinkedHashMap<K, V> map = new LinkedHashMap<K, V>();
     map.put(first.getFirst(), first.getSecond());
     for (Pair<? extends K, ? extends V> entry : entries) {
       map.put(entry.getFirst(), entry.getSecond());

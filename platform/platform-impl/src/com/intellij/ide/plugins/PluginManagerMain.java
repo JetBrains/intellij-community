@@ -303,7 +303,7 @@ public abstract class PluginManagerMain implements Disposable {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
-      Map<String, String> errors = ContainerUtil.newLinkedHashMap();
+      Map<String, String> errors = new LinkedHashMap<>();
       ProgressIndicator indicator = new EmptyProgressIndicator();
 
       List<String> hosts = RepositoryHelper.getPluginHosts();

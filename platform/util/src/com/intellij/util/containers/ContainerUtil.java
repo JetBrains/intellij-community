@@ -74,20 +74,32 @@ public class ContainerUtil extends ContainerUtilRt {
     return new TreeMap<>(map);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()})})}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<>();
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)})})})}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
     return new LinkedHashMap<>(capacity);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)})})})})}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return new LinkedHashMap<>(map);
   }

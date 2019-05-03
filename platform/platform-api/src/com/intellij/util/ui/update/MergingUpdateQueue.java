@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -387,7 +388,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(@NotNull Update update) {
-    Map<Update, Update> updates = myScheduledUpdates.computeIfAbsent(update.getPriority(), __ -> ContainerUtil.newLinkedHashMap());
+    Map<Update, Update> updates = myScheduledUpdates.computeIfAbsent(update.getPriority(), __ -> new LinkedHashMap<>());
     final Update existing = updates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();

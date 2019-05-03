@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,10 +29,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.*;
 import java.io.File;
 import java.net.URL;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.*;
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.SCALE;
@@ -57,7 +40,7 @@ final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
 
   private final Set<Painter> myPainters = ContainerUtil.newLinkedHashSet();
-  private final Map<Painter, Component> myPainter2Component = ContainerUtil.newLinkedHashMap();
+  private final Map<Painter, Component> myPainter2Component = new LinkedHashMap<>();
 
   private final JComponent myRootComponent;
 
@@ -283,7 +266,7 @@ final class PaintersHelper implements Painter.Listener {
       this.dst = dst;
     }
   }
-  
+
   private abstract static class ImagePainter extends AbstractPainter {
 
     final Map<GraphicsConfiguration, Cached> cachedMap = ContainerUtil.newHashMap();

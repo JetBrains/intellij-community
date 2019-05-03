@@ -3,10 +3,10 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -21,7 +21,7 @@ public class FUSUsageContext {
   private final Map<String, String> data;
 
   private FUSUsageContext(@NotNull String... data) {
-    this.data = ContainerUtil.newLinkedHashMap(data.length);
+    this.data = new LinkedHashMap<>(data.length);
     for (int i = 1; i < data.length + 1; i++) {
       String contextData = data[i - 1];
       if (StringUtil.isEmptyOrSpaces(contextData)) continue;

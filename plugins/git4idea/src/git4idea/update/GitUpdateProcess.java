@@ -39,7 +39,10 @@ import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitUtil.getRootsFromRepositories;
@@ -92,7 +95,7 @@ public class GitUpdateProcess {
       repository.update();
     }
 
-    mySubmodulesInDetachedHead = ContainerUtil.newLinkedHashMap();
+    mySubmodulesInDetachedHead = new LinkedHashMap<>();
     for (GitRepository repository : myRepositories) {
       if (!repository.isOnBranch()) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
@@ -326,7 +329,7 @@ public class GitUpdateProcess {
   private Map<GitRepository, GitBranchPair> checkTrackedBranchesConfiguration() {
     LOG.info("checking tracked branch configuration...");
 
-    Map<GitRepository, GitLocalBranch> currentBranches = ContainerUtil.newLinkedHashMap();
+    Map<GitRepository, GitLocalBranch> currentBranches = new LinkedHashMap<>();
     List<GitRepository> detachedHeads = ContainerUtil.newArrayList();
     for (GitRepository repository : myRepositories) {
       if (mySubmodulesInDetachedHead.containsKey(repository)) {
@@ -354,7 +357,7 @@ public class GitUpdateProcess {
       }
     }
 
-    Map<GitRepository, GitBranchPair> trackedBranches = ContainerUtil.newLinkedHashMap();
+    Map<GitRepository, GitBranchPair> trackedBranches = new LinkedHashMap<>();
     List<GitRepository> noTrackedBranch = ContainerUtil.newArrayList();
     for (GitRepository repository: currentBranches.keySet()) {
       GitLocalBranch branch = currentBranches.get(repository);

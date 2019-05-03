@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.openapi.project.Project;
@@ -21,10 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
@@ -68,7 +65,7 @@ public class GrAnnotationCollector {
 
     final PsiModifierList modifierList = (PsiModifierList)annotationCollector.getParent();
 
-    Map<String, Map<String, PsiNameValuePair>> annotations = ContainerUtil.newLinkedHashMap();
+    Map<String, Map<String, PsiNameValuePair>> annotations = new LinkedHashMap<>();
     collectAliasedAnnotationsFromAnnotationCollectorValueAttribute(annotationCollector, annotations);
     collectAliasedAnnotationsFromAnnotationCollectorAnnotations(modifierList, annotations);
 
@@ -121,14 +118,14 @@ public class GrAnnotationCollector {
       for (PsiNameValuePair pair : attributes) {
         Map<String, PsiNameValuePair> map = annotations.get(qname);
         if (map == null) {
-          map = ContainerUtil.newLinkedHashMap();
+          map = new LinkedHashMap<>();
           annotations.put(qname, map);
         }
 
         map.put(pair.getName() != null ? pair.getName() : "value", pair);
       }
       if (attributes.length == 0 && !annotations.containsKey(qname)) {
-        annotations.put(qname, ContainerUtil.newLinkedHashMap());
+        annotations.put(qname, new LinkedHashMap<>());
       }
     }
   }
@@ -142,7 +139,7 @@ public class GrAnnotationCollector {
         if (member instanceof GrReferenceExpression) {
           final PsiElement resolved = ((GrReferenceExpression)member).resolve();
           if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-            annotations.put(((PsiClass)resolved).getQualifiedName(), ContainerUtil.newLinkedHashMap());
+            annotations.put(((PsiClass)resolved).getQualifiedName(), new LinkedHashMap<>());
           }
         }
       }

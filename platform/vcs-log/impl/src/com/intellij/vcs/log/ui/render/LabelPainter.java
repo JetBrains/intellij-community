@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -199,7 +199,7 @@ public class LabelPainter {
 
   @NotNull
   private static List<Color> getColors(@NotNull Collection<? extends RefGroup> groups) {
-    LinkedHashMap<Color, Integer> usedColors = ContainerUtil.newLinkedHashMap();
+    LinkedHashMap<Color, Integer> usedColors = new LinkedHashMap<>();
 
     for (RefGroup group : groups) {
       List<Color> colors = group.getColors();

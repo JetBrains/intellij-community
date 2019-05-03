@@ -143,7 +143,7 @@ public class GitRebaseProcess {
     LOG.info("Started rebase");
     LOG.debug("Started rebase with the following spec: " + myRebaseSpec);
 
-    Map<GitRepository, GitRebaseStatus> statuses = newLinkedHashMap(myRebaseSpec.getStatuses());
+    Map<GitRepository, GitRebaseStatus> statuses = new LinkedHashMap<>(myRebaseSpec.getStatuses());
     List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
@@ -572,7 +572,7 @@ public class GitRebaseProcess {
 
   @NotNull
   private static Map<GitRepository, GitSuccessfulRebase> getSuccessfulRepositories(@NotNull Map<GitRepository, GitRebaseStatus> statuses) {
-    Map<GitRepository, GitSuccessfulRebase> map = newLinkedHashMap();
+    Map<GitRepository, GitSuccessfulRebase> map = new LinkedHashMap<>();
     for (GitRepository repository : statuses.keySet()) {
       GitRebaseStatus status = statuses.get(repository);
       if (status instanceof GitSuccessfulRebase) map.put(repository, (GitSuccessfulRebase)status);

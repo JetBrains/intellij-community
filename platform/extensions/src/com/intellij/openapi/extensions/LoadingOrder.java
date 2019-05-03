@@ -115,8 +115,8 @@ public class LoadingOrder {
     if (orderable.size() < 2) return;
 
     // our graph is pretty sparse so do benefit from the fact
-    final Map<String, Orderable> map = ContainerUtil.newLinkedHashMap();
-    final Map<Orderable, LoadingOrder> cachedMap = ContainerUtil.newLinkedHashMap();
+    final Map<String, Orderable> map = new LinkedHashMap<>();
+    final Map<Orderable, LoadingOrder> cachedMap = new LinkedHashMap<>();
     final Set<Orderable> first = new LinkedHashSet<>(1);
     final Set<Orderable> hasBefore = new LinkedHashSet<>(orderable.size());
     for (Orderable o : orderable) {
