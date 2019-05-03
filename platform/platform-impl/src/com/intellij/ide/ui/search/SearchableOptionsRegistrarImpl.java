@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -294,30 +295,26 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                           @Nullable Set<? extends Configurable> configurables,
                                           @NotNull String option,
                                           @Nullable Project project) {
-    return findConfigurables(groups, type, configurables, option, project, false);
-  }
-
-  @NotNull
-  public ConfigurableHit findByNameOnly(@NotNull String option, @NotNull List<ConfigurableGroup> groups) {
-    return findConfigurables(groups, DocumentEvent.EventType.INSERT, null, option, /* project = */ null, /* searchByNameOnly = */ true);
+    //noinspection unchecked
+    return findConfigurables(groups, type, (Collection<Configurable>)configurables, option, project);
   }
 
   @NotNull
   private ConfigurableHit findConfigurables(@NotNull List<ConfigurableGroup> groups,
                                             final DocumentEvent.EventType type,
-                                            @Nullable Set<? extends Configurable> configurables,
+                                            @Nullable Collection<Configurable> configurables,
                                             @NotNull String option,
-                                            @Nullable Project project,
-                                            boolean searchByNameOnly) {
-    Set<Configurable> contentHits = new LinkedHashSet<>();
+                                            @Nullable Project project) {
+    Collection<Configurable> effectiveConfigurables;
     if (configurables == null) {
-      CollectConsumer<Configurable> consumer = new CollectConsumer<>(contentHits);
+      effectiveConfigurables = new LinkedHashSet<>();
+      Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
       for (ConfigurableGroup group : groups) {
         SearchUtil.processExpandedGroups(group, consumer);
       }
     }
     else {
-      contentHits.addAll(configurables);
+      effectiveConfigurables = configurables;
     }
 
     String optionToCheck = option.trim().toLowerCase(Locale.ENGLISH);
@@ -326,7 +323,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     Set<Configurable> nameHits = new LinkedHashSet<>();
     Set<Configurable> nameFullHits = new LinkedHashSet<>();
 
-    for (Configurable each : contentHits) {
+    for (Configurable each : effectiveConfigurables) {
       if (each.getDisplayName() == null) continue;
       final String displayName = each.getDisplayName().toLowerCase(Locale.ENGLISH);
       final List<String> allWords = StringUtil.getWordsIn(displayName);
@@ -347,11 +344,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
 
-    if (searchByNameOnly) {
-      return new ConfigurableHit(Collections.emptySet(), nameHits, nameFullHits);
-    }
-
-    final Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new THashSet<>(contentHits) : null;
+    Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new THashSet<>(effectiveConfigurables) : null;
     // operate with substring
     if (options.isEmpty()) {
       String[] components = REG_EXP.split(optionToCheck);
@@ -361,6 +354,14 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       else {
         options.add(option);
       }
+    }
+
+    Set<Configurable> contentHits;
+    if (configurables == null) {
+      contentHits = (Set<Configurable>)effectiveConfigurables;
+    }
+    else {
+      contentHits = new LinkedHashSet<>(effectiveConfigurables);
     }
 
     Set<String> helpIds = null;
@@ -506,8 +507,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Override
   public Set<String> getProcessedWords(@NotNull String text) {
-    Set<String> result = new HashSet<>();
-    @NonNls final String toLowerCase = text.toLowerCase();
+    Set<String> result = new THashSet<>();
+    String toLowerCase = text.toLowerCase(Locale.ENGLISH);
     final String[] options = REG_EXP.split(toLowerCase);
     for (String opt : options) {
       if (isStopWord(opt)) continue;
