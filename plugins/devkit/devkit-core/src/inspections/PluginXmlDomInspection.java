@@ -373,12 +373,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     boolean hasBeanClass = DomUtil.hasXml(extensionPoint.getBeanClass());
     boolean hasInterface = DomUtil.hasXml(extensionPoint.getInterface());
     if (hasBeanClass && hasInterface) {
-      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
-                           DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"), null);
+      highlightRedundant(extensionPoint.getBeanClass(),
+                         DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"),
+                         ProblemHighlightType.GENERIC_ERROR, holder);
+      highlightRedundant(extensionPoint.getInterface(),
+                         DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"),
+                         ProblemHighlightType.GENERIC_ERROR, holder);
     }
     else if (!hasBeanClass && !hasInterface) {
       holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
-                           DevKitBundle.message("inspections.plugin.xml.ep.missing.beanClass.and.interface"), null);
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.beanClass.and.interface"), null,
+                           new AddDomElementQuickFix<>(extensionPoint.getBeanClass()),
+                           new AddDomElementQuickFix<>(extensionPoint.getInterface()));
     }
   }
 
