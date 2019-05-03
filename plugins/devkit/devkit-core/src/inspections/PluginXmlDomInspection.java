@@ -43,6 +43,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
@@ -260,6 +261,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (!hasRealPluginId(ideaPlugin)) return;
 
+    MultiMap<String, Dependency> dependencies = MultiMap.create();
+    ideaPlugin.getDependencies().forEach(dependency -> dependencies.putValue(dependency.getStringValue(), dependency));
+    for (Map.Entry<String, Collection<Dependency>> entry : dependencies.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        for (Dependency dependency : entry.getValue()) {
+          highlightRedundant(dependency, DevKitBundle.message("inspections.plugin.xml.duplicated.dependency", entry.getKey()),
+                             ProblemHighlightType.ERROR, holder);
+        }
+      }
+    }
+
+    
     boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
 
     if (isNotIdeaProject &&
