@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.testFramework.rules.TempDirectory
@@ -59,21 +59,21 @@ class DecompressorTest {
 
   @Test fun noInternalTraversalInTar() {
     val tar = tempDir.newFile("test.tgz")
-    TarArchiveOutputStream(GzipCompressorOutputStream(FileOutputStream(tar))).use { writeEntry(it, "a/../bad.txt") }
+    TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "a/../bad.txt") }
     val dir = tempDir.newFolder("unpacked")
     testNoTraversal(Decompressor.Tar(tar), dir, File(dir, "bad.txt"))
   }
 
   @Test fun noExternalTraversalInTar() {
     val tar = tempDir.newFile("test.tgz")
-    TarArchiveOutputStream(GzipCompressorOutputStream(FileOutputStream(tar))).use { writeEntry(it, "../evil.txt") }
+    TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "../evil.txt") }
     val dir = tempDir.newFolder("unpacked")
     testNoTraversal(Decompressor.Tar(tar), dir, File(dir.parent, "evil.txt"))
   }
 
   @Test fun noAbsolutePathsInTar() {
     val tar = tempDir.newFile("test.tgz")
-    TarArchiveOutputStream(GzipCompressorOutputStream(FileOutputStream(tar))).use { writeEntry(it, "/root.txt") }
+    TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "/root.txt") }
     val dir = tempDir.newFolder("unpacked")
     Decompressor.Tar(tar).extract(dir)
     assertThat(File(dir, "root.txt")).exists()
