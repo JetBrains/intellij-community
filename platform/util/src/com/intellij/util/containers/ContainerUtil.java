@@ -135,8 +135,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashMap<>(strategy);
   }
 
+  /**
+   * @deprecated Use {@link EnumMap#EnumMap(Class)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K extends Enum<K>, V> EnumMap<K, V> newEnumMap(@NotNull Class<K> keyType) {
     return new EnumMap<>(keyType);
   }
