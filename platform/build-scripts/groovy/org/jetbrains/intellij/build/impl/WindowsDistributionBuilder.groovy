@@ -97,7 +97,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, !buildContext.bundledJreManager.is32bitArchSupported() ? excludeList : [])
       if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath, excludeList)
+        buildWinZip([secondJreDirectoryPath],"${jreSuffix}.win", winDistPath, excludeList)
       }
     }
 
@@ -116,11 +116,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
       generateProductJson(productJsonDir, jreDirectoryPath64 != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir, null, buildContext.bundledJreManager.is32bitArchSupported())
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir, buildContext.bundledJreManager.jreSuffix(), buildContext.bundledJreManager.is32bitArchSupported())
       if (secondJreDirectoryPath != null) {
         generateProductJson(productJsonDir, secondJreDirectoryPath != null)
         new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, null, buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
       }
     }
   }
