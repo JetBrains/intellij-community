@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,21 +22,18 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Color[] ROOT_COLORS =
     {JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK};
 
-  @NotNull private final List<VirtualFile> myRoots;
-
   @NotNull private final Map<VirtualFile, Color> myRoots2Colors;
 
   public VcsLogColorManagerImpl(@NotNull Collection<VirtualFile> roots) {
-    myRoots = new ArrayList<>(roots);
-    Collections.sort(myRoots, Comparator.comparing(VirtualFile::getName));
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(new ArrayList<>(roots), Comparator.comparing(VirtualFile::getName));
     myRoots2Colors = new HashMap<>();
     int i = 0;
-    for (VirtualFile root : myRoots) {
+    for (VirtualFile root : sortedRoots) {
       Color color;
       if (i >= ROOT_COLORS.length) {
-        double balance = ((double)(i / ROOT_COLORS.length)) / (roots.size() / ROOT_COLORS.length);
+        double balance = ((double)(i / ROOT_COLORS.length)) / (sortedRoots.size() / ROOT_COLORS.length);
         Color mix = ColorUtil.mix(ROOT_COLORS[i % ROOT_COLORS.length], ROOT_COLORS[(i + 1) % ROOT_COLORS.length], balance);
-        int tones = (int)(Math.abs(balance - 0.5) * 2 * (roots.size() / ROOT_COLORS.length) + 1);
+        int tones = (int)(Math.abs(balance - 0.5) * 2 * (sortedRoots.size() / ROOT_COLORS.length) + 1);
         color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
       }
       else {
@@ -53,7 +51,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
 
   @Override
   public boolean isMultipleRoots() {
-    return myRoots.size() > 1;
+    return myRoots2Colors.size() > 1;
   }
 
   @NotNull
