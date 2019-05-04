@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -119,25 +120,31 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
   @Nullable
   private String getTextWithEnvVarReplacement(@NotNull CompletionParameters parameters) {
     PsiElement original = parameters.getOriginalPosition();
-    if (original != null) {
-      String fileText = parameters.getOriginalFile().getText();
-      String originalText = fileText.substring(parameters.getPosition().getTextRange().getStartOffset(), parameters.getOffset());
-      if (original.getTextOffset() - 1 >= 0) {
-        PsiElement prevSibling = parameters.getOriginalFile().findElementAt(original.getTextOffset() - 1);
-        if (prevSibling instanceof LeafPsiElement && ((LeafPsiElement) prevSibling).getElementType() == BashTokenTypes.VAR ) {
-          String variable = prevSibling.getText();
-          int index = variable.indexOf("$");
-          if (index + 1 > 0) {
-            variable = variable.substring(index + 1);
-          }
-          String envPath = System.getenv(variable);
-          if (envPath != null) {
-            return envPath + originalText;
-          }
-        }
-      }
+    if (original == null) return null;
+
+    String fileText = parameters.getOriginalFile().getText();
+    String originalText = fileText.substring(parameters.getPosition().getTextRange().getStartOffset(), parameters.getOffset());
+    int offset = original.getTextOffset() - 1;
+
+    if (offset < 0) return originalText;
+
+    PsiElement at = parameters.getOriginalFile().findElementAt(offset);
+    if (!(at instanceof LeafPsiElement) || ((LeafPsiElement) at).getElementType() != BashTokenTypes.VAR) {
       return originalText;
     }
-    return null;
+
+    String variable = variableText(at);
+    String envPath = EnvironmentUtil.getValue(variable);
+    return envPath != null
+        ? envPath + originalText
+        : originalText;
+  }
+
+  @NotNull
+  private static String variableText(PsiElement e) {
+    String variable = e.getText();
+    int index = variable.indexOf("$");
+    if (index + 1 <= 0) return variable;
+    return variable.substring(index + 1);
   }
 }
