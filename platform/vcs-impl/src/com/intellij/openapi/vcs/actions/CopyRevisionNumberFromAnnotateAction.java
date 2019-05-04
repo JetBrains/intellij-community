@@ -27,8 +27,7 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
     if (myLineNumber < 0) return;
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
     if (revisionNumber != null) {
-      final String revision = revisionNumber.asString();
-      CopyPasteManager.getInstance().setContents(new TextTransferable(revision));
+      CopyPasteManager.getInstance().setContents(new TextTransferable(revisionNumber.asString()));
     }
   }
 

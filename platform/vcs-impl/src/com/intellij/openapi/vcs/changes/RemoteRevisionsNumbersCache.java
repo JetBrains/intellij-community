@@ -42,6 +42,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private final Object myLock;
 
   public static final VcsRevisionNumber NOT_LOADED = new VcsRevisionNumber() {
+    @NotNull
     @Override
     public String asString() {
       return "NOT_LOADED";
@@ -53,6 +54,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
   };
   public static final VcsRevisionNumber UNKNOWN = new VcsRevisionNumber() {
+    @NotNull
     @Override
     public String asString() {
       return "UNKNOWN";

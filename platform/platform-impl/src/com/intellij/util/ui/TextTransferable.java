@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.text.CharSequenceReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,51 +14,57 @@ import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
-import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TextTransferable implements Transferable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.TextTransferable");
+  private static final Logger LOG = Logger.getInstance(TextTransferable.class);
 
-  private final String myHtmlContent;
-  private final String myPlainContent;
+  private final CharSequence myHtmlContent;
+  private final CharSequence myPlainContent;
 
-  private static DataFlavor html;
-  private static DataFlavor[] flavors;
-
-  private static DataFlavor[] getFlavours() {
-    if (flavors == null) {
-      try {
-        html = new DataFlavor("text/html;class=java.lang.String");
-      }
-      catch (ClassNotFoundException e) {
-        LOG.error(e);
-        html = null;
-      }
-
-      flavors = (html == null) ? new DataFlavor[]{DataFlavor.stringFlavor, DataFlavor.plainTextFlavor} :
-                new DataFlavor[]{DataFlavor.stringFlavor, DataFlavor.plainTextFlavor, html};
+  private static final NotNullLazyValue<List<DataFlavor>> FLAVORS = NotNullLazyValue.createValue(() -> {
+    List<DataFlavor> result = new ArrayList<>();
+    result.add(DataFlavor.stringFlavor);
+    //noinspection deprecation
+    result.add(DataFlavor.plainTextFlavor);
+    try {
+      result.add(new DataFlavor("text/html;class=java.lang.String"));
     }
-    return flavors;
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+    }
+    return result;
+  });
+
+  // old constructor to preserve backward compatibility
+  public TextTransferable(@Nullable String data) {
+    this(StringUtil.notNullize(data), StringUtil.notNullize(data));
   }
 
-  public TextTransferable(String data) {
+  public TextTransferable(@NotNull CharSequence data) {
     this(data, data);
   }
 
-  public TextTransferable(String htmlContent, String plainContent) {
+  // old constructor to preserve backward compatibility
+  public TextTransferable(@NotNull String htmlContent, @NotNull String plainContent) {
+    myHtmlContent = StringUtil.notNullize(htmlContent);
+    myPlainContent = StringUtil.notNullize(plainContent);
+  }
+
+  public TextTransferable(@NotNull CharSequence htmlContent, @NotNull CharSequence plainContent) {
     myHtmlContent = htmlContent;
     myPlainContent = plainContent;
   }
 
   @Override
   public DataFlavor[] getTransferDataFlavors() {
-    return getFlavours().clone();
+    return FLAVORS.getValue().toArray(new DataFlavor[0]);
   }
 
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
-    for (DataFlavor f : getFlavours()) {
+    for (DataFlavor f : FLAVORS.getValue()) {
       if (flavor.equals(f)) {
         return true;
       }
@@ -78,16 +73,17 @@ public class TextTransferable implements Transferable {
   }
 
   @Override
-  public Object getTransferData(final DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-    if (flavor.equals(html)) {
-      return myHtmlContent;
+  public Object getTransferData(@NotNull DataFlavor flavor) throws UnsupportedFlavorException {
+    if (flavor.getMimeType().startsWith("text/html;")) {
+      return myHtmlContent.toString();
     }
     else if (flavor.equals(DataFlavor.plainTextFlavor)) {
-      return new StringReader(myPlainContent == null ? "" : myPlainContent);
+      return new CharSequenceReader(myPlainContent == null ? "" : myPlainContent);
     }
     else if (flavor.equals(DataFlavor.stringFlavor)) {
-      return myPlainContent;
+      return myPlainContent.toString();
     }
+
     throw new UnsupportedFlavorException(flavor);
   }
 
