@@ -428,7 +428,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     if (errors) {
       Ref<String> enableAction = new Ref<>();
-      String message = PluginManagerConfigurableNew.getErrorMessage(myPluginModel, myPlugin, enableAction);
+      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
       ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : this::handleErrors);
     }
     myErrorComponent.setVisible(errors);

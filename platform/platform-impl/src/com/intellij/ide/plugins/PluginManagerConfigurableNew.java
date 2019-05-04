@@ -10,11 +10,9 @@ import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -1548,43 +1546,6 @@ public class PluginManagerConfigurableNew
       PluginManagerMain.LOG.info(e);
     }
     return Collections.emptyList();
-  }
-
-  @NotNull
-  public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
-                                       @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<String> enableAction) {
-    String message;
-
-    Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());
-    if (ContainerUtil.isEmpty(requiredPlugins)) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
-    }
-    else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-      message = "The plugin requires IntelliJ IDEA Ultimate.";
-    }
-    else {
-      String deps = StringUtil.join(requiredPlugins, id -> {
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-        if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
-          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (descriptor instanceof IdeaPluginDescriptorImpl) {
-              if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
-                plugin = descriptor;
-                break;
-              }
-            }
-          }
-        }
-        return plugin != null ? plugin.getName() : id.getIdString();
-      }, ", ");
-
-      int size = requiredPlugins.size();
-      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
-    }
-
-    return message;
   }
 
   @NotNull

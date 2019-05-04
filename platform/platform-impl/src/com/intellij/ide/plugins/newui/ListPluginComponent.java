@@ -269,7 +269,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
     if (errors) {
       Ref<String> enableAction = new Ref<>();
-      String message = PluginManagerConfigurableNew.getErrorMessage(myPluginModel, myPlugin, enableAction);
+      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
       myBaselinePanel.addErrorComponents(message, !enableAction.isNull(), () -> myPluginModel.enableRequiredPlugins(myPlugin));
     }
     else {
