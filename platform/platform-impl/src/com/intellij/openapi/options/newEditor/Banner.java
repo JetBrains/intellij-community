@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -42,12 +41,11 @@ final class Banner extends SimpleBanner {
   }
 
   void setText(@NotNull Collection<String> names) {
-    Transferable transferable = CopySettingsPathAction.createTransferable(names);
     List<Crumb> crumbs = new ArrayList<>();
-    if (transferable != null) {
-      Action action = CopySettingsPathAction.createSwingAction(() -> transferable);
+    if (!names.isEmpty()) {
+      List<Action> actions = CopySettingsPathAction.createSwingActions(() -> names);
       for (String name : names) {
-        crumbs.add(new Crumb.Impl(null, name, null, action));
+        crumbs.add(new Crumb.Impl(null, name, null, actions));
       }
     }
     myBreadcrumbs.setCrumbs(crumbs);
