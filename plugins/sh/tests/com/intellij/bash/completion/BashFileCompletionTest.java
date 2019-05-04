@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
 
 public class BashFileCompletionTest extends LightCodeInsightFixtureTestCase {
   private static final String FOLDER_NAME = "example";
@@ -84,6 +85,19 @@ public class BashFileCompletionTest extends LightCodeInsightFixtureTestCase {
 
     LookupElement[] lookupElements = myFixture.completeBasic();
     assertNotNull(lookupElements);
+  }
+
+  public void testEnvVariablesCompletion() {
+    String envVar = "HOME";
+    assumeNotNull(System.getenv(envVar));
+
+    myFixture.configureByText("a.sh", "$" + envVar + "/<caret>");
+    LookupElement[] envVarLookupElements = myFixture.completeBasic();
+
+    myFixture.configureByText("a.sh", "~/<caret>");
+    LookupElement[] homeDirLookupElements = myFixture.completeBasic();
+
+    assertSameElements(envVarLookupElements, homeDirLookupElements);
   }
 
   public void testCompletionWithPrefixMatch() throws IOException {

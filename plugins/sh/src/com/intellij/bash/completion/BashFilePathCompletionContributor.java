@@ -1,6 +1,7 @@
 package com.intellij.bash.completion;
 
 import com.intellij.bash.BashStringUtil;
+import com.intellij.bash.lexer.BashTokenTypes;
 import com.intellij.bash.psi.BashFile;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
@@ -13,9 +14,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
@@ -74,11 +77,9 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     extend(CompletionType.BASIC, psiElement().inFile(StandardPatterns.instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
-        PsiElement original = parameters.getOriginalPosition();
-        String originalText = original == null ? null : original.getText();
+        String originalText = getTextWithEnvVarReplacement(parameters);
 
         if (originalText != null) {
-          originalText = parameters.getOriginalFile().getText().substring(parameters.getPosition().getTextRange().getStartOffset(), parameters.getOffset());
           int lastSlashIndex = originalText.lastIndexOf("/");
           if (lastSlashIndex >= 0) {
             String afterSlash = originalText.substring(lastSlashIndex + 1);
@@ -112,7 +113,31 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     boolean isDirectory = file.isDirectory();
     return LookupElementBuilder.create(file, quote(name))
         .withIcon(isDirectory ? PlatformIcons.FOLDER_ICON : null)
-        .withInsertHandler(FILE_INSERT_HANDLER)
-        ;
+        .withInsertHandler(FILE_INSERT_HANDLER);
+  }
+
+  @Nullable
+  private String getTextWithEnvVarReplacement(@NotNull CompletionParameters parameters) {
+    PsiElement original = parameters.getOriginalPosition();
+    if (original != null) {
+      String fileText = parameters.getOriginalFile().getText();
+      String originalText = fileText.substring(parameters.getPosition().getTextRange().getStartOffset(), parameters.getOffset());
+      if (original.getTextOffset() - 1 >= 0) {
+        PsiElement prevSibling = parameters.getOriginalFile().findElementAt(original.getTextOffset() - 1);
+        if (prevSibling instanceof LeafPsiElement && ((LeafPsiElement) prevSibling).getElementType() == BashTokenTypes.VAR ) {
+          String variable = prevSibling.getText();
+          int index = variable.indexOf("$");
+          if (index + 1 > 0) {
+            variable = variable.substring(index + 1);
+          }
+          String envPath = System.getenv(variable);
+          if (envPath != null) {
+            return envPath + originalText;
+          }
+        }
+      }
+      return originalText;
+    }
+    return null;
   }
 }
