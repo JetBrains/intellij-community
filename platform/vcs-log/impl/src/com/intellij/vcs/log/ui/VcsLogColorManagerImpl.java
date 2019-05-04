@@ -25,7 +25,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   @NotNull private final Map<VirtualFile, Color> myRoots2Colors;
 
   public VcsLogColorManagerImpl(@NotNull Collection<VirtualFile> roots) {
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(new ArrayList<>(roots), Comparator.comparing(VirtualFile::getName));
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName));
 
     myRoots2Colors = new HashMap<>();
     for (int i = 0; i < sortedRoots.size(); i++) {
