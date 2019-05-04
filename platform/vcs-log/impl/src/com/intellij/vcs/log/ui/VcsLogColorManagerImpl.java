@@ -2,10 +2,12 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -25,15 +27,18 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     {JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK};
 
   @NotNull private final Map<String, Color> myPaths2Colors;
-  @NotNull private final List<FilePath> mySortedPaths;
+  @NotNull private final List<FilePath> myPaths;
 
-  public VcsLogColorManagerImpl(@NotNull Collection<VirtualFile> roots) {
-    mySortedPaths = ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
-                                      file -> VcsUtil.getFilePath(file));
+  public VcsLogColorManagerImpl(@NotNull Set<VirtualFile> roots) {
+    this(ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
+                           file -> VcsUtil.getFilePath(file)));
+  }
 
+  public VcsLogColorManagerImpl(@NotNull Collection<FilePath> paths) {
+    myPaths = new ArrayList<>(paths);
     myPaths2Colors = new HashMap<>();
-    for (int i = 0; i < mySortedPaths.size(); i++) {
-      myPaths2Colors.put(mySortedPaths.get(i).getPath(), getColor(i, mySortedPaths.size()));
+    for (int i = 0; i < myPaths.size(); i++) {
+      myPaths2Colors.put(myPaths.get(i).getPath(), getColor(i, myPaths.size()));
     }
   }
 
@@ -87,6 +92,6 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   @NotNull
   @Override
   public Collection<FilePath> getPaths() {
-    return mySortedPaths;
+    return myPaths;
   }
 }

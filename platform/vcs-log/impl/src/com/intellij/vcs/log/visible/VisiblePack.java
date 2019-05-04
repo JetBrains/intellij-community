@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.visible;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -24,6 +25,7 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,5 +124,10 @@ public class VisiblePack implements VcsLogDataPack {
            myFilters +
            ", canRequestMore=" +
            myCanRequestMore + "}";
+  }
+
+  @NotNull
+  public FilePath getFilePath(int index) {
+    return VcsUtil.getFilePath(getRoot(index));
   }
 }

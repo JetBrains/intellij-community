@@ -15,7 +15,6 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.visible.VisiblePack;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +125,7 @@ public class GraphTableModel extends AbstractTableModel {
     VcsShortCommitDetails data = getCommitMetadata(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
-        return VcsUtil.getFilePath(getRoot(rowIndex));
+        return myDataPack.getFilePath(rowIndex);
       case COMMIT_COLUMN:
         return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
                                    myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
