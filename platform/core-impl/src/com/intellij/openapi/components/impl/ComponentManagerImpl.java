@@ -197,7 +197,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentAdapter adapter = picoContainer.getComponentAdapter(interfaceClass);
-    if (!(adapter instanceof ComponentConfigComponentAdapter)) {
+    if (adapter == null) {
       return null;
     }
 
