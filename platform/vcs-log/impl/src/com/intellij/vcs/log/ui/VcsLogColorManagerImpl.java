@@ -28,20 +28,26 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(new ArrayList<>(roots), Comparator.comparing(VirtualFile::getName));
     myRoots2Colors = new HashMap<>();
     int i = 0;
+    int rootsCount = sortedRoots.size();
     for (VirtualFile root : sortedRoots) {
-      Color color;
-      if (i >= ROOT_COLORS.length) {
-        double balance = ((double)(i / ROOT_COLORS.length)) / (sortedRoots.size() / ROOT_COLORS.length);
-        Color mix = ColorUtil.mix(ROOT_COLORS[i % ROOT_COLORS.length], ROOT_COLORS[(i + 1) % ROOT_COLORS.length], balance);
-        int tones = (int)(Math.abs(balance - 0.5) * 2 * (sortedRoots.size() / ROOT_COLORS.length) + 1);
-        color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
-      }
-      else {
-        color = ROOT_COLORS[i];
-      }
+      myRoots2Colors.put(root, getColor(i, rootsCount));
       i++;
-      myRoots2Colors.put(root, color);
     }
+  }
+
+  @NotNull
+  private static Color getColor(int rootNumber, int rootsCount) {
+    Color color;
+    if (rootNumber >= ROOT_COLORS.length) {
+      double balance = ((double)(rootNumber / ROOT_COLORS.length)) / (rootsCount / ROOT_COLORS.length);
+      Color mix = ColorUtil.mix(ROOT_COLORS[rootNumber % ROOT_COLORS.length], ROOT_COLORS[(rootNumber + 1) % ROOT_COLORS.length], balance);
+      int tones = (int)(Math.abs(balance - 0.5) * 2 * (rootsCount / ROOT_COLORS.length) + 1);
+      color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
+    }
+    else {
+      color = ROOT_COLORS[rootNumber];
+    }
+    return color;
   }
 
   @NotNull
