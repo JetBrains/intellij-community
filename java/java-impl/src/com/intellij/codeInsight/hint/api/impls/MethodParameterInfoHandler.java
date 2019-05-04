@@ -651,7 +651,9 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       return null;
     }
 
-    StringBuilder buffer = new StringBuilder();
+    PsiParameter[] parms = method.getParameterList().getParameters();
+    int numParams = parms.length;
+    StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
 
     if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO && !context.isSingleParameterInfo()) {
       if (!method.isConstructor()) {
@@ -671,8 +673,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     int currentParameter = context.getCurrentParameterIndex();
 
-    PsiParameter[] parms = method.getParameterList().getParameters();
-    int numParams = parms.length;
     int highlightStartOffset = -1;
     int highlightEndOffset = -1;
     if (numParams > 0) {
