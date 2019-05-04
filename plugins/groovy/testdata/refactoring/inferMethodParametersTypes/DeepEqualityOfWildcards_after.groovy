@@ -1,4 +1,4 @@
-def <U0 extends T0, T0, Y0 extends java.util.List<U0>> Object foo(List<List<U0>> a, List<Y0> b) {
+def <U0, W0 extends U0> Object foo(List<U0> a, List<W0> b) {
   a.add(b.get(0))
 }
 

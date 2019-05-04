@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions
 
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -8,6 +10,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
 
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
   InferMethodParametersTypesIntentionTest() {
     super("Infer method parameters types")
   }

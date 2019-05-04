@@ -177,7 +177,7 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
    */
   private fun propagatePossibleInstantiations(order: List<InferenceUnit>) {
     var instantiationSubstitutor = PsiSubstitutor.EMPTY
-    for (unit in order.filter { it.unitInstantiation == null }) {
+    for (unit in order.filter { it.unitInstantiation == null && it.subtypes.isEmpty() }) {
       val validInstantiation =
         when {
           unit.initialTypeParameter.extendsList.referencedTypes.isNotEmpty() -> createExtendsBoundForTypeParameter(unit.initialTypeParameter)
