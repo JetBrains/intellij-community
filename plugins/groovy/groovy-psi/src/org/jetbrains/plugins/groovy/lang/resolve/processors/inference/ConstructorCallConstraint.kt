@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
@@ -35,7 +36,11 @@ class ConstructorCallConstraint(private val leftType: PsiType?, private val expr
   private fun runConstructorSession(classSession: GroovyInferenceSession) {
     val result = expression.advancedResolve() as? GroovyMethodResult ?: return
     val mapping = result.candidate?.argumentMapping ?: return
-    classSession.startNestedSession(result.element.typeParameters, result.contextSubstitutor, expression, result) {
+    val contextSubstitutor =
+      if (classSession.propagateVariablesToNestedSessions) classSession.contextSubstitutor
+      else PsiSubstitutor.EMPTY
+    classSession.startNestedSession(result.element.typeParameters, result.contextSubstitutor.putAll(contextSubstitutor), expression,
+                                    result) {
       it.initArgumentConstraints(mapping, classSession.inferenceSubstitution)
       it.repeatInferencePhases()
     }

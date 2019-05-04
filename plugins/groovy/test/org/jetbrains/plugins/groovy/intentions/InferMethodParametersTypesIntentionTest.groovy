@@ -91,6 +91,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testConstructor2() {
+    doTest(true)
+  }
+
   void testRedundantTypeParameter() {
     doTest(true)
   }

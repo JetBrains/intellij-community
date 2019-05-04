@@ -8,7 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -296,12 +295,12 @@ class MethodParametersInferenceProcessor(val method: GrMethod) {
       resolveSession.addConstraint(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
     }
     for (occurrence in references) {
-      if (occurrence is GrReferenceExpression) {
-        val call = occurrence.parent
+//      if (occurrence is GrReferenceElement) {
+        val call = occurrence.element.parent
         if (call is GrExpression) {
           resolveSession.addConstraint(ExpressionConstraint(null, call))
         }
-      }
+//      }
     }
   }
 
