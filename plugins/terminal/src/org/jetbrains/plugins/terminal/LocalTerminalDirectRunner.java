@@ -182,11 +182,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
       long startNano = System.nanoTime();
-      String[] finalCommand = command;
-      PtyProcess process = TerminalSignalUtil.computeWithIgnoredSignalsResetToDefault(
-        new int[] {UnixProcessManager.SIGINT, TerminalSignalUtil.SIGQUIT, TerminalSignalUtil.SIGPIPE},
-        () -> PtyProcess.exec(finalCommand, envs, workingDir)
-      );
+      PtyProcess process = PtyProcess.exec(command, envs, workingDir);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
                   " (" + TimeoutUtil.getDurationMillis(startNano) + " ms)");
