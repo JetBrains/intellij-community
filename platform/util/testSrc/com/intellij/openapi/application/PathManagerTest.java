@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -92,7 +93,7 @@ public class PathManagerTest {
       }
     }
 
-    assertEquals(PathManager.getBinPath() + File.separator + "../license", PathManager.substituteVars("../license"));
+    assertTrue(FileUtil.pathsEqual(PathManager.getBinPath() + "/../license", PathManager.substituteVars("../license")));
 
     assertEquals("//", PathManager.substituteVars("/${unknown_property_ignore_the_error}/"));
   }
