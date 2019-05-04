@@ -147,4 +147,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testParametrizedInterface() {
+    doTest(true)
+  }
+
 }

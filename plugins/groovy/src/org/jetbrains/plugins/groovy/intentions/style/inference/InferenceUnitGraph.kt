@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 
 /**
@@ -179,7 +180,7 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
     for (unit in order.filter { it.unitInstantiation == null }) {
       val validInstantiation =
         when {
-          unit.initialTypeParameter.extendsList.referencedTypes.isNotEmpty() -> unit.initialTypeParameter.extendsList.referencedTypes[0]
+          unit.initialTypeParameter.extendsList.referencedTypes.isNotEmpty() -> createExtendsBoundForTypeParameter(unit.initialTypeParameter)
           (unit.subtypes + unit.weakSubtypes + unit.weakSupertypes).isEmpty() -> initialInstantiations[unit]
           else -> unit.typeInstantiation
         }
@@ -187,6 +188,15 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
       if (unit.typeInstantiation != PsiType.NULL) {
         instantiationSubstitutor = instantiationSubstitutor.put(unit.initialTypeParameter, unit.typeInstantiation)
       }
+    }
+  }
+
+  private fun createExtendsBoundForTypeParameter(typeParameter: PsiTypeParameter) : PsiType {
+    val supertypes = typeParameter.extendsList.referencedTypes
+    if (supertypes.size > 1) {
+      return PsiIntersectionType.createIntersection(*supertypes)
+    } else {
+      return supertypes[0]
     }
   }
 
