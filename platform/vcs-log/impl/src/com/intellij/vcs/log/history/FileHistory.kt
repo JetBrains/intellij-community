@@ -259,8 +259,7 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
       affectedCommits.putAll(commits)
       newPaths.clear()
 
-      collectAdditionsDeletions(commits) { ad ->
-        if (commitToRename[ad.commits].any { rename -> ad.matches(rename) }) return@collectAdditionsDeletions
+      iterateUnmatchedAdditionsDeletions(commits) { ad ->
         findRename(ad.parent, ad.child, ad.filePath, ad.isAddition)?.let { files ->
           val rename = Rename(files.first, files.second, ad.parent, ad.child)
           commitToRename.putValue(ad.commits, rename)
@@ -273,21 +272,25 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
     }
   }
 
-  private fun collectAdditionsDeletions(commits: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
-                                        action: (AdditionDeletion) -> Unit) {
+  private fun iterateUnmatchedAdditionsDeletions(commits: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
+                                                 action: (AdditionDeletion) -> Unit) {
     commits.forEach { path, commit, changes ->
       changes.forEachEntry { parent, change ->
-        createAdditionDeletion(parent, commit, change, path)?.let { ad -> action(ad) }
+        if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
+          val ad = AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
+          if (!commitToRename[ad.commits].any { rename -> ad.matches(rename) }) {
+            action(ad)
+          }
+        }
         true
       }
     }
   }
 
-  private fun createAdditionDeletion(parent: Int, commit: Int, change: ChangeKind, path: FilePath): AdditionDeletion? {
-    if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
-      return AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
+  internal fun iterateUnmatchedAdditionsDeletions(action: (AdditionDeletion) -> Unit) {
+    iterateUnmatchedAdditionsDeletions(affectedCommits) {
+      action(it)
     }
-    return null
   }
 
   fun getPathInParentRevision(commit: Int, parent: Int, childPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
@@ -372,7 +375,7 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
   abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>
 }
 
-private class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
+internal class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
   val commits
     get() = UnorderedPair(parent, child)
 
@@ -411,7 +414,7 @@ private class AdditionDeletion(val filePath: FilePath, val child: Int, val paren
   }
 }
 
-private class Rename(val filePath1: FilePath, val filePath2: FilePath, val commit1: Int, val commit2: Int) {
+internal class Rename(val filePath1: FilePath, val filePath2: FilePath, val commit1: Int, val commit2: Int) {
 
   fun getOtherPath(commit: Int, filePath: FilePath): FilePath? {
     if (commit == commit1 && FILE_PATH_HASHING_STRATEGY.equals(filePath, filePath1)) return filePath2
