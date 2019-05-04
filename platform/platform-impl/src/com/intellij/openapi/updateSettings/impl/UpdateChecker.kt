@@ -256,7 +256,7 @@ object UpdateChecker {
       onceInstalled.deleteOnExit()
     }
 
-    if (!excludedFromUpdateCheckPlugins.isEmpty()) {
+    if (excludedFromUpdateCheckPlugins.isNotEmpty()) {
       val required = ProjectManager.getInstance().openProjects
         .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
         .map { PluginId.getId(it.pluginId) }
@@ -286,7 +286,7 @@ object UpdateChecker {
         try {
           val siteResult = source.getAvailableVersions(indicator, updateSettings)
             .filter { it.isUpdateFor(manager.findExistingComponentMatching(it, source)) }
-          if (!siteResult.isEmpty()) {
+          if (siteResult.isNotEmpty()) {
             result += ExternalUpdate(siteResult, source)
           }
         }
