@@ -4,9 +4,9 @@
   <vendor email="ignatov@jetbrains.com">Sergey Ignatov</vendor>
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="terminal.xml">org.jetbrains.plugins.terminal</depends>
-  <name>Bash</name>
+  <name>Shell Script</name>
   <description><![CDATA[
-    <p>Bash support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
+    <p>Shell Script support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
     ]]></description>
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.bash.BashFileTypeFactory"/>
@@ -57,7 +57,7 @@
 
     <intentionAction>
       <className>com.intellij.bash.rename.BashRenameIntention</className>
-      <category>Bash</category>
+      <category>Shell Script</category>
     </intentionAction>
   </extensions>
   <actions>
