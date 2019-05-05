@@ -53,7 +53,8 @@ public abstract class Decompressor {
     @Override
     @SuppressWarnings("OctalInteger")
     protected Entry nextEntry() throws IOException {
-      TarArchiveEntry te = myStream.getNextTarEntry();
+      TarArchiveEntry te;
+      while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory())) /* skips unsupported entries */;
       return te == null ? null : new Entry(te.getName(), te.isDirectory(), isSet(te.getMode(), 0200), isSet(te.getMode(), 0100));
     }
 
