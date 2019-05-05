@@ -1,4 +1,4 @@
-package com.intellij.sh.run.terminal;
+package com.intellij.sh.run;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.sh.psi.ShFile;
-import com.intellij.sh.run.ShellScriptRunner;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-public class TerminalShellScriptRunner extends ShellScriptRunner {
+public class ShTerminalRunner extends ShellScriptRunner {
   @Override
   public void run(@NotNull ShFile file) {
     Project project = file.getProject();

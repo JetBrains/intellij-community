@@ -20,7 +20,7 @@ public class ShRunFileAction extends DumbAwareAction {
     Project project = file.getProject();
     ShellScriptRunner shellScriptRunner = ServiceManager.getService(project, ShellScriptRunner.class);
     if (shellScriptRunner == null || !shellScriptRunner.isAvailable(project)) {
-      shellScriptRunner = new FailoverShellScriptRunner();
+      shellScriptRunner = new ShFailoverRunner();
     }
     shellScriptRunner.run((ShFile) file);
   }

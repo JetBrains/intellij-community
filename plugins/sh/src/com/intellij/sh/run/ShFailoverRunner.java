@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FailoverShellScriptRunner extends ShellScriptRunner {
+public class ShFailoverRunner extends ShellScriptRunner {
   @Override
   public void run(@NotNull ShFile file) {
     Project project = file.getProject();
