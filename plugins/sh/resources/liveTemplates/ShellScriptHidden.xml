@@ -6,7 +6,7 @@
             toShortenFQNames="false">
     <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -16,7 +16,7 @@
             toShortenFQNames="false">
     <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -28,7 +28,7 @@
     <variable name="VARIABLE_1" expression="" defaultValue="&quot;item&quot;" alwaysStopAt="true"/>
     <variable name="VARIABLE_2" expression="" defaultValue="&quot;*&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -39,7 +39,7 @@
     <variable name="VALUE" expression="" defaultValue="&quot;$x&quot;" alwaysStopAt="true"/>
     <variable name="PATTERN" expression="" defaultValue="&quot;pattern&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -50,7 +50,7 @@
     <variable name="INIT_VALUE" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
     <variable name="LIMIT" expression="" defaultValue="&quot;n&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -59,7 +59,7 @@
             toShortenFQNames="false">
     <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -68,7 +68,7 @@
             toShortenFQNames="false">
     <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -77,7 +77,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="FUNCNAME" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -86,7 +86,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$string2&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -96,7 +96,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$string2&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -104,7 +104,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -112,7 +112,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -121,7 +121,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -131,7 +131,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -140,7 +140,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -150,7 +150,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -160,7 +160,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -170,7 +170,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -178,7 +178,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -186,7 +186,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -194,7 +194,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -202,7 +202,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -210,7 +210,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -219,7 +219,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -228,7 +228,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -237,7 +237,7 @@
     <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -245,7 +245,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$path&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -253,7 +253,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$directory&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -261,7 +261,7 @@
             toReformat="true" toShortenFQNames="false">
     <variable name="COMMAND" expression="" defaultValue="&quot;command&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>

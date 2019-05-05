@@ -6,12 +6,12 @@ import org.jetbrains.annotations.Nullable;
 public class BashTemplateProvider implements DefaultLiveTemplatesProvider {
   @Override
   public String[] getDefaultLiveTemplateFiles() {
-    return new String[]{"liveTemplates/Bash", "liveTemplates/BashArray"};
+    return new String[]{"liveTemplates/ShellScript", "liveTemplates/ShellScriptArray"};
   }
 
   @Nullable
   @Override
   public String[] getHiddenLiveTemplateFiles() {
-    return new String[]{"liveTemplates/BashHidden"};
+    return new String[]{"liveTemplates/ShellScriptHidden"};
   }
 }

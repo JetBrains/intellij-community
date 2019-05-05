@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templateSet group="Bash">
+<templateSet group="Shell Script">
   <template name="array create" value="$ARRAY$=($ITEMS$)&#10;" description="Create array" toReformat="true"
             toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="ITEMS" expression="" defaultValue="&quot;item1 item2 item3&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -13,7 +13,7 @@
             toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -22,7 +22,7 @@
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="INDEX" expression="" defaultValue="&quot;index&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -30,7 +30,7 @@
             toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -38,7 +38,7 @@
             toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -47,7 +47,7 @@
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="INDEX" expression="" defaultValue="&quot;index&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -57,7 +57,7 @@
     <variable name="INDEX" expression="" defaultValue="&quot;index&quot;" alwaysStopAt="true"/>
     <variable name="VALUE" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -66,7 +66,7 @@
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="ITEM" expression="" defaultValue="&quot;item&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -75,7 +75,7 @@
             toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
-      <option name="BASH" value="true"/>
+      <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>

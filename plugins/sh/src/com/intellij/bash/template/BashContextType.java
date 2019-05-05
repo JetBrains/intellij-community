@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class BashContextType extends TemplateContextType {
   public BashContextType() {
-    super("BASH", "Bash");
+    super("SHELL_SCRIPT", "Shell Script");
   }
 
   @Override
