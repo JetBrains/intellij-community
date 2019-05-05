@@ -134,26 +134,19 @@ let_command ::= let expression
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'|
                                '\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
 
-
 pipeline ::= command (('|&'|'|') newlines command)* {pin(".*")=1}
 
 command ::= shell_command [heredoc | redirection+]
           | include_command
           | simple_command
 
-
 redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (number | '-')
                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
 process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
 
-
-
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
-
-
-
 
 shell_command ::=  if_command
                   | for_command
@@ -210,7 +203,6 @@ private pipeline_command_list ::= pipeline_command (pipeline_command_list_separa
 } // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
-
 function_definition ::= &(function | word '(') function_definition_inner {extends=command}
 private function_definition_inner ::=           word argument_list  newlines block
                                      | function word argument_list? newlines block {pin(".*")="function|argument_list"}
@@ -230,9 +222,6 @@ block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_o
   recoverWhile=block_compound_list_recover
 }
 private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done)
-
-
-
 
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
   pin=1
@@ -281,8 +270,6 @@ left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<pa
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
-
-
 literal ::= word | string | number | variable {extends=simple_command_element}
 private not_lvalue ::= '!' | vars | '$' | bash_expansion | 'file descriptor'
 bash_expansion ::= '{' (word | bash_expansion)* '}'
@@ -296,8 +283,6 @@ string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
 }
 private w ::= word | string | number | not_lvalue
 private newlines ::= '\n'*
-
-
 
 expression ::=
     comma_expression
