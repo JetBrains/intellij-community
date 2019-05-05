@@ -1,6 +1,6 @@
 package com.intellij.bash.psi.impl;
 
-import com.intellij.bash.psi.BashCompositeElement;
+import com.intellij.bash.psi.ShCompositeElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -26,7 +26,7 @@ public final class ResolveUtil {
                                  @NotNull PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
-      if (run instanceof BashCompositeElement && !run.processDeclarations(processor, substitutor, null, place)) {
+      if (run instanceof ShCompositeElement && !run.processDeclarations(processor, substitutor, null, place)) {
         return false;
       }
       run = run.getPrevSibling();

@@ -1,0 +1,70 @@
+package com.intellij.bash.parser;
+
+import com.intellij.bash.ShTypes;
+import com.intellij.bash.lexer.ShLexer;
+import com.intellij.bash.lexer.ShTokenTypes;
+import com.intellij.bash.psi.ShFile;
+import com.intellij.bash.psi.ShFileElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiParser;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
+
+public class ShParserDefinition implements ParserDefinition, ShTokenTypes {
+  @NotNull
+  @Override
+  public Lexer createLexer(Project project) {
+    return new ShLexer();
+  }
+
+  @Override
+  public PsiParser createParser(Project project) {
+    return new ShParser();
+  }
+
+  @Override
+  public IFileElementType getFileNodeType() {
+    return ShFileElementType.INSTANCE;
+  }
+
+  @NotNull
+  @Override
+  public TokenSet getWhitespaceTokens() {
+    return whitespaceTokens;
+  }
+
+  @NotNull
+  @Override
+  public TokenSet getCommentTokens() {
+    return commentTokens;
+  }
+
+  @NotNull
+  @Override
+  public TokenSet getStringLiteralElements() {
+    return stringLiterals;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement createElement(ASTNode astNode) {
+    return ShTypes.Factory.createElement(astNode);
+  }
+
+  @Override
+  public PsiFile createFile(FileViewProvider fileViewProvider) {
+    return new ShFile(fileViewProvider);
+  }
+
+  @Override
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MAY;
+  }
+}

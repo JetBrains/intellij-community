@@ -1,7 +1,7 @@
 package com.intellij.bash.run;
 
-import com.intellij.bash.lexer.BashTokenTypes;
-import com.intellij.bash.psi.BashFile;
+import com.intellij.bash.lexer.ShTokenTypes;
+import com.intellij.bash.psi.ShFile;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,15 +12,15 @@ import java.io.File;
 
 public abstract class ShellScriptRunner {
 
-  public abstract void run(@NotNull BashFile bashFile);
+  public abstract void run(@NotNull ShFile bashFile);
 
   public abstract boolean isAvailable(@NotNull Project project);
 
   @Nullable
-  public static String getShebangExecutable(@NotNull BashFile bashFile) {
+  public static String getShebangExecutable(@NotNull ShFile bashFile) {
     VirtualFile virtualFile = bashFile.getVirtualFile();
     if (virtualFile != null && virtualFile.exists()) {
-      ASTNode shebang = bashFile.getNode().findChildByType(BashTokenTypes.SHEBANG);
+      ASTNode shebang = bashFile.getNode().findChildByType(ShTokenTypes.SHEBANG);
       String prefix = "#!";
       if (shebang != null && shebang.getText().startsWith(prefix)) {
         String path = shebang.getText().substring(prefix.length()).trim();

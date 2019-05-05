@@ -9,59 +9,59 @@
     <p>Shell Script support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
     ]]></description>
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.intellij.bash.BashFileTypeFactory"/>
-    <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.bash.parser.BashParserDefinition"/>
-    <lang.commenter language="Shell Script" implementationClass="com.intellij.bash.BashCommenter"/>
-    <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.bash.BashQuoteHandler"/>
-    <backspaceHandlerDelegate implementation="com.intellij.bash.BashBackspaceHandler"/>
-    <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.bash.BashBackspaceModeOverride"/>
+    <fileTypeFactory implementation="com.intellij.bash.ShFileTypeFactory"/>
+    <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.bash.parser.ShParserDefinition"/>
+    <lang.commenter language="Shell Script" implementationClass="com.intellij.bash.ShCommenter"/>
+    <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.bash.ShQuoteHandler"/>
+    <backspaceHandlerDelegate implementation="com.intellij.bash.ShBackspaceHandler"/>
+    <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.bash.ShBackspaceModeOverride"/>
 
-    <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.bash.BashStructureViewFactory"/>
+    <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.bash.ShStructureViewFactory"/>
 
-    <annotator language="Shell Script" implementationClass="com.intellij.bash.BashAnnotator"/>
-    <colorSettingsPage implementation="com.intellij.bash.highlighter.BashColorPage"/>
+    <annotator language="Shell Script" implementationClass="com.intellij.bash.ShAnnotator"/>
+    <colorSettingsPage implementation="com.intellij.bash.highlighter.ShColorPage"/>
     <additionalTextAttributes scheme="Default" file="colors/BashDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colors/BashDarcula.xml"/>
 
-    <psi.referenceContributor implementation="com.intellij.bash.BashUrlReferenceContributor"/>
+    <psi.referenceContributor implementation="com.intellij.bash.ShUrlReferenceContributor"/>
 
-    <completion.contributor language="Shell Script" implementationClass="com.intellij.bash.completion.BashKeywordCompletionContributor" order="after bashFilePathCompletionContributor"/>
-    <completion.contributor id="bashFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.bash.completion.BashFilePathCompletionContributor"/>
-    <completion.contributor language="Shell Script" implementationClass="com.intellij.bash.completion.BashCommandCompletionContributor"/>
-    <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.bash.BashBraceMatcher"/>
-    <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.bash.BashDocumentationProvider"/>
-    <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.bash.run.BashRunLineMarkerContributor"/>
+    <completion.contributor language="Shell Script" implementationClass="com.intellij.bash.completion.ShKeywordCompletionContributor" order="after bashFilePathCompletionContributor"/>
+    <completion.contributor id="bashFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.bash.completion.ShFilePathCompletionContributor"/>
+    <completion.contributor language="Shell Script" implementationClass="com.intellij.bash.completion.ShCommandCompletionContributor"/>
+    <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.bash.ShBraceMatcher"/>
+    <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.bash.ShDocumentationProvider"/>
+    <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.bash.run.ShRunLineMarkerContributor"/>
 
-    <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.BashTemplateProvider"/>
-    <liveTemplateContext implementation="com.intellij.bash.template.BashContextType"/>
-    <lineIndentProvider implementation="com.intellij.bash.formatter.BashLineIndentProvider"/>
-    <langCodeStyleSettingsProvider implementation="com.intellij.bash.codeStyle.BashLanguageCodeStyleSettingsProvider"/>
+    <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.ShTemplateProvider"/>
+    <liveTemplateContext implementation="com.intellij.bash.template.ShContextType"/>
+    <lineIndentProvider implementation="com.intellij.bash.formatter.ShLineIndentProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.bash.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
 
-    <externalFormatProcessor implementation="com.intellij.bash.formatter.BashExternalFormatter"/>
-    <lang.formatter language="Shell Script" implementationClass="com.intellij.bash.formatter.BashFormatterModelBuilder"/>
-    <postFormatProcessor implementation="com.intellij.bash.formatter.BashPostFormatProcessor"/>
+    <externalFormatProcessor implementation="com.intellij.bash.formatter.ShExternalFormatter"/>
+    <lang.formatter language="Shell Script" implementationClass="com.intellij.bash.formatter.ShFormatterModelBuilder"/>
+    <postFormatProcessor implementation="com.intellij.bash.formatter.ShPostFormatProcessor"/>
 
     <editorNotificationProvider implementation="com.intellij.bash.shellcheck.ShellcheckSetupNotificationProvider"/>
 
     <registryKey key="bash.shellcheck.path"/>
-    <externalAnnotator language="Shell Script" implementationClass="com.intellij.bash.shellcheck.BashShellcheckExternalAnnotator"/>
+    <externalAnnotator language="Shell Script" implementationClass="com.intellij.bash.shellcheck.ShShellcheckExternalAnnotator"/>
     <localInspection language="Shell Script" groupName="Shell Script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
-                     level="ERROR" unfair="true" implementationClass="com.intellij.bash.shellcheck.BashShellcheckInspection"/>
+                     level="ERROR" unfair="true" implementationClass="com.intellij.bash.shellcheck.ShShellcheckInspection"/>
 
-    <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
-    <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>
-    <daemon.highlightInfoFilter implementation="com.intellij.bash.BashErrorFilter"/>
+    <fileTypeDetector implementation="com.intellij.bash.ShFileTypeDetector"/>
+    <highlightErrorFilter implementation="com.intellij.bash.ShErrorFilter"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.bash.ShErrorFilter"/>
 
-    <highlightUsagesHandlerFactory implementation="com.intellij.bash.highlighting.BashOccurrencesHighlightingFactory"/>
-    <renameHandler implementation="com.intellij.bash.BashRenameHandler"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.bash.highlighting.ShOccurrencesHighlightingFactory"/>
+    <renameHandler implementation="com.intellij.bash.ShRenameHandler"/>
 
     <intentionAction>
-      <className>com.intellij.bash.rename.BashRenameIntention</className>
+      <className>com.intellij.bash.rename.ShRenameIntention</className>
       <category>Shell Script</category>
     </intentionAction>
   </extensions>
   <actions>
-    <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
+    <action id="runShellFileAction" class="com.intellij.bash.run.ShRunFileAction" text="Run File"
             description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
   </actions>
 </idea-plugin>

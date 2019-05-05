@@ -1,6 +1,6 @@
 package com.intellij.bash.run.terminal;
 
-import com.intellij.bash.psi.BashFile;
+import com.intellij.bash.psi.ShFile;
 import com.intellij.bash.run.ShellScriptRunner;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 public class TerminalShellScriptRunner extends ShellScriptRunner {
 
   @Override
-  public void run(@NotNull BashFile bashFile) {
+  public void run(@NotNull ShFile bashFile) {
     Project project = bashFile.getProject();
     TerminalView terminalView = TerminalView.getInstance(bashFile.getProject());
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
@@ -61,7 +61,7 @@ public class TerminalShellScriptRunner extends ShellScriptRunner {
   }
 
   @NotNull
-  private Pair<String, String> createCommandLine(@NotNull BashFile bashFile) {
+  private Pair<String, String> createCommandLine(@NotNull ShFile bashFile) {
     VirtualFile virtualFile = bashFile.getVirtualFile();
     if (virtualFile == null) {
       return Pair.create(null, "Cannot run " + bashFile.getName());

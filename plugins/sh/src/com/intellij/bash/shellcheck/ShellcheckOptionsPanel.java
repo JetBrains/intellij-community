@@ -32,11 +32,11 @@ public class ShellcheckOptionsPanel {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
         String shellcheckPath = myShellcheckSelector.getText();
-        BashShellcheckUtil.setShellcheckPath(shellcheckPath);
-        myWarningPanel.setVisible(!BashShellcheckUtil.isValidPath(shellcheckPath));
+        ShShellcheckUtil.setShellcheckPath(shellcheckPath);
+        myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
       }
     });
-    myShellcheckSelector.setText(BashShellcheckUtil.getShellcheckPath());
+    myShellcheckSelector.setText(ShShellcheckUtil.getShellcheckPath());
     myShellcheckSelector.setEditable(false);
 
     myWarningLabel.setIcon(AllIcons.General.Warning);
@@ -46,8 +46,8 @@ public class ShellcheckOptionsPanel {
     myShellcheckDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        BashShellcheckUtil.download(event.getProject(), getPanel());
-        myShellcheckSelector.setText(BashShellcheckUtil.getShellcheckPath());
+        ShShellcheckUtil.download(event.getProject(), getPanel());
+        myShellcheckSelector.setText(ShShellcheckUtil.getShellcheckPath());
       }
     });
   }

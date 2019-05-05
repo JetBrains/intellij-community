@@ -1,6 +1,6 @@
 package com.intellij.bash.run;
 
-import com.intellij.bash.psi.BashFile;
+import com.intellij.bash.psi.ShFile;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
@@ -35,7 +35,7 @@ import javax.swing.*;
 
 public class FailoverShellScriptRunner extends ShellScriptRunner {
   @Override
-  public void run(@NotNull BashFile bashFile) {
+  public void run(@NotNull ShFile bashFile) {
     Project project = bashFile.getProject();
     ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance())
         .runProfile(new RunProfile() {
@@ -153,8 +153,8 @@ public class FailoverShellScriptRunner extends ShellScriptRunner {
     }
 
     @NotNull
-    private BashFile getBashFile() throws ExecutionException {
-      BashFile bashFile = ObjectUtils.tryCast(PsiManager.getInstance(myProject).findFile(myShellScriptFile), BashFile.class);
+    private ShFile getBashFile() throws ExecutionException {
+      ShFile bashFile = ObjectUtils.tryCast(PsiManager.getInstance(myProject).findFile(myShellScriptFile), ShFile.class);
       if (bashFile == null) {
         throw new ExecutionException("Cannot find BashFile by " + myShellScriptFile.getPath());
       }
