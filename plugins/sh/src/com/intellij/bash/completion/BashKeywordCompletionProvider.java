@@ -42,7 +42,7 @@ class BashKeywordCompletionProvider extends CompletionProvider<CompletionParamet
   @NotNull
   private LookupElement createKeywordLookupElement(@NotNull Project project, @NotNull final String keyword) {
     TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManager.getInstance(project);
-    Template template = TemplateSettings.getInstance().getTemplateById("bash_" + keyword);
+    Template template = TemplateSettings.getInstance().getTemplateById("shell_" + keyword);
 
     InsertHandler<LookupElement> insertHandler = createTemplateBasedInsertHandler(templateManager, template);
     return LookupElementBuilder
