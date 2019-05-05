@@ -7,11 +7,6 @@
   ]]>
   </description>
 
-  <!--<depends>org.jetbrains.kotlin</depends>-->
-
-  <!--<extensions defaultExtensionNs="org.jetbrains.kotlin">-->
-  <!--<scriptDefinitionContributor implementation="com.intellij.configurationScript.ConfigurationScriptContributor" order="first"/>-->
-  <!--</extensions>-->
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
   </extensions>
@@ -20,5 +15,9 @@
 
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>
     <updateSettingsProvider implementation="com.intellij.configurationScript.providers.MyUpdateSettingsProvider"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
+                        serviceImplementation="com.intellij.configurationScript.providers.ConfigurationScriptProjectStoreFactory"
+                        overrides="true"/>
   </extensions>
 </idea-plugin>

@@ -216,10 +216,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return ProgressManager.getInstance().getProgressIndicator();
   }
 
-  @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
-  }
-
   protected void handleInitComponentError(@NotNull Throwable ex, String componentClassName, PluginId pluginId) {
     LOG.error(ex);
   }
@@ -511,7 +507,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               indicator.checkCanceled();
               setProgressDuringInit(indicator);
             }
-            initializeComponent(instance, false);
+            initializeComponent(instance, null);
             if (instance instanceof BaseComponent) {
               ((BaseComponent)instance).initComponent();
             }

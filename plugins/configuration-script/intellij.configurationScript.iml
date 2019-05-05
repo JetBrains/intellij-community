@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.yaml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
   </component>
 </module>

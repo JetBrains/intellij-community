@@ -2,7 +2,7 @@ package com.intellij.configurationScript.providers
 
 import com.intellij.configurationScript.Keys
 import com.intellij.configurationScript.LOG
-import com.intellij.configurationScript.readObject
+import com.intellij.configurationScript.readIntoObject
 import com.intellij.configurationScript.schemaGenerators.processConfigurationTypes
 import com.intellij.configurationScript.schemaGenerators.rcFactoryIdToPropertyName
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -116,6 +116,6 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
       // very important - set BEFORE read to ensure that user can set any value for isAllowRunningInParallel and it will be not overridden by us later
       instance.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
     }
-    processor(factory, readObject(instance, node))
+    processor(factory, readIntoObject(instance, node))
   }
 }

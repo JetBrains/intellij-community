@@ -4,6 +4,7 @@ package com.intellij.openapi.components.impl.stores
 import com.intellij.configurationStore.SaveSession
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.SystemIndependent
@@ -14,7 +15,7 @@ interface IComponentStore {
 
   fun setPath(path: @SystemIndependent String)
 
-  fun initComponent(component: Any, isService: Boolean)
+  fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?)
 
   fun initPersistencePlainComponent(component: Any, key: String)
 
