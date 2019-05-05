@@ -3,7 +3,6 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.rules.TempDirectory
-import groovy.lang.Writable
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
