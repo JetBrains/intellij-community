@@ -20,8 +20,8 @@
 
     <annotator language="Shell Script" implementationClass="com.intellij.sh.ShAnnotator"/>
     <colorSettingsPage implementation="com.intellij.sh.highlighter.ShColorPage"/>
-    <additionalTextAttributes scheme="Default" file="colors/BashDefault.xml"/>
-    <additionalTextAttributes scheme="Darcula" file="colors/BashDarcula.xml"/>
+    <additionalTextAttributes scheme="Default" file="colors/ShDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colors/ShDarcula.xml"/>
 
     <psi.referenceContributor implementation="com.intellij.sh.ShUrlReferenceContributor"/>
 
