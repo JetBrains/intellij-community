@@ -1,4 +1,3 @@
-//noinspection BnfSuspiciousTokenForFile
 {
   generate = [ token-accessors="yes" ]
 
@@ -263,6 +262,7 @@ list ::= newlines pipeline_command_list end_of_list? newlines {pin(".*")=2 eleme
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
 
+//noinspection BnfSuspiciousToken
 shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
 
 left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
