@@ -100,7 +100,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testFrameEvalAndTracing() {
-    unittests("tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python3.6"), true);
+    pytests("tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron"));
   }
 
   private void pytests(final String script, @Nullable Set<String> tags) {

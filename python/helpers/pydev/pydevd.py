@@ -1256,7 +1256,7 @@ class PyDB(object):
 
         self.patch_threads()
         if enable_tracing_from_start:
-            pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
+            pydevd_tracing.SetTrace(self.trace_dispatch)
 
         PyDBCommandThread(self).start()
 
