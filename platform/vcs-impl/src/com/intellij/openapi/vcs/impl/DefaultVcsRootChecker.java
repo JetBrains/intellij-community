@@ -44,4 +44,10 @@ public class DefaultVcsRootChecker extends VcsRootChecker {
     if (myVcsDescriptor == null) return false;
     return myVcsDescriptor.matchesVcsDirPattern(dirName);
   }
+
+  @Override
+  public boolean areChildrenValidMappings() {
+    if (myVcsDescriptor == null) return false;
+    return myVcsDescriptor.areChildrenValidMappings();
+  }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -221,7 +222,9 @@ public class NewMappings implements Disposable {
         AbstractVcs<?> vcs = getMappingsVcs(mapping);
         if (vcs == null) continue;
 
-        List<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs, myDefaultVcsRootPolicy.getDefaultVcsRoots());
+        Collection<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs,
+                                                                     myDefaultVcsRootPolicy.getDefaultVcsRoots(),
+                                                                     map2Set(mappedRoots.values(), it -> it.root));
 
         ReadAction.run(() -> {
           for (VirtualFile vcsRoot : defaultRoots) {
@@ -265,21 +268,44 @@ public class NewMappings implements Disposable {
   }
 
   @NotNull
-  private List<VirtualFile> detectDefaultRootsFor(@NotNull AbstractVcs<?> vcs, @NotNull Collection<VirtualFile> files) {
+  private Collection<VirtualFile> detectDefaultRootsFor(@NotNull AbstractVcs<?> vcs,
+                                                        @NotNull Collection<VirtualFile> projectRoots,
+                                                        @NotNull Set<VirtualFile> mappedDirs) {
     try {
+      DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-      HashSet<VirtualFile> checkedDirs = new HashSet<>();
 
-      List<VirtualFile> vcsRoots = new ArrayList<>();
-      for (VirtualFile f : files) {
+      Map<VirtualFile, Boolean> checkedDirs = new HashMap<>();
+
+      Set<VirtualFile> vcsRoots = new HashSet<>();
+      for (VirtualFile f : projectRoots) {
         while (f != null) {
-          ProgressManager.checkCanceled();
-          if (!checkedDirs.add(f)) break;
-          if (rootChecker.isRoot(f.getPath())) {
+          if (vcsRoots.contains(f) || mappedDirs.contains(f)) break;
+
+          if (isVcsRoot(rootChecker, checkedDirs, f)) {
             vcsRoots.add(f);
             break;
           }
-          f = f.getParent();
+
+          VirtualFile parent = f.getParent();
+          if (!isUnderProject(directoryIndex, parent)) {
+            if (rootChecker.areChildrenValidMappings()) {
+              while (parent != null) {
+                if (vcsRoots.contains(parent) || mappedDirs.contains(parent)) break;
+
+                if (isVcsRoot(rootChecker, checkedDirs, parent)) {
+                  vcsRoots.add(f);
+                  break;
+                }
+
+                parent = parent.getParent();
+              }
+            }
+
+            break;
+          }
+
+          f = parent;
         }
       }
       return vcsRoots;
@@ -291,6 +317,17 @@ public class NewMappings implements Disposable {
       LOG.error(e);
       return Collections.emptyList();
     }
+  }
+
+  private static boolean isVcsRoot(@NotNull VcsRootChecker rootChecker,
+                                   @NotNull Map<VirtualFile, Boolean> checkedDirs,
+                                   @NotNull VirtualFile file) {
+    ProgressManager.checkCanceled();
+    return checkedDirs.computeIfAbsent(file, key -> rootChecker.isRoot(key.getPath()));
+  }
+
+  private static boolean isUnderProject(@NotNull DirectoryIndex directoryIndex, @NotNull VirtualFile f) {
+    return ReadAction.compute(() -> directoryIndex.getInfoForFile(f).isInProject(f));
   }
 
   public void mappingsChanged() {

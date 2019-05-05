@@ -67,4 +67,11 @@ public abstract class VcsRootChecker {
   public boolean isIgnored(@NotNull VirtualFile root, @NotNull VirtualFile checkForIgnore) {
     return false;
   }
+
+  /**
+   * @return Whether any descendant of VCS root can be registered as valid VCS mapping.
+   */
+  public boolean areChildrenValidMappings() {
+    return false;
+  }
 }

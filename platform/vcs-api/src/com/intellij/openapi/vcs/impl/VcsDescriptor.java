@@ -31,21 +31,31 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
 
   private final String myName;
   private final boolean myCrawlUpToCheckUnderVcs;
+  private final boolean myAreChildrenValidMappings;
   private final String myDisplayName;
   private final List<String> myAdministrativePatterns;
   private boolean myIsNone;
 
-  public VcsDescriptor(String administrativePattern, String displayName, String name, boolean crawlUpToCheckUnderVcs) {
+  public VcsDescriptor(String administrativePattern,
+                       String displayName,
+                       String name,
+                       boolean crawlUpToCheckUnderVcs,
+                       boolean areChildrenValidMappings) {
     myAdministrativePatterns = parseAdministrativePatterns(administrativePattern);
     myDisplayName = displayName;
     myName = name;
     myCrawlUpToCheckUnderVcs = crawlUpToCheckUnderVcs;
+    myAreChildrenValidMappings = areChildrenValidMappings;
   }
 
   @NotNull
   private static List<String> parseAdministrativePatterns(@Nullable String administrativePattern) {
     if (administrativePattern == null) return Collections.emptyList();
     return ContainerUtil.map(administrativePattern.split(","), it -> it.trim());
+  }
+
+  public boolean areChildrenValidMappings() {
+    return myAreChildrenValidMappings;
   }
 
   public boolean probablyUnderVcs(final VirtualFile file) {
@@ -110,7 +120,7 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
   }
 
   public static VcsDescriptor createFictive() {
-    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null, false);
+    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null, false, false);
     vcsDescriptor.myIsNone = true;
     return vcsDescriptor;
   }
