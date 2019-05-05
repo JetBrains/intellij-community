@@ -42,6 +42,6 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
                                    @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     indentOptions.INDENT_SIZE = 2;
-    indentOptions.TAB_SIZE = 1;
+    indentOptions.TAB_SIZE = 2;
   }
 }
