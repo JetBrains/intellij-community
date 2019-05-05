@@ -7,18 +7,7 @@ import com.intellij.sh.psi.ShCompositeElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ResolveUtil {
-  public static boolean treeWalkUp(@Nullable PsiElement place, @NotNull PsiScopeProcessor processor) {
-    PsiElement lastParent = null;
-    PsiElement run = place;
-    while (run != null) {
-      if (place != run && !run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
-      lastParent = run;
-      run = run.getParent();
-    }
-    return true;
-  }
-
+class ResolveUtil {
   static boolean processChildren(@NotNull PsiElement element,
                                  @NotNull PsiScopeProcessor processor,
                                  @NotNull ResolveState substitutor,
