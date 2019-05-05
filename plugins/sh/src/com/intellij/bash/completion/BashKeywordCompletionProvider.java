@@ -17,19 +17,18 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BashKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
-
+class BashKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
   @NotNull
   private final String[] myKeywords;
-  private final boolean withDescription;
+  private final boolean myWithDescription;
 
-  public BashKeywordCompletionProvider(@NotNull String... myKeywords) {
-    this(false, myKeywords);
+  BashKeywordCompletionProvider(@NotNull String... keywords) {
+    this(false, keywords);
   }
 
-  public BashKeywordCompletionProvider(boolean withDescription, @NotNull String... myKeywords) {
-    this.myKeywords = myKeywords;
-    this.withDescription = withDescription;
+  BashKeywordCompletionProvider(boolean withDescription, @NotNull String... keywords) {
+    myKeywords = keywords;
+    myWithDescription = withDescription;
   }
 
   @Override
@@ -46,17 +45,21 @@ public class BashKeywordCompletionProvider extends CompletionProvider<Completion
     Template template = TemplateSettings.getInstance().getTemplateById("bash_" + keyword);
 
     InsertHandler<LookupElement> insertHandler = createTemplateBasedInsertHandler(templateManager, template);
-    return LookupElementBuilder.create(keyword).withTypeText(template != null && withDescription ? template.getDescription() : "")
-                               .withBoldness(true).withInsertHandler(insertHandler);
+    return LookupElementBuilder
+        .create(keyword)
+        .withTypeText(template != null && myWithDescription ? template.getDescription() : "")
+        .withBoldness(true)
+        .withInsertHandler(insertHandler);
   }
 
-  private InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull TemplateManagerImpl templateManager,  @Nullable Template template) {
+  private InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull TemplateManagerImpl templateManager, @Nullable Template template) {
     return (context, item) -> {
       Editor editor = context.getEditor();
       if (template != null) {
         editor.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
         templateManager.startTemplate(editor, template);
-      } else {
+      }
+      else {
         EditorModificationUtil.insertStringAtCaret(editor, " ");
       }
     };
