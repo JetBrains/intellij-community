@@ -505,23 +505,29 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private JComponent createMappingsTable() {
     JPanel panelForTable = ToolbarDecorator.createDecorator(myDirectoryMappingTable, null)
+      .setAddActionUpdater(e -> !myIsDisabled && rootsOfOneKindInSelection())
       .setAddAction(button -> {
-        if (onlyRegisteredRootsInSelection()) {
+        List<MapInfo> unregisteredRoots = getSelectedUnregisteredRoots();
+        if (unregisteredRoots.isEmpty()) {
           addMapping();
         }
         else {
-          addSelectedUnregisteredMappings(getSelectedUnregisteredRoots());
+          addSelectedUnregisteredMappings(unregisteredRoots);
         }
         updateRootCheckers();
-      }).setEditAction(button -> {
+      })
+      .setEditActionUpdater(e -> !myIsDisabled && onlyRegisteredRootsInSelection())
+      .setEditAction(button -> {
         editMapping();
         updateRootCheckers();
-      }).setRemoveAction(button -> {
+      })
+      .setRemoveActionUpdater(e -> !myIsDisabled && onlyRegisteredRootsInSelection())
+      .setRemoveAction(button -> {
         removeMapping();
         updateRootCheckers();
-      }).setAddActionUpdater(e -> !myIsDisabled && rootsOfOneKindInSelection()).setEditActionUpdater(
-        e -> !myIsDisabled && onlyRegisteredRootsInSelection()).setRemoveActionUpdater(
-        e -> !myIsDisabled && onlyRegisteredRootsInSelection()).disableUpDownActions().createPanel();
+      })
+      .disableUpDownActions()
+      .createPanel();
     panelForTable.setPreferredSize(new JBDimension(-1, 200));
     return panelForTable;
   }
@@ -537,7 +543,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       return true;
     }
     if (selection.size() == 1 && selection.iterator().next().type == MapInfo.Type.SEPARATOR) {
-      return false;
+      return true;
     }
     List<MapInfo> selectedRegisteredRoots = getSelectedRegisteredRoots();
     return selectedRegisteredRoots.size() == selection.size() || selectedRegisteredRoots.size() == 0;
