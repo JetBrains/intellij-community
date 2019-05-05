@@ -166,7 +166,7 @@ public class BashShellcheckUtil {
   }
 
   private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Bash shellcheck was successfully installed",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Shellcheck was successfully installed",
         NotificationType.INFORMATION));
   }
 

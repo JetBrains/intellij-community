@@ -135,7 +135,7 @@ public class BashShfmtFormatterUtil {
   }
 
   private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Bash formatter was successfully installed",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Shell script formatter was successfully installed",
         NotificationType.INFORMATION));
   }
 
