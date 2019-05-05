@@ -916,7 +916,7 @@ public class EditorWindow {
     final LayeredIcon result = new LayeredIcon(count);
     result.setIcon(baseIcon, i++);
     if (pinIcon != null) result.setIcon(pinIcon, i++);
-    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth(), 0);
+    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth() / 2, 0);
 
     return JBUI.scale(result);
   }
