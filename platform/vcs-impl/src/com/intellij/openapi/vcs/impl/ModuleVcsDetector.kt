@@ -62,6 +62,8 @@ class ModuleVcsDetector(private val myProject: Project,
   }
 
   private fun autoDetectVcsMappings(tryMapPieces: Boolean) {
+    if (myVcsManager.haveDefaultMapping() != null) return
+
     val roots = ModuleManager.getInstance(myProject).modules.flatMap { it.rootManager.contentRoots.asIterable() }.distinct()
     val rootVcses = roots.mapNotNull { root -> myVcsManager.findVersioningVcs(root)?.let { root to it } }
     // this case is only for project <-> one vcs.
@@ -85,6 +87,8 @@ class ModuleVcsDetector(private val myProject: Project,
   }
 
   private fun autoDetectModuleVcsMapping(module: Module) {
+    if (myVcsManager.haveDefaultMapping() != null) return
+
     val newMappings = mutableListOf<VcsDirectoryMapping>()
     for (file in module.rootManager.contentRoots) {
       val vcs = myVcsManager.findVersioningVcs(file)
