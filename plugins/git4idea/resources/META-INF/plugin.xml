@@ -220,7 +220,7 @@
     <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
     <projectService serviceImplementation="git4idea.history.GitHistoryProvider"/>
     <projectService serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
-    <projectService serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService serviceImplementation="git4idea.config.GitExecutableValidator"/>
