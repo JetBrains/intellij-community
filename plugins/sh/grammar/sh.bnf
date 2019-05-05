@@ -2,22 +2,22 @@
 {
   generate = [ token-accessors="yes" ]
 
-  parserClass="com.intellij.bash.parser.ShParser"
-  parserUtilClass="com.intellij.bash.parser.ShParserUtil"
+  parserClass="com.intellij.sh.parser.ShParser"
+  parserUtilClass="com.intellij.sh.parser.ShParserUtil"
 
-  implements="com.intellij.bash.psi.ShCompositeElement"
-  extends="com.intellij.bash.psi.impl.ShCompositeElementImpl"
+  implements="com.intellij.sh.psi.ShCompositeElement"
+  extends="com.intellij.sh.psi.impl.ShCompositeElementImpl"
 
-  elementTypeHolderClass="com.intellij.bash.ShTypes"
-  elementTypeClass="com.intellij.bash.psi.ShCompositeElementType"
-  tokenTypeClass="com.intellij.bash.psi.ShTokenType"
+  elementTypeHolderClass="com.intellij.sh.ShTypes"
+  elementTypeClass="com.intellij.sh.psi.ShCompositeElementType"
+  tokenTypeClass="com.intellij.sh.psi.ShTokenType"
 
   psiClassPrefix="Sh"
   psiImplClassSuffix="Impl"
-  psiPackage="com.intellij.bash.psi"
-  psiImplPackage="com.intellij.bash.psi.impl"
+  psiPackage="com.intellij.sh.psi"
+  psiImplPackage="com.intellij.sh.psi.impl"
 
-  psiImplUtilClass="com.intellij.bash.psi.impl.ShPsiImplUtil"
+  psiImplUtilClass="com.intellij.sh.psi.impl.ShPsiImplUtil"
 
   tokens = [
     // Arithmetic operations
