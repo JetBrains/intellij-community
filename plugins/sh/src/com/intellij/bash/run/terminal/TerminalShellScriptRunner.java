@@ -23,11 +23,10 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 public class TerminalShellScriptRunner extends ShellScriptRunner {
-
   @Override
-  public void run(@NotNull ShFile bashFile) {
-    Project project = bashFile.getProject();
-    TerminalView terminalView = TerminalView.getInstance(bashFile.getProject());
+  public void run(@NotNull ShFile file) {
+    Project project = file.getProject();
+    TerminalView terminalView = TerminalView.getInstance(file.getProject());
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window != null && window.isAvailable()) {
       ((ToolWindowImpl) window).ensureContentInitialized();
@@ -37,7 +36,7 @@ public class TerminalShellScriptRunner extends ShellScriptRunner {
       @Override
       protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
         PtyProcess process = super.createProcess(directory, commandHistoryFilePath);
-        Pair<String, String> fileCommand = createCommandLine(bashFile);
+        Pair<String, String> fileCommand = createCommandLine(file);
         if (fileCommand.first != null) {
           try {
             process.getOutputStream().write(fileCommand.first.getBytes(CharsetToolkit.UTF8_CHARSET));
@@ -61,10 +60,10 @@ public class TerminalShellScriptRunner extends ShellScriptRunner {
   }
 
   @NotNull
-  private Pair<String, String> createCommandLine(@NotNull ShFile bashFile) {
-    VirtualFile virtualFile = bashFile.getVirtualFile();
+  private Pair<String, String> createCommandLine(@NotNull ShFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
-      return Pair.create(null, "Cannot run " + bashFile.getName());
+      return Pair.create(null, "Cannot run " + file.getName());
     }
     if (!virtualFile.exists()) {
       return Pair.create(null, "File " + virtualFile.getPath() + " doesn't exist");
@@ -73,7 +72,7 @@ public class TerminalShellScriptRunner extends ShellScriptRunner {
     if (VfsUtil.virtualToIoFile(virtualFile).canExecute()) {
       return Pair.create(filePath, null);
     }
-    String executable = ShellScriptRunner.getShebangExecutable(bashFile);
+    String executable = ShellScriptRunner.getShebangExecutable(file);
     if (executable == null) {
       String shellPath = TerminalOptionsProvider.Companion.getInstance().getShellPath();
       File shellFile = new File(shellPath);

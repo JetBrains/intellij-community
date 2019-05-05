@@ -35,19 +35,19 @@ import javax.swing.*;
 
 public class FailoverShellScriptRunner extends ShellScriptRunner {
   @Override
-  public void run(@NotNull ShFile bashFile) {
-    Project project = bashFile.getProject();
+  public void run(@NotNull ShFile file) {
+    Project project = file.getProject();
     ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance())
         .runProfile(new RunProfile() {
           @Override
           public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-            return new MyRunProfileState(bashFile.getProject(), bashFile.getVirtualFile());
+            return new MyRunProfileState(file.getProject(), file.getVirtualFile());
           }
 
           @NotNull
           @Override
           public String getName() {
-            return "Run " + bashFile.getName();
+            return "Run " + file.getName();
           }
 
           @Override
@@ -154,11 +154,11 @@ public class FailoverShellScriptRunner extends ShellScriptRunner {
 
     @NotNull
     private ShFile getBashFile() throws ExecutionException {
-      ShFile bashFile = ObjectUtils.tryCast(PsiManager.getInstance(myProject).findFile(myShellScriptFile), ShFile.class);
-      if (bashFile == null) {
+      ShFile shFile = ObjectUtils.tryCast(PsiManager.getInstance(myProject).findFile(myShellScriptFile), ShFile.class);
+      if (shFile == null) {
         throw new ExecutionException("Cannot find BashFile by " + myShellScriptFile.getPath());
       }
-      return bashFile;
+      return shFile;
     }
   }
 }
