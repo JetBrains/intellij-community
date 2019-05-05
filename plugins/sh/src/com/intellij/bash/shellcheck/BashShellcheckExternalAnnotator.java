@@ -130,7 +130,7 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Bash";
+          return "Shell Script";
         }
 
         @Override

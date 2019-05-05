@@ -166,12 +166,12 @@ public class BashShellcheckUtil {
   }
 
   private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Bash", "", "Bash shellcheck was successfully installed",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Bash shellcheck was successfully installed",
         NotificationType.INFORMATION));
   }
 
   private static void showErrorNotification() {
-    Notifications.Bus.notify(new Notification("Bash", "", "Can't download bash shellcheck. Please install in manually",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download bash shellcheck. Please install in manually",
         NotificationType.ERROR));
   }
 }

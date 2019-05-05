@@ -14,12 +14,12 @@ public class BashFileType extends LanguageFileType {
 
   @NotNull
   public String getName() {
-    return "Bash";
+    return "Shell Script";
   }
 
   @NotNull
   public String getDescription() {
-    return "Bash";
+    return "Shell Script";
   }
 
   @NotNull

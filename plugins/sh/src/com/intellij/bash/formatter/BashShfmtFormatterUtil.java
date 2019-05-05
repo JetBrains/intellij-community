@@ -135,12 +135,12 @@ public class BashShfmtFormatterUtil {
   }
 
   private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Bash", "", "Bash formatter was successfully installed",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Bash formatter was successfully installed",
         NotificationType.INFORMATION));
   }
 
   private static void showErrorNotification() {
-    Notifications.Bus.notify(new Notification("Bash", "", "Can't download bash shfmt formatter. Please install in manually",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download bash shfmt formatter. Please install in manually",
         NotificationType.ERROR));
   }
 }
