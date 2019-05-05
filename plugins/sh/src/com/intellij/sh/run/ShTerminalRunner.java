@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-public class ShTerminalRunner extends ShellScriptRunner {
+public class ShTerminalRunner extends ShRunner {
   @Override
   public void run(@NotNull ShFile file) {
     Project project = file.getProject();
@@ -71,7 +71,7 @@ public class ShTerminalRunner extends ShellScriptRunner {
     if (VfsUtil.virtualToIoFile(virtualFile).canExecute()) {
       return Pair.create(filePath, null);
     }
-    String executable = ShellScriptRunner.getShebangExecutable(file);
+    String executable = ShRunner.getShebangExecutable(file);
     if (executable == null) {
       String shellPath = TerminalOptionsProvider.Companion.getInstance().getShellPath();
       File shellFile = new File(shellPath);

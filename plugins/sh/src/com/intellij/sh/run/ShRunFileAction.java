@@ -18,11 +18,16 @@ public class ShRunFileAction extends DumbAwareAction {
     if (!(file instanceof ShFile)) return;
 
     Project project = file.getProject();
-    ShellScriptRunner shellScriptRunner = ServiceManager.getService(project, ShellScriptRunner.class);
-    if (shellScriptRunner == null || !shellScriptRunner.isAvailable(project)) {
-      shellScriptRunner = new ShFailoverRunner();
-    }
-    shellScriptRunner.run((ShFile) file);
+    ShRunner runner = findRunner(project);
+    runner.run((ShFile) file);
+  }
+
+  @NotNull
+  private static ShRunner findRunner(@NotNull Project project) {
+    ShRunner runner = ServiceManager.getService(project, ShRunner.class);
+    return runner == null || !runner.isAvailable(project)
+        ? new ShFailoverRunner()
+        : runner;
   }
 
   public void update(@NotNull AnActionEvent e) {

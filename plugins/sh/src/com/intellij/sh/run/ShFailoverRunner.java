@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ShFailoverRunner extends ShellScriptRunner {
+public class ShFailoverRunner extends ShRunner {
   @Override
   public void run(@NotNull ShFile file) {
     Project project = file.getProject();
@@ -141,7 +141,7 @@ public class ShFailoverRunner extends ShellScriptRunner {
         commandLine.setExePath(shellScriptFilePath);
       }
       else {
-        commandLine.setExePath(ObjectUtils.notNull(ShellScriptRunner.getShebangExecutable(getBashFile()), getDefaultShell()));
+        commandLine.setExePath(ObjectUtils.notNull(ShRunner.getShebangExecutable(getBashFile()), getDefaultShell()));
         commandLine.addParameter(shellScriptFilePath);
       }
       return commandLine;

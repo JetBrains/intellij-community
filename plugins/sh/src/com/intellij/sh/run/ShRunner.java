@@ -10,13 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public abstract class ShellScriptRunner {
+public abstract class ShRunner {
   public abstract void run(@NotNull ShFile file);
 
   public abstract boolean isAvailable(@NotNull Project project);
 
   @Nullable
-  public static String getShebangExecutable(@NotNull ShFile file) {
+  static String getShebangExecutable(@NotNull ShFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.exists()) {
       ASTNode shebang = file.getNode().findChildByType(ShTokenTypes.SHEBANG);
