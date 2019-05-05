@@ -145,24 +145,21 @@ public class ShShellcheckUtil {
     FileUtil.delete(archive);
 
     File shellcheck = new File(APP_PATH + File.separator + APP_NAME);
-    if (shellcheck.exists())
-      return shellcheck.getCanonicalPath();
-    return "";
+    return shellcheck.exists() ? shellcheck.getCanonicalPath() : "";
   }
 
+  @Nullable
   private static String getShellcheckDistributionLink() {
-    String baseUrl = "";
-
     if (SystemInfoRt.isMac) {
-      baseUrl = "https://homebrew.bintray.com/bottles/shellcheck-0.6.0_1.mojave.bottle.tar.gz";
+      return "https://homebrew.bintray.com/bottles/shellcheck-0.6.0_1.mojave.bottle.tar.gz";
     }
     if (SystemInfoRt.isLinux) {
-      baseUrl = "https://shellcheck.storage.googleapis.com/shellcheck-v0.6.0.linux-x86_64";
+      return "https://shellcheck.storage.googleapis.com/shellcheck-v0.6.0.linux-x86_64";
     }
     if (SystemInfoRt.isWindows) {
-      baseUrl = "https://shellcheck.storage.googleapis.com/shellcheck-v0.6.0.exe";
+      return "https://shellcheck.storage.googleapis.com/shellcheck-v0.6.0.exe";
     }
-    return baseUrl;
+    return null;
   }
 
   private static void showInfoNotification() {
