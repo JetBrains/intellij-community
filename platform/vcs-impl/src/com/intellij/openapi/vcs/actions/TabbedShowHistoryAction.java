@@ -72,7 +72,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
 
   private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, path);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, path, null);
   }
 
   @NotNull

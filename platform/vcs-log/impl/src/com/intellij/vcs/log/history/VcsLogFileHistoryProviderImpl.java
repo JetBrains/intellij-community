@@ -31,7 +31,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
   public static final String TAB_NAME = "History";
 
   @Override
-  public boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path) {
+  public boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
     if (!Registry.is("vcs.new.history")) return false;
 
     VirtualFile root = VcsLogUtil.getActualRoot(project, path);

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface VcsLogFileHistoryProvider {
-  boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path);
+  boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber);
 
   void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber);
 }
