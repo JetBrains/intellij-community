@@ -32,6 +32,10 @@
       <keyboard-shortcut first-keystroke="control shift RIGHT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
+    <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction"
+            text="Switch Focus To Editor">
+      <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
+    </action>
   </actions>
 
 </idea-plugin>
