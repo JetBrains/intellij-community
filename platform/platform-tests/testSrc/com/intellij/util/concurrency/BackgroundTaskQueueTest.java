@@ -21,8 +21,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
@@ -103,10 +103,11 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     }
   }
 
-  private static TestTask[] createSeveralTasks() {
+  @NotNull
+  private static TestTask[] createSeveralTasks(@NotNull Project project) {
     final TestTask[] tasks = new TestTask[10];
     for (int i = 0; i < tasks.length; i++) {
-      tasks[i] = new TestTask();
+      tasks[i] = new TestTask(project);
     }
     return tasks;
   }
@@ -137,8 +138,8 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     private final AtomicReference<TaskState> myState = new AtomicReference<>(TaskState.CREATED);
     private final Semaphore mySemaphore = new Semaphore(0);
 
-    TestTask() {
-      super(LightPlatformTestCase.getProject(), "Test Task", true);
+    TestTask(@NotNull Project project) {
+      super(project, "Test Task", true);
     }
 
     protected void execute(ProgressIndicator indicator) {
@@ -226,14 +227,14 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
   }
 
   public void testSingleSuccessfullTask() throws InterruptedException {
-    TestTask task = new TestTask();
+    TestTask task = new TestTask(getProject());
     myQueue.run(task);
     waitForTasks(task);
     assertSucceeded(task);
   }
 
   public void testSingleCancelledTask() throws InterruptedException {
-    TestTask task = new TestTask() {
+    TestTask task = new TestTask(getProject()) {
       @Override
       protected void execute(ProgressIndicator indicator) {
         sleep50();
@@ -246,7 +247,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
   }
 
   public void testSingleExceptionTask() throws InterruptedException {
-    TestTask task = new TestTask() {
+    TestTask task = new TestTask(getProject()) {
       @Override
       protected void execute(ProgressIndicator indicator) {
         sleep50();
@@ -292,7 +293,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
    * Start several tasks from a single thread. Wait for all to successfully complete.
    */
   public void testSeveralTasksStartedFromSingleThread() throws InterruptedException {
-    TestTask[] tasks = createSeveralTasks();
+    TestTask[] tasks = createSeveralTasks(getProject());
     for (TestTask task : tasks) {
       myQueue.run(task);
     }
@@ -304,7 +305,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
    * Start several tasks from different threads. All should successfully complete.
    */
   public void testSeveralSuccessfulTasksStartedFromDifferentThreads() throws InterruptedException {
-    final TestTask[] tasks = createSeveralTasks();
+    final TestTask[] tasks = createSeveralTasks(getProject());
 
     myThreadRunner.run(tasks.length, i -> myQueue.run(tasks[i]));
 
@@ -319,11 +320,11 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
   public void testSeveralDifferentlyEndingTasksStartedFromDifferentThreads() throws InterruptedException {
     final TestTask[] successful = new TestTask[6];
     for (int i = 0; i < 6; i++) {
-      successful[i] = new TestTask();
+      successful[i] = new TestTask(getProject());
     }
     final TestTask[] cancelled = new TestTask[6];
     for (int i = 0; i < 6; i++) {
-      cancelled[i] = new TestTask() {
+      cancelled[i] = new TestTask(getProject()) {
         @Override
         protected void execute(ProgressIndicator indicator) {
           sleep50();
@@ -333,7 +334,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     }
     final TestTask[] exceptioned = new TestTask[6];
     for (int i = 0; i < 6; i++) {
-      exceptioned[i] = new TestTask() {
+      exceptioned[i] = new TestTask(getProject()) {
         @Override
         protected void execute(ProgressIndicator indicator) {
           sleep50();
