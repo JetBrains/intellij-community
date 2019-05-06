@@ -30,8 +30,8 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (file.getFileType() instanceof ShFileType && !isValidPath(getShellcheckPath())) {
       EditorNotificationPanel panel = new EditorNotificationPanel();
-      panel.setText("Shellcheck not installed or incorrect path");
-      panel.createActionLabel("Download", () -> {
+      panel.setText("Would you like to install shellcheck to verify your shell scripts?");
+      panel.createActionLabel("Install", () -> {
         ShShellcheckUtil.download(null, null);
         EditorNotifications.getInstance(project).updateAllNotifications();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
