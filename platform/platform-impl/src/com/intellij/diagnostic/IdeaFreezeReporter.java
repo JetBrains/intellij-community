@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class IdeaFreezeReporter {
@@ -137,8 +136,8 @@ public class IdeaFreezeReporter {
     // build tree
     for (StackTraceElement[] stack : stacks) {
       CallTreeNode node = root;
-      for (StackTraceElement element : stack) {
-        node = node.addCallee(element);
+      for (int i = stack.length - 1; i >= 0; i--) {
+        node = node.addCallee(stack[i]);
       }
     }
     // find dominant
@@ -162,7 +161,6 @@ public class IdeaFreezeReporter {
       res.add(node.myStackTraceElement);
       node = node.myParent;
     }
-    Collections.reverse(res);
     return res;
   }
 
