@@ -64,21 +64,21 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
     return ObjectUtils.notNull(super.getDeploymentTask());
   }
 
-
-  private boolean isLocalState() {
-    return myRemoteDeployment == null || super.getStatus().isTransition();
-  }
-
   @NotNull
   @Override
   public DeploymentStatus getStatus() {
-    return isLocalState() ? super.getStatus() : myRemoteDeployment.getStatus();
+    return myRemoteDeployment == null ? super.getStatus() : myRemoteDeployment.getStatus();
   }
 
   @NotNull
   @Override
   public String getStatusText() {
-    return isLocalState() ? super.getStatusText() : myRemoteDeployment.getStatusText();
+    return myRemoteDeployment == null ? super.getStatusText() : myRemoteDeployment.getStatusText();
+  }
+
+  @Override
+  public DeploymentRuntime getRuntime() {
+    return myRemoteDeployment == null ? super.getRuntime() : myRemoteDeployment.getRuntime();
   }
 
   @Override
