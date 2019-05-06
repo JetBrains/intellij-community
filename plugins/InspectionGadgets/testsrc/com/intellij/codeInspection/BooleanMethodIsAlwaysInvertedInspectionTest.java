@@ -60,7 +60,7 @@ public class BooleanMethodIsAlwaysInvertedInspectionTest extends IGInspectionTes
   }
 
   public void testMethodReferenceIgnored() {
-    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_8, () -> doTest());
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest());
   }
 
   private void doTest() {

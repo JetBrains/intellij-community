@@ -10,17 +10,17 @@ public class DescriptorUtilTest extends LightCodeInsightFixtureTestCase {
 
   public void testSimple() {
     myFixture.copyFileToProject("simple.xml", "META-INF/plugin.xml");
-    assertSameElements(DescriptorUtil.getPluginAndOptionalDependenciesIds(myModule), "com.intellij.example");
+    assertSameElements(DescriptorUtil.getPluginAndOptionalDependenciesIds(getModule()), "com.intellij.example");
   }
 
   public void testWithDependency() {
     myFixture.copyFileToProject("withDependency.xml", "META-INF/plugin.xml");
-    assertSameElements(DescriptorUtil.getPluginAndOptionalDependenciesIds(myModule), "com.intellij.example");
+    assertSameElements(DescriptorUtil.getPluginAndOptionalDependenciesIds(getModule()), "com.intellij.example");
   }
 
   public void testWithOptionalDependency() {
     myFixture.copyFileToProject("withOptionalDependency.xml", "META-INF/plugin.xml");
-    assertSameElements(DescriptorUtil.getPluginAndOptionalDependenciesIds(myModule), "com.intellij.example", "my.dependency");
+    assertSameElements(DescriptorUtil.getPluginAndOptionalDependenciesIds(getModule()), "com.intellij.example", "my.dependency");
   }
 
   @Override

@@ -20,7 +20,6 @@ import java.io.File;
  */
 public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
   protected JavaCodeInsightTestFixture myFixture;
-  protected Module myModule;
 
   @Override
   protected void setUp() throws Exception {
@@ -38,7 +37,6 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-    myModule = moduleFixtureBuilder.getFixture().getModule();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
   }
 
@@ -48,8 +46,6 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myModule = null;
-
     try {
       myFixture.tearDown();
     }
@@ -96,5 +92,9 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
 
   public PsiElementFactory getElementFactory() {
     return JavaPsiFacade.getElementFactory(getProject());
+  }
+
+  protected Module getModule() {
+    return myFixture.getModule();
   }
 }
