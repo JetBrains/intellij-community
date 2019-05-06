@@ -45,6 +45,7 @@ public class SensitiveDataValidator {
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
     if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST.getDescription();
+    if (isSystemEventId(context.eventId)) return context.eventId;
 
     ValidationResultType validationResultType = validateEvent(group, context);
     return validationResultType == ACCEPTED ? context.eventId : validationResultType.getDescription();
@@ -96,6 +97,10 @@ public class SensitiveDataValidator {
 
   private boolean isUnreachableWhitelist() {
     return !isWhiteListInitialized.get();
+  }
+
+  private static boolean isSystemEventId(@Nullable String eventId) {
+    return "invoked".equals(eventId) || "registered".equals(eventId);
   }
 
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
