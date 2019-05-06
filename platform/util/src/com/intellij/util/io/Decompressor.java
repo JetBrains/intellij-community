@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -34,9 +36,15 @@ public abstract class Decompressor {
       mySource = stream;
     }
 
+    public Tar withSymlinks() {
+      symlinks = true;
+      return this;
+    }
+
     //<editor-fold desc="Implementation">
     private final Object mySource;
     private TarArchiveInputStream myStream;
+    private boolean symlinks;
 
     @Override
     protected void openStream() throws IOException {
@@ -55,8 +63,12 @@ public abstract class Decompressor {
     @SuppressWarnings("OctalInteger")
     protected Entry nextEntry() throws IOException {
       TarArchiveEntry te;
-      while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory())) /* skips unsupported entries */;
-      return te == null ? null : new Entry(te.getName(), te.isDirectory(), isSet(te.getMode(), 0200), isSet(te.getMode(), 0100));
+      while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink() && symlinks)) /* skips unsupported */;
+      return te == null ? null : new Entry(te.getName(), type(te), isSet(te.getMode(), 0200), isSet(te.getMode(), 0100), te.getLinkName());
+    }
+
+    private static Type type(TarArchiveEntry te) {
+      return te.isSymbolicLink() ? Type.SYMLINK : te.isDirectory() ? Type.DIR : Type.FILE;
     }
 
     @Override
@@ -97,7 +109,7 @@ public abstract class Decompressor {
     @Override
     protected Entry nextEntry() {
       myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
-      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory(), true, false);
+      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory());
     }
 
     @Override
@@ -145,7 +157,7 @@ public abstract class Decompressor {
         String name = entry.name;
 
         if (myFilter != null) {
-          String entryName = entry.isDirectory && !StringUtil.endsWithChar(name, '/') ? name + '/' : name;
+          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(name, '/') ? name + '/' : name;
           if (!myFilter.value(entryName)) {
             continue;
           }
@@ -153,26 +165,40 @@ public abstract class Decompressor {
 
         File outputFile = entryFile(outputDir, name);
 
-        if (entry.isDirectory) {
-          FileUtil.createDirectory(outputFile);
-        }
-        else if (!outputFile.exists() || myOverwrite) {
-          InputStream inputStream = openEntryStream(entry);
-          try {
+        switch (entry.type) {
+          case DIR:
+            FileUtil.createDirectory(outputFile);
+            break;
+
+          case FILE:
+            if (!outputFile.exists() || myOverwrite) {
+              InputStream inputStream = openEntryStream(entry);
+              try {
+                FileUtil.createParentDirs(outputFile);
+                try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+                  FileUtil.copy(inputStream, outputStream);
+                }
+                if (!entry.isWritable && !outputFile.setWritable(false, false)) {
+                  throw new IOException("Can't make file read-only: " + outputFile);
+                }
+                if (entry.isExecutable && SystemInfo.isUnix && !outputFile.setExecutable(true, true)) {
+                  throw new IOException("Can't make file executable: " + outputFile);
+                }
+              }
+              finally {
+                closeEntryStream(inputStream);
+              }
+            }
+            break;
+
+          case SYMLINK:
+            if (StringUtil.isEmpty(entry.linkTarget) ||
+                !FileUtil.isAncestor(outputDir, new File(FileUtil.toCanonicalPath(outputFile.getParent() + '/' + entry.linkTarget)), true)) {
+              throw new IOException("Invalid symlink entry: " + name + " -> " + entry.linkTarget);
+            }
             FileUtil.createParentDirs(outputFile);
-            try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-              FileUtil.copy(inputStream, outputStream);
-            }
-            if (!entry.isWritable && !outputFile.setWritable(false, false)) {
-              throw new IOException("Can't make file read-only: " + outputFile);
-            }
-            if (entry.isExecutable && SystemInfo.isUnix && !outputFile.setExecutable(true, true)) {
-              throw new IOException("Can't make file executable: " + outputFile);
-            }
-          }
-          finally {
-            closeEntryStream(inputStream);
-          }
+            Files.createSymbolicLink(outputFile.toPath(), Paths.get(entry.linkTarget));
+            break;
         }
 
         if (myConsumer != null) {
@@ -188,17 +214,25 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  protected static class Entry {
-    private final String name;
-    private final boolean isDirectory;
-    private final boolean isWritable;
-    private final boolean isExecutable;
+  private enum Type {FILE, DIR, SYMLINK}
 
-    Entry(String name, boolean isDirectory, boolean isWritable, boolean isExecutable) {
+  protected static class Entry {
+    final String name;
+    final Type type;
+    final boolean isWritable;
+    final boolean isExecutable;
+    final String linkTarget;
+
+    protected Entry(String name, boolean isDirectory) {
+      this(name, isDirectory ? Type.DIR : Type.FILE, true, false, null);
+    }
+
+    protected Entry(String name, Type type, boolean isWritable, boolean isExecutable, String linkTarget) {
       this.name = name;
-      this.isDirectory = isDirectory;
+      this.type = type;
       this.isWritable = isWritable;
       this.isExecutable = isExecutable;
+      this.linkTarget = linkTarget;
     }
   }
 
