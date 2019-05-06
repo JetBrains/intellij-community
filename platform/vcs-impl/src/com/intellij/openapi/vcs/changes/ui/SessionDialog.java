@@ -59,7 +59,7 @@ public class SessionDialog extends DialogWrapper {
   }
 
   @Nullable
-  public static JComponent createConfigurationUI(@NotNull CommitSession session, @NotNull List<? extends Change> changes, @NotNull String commitMessage) {
+  public static JComponent createConfigurationUI(@NotNull CommitSession session, @NotNull List<? extends Change> changes, @Nullable String commitMessage) {
     try {
       //noinspection unchecked
       return session.getAdditionalConfigurationUI((Collection<Change>)changes, commitMessage);
