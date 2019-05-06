@@ -19,21 +19,18 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,17 +50,21 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
     Project project = context.getProject();
     if (project == null) return false;
 
-    Pair<FilePath, VirtualFile> pair = getPathAndParentFile(context);
-    if (pair.first == null || pair.second == null) return false;
-    if (!AbstractVcs.fileInVcsByFileStatus(project, pair.second)) return false;
+    FilePath selectedPath = getSelectedPath(context);
+    if (selectedPath == null) return false;
+    if (!AbstractVcs.fileInVcsByFileStatus(project, selectedPath)) return false;
 
-    return canShowNewFileHistory(project, pair.first) || canShowOldFileHistory(project, pair.first, pair.second);
+    if (canShowNewFileHistory(project, selectedPath)) return true;
+
+    VirtualFile fileOrParent = getExistingFileOrParent(selectedPath);
+    if (fileOrParent == null) return false;
+    return canShowOldFileHistory(project, selectedPath, fileOrParent);
   }
 
   private static boolean canShowOldFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull VirtualFile fileOrParent) {
     AbstractVcs vcs = ChangesUtil.getVcsForFile(fileOrParent, project);
     if (vcs == null) return false;
-    
+
     VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     return provider != null &&
            (provider.supportsHistoryForDirectories() || !path.isDirectory()) &&
@@ -75,44 +76,28 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
     return historyProvider != null && historyProvider.canShowFileHistory(project, path, null);
   }
 
-  @NotNull
-  private static Pair<FilePath, VirtualFile> getPathAndParentFile(@NotNull VcsContext context) {
-    List<VirtualFile> selectedFiles = context.getSelectedFilesStream().limit(2).collect(Collectors.toList());
-    if (selectedFiles.size() > 0) {
-      if (selectedFiles.size() != 1) return Pair.empty();
-      VirtualFile file = selectedFiles.get(0);
-      return Pair.create(VcsUtil.getFilePath(file), file);
-    }
-
-    File[] ioFiles = context.getSelectedIOFiles();
-    if (ioFiles != null && ioFiles.length > 0) {
-      for (File ioFile : ioFiles) {
-        VirtualFile parent = getParentVirtualFile(ioFile);
-        if (parent != null) return Pair.create(VcsUtil.getFilePath(parent, ioFile.getName()), parent);
-      }
-    }
-
-    return Pair.empty();
+  @Nullable
+  private static FilePath getSelectedPath(@NotNull VcsContext context) {
+    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().limit(2).collect(Collectors.toList());
+    if (selectedFiles.size() != 1) return null;
+    return selectedFiles.get(0);
   }
 
   @Nullable
-  private static VirtualFile getParentVirtualFile(@NotNull File ioFile) {
-    File parentIoFile = ioFile.getParentFile();
-    return parentIoFile != null ? LocalFileSystem.getInstance().findFileByIoFile(parentIoFile) : null;
+  private static VirtualFile getExistingFileOrParent(@NotNull FilePath selectedPath) {
+    return ObjectUtils.chooseNotNull(selectedPath.getVirtualFile(), selectedPath.getVirtualFileParent());
   }
 
   @Override
   protected void actionPerformed(@NotNull VcsContext context) {
     Project project = assertNotNull(context.getProject());
-    Pair<FilePath, VirtualFile> pair = getPathAndParentFile(context);
-    FilePath path = assertNotNull(pair.first);
-    VirtualFile fileOrParent = assertNotNull(pair.second);
-    AbstractVcs vcs = assertNotNull(ChangesUtil.getVcsForFile(fileOrParent, project));
+    FilePath path = assertNotNull(getSelectedPath(context));
 
     if (canShowNewFileHistory(project, path)) {
       showNewFileHistory(project, path);
     }
     else {
+      AbstractVcs vcs = assertNotNull(ChangesUtil.getVcsForFile(assertNotNull(getExistingFileOrParent(path)), project));
       showOldFileHistory(project, vcs, path);
     }
   }
