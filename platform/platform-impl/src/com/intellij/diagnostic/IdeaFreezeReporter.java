@@ -131,6 +131,7 @@ public class IdeaFreezeReporter {
     });
   }
 
+  @Nullable
   private static List<StackTraceElement> findDominantCommonStack(List<StackTraceElement[]> stacks) {
     CallTreeNode root = new CallTreeNode(null, null);
     // build tree
@@ -143,9 +144,12 @@ public class IdeaFreezeReporter {
     // find dominant
     int half = stacks.size() / 2;
     CallTreeNode node = root.getMostHitChild();
+    if (node == null) {
+      return null;
+    }
     while (!node.myChildren.isEmpty()) {
       CallTreeNode mostHitChild = node.getMostHitChild();
-      if (mostHitChild.myTotalHits > half) {
+      if (mostHitChild != null && mostHitChild.myTotalHits > half) {
         node = mostHitChild;
       }
       else {
@@ -185,6 +189,7 @@ public class IdeaFreezeReporter {
       return child;
     }
 
+    @Nullable
     CallTreeNode getMostHitChild() {
       CallTreeNode currentMax = null;
       for (CallTreeNode child : myChildren) {
