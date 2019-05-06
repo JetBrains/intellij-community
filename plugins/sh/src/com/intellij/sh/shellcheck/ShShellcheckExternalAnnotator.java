@@ -117,13 +117,20 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
         @NotNull
         @Override
         public String getText() {
-          return "Suppress shellcheck inspection " + scCode;
+          return "Suppress " + getMessage();
+        }
+
+        @NotNull
+        private String getMessage() {
+          String m = message.endsWith(".") ? message.substring(0, message.length() - 1) : message;
+          return "'" + StringUtil.first(m, 60, true) + "'";
+
         }
 
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Shell Script";
+          return "Shell script";
         }
 
         @Override
