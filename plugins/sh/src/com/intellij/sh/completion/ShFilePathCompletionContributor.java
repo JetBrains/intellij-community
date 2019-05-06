@@ -146,17 +146,10 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
   private static PsiElement getNearestVarIfExist(@NotNull PsiFile file, int offset) {
     PsiElement e = file.findElementAt(offset);
     if (!(e instanceof LeafPsiElement)) return null;
-
     LeafPsiElement leaf = (LeafPsiElement) e;
-    if (leaf.getElementType() == ShTokenTypes.VAR) {
-      return leaf;
-    }
-    else if (isStringOfVar(leaf)) {
-      return leaf.getPrevSibling();
-    }
-    else {
-      return null;
-    }
+    if (leaf.getElementType() == ShTokenTypes.VAR) return leaf;
+    if (isStringOfVar(leaf)) return leaf.getPrevSibling();
+    return null;
   }
 
   // e.g. "$HOME"/<caret>
