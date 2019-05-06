@@ -251,7 +251,7 @@ public class PluginLogo {
     }
     catch (HttpRequests.HttpStatusException ignore) { }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 
