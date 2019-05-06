@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -89,7 +90,9 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         PsiStatement initialization = statement.getInitialization();
         LOG.assertTrue(initialization != null);
         TextRange range = TextRange.from(initialization.getStartOffsetInParent(), initialization.getTextLength());
-        boolean wholeStatement = isOnTheFly && type == ProblemHighlightType.INFORMATION;
+        boolean wholeStatement = isOnTheFly &&
+                                 (InspectionProjectProfileManager.isInformationLevel(getShortName(), statement) ||
+                                  type == ProblemHighlightType.INFORMATION);
         PsiJavaToken rParenth = statement.getRParenth();
         if (wholeStatement && rParenth != null) {
           range = new TextRange(0, rParenth.getStartOffsetInParent() + 1);
