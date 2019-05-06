@@ -252,7 +252,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
                                   && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
                                   && modifierListOwner.getModifierList() != null;
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class);
+    final PsiElement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class, PsiField.class);
     if (!addAnnotation && statement == null) return false;
 
     Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
