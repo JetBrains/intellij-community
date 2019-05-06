@@ -340,7 +340,7 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.expression.expand.ExpandBracketsIntention</className>
+      <className>com.siyeh.ipp.expression.eliminate.EliminateParenthesesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

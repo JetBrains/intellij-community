@@ -6,7 +6,7 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ExpandBracketsIntentionTest extends IPPTestCase {
+public class EliminateParenthesesIntentionTest extends IPPTestCase {
 
   public void testAssociative() {
     doTest();
@@ -34,11 +34,11 @@ public class ExpandBracketsIntentionTest extends IPPTestCase {
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("expand.brackets.intention.name");
+    return IntentionPowerPackBundle.message("eliminate.parentheses.intention.name");
   }
 
   @Override
   protected String getRelativePath() {
-    return "expression/expand_brackets";
+    return "expression/eliminate_parentheses";
   }
 }

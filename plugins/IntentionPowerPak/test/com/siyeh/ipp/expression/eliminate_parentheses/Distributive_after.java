@@ -13,8 +13,6 @@ class Test {
       /*1*/
       int j = a - b * c - b * d;
     int k = c * b + d * b;
-    int l = (a | c) & (a | b);
-    int m = -(a | c) & (a | b);
     int n = a & c | a & b;
       /*1*/
       /*2*/
@@ -27,9 +25,8 @@ class Test {
   void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d) {
     boolean g = a && b || a && c;
     boolean i = !a && b && !d || !a && !c && !d;
-    boolean j = (a || b) && (a || c);
-    boolean k = a && !b && c || a && !d;
-    boolean l = d || a && b || a && c;
-    boolean m = d ^ a && b || d ^ a && c;
+    boolean j = a && !b && c || a && !d;
+    boolean k = d || a && b || a && c;
+    boolean l = d ^ a && b || d ^ a && c;
   }
 }

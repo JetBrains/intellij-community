@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.siyeh.ipp.expression.expand;
+package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-class ExpandUtils {
+class EliminateUtils {
 
   private static final IElementType[] PREFIXES = {JavaTokenType.PLUS, JavaTokenType.MINUS};
 
@@ -42,16 +42,16 @@ class ExpandUtils {
   }
 
   /**
-   * Check if parenthesized expression is an expansion candidate and if so then create expandable expression using given constructor.
-   * If outer expression is not valid then expandable expression is constructed using only inner expression.
+   * Check if parenthesized expression is an elimination candidate and if so then create eliminable expression using given constructor.
+   * If outer expression is not valid then eliminable expression is constructed using only inner expression.
    *
    * @param parenthesized  parenthesized expression
    * @param ctor           constructor
    * @param outerOperators inner_expression_operator -> outer_expression_operators
-   * @param <T>            type of constructed expandable expression
-   * @return expandable expression if at least inner expression is valid, null otherwise
+   * @param <T>            type of constructed eliminable expression
+   * @return eliminable expression if at least inner expression is valid, null otherwise
    */
-  static <T extends ExpandableExpression> T createExpression(@NotNull PsiParenthesizedExpression parenthesized,
+  static <T extends EliminableExpression> T createExpression(@NotNull PsiParenthesizedExpression parenthesized,
                                                              @NotNull BiFunction<? super PsiPolyadicExpression, ? super PsiExpression, T> ctor,
                                                              @NotNull Map<IElementType, IElementType[]> outerOperators) {
     PsiPolyadicExpression innerExpr = getInnerExpression(parenthesized, outerOperators.keySet());
@@ -151,9 +151,9 @@ class ExpandUtils {
     return JavaTokenType.MINUS.equals(type) || JavaTokenType.DIV.equals(type);
   }
 
-  private static boolean isPolyadicNegated(@NotNull PsiPolyadicExpression expression, boolean isNegated, PsiExpression... toExpand) {
+  private static boolean isPolyadicNegated(@NotNull PsiPolyadicExpression expression, boolean isNegated, PsiExpression... toEliminate) {
     if (!isMultiplicative(expression.getOperationTokenType())) return false;
-    return StreamEx.of(expression.getOperands()).foldLeft(isNegated, (result, op) -> isNegated(op, result, toExpand));
+    return StreamEx.of(expression.getOperands()).foldLeft(isNegated, (result, op) -> isNegated(op, result, toEliminate));
   }
 
   /**
@@ -161,17 +161,17 @@ class ExpandUtils {
    *
    * @param operand   expression to check
    * @param isNegated true if expression is initially negated
-   * @param toExpand  expressions to expand. if current expression should be expanded and
+   * @param toEliminate  expressions to eliminate. if current expression should be eliminated and
    *                  it contains parenthesized expression then parenthesized expression would be traversed
    * @return true if negated
    */
-  static boolean isNegated(@NotNull PsiExpression operand, boolean isNegated, PsiExpression... toExpand) {
-    if (operand instanceof PsiPolyadicExpression) return isPolyadicNegated((PsiPolyadicExpression)operand, isNegated, toExpand);
+  static boolean isNegated(@NotNull PsiExpression operand, boolean isNegated, PsiExpression... toEliminate) {
+    if (operand instanceof PsiPolyadicExpression) return isPolyadicNegated((PsiPolyadicExpression)operand, isNegated, toEliminate);
     return processPrefixed(operand, isNegated, (op, isOpNegated) -> {
-      if (!ArrayUtil.contains(operand, toExpand)) return isOpNegated;
+      if (!ArrayUtil.contains(operand, toEliminate)) return isOpNegated;
       PsiPolyadicExpression innerExpr = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(op), PsiPolyadicExpression.class);
       if (innerExpr == null) return isOpNegated;
-      return isPolyadicNegated(innerExpr, isOpNegated, toExpand);
+      return isPolyadicNegated(innerExpr, isOpNegated, toEliminate);
     });
   }
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.siyeh.ipp.expression.expand;
+package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -22,11 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
+public class EliminateParenthesesIntention extends BaseElementAtCaretIntentionAction {
 
   private boolean myStartInWriteAction = false;
 
-  private static final Pass<PsiParenthesizedExpression> EXPAND_CALLBACK = new Pass<PsiParenthesizedExpression>() {
+  private static final Pass<PsiParenthesizedExpression> ELIMINATE_CALLBACK = new Pass<PsiParenthesizedExpression>() {
     @Override
     public void pass(@NotNull PsiParenthesizedExpression expression) {
       WriteCommandAction.writeCommandAction(expression.getProject(), expression.getContainingFile())
@@ -49,7 +49,7 @@ public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
   }
 
   private static String getName() {
-    return IntentionPowerPackBundle.defaultableMessage("expand.brackets.intention.name");
+    return IntentionPowerPackBundle.defaultableMessage("eliminate.parentheses.intention.name");
   }
 
   @Override
@@ -78,25 +78,25 @@ public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
       return;
     }
     if (expressions.isEmpty() || editor == null) return;
-    IntroduceTargetChooser.showChooser(editor, expressions, EXPAND_CALLBACK, new PsiExpressionTrimRenderer.RenderFunction());
+    IntroduceTargetChooser.showChooser(editor, expressions, ELIMINATE_CALLBACK, new PsiExpressionTrimRenderer.RenderFunction());
   }
 
   private static void replaceExpression(@NotNull PsiParenthesizedExpression parenthesized) {
-    ExpandableExpression expression = createExpandableExpression(parenthesized);
+    EliminableExpression expression = createEliminableExpression(parenthesized);
     if (expression == null) return;
     StringBuilder sb = new StringBuilder();
     CommentTracker commentTracker = new CommentTracker();
     PsiExpression toReplace = expression.getExpressionToReplace();
     PsiPolyadicExpression outerExpression = ObjectUtils.tryCast(toReplace.getParent(), PsiPolyadicExpression.class);
-    if (outerExpression == null || ExpandUtils.getOperator(outerExpression.getOperationTokenType()) == null) {
-      if (!expression.expand(null, sb)) return;
+    if (outerExpression == null || EliminateUtils.getOperator(outerExpression.getOperationTokenType()) == null) {
+      if (!expression.eliminate(null, sb)) return;
       PsiReplacementUtil.replaceExpression(toReplace, sb.toString(), commentTracker);
       return;
     }
     for (PsiExpression operand : outerExpression.getOperands()) {
       PsiJavaToken tokenBefore = outerExpression.getTokenBeforeOperand(operand);
       if (operand == toReplace) {
-        if (!expression.expand(tokenBefore, sb)) return;
+        if (!expression.eliminate(tokenBefore, sb)) return;
         continue;
       }
       if (tokenBefore != null) sb.append(tokenBefore.getText());
@@ -106,7 +106,7 @@ public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Nullable
-  private static ExpandableExpression createExpandableExpression(@NotNull PsiParenthesizedExpression parenthesized) {
+  private static EliminableExpression createEliminableExpression(@NotNull PsiParenthesizedExpression parenthesized) {
     DistributiveExpression distributive = DistributiveExpression.create(parenthesized);
     AssociativeExpression additive = AssociativeExpression.create(parenthesized);
     if (distributive == null) return additive;
