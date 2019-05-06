@@ -51,6 +51,7 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     myModule = builder.getFixture().getModule();
   }
 
+  @NotNull
   protected abstract LanguageLevel getLanguageLevel();
 
   @Override
