@@ -1,5 +1,5 @@
 {
-  generate = [ token-accessors="yes" ]
+  generate = [token-accessors="yes" java="8"]
 
   parserClass="com.intellij.sh.parser.ShParser"
   parserUtilClass="com.intellij.sh.parser.ShParserUtil"

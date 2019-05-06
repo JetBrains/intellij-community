@@ -77,7 +77,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeTokens(b, 1, LEFT_PAREN, RIGHT_PAREN);
     p = r; // pin = 1
-    exit_section_(b, l, m, r, p, argument_list_recover_parser_);
+    exit_section_(b, l, m, r, p, ShParser::argument_list_recover);
     return r || p;
   }
 
@@ -162,7 +162,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = r && consumeToken(b, SEMI);
     r = r && newlines(b, l + 1);
     r = r && arithmetic_for_expression_6(b, l + 1);
-    exit_section_(b, l, m, r, false, arithmetic_for_expression_recover_parser_);
+    exit_section_(b, l, m, r, false, ShParser::arithmetic_for_expression_recover);
     return r;
   }
 
@@ -265,7 +265,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = assignment_list(b, l + 1);
-    if (!r) r = parseUntilSpace(b, l + 1, assignment_command_2_0_1_0_parser_);
+    if (!r) r = parseUntilSpace(b, l + 1, ShParser::assignment_command_2_0_1_0);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -296,7 +296,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, ASSIGN);
-    r = r && parseUntilSpace(b, l + 1, literal_parser_);
+    r = r && parseUntilSpace(b, l + 1, ShParser::literal);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -397,7 +397,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, end_of_list(b, l + 1));
     r = p && newlines(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, block_compound_list_recover_parser_);
+    exit_section_(b, l, m, r, p, ShParser::block_compound_list_recover);
     return r || p;
   }
 
@@ -481,7 +481,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = case_clause(b, l + 1);
     p = r; // pin = 1
     r = r && case_clause_list_1(b, l + 1);
-    exit_section_(b, l, m, r, p, case_clause_recover_parser_);
+    exit_section_(b, l, m, r, p, ShParser::case_clause_recover);
     return r || p;
   }
 
@@ -651,7 +651,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = command_substitution_command_0(b, l + 1);
     r = r && consumeToken(b, BACKQUOTE);
     p = r; // pin = 2
-    r = r && report_error_(b, withOn(b, l + 1, "BACKQUOTE", command_substitution_command_2_1_parser_));
+    r = r && report_error_(b, withOn(b, l + 1, "BACKQUOTE", ShParser::command_substitution_command_2_1));
     r = p && consumeToken(b, BACKQUOTE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -884,7 +884,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     p = r; // pin = 2
     r = r && report_error_(b, end_of_list(b, l + 1));
     r = p && newlines(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, compound_list_recover_parser_);
+    exit_section_(b, l, m, r, p, ShParser::compound_list_recover);
     return r || p;
   }
 
@@ -1565,7 +1565,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, LIST_TERMINATOR, "<list terminator>");
     r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, SEMI);
-    exit_section_(b, l, m, r, false, list_terminator_recover_parser_);
+    exit_section_(b, l, m, r, false, ShParser::list_terminator_recover);
     return r;
   }
 
@@ -1692,7 +1692,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _NONE_);
     r = expression(b, l + 1, -1);
-    exit_section_(b, l, m, r, false, old_arithmetic_expansion_expression_recover_parser_);
+    exit_section_(b, l, m, r, false, ShParser::old_arithmetic_expansion_expression_recover);
     return r;
   }
 
@@ -1717,7 +1717,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, pattern_1(b, l + 1));
     r = p && pattern_2(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, case_pattern_recover_parser_);
+    exit_section_(b, l, m, r, p, ShParser::case_pattern_recover);
     return r || p;
   }
 
@@ -1838,7 +1838,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _COLLAPSE_, PIPELINE_COMMAND, "<pipeline command>");
     r = pipeline_command_0(b, l + 1);
     if (!r) r = let_command(b, l + 1);
-    exit_section_(b, l, m, r, false, pipeline_recover_parser_);
+    exit_section_(b, l, m, r, false, ShParser::pipeline_recover);
     return r;
   }
 
@@ -2984,64 +2984,4 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  static final Parser argument_list_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return argument_list_recover(b, l + 1);
-    }
-  };
-  static final Parser arithmetic_for_expression_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return arithmetic_for_expression_recover(b, l + 1);
-    }
-  };
-  static final Parser assignment_command_2_0_1_0_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return assignment_command_2_0_1_0(b, l + 1);
-    }
-  };
-  static final Parser block_compound_list_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return block_compound_list_recover(b, l + 1);
-    }
-  };
-  static final Parser case_clause_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return case_clause_recover(b, l + 1);
-    }
-  };
-  static final Parser case_pattern_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return case_pattern_recover(b, l + 1);
-    }
-  };
-  static final Parser command_substitution_command_2_1_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return command_substitution_command_2_1(b, l + 1);
-    }
-  };
-  static final Parser compound_list_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return compound_list_recover(b, l + 1);
-    }
-  };
-  static final Parser list_terminator_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return list_terminator_recover(b, l + 1);
-    }
-  };
-  static final Parser literal_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return literal(b, l + 1);
-    }
-  };
-  static final Parser old_arithmetic_expansion_expression_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return old_arithmetic_expansion_expression_recover(b, l + 1);
-    }
-  };
-  static final Parser pipeline_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return pipeline_recover(b, l + 1);
-    }
-  };
 }
