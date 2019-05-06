@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
@@ -18,6 +19,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -211,8 +213,9 @@ class ImmutableCollectionModelUtils {
 
     @Nullable
     private static String extractPutArgs(@NotNull PsiExpression entryExpression) {
-      if (entryExpression instanceof PsiReferenceExpression) {
-        return MessageFormat.format("{0}.getKey(), {0}.getValue()", entryExpression.getText());
+      if (entryExpression instanceof PsiReferenceExpression || entryExpression instanceof PsiConditionalExpression) {
+        String entryText = ParenthesesUtils.getText(entryExpression, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE);
+        return MessageFormat.format("{0}.getKey(), {0}.getValue()", entryText);
       }
       PsiCallExpression call = ObjectUtils.tryCast(entryExpression, PsiCallExpression.class);
       if (call == null || !isEntryConstruction(call)) return null;
