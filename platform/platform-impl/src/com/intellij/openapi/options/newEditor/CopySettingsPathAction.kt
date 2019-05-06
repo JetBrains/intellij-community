@@ -35,10 +35,11 @@ class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.message("a
     fun createSwingActions(supplier: Supplier<Collection<String>>): List<Action> {
       return listOf(
         createSwingAction("CopySettingsPath", pathActionName) { copy(supplier.get()) },
+        // disable until REST API is not able to delegate to proper IDE
+        //createSwingAction(null, "Copy ${CommonBundle.settingsTitle()} Link") {
+        //  copyLink(supplier, isHttp = true)
+        //},
         createSwingAction(null, "Copy ${CommonBundle.settingsTitle()} Link") {
-          copyLink(supplier, isHttp = true)
-        },
-        createSwingAction(null, "Copy ${CommonBundle.settingsTitle()} Toolbox Link") {
           copyLink(supplier, isHttp = false)
         }
       )
