@@ -1,14 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
+import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.events.*;
+import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -18,9 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -29,6 +35,19 @@ import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskT
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
+
+
+  @NotNull
+  protected static String[] fromFile(String resource) throws IOException {
+    try (InputStream stream = ResourceUtil.getResource(MavenBuildToolLogTestUtils.class, "", resource).openStream();
+         Scanner scanner = new Scanner(stream)) {
+      List<String> result = new ArrayList<>();
+      while (scanner.hasNextLine()) {
+        result.add(scanner.nextLine());
+      }
+      return ArrayUtil.toStringArray(result);
+    }
+  }
 
   protected TestCaseBuider testCase(String... lines) {
     return new TestCaseBuider().withLines(lines);
@@ -72,10 +91,84 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
 
     public void check(boolean checkFinishEvent) {
-      CollectConsumer collectConsumer = new CollectConsumer();
-      MavenLogOutputParser parser =
-        new MavenLogOutputParser(ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project"), myParsers);
+      Iterator<BuildEvent> events = collect().iterator();
+      Iterator<Pair<String, Matcher<BuildEvent>>> expectedEvents = myExpectedEvents.iterator();
+      while (events.hasNext()) {
 
+        if (!expectedEvents.hasNext()) {
+          BuildEvent next = events.next();
+
+          if (next instanceof FinishBuildEvent && !checkFinishEvent) {
+            continue;
+          }
+          fail("Event: " + next.getMessage() + " was not expected here");
+        }
+
+        BuildEvent next = events.next();
+        if(next instanceof StartBuildEventImpl && !checkFinishEvent){
+          continue;
+        }
+        Pair<String, Matcher<BuildEvent>> matcher = expectedEvents.next();
+
+        assertThat(next, matcher.second);
+      }
+      if (expectedEvents.hasNext()) {
+        fail("Didn't receive expected event: " + expectedEvents.next().first);
+      }
+    }
+
+
+    public String runAndFormatToString() {
+      List<BuildEvent> events = collect();
+
+      Map<Object, Integer> levelMap = new HashMap<>();
+      Map<Object, String> result = new LinkedHashMap<>();
+      for (BuildEvent event : events) {
+        if (event instanceof FinishEvent) {
+          Integer value = levelMap.remove(event.getId());
+          if (value == null) {
+            fail("Finish event for non-registered start event" + event);
+          }
+        }
+
+
+        if (event instanceof FinishEvent && ((FinishEvent)event).getResult() instanceof FailureResult) {
+          result.computeIfPresent(event.getId(), (id, s) -> "error:" + s);
+        }
+        else {
+          int level = -1;
+          if (event.getId() instanceof ExternalSystemTaskId) {
+            level = 0;
+          }
+          else {
+            Integer integer = levelMap.get(event.getParentId());
+            if (integer == null) {
+              fail("Parent id not registered!" + event);
+            }
+            level = integer + 1;
+          }
+          assertFalse("cannot calculate event level, possible bad parent id", level < 0);
+          result.put(event.getId(), event.getMessage());
+          levelMap.put(event.getId(), level);
+        }
+      }
+
+      StringBuilder builder = new StringBuilder();
+      for (Map.Entry<Object, String> entry : result.entrySet()) {
+        builder.append(StringUtil.repeatSymbol(' ', levelMap.get(entry.getKey()))).append(entry.getValue()).append("\n");
+      }
+      return builder.toString();
+    }
+
+    private List<BuildEvent> collect() {
+      CollectConsumer collectConsumer = new CollectConsumer();
+      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project");
+      MavenLogOutputParser parser =
+        new MavenLogOutputParser(taskId, myParsers);
+
+
+      collectConsumer.accept(new StartBuildEventImpl(
+        new DefaultBuildDescriptor(taskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));
       StubBuildOutputReader reader = new StubBuildOutputReader(myLines);
       String line;
       while ((line = reader.readLine()) != null) {
@@ -83,25 +176,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       }
 
       parser.finish(collectConsumer);
-
-
-      Iterator<BuildEvent> events = collectConsumer.myReceivedEvents.iterator();
-      Iterator<Pair<String, Matcher<BuildEvent>>> expectedEvents = myExpectedEvents.iterator();
-      while (events.hasNext()) {
-        if (!expectedEvents.hasNext()) {
-          BuildEvent next = events.next();
-          if (next instanceof FinishBuildEvent && !checkFinishEvent) {
-            continue;
-          }
-          fail("Event: " + next.getMessage() + " was not expected here");
-        }
-
-        Pair<String, Matcher<BuildEvent>> matcher = expectedEvents.next();
-        assertThat(events.next(), matcher.second);
-      }
-      if (expectedEvents.hasNext()) {
-        fail("Didn't receive expected event: " + expectedEvents.next().first);
-      }
+      return collectConsumer.myReceivedEvents;
     }
   }
 
