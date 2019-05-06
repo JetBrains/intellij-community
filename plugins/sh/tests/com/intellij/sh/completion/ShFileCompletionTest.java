@@ -91,8 +91,19 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
     String envVar = "HOME";
     assumeNotNull(System.getenv(envVar));
 
+    myFixture.configureByText("a.sh", "/<caret>");
+    LookupElement[] rootLookupElements = myFixture.completeBasic();
+
+    myFixture.configureByText("a.sh", "\"Text example $" + envVar + "\"/<caret>");
+    LookupElement[] quotedWithWhitespaceLookupElements = myFixture.completeBasic();
+    assertSameElements(rootLookupElements, quotedWithWhitespaceLookupElements);
+
+    myFixture.configureByText("a.sh", "\"$" + envVar + "\"/<caret>");
+    LookupElement[] quotedEnvVarLookupElements = myFixture.completeBasic();
+
     myFixture.configureByText("a.sh", "$" + envVar + "/<caret>");
     LookupElement[] envVarLookupElements = myFixture.completeBasic();
+    assertSameElements(quotedEnvVarLookupElements, envVarLookupElements);
 
     myFixture.configureByText("a.sh", "~/<caret>");
     LookupElement[] homeDirLookupElements = myFixture.completeBasic();

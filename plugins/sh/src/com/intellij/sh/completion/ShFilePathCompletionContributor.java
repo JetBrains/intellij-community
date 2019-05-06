@@ -11,10 +11,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.sh.ShStringUtil;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.psi.ShString;
+import com.intellij.sh.psi.ShVariable;
+import com.intellij.sh.psi.impl.ShPsiImplUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
@@ -122,22 +126,45 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
     PsiElement original = parameters.getOriginalPosition();
     if (original == null) return null;
 
-    String fileText = parameters.getOriginalFile().getText();
-    String originalText = fileText.substring(parameters.getPosition().getTextRange().getStartOffset(), parameters.getOffset());
+    int textLength = parameters.getOffset() - parameters.getPosition().getTextRange().getStartOffset();
+    String originalText = original.getText().substring(0, textLength);
     int offset = original.getTextOffset() - 1;
 
     if (offset < 0) return originalText;
 
-    PsiElement at = parameters.getOriginalFile().findElementAt(offset);
-    if (!(at instanceof LeafPsiElement) || ((LeafPsiElement) at).getElementType() != ShTokenTypes.VAR) {
-      return originalText;
-    }
+    PsiElement var = getNearestVarIfExist(parameters.getOriginalFile(), offset);
+    if (var == null) return originalText;
 
-    String variable = variableText(at);
+    String variable = variableText(var);
     String envPath = EnvironmentUtil.getValue(variable);
     return envPath != null
         ? envPath + originalText
         : originalText;
+  }
+
+  @Nullable
+  private static PsiElement getNearestVarIfExist(@NotNull PsiFile file, int offset) {
+    PsiElement e = file.findElementAt(offset);
+    if (!(e instanceof LeafPsiElement)) return null;
+
+    LeafPsiElement leaf = (LeafPsiElement) e;
+    if (leaf.getElementType() == ShTokenTypes.VAR) {
+      return leaf;
+    }
+    else if (isStringOfVar(leaf)) {
+      return leaf.getPrevSibling();
+    }
+    else {
+      return null;
+    }
+  }
+
+  private static boolean isStringOfVar(LeafPsiElement e) {
+    return e.getElementType() == ShTokenTypes.QUOTE
+        && e.getParent() != null
+        && e.getParent() instanceof ShString
+        && ShPsiImplUtil.getChildren(e.getParent()).length == 3
+        && e.getPrevSibling() instanceof ShVariable;
   }
 
   @NotNull
