@@ -69,7 +69,7 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
   log("Searching for all")
   val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
-  context.icons.forEach { icon, gitObject ->
+  context.icons.forEach { (icon, gitObject) ->
     when {
       !devIconsTmp.containsKey(icon) -> context.byDesigners.added += icon
       gitObject.hash != devIconsTmp[icon]?.hash -> modified += icon
@@ -195,7 +195,7 @@ internal fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Rege
   return Files.exists(path) && isValidIcon(path) ||
          // if not exists then check respective icon in icons repo
          !Files.exists(path) && isValidIcon(context.iconsRepoDir.resolve(file.toRelativeString(context.devRepoRoot)).toPath()) ||
-         IconRobotsDataReader.isSyncForced(file)
+         isImage(path) && IconRobotsDataReader.isSyncForced(file)
 }
 
 internal fun isValidIcon(file: Path) = muteStdErr {
