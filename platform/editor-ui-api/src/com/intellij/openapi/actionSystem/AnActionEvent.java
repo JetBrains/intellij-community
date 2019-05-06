@@ -228,6 +228,11 @@ public class AnActionEvent implements PlaceProvider<String> {
     return myIsActionToolbar;
   }
 
+  /**
+   * @deprecated This method returns true for both main menu and context menu invocations. Use {@link ActionPlaces#isPopupPlace(String)}
+   * instead to get results only from context menus.
+   */
+  @Deprecated
   public boolean isFromContextMenu() {
     return myIsContextMenuAction;
   }
