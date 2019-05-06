@@ -60,10 +60,11 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                                        @Nullable EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
+    int verticalOffset = getVerticalOffset(lineHeight, step, height);
     if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
-    int start1 = y1 + (lineHeight - height - step) / 2 + step / 2;
-    int start2 = y2 + (lineHeight - height - step) / 2 + step / 2;
+    int start1 = y1 + verticalOffset + step / 2;
+    int start2 = y2 + verticalOffset + step / 2;
     int end1 = start1 + height - 1;
     int end2 = start2 + height - 1;
 
@@ -172,7 +173,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     int[] xPoints = new int[count];
     int[] yPoints = new int[count];
 
-    shiftY += (lineHeight - height - step) / 2;
+    shiftY += getVerticalOffset(lineHeight, step, height);
 
     for (int index = 0; index < count; index++) {
       int absIndex = index + shift;
@@ -233,6 +234,10 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
   private static int getHeight(int lineHeight) {
     return Math.max(lineHeight / 2, 1);
+  }
+
+  private static int getVerticalOffset(int lineHeight, int step, int height) {
+    return (lineHeight - height - step) / 2;
   }
 
   @NotNull
