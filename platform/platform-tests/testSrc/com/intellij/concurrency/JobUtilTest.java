@@ -429,13 +429,13 @@ public class JobUtilTest extends LightPlatformTestCase {
       }), null);
 
     for (int i = 0; i < N_EVENTS; i++) {
-      setTimeout(10, TimeUnit.SECONDS);
+      TestTimeOut n = setTimeout(10, TimeUnit.SECONDS);
       int finalI = i;
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         int jobs0 = jobsStarted.get();
         while (jobsStarted.get() < jobs0 + JobSchedulerImpl.getJobPoolParallelism() && jobsStarted.get() < N_JOBS) {
-          if (t.timedOut(finalI)) {
+          if (n.timedOut(finalI)) {
             System.err.println(ThreadDumper.dumpThreadsToString());
             fail();
             break;
@@ -501,17 +501,19 @@ public class JobUtilTest extends LightPlatformTestCase {
         mainThread.set(Thread.currentThread());
         try {
           elapsed.set(TimeoutUtil.measureExecutionTime(() -> ProgressManager.getInstance().runProcess(()-> {
-            boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(/* more than 1 to pass through processIfTooFew */Arrays.asList(1, 1, 1, COARSENESS), indicator, delay -> {
+            // more than 1 to pass through processIfTooFew
+            List<Integer> things = Arrays.asList(1, 1, 1, COARSENESS);
+            boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, indicator, delay -> {
               if (delay == COARSENESS) {
                 indicator.cancel(); // emulate job external cancel
               }
-              // we seek to test the situation of "job submitted to FJP is waiting for lengthy task crated via invokeConcurrentlyUnderProgress()"
+              // we seek to test the situation of "job submitted to FJP is waiting for lengthy task created via invokeConcurrentlyUnderProgress()"
               // so when the main job steals that lengthy task from within .get() we balk out
-              if (Thread.currentThread() != mainThread.get()) {
-                TimeoutUtil.sleep(delay);
+              if (Thread.currentThread() == mainThread.get()) {
+                stealHappened.set(true);
               }
               else {
-                stealHappened.set(true);
+                TimeoutUtil.sleep(delay);
               }
               return true;
             });
