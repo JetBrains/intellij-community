@@ -98,6 +98,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class BundledMavenPathHolder {
     private static final File myBundledMaven2Home;
     private static final File myBundledMaven3Home;
+    private static final File eventListenerJar;
 
     static {
       final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
@@ -107,10 +108,17 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         File parentFile = getMavenPluginParentFile();
         myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
         myBundledMaven3Home = new File(parentFile, "maven36-server-impl/lib/maven3");
+        eventListenerJar = new File(new File(new File(pluginFileOrDir.getParentFile().getParentFile(), "artifacts"),
+                                             "maven_event_listener"), "maven-event-listener.jar");
       }
       else {
         myBundledMaven2Home = new File(root, "maven2");
         myBundledMaven3Home = new File(root, "maven3");
+        eventListenerJar = new File(root, "maven-event-listener.jar");
+      }
+
+      if (!eventListenerJar.isFile()) {
+        MavenLog.LOG.error("Event listener does not exist" + eventListenerJar);
       }
     }
   }
@@ -239,6 +247,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
   }
 
+  public static File getMavenEventListener() {
+    return BundledMavenPathHolder.eventListenerJar;
+  }
+
   public static File getMavenLibDirectory() {
     return new File(getInstance().getCurrentMavenHomeFile(), "lib");
   }
@@ -264,8 +276,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
    */
   public static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final List<File> classpath = new ArrayList<>();
     final String root = pluginFileOrDir.getParent();
+
+    final List<File> classpath = new ArrayList<>();
 
     if (pluginFileOrDir.isDirectory()) {
       prepareClassPathForLocalRunAndUnitTests(mavenVersion, classpath, root);
@@ -787,6 +800,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
       }
 
+      MavenUtil.addEventListener(mavenVersion, params);
       return params;
     }
 

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
@@ -45,6 +46,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
@@ -61,6 +63,7 @@ import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.xml.sax.Attributes;
@@ -558,6 +561,23 @@ public class MavenUtil {
     }
 
     return MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
+  }
+
+  public static void addEventListener(@NotNull String mavenVersion, @NotNull SimpleJavaParameters params) {
+    if (VersionComparatorUtil.compare(mavenVersion, "3.0.2") < 0) {
+      MavenLog.LOG.warn("Maven version less than 3.0.2 are not correctly displayed in Build Window");
+      return;
+    }
+    String listenerPath = MavenServerManager.getMavenEventListener().getAbsolutePath();
+    String extClassPath = params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH);
+    if (isEmpty(extClassPath)) {
+      params.getVMParametersList()
+        .addProperty(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH, listenerPath);
+    }
+    else {
+      params.getVMParametersList()
+        .addProperty(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH, extClassPath + File.pathSeparatorChar + listenerPath);
+    }
   }
 
   @Nullable

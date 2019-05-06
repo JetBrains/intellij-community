@@ -9,10 +9,11 @@ import org.jetbrains.annotations.Nullable;
 public enum LogMessageType {
   INFO("[INFO] "),
   WARNING("[WARNING] "),
-  ERROR("[ERROR] ");
+  ERROR("[ERROR] "),
+  IJ("[IJ]-");
 
-  private String myPrefix;
-  private int myPrefixLength;
+  private final String myPrefix;
+  private final int myPrefixLength;
 
   LogMessageType(final String prefix) {
     myPrefix = prefix;

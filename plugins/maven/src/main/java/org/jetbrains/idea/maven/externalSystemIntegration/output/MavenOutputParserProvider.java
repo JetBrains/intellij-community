@@ -27,8 +27,10 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
 
   public static MavenLogOutputParser createMavenOutputParser(ExternalSystemTaskId taskId) {
     return new MavenLogOutputParser(taskId,
-                                    Arrays.asList(new ArtifactDownloadScanning(), new JavaBuildErrorNotification(),
-                                                  new KotlinBuildErrorNotification(), new ProjectScanning(), new WarningNotifier(),
-                                                  new CommonErrorParser(), new MavenBadConfigEventParser()));
+                                    Arrays.asList( new JavaBuildErrorNotification(),
+                                                   new KotlinBuildErrorNotification(),
+                                                   new WarningNotifier(),
+                                                   new CommonErrorParser(),
+                                                   new MavenBadConfigEventParser()));
   }
 }
