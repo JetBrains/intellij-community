@@ -40,7 +40,9 @@ DONT_TRACE = {
     '_pydev_xmlrpclib.py': PYDEV_FILE,
     'django_debug.py': PYDEV_FILE,
     'fix_getpass.py': PYDEV_FILE,
+    'io.py': PYDEV_FILE,
     'jinja2_debug.py': PYDEV_FILE,
+    'protocol.py': PYDEV_FILE,
     'pycompletionserver.py': PYDEV_FILE,
     'pydev_app_engine_debug_startup.py': PYDEV_FILE,
     'pydev_code_executor.py': PYDEV_FILE,
@@ -53,8 +55,6 @@ DONT_TRACE = {
     'pydev_ipython_console.py': PYDEV_FILE,
     'pydev_ipython_console_011.py': PYDEV_FILE,
     'pydev_is_thread_alive.py': PYDEV_FILE,
-    'pydev_jupyter_plugin.py': PYDEV_FILE,
-    'pydev_jupyter_utils.py': PYDEV_FILE,
     'pydev_localhost.py': PYDEV_FILE,
     'pydev_log.py': PYDEV_FILE,
     'pydev_monkey.py': PYDEV_FILE,
@@ -77,6 +77,7 @@ DONT_TRACE = {
     'pydevd_concurrency_logger.py': PYDEV_FILE,
     'pydevd_console.py': PYDEV_FILE,
     'pydevd_console_integration.py': PYDEV_FILE,
+    'pydevd_console_pytest.py': PYDEV_FILE,
     'pydevd_constants.py': PYDEV_FILE,
     'pydevd_custom_frames.py': PYDEV_FILE,
     'pydevd_cython_wrapper.py': PYDEV_FILE,
@@ -119,6 +120,9 @@ DONT_TRACE = {
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
+    'rpc.py': PYDEV_FILE,
+    'server.py': PYDEV_FILE,
+    'transport.py': PYDEV_FILE,
 }
 
 if IS_PY3K:

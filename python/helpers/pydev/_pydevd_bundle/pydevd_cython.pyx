@@ -219,7 +219,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
             except:
                 traceback.print_exc()
             return True
-
+        
         return False
 
     finally:
@@ -336,7 +336,6 @@ cdef class PyDBFrame:
                         frame = trace.tb_frame
                         while frame is not None and not main_debugger.in_project_scope(frame.f_code.co_filename):
                             frame = frame.f_back
-
                     if ignore_exception_trace(trace):
                         return False, frame
 
@@ -368,11 +367,9 @@ cdef class PyDBFrame:
                     # Always add exception to frame (must remove later after we proceed).
                     add_exception_to_frame(frame, (exception, value, trace))
 
+                    info.pydev_message = "python-%s" % info.pydev_message
 
-                    if flag:
-                        info.pydev_message = "python-%s" % info.pydev_message
-
-                if exception_breakpoint is None or (not flag and not is_real):
+                else:
                     # No regular exception breakpoint, let's see if some plugin handles it.
                     try:
                         if main_debugger.plugin is not None:
@@ -804,11 +801,11 @@ cdef class PyDBFrame:
 
                 if stop:
                     self.set_suspend(
-                        thread,
-                        CMD_SET_BREAK,
+                        thread, 
+                        CMD_SET_BREAK, 
                         suspend_other_threads=breakpoint and breakpoint.suspend_policy == "ALL",
                     )
-
+                        
                 elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:
@@ -1303,7 +1300,7 @@ cdef class TopLevelThreadTracerNoBackFrame:
         # ELSE
 #         ret = self.trace_dispatch_and_unhandled_exceptions
         # ENDIF
-
+        
         # Need to reset (the call to _frame_trace_dispatch may have changed it).
         frame.f_trace = ret
         return ret
