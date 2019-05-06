@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.ListTable;
@@ -274,7 +275,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
     }
 
-    
+
     boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
 
     if (isNotIdeaProject &&
@@ -367,9 +368,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
   }
 
-  private void annotateExtensionPoint(ExtensionPoint extensionPoint,
-                                      DomElementAnnotationHolder holder,
-                                      ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
+  private static void annotateExtensionPoint(ExtensionPoint extensionPoint,
+                                             DomElementAnnotationHolder holder,
+                                             ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     if (extensionPoint.getWithElements().isEmpty() &&
         !extensionPoint.collectMissingWithTags().isEmpty()) {
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
@@ -377,6 +378,29 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     checkEpBeanClassAndInterface(extensionPoint, holder);
     checkEpNameAndQualifiedName(extensionPoint, holder);
+
+    if (DomUtil.hasXml(extensionPoint.getQualifiedName())) {
+      IdeaPlugin ideaPlugin = DomUtil.getParentOfType(extensionPoint, IdeaPlugin.class, true);
+      assert ideaPlugin != null;
+      final String pluginId =
+        StringUtil.notNullize(ideaPlugin.getPluginId(),
+                              componentModuleRegistrationChecker.isIdeaPlatformModule(extensionPoint.getModule()) ?
+                              PluginManagerCore.CORE_PLUGIN_ID : "");
+      if (!pluginId.isEmpty()) {
+        final String epQualifiedName = extensionPoint.getQualifiedName().getStringValue();
+        if (epQualifiedName != null && epQualifiedName.startsWith(pluginId + ".")) {
+          holder.createProblem(extensionPoint.getQualifiedName(), ProblemHighlightType.WARNING,
+                               DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous"), null,
+                               new LocalQuickFixBase(DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix")) {
+                                 @Override
+                                 public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                                   extensionPoint.getQualifiedName().undefine();
+                                   extensionPoint.getName().setStringValue(StringUtil.substringAfter(epQualifiedName, pluginId + "."));
+                                 }
+                               }).highlightWholeElement();
+        }
+      }
+    }
 
     Module module = extensionPoint.getModule();
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
@@ -587,7 +611,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
     }
 
-    
+
     if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
       GenericAttributeValue serviceInterface = getAttribute(extension, "serviceInterface");
       GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
