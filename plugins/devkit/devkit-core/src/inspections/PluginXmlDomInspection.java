@@ -382,11 +382,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (DomUtil.hasXml(extensionPoint.getQualifiedName())) {
       IdeaPlugin ideaPlugin = DomUtil.getParentOfType(extensionPoint, IdeaPlugin.class, true);
       assert ideaPlugin != null;
-      final String pluginId =
-        StringUtil.notNullize(ideaPlugin.getPluginId(),
-                              componentModuleRegistrationChecker.isIdeaPlatformModule(extensionPoint.getModule()) ?
-                              PluginManagerCore.CORE_PLUGIN_ID : "");
-      if (!pluginId.isEmpty()) {
+      final String pluginId = ideaPlugin.getPluginId();
+      if (pluginId != null) {
         final String epQualifiedName = extensionPoint.getQualifiedName().getStringValue();
         if (epQualifiedName != null && epQualifiedName.startsWith(pluginId + ".")) {
           holder.createProblem(extensionPoint.getQualifiedName(), ProblemHighlightType.WARNING,
