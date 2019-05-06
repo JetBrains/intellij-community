@@ -137,8 +137,8 @@ public class InferenceSession {
                                         PsiElement parent,
                                         PsiMethod method,
                                         boolean varargs) {
-    final MethodCandidateInfo currentMethod = getCurrentProperties(parent);
     if (method == null) {
+      final MethodCandidateInfo currentMethod = getCurrentProperties(parent);
       if (currentMethod != null) {
         method = currentMethod.getElement();
       }
