@@ -26,7 +26,7 @@ dependencies {
     compile "org.glassfish.jersey.core:jersey-client:2.23"
 
     compile "nl.komponents.kovenant:kovenant:3.3.0"
-    compile "org.apache.commons:commons-io:1.3.2"
+    compile "commons-io:commons-io:$apache_commons_io_version"
 }
 
 test { finalizedBy jacocoTestReport }
