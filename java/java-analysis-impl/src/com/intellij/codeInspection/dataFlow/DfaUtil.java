@@ -323,7 +323,7 @@ public class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover given expression.
+   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor, boolean)}) to cover given expression.
    *
    * @param expression expression to cover
    * @return a dataflow context; null if no applicable context found.
