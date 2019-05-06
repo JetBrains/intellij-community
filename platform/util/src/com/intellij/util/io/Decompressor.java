@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -142,8 +143,12 @@ public abstract class Decompressor {
       Entry entry;
       while ((entry = nextEntry()) != null) {
         String name = entry.name;
-        if (myFilter != null && !myFilter.value(name)) {
-          continue;
+
+        if (myFilter != null) {
+          String entryName = entry.isDirectory && !StringUtil.endsWithChar(name, '/') ? name + '/' : name;
+          if (!myFilter.value(entryName)) {
+            continue;
+          }
         }
 
         File outputFile = entryFile(outputDir, name);

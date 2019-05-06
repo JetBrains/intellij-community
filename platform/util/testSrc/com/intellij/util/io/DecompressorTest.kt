@@ -106,6 +106,19 @@ class DecompressorTest {
     assertThat(File(dir, "dir/rwx")).exists().`is`(Writable).`is`(Executable)
   }
 
+  @Test fun filtering() {
+    val zip = tempDir.newFile("test.zip")
+    ZipOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "d1/f1.txt")
+      writeEntry(it, "d2/f2.txt")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Zip(zip).filter { !it.startsWith("d2/") }.extract(dir)
+    assertThat(File(dir, "d1")).isDirectory()
+    assertThat(File(dir, "d1/f1.txt")).isFile()
+    assertThat(File(dir, "d2")).doesNotExist()
+  }
+
   private fun writeEntry(zip: ZipOutputStream, name: String) {
     val entry = ZipEntry(name)
     entry.time = System.currentTimeMillis()
