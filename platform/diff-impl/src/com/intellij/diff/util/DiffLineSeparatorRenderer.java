@@ -61,7 +61,6 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
     int verticalOffset = getVerticalOffset(lineHeight, step, height);
-    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     int start1 = y1 + verticalOffset + step / 2;
     int start2 = y2 + verticalOffset + step / 2;
@@ -241,7 +240,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   }
 
   @NotNull
-  private static Color getBackgroundColor(@NotNull EditorColorsScheme scheme) {
+  private static Color getBackgroundColor(@Nullable EditorColorsScheme scheme) {
+    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(BACKGROUND);
     return color != null ? color : Gray._128;
   }
