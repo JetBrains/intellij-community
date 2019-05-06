@@ -257,7 +257,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
     Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
     if (!configuration.isSourceModificationAllowed()) {
-      host.putUserData(InjectLanguageAction.FIX_KEY, annotationFixer);
+      InjectLanguageAction.addFixer(host,
+                                    annotationFixer,
+                                    addAnnotation ? "Do you want to insert annotation?" : "Do you want to insert comment?");
       return false;
     }
 
