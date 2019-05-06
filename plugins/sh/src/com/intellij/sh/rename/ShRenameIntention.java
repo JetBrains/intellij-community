@@ -22,7 +22,7 @@ public class ShRenameIntention extends BaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Rename text under caret";
+    return "Rename all occurrences";
   }
 
   @Override

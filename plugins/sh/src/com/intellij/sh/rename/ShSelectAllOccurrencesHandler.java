@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
@@ -34,14 +35,14 @@ public class ShSelectAllOccurrencesHandler extends EditorActionHandler {
     TextRange caretTextRange;
     boolean matchExactWords;
     if (caret.hasSelection()) {
-      caretTextRange = new TextRange(editor.getSelectionModel().getSelectionStart(),
-          editor.getSelectionModel().getSelectionEnd());
+      SelectionModel selectionModel = editor.getSelectionModel();
+      caretTextRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
       matchExactWords = false;
     }
     else {
       caretTextRange = ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(editor);
-      matchExactWords = true;
       if (caretTextRange == null) return;
+      matchExactWords = true;
     }
     CharSequence documentText = editor.getDocument().getImmutableCharSequence();
     CharSequence textToFind = caretTextRange.subSequence(documentText);
