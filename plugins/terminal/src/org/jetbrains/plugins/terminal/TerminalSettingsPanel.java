@@ -1,11 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -14,14 +18,16 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -48,6 +54,7 @@ public class TerminalSettingsPanel {
   private JBCheckBox myHighlightHyperlinks;
 
   private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
+  private ActionLink myConfigureTerminalKeybindingsActionLink;
 
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
@@ -64,7 +71,7 @@ public class TerminalSettingsPanel {
     configureShellPathField();
     configureStartDirectoryField();
 
-    List<Component> customComponents = ContainerUtil.newArrayList();
+    List<Component> customComponents = new ArrayList<>();
     for (LocalTerminalCustomizer c : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       UnnamedConfigurable configurable = c.getConfigurable(projectOptionsProvider.getProject());
       if (configurable != null) {
@@ -186,6 +193,20 @@ public class TerminalSettingsPanel {
 
   public Color getDefaultValueColor() {
     return findColorByKey("TextField.inactiveForeground", "nimbusDisabledText");
+  }
+
+  private void createUIComponents() {
+    myConfigureTerminalKeybindingsActionLink = new ActionLink(null, new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Settings settings = e.getData(Settings.KEY);
+        if (settings != null) {
+          Configurable configurable = settings.find("preferences.keymap");
+          settings.select(configurable, "Terminal");
+        }
+      }
+    });
+    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myConfigureTerminalKeybindingsActionLink);
   }
 
   @NotNull
