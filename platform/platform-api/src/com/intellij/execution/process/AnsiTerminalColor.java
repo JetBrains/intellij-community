@@ -7,25 +7,25 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * Interface to work with ANSI-defined terminal colors
+ * Interface to work with ANSI-defined terminal colors.
  */
 interface AnsiTerminalColor {
   /**
    * @return command part for serializing this color.
-   * @implSpec this method MUST NOT return an escape sequence. Only the part that should be wrapped to {@link #SGR_COMMAND_FG_COLOR_ENCODED} or
-   * {@link #SGR_COMMAND_BG_COLOR_ENCODED}. E.g. {@code 2;255;255;255 }
+   * @implSpec this method MUST NOT return an escape sequence. Only the part that should be wrapped to {@link AnsiCommands#SGR_COMMAND_FG_COLOR_ENCODED} or
+   * {@link AnsiCommands#SGR_COMMAND_BG_COLOR_ENCODED}. E.g. {@code 2;255;255;255 }
    */
   @NotNull
   String getAnsiEncodedColor();
 
   /**
-   * @return a {@link java.awt.Color color} representing this one or null if this is a pre-set configurable color 0-15
+   * @return a {@link Color color} representing this one or {@code null} if this is a pre-set configurable color 0-15.
    */
   @Nullable
   Color getColor();
 
   /**
-   * @return a color index for this terminal color if available. Returns {@code -1} for pure RGB encoded color
+   * @return a color index for this terminal color if available. Returns {@code -1} for pure RGB encoded color.
    */
   int getColorIndex();
 }
