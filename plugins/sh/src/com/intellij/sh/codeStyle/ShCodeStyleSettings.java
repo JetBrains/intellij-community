@@ -12,6 +12,6 @@ public class ShCodeStyleSettings extends CustomCodeStyleSettings {
   public String SHFMT_PATH = "";
 
   public ShCodeStyleSettings(CodeStyleSettings container) {
-    super("Shell Script", container);
+    super("Shell_Script", container);
   }
 }
