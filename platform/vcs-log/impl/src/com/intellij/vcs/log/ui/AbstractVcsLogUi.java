@@ -186,6 +186,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
     if (!VcsLogUtil.HASH_REGEX.matcher(commitHash).matches()) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit or reference '" + commitHash + "' not found", MessageType.WARNING);
       future.set(false);
       return;
     }
