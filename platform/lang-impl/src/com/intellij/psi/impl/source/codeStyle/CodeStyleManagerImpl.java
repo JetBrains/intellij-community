@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.codeStyle;
 
@@ -94,18 +94,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   private static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement formatted) {
     PsiElement result = formatted;
-    CodeStyleSettings settingsForFile = CodeStyle.getSettings(file);
-    if (settingsForFile.FORMATTER_TAGS_ENABLED && formatted instanceof PsiFile) {
-      postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), settingsForFile);
+    if (getSettings(file).FORMATTER_TAGS_ENABLED && formatted instanceof PsiFile) {
+      postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), getSettings(file));
     }
     else {
       for (PostFormatProcessor postFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
-        try {
-          result = postFormatProcessor.processElement(result, settingsForFile);
-        }
-        catch (Exception e) {
-          LOG.error("Cannot process element using extension \"" + postFormatProcessor + '"', e);
-        }
+        result = postFormatProcessor.processElement(result, getSettings(file));
       }
     }
     return result;
@@ -216,8 +210,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       caretKeeper.restoreCaretPosition();
     }
     if (editor instanceof EditorEx && isFullReformat) {
-      //TODO<rv> Move to another place
-      //CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
+      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
     }
   }
 
@@ -635,6 +628,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   public Indent zeroIndent() {
     return new IndentImpl(CodeStyle.getSettings(myProject), 0, 0, null);
   }
+
 
   @NotNull
   private static CodeStyleSettings getSettings(@NotNull PsiFile file) {

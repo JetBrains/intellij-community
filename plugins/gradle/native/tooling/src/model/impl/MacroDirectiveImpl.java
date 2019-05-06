@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.MacroDirective;
 
 public class MacroDirectiveImpl implements MacroDirective {
-  private String name;
-  private String value;
+
+  private String myName;
+  private String myValue;
 
   public MacroDirectiveImpl(String name, String value) {
-    this.name = name;
-    this.value = value;
+    myName = name;
+    myValue = value;
   }
 
   public MacroDirectiveImpl(MacroDirective directive) {
@@ -19,20 +20,20 @@ public class MacroDirectiveImpl implements MacroDirective {
 
   @Override
   public String getName() {
-    return name;
+    return myName;
   }
 
   public void setName(String name) {
-    this.name = name;
+    myName = name;
   }
 
   @Nullable
   @Override
   public String getValue() {
-    return value;
+    return myValue;
   }
 
   public void setValue(String value) {
-    this.value = value;
+    myValue = value;
   }
 }

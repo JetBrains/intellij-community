@@ -340,17 +340,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     }
 
     if (myToolWindow == null) return;
-
     MavenUtil.invokeLater(myProject, () -> {
-      boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
-
-      if (myToolWindow.isAvailable() != hasMavenProjects) {
-        myToolWindow.setAvailable(hasMavenProjects, null);
-
-        if (hasMavenProjects) {
-          myToolWindow.activate(null);
-        }
-      }
+      if (!myToolWindow.isVisible()) return;
 
       boolean shouldCreate = myStructure == null;
       if (shouldCreate) {

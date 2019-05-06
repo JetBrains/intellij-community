@@ -1,26 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author Denis Zhdanov
+ */
 public abstract class AbstractExternalEntityData implements ExternalEntityData {
-  @NotNull
-  private final ProjectSystemId owner;
 
+  private static final long serialVersionUID = 1L;
+  
+  @NotNull private final ProjectSystemId myOwner;
+  
   public AbstractExternalEntityData(@NotNull ProjectSystemId owner) {
-    this.owner = owner;
+    myOwner = owner;
   }
 
   @Override
   @NotNull
   public ProjectSystemId getOwner() {
-    return owner;
+    return myOwner;
   }
 
   @Override
   public int hashCode() {
-    return owner.hashCode();
+    return myOwner.hashCode();
   }
 
   @Override
@@ -32,6 +36,6 @@ public abstract class AbstractExternalEntityData implements ExternalEntityData {
       return false;
     }
     AbstractExternalEntityData that = (AbstractExternalEntityData)obj;
-    return owner.equals(that.owner);
+    return myOwner.equals(that.myOwner);
   }
-}
+} 

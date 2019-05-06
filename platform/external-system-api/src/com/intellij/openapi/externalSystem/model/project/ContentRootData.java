@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,20 +12,26 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
-public final class ContentRootData extends AbstractExternalEntityData {
-  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();
+/**
+ * @author Denis Zhdanov
+ */
+public class ContentRootData extends AbstractExternalEntityData {
 
-  @NotNull private final String rootPath;
+  private static final long serialVersionUID = 1L;
+
+  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> myData =
+    new HashMap<>();
+
+  @NotNull private final String myRootPath;
 
   /**
    * Creates new {@code GradleContentRootImpl} object.
    *
    * @param rootPath  path to the root directory
    */
-  @PropertyMapping({"owner", "rootPath"})
   public ContentRootData(@NotNull ProjectSystemId owner, @NotNull String rootPath) {
     super(owner);
-    this.rootPath = ExternalSystemApiUtil.toCanonicalPath(rootPath);
+    myRootPath = ExternalSystemApiUtil.toCanonicalPath(rootPath);
   }
 
   /**
@@ -35,7 +40,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
    */
   @NotNull
   public Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
-    final Collection<SourceRoot> result = data.get(type);
+    final Collection<SourceRoot> result = myData.get(type);
     return result == null ? Collections.emptyList() : result;
   }
 
@@ -54,9 +59,9 @@ public final class ContentRootData extends AbstractExternalEntityData {
    */
   public void storePath(@NotNull ExternalSystemSourceType type, @NotNull String path, @Nullable String packagePrefix) throws IllegalArgumentException {
     if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
-      Collection<SourceRoot> paths = data.get(type);
+      Collection<SourceRoot> paths = myData.get(type);
       if (paths == null) {
-        data.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
+        myData.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
       }
       paths.add(new SourceRoot(
         ExternalSystemApiUtil.toCanonicalPath(path),
@@ -75,16 +80,16 @@ public final class ContentRootData extends AbstractExternalEntityData {
 
   @NotNull
   public String getRootPath() {
-    return rootPath;
+    return myRootPath;
   }
 
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder("content root:");
-    for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : data.entrySet()) {
-      buffer.append(StringUtil.toLowerCase(entry.getKey().toString())).append("=").append(entry.getValue()).append("|");
+    for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : myData.entrySet()) {
+      buffer.append(entry.getKey().toString().toLowerCase(Locale.ENGLISH)).append("=").append(entry.getValue()).append("|");
     }
-    if (!data.isEmpty()) {
+    if (!myData.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     return buffer.toString();
@@ -92,30 +97,24 @@ public final class ContentRootData extends AbstractExternalEntityData {
 
   public static class SourceRoot implements Serializable {
     @NotNull
-    private final String path;
+    private final String myPath;
 
     @Nullable
-    private final String packagePrefix;
+    private final String myPackagePrefix;
 
     public SourceRoot(@NotNull String path, @Nullable String prefix) {
-      this.path = path;
-      packagePrefix = prefix;
-    }
-
-    @SuppressWarnings("unused")
-    private SourceRoot() {
-      path = "";
-      packagePrefix = "";
+      myPath = path;
+      myPackagePrefix = prefix;
     }
 
     @NotNull
     public String getPath() {
-      return path;
+      return myPath;
     }
 
     @Nullable
     public String getPackagePrefix() {
-      return packagePrefix;
+      return myPackagePrefix;
     }
 
     @Override
@@ -123,24 +122,24 @@ public final class ContentRootData extends AbstractExternalEntityData {
       if (this == o) return true;
       if (!(o instanceof SourceRoot)) return false;
       SourceRoot root = (SourceRoot)o;
-      if (packagePrefix != null ? !packagePrefix.equals(root.packagePrefix) : root.packagePrefix != null) return false;
-      if (!path.equals(root.path)) return false;
+      if (myPackagePrefix != null ? !myPackagePrefix.equals(root.myPackagePrefix) : root.myPackagePrefix != null) return false;
+      if (!myPath.equals(root.myPath)) return false;
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = path.hashCode();
-      result = 31 * result + (packagePrefix != null ? packagePrefix.hashCode() : 0);
+      int result = myPath.hashCode();
+      result = 31 * result + (myPackagePrefix != null ? myPackagePrefix.hashCode() : 0);
       return result;
     }
 
     @Override
     public String toString() {
       StringBuilder buffer = new StringBuilder("source_root(");
-      buffer.append(path);
-      if (packagePrefix != null) {
-        buffer.append(", ").append(packagePrefix);
+      buffer.append(myPath);
+      if (myPackagePrefix != null) {
+        buffer.append(", ").append(myPackagePrefix);
       }
       buffer.append(")");
       return buffer.toString();
@@ -152,7 +151,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
 
     @Override
     public int compare(@NotNull SourceRoot o1, @NotNull SourceRoot o2) {
-      return StringUtil.naturalCompare(o1.path, o2.path);
+      return StringUtil.naturalCompare(o1.myPath, o2.myPath);
     }
   }
 }

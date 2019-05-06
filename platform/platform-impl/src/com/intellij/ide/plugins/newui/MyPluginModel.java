@@ -363,12 +363,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private void appendDependsAfterInstall() {
-    if (myDownloaded == null || myDownloaded.ui == null) {
-      return;
-    }
-
     for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
-      if (myDownloaded.ui.findComponent(descriptor) != null) {
+      if (myDownloaded != null && myDownloaded.ui != null && myDownloaded.ui.findComponent(descriptor) != null) {
         continue;
       }
 
@@ -441,7 +437,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  public static List<String> getVendors(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+  public static List<String> getVendors(@NotNull List<IdeaPluginDescriptor> descriptors) {
     Map<String, Integer> vendors = new HashMap<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -648,7 +644,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
+  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<String> enableAction) {
     String message;
 
     Set<PluginId> requiredPlugins = getRequiredPlugins(pluginDescriptor.getPluginId());
@@ -666,7 +662,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       int size = requiredPlugins.size();
       message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "required", size));
+      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
     }
 
     return message;

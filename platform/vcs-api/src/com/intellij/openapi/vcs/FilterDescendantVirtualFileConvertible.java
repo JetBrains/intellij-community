@@ -37,7 +37,7 @@ public class FilterDescendantVirtualFileConvertible<T> extends AbstractFilterChi
   }
 
   @Override
-  protected void sortAscending(@NotNull List<? extends T> ts) {
+  protected void sortAscending(@NotNull List<T> ts) {
     sort(ts, myComparator);
   }
 

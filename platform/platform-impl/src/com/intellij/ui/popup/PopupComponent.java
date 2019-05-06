@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.FieldAccessor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.awt.AWTUtilities;
 
@@ -208,15 +208,13 @@ public interface PopupComponent {
 
     @Override
     public Window getWindow() {
-      Component c = ourComponentField.get(myPopup);
+      final Component c = ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
       return c instanceof JWindow ? (JWindow)c : null;
     }
 
     @Override
     public void setRequestFocus(boolean requestFocus) {
     }
-
-    static final FieldAccessor<Popup, Component> ourComponentField = new FieldAccessor<>(Popup.class, "component", Component.class);
   }
 }
 

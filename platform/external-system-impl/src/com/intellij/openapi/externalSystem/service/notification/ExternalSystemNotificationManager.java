@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.notification;
 
-import com.intellij.build.issue.BuildIssue;
-import com.intellij.build.issue.BuildIssueQuickFix;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.notification.Notification;
@@ -26,7 +24,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
@@ -133,14 +130,6 @@ public class ExternalSystemNotificationManager implements Disposable {
         title, message, notificationCategory, NotificationSource.PROJECT_SYNC,
         filePath, ObjectUtils.notNull(line, -1), ObjectUtils.notNull(column, -1), false);
 
-    if (unwrapped instanceof BuildIssueException) {
-      BuildIssue buildIssue = ((BuildIssueException)unwrapped).getBuildIssue();
-      for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
-        notificationData.setListener(quickFix.getId(), (notification, event) -> quickFix.runQuickFix(project));
-      }
-      return notificationData;
-    }
-
     for (ExternalSystemNotificationExtension extension: ExternalSystemNotificationExtension.EP_NAME.getExtensions()) {
       final ProjectSystemId targetExternalSystemId = extension.getTargetExternalSystemId();
       if (!externalSystemId.equals(targetExternalSystemId) && !targetExternalSystemId.equals(ProjectSystemId.IDE)) {
@@ -153,7 +142,6 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   private static boolean isInternalError(@NotNull Throwable error,
                                          @NotNull ProjectSystemId externalSystemId) {
-    if (RemoteUtil.unwrap(error) instanceof BuildIssueException) return false;
     return ExternalSystemNotificationExtension.EP_NAME.extensions()
       .anyMatch(extension -> externalSystemId.equals(extension.getTargetExternalSystemId()) && extension.isInternalError(error));
   }

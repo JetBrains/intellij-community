@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,134 +23,134 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public final class DefaultExternalSourceDirectorySet implements ExternalSourceDirectorySet {
+public class DefaultExternalSourceDirectorySet implements ExternalSourceDirectorySet {
   private static final long serialVersionUID = 1L;
 
   @NotNull
-  private String name;
+  private String myName;
   @NotNull
-  private Set<File> srcDirs;
-  private File outputDir;
-  private final List<File> gradleOutputDirs;
-  private final FilePatternSet patterns;
+  private Set<File> mySrcDirs;
+  private File myOutputDir;
+  private final List<File> myGradleOutputDirs;
+  private final FilePatternSet myPatterns;
   @NotNull
-  private List<ExternalFilter> filters;
+  private List<ExternalFilter> myFilters;
 
-  private boolean inheritedCompilerOutput;
+  private boolean myInheritedCompilerOutput;
 
   public DefaultExternalSourceDirectorySet() {
-    srcDirs = new HashSet<File>();
-    filters = new ArrayList<ExternalFilter>();
-    gradleOutputDirs = new ArrayList<File>();
-    patterns = new FilePatternSetImpl(new LinkedHashSet<String>(), new LinkedHashSet<String>());
+    mySrcDirs = new HashSet<File>();
+    myFilters = new ArrayList<ExternalFilter>();
+    myGradleOutputDirs = new ArrayList<File>();
+    myPatterns = new FilePatternSetImpl(new LinkedHashSet<String>(), new LinkedHashSet<String>());
   }
 
   public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
     this();
-    name = sourceDirectorySet.getName();
-    srcDirs = new HashSet<File>(sourceDirectorySet.getSrcDirs());
-    outputDir = sourceDirectorySet.getOutputDir();
-    gradleOutputDirs.addAll(sourceDirectorySet.getGradleOutputDirs());
+    myName = sourceDirectorySet.getName();
+    mySrcDirs = new HashSet<File>(sourceDirectorySet.getSrcDirs());
+    myOutputDir = sourceDirectorySet.getOutputDir();
+    myGradleOutputDirs.addAll(sourceDirectorySet.getGradleOutputDirs());
 
-    patterns.getIncludes().addAll(sourceDirectorySet.getPatterns().getIncludes());
-    patterns.getExcludes().addAll(sourceDirectorySet.getPatterns().getExcludes());
+    myPatterns.getIncludes().addAll(sourceDirectorySet.getPatterns().getIncludes());
+    myPatterns.getExcludes().addAll(sourceDirectorySet.getPatterns().getExcludes());
     for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
-      filters.add(new DefaultExternalFilter(filter));
+      myFilters.add(new DefaultExternalFilter(filter));
     }
-    inheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited();
+    myInheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited();
   }
 
   @NotNull
   @Override
   public String getName() {
-    return name;
+    return myName;
   }
 
   public void setName(@NotNull String name) {
-    this.name = name;
+    myName = name;
   }
 
   @NotNull
   @Override
   public Set<File> getSrcDirs() {
-    return srcDirs;
+    return mySrcDirs;
   }
 
   public void setSrcDirs(@NotNull Set<File> srcDirs) {
-    this.srcDirs = srcDirs;
+    mySrcDirs = srcDirs;
   }
 
   @NotNull
   @Override
   public File getOutputDir() {
-    return outputDir;
+    return myOutputDir;
   }
 
   public void setOutputDir(@NotNull File outputDir) {
-    this.outputDir = outputDir;
+    myOutputDir = outputDir;
   }
 
   @NotNull
   @Override
   public File getGradleOutputDir() {
-    assert gradleOutputDirs.size() > 0;
-    return gradleOutputDirs.get(0);
+    assert myGradleOutputDirs.size() > 0;
+    return myGradleOutputDirs.get(0);
   }
 
   @NotNull
   @Override
   public Collection<File> getGradleOutputDirs() {
-    return gradleOutputDirs;
+    return myGradleOutputDirs;
   }
 
   public void addGradleOutputDir(@NotNull File outputDir) {
-    gradleOutputDirs.add(outputDir);
+    myGradleOutputDirs.add(outputDir);
   }
 
   @Override
   public boolean isCompilerOutputPathInherited() {
-    return inheritedCompilerOutput;
+    return myInheritedCompilerOutput;
   }
 
   @NotNull
   @Override
   public Set<String> getExcludes() {
-    return patterns.getExcludes();
+    return myPatterns.getExcludes();
   }
 
   public void setExcludes(Set<String> excludes) {
-    patterns.getExcludes().clear();
-    patterns.getExcludes().addAll(excludes);
+    myPatterns.getExcludes().clear();
+    myPatterns.getExcludes().addAll(excludes);
   }
 
   @NotNull
   @Override
   public Set<String> getIncludes() {
-    return patterns.getIncludes();
+    return myPatterns.getIncludes();
   }
 
   public void setIncludes(Set<String> includes) {
-    patterns.getIncludes().clear();
-    patterns.getIncludes().addAll(includes);
+    myPatterns.getIncludes().clear();
+    myPatterns.getIncludes().addAll(includes);
   }
 
   @NotNull
   @Override
   public FilePatternSet getPatterns() {
-    return patterns;
+    return myPatterns;
   }
 
   public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
-    this.inheritedCompilerOutput = inheritedCompilerOutput;
+    myInheritedCompilerOutput = inheritedCompilerOutput;
   }
 
   @NotNull
   @Override
   public List<ExternalFilter> getFilters() {
-    return filters;
+    return myFilters;
   }
 
   public void setFilters(@NotNull List<ExternalFilter> filters) {
-    this.filters = filters;
+    myFilters = filters;
   }
 }

@@ -134,7 +134,7 @@ public final class StandardMethodContract extends MethodContract {
    * (e.g. contracts with different parameter count)
    */
   @Nullable("When result is too big or contracts are erroneous")
-  public static List<StandardMethodContract> toNonIntersectingStandardContracts(List<StandardMethodContract> contracts) {
+  public static List<StandardMethodContract> toNonIntersectingContracts(List<StandardMethodContract> contracts) {
     if (contracts.isEmpty()) return contracts;
     int paramCount = contracts.get(0).getParameterCount();
     List<StandardMethodContract> result = new ArrayList<>();

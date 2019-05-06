@@ -176,10 +176,7 @@ public class PyDataViewerPanel extends JPanel {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         ArrayChunk arrayChunk = debugValue.getFrameAccessor().getArrayItems(debugValue, 0, 0, -1, -1, getFormat());
-        ApplicationManager.getApplication().invokeLater(() -> updateUI(arrayChunk, strategy));
-      }
-      catch (IllegalArgumentException e) {
-        setError(e.getLocalizedMessage());
+        ApplicationManager.getApplication().invokeLater(() -> updateUI(arrayChunk, debugValue, strategy));
       }
       catch (PyDebuggerException e) {
         LOG.error(e);
@@ -192,8 +189,7 @@ public class PyDataViewerPanel extends JPanel {
     apply(getSliceTextField().getText());
   }
 
-  private void updateUI(@NotNull ArrayChunk chunk, @NotNull DataViewStrategy strategy) {
-    PyDebugValue debugValue = chunk.getValue();
+  private void updateUI(@NotNull ArrayChunk chunk, @NotNull PyDebugValue debugValue, @NotNull DataViewStrategy strategy) {
     AsyncArrayTableModel model = strategy.createTableModel(chunk.getRows(), chunk.getColumns(), this, debugValue);
     model.addToCache(chunk);
 

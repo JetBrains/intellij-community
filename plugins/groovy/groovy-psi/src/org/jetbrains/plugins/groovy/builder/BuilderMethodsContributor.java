@@ -35,5 +35,5 @@ public abstract class BuilderMethodsContributor extends NonCodeMembersContributo
                                          @NotNull PsiClass clazz,
                                          @NotNull String name,
                                          @NotNull PsiElement place,
-                                         @NotNull Processor<? super PsiElement> processor);
+                                         @NotNull Processor<PsiElement> processor);
 }

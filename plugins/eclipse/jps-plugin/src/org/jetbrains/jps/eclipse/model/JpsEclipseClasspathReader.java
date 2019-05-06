@@ -47,7 +47,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
 
   @Override
   protected void addNamedLibrary(JpsModule rootModel,
-                                 Collection<? super String> unknownLibraries,
+                                 Collection<String> unknownLibraries,
                                  boolean exported,
                                  String name,
                                  boolean applicationLevel) {
@@ -74,7 +74,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
 
   @Override
   protected void setUpModuleJdk(JpsModule rootModel,
-                                Collection<? super String> unknownJdks,
+                                Collection<String> unknownJdks,
                                 EclipseModuleManager eclipseModuleManager,
                                 String jdkName) {
     if (LOG.isDebugEnabled()) {

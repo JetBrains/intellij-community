@@ -129,7 +129,7 @@ public class IncProjectBuilder {
       final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
         if (scope.isAffected(target)) {
-          BuildOperations.ensureFSStateInitialized(context, target, true);
+          BuildOperations.ensureFSStateInitialized(context, target);
           final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
           delta.lockData();
           try {
@@ -771,7 +771,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void runTasks(CompileContext context, final List<? extends BuildTask> tasks) throws ProjectBuildException {
+  private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
     for (BuildTask task : tasks) {
       task.build(context);
     }
@@ -912,7 +912,7 @@ public class IncProjectBuilder {
       }
     }
 
-    private void queueTasks(List<? extends BuildChunkTask> tasks) {
+    private void queueTasks(List<BuildChunkTask> tasks) {
       if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
         final List<BuildTargetChunk> chunksToLog = new ArrayList<>();
         for (BuildChunkTask task : tasks) {
@@ -1065,7 +1065,7 @@ public class IncProjectBuilder {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
 
       for (BuildTarget<?> target : chunk.getTargets()) {
-        BuildOperations.ensureFSStateInitialized(context, target, false);
+        BuildOperations.ensureFSStateInitialized(context, target);
       }
 
       doneSomething = processDeletedPaths(context, chunk.getTargets());

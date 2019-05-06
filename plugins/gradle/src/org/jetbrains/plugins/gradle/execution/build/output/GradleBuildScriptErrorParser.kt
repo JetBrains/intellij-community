@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.DuplicateMessageAware
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
@@ -68,19 +67,14 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     // compilation errors should be added by the respective compiler output parser
     if(reason == "Compilation failed; see the compiler error output for details" ||
        reason == "Compilation error. See log for more details" ||
-       reason == "Script compilation error:" ||
        reason.contains("compiler failed")) return false
 
     if (location != null && filter != null) {
       val filePosition = FilePosition(File(filter.filteredFileName), filter.filteredLineNumber - 1, 0)
-      messageConsumer.accept(object : FileMessageEventImpl(
-        parentId, MessageEvent.Kind.ERROR, null, reason, description.toString(), filePosition), DuplicateMessageAware {}
-      )
+      messageConsumer.accept(FileMessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason, description.toString(), filePosition))
     }
     else {
-      messageConsumer.accept(object : MessageEventImpl(
-        parentId, MessageEvent.Kind.ERROR, null, reason, description.toString()), DuplicateMessageAware {}
-      )
+      messageConsumer.accept(MessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason, description.toString()))
     }
     return true
   }

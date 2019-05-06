@@ -19,9 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.refactoring.actions.InvertBooleanAction;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
-import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -51,11 +49,6 @@ public class PyInvertBooleanTest extends PyTestCase {
     myFixture.configureByFiles(ArrayUtil.toStringArray(files));
     final PsiElement element = myFixture.getElementAtCaret();
     assertTrue(element instanceof PsiNamedElement);
-    
-    final InvertBooleanAction action = new InvertBooleanAction();
-    final TestActionEvent event = new TestActionEvent(action);
-    action.beforeActionPerformedUpdate(event);
-    assertTrue(event.getPresentation().isEnabledAndVisible());
 
     final PsiNamedElement target = (PsiNamedElement)element;
     final String name = target.getName();

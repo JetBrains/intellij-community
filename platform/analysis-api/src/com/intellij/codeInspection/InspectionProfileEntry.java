@@ -15,11 +15,11 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
+import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -307,7 +307,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       try {
         XmlSerializer.deserializeInto(node, this);
       }
-      catch (SerializationException e) {
+      catch (XmlSerializationException e) {
         throw new InvalidDataException(e);
       }
     }
@@ -381,7 +381,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Nullable
   @Deprecated
   protected SerializationFilter getSerializationFilter() {
-    return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
+    return XmlSerializer.getDefaultSerializationFilter();
   }
 
   /**

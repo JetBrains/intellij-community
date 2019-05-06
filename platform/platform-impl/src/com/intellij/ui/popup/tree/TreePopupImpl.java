@@ -20,7 +20,6 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -47,12 +46,13 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   private TreePath myPendingChildPath;
   private FilteringTreeBuilder myBuilder;
 
-  public TreePopupImpl(@Nullable Project project,
-                       @Nullable JBPopup parent,
-                       @NotNull TreePopupStep<Object> aStep,
-                       @Nullable Object parentValue) {
-    super(project, parent, aStep);
+  public TreePopupImpl(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
+    super(parent, aStep);
     setParentValue(parentValue);
+  }
+
+  public TreePopupImpl(@NotNull TreePopupStep aStep) {
+    this(null, aStep, null);
   }
 
   @Override
@@ -437,6 +437,10 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         icon.paintIcon(this, g, x, y);
       }
     }
+  }
+
+  private Project getProject() {
+    return getTreeStep().getProject();
   }
 
   @Override

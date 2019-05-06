@@ -162,7 +162,7 @@ public class ActionButtonWithText extends ActionButton {
                                           textRect.x, textRect.y + fm.getAscent());
     if (arrowIcon != null) {
       int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width);
-      int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
+      int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2;
       arrowIcon.paintIcon(this, g, x, y);
     }
   }

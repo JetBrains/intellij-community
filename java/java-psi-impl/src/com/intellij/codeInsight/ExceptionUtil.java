@@ -447,7 +447,8 @@ public class ExceptionUtil {
     if (MethodCandidateInfo.isOverloadCheck()) {
       return Collections.emptyList();
     }
-    final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(methodCall);
+    final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(methodCall.getArgumentList());
+    final JavaResolveResult result = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult(methodCall);
     final PsiElement element = result.getElement();
     final PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : null;
     if (method == null) {
@@ -455,6 +456,10 @@ public class ExceptionUtil {
     }
     if (skipCondition.test(methodCall)) {
       return Collections.emptyList();
+    }
+
+    if (currentMethod != null) {
+      PsiUtilCore.ensureValid(method);
     }
 
     final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
@@ -650,7 +655,7 @@ public class ExceptionUtil {
   private static List<PsiClassType> getUnhandledExceptions(@NotNull PsiMethod method,
                                                           PsiElement element,
                                                           PsiElement topElement,
-                                                          @NotNull Supplier<? extends PsiSubstitutor> substitutor) {
+                                                          @NotNull Supplier<PsiSubstitutor> substitutor) {
     if (isArrayClone(method, element)) {
       return Collections.emptyList();
     }

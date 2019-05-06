@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -31,7 +32,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
-import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
@@ -292,7 +292,8 @@ public class IdeaApplication {
     }
 
     @Override
-    public void premain(String[] args) { }
+    public void premain(String[] args) {
+    }
 
     private void showSplash() {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -368,8 +369,6 @@ public class IdeaApplication {
 
     @Override
     public void main(String[] args) {
-      if (SystemInfo.isMac) MacOSApplicationProvider.initApplication();
-
       SystemDock.updateMenu();
 
       RecentProjectsManager.getInstance();  // ensures that RecentProjectsManager app listener is added
@@ -377,7 +376,7 @@ public class IdeaApplication {
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
-      Application app = ApplicationManager.getApplication();
+      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
 
@@ -435,7 +434,6 @@ public class IdeaApplication {
     return myArgs;
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void disableProjectLoad() {
     myPerformProjectLoad = false;
   }

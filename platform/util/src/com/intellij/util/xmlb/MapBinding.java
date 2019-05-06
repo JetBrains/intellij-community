@@ -2,8 +2,6 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.serialization.ClassUtil;
-import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -21,7 +19,7 @@ import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
 
-class MapBinding implements MultiNodeBinding, NestedBinding {
+class MapBinding extends Binding implements MultiNodeBinding {
   private static final Comparator<Object> KEY_COMPARATOR = (o1, o2) -> {
     if (o1 instanceof Comparable && o2 instanceof Comparable) {
       Comparable c1 = (Comparable)o1;
@@ -42,20 +40,12 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  protected final MutableAccessor myAccessor;
-
   MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
-    myAccessor = accessor;
+    super(accessor);
 
     oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
     annotation = accessor == null ? null : accessor.getAnnotation(XMap.class);
     this.mapClass = mapClass;
-  }
-
-  @NotNull
-  @Override
-  public MutableAccessor getAccessor() {
-    return myAccessor;
   }
 
   @Override
@@ -63,8 +53,8 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
     ParameterizedType type = (ParameterizedType)originalType;
     Type[] typeArguments = type.getActualTypeArguments();
 
-    keyClass = ClassUtil.typeToClass(typeArguments[0]);
-    valueClass = ClassUtil.typeToClass(typeArguments[1]);
+    keyClass = XmlSerializerImpl.typeToClass(typeArguments[0]);
+    valueClass = XmlSerializerImpl.typeToClass(typeArguments[1]);
 
     keyBinding = serializer.getBinding(keyClass, typeArguments[0]);
     valueBinding = serializer.getBinding(valueClass, typeArguments[1]);
@@ -164,12 +154,22 @@ class MapBinding implements MultiNodeBinding, NestedBinding {
     }
   }
 
+  private static boolean isMutableMap(@NotNull Map object) {
+    if (object == Collections.emptyMap()) {
+      return false;
+    }
+    else {
+      String simpleName = object.getClass().getSimpleName();
+      return !simpleName.equals("EmptyMap") && !simpleName.equals("UnmodifiableMap");
+    }
+  }
+
   @Nullable
   private Map deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
     // if accessor is null, it is sub-map and we must not use context
     Map map = myAccessor == null ? null : (Map)context;
     if (map != null) {
-      if (ClassUtil.isMutableMap(map)) {
+      if (isMutableMap(map)) {
         map.clear();
       }
       else {

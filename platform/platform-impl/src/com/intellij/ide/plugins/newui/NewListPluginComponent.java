@@ -13,15 +13,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -36,7 +35,8 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
-  private final BaselineLayout myLayout = new BaselineLayout();
+  private final BaselinePanel myNameAndButtons = new BaselinePanel();
+  private final JPanel myCenterPanel;
   public JButton myRestartButton;
   public JButton myInstallButton;
   public JButton myUpdateButton;
@@ -45,7 +45,6 @@ public class NewListPluginComponent extends CellPluginComponent {
   private JLabel myDownloads;
   private JLabel myVersion;
   private JLabel myVendor;
-  private JPanel myErrorPanel;
   private JComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
@@ -58,17 +57,22 @@ public class NewListPluginComponent extends CellPluginComponent {
 
     setOpaque(true);
     setBorder(JBUI.Borders.empty(10));
-    setLayout(myLayout);
+    setLayout(new BorderLayout(JBUI.scale(10), 0));
 
     myIconComponent.setVerticalAlignment(SwingConstants.TOP);
     myIconComponent.setOpaque(false);
-    myLayout.setIconComponent(myIconComponent);
+    add(myIconComponent, BorderLayout.WEST);
 
     myNameComponent.setText(myPlugin.getName());
-    myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent));
+    myNameComponent.setToolTipText(myPlugin.getName());
+    myNameAndButtons.add(RelativeFont.BOLD.install(myNameComponent));
 
     createButtons();
-    createMetricsPanel();
+
+    myCenterPanel = new NonOpaquePanel(new VerticalLayout(0));
+    myCenterPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
+    createMetricsPanel(myCenterPanel);
+    add(myCenterPanel);
 
     if (marketplace) {
       updateIcon(false, false);
@@ -85,10 +89,10 @@ public class NewListPluginComponent extends CellPluginComponent {
   private void createButtons() {
     if (myMarketplace) {
       if (InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId())) {
-        myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
+        myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       }
       else {
-        myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+        myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(false));
 
         myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
         myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
@@ -96,7 +100,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
     }
     else if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
-      myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
+      myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
       myUninstalled = true;
     }
@@ -105,10 +109,10 @@ public class NewListPluginComponent extends CellPluginComponent {
       PluginId id = myPlugin.getPluginId();
 
       if (pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
-        myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
+        myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       }
       else {
-        myLayout.addButtonComponent(myEnableDisableButton = new JCheckBox() {
+        myNameAndButtons.addButtonComponent(myEnableDisableButton = new JCheckBox() {
           int myBaseline = -1;
 
           @Override
@@ -120,19 +124,6 @@ public class NewListPluginComponent extends CellPluginComponent {
             }
             return myBaseline;
           }
-
-          @Override
-          public void setUI(ButtonUI ui) {
-            myBaseline = -1;
-            super.setUI(ui);
-          }
-
-          @Override
-          public Dimension getPreferredSize() {
-            Dimension size = super.getPreferredSize();
-            int scale = JBUI.scale(2);
-            return new Dimension(size.width + scale, size.height + scale);
-          }
         });
 
         myEnableDisableButton.setOpaque(false);
@@ -142,20 +133,19 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
   }
 
-  private void createMetricsPanel() {
+  private void createMetricsPanel(@NotNull JPanel centerPanel) {
     JPanel panel = new NonOpaquePanel(new TextHorizontalLayout(JBUI.scale(7)));
-    panel.setBorder(JBUI.Borders.emptyTop(5));
-    myLayout.addLineComponent(panel);
+    centerPanel.add(panel);
 
     if (myMarketplace) {
-      String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
-      if (downloads != null) {
-        myDownloads = GridCellPluginComponent.createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
-      }
-
       String rating = PluginManagerConfigurableNew.getRating(myPlugin);
       if (rating != null) {
         myRating = GridCellPluginComponent.createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
+      }
+
+      String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
+      if (downloads != null) {
+        myDownloads = GridCellPluginComponent.createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
       }
     }
     else {
@@ -191,7 +181,7 @@ public class NewListPluginComponent extends CellPluginComponent {
         myVersion.setText(myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
       }
       if (myUpdateButton == null) {
-        myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
+        myNameAndButtons.addButtonAsFirstComponent(myUpdateButton = new UpdateButton());
         myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
       }
       else {
@@ -199,15 +189,16 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
     }
 
-    doLayout();
+    myNameAndButtons.doLayout();
   }
 
   @Override
   public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
-    myEventHandler = eventHandler;
     eventHandler.addAll(this);
+    myNameAndButtons.setListeners(eventHandler);
+    myEventHandler = eventHandler;
   }
 
   @Override
@@ -256,25 +247,17 @@ public class NewListPluginComponent extends CellPluginComponent {
     if (errors) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
 
-      if (myErrorPanel == null) {
-        myErrorPanel = new NonOpaquePanel();
-        myLayout.addLineComponent(myErrorPanel);
-      }
-
       Ref<String> enableAction = new Ref<>();
       String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
-      myErrorComponent = ErrorComponent.show(myErrorPanel, BorderLayout.CENTER, myErrorComponent, message, enableAction.get(),
+      myErrorComponent = ErrorComponent.show(myCenterPanel, VerticalLayout.FILL_HORIZONTAL, myErrorComponent, message, enableAction.get(),
                                              enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
-      myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
 
       if (addListeners) {
-        myEventHandler.add(myErrorPanel);
         myEventHandler.add(myErrorComponent);
       }
     }
-    else if (myErrorPanel != null) {
-      myLayout.removeLineComponent(myErrorPanel);
-      myErrorPanel = null;
+    else if (myErrorComponent != null) {
+      myCenterPanel.remove(myErrorComponent);
       myErrorComponent = null;
     }
   }
@@ -292,7 +275,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   private void showProgress(boolean repaint) {
     myIndicator = new OneLineProgressIndicator(false);
     myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
-    myLayout.setProgressComponent(myIndicator.createBaselineWrapper());
+    myNameAndButtons.setProgressComponent(this, myIndicator.createBaselineWrapper());
 
     MyPluginModel.addProgress(myPlugin, myIndicator);
 
@@ -304,7 +287,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   @Override
   public void hideProgress(boolean success) {
     myIndicator = null;
-    myLayout.removeProgressComponent();
+    myNameAndButtons.removeProgressComponent();
 
     if (success) {
       enableRestart();
@@ -321,19 +304,19 @@ public class NewListPluginComponent extends CellPluginComponent {
   @Override
   public void enableRestart() {
     if (myInstallButton != null) {
-      myLayout.removeButtonComponent(myInstallButton);
+      myNameAndButtons.removeButtonComponent(myInstallButton);
       myInstallButton = null;
     }
     if (myUpdateButton != null) {
-      myLayout.removeButtonComponent(myUpdateButton);
+      myNameAndButtons.removeButtonComponent(myUpdateButton);
       myUpdateButton = null;
     }
     if (myEnableDisableButton != null) {
-      myLayout.removeButtonComponent(myEnableDisableButton);
+      myNameAndButtons.removeButtonComponent(myEnableDisableButton);
       myEnableDisableButton = null;
     }
     if (myRestartButton == null) {
-      myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
+      myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
     }
   }
 
@@ -559,226 +542,5 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
 
     return Pair.create(setTrue || !state, plugins);
-  }
-
-  private class BaselineLayout extends AbstractLayoutManager {
-    private final JBValue myHGap = new JBValue.Float(10);
-    private final JBValue myHOffset = new JBValue.Float(8);
-    private final JBValue myButtonOffset = new JBValue.Float(6);
-
-    private JComponent myIconComponent;
-    private JLabel myNameComponent;
-    private JComponent myProgressComponent;
-    private final List<JComponent> myButtonComponents = new ArrayList<>();
-    private final List<JComponent> myLineComponents = new ArrayList<>();
-    private boolean[] myButtonEnableStates;
-
-    @Override
-    public Dimension preferredLayoutSize(Container parent) {
-      Dimension result = new Dimension(myNameComponent.getPreferredSize());
-
-      if (myProgressComponent == null) {
-        int count = myButtonComponents.size();
-        if (count > 0) {
-          int visibleCount = 0;
-
-          for (Component component : myButtonComponents) {
-            if (component.isVisible()) {
-              Dimension size = component.getPreferredSize();
-              result.width += size.width;
-              result.height = Math.max(result.height, size.height);
-              visibleCount++;
-            }
-          }
-
-          if (visibleCount > 0) {
-            result.width += myHOffset.get();
-            result.width += (visibleCount - 1) * myButtonOffset.get();
-          }
-        }
-      }
-      else {
-        Dimension size = myProgressComponent.getPreferredSize();
-        result.width += myHOffset.get() + size.width;
-        result.height = Math.max(result.height, size.height);
-      }
-
-      for (JComponent component : myLineComponents) {
-        Dimension size = component.getPreferredSize();
-        result.width = Math.max(result.width, size.width);
-        result.height += size.height;
-      }
-
-      Dimension iconSize = myIconComponent.getPreferredSize();
-      result.width += iconSize.width + myHGap.get();
-      result.height = Math.max(result.height, iconSize.height);
-
-      JBInsets.addTo(result, getInsets());
-      return result;
-    }
-
-    @Override
-    public void layoutContainer(Container parent) {
-      Insets insets = getInsets();
-      int x = insets.left;
-      int y = insets.top;
-
-      Dimension iconSize = myIconComponent.getPreferredSize();
-      myIconComponent.setBounds(x, y, iconSize.width, iconSize.height);
-      x += iconSize.width + myHGap.get();
-      y += JBUI.scale(2);
-
-      int calcNameWidth = calculateNameWidth();
-      Dimension nameSize = myNameComponent.getPreferredSize();
-      int baseline = y + myNameComponent.getBaseline(nameSize.width, nameSize.height);
-
-      myNameComponent.setToolTipText(calcNameWidth < nameSize.width ? myNameComponent.getText() : null);
-      nameSize.width = Math.min(nameSize.width, calcNameWidth);
-      myNameComponent.setBounds(x, y, nameSize.width, nameSize.height);
-      y += nameSize.height;
-
-      int width = getWidth();
-
-      if (myProgressComponent == null) {
-        int lastX = width - insets.right;
-
-        for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
-          Component component = myButtonComponents.get(i);
-          if (!component.isVisible()) {
-            continue;
-          }
-          Dimension size = component.getPreferredSize();
-          lastX -= size.width;
-          setBaselineBounds(lastX, baseline, component, size);
-          lastX -= myButtonOffset.get();
-        }
-      }
-      else {
-        Dimension size = myProgressComponent.getPreferredSize();
-        setBaselineBounds(width - size.width - insets.right, baseline, myProgressComponent, size);
-      }
-
-      int lineWidth = width - x - insets.right;
-
-      for (JComponent component : myLineComponents) {
-        int lineHeight = component.getPreferredSize().height;
-        component.setBounds(x, y, lineWidth, lineHeight);
-        y += lineHeight;
-      }
-    }
-
-    private int calculateNameWidth() {
-      Insets insets = getInsets();
-      int width = getWidth() - insets.left - insets.right - myIconComponent.getPreferredSize().width - myHGap.get();
-
-      if (myProgressComponent != null) {
-        return width - myProgressComponent.getPreferredSize().width - myHOffset.get();
-      }
-
-      int visibleCount = 0;
-      for (Component component : myButtonComponents) {
-        if (component.isVisible()) {
-          width -= component.getPreferredSize().width;
-          visibleCount++;
-        }
-      }
-      width -= myButtonOffset.get() * (visibleCount - 1);
-      if (visibleCount > 0) {
-        width -= myHOffset.get();
-      }
-
-      return width;
-    }
-
-    private void setBaselineBounds(int x, int y, @NotNull Component component, @NotNull Dimension size) {
-      component.setBounds(x, y - component.getBaseline(size.width, size.height), size.width, size.height);
-    }
-
-    public void setIconComponent(@NotNull JComponent iconComponent) {
-      assert myIconComponent == null;
-      myIconComponent = iconComponent;
-      add(iconComponent);
-    }
-
-    public void setNameComponent(@NotNull JLabel nameComponent) {
-      assert myNameComponent == null;
-      add(myNameComponent = nameComponent);
-    }
-
-    public void addLineComponent(@NotNull JComponent component) {
-      myLineComponents.add(component);
-      add(component);
-    }
-
-    public void removeLineComponent(@NotNull JComponent component) {
-      myLineComponents.remove(component);
-      remove(component);
-    }
-
-    public void addButtonComponent(@NotNull JComponent component) {
-      addButtonComponent(component, -1);
-    }
-
-    public void addButtonComponent(@NotNull JComponent component, int index) {
-      if (myButtonComponents.isEmpty() || index == -1) {
-        myButtonComponents.add(component);
-      }
-      else {
-        myButtonComponents.add(index, component);
-      }
-      add(component);
-    }
-
-    public void removeButtonComponent(@NotNull JComponent component) {
-      myButtonComponents.remove(component);
-      remove(component);
-    }
-
-    public void setProgressComponent(@NotNull JComponent progressComponent) {
-      assert myProgressComponent == null;
-      myProgressComponent = progressComponent;
-      add(progressComponent);
-
-      if (myEventHandler != null) {
-        myEventHandler.addAll(progressComponent);
-        myEventHandler.updateHover(NewListPluginComponent.this);
-      }
-
-      setVisibleOther(false);
-      doLayout();
-    }
-
-    public void removeProgressComponent() {
-      assert myProgressComponent != null;
-      remove(myProgressComponent);
-      myProgressComponent = null;
-
-      setVisibleOther(true);
-      doLayout();
-    }
-
-    private void setVisibleOther(boolean value) {
-      if (myButtonComponents.isEmpty()) {
-        return;
-      }
-      if (value) {
-        assert myButtonEnableStates != null && myButtonEnableStates.length == myButtonComponents.size();
-
-        for (int i = 0, size = myButtonComponents.size(); i < size; i++) {
-          myButtonComponents.get(i).setVisible(myButtonEnableStates[i]);
-        }
-        myButtonEnableStates = null;
-      }
-      else {
-        assert myButtonEnableStates == null;
-        myButtonEnableStates = new boolean[myButtonComponents.size()];
-
-        for (int i = 0, size = myButtonComponents.size(); i < size; i++) {
-          Component component = myButtonComponents.get(i);
-          myButtonEnableStates[i] = component.isVisible();
-          component.setVisible(false);
-        }
-      }
-    }
   }
 }

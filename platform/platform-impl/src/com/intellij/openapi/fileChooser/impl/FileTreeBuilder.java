@@ -40,7 +40,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   public FileTreeBuilder(JTree tree,
                          DefaultTreeModel treeModel,
                          AbstractTreeStructure treeStructure,
-                         Comparator<? super NodeDescriptor> comparator,
+                         Comparator<NodeDescriptor> comparator,
                          FileChooserDescriptor chooserDescriptor,
                          @SuppressWarnings("UnusedParameters") Runnable onInitialized) {
     super(tree, treeModel, treeStructure, comparator, false);

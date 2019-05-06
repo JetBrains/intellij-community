@@ -90,7 +90,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
-        String lowerCaseLine = StringUtil.toLowerCase(line);
+        String lowerCaseLine = line.toLowerCase();
         if (lowerCaseLine.contains("authentication failed") ||
             lowerCaseLine.contains("403 forbidden") ||
             lowerCaseLine.contains("error: 400") ||

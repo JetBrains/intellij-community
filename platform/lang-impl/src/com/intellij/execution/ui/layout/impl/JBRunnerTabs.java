@@ -7,12 +7,16 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.newImpl.SameHeightTabs;
+import com.intellij.ui.tabs.JBTabsFactory;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.newImpl.JBEditorTabs;
+import com.intellij.ui.tabs.JBTabsBackgroundAndBorder;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +27,7 @@ import java.util.Map;
 /**
  * @author Dennis.Ushakov
  */
-public class JBRunnerTabs extends SameHeightTabs implements JBRunnerTabsBase {
+public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
   public static JBRunnerTabsBase create(@Nullable Project project, @NotNull Disposable parentDisposable) {
     IdeFocusManager focusManager = project != null ? IdeFocusManager.getInstance(project) : null;
     return JBTabsFactory.getUseNewTabs()
@@ -31,10 +35,6 @@ public class JBRunnerTabs extends SameHeightTabs implements JBRunnerTabsBase {
            : new JBRunnerTabsOld(project, ActionManager.getInstance(), focusManager, parentDisposable);
   }
 
-  @Override
-  protected JBTabPainter createTabPainter() {
-    return JBTabPainter.getDEBUGGER();
-  }
 
   public JBRunnerTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -46,8 +46,8 @@ public class JBRunnerTabs extends SameHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
-  protected JBTabsBorder createTabBorder() {
-    return new JBTabsBorder(this) {
+  protected JBTabsBackgroundAndBorder createTabBorder() {
+    return new JBTabsBackgroundAndBorder(this) {
       @NotNull
       @Override
       public Insets getEffectiveBorder() {
@@ -57,6 +57,8 @@ public class JBRunnerTabs extends SameHeightTabs implements JBRunnerTabsBase {
       @Override
       public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
         if (isEmptyVisible()) return;
+        paintBackground((Graphics2D)g, new Rectangle(x, y, width, height));
+
         getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
         getTabPainter()
           .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
@@ -110,24 +112,28 @@ public class JBRunnerTabs extends SameHeightTabs implements JBRunnerTabsBase {
 
   @Override
   protected TabLabel createTabLabel(TabInfo info) {
-    return new SingleHeightLabel(this, info) {
-      @Override
-      public void setTabActionsAutoHide(boolean autoHide) {
-        super.setTabActionsAutoHide(autoHide);
-        apply(new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
-      }
-
-      @Override
-      public void setTabActions(ActionGroup group) {
-        super.setTabActions(group);
-        if (myActionPanel != null) {
-          final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
-          wrapper.remove(0);
-          wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
-        }
-      }
-    };
-
+    return new MyTabLabel(this, info);
   }
 
+  private static class MyTabLabel extends TabLabel {
+    MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
+      super(tabs, info);
+    }
+
+    @Override
+    public void setTabActionsAutoHide(boolean autoHide) {
+      super.setTabActionsAutoHide(autoHide);
+      apply(new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
+    }
+
+    @Override
+    public void setTabActions(ActionGroup group) {
+      super.setTabActions(group);
+      if (myActionPanel != null) {
+        final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
+        wrapper.remove(0);
+        wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
+      }
+    }
+  }
 }

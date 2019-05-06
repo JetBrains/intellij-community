@@ -80,27 +80,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
-    getStateStore().setPath(filePath);
+    if (!isDefault()) {
+      getStateStore().setPath(filePath);
+    }
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
-  }
-
-  static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-  // default project constructor
-  ProjectImpl() {
-    super(ApplicationManager.getApplication(), TEMPLATE_PROJECT_NAME);
-
-    putUserData(CREATION_TIME, System.nanoTime());
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
-    }
-
-    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
-
-    myName = TEMPLATE_PROJECT_NAME;
-    myLight = false;
   }
 
   @Override
@@ -186,23 +172,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Nullable
   @Override
   public @SystemIndependent String getProjectFilePath() {
-    return getStateStore().getProjectFilePath();
+    return isDefault() ? null : getStateStore().getProjectFilePath();
   }
 
   @Override
   public VirtualFile getProjectFile() {
-    return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
+    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
   }
 
   @Override
   public VirtualFile getBaseDir() {
-    return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
+    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
   }
 
   @Override
   @Nullable
   public @SystemIndependent String getBasePath() {
-    return getStateStore().getProjectBasePath();
+    return isDefault() ? null : getStateStore().getProjectBasePath();
   }
 
   @NotNull
@@ -216,6 +202,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public @SystemDependent String getPresentableUrl() {
+    if (isDefault()) {
+      return null;
+    }
+
     IProjectStore store = getStateStore();
     return PathUtil.toSystemDependentName(store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath());
   }
@@ -229,14 +219,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       str = getName();
     }
 
-    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
+    final String prefix = !isDefault() && getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    String workspaceFilePath = getStateStore().getWorkspaceFilePath();
+    String workspaceFilePath = isDefault() ? null : getStateStore().getWorkspaceFilePath();
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
@@ -244,14 +234,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     Application application = ApplicationManager.getApplication();
 
-    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
     //noinspection CodeBlock2Expr
-    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, application.isUnitTestMode() ? () -> {
+    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
     } : null);
 
-    if (!application.isHeadlessEnvironment()) {
+    if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
     }
     if (myName == null) {
@@ -356,7 +346,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + getPresentableUrl() + "'") +
+                         : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
+           (isDefault() ? " (Default)" : "") +
            " " + myName;
   }
 

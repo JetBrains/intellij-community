@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.service.fus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
@@ -54,8 +55,8 @@ public class FUStatisticsWhiteListGroupsService {
   }
 
   @Nullable
-  public static String loadWhiteListFromServer(@NotNull EventLogExternalSettingsService settingsService) {
-    return getFUSWhiteListContent(settingsService.getWhiteListProductUrl());
+  public static String getFUSWhiteListContent() {
+    return getFUSWhiteListContent(EventLogExternalSettingsService.getFeatureUsageSettings().getWhiteListProductUrl());
   }
 
   @Nullable
@@ -112,7 +113,6 @@ public class FUStatisticsWhiteListGroupsService {
     public final ArrayList<WLGroup> groups = new ArrayList<>();
     @Nullable public Map<String, Set<String>> globalEnums;
     @Nullable public WLRule rules;
-    @Nullable public String version;
   }
 
   public static class WLGroup {
@@ -140,11 +140,11 @@ public class FUStatisticsWhiteListGroupsService {
     }
   }
 
-  public static class WLVersion {
+  private static class WLVersion {
     public final String from;
     public final String to;
 
-    public WLVersion(String from, String to) {
+    private WLVersion(String from, String to) {
       this.from = from;
       this.to = to;
     }

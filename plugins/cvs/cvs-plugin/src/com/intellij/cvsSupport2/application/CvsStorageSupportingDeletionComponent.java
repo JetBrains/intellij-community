@@ -22,35 +22,32 @@ import java.io.File;
 
 public class CvsStorageSupportingDeletionComponent implements VirtualFileListener {
   private static final Logger LOG = Logger.getInstance(CvsStorageSupportingDeletionComponent.class);
-  private boolean myIsActive;
-  private final Project myProject;
+  protected boolean myIsActive = false;
+  private Project myProject;
 
   private DeletedCVSDirectoryStorage myDeletedStorage;
-  private DeleteHandler myDeleteHandler;
-  private AddHandler myAddHandler;
+  private DeleteHandler myDeleteHandler = null;
+  private AddHandler myAddHandler = null;
   private CvsFileOperationsHandler myFileOperationsHandler;
 
-  private int myCommandLevel;
+  private int myCommandLevel = 0;
 
-  private boolean myAnotherProjectCommand;
+  private boolean myAnotherProjectCommand = false;
   static final Key<AbstractVcs> FILE_VCS = new Key<>("File VCS");
 
   private Disposable myListenerDisposable = Disposer.newDisposable();
-
-  public CvsStorageSupportingDeletionComponent(Project project) {
-    myProject = project;
-  }
 
   @NotNull
   public static CvsStorageSupportingDeletionComponent getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, CvsStorageSupportingDeletionComponent.class);
   }
 
-  public void activate() {
+  public void init(@NotNull Project project) {
+    myProject = project;
     initializeDeletedStorage();
     VirtualFileManager.getInstance().addVirtualFileListener(this, myListenerDisposable);
-    CvsEntriesManager.getInstance().activate();
-    myProject.getMessageBus().connect(myListenerDisposable).subscribe(CommandListener.TOPIC, new CommandListener() {
+    CvsEntriesManager.getInstance().registerAsVirtualFileListener(myListenerDisposable);
+    project.getMessageBus().connect(myListenerDisposable).subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
       public void commandStarted(@NotNull CommandEvent event) {
         myCommandLevel++;
@@ -72,7 +69,7 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
         execute();
       }
     });
-    myFileOperationsHandler = new CvsFileOperationsHandler(myProject, this);
+    myFileOperationsHandler = new CvsFileOperationsHandler(project, this);
     LocalFileSystem.getInstance().registerAuxiliaryFileOperationsHandler(myFileOperationsHandler);
     myIsActive = true;
   }
@@ -86,14 +83,14 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
     myListenerDisposable = null;
     Disposer.dispose(listenerDisposable);
 
-    CvsEntriesManager.getInstance().deactivate();
+    CvsEntriesManager.getInstance().unregisterAsVirtualFileListener();
     LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(myFileOperationsHandler);
     myFileOperationsHandler = null;
     myIsActive = false;
+    myProject = null;
   }
 
-  @NotNull
-  DeleteHandler getDeleteHandler() {
+  public DeleteHandler getDeleteHandler() {
     if (myDeleteHandler == null) {
       myDeleteHandler = myDeletedStorage.createDeleteHandler(myProject, this);
     }
@@ -105,10 +102,13 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
       return false;
     }
     final VirtualFile file = event.getFile();
-    return !disabled(file) && !event.isFromRefresh() && !isStorageEvent(event) && isUnderCvsManagedModuleRoot(file);
+    if (disabled(file) || event.isFromRefresh() || isStorageEvent(event) || !isUnderCvsManagedModuleRoot(file)) {
+      return false;
+    }
+    return true;
   }
 
-  boolean getIsActive() {
+  public boolean getIsActive() {
     return myIsActive;
   }
 
@@ -159,7 +159,8 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
   @Override
   public void fileCreated(@NotNull final VirtualFileEvent event) {
     if (!shouldProcessEvent(event)) return;
-    if (!myIsActive) return;    // already disposed
+    final Project project = myProject;
+    if (project == null) return;    // already disposed
 
     final VirtualFile file = event.getFile();
     if (myDeleteHandler != null) {
@@ -172,8 +173,7 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
     execute();
   }
 
-  @NotNull
-  AddHandler getAddHandler() {
+  public AddHandler getAddHandler() {
     if (myAddHandler == null) {
       myAddHandler = new AddHandler(myProject, this);
     }

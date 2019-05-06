@@ -22,7 +22,6 @@ import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -1486,9 +1485,7 @@ public class Messages {
     }
 
     protected JTextComponent createTextFieldComponent() {
-      JTextField field = new JTextField(30);
-      field.setMargin(JBUI.insets(0, 5));
-      return field;
+      return new JTextField(30);
     }
 
     @Override

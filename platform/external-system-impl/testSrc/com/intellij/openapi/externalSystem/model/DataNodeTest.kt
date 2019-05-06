@@ -1,54 +1,65 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.externalSystem.model
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.serialization.ObjectSerializer
+
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.Before
 import org.junit.Test
-import java.io.Serializable
+import java.io.*
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+import java.net.URL
 import java.net.URLClassLoader
 
+
 class DataNodeTest {
-  lateinit var classLoader: ClassLoader
-  private val libUrl = javaClass.classLoader.getResource("dataNodeTest/lib.jar")
+
+  lateinit var cl: ClassLoader
+  private val myLibUrl: URL = javaClass.classLoader.getResource("dataNodeTest/lib.jar")
 
   @Before
   fun setUp() {
-    classLoader = URLClassLoader(arrayOf(libUrl), javaClass.classLoader)
+    cl = URLClassLoader(arrayOf(myLibUrl), javaClass.classLoader)
   }
 
   @Test
   fun `instance of class from a classloader can be deserialized`() {
-    val barObject = classLoader.loadClass("foo.Bar").newInstance()
+    val barObject = cl.loadClass("foo.Bar").newInstance()
 
-    val deserialized = wrapAndDeserialize(barObject)
+    val deserialized = wrapAndDeserialize(Any::class.java, barObject)
 
     assertThatExceptionOfType(IllegalStateException::class.java)
-      .isThrownBy { deserialized.deserializeData(listOf(javaClass.classLoader)) }
+      .isThrownBy { deserialized.prepareData(javaClass.classLoader) }
 
-    deserialized.deserializeData(listOf(URLClassLoader(arrayOf(libUrl), javaClass.classLoader)))
-    assertThat(deserialized.data.javaClass.name).isEqualTo("foo.Bar")
+    val newCl = URLClassLoader(arrayOf(myLibUrl), javaClass.classLoader)
+
+    deserialized.prepareData(newCl)
+    assertThat(deserialized.data.javaClass.name)
+      .contains("foo.Bar")
   }
 
-  // well, proxy cannot be serialized because on deserialize we need class
+  @Test
   fun `proxy instance can be deserialized`() {
-    val interfaceClass = classLoader.loadClass("foo.Baz")
+    val interfaceClass = cl.loadClass("foo.Baz")
 
-    val invocationHandler = InvocationHandler { _, _, _ -> 0 }
+    val invocationHandler = object : InvocationHandler, Serializable {
+      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?) = 0
+    }
 
-    val proxyInstance = Proxy.newProxyInstance(classLoader, arrayOf(interfaceClass), invocationHandler)
-    @Suppress("UNCHECKED_CAST")
-    val deserialized = wrapAndDeserialize(proxyInstance)
+    var proxyInstance = Proxy.newProxyInstance(cl, arrayOf(interfaceClass), invocationHandler)
+    val deserialized = wrapAndDeserialize(interfaceClass as Class<Any>, proxyInstance)
+
 
     assertThatExceptionOfType(IllegalStateException::class.java)
-      .isThrownBy { deserialized.deserializeData(listOf(javaClass.classLoader)) }
+      .isThrownBy { deserialized.prepareData(javaClass.classLoader) }
 
-    deserialized.deserializeData(listOf(URLClassLoader(arrayOf(libUrl), javaClass.classLoader)))
+    val newCl = URLClassLoader(arrayOf(myLibUrl), javaClass.classLoader)
+
+    deserialized.prepareData(newCl)
     assertThat(deserialized.data.javaClass.interfaces)
       .extracting("name")
       .contains("foo.Baz")
@@ -57,16 +68,13 @@ class DataNodeTest {
   @Test
   fun `ProjectSystemIds are re-used after deserialization`() {
     val id = ProjectSystemId("MyTest")
-
     val dataNodes = listOf(DataNode(Key.create(ProjectSystemId::class.java, 0), id, null),
                            DataNode(Key.create(ProjectSystemId::class.java, 0), id, null))
 
-    val buffer = WriteAndCompressSession()
-    dataNodes.forEach { it.serializeData(buffer) }
-    val out = BufferExposingByteArrayOutputStream()
-    ObjectSerializer.instance.writeList(dataNodes, DataNode::class.java, out)
-    val bytes = out.toByteArray()
-    val deserializedList = ObjectSerializer.instance.readList(DataNode::class.java, bytes, createDataNodeReadConfiguration(javaClass.classLoader))
+    val bos = ByteArrayOutputStream()
+    ObjectOutputStream(bos).use { it.writeObject(dataNodes) }
+    val bytes = bos.toByteArray()
+    val deserializedList = ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() } as List<DataNode<ProjectSystemId>>
 
     assertThat(deserializedList).hasSize(2)
     assertThat(deserializedList[0].data === deserializedList[1].data)
@@ -74,6 +82,7 @@ class DataNodeTest {
       .isTrue()
   }
 
+  @Test
   fun `proxy instance referenced from invocation handler (de-)serialized`() {
     val handler = object: InvocationHandler, Serializable {
       var counter: Int = 0
@@ -91,20 +100,22 @@ class DataNodeTest {
     handler.ref = proxy
     assertThat(proxy.incrementAndGet()).isEqualTo(1)
 
-    val dataNode = wrapAndDeserialize(proxy)
+    val dataNode = wrapAndDeserialize(Any::class.java, proxy)
     val counter = dataNode.data as Counter
     assertThat(counter.incrementAndGet()).isEqualTo(2)
   }
 
-  private fun wrapAndDeserialize(barObject: Any): DataNode<*> {
-    val original = DataNode(Key.create(barObject.javaClass, 0), barObject, null)
-    original.serializeData(WriteAndCompressSession())
-    val bytes = ObjectSerializer.instance.writeAsBytes(original)
-    return ObjectSerializer.instance.read(DataNode::class.java, bytes)
+  private fun wrapAndDeserialize(clz: Class<Any>,
+                                 barObject: Any): DataNode<Any> {
+    val original = DataNode(Key.create(clz, 0), barObject, null)
+    val bos = ByteArrayOutputStream()
+    ObjectOutputStream(bos).use { it.writeObject(original) }
+    val bytes = bos.toByteArray()
+    return ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() } as DataNode<Any>
   }
 }
 
-private interface Counter {
+interface Counter {
   fun incrementAndGet(): Int
 }
 

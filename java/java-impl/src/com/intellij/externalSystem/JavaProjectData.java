@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.externalSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,50 +23,53 @@ import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityD
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class JavaProjectData extends AbstractExternalEntityData {
+/**
+ * @author Denis Zhdanov
+ */
+public class JavaProjectData extends AbstractExternalEntityData {
+
   public static final Key<JavaProjectData> KEY = Key.create(JavaProjectData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
 
   private static final Logger LOG = Logger.getInstance(JavaProjectData.class);
+
+  private static final long serialVersionUID = 1L;
 
   private static final LanguageLevel  DEFAULT_LANGUAGE_LEVEL = LanguageLevel.JDK_1_6;
   private static final JavaSdkVersion DEFAULT_JDK_VERSION    = JavaSdkVersion.JDK_1_6;
   private static final Pattern        JDK_VERSION_PATTERN    = Pattern.compile(".*1.(\\d+).*");
 
-  @NotNull private JavaSdkVersion jdkVersion = DEFAULT_JDK_VERSION;
-  @NotNull private LanguageLevel languageLevel = DEFAULT_LANGUAGE_LEVEL;
+  @NotNull private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
+  @NotNull private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
 
-  @NotNull private String compileOutputPath;
+  @NotNull private String myCompileOutputPath;
 
-  @PropertyMapping({"owner", "compileOutputPath"})
   public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
     super(owner);
-
-    this.compileOutputPath = compileOutputPath;
+    myCompileOutputPath = compileOutputPath;
   }
 
   @NotNull
   public String getCompileOutputPath() {
-    return compileOutputPath;
+    return myCompileOutputPath;
   }
 
   public void setCompileOutputPath(@NotNull String compileOutputPath) {
-    this.compileOutputPath = ExternalSystemApiUtil.toCanonicalPath(compileOutputPath);
+    myCompileOutputPath = ExternalSystemApiUtil.toCanonicalPath(compileOutputPath);
   }
 
   @NotNull
   public JavaSdkVersion getJdkVersion() {
-    return jdkVersion;
+    return myJdkVersion;
   }
 
   public void setJdkVersion(@NotNull JavaSdkVersion jdkVersion) {
-    this.jdkVersion = jdkVersion;
+    myJdkVersion = jdkVersion;
   }
 
   public void setJdkVersion(@Nullable String jdk) {
@@ -91,7 +108,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     }
     for (JavaSdkVersion sdkVersion : JavaSdkVersion.values()) {
       if (sdkVersion.ordinal() == version) {
-        jdkVersion = sdkVersion;
+        myJdkVersion = sdkVersion;
         return true;
       }
     }
@@ -101,26 +118,26 @@ public final class JavaProjectData extends AbstractExternalEntityData {
 
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    return languageLevel;
+    return myLanguageLevel;
   }
 
   public void setLanguageLevel(@NotNull LanguageLevel level) {
-    languageLevel = level;
+    myLanguageLevel = level;
   }
 
   public void setLanguageLevel(@Nullable String languageLevel) {
     LanguageLevel level = LanguageLevel.parse(languageLevel);
     if (level != null) {
-      this.languageLevel = level;
+      myLanguageLevel = level;
     }
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + jdkVersion.hashCode();
-    result = 31 * result + languageLevel.hashCode();
-    result = 31 * result + compileOutputPath.hashCode();
+    result = 31 * result + myJdkVersion.hashCode();
+    result = 31 * result + myLanguageLevel.hashCode();
+    result = 31 * result + myCompileOutputPath.hashCode();
     return result;
   }
 
@@ -132,9 +149,9 @@ public final class JavaProjectData extends AbstractExternalEntityData {
 
     JavaProjectData project = (JavaProjectData)o;
 
-    if (!compileOutputPath.equals(project.compileOutputPath)) return false;
-    if (jdkVersion != project.jdkVersion) return false;
-    if (languageLevel != project.languageLevel) return false;
+    if (!myCompileOutputPath.equals(project.myCompileOutputPath)) return false;
+    if (myJdkVersion != project.myJdkVersion) return false;
+    if (myLanguageLevel != project.myLanguageLevel) return false;
 
     return true;
   }

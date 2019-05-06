@@ -118,11 +118,11 @@ class CodeErrorReport {
   private final Language myLang;
   private final String myCode;
   private final SettingsType mySettingsType;
-  private final Collection<? extends PsiErrorElement> myErrors;
+  private final Collection<PsiErrorElement> myErrors;
 
   CodeErrorReport(@NotNull CodeSampleInfo codeSampleInfo,
                          @NotNull Language lang,
-                         @NotNull Collection<? extends PsiErrorElement> errors) {
+                         @NotNull Collection<PsiErrorElement> errors) {
     myLang = lang;
     myCode = codeSampleInfo.codeSample;
     mySettingsType = codeSampleInfo.correspondingSetting;

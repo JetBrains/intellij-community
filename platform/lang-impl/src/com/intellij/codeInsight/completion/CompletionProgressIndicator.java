@@ -140,6 +140,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
     myArranger = new CompletionLookupArrangerImpl(this);
+    if (handler.isTestingMode()) {
+      myArranger.setConsiderAllItemsVisible();
+    }
     myLookup.setArranger(myArranger);
 
     myLookup.addLookupListener(myLookupListener);
@@ -513,7 +516,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   @Override
-  public void registerChildDisposable(@NotNull Supplier<? extends Disposable> child) {
+  public void registerChildDisposable(@NotNull Supplier<Disposable> child) {
     synchronized (myLock) {
       // avoid registering stuff on an indicator being disposed concurrently
       checkCanceled();

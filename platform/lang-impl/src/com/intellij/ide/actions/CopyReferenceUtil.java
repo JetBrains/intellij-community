@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class CopyReferenceUtil {
-  static void highlight(Editor editor, Project project, List<? extends PsiElement> elements) {
+  static void highlight(Editor editor, Project project, List<PsiElement> elements) {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -165,7 +165,7 @@ public class CopyReferenceUtil {
 
   @NotNull
   private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    for (CopyReferenceAction.VirtualFileQualifiedNameProvider provider : CopyReferenceAction.VirtualFileQualifiedNameProvider.EP_NAME.getExtensionList()) {
+    for (VirtualFileQualifiedNameProvider provider : VirtualFileQualifiedNameProvider.EP_NAME.getExtensionList()) {
       String qualifiedName = provider.getQualifiedName(project, virtualFile);
       if (qualifiedName != null) {
         return qualifiedName;

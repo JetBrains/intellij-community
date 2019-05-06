@@ -53,7 +53,6 @@ class CommunityRepositoryModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
-    "intellij.platform.util.ex",
     "intellij.platform.credentialStore",
     "intellij.platform.diff.impl",
     "intellij.platform.vcs.dvcs.impl",
@@ -64,8 +63,6 @@ class CommunityRepositoryModules {
     "intellij.platform.lang.impl",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
-    "intellij.platform.objectSerializer",
-    "intellij.platform.objectSerializer.annotations",
     "intellij.platform.projectModel.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
@@ -161,7 +158,6 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
-      withArtifact("maven-event-listener", "")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")

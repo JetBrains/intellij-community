@@ -45,7 +45,7 @@ import java.nio.charset.Charset;
  *
  * Class is not final since it is overridden in Upsource
  */
-public class FileContentImpl extends UserDataHolderBase implements PsiDependentFileContent {
+public class FileContentImpl extends UserDataHolderBase implements FileContent {
   private final VirtualFile myFile;
   private final String myFileName;
   private final FileType myFileType;
@@ -91,14 +91,12 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
+  /**
+   * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
+   */
   @NotNull
   @Override
   public PsiFile getPsiFile() {
-    return getPsiFileForPsiDependentIndex();
-  }
-
-  @NotNull
-  private PsiFile getFileFromText() {
     PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
 
     if (psi == null) {
@@ -113,9 +111,8 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
     return psi;
   }
 
-  @Override
   @NotNull
-  public LighterAST getLighterAST() {
+  public LighterAST getLighterASTForPsiDependentIndex() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
@@ -269,7 +266,7 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
       }
     }
     if (psi == null) {
-      psi = getFileFromText();
+      psi = getPsiFile();
     }
     return psi;
   }

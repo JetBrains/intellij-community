@@ -22,7 +22,6 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -31,8 +30,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -41,38 +43,35 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    if (!editor.getSelectionModel().hasSelection()) {
-      SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
-      if (!editor.getSelectionModel().hasSelection()) return;
-    }
+    DefaultActionGroup group = createActionGroup(project, editor, file);
+    if (group == null) return;
 
-    List<AnAction> group = createActionGroup(editor, file, new HashSet<>());
-    if (group.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
-      return;
-    }
-
-
-    ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(CodeInsightBundle.message("templates.select.template.chooser.title"), new DefaultActionGroup(group),
+    final ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(CodeInsightBundle.message("templates.select.template.chooser.title"), group,
                               DataManager.getInstance().getDataContext(editor.getContentComponent()),
                               JBPopupFactory.ActionSelectionAid.MNEMONICS, false);
 
     popup.showInBestPositionFor(editor);
   }
 
-  @NotNull
-  public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<Character> usedMnemonicsSet) {
+  @Nullable
+  public static DefaultActionGroup createActionGroup(Project project, Editor editor, PsiFile file) {
+    if (!editor.getSelectionModel().hasSelection()) {
+      SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
+      if (!editor.getSelectionModel().hasSelection()) return null;
+    }
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
     if (templates.isEmpty() && customTemplates.isEmpty()) {
-      return Collections.emptyList();
+      HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
+      return null;
     }
 
-    List<AnAction> group = new ArrayList<>();
+    Set<Character> usedMnemonicsSet = new HashSet<>();
+    DefaultActionGroup group = new DefaultActionGroup();
 
     for (TemplateImpl template : templates) {
-      group.add(new InvokeTemplateAction(template, editor, file.getProject(), usedMnemonicsSet));
+      group.add(new InvokeTemplateAction(template, editor, project, usedMnemonicsSet));
     }
 
     for (CustomLiveTemplate customTemplate : customTemplates) {

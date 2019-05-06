@@ -16,10 +16,12 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
+import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +33,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * author: lesya
@@ -41,8 +43,8 @@ public class ChooseCheckoutMode extends WizardStep {
 
   private File mySelectedLocation;
   private final Collection<File> myCvsPaths = new ArrayList<>();
-  private final DefaultListModel<CheckoutStrategy> myCheckoutModeModel = new DefaultListModel<>();
-  private final JList<CheckoutStrategy> myCheckoutModeList = new JBList<>(myCheckoutModeModel);
+  private final DefaultListModel myCheckoutModeModel = new DefaultListModel();
+  private final JList myCheckoutModeList = new JBList(myCheckoutModeModel);
   private final JCheckBox myMakeNewFilesReadOnly = new JCheckBox(CvsBundle.message("checkbox.make.new.files.read.only"));
   private final JCheckBox myPruneEmptyDirectories = new JCheckBox(CvsBundle.message("checkbox.prune.empty.directories"));
   private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
@@ -58,10 +60,14 @@ public class ChooseCheckoutMode extends WizardStep {
 
   public ChooseCheckoutMode(Project project, CheckoutWizard wizard) {
     super("###", wizard);
-    myCheckoutModeList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-      label.setText(value.getResult().getAbsolutePath());
-      label.setIcon(PlatformIcons.FOLDER_ICON);
-    }));
+    myCheckoutModeList.setCellRenderer(new ColoredListCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        final CheckoutStrategy checkoutStrategy = (CheckoutStrategy)value;
+        append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
+        setIcon(PlatformIcons.FOLDER_ICON);
+      }
+    });
     myCheckoutModeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -234,7 +240,7 @@ public class ChooseCheckoutMode extends WizardStep {
       if (!hasParentIn(allFiles, file)) result.add(file);
     }
 
-    Collections.sort(result, Comparator.comparing(File::getPath));
+    Collections.sort(result, (file, file1) -> file.getPath().compareTo(file1.getPath()));
     return result;
   }
 
@@ -254,8 +260,8 @@ public class ChooseCheckoutMode extends WizardStep {
 
     final boolean forFile = getWizard().getSelectedElements()[0] instanceof CvsFile;
     final CheckoutStrategy[] strategies = CheckoutStrategy.createAllStrategies(mySelectedLocation, selected, forFile);
-    final Collection<File> results = new HashSet<>();
-    final List<CheckoutStrategy> resultModes = new ArrayList<>();
+    final Collection<File> results = new HashSet();
+    final List<CheckoutStrategy> resultModes = new ArrayList();
     for (CheckoutStrategy strategy : strategies) {
       final File resultFile = strategy.getResult();
       if (resultFile != null && !results.contains(resultFile)) {
@@ -285,7 +291,7 @@ public class ChooseCheckoutMode extends WizardStep {
 
   public boolean useAlternativeCheckoutLocation() {
     if (myCvsPaths.size() == 1) {
-      CheckoutStrategy checkoutStrategy = myCheckoutModeList.getSelectedValue();
+      final CheckoutStrategy checkoutStrategy = (CheckoutStrategy)myCheckoutModeList.getSelectedValue();
       return checkoutStrategy.useAlternativeCheckoutLocation();
     }
     else {
@@ -295,7 +301,7 @@ public class ChooseCheckoutMode extends WizardStep {
 
   public File getCheckoutDirectory() {
     if (myCvsPaths.size() == 1) {
-      CheckoutStrategy checkoutStrategy = myCheckoutModeList.getSelectedValue();
+      final CheckoutStrategy checkoutStrategy = (CheckoutStrategy)myCheckoutModeList.getSelectedValue();
       return checkoutStrategy.getCheckoutDirectory();
     }
     else {

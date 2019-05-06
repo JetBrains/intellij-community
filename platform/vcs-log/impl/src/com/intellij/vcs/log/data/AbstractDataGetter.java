@@ -292,10 +292,6 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }));
   }
 
-  protected void clear() {
-    UIUtil.invokeLaterIfNeeded(() -> myCache.removeByCondition(t -> !(t instanceof LoadingDetails)));
-  }
-
   @NotNull
   protected abstract List<? extends T> readDetails(@NotNull VcsLogProvider logProvider,
                                                    @NotNull VirtualFile root,

@@ -677,7 +677,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   private final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
-    public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull final Ref<? super Boolean> willOpenProject) {
+    public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
       if (willReopenProjectOnStart()) {
         willOpenProject.set(Boolean.TRUE);
       }

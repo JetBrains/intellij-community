@@ -19,9 +19,6 @@ class CommunityLibraryLicenses {
                        libraryName: 'org.eclipse.aether:aether-api', licenseUrl: "http://www.eclipse.org/legal/epl-v10.html",
                        additionalLibraryNames: ['org.eclipse.aether:aether-impl', 'org.eclipse.aether:aether-connector-basic',
                                                 'org.eclipse.aether:aether-transport-file', 'org.eclipse.aether:aether-transport-http']),
-
-    new LibraryLicense(name: "Amazon Ion Java", libraryName: "ion", license: "Apache 2.0", url: "https://github.com/amzn/ion-java"),
-
     new LibraryLicense(name: "Android Analytics", attachedTo: "intellij.android.core", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Crash", libraryName: "com.android.tools.analytics-library:crash",
@@ -149,8 +146,6 @@ class CommunityLibraryLicenses {
                        license: "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl: "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
     new LibraryLicense(name: "completion-ranking-java", attachedTo: "intellij.statsCollector.completionRanker", version: "0.0.6",
                        license: "Apache 2.0"),
-    new LibraryLicense(name: "completion-ranking-kotlin", attachedTo: "intellij.statsCollector.completionRanker", version: "0.0.1",
-                       license: "Apache 2.0"),
     new LibraryLicense(name: "completion-ranking-python", attachedTo: "intellij.statsCollector.completionRanker", version: "0.0.2",
                        license: "Apache 2.0"),
     new LibraryLicense(name: "coverage.py", attachedTo: "intellij.python.helpers", version: "3.7.1", license: "Apache 2.0",
@@ -204,7 +199,9 @@ class CommunityLibraryLicenses {
                        url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", version: "2.3.20", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
-
+    new LibraryLicense(name: "FST", libraryName: "de.ruedigermoeller:fst", version: "2.56", license: "Apache 2.0",
+                       url: "https://github.com/RuedigerMoeller/fast-serialization",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant-groovy", license: "Apache 2.0",
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),
     new LibraryLicense(name: "Gherkin keywords", attachedTo: "intellij.gherkin", version: "2.12.2", license: "MIT",
@@ -340,7 +337,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0",
                        url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.6.0", license: "Apache 2.0",
+    new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.3", license: "Apache 2.0",
                        url: "https://github.com/lz4/lz4-java", licenseUrl: "https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "markdown4j", libraryName: "markdown4j", version: "2.2", license: "New BSD",
                        url: "https://code.google.com/p/markdown4j/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -383,12 +384,12 @@ public class JDParser {
   }
 
   private static boolean isParaTag(String token) {
-    String withoutWS = StringUtil.toLowerCase(removeWhiteSpacesFrom(token));
+    String withoutWS = removeWhiteSpacesFrom(token).toLowerCase(Locale.US);
     return withoutWS.equals(SELF_CLOSED_P_TAG) || withoutWS.equals(P_START_TAG);
   }
 
   private static boolean isSelfClosedPTag(String token) {
-    return StringUtil.toLowerCase(removeWhiteSpacesFrom(token)).equals(SELF_CLOSED_P_TAG);
+    return removeWhiteSpacesFrom(token).toLowerCase(Locale.US).equals(SELF_CLOSED_P_TAG);
   }
 
   private static boolean hasLineLongerThan(String str, int maxLength) {
@@ -531,7 +532,7 @@ public class JDParser {
     return false;
   }
 
-  private static void endParagraph(@NotNull List<? super Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
+  private static void endParagraph(@NotNull List<Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
     if (sb.length() > 0) {
       result.add(new Pair<>(sb.toString(), false));
       sb.setLength(0);

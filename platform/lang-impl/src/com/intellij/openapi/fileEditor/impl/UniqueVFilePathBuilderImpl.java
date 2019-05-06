@@ -50,13 +50,6 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     return getUniqueVirtualFilePath(project, vFile, true, GlobalSearchScope.projectScope(project));
   }
 
-  @Override
-  public boolean hasFilesWithSameName(@NotNull Project project, @NotNull VirtualFile vFile) {
-    UniqueNameBuilder<VirtualFile> builder =
-      getUniqueVirtualFileNameBuilder(project, vFile, false, GlobalSearchScope.projectScope(project));
-    return builder != null && builder.size() > 1;
-  }
-
   private static final Key<CachedValue<Map<GlobalSearchScope, Map<String, UniqueNameBuilder<VirtualFile>>>>>
     ourShortNameBuilderCacheKey = Key.create("project's.short.file.name.builder");
   private static final Key<CachedValue<Map<GlobalSearchScope, Map<String, UniqueNameBuilder<VirtualFile>>>>>
@@ -64,21 +57,6 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   private static final UniqueNameBuilder<VirtualFile> ourEmptyBuilder = new UniqueNameBuilder<>(null, null, -1);
 
   private static String getUniqueVirtualFilePath(Project project,
-                                                 VirtualFile file,
-                                                 boolean skipNonOpenedFiles,
-                                                 GlobalSearchScope scope) {
-    UniqueNameBuilder<VirtualFile> builder = getUniqueVirtualFileNameBuilder(project,
-                                                                             file,
-                                                                             skipNonOpenedFiles,
-                                                                             scope);
-    if (builder != null) {
-      return builder.getShortPath(file);
-    }
-    return file instanceof VirtualFilePathWrapper ? file.getPresentableName() : file.getName();
-  }
-
-  @Nullable
-  private static UniqueNameBuilder<VirtualFile> getUniqueVirtualFileNameBuilder(Project project,
                                                  VirtualFile file,
                                                  boolean skipNonOpenedFiles,
                                                  GlobalSearchScope scope) {
@@ -116,10 +94,9 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     }
 
     if (uniqueNameBuilderForShortName != null && uniqueNameBuilderForShortName.contains(file)) {
-      return uniqueNameBuilderForShortName;
+      return uniqueNameBuilderForShortName.getShortPath(file);
     }
-
-    return null;
+    return file instanceof VirtualFilePathWrapper ? file.getPresentableName() : file.getName();
   }
 
   @Nullable

@@ -140,7 +140,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private static String findInterpreter(VirtualFile dir) {
     for (VirtualFile child : dir.getChildren()) {
       if (!child.isDirectory()) {
-        final String childName = StringUtil.toLowerCase(child.getName());
+        final String childName = child.getName().toLowerCase();
         for (String name : NAMES) {
           if (SystemInfo.isWindows) {
             if (childName.equals(name)) {

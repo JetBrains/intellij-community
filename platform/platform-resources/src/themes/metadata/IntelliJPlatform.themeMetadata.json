@@ -65,7 +65,7 @@
     },
     {
       "key": "DebuggerTabs.selectedBackground",
-      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground."
+      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.selectedForeground."
     },
     {
     "key": "DefaultTabs.background"
@@ -77,7 +77,7 @@
       "key": "DefaultTabs.hoverColor"
     },
     {
-      "key": "DefaultTabs.hoverBackground"
+      "key": "DefaultTabs.hoverMaskColor"
     },
     {
       "key": "DefaultTabs.inactiveMaskColor"
@@ -90,9 +90,6 @@
     },
     {
       "key": "DefaultTabs.underlineHeight"
-    },
-    {
-      "key": "DefaultTabs.underlinedTabBackground"
     },
     {
       "key": "Editor.background",
@@ -115,10 +112,10 @@
       "key": "EditorTabs.hoverColor"
     },
     {
-      "key": "EditorTabs.hoverBackground"
+      "key": "EditorTabs.hoverMaskColor"
     },
     {
-      "key": "EditorTabs.inactiveColoredFileBackground",
+      "key": "EditorTabs.inactiveMaskColor",
       "description": "Masks inactive tabs to make them darker"
     },
     {
@@ -127,10 +124,10 @@
 
     {
       "key": "EditorTabs.selectedBackground",
-      "description": "Background for all tabs. Inactive tabs also use inactiveColoredFileBackground."
+      "description": "Background for all tabs. Inactive tabs also use inactiveMaskColor."
     },
     {
-      "key": "EditorTabs.underlinedTabForeground",
+      "key": "EditorTabs.selectedForeground",
       "description": "Foreground of the selected tab when a file status color is not used. Inactive tabs use Label.foreground."
     },
     {
@@ -139,9 +136,6 @@
     },
     {
       "key": "EditorTabs.underlineHeight"
-    },
-    {
-      "key": "EditorTabs.underlinedTabBackground"
     },
     {
       "key": "FileColor.Blue",
@@ -581,12 +575,6 @@
     },
     {
       "key": "TitlePane.background"
-    },
-    {
-      "key": "TitlePane.infoForeground"
-    },
-    {
-      "key": "TitlePane.inactiveInfoForeground"
     },
     {
       "key": "ToggleButton.borderColor"

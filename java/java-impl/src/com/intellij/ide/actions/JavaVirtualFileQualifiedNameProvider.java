@@ -15,7 +15,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaVirtualFileQualifiedNameProvider implements CopyReferenceAction.VirtualFileQualifiedNameProvider {
+public class JavaVirtualFileQualifiedNameProvider implements VirtualFileQualifiedNameProvider {
   @Nullable
   @Override
   public String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile) {

@@ -138,7 +138,7 @@ public class GitUnstashDialog extends DialogWrapper {
                                                      GitBundle.message("git.unstash.drop.confirmation.message", stash.getStash(), stash.getMessage()),
                                                      GitBundle.message("git.unstash.drop.confirmation.title", stash.getStash()), Messages.getQuestionIcon())) {
           final ModalityState current = ModalityState.current();
-          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash() + "...", true) {
+          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               final GitLineHandler h = dropHandler(stash.getStash());
@@ -168,7 +168,7 @@ public class GitUnstashDialog extends DialogWrapper {
         String selectedStash = getSelectedStash().getStash();
         try {
           String hash = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            () -> resolveHashOfStash(root, selectedStash), "Loading Stash Details...", true, project);
+            () -> resolveHashOfStash(root, selectedStash), "Loading Stash Details", true, project);
           GitUtil.showSubmittedFiles(myProject, hash, root, true, false);
         }
         catch (VcsException ex) {
@@ -256,7 +256,7 @@ public class GitUnstashDialog extends DialogWrapper {
     VirtualFile root = getGitRoot();
     try {
       List<StashInfo> listOfStashes = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> GitStashUtils.loadStashStack(myProject, root), "Loading List of Stashes...", true, myProject);
+        () -> GitStashUtils.loadStashStack(myProject, root), "Loading List of Stashes", true, myProject);
 
       for (StashInfo info: listOfStashes) {
         listModel.addElement(info);

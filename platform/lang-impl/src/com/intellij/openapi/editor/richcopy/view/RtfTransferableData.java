@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.richcopy.view;
 
+import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
 import com.intellij.openapi.editor.richcopy.model.FontNameRegistry;
 import com.intellij.openapi.editor.richcopy.model.MarkupHandler;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.mac.MacColorSpaceLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -15,15 +15,15 @@ import java.awt.datatransfer.DataFlavor;
 
 public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransferableData {
   public static final int PRIORITY = 100;
-  public static final DataFlavor FLAVOR = new DataFlavor("text/rtf;class=java.io.InputStream", "RTF text");
+  @NotNull public static final DataFlavor FLAVOR = new DataFlavor("text/rtf;class=java.io.InputStream", "RTF text");
 
-  private static final String HEADER_PREFIX = "{\\rtf1\\ansi\\deff0";
-  private static final String HEADER_SUFFIX = "}";
-  private static final String TAB           = "\\tab\n";
+  @NotNull private static final String HEADER_PREFIX = "{\\rtf1\\ansi\\deff0";
+  @NotNull private static final String HEADER_SUFFIX = "}";
+  @NotNull private static final String TAB           = "\\tab\n";
   // using undocumented way to denote line break on Mac (used e.g. by TextEdit) to resolve IDEA-165337
-  private static final String NEW_LINE      = SystemInfo.isMac ? "\\\n" : "\\line\n";
-  private static final String BOLD          = "\\b";
-  private static final String ITALIC        = "\\i";
+  @NotNull private static final String NEW_LINE      = SystemInfo.isMac ? "\\\n" : "\\line\n";
+  @NotNull private static final String BOLD          = "\\b";
+  @NotNull private static final String ITALIC        = "\\i";
 
   public RtfTransferableData(@NotNull SyntaxInfo syntaxInfo) {
     super(syntaxInfo, FLAVOR);
@@ -64,19 +64,19 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   }
   
   private static int[] getAdjustedColorComponents(Color color) {
-    ColorSpace genericRgbSpace;
-    if (SystemInfo.isMac && (genericRgbSpace = MacColorSpaceLoader.getGenericRgbColorSpace()) != null) {
-      // on macOS color components are expected in Apple's 'Generic RGB' color space
-      float[] components = genericRgbSpace.fromRGB(color.getRGBColorComponents(null));
-      return new int[]{
-        colorComponentFloatToInt(components[0]),
-        colorComponentFloatToInt(components[1]),
-        colorComponentFloatToInt(components[2])
-      };
+    if (SystemInfo.isMac) {
+      // on Mac OS color components are expected in Apple's 'Generic RGB' color space
+      ColorSpace genericRgbSpace = MacOSApplicationProvider.getInstance().getGenericRgbColorSpace();
+      if (genericRgbSpace != null) {
+        float[] components = genericRgbSpace.fromRGB(color.getRGBColorComponents(null));
+        return new int[] {
+          colorComponentFloatToInt(components[0]), 
+          colorComponentFloatToInt(components[1]), 
+          colorComponentFloatToInt(components[2])
+        };
+      }
     }
-    else {
-      return new int[]{color.getRed(), color.getGreen(), color.getBlue()};
-    }
+    return new int[] {color.getRed(), color.getGreen(), color.getBlue()};
   }
   
   private static int colorComponentFloatToInt(float component) {
@@ -99,9 +99,11 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   }
 
   private static class MyVisitor implements MarkupHandler {
+
     @NotNull private final StringBuilder myBuffer;
     @NotNull private final String        myRawText;
     private final int myMaxLength;
+
     private final int myDefaultBackgroundId;
     private final float myFontSize;
     private int myForegroundId = -1;
@@ -118,7 +120,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     }
 
     @Override
-    public void handleText(int startOffset, int endOffset) {
+    public void handleText(int startOffset, int endOffset) throws Exception {
       myBuffer.append("\n");
       for (int i = startOffset; i < endOffset; i++) {
         char c = myRawText.charAt(i);
@@ -145,7 +147,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     }
 
     @Override
-    public void handleBackground(int backgroundId) {
+    public void handleBackground(int backgroundId) throws Exception {
       if (backgroundId == myDefaultBackgroundId) {
         myBuffer.append("\\plain"); // we cannot use \chcbpat with default background id, as it doesn't work in MS Word,
                                     // and we cannot use \chcbpat0 as it doesn't work in OpenOffice
@@ -169,19 +171,19 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     }
 
     @Override
-    public void handleForeground(int foregroundId) {
+    public void handleForeground(int foregroundId) throws Exception {
       myBuffer.append("\\cf").append(foregroundId).append('\n');
       myForegroundId = foregroundId;
     }
 
     @Override
-    public void handleFont(int fontNameId) {
+    public void handleFont(int fontNameId) throws Exception {
       myBuffer.append("\\f").append(fontNameId).append('\n');
       myFontNameId = fontNameId;
     }
 
     @Override
-    public void handleStyle(int style) {
+    public void handleStyle(int style) throws Exception {
       myBuffer.append(ITALIC);
       if ((style & Font.ITALIC) == 0) {
         myBuffer.append('0');

@@ -43,8 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * @author Eugene.Kudelevsky
@@ -420,42 +418,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     return factory.createCodeBlockCodeFragment(text, context, true);
-  }
-
-  @Override
-  public String getCodeFragmentText(PsiFile fragment) {
-    final List<String> imports = StringUtil.split(((JavaCodeFragment)fragment).importsToString(), ",");
-    final Map<String, String> importMap =
-      imports.stream().collect(Collectors.toMap(s -> s.substring(s.lastIndexOf('.') + 1), Function.identity()));
-    final StringBuilder result = new StringBuilder();
-    fragment.accept(new JavaRecursiveElementWalkingVisitor() {
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitReferenceElement(expression);
-      }
-
-      @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        if (!reference.isQualified()) {
-          final String text = reference.getText();
-          final String fqName = importMap.get(text);
-          result.append(fqName != null ? fqName : text);
-        }
-        else {
-          super.visitReferenceElement(reference);
-        }
-      }
-
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (element.getFirstChild() == null) {
-          result.append(element.getText());
-        }
-      }
-    });
-    return result.toString();
   }
 
   @Override

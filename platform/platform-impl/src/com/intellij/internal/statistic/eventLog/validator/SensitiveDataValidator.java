@@ -2,15 +2,15 @@
 package com.intellij.internal.statistic.eventLog.validator;
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
-import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
+import com.intellij.internal.statistic.eventLog.validator.persistence.FUSWhiteListPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,42 +18,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
 public class SensitiveDataValidator {
-  private static final ConcurrentMap<String, SensitiveDataValidator> instances = ContainerUtil.newConcurrentMap();
+  private static final NotNullLazyValue<SensitiveDataValidator> me = NotNullLazyValue.createValue(
+    () -> ApplicationManager.getApplication().isUnitTestMode() ? new BlindSensitiveDataValidator() : new SensitiveDataValidator()
+  );
 
   private final Semaphore mySemaphore;
   private final AtomicBoolean isWhiteListInitialized;
   protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
-  private final EventLogWhitelistPersistence myWhitelistPersistence;
-  private final EventLogExternalSettingsService mySettingsService;
-
-  @NotNull
-  public static SensitiveDataValidator getInstance(@NotNull String recorderId) {
-    return instances.computeIfAbsent(
-      recorderId,
-      id -> ApplicationManager.getApplication().isUnitTestMode() ? new BlindSensitiveDataValidator(id) : new SensitiveDataValidator(id)
-    );
+  public static SensitiveDataValidator getInstance() {
+    return me.getValue();
   }
 
-  protected SensitiveDataValidator(@NotNull String recorderId) {
+  protected SensitiveDataValidator() {
     mySemaphore = new Semaphore();
     isWhiteListInitialized = new AtomicBoolean(false);
-    myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
-    mySettingsService = new EventLogExternalSettingsService(recorderId);
-    updateValidators(myWhitelistPersistence.getCachedWhiteList());
+    updateValidators(FUSWhiteListPersistence.getCachedWhiteList());
   }
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
     if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST.getDescription();
-    if (isSystemEventId(context.eventId)) return context.eventId;
 
     ValidationResultType validationResultType = validateEvent(group, context);
     return validationResultType == ACCEPTED ? context.eventId : validationResultType.getDescription();
@@ -77,10 +68,6 @@ public class SensitiveDataValidator {
   public SensitiveDataValidator update() {
     updateValidators(getWhiteListContent());
     return this;
-  }
-
-  public void reload() {
-    updateValidators(myWhitelistPersistence.getCachedWhiteList());
   }
 
   private void updateValidators(@Nullable String whiteListContent) {
@@ -111,10 +98,6 @@ public class SensitiveDataValidator {
     return !isWhiteListInitialized.get();
   }
 
-  private static boolean isSystemEventId(@Nullable String eventId) {
-    return "invoked".equals(eventId) || "registered".equals(eventId);
-  }
-
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
     WhiteListGroupRules whiteListRule = eventsValidators.get(group.getId());
     if (whiteListRule == null || !whiteListRule.areEventIdRulesDefined()) {
@@ -143,20 +126,16 @@ public class SensitiveDataValidator {
   }
 
   protected String getWhiteListContent() {
-    String content = FUStatisticsWhiteListGroupsService.loadWhiteListFromServer(mySettingsService);
+    String content = FUStatisticsWhiteListGroupsService.getFUSWhiteListContent();
     if (StringUtil.isNotEmpty(content)) {
-      if (shouldUpdateCache(content)) myWhitelistPersistence.cacheWhiteList(content);
+      FUSWhiteListPersistence.cacheWhiteList(content);
       return content;
     }
-    return myWhitelistPersistence.getCachedWhiteList();
+    return FUSWhiteListPersistence.getCachedWhiteList();
   }
 
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
-    protected BlindSensitiveDataValidator(@NotNull String recorderId) {
-      super(recorderId);
-    }
-
     @Override
     public String guaranteeCorrectEventId(@NotNull EventLogGroup group, @NotNull EventContext context) {
       return context.eventId;
@@ -166,24 +145,5 @@ public class SensitiveDataValidator {
     public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
       return context.eventData;
     }
-  }
-
-  public boolean shouldUpdateCache(@NotNull String gsonWhiteListContent) {
-    int cachedVersion = getVersion(myWhitelistPersistence.getCachedWhiteList());
-
-    return cachedVersion == 0 || getVersion(gsonWhiteListContent) > cachedVersion;
-  }
-
-  private static int getVersion(@Nullable String whiteListContent) {
-    if (whiteListContent == null) return 0;
-    FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
-    if (groups == null) return 0;
-    String version = groups.version;
-    if (version == null) return 0;
-    try {
-      return Integer.parseInt(version);
-    } catch (Exception ignored) {
-    }
-    return 0;
   }
 }

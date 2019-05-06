@@ -224,7 +224,7 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
       roots.addAll(PyUtil.getSourceRoots(module));
     }
     Collections.addAll(roots, ProjectRootManager.getInstance(project).getContentRoots());
-    return StringUtil.toLowerCase(name).contains("test") || roots.contains(virtualFile);
+    return name.toLowerCase().contains("test") || roots.contains(virtualFile);
   }
 
   protected boolean isAvailable(@NotNull final Location location) {

@@ -602,9 +602,6 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     else if (property == VcsLogProperties.SUPPORTS_INDEXING) {
       return (T)Boolean.valueOf(isIndexingOn());
     }
-    else if (property == VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY) {
-      return (T)Boolean.TRUE;
-    }
     return null;
   }
 

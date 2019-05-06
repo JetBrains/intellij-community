@@ -820,10 +820,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
-    return getCollectionChildren(description, true);
-  }
-
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
@@ -833,7 +829,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
           if (stub instanceof DomStub && ((DomStub)stub).matches(xmlName)) {
             result.add(((DomStub)stub).getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy());
           }
-          else if (processIncludes && stub instanceof XIncludeStub) {
+          else if (stub instanceof XIncludeStub) {
             ((XIncludeStub)stub).resolve(this, result, xmlName);
           }
         }
@@ -853,7 +849,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    final List<XmlTag> subTags = getCollectionSubTags(description, tag, processIncludes);
+    final List<XmlTag> subTags = getCollectionSubTags(description, tag);
     if (subTags.isEmpty()) return Collections.emptyList();
 
     List<DomElement> elements = new ArrayList<>(subTags.size());
@@ -875,9 +871,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return Collections.unmodifiableList(elements);
   }
 
-  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
+  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag) {
     if (description instanceof CollectionChildDescriptionImpl) {
-      return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag, processIncludes);
+      return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag);
     }
     return DomImplUtil.getCustomSubTags(this, tag.getSubTags(), getFile());
   }

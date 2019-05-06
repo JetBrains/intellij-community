@@ -62,9 +62,9 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return ApiUsageUastVisitor.createPsiElementVisitor(
+    return new UastVisitorAdapter(new ApiUsageUastVisitor(
       new SuspiciousApiUsageProcessor(holder, myModuleSetByModuleName.getValue())
-    );
+    ), true);
   }
 
   private static class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
@@ -90,8 +90,13 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
                                              @NotNull PsiClass instantiatedClass,
                                              @Nullable PsiMethod constructor,
                                              @Nullable UClass subclassDeclaration) {
-      if (subclassDeclaration == null && constructor != null) {
-        checkAccess(sourceNode, constructor, null);
+      if (subclassDeclaration == null) {
+        if (constructor != null) {
+          checkAccess(sourceNode, constructor, null);
+        }
+        else {
+          checkAccess(sourceNode, instantiatedClass, null);
+        }
       }
     }
 

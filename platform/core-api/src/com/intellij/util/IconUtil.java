@@ -554,52 +554,56 @@ public class IconUtil {
 
   @NotNull
   public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    Icon icon = filterIcon(source, () -> new ColorFilter(color, keepGray), null);
-    return icon != null ? icon : getEmptyIcon(true);
+    return filterIcon(null, source, new ColorFilter(color, keepGray));
   }
 
   @NotNull
   public static Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color, boolean keepGray) {
     return filterIcon(g, source, new ColorFilter(color, keepGray));
   }
-
-  @Nullable
+  @NotNull
   public static Icon desaturate(@NotNull Icon source) {
-    return filterIcon(source, () -> new DesaturationFilter(), null);
-  }
-
-  @Nullable
-  public static Icon brighter(@NotNull Icon source, int tones) {
-    return filterIcon(source, () -> new BrighterFilter(tones), null);
-  }
-
-  @Nullable
-  public static Icon darker(@NotNull Icon source, int tones) {
-    return filterIcon(source, () -> new DarkerFilter(tones), null);
+    return filterIcon(null, source, new DesaturationFilter());
   }
 
   @NotNull
-  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
-    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+  public static Icon brighter(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new BrighterFilter(tones));
+  }
+
+  @NotNull
+  public static Icon darker(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new DarkerFilter(tones));
+  }
+
+  @NotNull
+  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull Filter filter) {
+    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
     Graphics2D g2d = src.createGraphics();
     source.paintIcon(null, g2d, 0, 0);
     g2d.dispose();
-    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    int rgba;
+    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    int[] rgba = new int[4];
     for (int y = 0; y < src.getRaster().getHeight(); y++) {
       for (int x = 0; x < src.getRaster().getWidth(); x++) {
-        rgba = src.getRGB(x, y);
-        if ((rgba & 0xff000000) != 0) {
-          img.setRGB(x, y, filter.filterRGB(x, y, rgba));
+        src.getRaster().getPixel(x, y, rgba);
+        if (rgba[3] != 0) {
+          img.getRaster().setPixel(x, y, filter.convert(rgba));
         }
       }
     }
     return createImageIcon((Image)img);
   }
 
-  private static class ColorFilter extends RGBImageFilter {
+  @FunctionalInterface
+  private interface Filter {
+    @NotNull
+    int[] convert(@NotNull int[] rgba);
+  }
+
+  private static class ColorFilter implements Filter {
     private final float[] myBase;
     private final boolean myKeepGray;
 
@@ -608,60 +612,54 @@ public class IconUtil {
       myBase = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     }
 
+    @NotNull
     @Override
-    public int filterRGB(int x, int y, int rgba) {
-      int r = rgba >> 16 & 0xff;
-      int g = rgba >> 8 & 0xff;
-      int b = rgba & 0xff;
+    public int[] convert(@NotNull int[] rgba) {
       float[] hsb = new float[3];
-      Color.RGBtoHSB(r, g, b, hsb);
+      Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
       int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1f), myBase[2] * hsb[2]);
-      return (rgba & 0xff000000) | (rgb & 0xffffff);
+      return new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]};
     }
   }
 
-  private static class DesaturationFilter extends RGBImageFilter {
+  private static class DesaturationFilter implements Filter {
+    @NotNull
     @Override
-    public int filterRGB(int x, int y, int rgba) {
-      int r = rgba >> 16 & 0xff;
-      int g = rgba >> 8 & 0xff;
-      int b = rgba & 0xff;
-      int min = Math.min(Math.min(r, g), b);
-      int max = Math.max(Math.max(r, g), b);
+    public int[] convert(@NotNull int[] rgba) {
+      int min = Math.min(Math.min(rgba[0], rgba[1]), rgba[2]);
+      int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
       int grey = (max + min) / 2;
-      return (rgba & 0xff000000) | (grey << 16) | (grey << 8) | grey;
+      return new int[]{grey, grey, grey, rgba[3]};
     }
   }
 
-  private static class BrighterFilter extends RGBImageFilter {
+  private static class BrighterFilter implements Filter {
     private final int myTones;
 
     BrighterFilter(int tones) {
       myTones = tones;
     }
 
-    @SuppressWarnings("UseJBColor")
+    @NotNull
     @Override
-    public int filterRGB(int x, int y, int rgb) {
-      Color originalColor = new Color(rgb, true);
-      Color filteredColor = ColorUtil.toAlpha(ColorUtil.brighter(originalColor, myTones), originalColor.getAlpha());
-      return filteredColor.getRGB();
+    public int[] convert(@NotNull int[] rgba) {
+      Color color = ColorUtil.hackBrightness(rgba[0], rgba[1], rgba[2], myTones, 1.1f);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
     }
   }
 
-  private static class DarkerFilter extends RGBImageFilter {
+  private static class DarkerFilter implements Filter {
     private final int myTones;
 
     DarkerFilter(int tones) {
       myTones = tones;
     }
 
-    @SuppressWarnings("UseJBColor")
+    @NotNull
     @Override
-    public int filterRGB(int x, int y, int rgb) {
-      Color originalColor = new Color(rgb, true);
-      Color filteredColor = ColorUtil.toAlpha(ColorUtil.darker(originalColor, myTones), originalColor.getAlpha());
-      return filteredColor.getRGB();
+    public int[] convert(@NotNull int[] rgba) {
+      Color color = ColorUtil.hackBrightness(rgba[0], rgba[1], rgba[2], myTones, 1/1.1f);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
     }
   }
 
@@ -764,7 +762,7 @@ public class IconUtil {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+  public static Icon filterIcon(@NotNull Icon icon, Supplier<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
 

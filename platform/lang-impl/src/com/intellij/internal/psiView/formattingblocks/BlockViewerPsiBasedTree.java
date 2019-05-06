@@ -133,7 +133,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     myBlockTree.setVisible(true);
     BlockTreeStructure blockTreeStructure = new BlockTreeStructure();
     BlockTreeNode rootNode = new BlockTreeNode(rootBlock, null);
-    StructureTreeModel treeModel = new StructureTreeModel<>(blockTreeStructure, myTreeModelDisposable);
+    StructureTreeModel treeModel = new StructureTreeModel(blockTreeStructure);
     initMap(rootNode, rootElement);
     assert myPsiToBlockMap != null;
 

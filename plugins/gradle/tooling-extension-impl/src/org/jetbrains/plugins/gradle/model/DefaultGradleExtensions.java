@@ -1,11 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,100 +27,78 @@ import java.util.List;
  */
 public class DefaultGradleExtensions implements GradleExtensions {
   private static final long serialVersionUID = 1L;
-
-  private final List<DefaultGradleExtension> extensions;
-  private final List<DefaultGradleConvention> conventions;
-  private final List<DefaultGradleProperty> gradleProperties;
-  private final ArrayList<DefaultExternalTask> tasks;
-  private final List<DefaultGradleConfiguration> configurations;
-  private String parentProjectPath;
+  private final List<GradleExtension> myExtensions;
+  private final List<GradleConvention> myConventions;
+  private final List<GradleProperty> myGradleProperties;
+  private final List<ExternalTask> myTasks;
+  private final List<GradleConfiguration> myConfigurations;
+  private String myParentProjectPath;
 
   public DefaultGradleExtensions() {
-    extensions = new ArrayList<DefaultGradleExtension>();
-    conventions = new ArrayList<DefaultGradleConvention>();
-    gradleProperties = new ArrayList<DefaultGradleProperty>();
-    tasks = new ArrayList<DefaultExternalTask>();
-    configurations = new ArrayList<DefaultGradleConfiguration>();
+    myExtensions = new ArrayList<GradleExtension>();
+    myConventions = new ArrayList<GradleConvention>();
+    myGradleProperties = new ArrayList<GradleProperty>();
+    myTasks = new ArrayList<ExternalTask>();
+    myConfigurations = new ArrayList<GradleConfiguration>();
   }
 
-  public DefaultGradleExtensions(@NotNull GradleExtensions extensions) {
-    parentProjectPath = extensions.getParentProjectPath();
-
-    this.extensions = new ArrayList<DefaultGradleExtension>(extensions.getExtensions().size());
+  public DefaultGradleExtensions(GradleExtensions extensions) {
+    this();
+    myParentProjectPath = extensions.getParentProjectPath();
     for (GradleExtension extension : extensions.getExtensions()) {
-      this.extensions.add(new DefaultGradleExtension(extension));
+      myExtensions.add(new DefaultGradleExtension(extension));
     }
-
-    conventions = new ArrayList<DefaultGradleConvention>(extensions.getConventions().size());
     for (GradleConvention convention : extensions.getConventions()) {
-      conventions.add(new DefaultGradleConvention(convention));
+      myConventions.add(new DefaultGradleConvention(convention));
     }
-
-    gradleProperties = new ArrayList<DefaultGradleProperty>(extensions.getGradleProperties().size());
     for (GradleProperty property : extensions.getGradleProperties()) {
-      gradleProperties.add(new DefaultGradleProperty(property));
+      myGradleProperties.add(new DefaultGradleProperty(property));
     }
-
-    tasks = new ArrayList<DefaultExternalTask>(extensions.getTasks().size());
     for (ExternalTask entry : extensions.getTasks()) {
-      tasks.add(new DefaultExternalTask(entry));
+      myTasks.add(new DefaultExternalTask(entry));
     }
-
-    configurations = new ArrayList<DefaultGradleConfiguration>(extensions.getConfigurations().size());
     for (GradleConfiguration entry : extensions.getConfigurations()) {
-      configurations.add(new DefaultGradleConfiguration(entry));
+      myConfigurations.add(new DefaultGradleConfiguration(entry));
     }
   }
 
   @Nullable
   @Override
   public String getParentProjectPath() {
-    return parentProjectPath;
+    return myParentProjectPath;
   }
 
   public void setParentProjectPath(String parentProjectPath) {
-    this.parentProjectPath = parentProjectPath;
+    myParentProjectPath = parentProjectPath;
   }
 
   @NotNull
   @Override
-  public List<DefaultGradleExtension> getExtensions() {
-    return extensions == null ? Collections.<DefaultGradleExtension>emptyList() : extensions;
+  public List<GradleExtension> getExtensions() {
+    return myExtensions == null ? Collections.<GradleExtension>emptyList() : myExtensions;
   }
 
   @Override
   @NotNull
-  public List<DefaultGradleConvention> getConventions() {
-    return conventions == null ? Collections.<DefaultGradleConvention>emptyList() : conventions;
+  public List<GradleConvention> getConventions() {
+    return myConventions == null ? Collections.<GradleConvention>emptyList() : myConventions;
   }
 
   @NotNull
   @Override
-  public List<DefaultGradleProperty> getGradleProperties() {
-    return gradleProperties == null ? Collections.<DefaultGradleProperty>emptyList() : gradleProperties;
+  public List<GradleProperty> getGradleProperties() {
+    return myGradleProperties == null ? Collections.<GradleProperty>emptyList() : myGradleProperties;
   }
 
   @NotNull
   @Override
-  public List<DefaultExternalTask> getTasks() {
-    return tasks;
-  }
-
-  public void addTasks(@NotNull Collection<? extends ExternalTask> values) {
-    tasks.ensureCapacity(tasks.size() + values.size());
-    for (ExternalTask value : values) {
-      if (value instanceof DefaultExternalTask) {
-        tasks.add((DefaultExternalTask)value);
-      }
-      else {
-        tasks.add(new DefaultExternalTask(value));
-      }
-    }
+  public List<ExternalTask> getTasks() {
+    return myTasks == null ? Collections.<ExternalTask>emptyList() : myTasks;
   }
 
   @NotNull
   @Override
-  public List<DefaultGradleConfiguration> getConfigurations() {
-    return configurations == null ? Collections.<DefaultGradleConfiguration>emptyList() : configurations;
+  public List<GradleConfiguration> getConfigurations() {
+    return myConfigurations == null ? Collections.<GradleConfiguration>emptyList() : myConfigurations;
   }
 }

@@ -14,8 +14,9 @@ import com.intellij.execution.ui.AdjustingTabSettingsEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -149,7 +150,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   }
 
   private <T> SettingsEditor<RunnerAndConfigurationSettings> wrapEditor(SettingsEditor<T> editor,
-                                                                        Convertor<? super RunnerAndConfigurationSettings, ? extends T> convertor,
+                                                                        Convertor<RunnerAndConfigurationSettings, T> convertor,
                                                                         ProgramRunner runner) {
     SettingsEditor<RunnerAndConfigurationSettings> wrappedEditor = new SettingsEditorWrapper<>(editor, convertor);
 
@@ -235,10 +236,14 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
         }
       });
       updateRunnerComponent();
-      myRunnersList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-        label.setIcon(value.getIcon());
-        label.setText(value.getId());
-      }));
+      myRunnersList.setCellRenderer(new ColoredListCellRenderer<Executor>() {
+        @Override
+        protected void customizeCellRenderer(@NotNull JList<? extends Executor> list, Executor value, int index, boolean selected, boolean hasFocus) {
+          setIcon(value.getIcon());
+          append(value.getId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      });
+
       myScrollPane.setBorder(JBUI.Borders.empty());
       myScrollPane.setViewportBorder(JBUI.Borders.empty());
     }

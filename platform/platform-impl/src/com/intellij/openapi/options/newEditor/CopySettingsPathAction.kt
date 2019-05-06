@@ -12,7 +12,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.tabs.JBTabs
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.UIUtil.getParentOfType
 import org.jetbrains.ide.BuiltInServerManager
@@ -172,7 +171,7 @@ private fun copyLink(supplier: Supplier<Collection<String>>, isHttp: Boolean) {
       .append("/api")
   }
   else {
-    builder.append("jetbrains://").append(PlatformUtils.getPlatformPrefix())
+    builder.append("jetbrains://*")
   }
 
   builder.append("/settings?name=")

@@ -94,7 +94,7 @@ public class FindManagerImpl extends FindManager {
   private FindUIHelper myHelper;
   private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
 
-  public FindManagerImpl(@NotNull Project project, @NotNull FindSettings findSettings, @NotNull UsageViewManager anotherManager, MessageBus bus) {
+  public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
     myBus = bus;
     findSettings.initModelBySetings(myFindInProjectModel);
@@ -885,7 +885,7 @@ public class FindManagerImpl extends FindManager {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
     else if (isTailLower && (isReplacementLowercase || isReplacementUppercase)) {
-      buffer.append(StringUtil.toLowerCase(toReplace.substring(1)));
+      buffer.append(toReplace.substring(1).toLowerCase());
     }
     else {
       buffer.append(toReplace.substring(1));
@@ -1065,7 +1065,9 @@ public class FindManagerImpl extends FindManager {
       if (o1 == null) {
         return startOffset - o2.getEndOffset();
       }
-      return o1.getEndOffset() - startOffset;
+      else {
+        return o1.getEndOffset() - startOffset;
+      }
     });
     if (i < 0) {
       i = -i - 1;

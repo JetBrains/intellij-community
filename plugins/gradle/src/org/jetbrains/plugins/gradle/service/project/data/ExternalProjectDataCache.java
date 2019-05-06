@@ -21,10 +21,7 @@ import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -39,8 +36,10 @@ public class ExternalProjectDataCache {
   @NotNull private final Map<String, ExternalProject> myExternalRootProjects;
 
   public ExternalProjectDataCache() {
-    myExternalRootProjects = ConcurrentFactoryMap.create(key-> new ExternalProjectSerializer().load(GradleConstants.SYSTEM_ID, new File(key)),
-                                                         () -> ConcurrentCollectionFactory.createMap(FilePathHashingStrategy.create()));
+    myExternalRootProjects = ConcurrentFactoryMap.createMap(key->
+      new ExternalProjectSerializer().load(GradleConstants.SYSTEM_ID, new File(key)),
+                                                            () -> ConcurrentCollectionFactory.createMap(FilePathHashingStrategy.create())
+    );
   }
 
   /**
@@ -93,15 +92,15 @@ public class ExternalProjectDataCache {
   private static Map<String, ExternalSourceSet> findExternalProject(@NotNull ExternalProject parentProject,
                                                                     @NotNull String externalProjectId,
                                                                     boolean isSourceSet) {
-    ArrayDeque<ExternalProject> queue = new ArrayDeque<>();
+    Queue<ExternalProject> queue = new LinkedList<>();
     queue.add(parentProject);
 
-    ExternalProject externalProject;
-    while ((externalProject = queue.pollFirst()) != null) {
+    while (!queue.isEmpty()) {
+      final ExternalProject externalProject = queue.remove();
       final String projectId = externalProject.getId();
       boolean isRelatedProject = projectId.equals(externalProjectId);
       final Map<String, ExternalSourceSet> result = new HashMap<>();
-      for (Map.Entry<String, ? extends ExternalSourceSet> sourceSetEntry : externalProject.getSourceSets().entrySet()) {
+      for (Map.Entry<String, ExternalSourceSet> sourceSetEntry : externalProject.getSourceSets().entrySet()) {
         final String sourceSetName = sourceSetEntry.getKey();
         final String sourceSetId = projectId + ":" + sourceSetName;
         if (isRelatedProject || (isSourceSet && externalProjectId.equals(sourceSetId))) {

@@ -480,7 +480,7 @@ public class SwingHelper {
   }
 
   private static void getAllElements(Element root, List<? super Element> list, List<String> toCheck) {
-    if (toCheck.contains(StringUtil.toLowerCase(root.getName()))) {
+    if (toCheck.contains(root.getName().toLowerCase(Locale.US))) {
       list.add(root);
     }
     for (int i = 0; i < root.getElementCount(); i++) {

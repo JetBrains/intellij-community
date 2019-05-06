@@ -202,7 +202,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         linksToProcess.remove(s);
         processedLinks.add(s);
 
-        final boolean absoluteUrl = s.startsWith(HTTP_PROTOCOL) || s.startsWith(HTTPS_PROTOCOL);
+        final boolean absoluteUrl = s.startsWith(HTTP_PROTOCOL);
         String resourceUrl;
         if (absoluteUrl) {
           resourceUrl = s;
@@ -214,9 +214,9 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           resourceUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1) + s;
         }
 
-        String refName = s;
+        String refName = s.substring(s.lastIndexOf('/') + 1);
         if (absoluteUrl) {
-          refName = Integer.toHexString(s.hashCode()) + "_" + refName.substring(refName.lastIndexOf('/') + 1);
+          refName = Integer.toHexString(s.hashCode()) + "_" + refName;
         }
         String resourcePath;
         try {

@@ -25,14 +25,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -47,10 +46,10 @@ import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
+import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
@@ -182,20 +181,8 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return myEditorField;
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return getComment();
-  }
-
-  @Override
   public void setText(@Nullable String initialMessage) {
     myEditorField.setText(initialMessage == null ? "" : convertLineSeparators(initialMessage));
-  }
-
-  @Override
-  public void focus() {
-    requestFocusInMessage();
   }
 
   @NotNull

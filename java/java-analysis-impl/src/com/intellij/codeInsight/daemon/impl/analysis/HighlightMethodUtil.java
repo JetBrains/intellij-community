@@ -1709,9 +1709,7 @@ public class HighlightMethodUtil {
         if (staticFactory instanceof MethodCandidateInfo) {
           if (((MethodCandidateInfo)staticFactory).isApplicable()) {
             result = (MethodCandidateInfo)staticFactory;
-            if (constructor == null) {
-              constructor = ((MethodCandidateInfo)staticFactory).getElement();
-            }
+            constructor = ((MethodCandidateInfo)staticFactory).getElement();
           }
           else {
             applicable = false;

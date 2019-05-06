@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -78,13 +79,13 @@ public class HTMLControls {
     @Nullable
     @Override
     public TagState fromString(@NotNull String value) {
-      return TagState.valueOf(StringUtil.toUpperCase(value));
+      return TagState.valueOf(value.toUpperCase(Locale.US));
     }
 
     @NotNull
     @Override
     public String toString(@NotNull TagState state) {
-      return StringUtil.toLowerCase(state.name());
+      return state.name().toLowerCase(Locale.US);
     }
   }
 
@@ -94,7 +95,7 @@ public class HTMLControls {
     public Set<String> fromString(@NotNull String value) {
       final THashSet<String> result = new THashSet<>();
       for (String closingTag : StringUtil.split(value, ",")) {
-        result.add(StringUtil.toLowerCase(closingTag.trim()));
+        result.add(closingTag.trim().toLowerCase(Locale.US));
       }
       return result;
     }

@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 
@@ -171,7 +170,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   private fun debugLog(text: String) {
-    MavenLog.LOG.debug(text)
+    println(text)
   }
 
   @TestOnly

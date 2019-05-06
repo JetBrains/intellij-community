@@ -22,12 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -41,20 +39,16 @@ public class PluginLogo {
   private static final String CACHE_DIR = "imageCache";
   private static final String PLUGIN_ICON = "pluginIcon.svg";
   private static final String PLUGIN_ICON_DARK = "pluginIcon_dark.svg";
-  private static final int PLUGIN_ICON_SIZE = 40;
-  private static final int PLUGIN_ICON_SIZE_SCALED = 80;
 
   private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = new HashMap<>();
   private static PluginLogoIconProvider Default;
   private static List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> myPrepareToLoad;
 
   static {
-    if (!GraphicsEnvironment.isHeadless()) {
-      LafManager.getInstance().addLafManagerListener(_0 -> {
-        Default = null;
-        HiDPIPluginLogoIcon.clearCache();
-      });
-    }
+    LafManager.getInstance().addLafManagerListener(_0 -> {
+      Default = null;
+      HiDPIPluginLogoIcon.clearCache();
+    });
   }
 
   @NotNull
@@ -168,7 +162,6 @@ public class PluginLogo {
       }
       else {
         tryLoadJarIcons(idPlugin, lazyIcon, path, true);
-        return;
       }
       putIcon(idPlugin, lazyIcon, null, null);
       return;
@@ -256,10 +249,9 @@ public class PluginLogo {
                                     "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme);
       HttpRequests.request(url).productNameAsUserAgent().saveToFile(file, null);
     }
-    catch (HttpRequests.HttpStatusException ignore) {
-    }
+    catch (HttpRequests.HttpStatusException ignore) { }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.error(e);
     }
   }
 
@@ -297,23 +289,15 @@ public class PluginLogo {
   }
 
   @NotNull
-  public static String getIconFileName(boolean light) {
+  static String getIconFileName(boolean light) {
     return PluginManagerCore.META_INF + (light ? PLUGIN_ICON : PLUGIN_ICON_DARK);
   }
 
-  public static int height() {
-    return PLUGIN_ICON_SIZE;
-  }
-
-  public static int width() {
-    return PLUGIN_ICON_SIZE;
-  }
-
   @Nullable
-  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> provider) {
+  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
     try {
-      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE);
-      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED);
+      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 40, 40);
+      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 80, 80);
 
       return new HiDPIPluginLogoIcon(logo40, logo80);
     }

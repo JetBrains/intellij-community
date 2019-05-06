@@ -1,7 +1,7 @@
 /*
-Value is always false (s1 == null; line#9)
-  's1' was assigned (=; line#8)
-    Method 'trim' is externally annotated as 'non-null' (trim; line#8)
+Value is always false (s1 == null)
+  's1' was assigned (=)
+    Method 'trim' is externally annotated as 'non-null' (trim)
  */
 class Test {
   void test(String s) {

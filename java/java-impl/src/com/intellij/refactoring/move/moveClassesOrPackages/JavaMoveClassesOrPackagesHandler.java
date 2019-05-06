@@ -72,17 +72,16 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   }
 
   @Override
-  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
+  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
       if (!isPackageOrDirectory(element) && invalid4Move(element)) return false;
     }
-    if (isReferenceInAnonymousClass(reference)) return false;
-    return targetContainer == null || super.canMove(elements, targetContainer, reference);
+    return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
   @Nullable
   @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
+  public String getActionName(PsiElement[] elements) {
     int classCount = 0, directoryCount = 0;
     for (PsiElement element : elements) {
       if (element instanceof PsiClass) classCount++;

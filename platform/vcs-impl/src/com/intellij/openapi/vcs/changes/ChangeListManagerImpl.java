@@ -38,10 +38,9 @@ import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.vcs.commit.DefaultCommitResultHandler;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
+import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler;
+import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -97,6 +96,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final Object myDataLock = new Object();
 
+  private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private final UpdateRequestsQueue myUpdater;
   private final Modifier myModifier;
   private final MyChangesDeltaForwarder myDeltaForwarder;
@@ -134,6 +134,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
+
+    myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
 
     myComposite = new FileHolderComposite(project);
     myDeltaForwarder = new MyChangesDeltaForwarder(myProject, myScheduler);
@@ -1227,9 +1229,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     FileDocumentManager.getInstance().saveAllDocuments();
 
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
-    ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), emptyList(), null, changeList.getName(), false);
+      new SingleChangeListCommitter(myProject, changeList, changes, commitMessage, emptyList(), FunctionUtil.nullConstant(), null,
+                                    changeList.getName(), false);
 
     committer.addResultHandler(new DefaultCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);
@@ -1247,7 +1249,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     synchronized (myDataLock) {
-      ChangeListManagerSerialization.readExternal(element, myWorker);
+      ChangeListManagerSerialization.readExternal(element, myIgnoredIdeaLevel, myWorker);
     }
     myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
     myConflictTracker.loadState(element);
@@ -1261,11 +1263,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       return element;
     }
 
+    final IgnoredFilesComponent ignoredFilesComponent;
     final ChangeListWorker worker;
     synchronized (myDataLock) {
+      ignoredFilesComponent = myIgnoredIdeaLevel.copy();
       worker = myWorker.copy();
     }
-    ChangeListManagerSerialization.writeExternal(element, worker);
+    ChangeListManagerSerialization.writeExternal(element, ignoredFilesComponent, worker);
     JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, Boolean.toString(myExcludedConvertedToIgnored), Boolean.toString(false));
     myConflictTracker.saveState(element);
     return element;
@@ -1293,17 +1297,29 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addFilesToIgnore(@NotNull IgnoredFileBean... filesToIgnore) {
+    myIgnoredIdeaLevel.add(filesToIgnore);
+    scheduleUnversionedUpdate();
   }
 
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
+    myIgnoredIdeaLevel.addIgnoredDirectoryImplicitly(path, myProject);
   }
 
   @Override
   public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
+    myIgnoredIdeaLevel.removeImplicitlyIgnoredDirectory(path, myProject);
   }
 
-  public void scheduleUnversionedUpdate() {
+  /**
+   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   */
+  @Deprecated
+  public IgnoredFilesComponent getIgnoredFilesComponent() {
+    return myIgnoredIdeaLevel;
+  }
+
+  private void scheduleUnversionedUpdate() {
     Couple<Collection<VirtualFile>> couple = ReadAction.compute(() -> {
       synchronized (myDataLock) {
         Collection<VirtualFile> unversioned = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
@@ -1340,15 +1356,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void setFilesToIgnore(@NotNull IgnoredFileBean... filesToIgnore) {
+    myIgnoredIdeaLevel.set(filesToIgnore);
+    scheduleUnversionedUpdate();
   }
 
   @NotNull
   @Override
   public IgnoredFileBean[] getFilesToIgnore() {
-    return EMPTY_ARRAY;
+    return myIgnoredIdeaLevel.getFilesToIgnore();
   }
-
-  private static final IgnoredFileBean[] EMPTY_ARRAY = new IgnoredFileBean[0];
 
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {

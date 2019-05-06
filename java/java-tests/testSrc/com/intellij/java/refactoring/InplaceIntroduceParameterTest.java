@@ -10,6 +10,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -79,7 +80,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
 
       //ensure extract local var
       final MyIntroduceHandler introduceHandler = createIntroduceHandler();
-      introduceHandler.invokeImpl(getProject(), getLocalVariableFromEditor(), getEditor());
+      introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), getLocalVariableFromEditor(), getEditor());
       final AbstractInplaceIntroducer introducer = introduceHandler.getInplaceIntroducer();
       pass.accept(introducer);
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());

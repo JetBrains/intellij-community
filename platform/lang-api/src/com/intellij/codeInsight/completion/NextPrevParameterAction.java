@@ -8,21 +8,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
-import com.intellij.codeInsight.actions.CodeInsightEditorAction;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public abstract class NextPrevParameterAction extends CodeInsightAction {
-  private static final LanguageExtension<TemplateParameterTraversalPolicy> EP = new LanguageExtension<>("com.intellij.templateParameterTraversalPolicy");
   private final boolean myNext;
 
   protected NextPrevParameterAction(boolean next) {
@@ -44,23 +36,14 @@ public abstract class NextPrevParameterAction extends CodeInsightAction {
     return findSuitableTraversalPolicy(editor, file) != null;
   }
 
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    if (file != null && findPolicyForFile(file) != null) {
-      CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    }
-    update(e);
-  }
-
   @Nullable
   private static TemplateParameterTraversalPolicy findSuitableTraversalPolicy(Editor editor, PsiFile file) {
-    TemplateParameterTraversalPolicy policy = findPolicyForFile(file);
-    return policy != null && policy.isValidForFile(editor, file) ? policy : null;
-  }
-
-  private static TemplateParameterTraversalPolicy findPolicyForFile(PsiFile file) {
-    return EP.forLanguage(file.getLanguage());
+    for (TemplateParameterTraversalPolicy policy : TemplateParameterTraversalPolicy.EP_NAME.getExtensionList()) {
+      if (policy.isValidForFile(editor, file)) {
+        return policy;
+      }
+    }
+    return null;
   }
 
   private class Handler implements CodeInsightActionHandler {

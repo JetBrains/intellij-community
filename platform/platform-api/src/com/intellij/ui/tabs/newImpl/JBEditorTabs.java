@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -90,7 +92,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   @Override
-  public void setEmptySpaceColorCallback(@NotNull Supplier<? extends Color> callback) {
+  public void setEmptySpaceColorCallback(@NotNull Supplier<Color> callback) {
   }
 
   /**

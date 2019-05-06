@@ -1,6 +1,0 @@
-OPEN_QUOTE ('"')
-$ ('$')
-{ ('{')
-parameter_expansion_body ('A%<')
-} ('}')
-CLOSE_QUOTE ('"')

@@ -84,7 +84,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 public class Switcher extends AnAction implements DumbAware {
   private static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
-  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
+  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherToggleCheckBox";
 
   private static final int MINIMUM_HEIGHT = JBUI.scale(100);
 
@@ -145,10 +145,7 @@ public class Switcher extends AnAction implements DumbAware {
     if (switcher != null) {
       boolean sameShortcut = Comparing.equal(switcher.myTitle, title);
       if (sameShortcut) {
-        if (switcher.isCheckboxMode() &&
-            (!ToggleCheckBoxAction.isEnabled() ||
-             e.getInputEvent() instanceof KeyEvent &&
-             KeymapUtil.isEventForAction(((KeyEvent)e.getInputEvent()), TOGGLE_CHECK_BOX_ACTION_ID))) {
+        if (switcher.isCheckboxMode() && !ToggleCheckBoxAction.isEnabled()) {
           switcher.toggleShowEditedFiles();
         }
         else {
@@ -623,7 +620,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static <T> JBList<T> createList(CollectionListModel<T> baseModel,
-                                            Function<? super T, String> namer,
+                                            Function<T, String> namer,
                                             SwitcherSpeedSearch speedSearch,
                                             boolean pinned) {
       ListModel<T> listModel;

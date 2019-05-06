@@ -9,7 +9,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -62,7 +61,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
       final String fieldName = field.getName();
       if (fieldName == null) continue;
 
-      if (Extension.isClassField(fieldName) &&
+      if (ExtensionDomExtender.isClassField(fieldName) &&
           ExtensionDomExtender.findWithElement(getWithElements(), field) == null) {
         result.add(field);
       }

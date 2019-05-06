@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -26,8 +25,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
@@ -56,6 +57,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -190,7 +192,8 @@ public class AppUIUtil {
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition())
+    String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+      .toLowerCase(Locale.US)
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
@@ -338,14 +341,7 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    final String title = isPrivacyPolicy
-                         ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
-                         : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement";
-    showEndUserAgreementText(title, htmlText);
-  }
-
-  public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
-      DialogWrapper dialog = new DialogWrapper(true) {
+    DialogWrapper dialog = new DialogWrapper(true) {
 
       private JEditorPane myViewer;
 
@@ -382,24 +378,8 @@ public class AppUIUtil {
           new JLabel("Please read and accept these terms and conditions. Scroll down for full text:")), BorderLayout.NORTH);
         JBScrollPane scrollPane = new JBScrollPane(myViewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
-          JPanel eapPanel = new JPanel(new BorderLayout(8, 8));
-          eapPanel.setBorder(JBUI.Borders.empty(8));
-          //noinspection UseJBColor
-          eapPanel.setBackground(new Color(0xDCE4E8));
-          IconLoader.activate();
-          JLabel label = new JLabel(AllIcons.General.BalloonInformation);
-          label.setVerticalAlignment(SwingConstants.TOP);
-          eapPanel.add(label, BorderLayout.WEST);
-          JEditorPane html = SwingHelper.createHtmlLabel("EAP builds report usage statistics by default per the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>." +
-                                                  "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null);
-          eapPanel.add(html, BorderLayout.CENTER);
-          bottomPanel.add(eapPanel, BorderLayout.NORTH);
-        }
         JCheckBox checkBox = new JCheckBox("I confirm that I have read and accept the terms of this User Agreement");
-        bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
-        centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
+        centerPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.SOUTH);
         checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
         return centerPanel;
       }
@@ -433,8 +413,13 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(title);
-    dialog.setSize(JBUI.scale(550), JBUI.scale(500));
+    if (isPrivacyPolicy) {
+      dialog.setTitle(ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy");
+    }
+    else {
+      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement");
+    }
+    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
 

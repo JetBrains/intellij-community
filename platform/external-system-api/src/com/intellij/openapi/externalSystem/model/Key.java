@@ -1,8 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.model;
 
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.Serializable;
 
 /**
  * The basic design of external system integration assumes that target project info if represented as a generic graph
@@ -11,18 +26,22 @@ import org.jetbrains.annotations.NotNull;
  * That makes it possible to register custom {@link DataNode} processor per-{@link Key}
  * <p/>
  * Thread-safe.
- *
+ * 
+ * @author Denis Zhdanov
  * @param <T>  data class
  */
 @SuppressWarnings("UnusedDeclaration")
-public final class Key<T> implements Comparable<Key<?>> {
-  @NotNull private final String dataClass;
+public class Key<T> implements Serializable, Comparable<Key<?>> {
 
-  private final int processingWeight;
+  private static final long serialVersionUID = 1L;
+  
+  @NotNull private final String myDataClass;
+  
+  private final int myProcessingWeight;
 
   /**
    * Creates new {@code Key} object.
-   *
+   * 
    * @param dataClass         class of the payload data which will be associated with the current key
    * @param processingWeight  there is a possible case that when a {@link DataNode} object has children of more than on type (children
    *                          with more than one different {@link Key} we might want to process one type of children before another.
@@ -30,10 +49,9 @@ public final class Key<T> implements Comparable<Key<?>> {
    *                          lower value means that key's payload should be processed <b>before</b> payload of the key with a greater
    *                          value
    */
-  @PropertyMapping({"dataClass", "processingWeight"})
   public Key(@NotNull String dataClass, int processingWeight) {
-    this.dataClass = dataClass;
-    this.processingWeight = processingWeight;
+    myDataClass = dataClass;
+    myProcessingWeight = processingWeight;
   }
 
   @NotNull
@@ -41,9 +59,8 @@ public final class Key<T> implements Comparable<Key<?>> {
     return new Key<>(dataClass.getName(), processingWeight);
   }
 
-  @NotNull
   public String getDataType() {
-    return dataClass;
+    return myDataClass;
   }
 
   /**
@@ -51,16 +68,16 @@ public final class Key<T> implements Comparable<Key<?>> {
    * one different {@link Key} we might want to process one type of children before another. That's why we need a way to define
    * that processing order. This property serves exactly for that - lower value means that key's payload should be processed
    * <b>before</b> payload of the key with a greater value.
-   *
+   * 
    * @return    processing weight for data associated with the current key
    */
   public int getProcessingWeight() {
-    return processingWeight;
+    return myProcessingWeight;
   }
 
   @Override
   public int hashCode() {
-    return dataClass.hashCode();
+    return myDataClass.hashCode();
   }
 
   @Override
@@ -70,20 +87,20 @@ public final class Key<T> implements Comparable<Key<?>> {
 
     Key key = (Key)o;
 
-    if (!dataClass.equals(key.dataClass)) return false;
+    if (!myDataClass.equals(key.myDataClass)) return false;
 
     return true;
   }
 
   @Override
   public int compareTo(@NotNull Key<?> that) {
-    if(processingWeight == that.processingWeight) return dataClass.compareTo(that.dataClass);
-    return processingWeight - that.processingWeight;
+    if(myProcessingWeight == that.myProcessingWeight) return myDataClass.compareTo(that.myDataClass);
+    return myProcessingWeight - that.myProcessingWeight;
   }
 
   @Override
   public String toString() {
-    int i = dataClass.lastIndexOf('.');
-    return i > 0 ? dataClass.substring(i + 1) : dataClass;
+    int i = myDataClass.lastIndexOf('.');
+    return i > 0 ? myDataClass.substring(i + 1) : myDataClass;
   }
 }

@@ -62,7 +62,6 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -140,14 +139,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @return Project to be used in tests for example for project components retrieval.
    */
-  protected static Project getProject() {
+  public static Project getProject() {
     return ourProject;
   }
 
   /**
    * @return Module to be used in tests for example for module components retrieval.
    */
-  protected static Module getModule() {
+  public static Module getModule() {
     return ourModule;
   }
 
@@ -155,7 +154,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * Shortcut to PsiManager.getInstance(getProject())
    */
   @NotNull
-  protected static PsiManager getPsiManager() {
+  public static PsiManager getPsiManager() {
     if (ourPsiManager == null) {
       ourPsiManager = PsiManager.getInstance(ourProject);
     }
@@ -300,10 +299,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
   }
 
-  @NotNull
-  public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
-                                                      @NotNull LocalInspectionTool[] localInspectionTools,
-                                                      @NotNull Disposable parentDisposable) throws Exception {
+  public static void doSetup(@NotNull LightProjectDescriptor descriptor,
+                             @NotNull LocalInspectionTool[] localInspectionTools,
+                             @NotNull Disposable parentDisposable) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -367,7 +365,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     UIUtil.dispatchAllInvocationEvents(); // startup activities
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    return Pair.createNonNull(getProject(), getModule());
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
@@ -760,7 +757,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     private boolean areJdksEqual(final Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
 
-      OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
+      OrderRootType[] rootTypes = new OrderRootType[]{OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
       for (OrderRootType rootType : rootTypes) {
         final String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
         final String[] newUrls = newSdk.getRootProvider().getUrls(rootType);

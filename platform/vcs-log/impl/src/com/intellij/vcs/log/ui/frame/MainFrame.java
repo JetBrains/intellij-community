@@ -340,7 +340,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.showError("Error loading commits");
+      myChangesBrowser.setSelectedDetails(Collections.emptyList());
+      myChangesBrowser.getViewer().setEmptyText("Error loading commits");
     }
   }
 

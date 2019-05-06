@@ -905,9 +905,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  @Override
   @Nullable
-  public List<GutterMark> getGutterRenderers(int line) {
+  List<GutterMark> getGutterRenderers(int line) {
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
@@ -966,7 +965,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void paintIconRow(int line, List<? extends GutterMark> row, final Graphics2D g) {
+  private void paintIconRow(int line, List<GutterMark> row, final Graphics2D g) {
     processIconsRow(line, row, (x, y, renderer) -> {
       Icon icon = scaleIcon(renderer.getIcon());
 

@@ -411,11 +411,12 @@ public class EditorPainter implements TextDrawingCallback {
     if (separatorColor == null && lineSeparatorRenderer == null) {
       return;
     }
-    boolean isTop = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP;
-    int edgeOffset = isTop ? myDocument.getLineStartOffset(myDocument.getLineNumber(marker.getStartOffset()))
-                           : myDocument.getLineEndOffset(myDocument.getLineNumber(marker.getEndOffset()));
-    int visualLine = myView.offsetToVisualLine(edgeOffset, !isTop);
-    int y = myView.visualLineToY(visualLine) + (isTop ? 0 : myView.getLineHeight()) - 1 + yShift;
+    int line = myDocument.getLineNumber(marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP
+                                        ? marker.getStartOffset()
+                                        : marker.getEndOffset());
+    int visualLine = myView.offsetToVisualLine(myDocument.getLineStartOffset(line), false);
+    int y = myView.visualLineToY(visualLine) + (marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP ? 0 : myView.getLineHeight())
+            - 1 + yShift;
     int startX = myCorrector.lineSeparatorStart(clip.x);
     int endX = myCorrector.lineSeparatorEnd(clip.x + clip.width);
     g.setColor(separatorColor);

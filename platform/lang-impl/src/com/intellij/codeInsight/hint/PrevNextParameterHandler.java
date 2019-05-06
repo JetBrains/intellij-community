@@ -16,8 +16,6 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.actions.CodeInsightEditorAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
@@ -75,12 +73,5 @@ public class PrevNextParameterHandler extends EditorActionHandler {
   private static PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     return file != null ? ParameterInfoController.findArgumentList(file, offset, -1) : null;
-  }
-
-  public static void commitDocumentsIfNeeded(@NotNull AnActionEvent e) {
-    Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor != null && ParameterInfoController.existsForEditor(editor)) {
-      CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    }
   }
 }

@@ -28,7 +28,7 @@ public class XDebuggerStepIntoHandler extends XDebuggerSmartStepIntoHandler {
 
   @Override
   protected <V extends XSmartStepIntoVariant> boolean handleSimpleCases(XSmartStepIntoHandler<V> handler,
-                                                                        List<? extends V> variants,
+                                                                        List<V> variants,
                                                                         XDebugSession session) {
     if (variants.size() < 2) {
       session.stepInto();

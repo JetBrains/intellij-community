@@ -42,16 +42,9 @@ public class HgVFSListener extends VcsVFSListener {
   private final VcsDirtyScopeManager dirtyScopeManager;
   private static final Logger LOG = Logger.getInstance(HgVFSListener.class);
 
-  private HgVFSListener(@NotNull HgVcs vcs) {
-    super(vcs);
+  protected HgVFSListener(final Project project, final HgVcs vcs) {
+    super(project, vcs);
     dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-  }
-
-  @NotNull
-  public static HgVFSListener createInstance(@NotNull HgVcs vcs) {
-    HgVFSListener listener = new HgVFSListener(vcs);
-    listener.installListeners();
-    return listener;
   }
 
   @NotNull

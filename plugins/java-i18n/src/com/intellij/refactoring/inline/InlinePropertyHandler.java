@@ -20,7 +20,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -97,11 +96,5 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
       }
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
     });
-  }
-
-  @Nullable
-  @Override
-  public String getActionName(PsiElement element) {
-    return REFACTORING_NAME;
   }
 }

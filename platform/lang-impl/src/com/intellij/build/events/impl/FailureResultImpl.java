@@ -17,7 +17,6 @@ package com.intellij.build.events.impl;
 
 import com.intellij.build.events.Failure;
 import com.intellij.build.events.FailureResult;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -45,7 +44,7 @@ public class FailureResultImpl implements FailureResult {
     }
   }
 
-  public FailureResultImpl(@NotNull List<Failure> failures) {
+  public FailureResultImpl(List<Failure> failures) {
     myFailures = failures;
   }
   

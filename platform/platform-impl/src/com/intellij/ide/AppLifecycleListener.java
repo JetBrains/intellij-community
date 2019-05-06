@@ -20,7 +20,7 @@ public interface AppLifecycleListener {
   /**
    * Called before an application frame is shown.
    */
-  default void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<? super Boolean> willOpenProject) { }
+  default void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<Boolean> willOpenProject) { }
 
   /**
    * Called when the welcome screen is displayed (not called if the application opens a project).

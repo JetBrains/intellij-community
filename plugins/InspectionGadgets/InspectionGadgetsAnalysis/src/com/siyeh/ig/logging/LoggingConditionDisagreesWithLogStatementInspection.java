@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.logging;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -220,7 +219,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         return null;
       }
       final PsiField field = (PsiField)argumentTarget;
-      return StringUtil.toLowerCase(field.getName());
+      return field.getName().toLowerCase();
     }
   }
 
@@ -265,7 +264,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         }
         final PsiField field = (PsiField)target;
         final String fieldName = field.getName();
-        return fieldName != null && !StringUtil.toLowerCase(fieldName).equals(priority);
+        return fieldName != null && !fieldName.toLowerCase().equals(priority);
       }
       else if ("isEnabledFor".equals(methodName)) {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -290,7 +289,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
           }
           final PsiField field = (PsiField)argumentTarget;
           final String fieldName = field.getName();
-          return fieldName != null && !StringUtil.toLowerCase(fieldName).equals(priority);
+          return fieldName != null && !fieldName.toLowerCase().equals(priority);
         }
       }
       return false;

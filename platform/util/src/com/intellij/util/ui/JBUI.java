@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.CopyableIcon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -17,6 +18,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUIScale.DerivedScaleType;
 import com.intellij.util.ui.JBUIScale.Scale;
+import com.intellij.util.ui.JBUIScale.ScaleType;
 import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
@@ -183,7 +185,7 @@ public class JBUI {
           gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
       {
         // in this case gc doesn't provide a valid scale
-        return Math.abs((float)g.getTransform().getScaleX());
+        return (float)g.getTransform().getScaleX();
       }
       return sysScale(gc);
     }
@@ -651,18 +653,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color titlePaneInfoForeground() {
-        return JBColor.namedColor("TitlePane.infoForeground", new JBColor(0x595959, 0x999999));
-      }
-
-      @NotNull
-      public static Color titlePaneInactiveInfoForeground() {
-        return JBColor.namedColor("TitlePane.inactiveInfoForeground", new JBColor(0xB1B1B1, 0x737373));
-      }
-
-      @NotNull
       public static Color paneBackground() {
-        return new JBColor(() -> ObjectUtils.notNull(UIManager.getColor("Panel.background"), Gray.xCD));
+        return JBColor.namedColor("Panel.background", 0xcdcdcd);
       }
     }
 
@@ -673,7 +665,7 @@ public class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt("DefaultTabs.underlineHeight", scale(3));
+        return getInt("DefaultTabs.underlineHeight", scale(2));
       }
 
       @NotNull
@@ -692,15 +684,15 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color hoverBackground() {
-        return JBColor.namedColor("DefaultTabs.hoverBackground",
+      public static Color hoverMaskColor() {
+        return JBColor.namedColor("DefaultTabs.hoverMaskColor",
                                   new JBColor(ColorUtil.withAlpha(Color.BLACK, .10),
                                               ColorUtil.withAlpha(Color.BLACK, .35)));
       }
 
       @NotNull
-      public static Color underlinedTabBackground() {
-        return JBColor.namedColor("DefaultTabs.underlinedTabBackground",
+      public static Color uncoloredTabSelectedColor() {
+        return JBColor.namedColor("DefaultTabs.uncoloredTabSelectedColor",
                                   new JBColor(0xFAFAFA, 0x4E5254));
       }
 
@@ -709,6 +701,14 @@ public class JBUI {
         return JBColor.namedColor("DefaultTabs.hoverColor",
                                   new JBColor(0xD9D9D9,
                                               0x2E3133));
+      }
+
+      @NotNull
+      public static Color inactiveMaskColor() {
+        return JBColor.namedColor("DefaultTabs.inactiveMaskColor",
+                                  new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
+                                              ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
+
       }
     }
 
@@ -728,9 +728,9 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color underlinedTabBackground() {
-        return JBColor.namedColor("EditorTabs.underlinedTabBackground",
-                                  DefaultTabs.underlinedTabBackground());
+      public static Color uncoloredTabSelectedColor() {
+        return JBColor.namedColor("EditorTabs.uncoloredTabSelectedColor",
+                                  DefaultTabs.uncoloredTabSelectedColor());
       }
 
       @NotNull
@@ -744,8 +744,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color hoverBackground() {
-        return JBColor.namedColor("EditorTabs.hoverMaskColor", DefaultTabs.hoverBackground());
+      public static Color hoverMaskColor() {
+        return JBColor.namedColor("EditorTabs.hoverMaskColor", DefaultTabs.hoverMaskColor());
       }
 
       @NotNull
@@ -755,14 +755,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color inactiveColoredFileBackground() {
-        return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
-                                                                              ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
-      }
-
-      @NotNull
-      public static Color underlinedTabForeground() {
-        return JBColor.namedColor("EditorTabs.underlinedTabForeground", UIUtil.getLabelForeground());
+      public static Color inactiveMaskColor() {
+        return JBColor.namedColor("EditorTabs.inactiveMaskColor", DefaultTabs.inactiveMaskColor());
       }
 
     }

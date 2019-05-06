@@ -235,10 +235,10 @@ public class CanonicalTypes {
   }
 
   private static class LogicalOperationType extends Type {
-    private final List<? extends Type> myTypes;
+    private final List<Type> myTypes;
     private final boolean myDisjunction;
 
-    private LogicalOperationType(List<? extends Type> types, boolean disjunction) {
+    private LogicalOperationType(List<Type> types, boolean disjunction) {
       myTypes = types;
       myDisjunction = disjunction;
     }

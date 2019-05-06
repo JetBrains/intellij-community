@@ -23,7 +23,7 @@
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
-    <group id="ListActions" text="List Actions">
+    <group id="ListActions" text="List actions">
       <action id="List-selectFirstRow" text="Select First Row"
               description="Selects the first row."
               class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
@@ -75,7 +75,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="TableActions" text="Table Actions">
+    <group id="TableActions" text="Table actions">
       <action id="Table-selectFirstRow" text="Select First Row"
               description="Selects the first row."
               class="com.intellij.ui.TableActions$CtrlHome" use-shortcut-of="EditorTextStart"/>
@@ -127,7 +127,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="TreeActions" text="Tree Actions">
+    <group id="TreeActions" text="Tree actions">
       <action id="Tree-selectFirst" text="Select First Node"
               description="Selects the first node."
               class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorTextStart"/>
@@ -179,7 +179,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="PopupMenuActions" text="Popup Menu Actions">
+    <group id="PopupMenuActions" text="Popup menu actions">
       <action id="PopupMenu-selectPrevious" text="Select Previous Menu Item"
               description="Selects the previous menu item."
               class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorUp"/>
@@ -198,28 +198,6 @@
       <action id="PopupMenu-cancel" text="Close Context Menu"
               description="Closes a context menu."
               class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorEscape"/>
-      <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
-
-    <group id="NavBarActions" text="Navigation Bar Actions">
-      <action id="NavBar-selectHome" text="Select First Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Home" use-shortcut-of="EditorTextStart"/>
-      <action id="NavBar-selectEnd" text="Select Last Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$End" use-shortcut-of="EditorTextEnd"/>
-      <action id="NavBar-selectUp" text="Open Corresponding Popup Menu"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Up" use-shortcut-of="EditorUp"/>
-      <action id="NavBar-selectDown" text="Open Corresponding Popup Menu"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Down" use-shortcut-of="EditorDown"/>
-      <action id="NavBar-selectLeft" text="Select Previous Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Left" use-shortcut-of="EditorLeft"/>
-      <action id="NavBar-selectRight" text="Select Next Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Right" use-shortcut-of="EditorRight"/>
-      <action id="NavBar-cancel" text="Close Floating Navigation Bar"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Escape" use-shortcut-of="EditorEscape"/>
-      <action id="NavBar-return" text="Perform Action on Selected Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Enter" use-shortcut-of="EditorEnter"/>
-      <action id="NavBar-navigate" text="Navigate from Selected Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Navigate" use-shortcut-of="EditSource"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -634,8 +612,8 @@
         <separator/>
         <group id="ViewRecentActions">
           <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
-          <action id="SwitcherRecentEditedChangedToggleCheckBox" class="com.intellij.ide.actions.Switcher$ToggleCheckBoxAction"
-                  text="Toggle Changed Only Files"/>
+          <action id="SwitcherToggleCheckBox" class="com.intellij.ide.actions.Switcher$ToggleCheckBoxAction"
+                  text="Toggle Show Only Edited Files"/>
           <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
           <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>
         </group>
@@ -1108,8 +1086,6 @@
                 text="Send Feature Usage Event Log"/>
         <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction"
                 text="Clean Up Event Log"/>
-        <action internal="true" id="AddTestGroupToLocalWhitelistAction" class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"
-                text="Add Test Group to Local Whitestlist"/>
         <action internal="true" id="RecordStateCollectors"
                 class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"
                 text="Record State Collectors to Event Log"/>

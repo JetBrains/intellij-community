@@ -8,9 +8,6 @@
   <depends><error descr="Cannot resolve plugin com.intellij.xxx">com.intellij.xxx</error></depends>
 
 
-  <depends <warning descr="Superfluous declaration">optional="false"</warning>>com.intellij.custom3</depends>
-  <error descr="Must specify 'config-file'"><depends optional="true">com.intellij.custom4</depends></error>
-
   <depends config-file="optional.xml">com.intellij</depends>
   <depends config-file="<error descr="Cannot resolve file 'INVALID_VALUE'">INVALID_VALUE</error>">com.intellij.custom2</depends>
 

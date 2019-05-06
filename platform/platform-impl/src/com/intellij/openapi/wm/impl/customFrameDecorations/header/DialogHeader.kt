@@ -44,11 +44,19 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
         }
     }
 
-    override fun getHitTestSpots(): List<RelativeRectangle> {
-        val hitTestSpots = ArrayList<RelativeRectangle>()
+    override fun getHitTestSpots(): List<Rectangle> {
+        val hitTestSpots = ArrayList<Rectangle>()
 
-        hitTestSpots.add(RelativeRectangle(productIcon))
-        hitTestSpots.add(RelativeRectangle(buttonPanes.getView()))
+        val iconRect = RelativeRectangle(productIcon).getRectangleOn(this)
+        iconRect.width = (iconRect.width * 1.5).toInt()
+
+        hitTestSpots.add(iconRect)
+
+        val buttonRect = RelativeRectangle(buttonPanes.getView()).getRectangleOn(this)
+        buttonRect.x -= HIT_TEST_RESIZE_GAP
+
+        hitTestSpots.add(buttonRect)
+
 
         return hitTestSpots
     }

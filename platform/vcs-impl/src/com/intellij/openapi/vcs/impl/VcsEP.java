@@ -46,8 +46,6 @@ public class VcsEP extends AbstractExtensionPointBean {
   public String administrativeAreaName;
   @Attribute("crawlUpToCheckUnderVcs")
   public boolean crawlUpToCheckUnderVcs;
-  @Attribute("areChildrenValidMappings")
-  public boolean areChildrenValidMappings;
 
   private AbstractVcs myVcs;
   private final Object LOCK = new Object();
@@ -92,6 +90,6 @@ public class VcsEP extends AbstractExtensionPointBean {
 
   @NotNull
   public VcsDescriptor createDescriptor() {
-    return new VcsDescriptor(administrativeAreaName, displayName, name, crawlUpToCheckUnderVcs, areChildrenValidMappings);
+    return new VcsDescriptor(administrativeAreaName, displayName, name, crawlUpToCheckUnderVcs);
   }
 }

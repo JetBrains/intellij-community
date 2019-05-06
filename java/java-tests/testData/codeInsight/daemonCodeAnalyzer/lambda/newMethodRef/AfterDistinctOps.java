@@ -77,7 +77,7 @@ abstract class AbstractCollection<E> implements Collection<E> {
     public boolean add(E e) {
         return true;
     }
-    public boolean addAll(Collection<? extends E> c) {
+    public boolean addAll(Collection<? extends E> <warning descr="Parameter 'c' is never used">c</warning>) {
         boolean modified = false;
         return modified;
     }

@@ -1,7 +1,7 @@
 /*
-Value is always true (s != null; line#10)
-  's' was assigned (=; line#9)
-    Expression cannot be null as it's newly created object (new Object(); line#9)
+Value is always true (s != null)
+  's' was assigned (=)
+    Expression cannot be null as it's newly created object (new Object())
  */
 
 class Test {

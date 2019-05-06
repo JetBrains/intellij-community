@@ -27,19 +27,10 @@ import java.util.*;
  */
 public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
-  private final boolean myStopAnalysisOnNpe;
 
   private final Set<InstanceofInstruction> myReachable = new THashSet<>();
   private final Set<InstanceofInstruction> myCanBeNullInInstanceof = new THashSet<>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
-
-  public StandardInstructionVisitor() {
-    myStopAnalysisOnNpe = false;
-  }
-
-  StandardInstructionVisitor(boolean stopAnalysisOnNpe) {
-    myStopAnalysisOnNpe = stopAnalysisOnNpe;
-  }
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -606,20 +597,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       checkNotNullable(memState, memState.peek(), problem);
     } else {
       DfaControlTransferValue transfer = instruction.getOnNullTransfer();
-      DfaValue value = memState.pop();
-      boolean isNull = myStopAnalysisOnNpe && memState.isNull(value);
       if (transfer == null) {
-        memState.push(dereference(memState, value, problem));
-        if (isNull) {
-          return DfaInstructionState.EMPTY_ARRAY;
-        }
+        memState.push(dereference(memState, memState.pop(), problem));
       } else {
+        DfaValue value = memState.pop();
         List<DfaInstructionState> result = new ArrayList<>();
         DfaMemoryState nullState = memState.createCopy();
         memState.push(dereference(memState, value, problem));
-        if (!isNull) {
-          result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
-        }
+        result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
         DfaValueFactory factory = runner.getFactory();
         if (nullState.applyCondition(factory.createCondition(value, RelationType.EQ, factory.getConstFactory().getNull()))) {
           List<DfaInstructionState> dispatched = transfer.dispatch(nullState, runner);

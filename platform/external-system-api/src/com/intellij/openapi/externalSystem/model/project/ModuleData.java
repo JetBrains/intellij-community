@@ -3,8 +3,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.serialization.Property;
-import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,43 +19,42 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  * @author Denis Zhdanov
  */
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
-  @NotNull private final Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();
-  @NotNull private final Map<ExternalSystemSourceType, String> externalCompilerOutputPaths = new HashMap<>();
-  @Nullable private Map<String, String> properties;
-  @NotNull private final String id;
-  @NotNull private final String moduleTypeId;
-  @NotNull private final String externalConfigPath;
-  @NotNull private final String moduleFileDirectoryPath;
-  @Nullable private String group;
-  @Nullable private String version;
-  @Nullable private String description;
-  @NotNull private List<File> artifacts;
-  @Nullable private String[] ideModuleGroup;
-  @Nullable private String sourceCompatibility;
-  @Nullable private String targetCompatibility;
-  @Nullable private String sdkName;
-  @Nullable private String productionModuleId;
 
-  @Nullable
-  @Property(allowedTypes = {LibraryData.class, ProjectId.class})
-  private ProjectCoordinate publication;
+  private static final long serialVersionUID = 1L;
 
-  private boolean inheritProjectCompileOutputPath = true;
-  private boolean useExternalCompilerOutput;
+  @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = new HashMap<>();
+  @NotNull private final Map<ExternalSystemSourceType, String> myExternalCompilerOutputPaths = new HashMap<>();
+  @Nullable private Map<String, String> myProperties;
+  @NotNull private final String myId;
+  @NotNull private final String myModuleTypeId;
+  @NotNull private final String myExternalConfigPath;
+  @NotNull private final String myModuleFileDirectoryPath;
+  @Nullable private String myGroup;
+  @Nullable private String myVersion;
+  @Nullable private String myDescription;
+  @NotNull private List<File> myArtifacts;
+  @Nullable private String[] myIdeModuleGroup;
+  @Nullable private String mySourceCompatibility;
+  @Nullable private String myTargetCompatibility;
+  @Nullable private String mySdkName;
+  @Nullable private String myProductionModuleId;
+  @Nullable private ProjectCoordinate myPublication;
 
-  @PropertyMapping({"id", "owner", "moduleTypeId", "externalName", "moduleFileDirectoryPath", "externalConfigPath"})
+  private boolean myInheritProjectCompileOutputPath = true;
+  private boolean myUseExternalCompilerOutput;
+
   public ModuleData(@NotNull String id,
                     @NotNull ProjectSystemId owner,
-                    @NotNull String moduleTypeId,
-                    @NotNull String externalName,
+                    @NotNull String typeId,
+                    @NotNull String name,
                     @NotNull String moduleFileDirectoryPath,
                     @NotNull String externalConfigPath) {
-    super(owner, externalName, externalName.replaceAll("(/|\\\\)", "_"));
-    this.id = id;
-    this.moduleTypeId = moduleTypeId;
-    this.externalConfigPath = externalConfigPath;
-    artifacts = Collections.emptyList();
-    this.moduleFileDirectoryPath = moduleFileDirectoryPath;
+    super(owner, name, name.replaceAll("(/|\\\\)", "_"));
+    myId = id;
+    myModuleTypeId = typeId;
+    myExternalConfigPath = externalConfigPath;
+    myArtifacts = Collections.emptyList();
+    myModuleFileDirectoryPath = moduleFileDirectoryPath;
   }
 
   protected ModuleData(@NotNull String id,
@@ -68,33 +65,33 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
                        @NotNull String moduleFileDirectoryPath,
                        @NotNull String externalConfigPath) {
     super(owner, externalName, internalName);
-    this.id = id;
-    moduleTypeId = typeId;
-    this.externalConfigPath = externalConfigPath;
-    artifacts = Collections.emptyList();
-    this.moduleFileDirectoryPath = moduleFileDirectoryPath;
+    myId = id;
+    myModuleTypeId = typeId;
+    myExternalConfigPath = externalConfigPath;
+    myArtifacts = Collections.emptyList();
+    myModuleFileDirectoryPath = moduleFileDirectoryPath;
   }
 
   @NotNull
   @Override
   public String getId() {
-    return id;
+    return myId;
   }
 
   @NotNull
   public String getModuleTypeId() {
-    return moduleTypeId;
+    return myModuleTypeId;
   }
 
   @NotNull
   @Override
   public String getLinkedExternalProjectPath() {
-    return externalConfigPath;
+    return myExternalConfigPath;
   }
 
   @NotNull
   public String getModuleFileDirectoryPath() {
-    return moduleFileDirectoryPath;
+    return myModuleFileDirectoryPath;
   }
 
   /**
@@ -103,19 +100,19 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
    */
   @Nullable
   public String getProductionModuleId() {
-    return productionModuleId;
+    return myProductionModuleId;
   }
 
   public void setProductionModuleId(@Nullable String productionModuleId) {
-    this.productionModuleId = productionModuleId;
+    myProductionModuleId = productionModuleId;
   }
 
   public boolean isInheritProjectCompileOutputPath() {
-    return inheritProjectCompileOutputPath;
+    return myInheritProjectCompileOutputPath;
   }
 
   public void setInheritProjectCompileOutputPath(boolean inheritProjectCompileOutputPath) {
-    this.inheritProjectCompileOutputPath = inheritProjectCompileOutputPath;
+    myInheritProjectCompileOutputPath = inheritProjectCompileOutputPath;
   }
 
   /**
@@ -129,120 +126,120 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable
   public String getCompileOutputPath(@NotNull ExternalSystemSourceType type) {
     //noinspection ConstantConditions
-    return useExternalCompilerOutput && externalCompilerOutputPaths != null
-           ? externalCompilerOutputPaths.get(type)
-           : compileOutputPaths.get(type);
+    return myUseExternalCompilerOutput && myExternalCompilerOutputPaths != null
+           ? myExternalCompilerOutputPaths.get(type)
+           : myCompileOutputPaths.get(type);
   }
 
   public void setCompileOutputPath(@NotNull ExternalSystemSourceType type, @Nullable String path) {
-    updatePath(compileOutputPaths, type, path);
+    updatePath(myCompileOutputPaths, type, path);
   }
 
   public void setExternalCompilerOutputPath(@NotNull ExternalSystemSourceType type, @Nullable String path) {
-    updatePath(externalCompilerOutputPaths, type, path);
+    updatePath(myExternalCompilerOutputPaths, type, path);
   }
 
   public void useExternalCompilerOutput(boolean useExternalCompilerOutput) {
-    this.useExternalCompilerOutput = useExternalCompilerOutput;
+    myUseExternalCompilerOutput = useExternalCompilerOutput;
   }
 
   @Nullable
   public String getGroup() {
-    return group;
+    return myGroup;
   }
 
   public void setGroup(@Nullable String group) {
-    this.group = group;
+    this.myGroup = group;
   }
 
   @Nullable
   public ProjectCoordinate getPublication() {
-    return publication;
+    return myPublication;
   }
 
   public void setPublication(@Nullable ProjectCoordinate publication) {
-    this.publication = publication;
+    myPublication = publication;
   }
 
   @Nullable
   public String getVersion() {
-    return version;
+    return myVersion;
   }
 
   public void setVersion(@Nullable String version) {
-    this.version = version;
+    this.myVersion = version;
   }
 
   @Nullable
   public String getDescription() {
-    return description;
+    return myDescription;
   }
 
   public void setDescription(@Nullable String description) {
-    this.description = description;
+    this.myDescription = description;
   }
 
   @NotNull
   public List<File> getArtifacts() {
-    return artifacts;
+    return myArtifacts;
   }
 
   public void setArtifacts(@NotNull List<File> artifacts) {
-    this.artifacts = artifacts;
+    myArtifacts = artifacts;
   }
 
   @Nullable
   public String[] getIdeModuleGroup() {
-    return ideModuleGroup;
+    return myIdeModuleGroup;
   }
 
   public void setIdeModuleGroup(@Nullable String[] ideModuleGroup) {
-    this.ideModuleGroup = ideModuleGroup;
+    this.myIdeModuleGroup = ideModuleGroup;
   }
 
   @Nullable
   public String getSourceCompatibility() {
-    return sourceCompatibility;
+    return mySourceCompatibility;
   }
 
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
-    this.sourceCompatibility = sourceCompatibility;
+    mySourceCompatibility = sourceCompatibility;
   }
 
   @Nullable
   public String getTargetCompatibility() {
-    return targetCompatibility;
+    return myTargetCompatibility;
   }
 
   public void setTargetCompatibility(@Nullable String targetCompatibility) {
-    this.targetCompatibility = targetCompatibility;
+    myTargetCompatibility = targetCompatibility;
   }
 
   @Nullable
   public String getSdkName() {
-    return sdkName;
+    return mySdkName;
   }
 
   public void setSdkName(@Nullable String sdkName) {
-    this.sdkName = sdkName;
+    mySdkName = sdkName;
   }
 
   @Nullable
   public String getProperty(String key) {
-    return properties != null ? properties.get(key) : null;
+    return myProperties != null ? myProperties.get(key) : null;
   }
 
   public void setProperty(String key, String value) {
-    if (properties == null) {
-      properties = new HashMap<>();
+    if (myProperties == null) {
+      myProperties = new HashMap<>();
     }
-    properties.put(key, value);
+    myProperties.put(key, value);
   }
 
   @Nullable
   public String getIdeGrouping() {
-    if (ideModuleGroup != null) {
-      return join(ideModuleGroup, ".");
+    if (myIdeModuleGroup != null) {
+      return join(myIdeModuleGroup, ".");
     } else {
       return getInternalName();
     }
@@ -250,8 +247,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Nullable
   public String getIdeParentGrouping() {
-    if (ideModuleGroup != null) {
-      return nullize(join(ArrayUtil.remove(ideModuleGroup, ideModuleGroup.length - 1), "."));
+    if (myIdeModuleGroup != null) {
+      return nullize(join(ArrayUtil.remove(myIdeModuleGroup, myIdeModuleGroup.length - 1), "."));
     } else {
       final String name = getInternalName();
       if (name.lastIndexOf(".") > 0) {
@@ -269,13 +266,13 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
     ModuleData that = (ModuleData)o;
 
-    if (!id.equals(that.id)) return false;
-    if (!externalConfigPath.equals(that.externalConfigPath)) return false;
-    if (group != null ? !group.equals(that.group) : that.group != null) return false;
-    if (!moduleTypeId.equals(that.moduleTypeId)) return false;
-    if (version != null ? !version.equals(that.version) : that.version != null) return false;
-    if (description != null ? !description.equals(that.description) : that.description != null) return false;
-    if (sdkName != null ? !sdkName.equals(that.sdkName) : that.sdkName != null) return false;
+    if (!myId.equals(that.myId)) return false;
+    if (!myExternalConfigPath.equals(that.myExternalConfigPath)) return false;
+    if (myGroup != null ? !myGroup.equals(that.myGroup) : that.myGroup != null) return false;
+    if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
+    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
+    if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
+    if (mySdkName != null ? !mySdkName.equals(that.mySdkName) : that.mySdkName != null) return false;
 
     return true;
   }
@@ -283,13 +280,13 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + id.hashCode();
-    result = 31 * result + externalConfigPath.hashCode();
-    result = 31 * result + moduleTypeId.hashCode();
-    result = 31 * result + (group != null ? group.hashCode() : 0);
-    result = 31 * result + (version != null ? version.hashCode() : 0);
-    result = 31 * result + (description != null ? description.hashCode() : 0);
-    result = 31 * result + (sdkName != null ? sdkName.hashCode() : 0);
+    result = 31 * result + myId.hashCode();
+    result = 31 * result + myExternalConfigPath.hashCode();
+    result = 31 * result + myModuleTypeId.hashCode();
+    result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
+    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
+    result = 31 * result + (mySdkName != null ? mySdkName.hashCode() : 0);
     return result;
   }
 

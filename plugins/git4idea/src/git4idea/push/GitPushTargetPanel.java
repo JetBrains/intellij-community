@@ -201,7 +201,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     if (remotes.size() <= 1) {
       return;
     }
-    ListPopup popup = new ListPopupImpl(myProject, new BaseListPopupStep<PopupItem>(null, remotes) {
+    ListPopup popup = new ListPopupImpl(new BaseListPopupStep<PopupItem>(null, remotes) {
       @Override
       public PopupStep onChosen(@NotNull PopupItem selectedValue, boolean finalChoice) {
         return doFinalStep(() -> {

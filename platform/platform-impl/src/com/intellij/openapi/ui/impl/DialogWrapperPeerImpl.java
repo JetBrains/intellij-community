@@ -845,7 +845,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && (ApplicationManagerEx.getApplicationEx() == null || ApplicationManagerEx.getApplicationEx().isActive())) {
+            if (isShowing() && ApplicationManagerEx.getApplicationEx().isActive()) {
               toFocus.requestFocus();
             } else {
               toFocus.requestFocusInWindow();

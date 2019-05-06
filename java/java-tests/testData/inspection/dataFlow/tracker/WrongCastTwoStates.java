@@ -1,8 +1,8 @@
 /*
-Cast may fail ((Integer)x; line#12)
+Cast may fail ((Integer)x)
   An execution might exist where:
-    An object type is exactly String which is not a subtype of Integer (x; line#12)
-      Type of 'x' is known from line #10 (x instanceof String; line#10)
+    An object type is exactly String which is not a subtype of Integer (x)
+      Type of 'x' is known from line #10 (x instanceof String)
  */
 
 class Test {

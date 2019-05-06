@@ -47,10 +47,10 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
     this.flushBufferSize = flushBufferSize
     val testProxy = SMTestProxy.SMRootTestProxy()
     converter.processor = if (idBased) {
-      GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), testProxy, "root")
+      GeneralIdBasedToSMTRunnerEventsConvertor(LightPlatformTestCase.ourProject, testProxy, "root")
     }
     else {
-      GeneralToSMTRunnerEventsConvertor(getProject(), testProxy, "root")
+      GeneralToSMTRunnerEventsConvertor(LightPlatformTestCase.getProject(), testProxy, "root")
     }
 
     converter.setTestingStartedHandler {  }

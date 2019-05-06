@@ -32,22 +32,19 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
+import org.junit.*
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertTrue
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
+
   private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
 
   @Rule @JvmField val tempDir = TempDirectory()
@@ -72,7 +69,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
-    assertThat(watcher.isOperational).isFalse()
+    assertFalse(watcher.isOperational)
     watchedPaths += tempDir.root.path
     startup(watcher) { path ->
       if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
@@ -97,13 +94,14 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
   }
+
   //</editor-fold>
 
   @Test fun testWatchRequestConvention() {
     val dir = tempDir.newFolder("dir")
     val r1 = watch(dir)
     val r2 = watch(dir)
-    assertThat(r1 == r2).isFalse()
+    assertFalse(r1 == r2)
   }
 
   @Test fun testFileRoot() {
@@ -177,22 +175,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents(
       { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
       mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
-  }
-
-  @Test fun testMove() {
-    val top = tempDir.newFolder("top")
-    val srcFile = tempDir.newFile("top/src/f")
-    val srcDir = tempDir.newFolder("top/src/sub")
-    tempDir.newFile("top/src/sub/f1")
-    tempDir.newFile("top/src/sub/f2")
-    val dst = tempDir.newFolder("top/dst")
-    val dstFile = File(dst, srcFile.name)
-    val dstDir = File(dst, srcDir.name)
-    refresh(top)
-
-    watch(top)
-    assertEvents({ Files.move(srcFile.toPath(), dstFile.toPath(), StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcFile to 'D', dstFile to 'C'))
-    assertEvents({ Files.move(srcDir.toPath(), dstDir.toPath(), StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcDir to 'D', dstDir to 'C'))
   }
 
   @Test fun testIncorrectPath() {
@@ -561,12 +543,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val root_bak = File(top, "root.bak")
 
     val vFile = fs.refreshAndFindFileByIoFile(file)!!
-    assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("new content")
+    assertEquals("new content", VfsUtilCore.loadText(vFile))
 
     watch(root)
     assertEvents({ root.renameTo(root_bak); root_copy.renameTo(root) }, mapOf(file to 'U'))
     assertTrue(vFile.isValid)
-    assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("original content")
+    assertEquals("original content", VfsUtilCore.loadText(vFile))
   }
 
   @Test fun testWatchRootReplacement() {
@@ -593,7 +575,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(file)
     assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*ro)) }, mapOf(file to 'P'))
-    assertThat(vFile.isWritable).isFalse()
+    assertFalse(vFile.isWritable)
     assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*rw)) }, mapOf(file to 'P'))
     assertTrue(vFile.isWritable)
   }
@@ -656,7 +638,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()
-    assertThat(actual).isEqualTo(expected)
+    assertEquals(expected, actual)
   }
+
   //</editor-fold>
 }

@@ -23,6 +23,6 @@ public abstract class PerformanceCareRule implements FUSRule {
     return resultType;
   }
 
-  @NotNull
-  protected abstract ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context);
+  protected abstract ValidationResultType doValidate(@NotNull String data,
+                                                     @NotNull EventContext context);
 }

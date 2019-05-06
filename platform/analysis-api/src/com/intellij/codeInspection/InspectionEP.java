@@ -68,7 +68,6 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
    * @see #bundle
    */
   @Attribute("key")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String key;
 
   /**
@@ -84,7 +83,6 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
    * Non-localized display name. Use {@link #key} for I18N.
    */
   @Attribute("displayName")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String displayName;
 
   /**
@@ -93,7 +91,6 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
    * @see #groupBundle
    */
   @Attribute("groupKey")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String groupKey;
 
   /**
@@ -109,7 +106,6 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
    * Non-localized group display name. Use {@link #groupKey} for I18N.
    */
   @Attribute("groupName")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String groupDisplayName;
 
   /**

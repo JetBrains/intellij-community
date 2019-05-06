@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public class StringSearcher {
   private final String myPattern;
@@ -56,10 +57,10 @@ public class StringSearcher {
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
     myForwardDirection = forwardDirection;
-    char[] chars = myCaseSensitive ? myPattern.toCharArray() : StringUtil.toLowerCase(myPattern).toCharArray();
+    char[] chars = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
     if (chars.length != myPattern.length()) {
       myLowercaseTransform = false;
-      chars = StringUtil.toUpperCase(myPattern).toCharArray();
+      chars = myPattern.toUpperCase(Locale.US).toCharArray();
     } else {
       myLowercaseTransform = true;
     }

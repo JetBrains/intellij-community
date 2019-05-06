@@ -1,10 +1,10 @@
 package com.intellij.configurationScript
 
+import com.intellij.configurationStore.properties.CollectionStoredProperty
+import com.intellij.configurationStore.properties.MapStoredProperty
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ScalarProperty
 import com.intellij.openapi.components.StoredProperty
-import com.intellij.serialization.stateProperties.CollectionStoredProperty
-import com.intellij.serialization.stateProperties.MapStoredProperty
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.nodes.ScalarNode
 import org.yaml.snakeyaml.nodes.SequenceNode

@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+
 public class PsiLiteralExpressionImpl
   extends JavaStubPsiElement<PsiLiteralStub>
        implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
@@ -116,7 +118,7 @@ public class PsiLiteralExpressionImpl
       return getRawString();
     }
 
-    String text = NUMERIC_LITERALS.contains(type) ? StringUtil.toLowerCase(getCanonicalText()) : getCanonicalText();
+    String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase(Locale.ENGLISH) : getCanonicalText();
     final int textLength = text.length();
 
     if (type == JavaTokenType.INTEGER_LITERAL) {

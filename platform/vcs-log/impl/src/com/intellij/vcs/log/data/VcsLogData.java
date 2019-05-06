@@ -298,6 +298,17 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   /**
+   * Refreshes specified roots.
+   * Does not re-read all log but rather the most recent commits.
+   *
+   * @param roots roots to refresh
+   */
+  public void refreshSoftly(@NotNull Set<VirtualFile> roots) {
+    initialize();
+    myRefresher.refresh(roots);
+  }
+
+  /**
    * Makes the log perform refresh for the given root.
    * This refresh can be optimized, i. e. it can query VCS just for the part of the log.
    */

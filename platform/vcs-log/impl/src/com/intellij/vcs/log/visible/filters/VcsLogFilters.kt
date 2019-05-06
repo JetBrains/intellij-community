@@ -71,8 +71,7 @@ object VcsLogFilterObject {
     for (s in strings) {
       val isExcluded = s.startsWith("-")
       val string = if (isExcluded) s.substring(1) else s
-      val isRegexp = (existingBranches.isNotEmpty() && !existingBranches.contains(string)) ||
-                     (existingBranches.isEmpty() && VcsLogUtil.maybeRegexp(string))
+      val isRegexp = !existingBranches.contains(string)
 
       if (isRegexp) {
         try {

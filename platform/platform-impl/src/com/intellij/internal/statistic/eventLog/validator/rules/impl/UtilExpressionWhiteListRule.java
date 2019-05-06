@@ -18,7 +18,6 @@ public class UtilExpressionWhiteListRule extends PerformanceCareRule implements 
     mySuffix = suffix;
   }
 
-  @NotNull
   @Override
   public ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     if (acceptPrefix(data) && acceptSuffix(data)) {

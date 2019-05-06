@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
-import com.intellij.util.indexing.PsiDependentFileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,8 +65,8 @@ public class StubTreeBuilder {
       }
       else {
         CharSequence contentAsText = inputData.getContentAsText();
-        PsiDependentFileContent fileContent = (PsiDependentFileContent)inputData;
-        PsiFile psi = fileContent.getPsiFile();
+        FileContentImpl fileContent = (FileContentImpl)inputData;
+        PsiFile psi = fileContent.getPsiFileForPsiDependentIndex();
         final FileViewProvider viewProvider = psi.getViewProvider();
         psi = viewProvider.getStubBindingRoot();
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
@@ -80,7 +79,7 @@ public class StubTreeBuilder {
           if (stubFileElementType != null) {
             final StubBuilder stubBuilder = stubFileElementType.getBuilder();
             if (stubBuilder instanceof LightStubBuilder) {
-              LightStubBuilder.FORCED_AST.set(fileContent.getLighterAST());
+              LightStubBuilder.FORCED_AST.set(fileContent.getLighterASTForPsiDependentIndex());
             }
             data = stubBuilder.buildStubTree(psi);
 

@@ -2,9 +2,7 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +10,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,34 +52,25 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
 
-  @Deprecated
   public ListPopupImpl(@NotNull ListPopupStep aStep, int maxRowCount) {
-    this(aStep);
-    setMaxRowCount(maxRowCount);
+    this(null, aStep, null, maxRowCount);
   }
 
-  @Deprecated
   public ListPopupImpl(@NotNull ListPopupStep aStep) {
-    this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep, null);
+    this(aStep, -1);
   }
 
-  public ListPopupImpl(@Nullable Project project,
-                       @NotNull ListPopupStep aStep) {
-    this(project, null, aStep, null);
+  public ListPopupImpl(WizardPopup aParent, @NotNull ListPopupStep aStep, Object parentValue) {
+    this(aParent, aStep, parentValue, -1);
   }
 
-  public ListPopupImpl(@Nullable Project project,
-                       @Nullable WizardPopup aParent,
-                       @NotNull ListPopupStep aStep,
-                       Object parentValue) {
-    super(project, aParent, aStep);
+  public ListPopupImpl(WizardPopup aParent, @NotNull ListPopupStep aStep, Object parentValue, int maxRowCount) {
+    super(aParent, aStep);
     setParentValue(parentValue);
+    if (maxRowCount != -1){
+      myMaxRowCount = maxRowCount;
+    }
     replacePasteAction();
-  }
-
-  public void setMaxRowCount(int maxRowCount) {
-    if (maxRowCount <= 0) return;
-    myMaxRowCount = maxRowCount;
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {

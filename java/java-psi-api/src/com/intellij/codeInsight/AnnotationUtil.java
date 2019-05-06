@@ -20,7 +20,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * @author max
@@ -105,7 +104,7 @@ public class AnnotationUtil {
     }
     List<PsiAnnotation> result = null;
     for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (annotationNames.contains(annotation.getQualifiedName()) && isApplicableToDeclaration(annotation, list)) {
+      if (annotationNames.contains(annotation.getQualifiedName())) {
         if (result == null) {
           result = new SmartList<>();
         }
@@ -113,17 +112,6 @@ public class AnnotationUtil {
       }
     }
     return result;
-  }
-
-  private static boolean isApplicableToDeclaration(PsiAnnotation annotation, PsiModifierList list) {
-    PsiAnnotation.TargetType[] allTargets = AnnotationTargetUtil.getTargetsForLocation(list);
-    if (allTargets.length == 0) return true;
-                                
-    PsiAnnotation.TargetType[] nonTypeUse = Stream
-      .of(allTargets)
-      .filter(t -> t != PsiAnnotation.TargetType.TYPE_USE)
-      .toArray(PsiAnnotation.TargetType[]::new);
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, nonTypeUse) != null;
   }
 
   @Nullable

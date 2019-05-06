@@ -215,14 +215,6 @@ public class JavaSdkImpl extends JavaSdk {
     return JdkUtil.checkForJdk(path);
   }
 
-  @Override
-  public String getInvalidHomeMessage(String path) {
-    if (JdkUtil.checkForJre(path)) {
-      return "The selected directory points to a JRE, not a JDK.\nYou can download a JDK from " + getDownloadSdkUrl();
-    }
-    return super.getInvalidHomeMessage(path);
-  }
-
   @NotNull
   @Override
   public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {

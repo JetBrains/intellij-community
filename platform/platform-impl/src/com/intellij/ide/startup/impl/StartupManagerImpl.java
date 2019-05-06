@@ -47,12 +47,10 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
-  private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
   private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<>());
   private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<>());
@@ -153,12 +151,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     DumbService dumbService = DumbService.getInstance(myProject);
     for (StartupActivity extension : StartupActivity.POST_STARTUP_ACTIVITY.getExtensionList()) {
       if (DumbService.isDumbAware(extension)) {
-        runActivity(uiFreezeWarned, extension);
+        logActivityDuration(uiFreezeWarned, extension);
       }
       else {
         dumbService.runWhenSmart(() -> {
           ProgressManager.checkCanceled();
-          runActivity(uiFreezeWarned, extension);
+          logActivityDuration(uiFreezeWarned, extension);
         });
       }
     }
@@ -166,8 +164,9 @@ public class StartupManagerImpl extends StartupManagerEx {
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
   }
 
-  private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
+  private void logActivityDuration(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
     long startTime = StartUpMeasurer.getCurrentTime();
+
     try {
       extension.runActivity(myProject);
     }
@@ -182,7 +181,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
 
     long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass());
-    if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
+    if (duration > 100) {
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && app.isDispatchThread() && uiFreezeWarned.compareAndSet(false, true)) {
         LOG.info(
@@ -190,6 +189,11 @@ public class StartupManagerImpl extends StartupManagerEx {
           " under modal progress, or just making them faster to speed up project opening.");
       }
     }
+  }
+
+  // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
+  private void queueSmartModeActivity(@NotNull Runnable activity) {
+    DumbService.getInstance(myProject).runWhenSmart(() -> runActivity(activity));
   }
 
   public void runPostStartupActivities() {
@@ -217,14 +221,9 @@ public class StartupManagerImpl extends StartupManagerEx {
 
         while (true) {
           List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
-          if (dumbUnaware.isEmpty()) {
-            break;
-          }
+          if (dumbUnaware.isEmpty()) break;
 
-          // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
-          for (Runnable activity : dumbUnaware) {
-            dumbService.runWhenSmart(() -> runActivity(activity));
-          }
+          dumbUnaware.forEach(StartupManagerImpl.this::queueSmartModeActivity);
         }
 
         if (dumbService.isDumb()) {
@@ -241,12 +240,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
-  @NotNull
   private synchronized List<Runnable> takeDumbUnawareStartupActivities() {
-    if (myNotDumbAwarePostStartupActivities.isEmpty()) {
-      return Collections.emptyList();
-    }
-
     List<Runnable> result = new ArrayList<>(myNotDumbAwarePostStartupActivities);
     myNotDumbAwarePostStartupActivities.clear();
     return result;

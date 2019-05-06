@@ -98,8 +98,8 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
   private fun addTwoModules() {
     moduleA = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "A", myFixture.tempDirFixture.findOrCreateDir("A"))
     moduleB = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "B", myFixture.tempDirFixture.findOrCreateDir("B"))
-    ModuleRootModificationUtil.addDependency(moduleA!!, module)
-    ModuleRootModificationUtil.addDependency(moduleB!!, module)
+    ModuleRootModificationUtil.addDependency(moduleA!!, myModule)
+    ModuleRootModificationUtil.addDependency(moduleB!!, myModule)
   }
 
   private fun dirtyModules() =

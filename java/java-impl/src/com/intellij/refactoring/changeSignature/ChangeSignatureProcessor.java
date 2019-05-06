@@ -162,7 +162,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     return true;
   }
 
-  private void askToRemoveCovariantOverriders(Set<? extends UsageInfo> usages) {
+  private void askToRemoveCovariantOverriders(Set<UsageInfo> usages) {
     if (PsiUtil.isLanguageLevel5OrHigher(myChangeInfo.getMethod())) {
       List<UsageInfo> covariantOverriderInfos = new ArrayList<>();
       for (UsageInfo usageInfo : usages) {

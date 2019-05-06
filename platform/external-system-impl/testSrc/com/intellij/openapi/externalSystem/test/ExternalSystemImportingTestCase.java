@@ -75,6 +75,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
  * @author Vladislav.Soroka
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
+
   protected void assertModulesContains(@NotNull Project project, String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(project).getModules();
     List<String> actualNames = new ArrayList<>();
@@ -449,7 +450,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
     final Collection<DataNode<?>> nodes = ExternalSystemApiUtil.findAllRecursively(projectDataNode, booleanFunction);
     for (DataNode<?> node : nodes) {
-      node.visit(dataNode -> dataNode.setIgnored(ignored));
+      ExternalSystemApiUtil.visit(node, dataNode -> dataNode.setIgnored(ignored));
     }
     ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
   }

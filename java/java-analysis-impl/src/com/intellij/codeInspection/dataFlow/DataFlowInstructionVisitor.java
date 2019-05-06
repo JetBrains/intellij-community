@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -354,7 +353,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     @NotNull
     @Override
     public String toString() {
-      return StringUtil.toLowerCase(name());
+      return name().toLowerCase(Locale.ENGLISH);
     }
 
     public Object value() {

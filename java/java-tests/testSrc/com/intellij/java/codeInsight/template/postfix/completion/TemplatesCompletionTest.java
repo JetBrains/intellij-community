@@ -230,10 +230,6 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "class Foo { ps<caret> } class psvClass {}");
     type("v");
     myFixture.assertPreferredCompletionItems(0, "psvm", "psvClass");
-
-    myFixture.configureByText("a.xml", "CARBON C<caret>");
-    myFixture.completeBasic();
-    myFixture.assertPreferredCompletionItems(0, "CD", "CARBON");
   }
 
 

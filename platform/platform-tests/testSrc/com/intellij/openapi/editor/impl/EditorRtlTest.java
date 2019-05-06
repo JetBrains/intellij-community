@@ -352,8 +352,6 @@ public class EditorRtlTest extends AbstractRtlTest {
   public void testNextPrevWord() {
     prepareText("LL RR RR LL");
     nextWord();
-    assertVisualCaretLocation(2, false);
-    nextWord();
     assertVisualCaretLocation(3, false);
     nextWord();
     assertVisualCaretLocation(3, true);
@@ -364,6 +362,8 @@ public class EditorRtlTest extends AbstractRtlTest {
     nextWord();
     assertVisualCaretLocation(8, false);
     nextWord();
+    assertVisualCaretLocation(9, false);
+    nextWord();
     assertVisualCaretLocation(11, false);
     previousWord();
     assertVisualCaretLocation(9, false);
@@ -372,7 +372,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     previousWord();
     assertVisualCaretLocation(8, true);
     previousWord();
-    assertVisualCaretLocation(6, true);
+    assertVisualCaretLocation(5, true);
     previousWord();
     assertVisualCaretLocation(3, true);
     previousWord();
@@ -384,8 +384,6 @@ public class EditorRtlTest extends AbstractRtlTest {
   public void testNextPrevWordWithSelection() {
     prepareText("LL RR RR LL");
     moveCaretToNextWordWithSelection();
-    checkResult("<selection>LL</selection> RR RR LL");
-    moveCaretToNextWordWithSelection();
     checkResult("<selection>LL </selection>RR RR LL");
     moveCaretToNextWordWithSelection();
     checkResult("<selection>LL RR RR</selection> LL");
@@ -396,6 +394,8 @@ public class EditorRtlTest extends AbstractRtlTest {
     moveCaretToNextWordWithSelection();
     checkResult("<selection>LL RR RR</selection> LL");
     moveCaretToNextWordWithSelection();
+    checkResult("<selection>LL RR RR </selection>LL");
+    moveCaretToNextWordWithSelection();
     checkResult("<selection>LL RR RR LL</selection>");
     moveCaretToPreviousWordWithSelection();
     checkResult("<selection>LL RR RR </selection>LL");
@@ -404,7 +404,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     moveCaretToPreviousWordWithSelection();
     checkResult("<selection>LL </selection>RR RR LL");
     moveCaretToPreviousWordWithSelection();
-    checkResult("<selection>LL RR</selection> RR LL");
+    checkResult("<selection>LL RR </selection>RR LL");
     moveCaretToPreviousWordWithSelection();
     checkResult("<selection>LL RR RR</selection> LL");
     moveCaretToPreviousWordWithSelection();

@@ -16,7 +16,6 @@ ColHeader = _console_thrift.ColHeader
 RowHeader = _console_thrift.RowHeader
 
 UnsupportedArrayTypeException = _console_thrift.UnsupportedArrayTypeException
-ExceedingArrayDimensionsException = _console_thrift.ExceedingArrayDimensionsException
 KeyboardInterruptException = _console_thrift.KeyboardInterruptException
 
 PythonConsoleFrontendService = _console_thrift.PythonConsoleFrontendService

@@ -323,7 +323,7 @@ public class VcsLogUtil {
    * waits for it in a background task, and executes the action after the log is ready.
    */
   @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<VcsProjectLog, VcsLogManager> action) {
     VcsProjectLog log = VcsProjectLog.getInstance(project);
     VcsLogManager manager = log.getLogManager();
     if (manager != null) {
@@ -362,21 +362,18 @@ public class VcsLogUtil {
   public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     int maxSize = 0;
     for (VcsFullCommitDetails details : detailsList) {
-      maxSize = Math.max(getSize(details), maxSize);
+      int size = 0;
+      if (details instanceof VcsChangesLazilyParsedDetails) {
+        size = ((VcsChangesLazilyParsedDetails)details).size();
+      }
+      else {
+        for (int i = 0; i < details.getParents().size(); i++) {
+          size += details.getChanges(i).size();
+        }
+      }
+      maxSize = Math.max(size, maxSize);
     }
     return maxSize;
-  }
-
-  public static int getSize(@NotNull VcsFullCommitDetails details) {
-    if (details instanceof VcsChangesLazilyParsedDetails) {
-      return ((VcsChangesLazilyParsedDetails)details).size();
-    }
-    
-    int size = 0;
-    for (int i = 0; i < details.getParents().size(); i++) {
-      size += details.getChanges(i).size();
-    }
-    return size;
   }
 
   public static int getShownChangesLimit() {

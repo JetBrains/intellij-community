@@ -49,8 +49,8 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return "CollectionChildDescription:" + getXmlName();
   }
 
-  List<XmlTag> getCollectionSubTags(DomInvocationHandler<?,?> handler, @NotNull XmlTag tag, boolean processIncludes) {
-    return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile(), processIncludes);
+  List<XmlTag> getCollectionSubTags(DomInvocationHandler<?,?> handler, @NotNull XmlTag tag) {
+    return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
   }
 
   @Override

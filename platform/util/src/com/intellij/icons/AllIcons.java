@@ -40,11 +40,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Exit = IconLoader.getIcon("/actions/exit.svg");
     /** 16x16 */ public static final Icon Expandall = IconLoader.getIcon("/actions/expandall.svg");
     /** 16x16 */ public static final Icon Find = IconLoader.getIcon("/actions/find.svg");
-    /** 16x16 */ public static final Icon FindAndShowNextMatches = IconLoader.getIcon("/actions/findAndShowNextMatches.svg");
-    /** 16x16 */ public static final Icon FindAndShowPrevMatches = IconLoader.getIcon("/actions/findAndShowPrevMatches.svg");
-    /** 16x16 */ public static final Icon FindBackward = IconLoader.getIcon("/actions/findBackward.svg");
-    /** 16x16 */ public static final Icon FindEntireFile = IconLoader.getIcon("/actions/findEntireFile.svg");
-    /** 16x16 */ public static final Icon FindForward = IconLoader.getIcon("/actions/findForward.svg");
     /** 16x16 */ public static final Icon ForceRefresh = IconLoader.getIcon("/actions/forceRefresh.svg");
     /** 16x16 */ public static final Icon Forward = IconLoader.getIcon("/actions/forward.svg");
     /** 16x16 */ public static final Icon GC = IconLoader.getIcon("/actions/gc.svg");
@@ -61,7 +56,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Highlighting = IconLoader.getIcon("/actions/highlighting.svg");
     /** 16x16 */ public static final Icon Install = IconLoader.getIcon("/actions/install.svg");
     /** 16x16 */ public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.svg");
-    /** 16x16 */ public static final Icon IntentionBulbGrey = IconLoader.getIcon("/actions/intentionBulbGrey.svg");
     /** 16x16 */ public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.svg");
     /** 16x16 */ public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.svg");
     /** 16x16 */ public static final Icon ListFiles = IconLoader.getIcon("/actions/listFiles.svg");

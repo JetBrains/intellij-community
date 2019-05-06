@@ -110,46 +110,43 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
     val writer = JsonFactory().createGenerator(stringWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
-    writer.use {
-      writer.obj {
-        writer.writeStringField("version", "5")
-        writeServiceStats(writer)
 
-        val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
-        var totalDuration: Long = 0
-        writer.array("items") {
-          totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
+    writer.obj {
+      writer.writeStringField("version", "5")
+      writeServiceStats(writer)
 
-          for ((index, item) in items.withIndex()) {
-            writer.obj {
-              writer.writeStringField("name", item.name)
-              if (item.description != null) {
-                writer.writeStringField("description", item.description)
-              }
-
-              val duration = item.end - item.start
-              if (!isSubItem(item, index, items)) {
-                totalDuration += duration
-              }
-
-              writeItemTimeInfo(item, duration, startTime, writer)
+      val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
+      var totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
+      writer.array("items") {
+        for ((index, item) in items.withIndex()) {
+          writer.obj {
+            writer.writeStringField("name", item.name)
+            if (item.description != null) {
+              writer.writeStringField("description", item.description)
             }
+
+            val duration = item.end - item.start
+            if (!isSubItem(item, index, items)) {
+              totalDuration += duration
+            }
+
+            writeItemTimeInfo(item, duration, startTime, writer)
           }
-          totalDuration += writeUnknown(writer, items.last().end, end, startTime)
         }
-
-        writeParallelActivities(activities, startTime, writer)
-
-        writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
-        writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
-
+        totalDuration += writeUnknown(writer, items.last().end, end, startTime)
       }
+
+      writeParallelActivities(activities, startTime, writer)
+
+      writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
+      writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
+
     }
+    writer.flush()
 
     lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
 
-    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", true)) {
-      stringWriter.write("\n=== Stop: StartUp Measurement ===")
+    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", true)) { stringWriter.write("\n=== Stop: StartUp Measurement ===")
       LOG.info(stringWriter.toString())
     }
   }

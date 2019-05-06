@@ -26,8 +26,6 @@ import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
-import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -117,8 +115,7 @@ public class GradleExecutionHelper {
       if (buildEnvironment != null) {
         // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
         // to avoid spawning of the second gradle daemon
-        BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
-        List<String> buildJvmArguments = buildIdentifier == null || "buildSrc".equals(buildIdentifier.getRootDir().getName())
+        List<String> buildJvmArguments = "buildSrc".equals(buildEnvironment.getBuildIdentifier().getRootDir().getName())
                                          ? ContainerUtil.emptyList()
                                          : buildEnvironment.getJava().getJvmArguments();
         merged = mergeJvmArgs(settings.getServiceDirectory(), buildJvmArguments, jvmArgs);
@@ -176,14 +173,7 @@ public class GradleExecutionHelper {
       operation.setJavaHome(new File(javaHome));
     }
 
-    String buildRootDir;
-    if (buildEnvironment == null) {
-      buildRootDir = null;
-    }
-    else {
-      BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
-      buildRootDir = buildIdentifier == null ? null : buildIdentifier.getRootDir().getPath();
-    }
+    String buildRootDir = buildEnvironment == null ? null : buildEnvironment.getBuildIdentifier().getRootDir().getPath();
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener(gradleProgressListener,
@@ -197,16 +187,6 @@ public class GradleExecutionHelper {
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
     }
-  }
-
-  @Nullable
-  private static BuildIdentifier getBuildIdentifier(@NotNull BuildEnvironment buildEnvironment) {
-    try {
-      return buildEnvironment.getBuildIdentifier();
-    }
-    catch (UnsupportedMethodException ignore) {
-    }
-    return null;
   }
 
   private static void setupEnvironment(@NotNull LongRunningOperation operation,
@@ -233,7 +213,7 @@ public class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<? super ProjectConnection, ? extends T> f) {
+  public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<ProjectConnection, T> f) {
 
     final String projectDir;
     final File projectPathFile = new File(projectPath);
@@ -598,34 +578,28 @@ public class GradleExecutionHelper {
                                                      @NotNull ExternalSystemTaskId taskId,
                                                      @NotNull ExternalSystemTaskNotificationListener listener,
                                                      @Nullable CancellationTokenSource cancellationTokenSource) {
-    BuildEnvironment buildEnvironment = null;
-    try {
-      ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
-      if (cancellationTokenSource != null) {
-        modelBuilder.withCancellationToken(cancellationTokenSource.token());
-      }
-      // do not use connection.getModel methods since it doesn't allow to handle progress events
-      // and we can miss gradle tooling client side events like distribution download.
-      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
-      modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
-      modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
-      modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
-      modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
-
-      buildEnvironment = modelBuilder.get();
-      if (LOG.isDebugEnabled()) {
-        try {
-          LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-          LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
-          LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
-        }
-        catch (Throwable t) {
-          LOG.debug(t);
-        }
-      }
+    ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
+    if (cancellationTokenSource != null) {
+      modelBuilder.withCancellationToken(cancellationTokenSource.token());
     }
-    catch (Throwable t) {
-      LOG.debug(t);
+    // do not use connection.getModel methods since it doesn't allow to handle progress events
+    // and we can miss gradle tooling client side events like distribution download.
+    GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+    modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
+    modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+    modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
+    modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
+
+    final BuildEnvironment buildEnvironment = modelBuilder.get();
+    if (LOG.isDebugEnabled()) {
+      try {
+        LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
+        LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
+        LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
+      }
+      catch (Throwable t) {
+        LOG.debug(t);
+      }
     }
     return buildEnvironment;
   }

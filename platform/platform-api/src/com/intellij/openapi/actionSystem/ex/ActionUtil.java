@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,7 +285,8 @@ public class ActionUtil {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
   }
 
-  public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
+  @NotNull
+  public static void sortAlphabetically(@NotNull List<AnAction> list) {
     list.sort(new Comparator<AnAction>() {
       @Override
       public int compare(AnAction o1, AnAction o2) {
@@ -294,6 +295,7 @@ public class ActionUtil {
     });
   }
 
+  @NotNull
   /**
    * Tries to find an 'action' and 'target action' by text and put the 'action' just before of after the 'target action'
    */
@@ -366,7 +368,7 @@ public class ActionUtil {
   }
 
   public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
-                                                  @NotNull Predicate<? super AnAction> condition) {
+                                                  @NotNull Predicate<AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
       if (condition.test(child)) return true;
       if (child instanceof ActionGroup) {
@@ -436,7 +438,7 @@ public class ActionUtil {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       manager.fireBeforeActionPerformed(action, dataContext, event);
-      performActionDumbAware(action, event);
+      action.actionPerformed(event);
       if (onDone != null) {
         onDone.run();
       }

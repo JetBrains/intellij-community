@@ -28,7 +28,7 @@ private const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CO
 private const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES"
 
 class ProjectConfigurationFilesProcessorImpl(project: Project,
-                                             private val parentDisposable: Disposable,
+                                             parentDisposable: Disposable,
                                              private val vcsName: String,
                                              private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, ChangeListListener {
@@ -39,7 +39,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
 
-  fun install() {
+  init {
     runReadAction {
       if (!project.isDisposed) {
         changeListManager.addChangeListListener(this, parentDisposable)

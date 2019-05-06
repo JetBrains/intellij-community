@@ -13,7 +13,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -163,9 +162,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       return navBarItem;
     });
     list.setBorder(JBUI.Borders.empty(5));
-    ActionMap map = list.getActionMap();
-    map.put(ListActions.Left.ID, createMoveAction(panel, -1));
-    map.put(ListActions.Right.ID, createMoveAction(panel, 1));
+    installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
+    installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
     installEnterAction(list, panel, KeyEvent.VK_ENTER);
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
     JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o));
@@ -198,8 +196,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
   }
 
-  private static Action createMoveAction(@NotNull NavBarPanel panel, int direction) {
-    return new AbstractAction() {
+  private static void installMoveAction(JBList list, NavBarPanel panel, int direction, int keyCode) {
+    AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         panel.cancelPopup();
@@ -207,5 +205,6 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         panel.restorePopup();
       }
     };
+    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
   }
 }

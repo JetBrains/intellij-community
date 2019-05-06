@@ -11,7 +11,6 @@ public class WarningScanningTest extends MavenBuildToolLogTestUtils {
              "[WARNING] The POM for some.maven:artifact:jar:1.2 is missing, no dependency information available\n")
       .withParsers(new WarningNotifier())
       .expect("The POM for some.maven:artifact:jar:1.2 is missing, no dependency information available", WarningEventMatcher::new)
-      .withSkippedOutput()
       .check();
   }
 
@@ -33,7 +32,6 @@ public class WarningScanningTest extends MavenBuildToolLogTestUtils {
               "It is highly recommended to fix these problems because they threaten the stability of your build.\n" +
               "For this reason, future Maven versions might no longer support building such malformed projects",
               WarningEventMatcher::new)
-      .withSkippedOutput()
       .check();
   }
 }

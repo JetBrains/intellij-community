@@ -7,9 +7,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Tag("serviceView")
 final class ServiceViewState {
   private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
@@ -20,15 +17,6 @@ final class ServiceViewState {
   @Tag("treeState")
   public Element treeStateElement;
 
-  public String viewType = "";
-  public List<ServiceState> roots = new ArrayList<>();
-  public int parentView = -1;
-
   @Transient
   public TreeState treeState = TreeState.createFrom(null);
-
-  public static final class ServiceState {
-    public List<String> path;
-    public String contributor;
-  }
 }

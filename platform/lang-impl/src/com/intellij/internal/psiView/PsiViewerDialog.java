@@ -588,9 +588,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private static List<String> getAllExtensions(LanguageFileType fileType) {
     final List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(fileType);
     final List<String> extensions = new ArrayList<>();
-    extensions.add(StringUtil.toLowerCase(fileType.getDefaultExtension()));
+    extensions.add(fileType.getDefaultExtension().toLowerCase());
     for (FileNameMatcher matcher : associations) {
-      final String presentableString = StringUtil.toLowerCase(matcher.getPresentableString());
+      final String presentableString = matcher.getPresentableString().toLowerCase();
       if (presentableString.startsWith("*.")) {
         final String ext = presentableString.substring(2);
         if (ext.length() > 0 && !extensions.contains(ext) && EXT_PATTERN.matcher(ext).matches()) {
@@ -679,7 +679,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         final FileType type = (FileType)source;
         String ext = type.getDefaultExtension();
         if (myExtensionComboBox.isVisible()) {
-          ext = StringUtil.toLowerCase(myExtensionComboBox.getSelectedItem().toString());
+          ext = myExtensionComboBox.getSelectedItem().toString().toLowerCase(Locale.ENGLISH);
         }
         if (type instanceof LanguageFileType) {
           final Language dialect = (Language)myDialectComboBox.getSelectedItem();

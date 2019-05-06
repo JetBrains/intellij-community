@@ -57,7 +57,6 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
   @Test
   fun `test two levels of tree console view are auto-expanded`() {
     val tree = treeConsoleView.tree
-    treeConsoleView.addFilter { true }
     listOf(
       StartBuildEventImpl(buildDescriptor, "build started"),
       StartEventImpl("event_id", buildDescriptor.id, 1000, "build event"),

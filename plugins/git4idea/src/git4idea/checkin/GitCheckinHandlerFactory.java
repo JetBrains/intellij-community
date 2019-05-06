@@ -102,7 +102,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
       final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<>();
       ProgressManager.getInstance().run(
-        new Task.Modal(myProject, "Checking for Line Separator Issues...", true) {
+        new Task.Modal(myProject, "Checking for Line Separator Issues", true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             crlfHelper.set(GitCrlfProblemsDetector.detect(GitCheckinHandlerFactory.MyCheckinHandler.this.myProject,
@@ -202,7 +202,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                                                                         @NotNull final Collection<VirtualFile> roots,
                                                                         final boolean stopWhenFoundFirst) {
       final Map<VirtualFile, Couple<String>> defined = new HashMap<>();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git User Name...", true) {
+      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git User Name", true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {
           for (VirtualFile root : roots) {

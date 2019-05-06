@@ -79,7 +79,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     final Set<String> childrenOfSomebody = new HashSet<>();
     new AbstractFilterChildren<File>() {
       @Override
-      protected void sortAscending(List<? extends File> list) {
+      protected void sortAscending(List<File> list) {
         Collections.sort(list);
       }
 

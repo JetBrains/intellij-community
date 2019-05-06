@@ -2,7 +2,6 @@
 package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.tree.TreeNodeBackgroundSupplier;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -22,19 +21,19 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
-import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
+import static com.intellij.ui.ExpandableItemsHandler.RENDERER_DISABLED;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
 
+@SuppressWarnings("unused")
 public final class DefaultTreeUI extends BasicTreeUI {
-  public static final Key<Control.Painter> CONTROL_PAINTER = Key.create("tree control painter");
-  public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -50,11 +49,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @NotNull
   private static Control.Painter getPainter(@NotNull JTree tree) {
-    Control.Painter painter = UIUtil.getClientProperty(tree, CONTROL_PAINTER);
-    if (painter != null) return painter;
-    if (is("ide.tree.painter.classic.compact")) return Control.Painter.COMPACT;
+    Object property = tree.getClientProperty(Control.Painter.class);
+    if (property instanceof Control.Painter) return (Control.Painter)property;
+    if (is("ide.tree.painter.classic.compact")) return ClassicPainter.COMPACT;
     if (is("ide.tree.painter.compact.default")) return CompactPainter.DEFAULT;
-    return Control.Painter.DEFAULT;
+    return ClassicPainter.DEFAULT;
   }
 
   @Nullable
@@ -90,6 +89,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
     }
   }
 
+  private static boolean isRendererReducible(Component component) {
+    if (component instanceof DefaultTreeCellRenderer) return false;
+    return !UIUtil.isClientPropertyTrue(component, RENDERER_DISABLED);
+  }
+
   private static boolean isSuspiciousRenderer(Component component) {
     if (component instanceof JComponent) {
       Method method = getMethod(component.getClass(), "validate");
@@ -108,9 +112,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
     return -1;
   }
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static ComponentUI createUI(JComponent component) {
-    assert component instanceof JTree;
     return new DefaultTreeUI();
   }
 
@@ -185,13 +188,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
             JBScrollPane pane = (JBScrollPane)parent;
             JScrollBar hsb = pane.getHorizontalScrollBar();
             if (hsb != null && hsb.isVisible()) hsbVisible = true;
-            JScrollBar vsb = pane.getVerticalScrollBar();
-            if (vsb != null && vsb.isVisible() && !vsb.isOpaque()) {
-              Boolean property = UIUtil.getClientProperty(vsb, IGNORE_SCROLLBAR_IN_INSETS);
-              if (isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
-                vsbWidth = vsb.getWidth(); // to calculate a right margin of a renderer component
-              }
-            }
+            JScrollBar vsb = isMac ? null : pane.getVerticalScrollBar();
+            if (vsb != null && vsb.isVisible() && !vsb.isOpaque()) vsbWidth = vsb.getWidth();
           }
         }
         while (path != null) {
@@ -220,7 +218,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
-                if (width < bounds.width && (expandedRow == row || hsbVisible && !UIUtil.isClientPropertyTrue(component, SHRINK_LONG_RENDERER))) {
+                if (width < bounds.width && (expandedRow == row || hsbVisible && !isRendererReducible(component))) {
                   width = bounds.width; // disable shrinking a long nodes
                 }
                 setBackground(tree, component, background, false);
@@ -247,7 +245,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
     super.installDefaults();
     JTree tree = getTree();
     if (tree != null) {
-      LookAndFeel.installBorder(tree, "Tree.border");
       if (tree.isForegroundSet()) tree.setForeground(null);
       if (UIManager.get("Tree.showsRootHandles") == null) {
         LookAndFeel.installProperty(tree, JTree.SHOWS_ROOT_HANDLES_PROPERTY, Boolean.TRUE);

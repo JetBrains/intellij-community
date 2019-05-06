@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.Locale;
 
 /**
  * @author yole
@@ -272,7 +273,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
       if (isValidProperty(category)) return true;
 
       // Unicode properties and scripts available since JDK 1.7
-      category = StringUtil.toUpperCase(category);
+      category = category.toUpperCase(Locale.ENGLISH);
       switch (category) { // see java.util.regex.UnicodeProp
         // 4 aliases
         case "WHITESPACE":

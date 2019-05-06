@@ -20,13 +20,18 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VfsUtil.copyDirectory;
+import static com.intellij.util.PathUtil.toSystemDependentName;
+
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String TEST_DIC = "test.dic";
   private static final String NEW_TEST_DIC = "new_" + TEST_DIC;
   private static final String TEST_DIC_AFTER = TEST_DIC + ".after";
+  private static final String TEMP_DIC = TEST_DIC + ".temp";
+  private static final String TEST_DIC_DIR = "dictDir" ;
   public static final String TEMP = "temp";
-  private SpellCheckerSettings settings;
-  private SpellCheckerManager spellCheckerManager;
+  SpellCheckerSettings settings;
+  SpellCheckerManager spellCheckerManager;
   private VirtualFile dictDir;
 
   @Override
@@ -37,15 +42,15 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     spellCheckerManager = SpellCheckerManager.getInstance(getProject());
 
     List<String> oldPaths = settings.getCustomDictionariesPaths();
+    List<String> testDictionaries = new ArrayList<>();
     WriteAction.runAndWait(() -> {
       dictDir = getProject().getBaseDir().createChildDirectory(this, getDictDirName());
-      VfsUtil.copyDirectory(this, myFixture.copyDirectoryToProject(getTestName(true), getDictDirName()), dictDir, null);
+      copyDirectory(this, myFixture.copyDirectoryToProject(getTestName(true), getDictDirName()), dictDir, null);
     });
 
-    List<String> testDictionaries = new ArrayList<>();
-    VfsUtilCore.processFilesRecursively(dictDir, file -> {
+    VfsUtil.processFilesRecursively(dictDir, file -> {
       if (FileUtilRt.extensionEquals(file.getPath(), "dic")) {
-        testDictionaries.add(PathUtil.toSystemDependentName(file.getPath()));
+        testDictionaries.add(toSystemDependentName(file.getPath()));
       }
       return true;
     });
@@ -66,9 +71,6 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
         WriteAction.run(() -> dictDir.delete(this));
       }
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
     finally {
       super.tearDown();
     }
@@ -85,6 +87,12 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
 
   private VirtualFile getTestDictionaryAfter() {
     return dictDir.findChild(TEST_DIC_AFTER);
+  }
+
+  private String loadFromTestDictionary() throws IOException {
+    final VirtualFile file = getTestDictionaryFile();
+    if (file == null) return null;
+    return VfsUtilCore.loadText(file);
   }
 
   private void modifyDictContent(String newContent) throws IOException {

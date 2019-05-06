@@ -7,7 +7,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
 
         private boolean isTagPresentation(final String presentation, final String tagName) {
           // "head", "head#id", "head.cls"
-          final String lowerCased = StringUtil.toLowerCase(presentation);
+          final String lowerCased = presentation.toLowerCase();
           return lowerCased.startsWith(tagName) &&
                  (lowerCased.length() == tagName.length() || !Character.isLetter(lowerCased.charAt(tagName.length())));
         }

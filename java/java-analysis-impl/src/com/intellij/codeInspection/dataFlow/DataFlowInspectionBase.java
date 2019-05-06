@@ -574,14 +574,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (PsiUtil.canBeOverridden(method)) return;
 
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
-    if (info == null || info.getNullability() != Nullability.NULLABLE) return;
+    if (info == null || info.getNullability() != Nullability.NULLABLE || !info.getAnnotation().isPhysical()) return;
 
-    PsiAnnotation annotation = info.getAnnotation();
-    if (!annotation.isPhysical() || alsoAppliesToInternalSubType(annotation, method)) return;
-
-    PsiJavaCodeReferenceElement annoName = annotation.getNameReferenceElement();
+    PsiJavaCodeReferenceElement annoName = info.getAnnotation().getNameReferenceElement();
     assert annoName != null;
-    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(annotation) +
+    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(info.getAnnotation()) +
                  " method '" + method.getName() + "' always returns a non-null value";
     LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method)};
     if (holder.isOnTheFly()) {
@@ -594,15 +591,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     holder.registerProblem(annoName, msg, fixes);
   }
 
-  private static boolean alsoAppliesToInternalSubType(PsiAnnotation annotation, PsiMethod method) {
-    return AnnotationTargetUtil.isTypeAnnotation(annotation) && method.getReturnType() instanceof PsiArrayType;
-  }
-
-  private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
+  private static void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(call -> {
       String message = getContractMessage(JavaMethodContractUtil.getMethodCallContracts(call));
-      LocalQuickFix causeFix = reporter.isOnTheFly() ? createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType()) : null;
-      reporter.registerProblem(getElementToHighlight(call), message, causeFix);
+      reporter.registerProblem(getElementToHighlight(call), message);
     });
   }
 

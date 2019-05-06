@@ -86,6 +86,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   };
 
   protected JavaCodeInsightTestFixture myFixture;
+  protected Module myModule;
 
   @Override
   protected void setUp() throws Exception {
@@ -98,6 +99,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
+
+    myModule = myFixture.getModule();
 
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
   }
@@ -120,6 +123,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     }
     finally {
       myFixture = null;
+      myModule = null;
       super.tearDown();
     }
   }
@@ -154,10 +158,6 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   protected PsiFile getFile() { return myFixture.getFile(); }
 
   protected Editor getEditor() { return myFixture.getEditor(); }
-
-  protected Module getModule() {
-    return myFixture.getModule();
-  }
 
   protected PsiManager getPsiManager() {
     return PsiManager.getInstance(getProject());

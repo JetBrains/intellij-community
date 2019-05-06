@@ -31,7 +31,7 @@ import kotlin.concurrent.write
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
-class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: Disposable)
+class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
@@ -41,7 +41,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-  fun install() {
+  init {
     runReadAction {
       if (!project.isDisposed) {
         changeListManager.addChangeListListener(this, parentDisposable)
@@ -175,10 +175,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
 
   private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
-  override fun needDoForCurrentProject(): Boolean {
-    val appSettings = VcsApplicationSettings.getInstance()
-    return !appSettings.DISABLE_MANAGE_IGNORE_FILES && (appSettings.MANAGE_IGNORE_FILES || super.needDoForCurrentProject())
-  }
+  override fun needDoForCurrentProject() = VcsApplicationSettings.getInstance().MANAGE_IGNORE_FILES || super.needDoForCurrentProject()
 
   private fun getAffectedFile(event: VFileEvent): VirtualFile? =
     runReadAction {
@@ -192,5 +189,5 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
 
   private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && isRename
 
-  private fun needProcessIgnoredFiles() = ApplicationManager.getApplication().isInternal || Registry.`is`("vcs.ignorefile.generation", true)
+  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation", true)
 }

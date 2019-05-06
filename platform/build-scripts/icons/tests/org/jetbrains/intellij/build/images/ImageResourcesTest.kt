@@ -25,7 +25,7 @@ class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectBadIcons(TestRoot.COMMUNITY)
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.COMMUNITY)
     }
   }
 }
@@ -35,7 +35,7 @@ class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
     }
   }
 }
@@ -45,7 +45,7 @@ class CommunityIconClassesTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectNonRegeneratedIconClasses(TestRoot.COMMUNITY)
+      return ImageResourcesTestBase.collectNonRegeneratedIconClasses(TestRoot.COMMUNITY)
     }
   }
 }
@@ -56,7 +56,7 @@ class AllImageResourcesSanityTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectBadIcons(TestRoot.ALL, true)
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.ALL, true)
     }
   }
 }
@@ -67,7 +67,7 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectIconsWithNonOptimumSize(TestRoot.ALL, false, true)
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.ALL, false, true)
     }
   }
 }
@@ -171,7 +171,7 @@ abstract class ImageResourcesTestBase {
 private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
   val failures = ArrayList<FailedTest>()
 
-  override fun log(severity: Severity,
+  override fun log(severity: ImageSanityCheckerBase.Severity,
                    message: String,
                    module: JpsModule,
                    images: Collection<ImagePaths>) {

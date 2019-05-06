@@ -716,12 +716,12 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   @Override
-  public void addFixedHotfixGroup(String text, List<? extends SimpleErrorData> children) {
+  public void addFixedHotfixGroup(String text, List<SimpleErrorData> children) {
     myErrorViewStructure.addFixedHotfixGroup(text, children);
   }
 
   @Override
-  public void addHotfixGroup(HotfixData hotfixData, List<? extends SimpleErrorData> children) {
+  public void addHotfixGroup(HotfixData hotfixData, List<SimpleErrorData> children) {
     myErrorViewStructure.addHotfixGroup(hotfixData, children, this);
   }
 

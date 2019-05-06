@@ -24,7 +24,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +51,6 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
    * @deprecated use {@link #ListSpeedSearch(JList, Function)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public ListSpeedSearch(final JList<T> list, @Nullable Convertor<? super T, String> convertor) {
     super(list);

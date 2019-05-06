@@ -26,7 +26,7 @@ public class FilterFilePathStrings extends AbstractFilterChildren<String> {
   }
 
   @Override
-  protected void sortAscending(List<? extends String> list) {
+  protected void sortAscending(List<String> list) {
     Collections.sort(list);
   }
 

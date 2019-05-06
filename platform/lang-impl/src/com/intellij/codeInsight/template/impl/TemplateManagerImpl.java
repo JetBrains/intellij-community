@@ -19,7 +19,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
@@ -50,7 +49,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public TemplateManagerImpl(@NotNull Project project, @NotNull MessageBus messageBus) {
     myProject = project;
     myEventPublisher = messageBus.syncPublisher(TEMPLATE_STARTED_TOPIC);
-    EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
+    final EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
@@ -93,10 +92,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @Nullable
   public static TemplateState getTemplateState(@NotNull Editor editor) {
-    UserDataHolder stateHolder = InjectedLanguageUtil.getTopLevelEditor(editor);
-    TemplateState templateState = stateHolder.getUserData(TEMPLATE_STATE_KEY);
+    TemplateState templateState = editor.getUserData(TEMPLATE_STATE_KEY);
     if (templateState != null && templateState.isDisposed()) {
-      stateHolder.putUserData(TEMPLATE_STATE_KEY, null);
+      editor.putUserData(TEMPLATE_STATE_KEY, null);
       return null;
     }
     return templateState;
@@ -105,21 +103,17 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   static void clearTemplateState(@NotNull Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
-      Editor stateEditor = prevState.getEditor();
-      if (stateEditor != null) {
-        stateEditor.putUserData(TEMPLATE_STATE_KEY, null);
-      }
       Disposer.dispose(prevState);
+      editor.putUserData(TEMPLATE_STATE_KEY, null);
     }
   }
 
   @NotNull
   private TemplateState initTemplateState(@NotNull Editor editor) {
-    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
-    clearTemplateState(topLevelEditor);
-    TemplateState state = new TemplateState(myProject, topLevelEditor);
+    clearTemplateState(editor);
+    TemplateState state = new TemplateState(myProject, editor);
     Disposer.register(this, state);
-    topLevelEditor.putUserData(TEMPLATE_STATE_KEY, state);
+    editor.putUserData(TEMPLATE_STATE_KEY, state);
     return state;
   }
 
@@ -147,7 +141,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public void startTemplate(@NotNull Editor editor,
                             @NotNull Template template,
                             TemplateEditingListener listener,
-                            final PairProcessor<? super String, ? super String> processor) {
+                            final PairProcessor<String, String> processor) {
     startTemplate(editor, null, template, true, listener, processor, null);
   }
 
@@ -156,7 +150,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
                              final Template template,
                              boolean inSeparateCommand,
                              TemplateEditingListener listener,
-                             final PairProcessor<? super String, ? super String> processor,
+                             final PairProcessor<String, String> processor,
                              final Map<String, String> predefinedVarValues) {
     final TemplateState templateState = initTemplateState(editor);
 
@@ -242,7 +236,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   @Nullable
-  public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<? super String, ? super String> processor) {
+  public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<String, String> processor) {
     if (editor.getSelectionModel().hasSelection()) {
       return null;
     }
@@ -349,7 +343,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   @Nullable
   public Runnable startNonCustomTemplates(final Map<TemplateImpl, String> template2argument,
                                           final Editor editor,
-                                          @Nullable final PairProcessor<? super String, ? super String> processor) {
+                                          @Nullable final PairProcessor<String, String> processor) {
     final int caretOffset = editor.getCaretModel().getOffset();
     final Document document = editor.getDocument();
     final CharSequence text = document.getCharsSequence();
@@ -397,7 +391,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   public void startTemplateWithPrefix(final Editor editor,
                                       final TemplateImpl template,
-                                      @Nullable final PairProcessor<? super String, ? super String> processor,
+                                      @Nullable final PairProcessor<String, String> processor,
                                       @Nullable String argument) {
     final int caretOffset = editor.getCaretModel().getOffset();
     String key = template.getKey();
@@ -415,7 +409,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public void startTemplateWithPrefix(final Editor editor,
                                       final TemplateImpl template,
                                       final int templateStart,
-                                      @Nullable final PairProcessor<? super String, ? super String> processor,
+                                      @Nullable final PairProcessor<String, String> processor,
                                       @Nullable final String argument) {
     final int caretOffset = editor.getCaretModel().getOffset();
     final TemplateState templateState = initTemplateState(editor);

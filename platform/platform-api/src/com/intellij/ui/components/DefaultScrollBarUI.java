@@ -300,9 +300,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
           if (alignment == Alignment.BOTTOM) bounds.y += offset;
         }
       }
-      boolean animate = !myTrack.bounds.equals(bounds); // animate thumb on resize
-      if (animate) myTrack.bounds.setBounds(bounds);
-      updateThumbBounds(animate);
+      myTrack.bounds.setBounds(bounds);
+      updateThumbBounds();
       paintTrack((Graphics2D)g, c);
       // process additional drawing on the track
       RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
@@ -316,7 +315,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     }
   }
 
-  private void updateThumbBounds(boolean animate) {
+  private void updateThumbBounds() {
     int value = 0;
     int min = myScrollBar.getMinimum();
     int max = myScrollBar.getMaximum();
@@ -335,7 +334,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
         int maxY = myTrack.bounds.y + myTrack.bounds.height - height;
         int y = (value < max - extent) ? convert(myTrack.bounds.height - height, value - min, range - extent) : maxY;
         myThumb.bounds.setBounds(myTrack.bounds.x, adjust(y, myTrack.bounds.y, maxY), myTrack.bounds.width, height);
-        animate |= myOldValue != value; // animate thumb on move
+        if (myOldValue != value) onThumbMove();
       }
     }
     else {
@@ -350,11 +349,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
         int x = (value < max - extent) ? convert(myTrack.bounds.width - width, value - min, range - extent) : maxX;
         if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrack.bounds.x - x + maxX;
         myThumb.bounds.setBounds(adjust(x, myTrack.bounds.x, maxX), myTrack.bounds.y, width, myTrack.bounds.height);
-        animate |= myOldValue != value; // animate thumb on move
+        if (myOldValue != value) onThumbMove();
       }
     }
     myOldValue = value;
-    if (animate) onThumbMove();
   }
 
   private int getValue() {
@@ -539,7 +537,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
     @Override
     public void stateChanged(ChangeEvent event) {
-      updateThumbBounds(false);
+      updateThumbBounds();
       // TODO: update mouse
       isValueCached = false;
       repaint();

@@ -271,7 +271,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             final int defaultIndex = defaultVariant != null ? variants.indexOf(defaultVariant) : 0;
 
             final MySelectionListener selectionListener = new MySelectionListener();
-            BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant> step =
+            ListPopupImpl popup = new ListPopupImpl(
               new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Set Breakpoint", variants) {
                 @NotNull
                 @Override
@@ -302,8 +302,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                 public int getDefaultOptionIndex() {
                   return defaultIndex;
                 }
-              };
-            ListPopupImpl popup = new ListPopupImpl(project, step) {
+              }) {
               @Override
               protected void afterShow() {
                 super.afterShow();
@@ -494,7 +493,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<? super PsiElement> processor) {
+  public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       return;

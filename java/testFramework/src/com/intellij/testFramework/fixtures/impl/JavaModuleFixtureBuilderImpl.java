@@ -41,10 +41,12 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author mike
@@ -53,7 +55,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
   private final List<Lib> myLibraries = new ArrayList<>();
   private String myJdk;
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
-  private LanguageLevel myLanguageLevel;
+  private LanguageLevel myLanguageLevel = null;
 
   public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(StdModuleTypes.JAVA, fixtureBuilder);
@@ -63,36 +65,33 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     super(moduleType, fixtureBuilder);
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
+  public JavaModuleFixtureBuilder setLanguageLevel(final LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibrary(String libraryName, @NotNull String... classPath) {
+  public JavaModuleFixtureBuilder addLibrary(String libraryName, String... classPath) {
+    final HashMap<OrderRootType, String[]> map = new HashMap<>();
     for (String path : classPath) {
       if (!new File(path).exists()) {
         System.out.println(path + " does not exist");
       }
     }
-    Map<OrderRootType, String[]> map = Collections.singletonMap(OrderRootType.CLASSES, classPath);
+    map.put(OrderRootType.CLASSES, classPath);
     myLibraries.add(new Lib(libraryName, map));
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibrary(@NonNls final String libraryName, @NotNull final Map<OrderRootType, String[]> roots) {
+  public JavaModuleFixtureBuilder addLibrary(@NonNls final String libraryName, final Map<OrderRootType, String[]> roots) {
     myLibraries.add(new Lib(libraryName, roots));
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibraryJars(String libraryName, @NotNull String basePath, @NotNull String... jars) {
+  public JavaModuleFixtureBuilder addLibraryJars(String libraryName, String basePath, String... jars) {
     if (!basePath.endsWith("/")) {
       basePath += "/";
     }
@@ -103,15 +102,14 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     return addLibrary(libraryName, classPath);
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addJdk(@NotNull String jdkPath) {
+  public JavaModuleFixtureBuilder addJdk(String jdkPath) {
     myJdk = jdkPath;
     return this;
   }
 
   @Override
-  public void setMockJdkLevel(@NotNull final MockJdkLevel level) {
+  public void setMockJdkLevel(final MockJdkLevel level) {
     myMockJdkLevel = level;
   }
 

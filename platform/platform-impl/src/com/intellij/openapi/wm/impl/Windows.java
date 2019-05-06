@@ -22,26 +22,26 @@ public class Windows {
 
     private final Signal mySignal;
 
-    private Consumer<? super String> pinnedWindowFocusLostHandler;
+    private Consumer<String> pinnedWindowFocusLostHandler;
 
     private ToolWindowProvider(Signal signal) {
       mySignal = signal;
     }
 
-    public ToolWindowProvider handleDocked(Consumer<? super String> dockedWindowHandler) {
+    public ToolWindowProvider handleDocked(Consumer<String> dockedWindowHandler) {
       return this;
     }
 
-    public ToolWindowProvider handleFocusLostOnPinned(Consumer<? super String> pinnedWindowHandler) {
+    public ToolWindowProvider handleFocusLostOnPinned(Consumer<String> pinnedWindowHandler) {
       this.pinnedWindowFocusLostHandler = pinnedWindowHandler;
       return this;
     }
 
-    public ToolWindowProvider handleFloating(Consumer<? super String> floatingWindowHandler) {
+    public ToolWindowProvider handleFloating(Consumer<String> floatingWindowHandler) {
       return this;
     }
 
-    public ToolWindowProvider handleWindowed(Consumer<? super String> windowedWindowHandler) {
+    public ToolWindowProvider handleWindowed(Consumer<String> windowedWindowHandler) {
       return this;
     }
 

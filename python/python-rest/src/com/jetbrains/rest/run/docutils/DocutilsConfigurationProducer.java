@@ -78,7 +78,7 @@ public class DocutilsConfigurationProducer extends RuntimeConfigurationProducer 
   @Nullable
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull List<? extends RunnerAndConfigurationSettings> existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     PsiFile script = location.getPsiElement().getContainingFile();
     if (script == null) {

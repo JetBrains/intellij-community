@@ -24,13 +24,13 @@ public class JavacMain {
 
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-    "-d", "-classpath", "-cp", "--class-path", "-bootclasspath", "--boot-class-path"
+    "-d", "-classpath", "-cp", "-bootclasspath"
   )));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   )));
   private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-    "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "--processor-path", "--processor-module-path", "-s", "-d", "-h"
+    "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "-s", "-d", "-h"
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
@@ -38,7 +38,7 @@ public class JavacMain {
   public static boolean compile(Collection<String> options,
                                 final Collection<? extends File> sources,
                                 Collection<? extends File> classpath,
-                                Collection<? extends File> platformClasspath,
+                                Collection<File> platformClasspath,
                                 Collection<? extends File> modulePath,
                                 Collection<? extends File> upgradeModulePath,
                                 Collection<? extends File> sourcePath,
@@ -99,7 +99,7 @@ public class JavacMain {
       if (!classpath.isEmpty()) {
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-          if (!usingJavac && isAnnotationProcessingEnabled(_options) && !_options.contains("-processorpath")) {
+          if (!usingJavac && !isOptionSet(options, "-processorpath")) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
             fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }
@@ -123,7 +123,7 @@ public class JavacMain {
 
       if (!upgradeModulePath.isEmpty()) {
         try {
-          setLocation(fileManager, "UPGRADE_MODULE_PATH", upgradeModulePath);
+          setModulePath(fileManager, "UPGRADE_MODULE_PATH", upgradeModulePath);
         }
         catch (IOException e) {
           fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -133,11 +133,7 @@ public class JavacMain {
 
       if (!modulePath.isEmpty()) {
         try {
-          setLocation(fileManager, "MODULE_PATH", modulePath);
-          if (isAnnotationProcessingEnabled(_options) && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null) {
-            // default annotation processing discovery path to module path if not explicitly set
-            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", modulePath);
-          }
+          setModulePath(fileManager, "MODULE_PATH", modulePath);
         }
         catch (IOException e) {
           fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -172,10 +168,9 @@ public class JavacMain {
         }
       };
 
-      final StandardJavaFileManager fm = wrapWithCallDispatcher(fileManager);
-      final JavaCompiler.CompilationTask task = tryUnwrapFileManager(compiler.getTask(
-        out, fm, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
-      ), fileManager);
+      final JavaCompiler.CompilationTask task = compiler.getTask(
+        out, wrapWithCallDispatcher(fileManager), diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
+      );
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
         try {
           extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
@@ -226,52 +221,11 @@ public class JavacMain {
     return false;
   }
 
-  // Workaround for javac bug:
-  // the internal ClientCodeWrapper class may not implement some interface-declared methods
-  // which throw UnsupportedOperationException instead of delegating to our JpsFileManager instance
-  private static JavaCompiler.CompilationTask tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
-    try {
-      final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
-      final Field contextField = findFieldOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
-      if (contextField != null) {
-        final Object contextObject = contextField.get(task);
-        final Method getMethod = contextObject.getClass().getMethod("get", Class.class);
-        if (getMethod.invoke(contextObject, JavaFileManager.class) != null) {
-          final Method putMethod = contextObject.getClass().getMethod("put", Class.class, Object.class);
-          putMethod.invoke(contextObject, JavaFileManager.class, null);  // must clear previous value first
-          putMethod.invoke(contextObject, JavaFileManager.class, manager);
-        }
-      }
-    }
-    catch (Throwable ignored) {
-    }
-    return task;
-  }
-
-  private static Field findFieldOfType(final Class<?> aClass, final Class<?> fieldType) {
-    for (Class<?> from = aClass; from != null && !Object.class.equals(from); from = from.getSuperclass()) {
-      for (Field field : from.getDeclaredFields()) {
-        if (fieldType.equals(field.getType())) {
-          if (!field.isAccessible()) {
-            field.setAccessible(true);
-          }
-          return field;
-        }
-      }
-    }
-    return null;
-  }
-
-  private static void setLocation(JpsJavacFileManager fileManager, String locationId, Iterable<? extends File> path) throws IOException {
-    JavaFileManager.Location location = StandardLocation.locationFor(locationId);
+  private static void setModulePath(JpsJavacFileManager fileManager, String option, Collection<? extends File> path) throws IOException {
+    JavaFileManager.Location location = StandardLocation.locationFor(option);
     if (location != null) { // if this option is supported
       fileManager.setLocation(location, path);
     }
-  }
-
-  private static Iterable<? extends File> getLocation(JpsJavacFileManager fileManager, String locationId) {
-    final JavaFileManager.Location location = StandardLocation.locationFor(locationId);
-    return location != null? fileManager.getLocation(location) : null;
   }
 
   // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
@@ -321,7 +275,21 @@ public class JavacMain {
   }
 
   private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {
-    return !options.contains("-proc:none");
+    for (String option : options) {
+      if ("-proc:none".equals(option)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean isOptionSet(final Collection<String> options, String option) {
+    for (String opt : options) {
+      if (option.equals(opt)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
@@ -343,7 +311,7 @@ public class JavacMain {
     return result;
   }
 
-  private static Collection<? extends File> buildPlatformClasspath(Collection<? extends File> platformClasspath, Collection<String> options) {
+  private static Collection<File> buildPlatformClasspath(Collection<File> platformClasspath, Collection<String> options) {
     final Map<PathOption, String> argsMap = new HashMap<PathOption, String>();
     for (Iterator<String> iterator = options.iterator(); iterator.hasNext(); ) {
       final String arg = iterator.next();
@@ -368,7 +336,7 @@ public class JavacMain {
     return result;
   }
 
-  private static void appendFiles(Map<PathOption, String> args, PathOption option, Collection<? super File> container, boolean listDir) {
+  private static void appendFiles(Map<PathOption, String> args, PathOption option, Collection<File> container, boolean listDir) {
     final String path = args.get(option);
     if (path == null) {
       return;

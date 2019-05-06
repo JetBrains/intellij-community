@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class PsiMethodReferenceCompatibilityConstraint implements ConstraintFormula {
   private static final Logger LOG = Logger.getInstance(PsiMethodReferenceCompatibilityConstraint.class);
@@ -141,7 +142,17 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
     }
 
-    JavaResolveResult resolve = LambdaUtil.performWithTargetType(myExpression, session.startWithFreshVars(groundTargetType), () -> myExpression.advancedResolve(true));
+    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+    final PsiType added = map.put(myExpression, session.startWithFreshVars(groundTargetType));
+    final JavaResolveResult resolve;
+    try {
+      resolve = myExpression.advancedResolve(true);
+    }
+    finally {
+      if (added == null) {
+        map.remove(myExpression);
+      }
+    }
     final PsiElement element = resolve.getElement();
     if (element == null || resolve instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolve).isApplicable()) {
       session.registerIncompatibleErrorMessage("No compile-time declaration for the method reference is found");

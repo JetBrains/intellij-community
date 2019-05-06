@@ -147,7 +147,7 @@ public class Replacer {
     }
   }
 
-  public void replaceAll(final List<? extends ReplacementInfo> infos) {
+  public void replaceAll(final List<ReplacementInfo> infos) {
     for (ReplacementInfo info : infos) {
       replaceHandler.prepare(info);
     }
@@ -165,11 +165,9 @@ public class Replacer {
             indicator.checkCanceled();
             indicator.setFraction((float)(i + 1) / size);
 
-            final ReplacementInfo info = infos.get(i);
-            final PsiElement element = info.getMatch(0);
-            if (element == null) {
-              continue;
-            }
+            ReplacementInfo info = infos.get(i);
+            PsiElement element = info.getMatch(0);
+            assert element != null;
             final VirtualFile vFile = element.getContainingFile().getVirtualFile();
             if (vFile != null && !vFile.equals(lastFile)) {
               indicator.setText2(vFile.getPresentableUrl());
@@ -216,7 +214,7 @@ public class Replacer {
   }
 
   private void reformatAndPostProcess(final PsiElement elementParent) {
-    if (elementParent == null || !elementParent.isValid()) return;
+    if (elementParent == null) return;
     final PsiFile containingFile = elementParent.getContainingFile();
 
     if (containingFile != null && options.isToReformatAccordingToStyle()) {

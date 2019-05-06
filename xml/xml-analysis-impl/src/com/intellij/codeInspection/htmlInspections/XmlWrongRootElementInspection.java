@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -100,8 +99,8 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
       String name = tag.getName();
       String text = nameElement.getText();
       if (tag instanceof HtmlTag) {
-        name = StringUtil.toLowerCase(name);
-        text = StringUtil.toLowerCase(text);
+        name = name.toLowerCase();
+        text = text.toLowerCase();
       }
 
       if (!name.equals(text)) {

@@ -408,17 +408,11 @@ public class ArtifactRepositoryManager {
     public boolean visitEnter(DependencyNode node) {
       final Dependency dep = node.getDependency();
       if (dep != null) {
-        Artifact artifact = dep.getArtifact();
-        String classifier = myKind.getClassifier();
-        if (classifier.isEmpty()) {
-          myRequests.add(new ArtifactRequest(node));
-        }
-        else {
-          myRequests.add(new ArtifactRequest(new ArtifactWithChangedClassifier(artifact, classifier),
-            node.getRepositories(),
-            node.getRequestContext()
-          ));
-        }
+        myRequests.add(new ArtifactRequest(
+          new ArtifactWithChangedClassifier(node.getDependency().getArtifact(), myKind.getClassifier()),
+          node.getRepositories(),
+          node.getRequestContext()
+        ));
       }
       return true;
     }

@@ -119,7 +119,7 @@ public class AbstractPopup implements JBPopup {
 
   private Runnable myFinalRunnable;
   private Runnable myOkHandler;
-  @Nullable private BooleanFunction<? super KeyEvent> myKeyEventHandler;
+  @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
   private final List<Runnable> myResizeListeners = new ArrayList<>();
@@ -223,7 +223,7 @@ public class AbstractPopup implements JBPopup {
                      boolean showBorder,
                      Color borderColor,
                      boolean cancelOnWindowDeactivation,
-                     @Nullable BooleanFunction<? super KeyEvent> keyEventHandler) {
+                     @Nullable BooleanFunction<KeyEvent> keyEventHandler) {
     assert !requestFocus || focusable : "Incorrect argument combination: requestFocus=true focusable=false";
 
     all.add(this);
@@ -1357,9 +1357,10 @@ public class AbstractPopup implements JBPopup {
     return myComponent;
   }
 
-  public Project getProject() {
-    return myProject;
+  public void setProject(Project project) {
+    myProject = project;
   }
+
 
   @Override
   public void dispose() {
@@ -1532,7 +1533,7 @@ public class AbstractPopup implements JBPopup {
       switch (event.getID()) {
         case WINDOW_ACTIVATED:
         case WINDOW_GAINED_FOCUS:
-          if (myCancelOnWindow && myPopup != null && isCancelNeeded((WindowEvent)event, myPopup.getWindow())) {
+          if (myCancelOnWindow && myPopup != null && !myPopup.isPopupWindow(((WindowEvent)event).getWindow())) {
             cancel();
           }
           break;
@@ -1886,7 +1887,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
-    BooleanFunction<? super KeyEvent> handler = myKeyEventHandler;
+    BooleanFunction<KeyEvent> handler = myKeyEventHandler;
     if (handler != null && handler.fun(e)) {
       return true;
     }
@@ -1974,14 +1975,5 @@ public class AbstractPopup implements JBPopup {
   public void addResizeListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
     myResizeListeners.add(runnable);
     Disposer.register(parentDisposable, () -> myResizeListeners.remove(runnable));
-  }
-
-  /**
-   * @return {@code true} if focus moved to a popup window or its child window
-   */
-  private static boolean isCancelNeeded(@NotNull WindowEvent event, Window window) {
-    if (window == null) return true;
-    Window focused = event.getWindow();
-    return focused != window && (focused == null || window != focused.getOwner());
   }
 }

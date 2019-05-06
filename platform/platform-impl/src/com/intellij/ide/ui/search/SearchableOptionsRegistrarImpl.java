@@ -259,7 +259,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       effectiveConfigurables = configurables;
     }
 
-    String optionToCheck = StringUtil.toLowerCase(option.trim());
+    String optionToCheck = option.trim().toLowerCase(Locale.ENGLISH);
     Set<String> options = getProcessedWordsWithoutStemming(optionToCheck);
 
     Set<Configurable> nameHits = new LinkedHashSet<>();
@@ -267,7 +267,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
     for (Configurable each : effectiveConfigurables) {
       if (each.getDisplayName() == null) continue;
-      final String displayName = StringUtil.toLowerCase(each.getDisplayName());
+      final String displayName = each.getDisplayName().toLowerCase(Locale.ENGLISH);
       final List<String> allWords = StringUtil.getWordsIn(displayName);
       if (displayName.contains(optionToCheck)) {
         nameFullHits.add(each);
@@ -440,7 +440,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @Override
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
     Set<String> result = new THashSet<>();
-    for (String opt : REG_EXP.split(StringUtil.toLowerCase(text))) {
+    for (String opt : REG_EXP.split(text.toLowerCase(Locale.ENGLISH))) {
       if (isStopWord(opt)) {
         continue;
       }
@@ -458,7 +458,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @Override
   public Set<String> getProcessedWords(@NotNull String text) {
     Set<String> result = new THashSet<>();
-    String toLowerCase = StringUtil.toLowerCase(text);
+    String toLowerCase = text.toLowerCase(Locale.ENGLISH);
     final String[] options = REG_EXP.split(toLowerCase);
     for (String opt : options) {
       if (isStopWord(opt)) continue;

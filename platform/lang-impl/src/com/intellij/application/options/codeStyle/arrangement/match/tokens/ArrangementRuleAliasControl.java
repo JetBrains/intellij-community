@@ -49,7 +49,7 @@ public class ArrangementRuleAliasControl extends ArrangementMatchingRulesControl
     return rulesSequences;
   }
 
-  public void setRuleSequences(Collection<? extends StdArrangementMatchRule> sequences) {
+  public void setRuleSequences(Collection<StdArrangementMatchRule> sequences) {
     myComponents.clear();
     getModel().clear();
 

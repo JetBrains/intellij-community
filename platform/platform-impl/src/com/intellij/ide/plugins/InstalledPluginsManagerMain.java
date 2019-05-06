@@ -198,7 +198,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
-  protected void propagateUpdates(List<? extends IdeaPluginDescriptor> list) {
+  protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
   }
 
   private PluginManagerConfigurable createAvailableConfigurable(final String vendorFilter) {
@@ -313,20 +313,20 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   public boolean isModified() {
     final boolean modified = super.isModified();
     if (modified) return true;
-
+    final Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     for (int i = 0; i < pluginsModel.getRowCount(); i++) {
-      if (isPluginStateChanged(pluginsModel.getObjectAt(i))) {
+      if (isPluginStateChanged(pluginsModel.getObjectAt(i), disabledPlugins)) {
         return true;
       }
     }
     for (IdeaPluginDescriptor descriptor : pluginsModel.filtered) {
-      if (isPluginStateChanged(descriptor)) {
+      if (isPluginStateChanged(descriptor, disabledPlugins)) {
         return true;
       }
     }
     for (Map.Entry<PluginId, Boolean> entry : ((InstalledPluginsTableModel)pluginsModel).getEnabledMap().entrySet()) {
       final Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled.booleanValue() && !PluginManagerCore.isDisabled(entry.getKey().toString())) {
+      if (enabled != null && !enabled.booleanValue() && !disabledPlugins.contains(entry.getKey().toString())) {
         return true;
       }
     }
@@ -334,11 +334,11 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     return false;
   }
 
-  private boolean isPluginStateChanged(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+  private boolean isPluginStateChanged(@NotNull IdeaPluginDescriptor pluginDescriptor, @NotNull Set<String> disabledPlugins) {
     final PluginId pluginId = pluginDescriptor.getPluginId();
     final boolean enabledInTable = ((InstalledPluginsTableModel)pluginsModel).isEnabled(pluginId);
     if (pluginDescriptor.isEnabled() != enabledInTable) {
-      if (enabledInTable && !PluginManagerCore.isDisabled(pluginId.getIdString())) {
+      if (enabledInTable && !disabledPlugins.contains(pluginId.getIdString())) {
         return false; //was disabled automatically on startup
       }
       return true;
@@ -421,7 +421,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             final IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
-            final String filter = StringUtil.toLowerCase(myFilter.getFilter());
+            final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
             ((InstalledPluginsTableModel)pluginsModel).setEnabledFilter(enabledValue, filter);
             if (selection != null) {
               select(selection);

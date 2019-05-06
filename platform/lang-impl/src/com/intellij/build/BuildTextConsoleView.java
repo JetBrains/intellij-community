@@ -23,13 +23,12 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -47,27 +46,24 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
 
   @Override
   public void onEvent(@NotNull BuildEvent event) {
-    if (event instanceof FileMessageEvent) {
-      boolean isStdOut = ((FileMessageEvent)event).getResult().getKind() != MessageEvent.Kind.ERROR;
-      String description = event.getDescription();
-      if (description != null) {
-        append(description, isStdOut);
+    String description = event.getDescription();
+    if (description != null) {
+      append(description, true);
+    }
+    else if (event instanceof FileMessageEvent) {
+      FilePosition position = ((FileMessageEvent)event).getFilePosition();
+      StringBuilder fileLink = new StringBuilder();
+      fileLink.append(position.getFile().getName());
+      if (position.getStartLine() > 0) {
+        fileLink.append(":").append(position.getStartLine() + 1);
       }
-      else {
-        FilePosition position = ((FileMessageEvent)event).getFilePosition();
-        StringBuilder fileLink = new StringBuilder();
-        fileLink.append(position.getFile().getName());
-        if (position.getStartLine() > 0) {
-          fileLink.append(":").append(position.getStartLine() + 1);
-        }
-        if (position.getStartColumn() > 0) {
-          fileLink.append(":").append(position.getStartColumn() + 1);
-        }
-        print(fileLink.toString(), ConsoleViewContentType.NORMAL_OUTPUT,
-              new LazyFileHyperlinkInfo(getProject(), position.getFile().getPath(), position.getStartLine(), position.getStartColumn()));
-        print(": ", ConsoleViewContentType.NORMAL_OUTPUT);
-        append(event.getMessage(), isStdOut);
+      if (position.getStartColumn() > 0) {
+        fileLink.append(":").append(position.getStartColumn() + 1);
       }
+      print(fileLink.toString(), ConsoleViewContentType.NORMAL_OUTPUT,
+            new LazyFileHyperlinkInfo(getProject(), position.getFile().getPath(), position.getStartLine(), position.getStartColumn()));
+      print(": ", ConsoleViewContentType.NORMAL_OUTPUT);
+      append(event.getMessage(), true);
     }
     else if (event instanceof MessageEvent) {
       appendEventResult(((MessageEvent)event).getResult());
@@ -79,7 +75,7 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
       onEvent((OutputBuildEvent)event);
     }
     else {
-      append(chooseNotNull(event.getDescription(), event.getMessage()), true);
+      append(event.getMessage(), true);
     }
   }
 
@@ -118,7 +114,7 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   }
 
   public boolean append(@NotNull Failure failure) {
-    String text = chooseNotNull(failure.getDescription(), failure.getMessage());
+    String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
     if (text == null && failure.getError() != null) {
       text = failure.getError().getMessage();
     }

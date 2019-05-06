@@ -47,7 +47,7 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
       // compiler errors should be handled by BuildOutputParsers
       return true;
     }
-    if (unwrapped.getCause() instanceof ObjectStreamException) {
+    if(unwrapped.getCause() instanceof ObjectStreamException) {
       // gradle tooling internal serialization issues
       return true;
     }
@@ -76,8 +76,9 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
   }
 
   protected void updateNotification(@NotNull final NotificationData notificationData,
-                                    @NotNull final Project project,
-                                    @NotNull ExternalSystemException e) {
+                                         @NotNull final Project project,
+                                         @NotNull ExternalSystemException e) {
+
     for (String fix : e.getQuickFixes()) {
       if (OpenGradleSettingsCallback.ID.equals(fix)) {
         notificationData.setListener(OpenGradleSettingsCallback.ID, new OpenGradleSettingsCallback(project));

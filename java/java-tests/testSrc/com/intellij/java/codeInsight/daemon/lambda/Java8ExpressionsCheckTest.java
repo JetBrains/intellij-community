@@ -91,7 +91,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTestParametersSideEffects() {
-    configure();
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     Collection<PsiParameter> parameters = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
     for (PsiParameter parameter : parameters) {
       if (parameter.getTypeElement() == null) { //lambda parameter
@@ -101,13 +101,13 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
           assertNotNull(expression.getText(), expression.resolveMethod());
         }
 
-        dropCaches();
+        getPsiManager().dropResolveCaches();
       }
     }
   }
 
   public void testCachingOfResultsDuringCandidatesIteration() {
-    configure();
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiMethodCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class);
 
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
@@ -167,7 +167,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTestCachedUnresolved() {
-    configure();
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     PsiMethodCallExpression callExpression =
       PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
 
@@ -180,45 +180,15 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  private void configure() {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-  }
-
   public void testIDEA140035() {
     doTestAllMethodCallExpressions();
     final Collection<PsiParameter> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
     for (PsiParameter parameter : parameterLists) {
       if (parameter.getTypeElement() != null) continue;
-      dropCaches();
+      getPsiManager().dropResolveCaches();
       final PsiType type = parameter.getType();
       assertFalse("Failed inference for: " + parameter.getParent().getText(), type instanceof PsiLambdaParameterType);
     }
-  }
-
-  private static void dropCaches() {
-    getPsiManager().dropResolveCaches();
-  }
-
-  public void testOuterCallOverloads() {
-    configure();
-    PsiMethodCallExpression innerCall =
-      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
-
-    PsiMethodCallExpression outerCall = (PsiMethodCallExpression) innerCall.getParent().getParent();
-
-    assertAmbiguous(outerCall);
-    assertAmbiguous(innerCall);
-
-    dropCaches();
-
-    assertAmbiguous(innerCall);
-    assertAmbiguous(outerCall);
-  }
-
-  private static void assertAmbiguous(PsiMethodCallExpression call) {
-    assertNull(call.getText(), call.resolveMethod());
-    assertSize(2, call.getMethodExpression().multiResolve(false));
-    assertNull(call.getText(), call.getType());
   }
 
   public void testAdditionalConstraintsBasedOnLambdaResolution() {
@@ -234,10 +204,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTestAllMethodCallExpressions() {
-    configure();
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
     for (PsiCallExpression expression : methodCallExpressions) {
-      dropCaches();
+      getPsiManager().dropResolveCaches();
       if (expression instanceof PsiMethodCallExpression) {
         assertNotNull("Failed to resolve: " + expression.getText(), expression.resolveMethod());
       }
@@ -246,7 +216,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
     final Collection<PsiNewExpression> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiNewExpression.class);
     for (PsiNewExpression newExpression : parameterLists) {
-      dropCaches();
+      getPsiManager().dropResolveCaches();
       final PsiType[] arguments = newExpression.getTypeArguments();
       String failMessage = "Failed inference for: " + newExpression.getParent().getText();
       assertNotNull(failMessage, arguments);

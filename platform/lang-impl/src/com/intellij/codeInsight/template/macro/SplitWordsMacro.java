@@ -20,7 +20,6 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +55,8 @@ public abstract class SplitWordsMacro extends MacroBase {
     @NotNull
     @Override
     protected String convertCase(@NotNull String word) {
-      return StringUtil.toLowerCase(word);
+      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+      return word.toLowerCase();
     }
   }
 
@@ -68,7 +68,8 @@ public abstract class SplitWordsMacro extends MacroBase {
     @NotNull
     @Override
     protected String convertCase(@NotNull String word) {
-      return StringUtil.toLowerCase(word);
+      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+      return word.toLowerCase();
     }
   }
 

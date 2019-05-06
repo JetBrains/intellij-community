@@ -7,8 +7,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.impl.libraries.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -70,11 +74,11 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibrarySerialization() {
-    final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
+    final long moduleModificationCount = ((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount();
     Library library = PsiTestUtil.addProjectLibrary(myModule, "junit", Collections.singletonList(getJDomJar()),
                                                     Collections.singletonList(getJDomSources()));
 
-    assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isGreaterThan(moduleModificationCount);
+    assertThat(((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount()).isGreaterThan(moduleModificationCount);
     Element element = serialize(library);
     String classesUrl = getJDomJar().getUrl();
     String sourcesUrl = getJDomSources().getUrl();
@@ -102,7 +106,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testFindLibraryByNameAfterRename() {
-    final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
+    final long moduleModificationCount = ((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount();
     ProjectLibraryTableImpl table = (ProjectLibraryTableImpl)getProjectLibraryTable();
     final long projectLibraryModificationCount = table.getStateModificationCount();
     Library a = createLibrary("a", null, null);
@@ -114,7 +118,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(libraryModel);
 
     // module not marked as to save if project library modified, but module is not affected
-    assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isEqualTo(moduleModificationCount);
+    assertThat(((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount()).isEqualTo(moduleModificationCount);
     assertThat(table.getStateModificationCount()).isGreaterThan(projectLibraryModificationCount);
 
     assertNull(table.getLibraryByName("a"));

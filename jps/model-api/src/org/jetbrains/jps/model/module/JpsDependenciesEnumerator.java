@@ -74,10 +74,11 @@ public interface JpsDependenciesEnumerator {
   /**
    * Runs {@code consumer.consume()} for each module processed by this enumerator
    */
-  void processModules(@NotNull Consumer<? super JpsModule> consumer);
+  void processModules(@NotNull Consumer<JpsModule> consumer);
 
   /**
    * Runs {@code consumer.consume()} for each library processed by this enumerator
+   * @param consumer
    */
   void processLibraries(@NotNull Consumer<? super JpsLibrary> consumer);
 

@@ -207,7 +207,7 @@ public class MavenProjectConfiguration {
           continue;
         }
         if (SystemInfo.isWindows) {
-          key = StringUtil.toUpperCase(key);
+          key = key.toUpperCase();
         }
         res.setProperty("env." + key, entry.getValue());
       }

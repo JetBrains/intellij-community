@@ -13,13 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NameUtil {
+  private static final Function<String,String> LOWERCASE_MAPPING = String::toLowerCase;
   private static final int MAX_LENGTH = 40;
 
   private NameUtil() {}
 
   @NotNull
   public static List<String> nameToWordsLowerCase(@NotNull String name){
-    return ContainerUtil.map(nameToWords(name), StringUtil::toLowerCase);
+    return ContainerUtil.map(nameToWords(name), LOWERCASE_MAPPING);
   }
 
   @NotNull
@@ -273,7 +274,7 @@ public class NameUtil {
     }
     else {
       if (prefix.isEmpty() || StringUtil.endsWithChar(prefix, '_')) {
-        startWord = StringUtil.toLowerCase(startWord);
+        startWord = startWord.toLowerCase();
       }
       else {
         startWord = Character.toUpperCase(c) + startWord.substring(1);
@@ -292,7 +293,7 @@ public class NameUtil {
       }
       else {
         if (prevWord.charAt(prevWord.length() - 1) == '_') {
-          word = StringUtil.toLowerCase(word);
+          word = word.toLowerCase();
         }
 
         if (skip_) {

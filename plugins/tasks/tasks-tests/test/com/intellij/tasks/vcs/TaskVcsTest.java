@@ -12,8 +12,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
+import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
@@ -26,6 +25,7 @@ import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -314,9 +314,9 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
 
     List<CheckinHandler> handlers = Arrays.asList(checkinHandler);
-    ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), handlers, null, "Commit", false);
+      new SingleChangeListCommitter(getProject(), changeList, changes, commitMessage, handlers, FunctionUtil.nullConstant(), null, "Commit",
+                                    false);
 
     committer.runCommit("Commit", true);
   }
@@ -489,10 +489,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
     vcsManager.registerVcs(myVcs);
+    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", myVcs.getName())));
     vcsManager.waitForInitialized();
-
-    String tempDirPath = myFixture.getTempDirFixture().getTempDirPath();
-    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(tempDirPath, myVcs.getName())));
     assertTrue(vcsManager.hasActiveVcss());
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());

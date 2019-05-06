@@ -3,9 +3,7 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
@@ -29,16 +27,6 @@ public class IntroduceParameterObjectAction extends BaseRefactoringAction {
       }
     }
     return false;
-  }
-
-  @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
-                                                        @NotNull Editor editor,
-                                                        @NotNull PsiFile file,
-                                                        @NotNull DataContext context,
-                                                        @NotNull String place) {
-    final IntroduceParameterObjectDelegate delegate = IntroduceParameterObjectDelegate.findDelegate(element);
-    return delegate != null && delegate.isEnabledOn(element);
   }
 
   @Override

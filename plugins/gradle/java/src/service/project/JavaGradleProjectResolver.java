@@ -15,7 +15,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
@@ -92,26 +91,23 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
 
   @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                      @NotNull Throwable error,
+  public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
                                                       @NotNull String projectPath,
                                                       @Nullable String buildFilePath) {
-    ExternalSystemException friendlyError =
-      new JavaProjectImportErrorHandler().getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
+    ExternalSystemException friendlyError = new JavaProjectImportErrorHandler().getUserFriendlyError(error, projectPath, buildFilePath);
     if (friendlyError != null) {
       if (friendlyError.getCause() == null) {
         friendlyError.initCause(error);
       }
       return friendlyError;
     }
-    return super.getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
+    return super.getUserFriendlyError(error, projectPath, buildFilePath);
   }
 
   private static class JavaProjectImportErrorHandler extends AbstractProjectImportErrorHandler {
     @Nullable
     @Override
-    public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                        @NotNull Throwable error,
+    public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
                                                         @NotNull String projectPath,
                                                         @Nullable String buildFilePath) {
       GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);

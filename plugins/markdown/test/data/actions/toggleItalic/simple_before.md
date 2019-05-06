@@ -1,1 +1,0 @@
-Simple <selection>test</selection> text

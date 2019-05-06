@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
@@ -88,8 +87,8 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
 
   @NotNull
   private static List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
-                                                                  @NotNull List<? extends PsiTypeParameter> classTypeParameters,
-                                                                  @NotNull List<? extends PsiTypeElement> typeElements) {
+                                                                  @NotNull List<PsiTypeParameter> classTypeParameters,
+                                                                  @NotNull List<PsiTypeElement> typeElements) {
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
     List<TypeParameterInfoView> result = new ArrayList<>();
@@ -176,7 +175,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
 
     @NotNull
     public String suggest(@NotNull PsiClassType type) {
-      return suggestUnusedName(StringUtil.toUpperCase(type.getClassName().substring(0, 1)));
+      return suggestUnusedName(type.getClassName().substring(0, 1).toUpperCase());
     }
   }
 

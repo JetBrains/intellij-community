@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.frameworks;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -8,9 +7,10 @@ import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.serialization.SerializationException;
 import com.intellij.util.containers.ContainerUtil;
+import java.util.HashSet;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -94,7 +93,7 @@ public class LibrariesDownloadAssistant {
     try {
       allArtifacts = XmlSerializer.deserialize(url, Artifacts.class);
     }
-    catch (SerializationException e) {
+    catch (XmlSerializationException e) {
       final Throwable cause = e.getCause();
       if (!(cause instanceof IOException)) {
         LOG.error(e);

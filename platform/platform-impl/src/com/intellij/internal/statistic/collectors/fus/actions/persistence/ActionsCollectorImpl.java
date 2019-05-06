@@ -45,10 +45,6 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     "Reload Classes", "Progress Paused", "Progress Resumed", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
-  public static boolean isCustomAllowedAction(@NotNull String actionId) {
-    return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
-  }
-
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;

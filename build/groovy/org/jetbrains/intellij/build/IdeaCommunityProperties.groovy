@@ -37,11 +37,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
 
     mavenArtifacts.forIdeModules = true
-    mavenArtifacts.additionalModules = [
-      "intellij.tools.jps.buildScriptDependencies",
-      "intellij.platform.debugger.testFramework",
-      "intellij.platform.vcs.testFramework"
-    ]
+    mavenArtifacts.additionalModules = ["intellij.tools.jps.buildScriptDependencies"]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
   }

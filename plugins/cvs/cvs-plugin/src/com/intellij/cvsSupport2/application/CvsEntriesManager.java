@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
@@ -60,13 +59,12 @@ public class CvsEntriesManager implements VirtualFileListener {
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
   private final Collection<CvsEntriesListener> myEntriesListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private int myIsActive; // guarded by this
+  private int myIsActive = 0;
   private final Collection<String> myFilesToRefresh = new THashSet<>();
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
   private final CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
-  private Disposable listenerDisposable;
 
   public static CvsEntriesManager getInstance() {
     return ServiceManager.getService(CvsEntriesManager.class);
@@ -78,27 +76,26 @@ public class CvsEntriesManager implements VirtualFileListener {
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
     @Override
-    public void afterRefreshFinish(boolean asynchronous) {
+    public void afterRefreshFinish(boolean asynchonous) {
       ensureFilesCached(); //to cache for next refreshes
+    }
+
+    @Override
+    public void beforeRefreshStart(boolean asynchonous) {
     }
   }
 
-  public synchronized void activate() {
-    if (myIsActive == 0) {
-      listenerDisposable = Disposer.newDisposable();
-      VirtualFileManager.getInstance().addVirtualFileListener(this, listenerDisposable);
-      VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener(), listenerDisposable);
-    }
+  public void registerAsVirtualFileListener(@NotNull Disposable listenerDisposable) {
+    VirtualFileManager.getInstance().addVirtualFileListener(this, listenerDisposable);
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener(), listenerDisposable);
     myIsActive++;
   }
 
-  public synchronized void deactivate() {
+  public synchronized void unregisterAsVirtualFileListener() {
     LOG.assertTrue(isActive());
     myIsActive--;
     if (myIsActive == 0) {
       myInfoByParentDirectoryPath.clear();
-      Disposer.dispose(listenerDisposable);
-      listenerDisposable = null;
     }
   }
 
@@ -132,8 +129,9 @@ public class CvsEntriesManager implements VirtualFileListener {
     for (final VirtualFile file : myInfoByParentDirectoryPath.keySet()) {
       if (file == null) continue;
       if (!file.isValid()) continue;
-      if (VfsUtilCore.isAncestor(parent, file, false)) {
-        myInfoByParentDirectoryPath.get(file).clearFilter();
+      if (VfsUtil.isAncestor(parent, file, false)) {
+        myInfoByParentDirectoryPath.get(file)
+          .clearFilter();
       }
     }
     fileStatusesChanged();
@@ -210,7 +208,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     for (final VirtualFile file : myInfoByParentDirectoryPath.keySet()) {
       if (file == null) continue;
       if (!file.isValid()) continue;
-      if (VfsUtilCore.isAncestor(parent, file, false)) clearCachedEntriesFor(file);
+      if (VfsUtil.isAncestor(parent, file, false)) clearCachedEntriesFor(file);
     }
   }
 
@@ -220,7 +218,7 @@ public class CvsEntriesManager implements VirtualFileListener {
 
   public Entry getEntryFor(@NotNull VirtualFile file) {
     final CvsInfo cvsInfo = getCvsInfo(file.getParent());
-    assert cvsInfo != null;
+    assert(cvsInfo != null);
     return cvsInfo.getEntryNamed(file.getName());
   }
 
@@ -296,7 +294,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     }
   }
 
-  void watchForCvsAdminFiles(final VirtualFile parent) {
+  public void watchForCvsAdminFiles(final VirtualFile parent) {
     if (parent == null) return;
     synchronized (myFilesToRefresh) {
       myFilesToRefresh.add(parent.getPath() + "/" + CVS_ADMIN_DIRECTORY_NAME);
@@ -362,7 +360,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     return getInfoFor(directory);
   }
 
-  CvsConnectionSettings createConnectionSettingsOn(String cvsRoot) {
+  public CvsConnectionSettings createConnectionSettingsOn(String cvsRoot) {
     if (!myStringToSettingsMap.containsKey(cvsRoot)) {
       final CvsRootConfiguration rootConfiguration = myApplicationLevelConfiguration.getConfigurationForCvsRoot(cvsRoot);
       CvsConnectionSettings settings = new IDEARootFormatter(rootConfiguration).createConfiguration();
@@ -387,7 +385,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     return UserDirIgnores.userHomeCvsIgnoreFile().equals(CvsVfsUtil.getFileFor(file));
   }
 
-  public synchronized boolean isActive() {
+  public boolean isActive() {
     return myIsActive > 0;
   }
 

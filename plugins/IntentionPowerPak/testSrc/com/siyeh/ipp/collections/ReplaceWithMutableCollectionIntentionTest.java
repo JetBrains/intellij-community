@@ -56,23 +56,7 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
   }
 
   public void testMapOfEntriesTernary() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testMapOfEntriesArrayAccess() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testVarArgCall() {
     doTest();
-  }
-
-  public void testFieldAssignment() {
-    doTest();
-  }
-
-  public void testGenericMethod() {
-    assertIntentionNotAvailable();
   }
 
   @Override

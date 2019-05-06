@@ -16,8 +16,8 @@ import com.intellij.psi.search.SearchScopeProvider;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
@@ -251,14 +251,18 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
   }
 
-  private static class MyRenderer extends SimpleListCellRenderer<ScopeDescriptor> {
+  private static class MyRenderer extends ColoredListCellRenderer<ScopeDescriptor> {
     final TitledSeparator separator = new TitledSeparator();
 
     @Override
-    public void customize(JList<? extends ScopeDescriptor> list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList<? extends ScopeDescriptor> list,
+                                         ScopeDescriptor value,
+                                         int index,
+                                         boolean selected,
+                                         boolean hasFocus) {
       if (value == null) return;
       setIcon(value.getIcon());
-      setText(value.getDisplayName());
+      append(value.getDisplayName());
     }
 
     @Override
@@ -272,7 +276,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         separator.setBorder(index == -1 ? null : new JBEmptyBorder(UIUtil.DEFAULT_VGAP, 2, UIUtil.DEFAULT_VGAP, 0));
         return separator;
       }
-      return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+      super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+      setIpad(index == -1 ? JBUI.emptyInsets() : JBUI.insets(1, UIUtil.LARGE_VGAP + 2, 1, 0));
+      return this;
     }
   }
 

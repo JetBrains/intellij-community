@@ -15,14 +15,11 @@
  */
 package com.intellij.ui;
 
-import org.jetbrains.annotations.NotNull;
-
 import javax.swing.*;
 
 public interface ActiveComponent {
   void setActive(boolean active);
 
-  @NotNull
   JComponent getComponent();
 
   abstract class Adapter implements ActiveComponent {

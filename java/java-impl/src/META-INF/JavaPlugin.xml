@@ -84,7 +84,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
-      <headless-implementation-class/>
     </component>
 
   </project-components>
@@ -1133,8 +1132,7 @@
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="UAST" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.ExternalAnnotationLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.InferredAnnotationsLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.ExternalAnnotationsLineMarkerProvider"/>
     <codeInsight.gotoSuper language="SPI" implementationClass="com.intellij.spi.SPIGotoSuperHandler"/>
     <codeInsight.gotoSuper language="JAVA" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <codeInsight.delegateMethods language="JAVA" implementationClass="com.intellij.codeInsight.generation.GenerateDelegateHandler"/>
@@ -1416,11 +1414,11 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitArrayFillingInspection"
                      displayName="Explicit array filling"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ManualMinMaxCalculation"
+    <localInspection groupPath="Java" language="JAVA" shortName="ExplicitMinMaxCheck"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.ManualMinMaxCalculationInspection"
-                     displayName="Manual min/max calculation"/>
+                     implementationClass="com.intellij.codeInspection.ExplicitMinMaxCheckInspection"
+                     displayName="Explicit min/max check"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
@@ -1820,6 +1818,11 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.ToggleSourceInferredAnnotations</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>ToggleSourceInferredAnnotations</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.MakeAnnotationExternal</className>
       <category>Java/Annotations</category>
       <descriptionDirectoryName>MakeAnnotationExternal</descriptionDirectoryName>
@@ -1905,8 +1908,6 @@
     <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
     <java.externalAnnotation.locationProvider
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
-    <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
-    <registryKey key="ide.java.show.bundled.runtime" defaultValue="false" description="Enables using bundled JetBrains Runtime for execution"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

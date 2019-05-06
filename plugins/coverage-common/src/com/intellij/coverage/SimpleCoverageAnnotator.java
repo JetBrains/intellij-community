@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -97,7 +96,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   protected static @NotNull
   String normalizeFilePath(@NotNull String filePath) {
     if (SystemInfo.isWindows) {
-      filePath = StringUtil.toLowerCase(filePath);
+      filePath = filePath.toLowerCase();
     }
     return FileUtil.toSystemIndependentName(filePath);
   }
@@ -176,7 +175,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                   final ProjectData projectInfo, boolean trackTestFolders,
                                                   @NotNull final ProjectFileIndex index,
                                                   @NotNull final CoverageEngine coverageEngine,
-                                                  Set<? super VirtualFile> visitedDirs,
+                                                  Set<VirtualFile> visitedDirs,
                                                   @NotNull final Map<String, String> normalizedFiles2Files) {
     if (!index.isInContent(dir)) {
       return null;

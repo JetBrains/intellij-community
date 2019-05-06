@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -100,6 +100,7 @@ public abstract class StructuralSearchProfile {
     if (codeFragment != null) {
       final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
+      //DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
       return doc;
     }
 
@@ -144,13 +145,6 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  /**
-   * This method is called while holding a read action.
-   */
-  public String getCodeFragmentText(PsiFile fragment) {
-    return fragment.getText();
-  }
-
   @NotNull
   public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
@@ -173,7 +167,7 @@ public abstract class StructuralSearchProfile {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
+    String fileType = options.getMatchOptions().getFileType().getName().toLowerCase();
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 

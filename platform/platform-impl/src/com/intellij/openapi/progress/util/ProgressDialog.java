@@ -35,9 +35,9 @@ import java.io.File;
 class ProgressDialog implements Disposable {
   private final ProgressWindow myProgressWindow;
   private long myLastTimeDrawn = -1;
-  private final boolean myShouldShowBackground;
+  private volatile boolean myShouldShowBackground;
   private final Alarm myUpdateAlarm = new Alarm(this);
-  private boolean myWasShown;
+  boolean myWasShown;
 
   final Runnable myRepaintRunnable = new Runnable() {
     @Override
@@ -84,17 +84,11 @@ class ProgressDialog implements Disposable {
   private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(), this);
   private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(), this);
 
-  ProgressDialog(@NotNull ProgressWindow progressWindow,
-                 boolean shouldShowBackground,
-                 @Nullable String cancelText,
-                 @Nullable Window parentWindow) {
+  ProgressDialog(@NotNull ProgressWindow progressWindow, boolean shouldShowBackground, String cancelText, @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;
     myParentWindow = parentWindow;
-    myShouldShowBackground = shouldShowBackground;
-    initDialog(cancelText);
+    initDialog(shouldShowBackground, cancelText);
   }
-
-  void setWasShown() { myWasShown = true; }
 
   @NotNull
   private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
@@ -107,7 +101,7 @@ class ProgressDialog implements Disposable {
     return fullText;
   }
 
-  private void initDialog(@Nullable String cancelText) {
+  private void initDialog(boolean shouldShowBackground, String cancelText) {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
@@ -121,6 +115,7 @@ class ProgressDialog implements Disposable {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
+    myShouldShowBackground = shouldShowBackground;
     if (cancelText != null) {
       myProgressWindow.setCancelButtonText(cancelText);
     }
@@ -241,7 +236,7 @@ class ProgressDialog implements Disposable {
   }
 
   void show() {
-    setWasShown();
+    myWasShown = true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (myParentWindow == null) return;
     if (myPopup != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.roots.DependencyScope;
@@ -7,61 +7,66 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
+/**
+ * @author Denis Zhdanov
+ */
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
-  implements DependencyData, Named, OrderAware {
+  implements DependencyData, Named, OrderAware
+{
 
-  @NotNull private ModuleData ownerModule;
-  @NotNull private T target;
+  private static final long serialVersionUID = 1L;
 
-  private DependencyScope scope = DependencyScope.COMPILE;
+  @NotNull private ModuleData myOwnerModule;
+  @NotNull private T          myTarget;
 
-  private boolean exported;
-  private int order;
+  private DependencyScope myScope = DependencyScope.COMPILE;
 
-  protected AbstractDependencyData(@NotNull ModuleData ownerModule, @NotNull T target) {
+  private boolean myExported;
+  private int myOrder;
+
+  protected AbstractDependencyData(@NotNull ModuleData ownerModule, @NotNull T dependency) {
     super(ownerModule.getOwner());
-
-    this.ownerModule = ownerModule;
-    this.target = target;
+    myOwnerModule = ownerModule;
+    myTarget = dependency;
   }
 
   @Override
   @NotNull
   public ModuleData getOwnerModule() {
-    return ownerModule;
+    return myOwnerModule;
   }
 
   public void setOwnerModule(@NotNull ModuleData ownerModule) {
-    this.ownerModule = ownerModule;
+    myOwnerModule = ownerModule;
   }
 
   @Override
   @NotNull
   public T getTarget() {
-    return target;
+    return myTarget;
   }
 
   public void setTarget(@NotNull T target) {
-    this.target = target;
+    myTarget = target;
   }
 
   @Override
   @NotNull
   public DependencyScope getScope() {
-    return scope;
+    return myScope;
   }
 
   public void setScope(DependencyScope scope) {
-    this.scope = scope;
+    myScope = scope;
   }
 
   @Override
   public boolean isExported() {
-    return exported;
+    return myExported;
   }
 
   public void setExported(boolean exported) {
-    this.exported = exported;
+    myExported = exported;
   }
 
   /**
@@ -71,7 +76,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   @Deprecated
   @Override
   public String getName() {
-    return target.getName();
+    return myTarget.getName();
   }
 
   /**
@@ -80,39 +85,39 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   @Deprecated
   @Override
   public void setName(@NotNull String name) {
-    target.setName(name);
+    myTarget.setName(name);
   }
 
   @NotNull
   @Override
   public String getExternalName() {
-    return target.getExternalName();
+    return myTarget.getExternalName();
   }
 
   @Override
   public void setExternalName(@NotNull String name) {
-    target.setExternalName(name);
+    myTarget.setExternalName(name);
   }
 
   @NotNull
   @Override
   public String getInternalName() {
-    return target.getInternalName();
+    return myTarget.getInternalName();
   }
 
   @Override
   public void setInternalName(@NotNull String name) {
-    target.setInternalName(name);
+    myTarget.setInternalName(name);
   }
 
 
   @Override
   public int getOrder() {
-    return order;
+    return myOrder;
   }
 
   public void setOrder(int order) {
-    this.order = order;
+    myOrder = order;
   }
 
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -122,9 +127,9 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + scope.hashCode();
-    result = 31 * result + ownerModule.hashCode();
-    result = 31 * result + target.hashCode();
+    result = 31 * result + myScope.hashCode();
+    result = 31 * result + myOwnerModule.hashCode();
+    result = 31 * result + myTarget.hashCode();
     return result;
   }
 
@@ -134,9 +139,9 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
       return false;
     }
     AbstractDependencyData<?> that = (AbstractDependencyData<?>)o;
-    return scope.equals(that.scope) &&
-           ownerModule.equals(that.ownerModule) &&
-           target.equals(that.target);
+    return myScope.equals(that.myScope) &&
+           myOwnerModule.equals(that.myOwnerModule) &&
+           myTarget.equals(that.myTarget);
   }
 
   @Override

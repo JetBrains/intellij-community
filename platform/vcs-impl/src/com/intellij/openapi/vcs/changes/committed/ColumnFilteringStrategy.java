@@ -34,7 +34,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   private final MyListModel myModel;
   private final CommittedChangeListToStringConvertor ourConvertorInstance = new CommittedChangeListToStringConvertor();
 
-  private Object[] myPreferredSelection;
+  private Object[] myPrefferedSelection;
 
   public ColumnFilteringStrategy(final ChangeListColumn column,
                                  final Class<? extends CommittedChangesProvider> providerClass) {
@@ -85,7 +85,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   public void setFilterBase(List<CommittedChangeList> changeLists) {
-    myPreferredSelection = null;
+    myPrefferedSelection = null;
     appendFilterBase(changeLists);
   }
 
@@ -101,7 +101,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   public void resetFilterBase() {
-    myPreferredSelection = myValueList.getSelectedValues();
+    myPrefferedSelection = myValueList.getSelectedValues();
     myValueList.clearSelection();
     myModel.clear();
     myValueList.revalidate();
@@ -110,7 +110,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   public void appendFilterBase(List<CommittedChangeList> changeLists) {
-    final Object[] oldSelection = myModel.isEmpty() ? myPreferredSelection : myValueList.getSelectedValues();
+    final Object[] oldSelection = myModel.isEmpty() ? myPrefferedSelection : myValueList.getSelectedValues();
 
     myModel.addNext(changeLists, ourConvertorInstance);
     if (oldSelection != null) {

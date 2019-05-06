@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
+import org.editorconfig.language.lexer.EditorConfigLexerAdapter
 import org.editorconfig.language.psi.EditorConfigElementTypes
 
 object EditorConfigSyntaxHighlighter : SyntaxHighlighterBase() {
@@ -39,6 +40,7 @@ object EditorConfigSyntaxHighlighter : SyntaxHighlighterBase() {
   private val COMMA_KEYS = arrayOf(COMMA)
   private val IDENTIFIER_KEYS = arrayOf(IDENTIFIER)
   private val COMMENT_KEYS = arrayOf(COMMENT)
+  private val EMPTY_KEYS = emptyArray<TextAttributesKey>()
 
   override fun getHighlightingLexer() = EditorConfigLexerFactory.getAdapter()
 
@@ -53,6 +55,6 @@ object EditorConfigSyntaxHighlighter : SyntaxHighlighterBase() {
     EditorConfigElementTypes.IDENTIFIER -> IDENTIFIER_KEYS
     EditorConfigElementTypes.LINE_COMMENT -> COMMENT_KEYS
     TokenType.BAD_CHARACTER -> BAD_CHAR_KEYS
-    else -> TextAttributesKey.EMPTY_ARRAY
+    else -> EMPTY_KEYS
   }
 }

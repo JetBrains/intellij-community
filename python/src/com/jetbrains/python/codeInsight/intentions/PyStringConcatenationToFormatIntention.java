@@ -153,7 +153,7 @@ public class PyStringConcatenationToFormatIntention extends PyBaseIntentionActio
     if (quotes == null)
       quotes = Pair.create("\"", "\"");
     stringLiteral.insert(0, quotes.getFirst());
-    if (isUnicode && !StringUtil.toLowerCase(quotes.getFirst()).contains("u"))
+    if (isUnicode && !quotes.getFirst().toLowerCase().contains("u"))
       stringLiteral.insert(0, "u");
     stringLiteral.append(quotes.getSecond());
 

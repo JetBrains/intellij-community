@@ -50,7 +50,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private JComponent myComponent = null;
   private JComponent myPreferredFocus = null;
   private String myTitle = "";
-  private List<? extends Image> myImages = null;
+  private List<Image> myImages = null;
   private boolean myCloseOnEsc = false;
   private BooleanGetter myOnCloseHandler;
   private Window myFrame;
@@ -312,7 +312,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     setImages(image != null ? Collections.singletonList(image) : Collections.emptyList());
   }
 
-  public void setImages(List<? extends Image> images) {
+  public void setImages(List<Image> images) {
     myImages = images;
   }
 

@@ -6,7 +6,6 @@ import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
@@ -31,7 +30,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
                                          @Nullable String languageDomainId) {
     super(settings);
     myLanguage = language;
-    myLanguageDomainId = languageDomainId == null ? StringUtil.toLowerCase(myLanguage.getID()) : languageDomainId;
+    myLanguageDomainId = languageDomainId == null ? myLanguage.getID().toLowerCase(Locale.ENGLISH) : languageDomainId;
     mySettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
     myCustomSettings = getCustomSettings();
   }
@@ -91,7 +90,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return customSettingsList;
   }
 
-  private void addCustomSettings(@NotNull List<? super CustomCodeStyleSettings> list,
+  private void addCustomSettings(@NotNull List<CustomCodeStyleSettings> list,
                                  @NotNull CodeStyleSettings rootSettings,
                                  @NotNull List<? extends CodeStyleSettingsProvider> providerList) {
     for (CodeStyleSettingsProvider provider : providerList) {

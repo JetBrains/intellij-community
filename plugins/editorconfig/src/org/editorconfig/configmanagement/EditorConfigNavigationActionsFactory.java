@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
@@ -25,8 +24,6 @@ public class EditorConfigNavigationActionsFactory {
 
   private final List<String> myEditorConfigFilePaths = new ArrayList<>();
 
-  private final ThreadLocal<Boolean> myNavigationFlag = new ThreadLocal<>();
-
   private static final Object INSTANCE_LOCK = new Object();
 
   private EditorConfigNavigationActionsFactory() {
@@ -41,21 +38,11 @@ public class EditorConfigNavigationActionsFactory {
         if (editorConfigFile != null) {
           actions.add(DumbAwareAction.create(
             getActionName(editorConfigFile, editorConfigFiles.size() > 1),
-            event -> openEditorConfig(project, editorConfigFile)));
+            event -> OpenFileAction.openFile(editorConfigFile, project)));
         }
       }
     }
     return actions.size() <= 1 ? actions : Collections.singletonList(new NavigationActionGroup(actions.toArray(AnAction.EMPTY_ARRAY)));
-  }
-
-  private void openEditorConfig(@NotNull Project project, VirtualFile editorConfigFile) {
-    myNavigationFlag.set(true);
-    OpenFileAction.openFile(editorConfigFile, project);
-    myNavigationFlag.set(false);
-  }
-
-  public boolean isNavigating() {
-    return ObjectUtils.notNull(myNavigationFlag.get(), false);
   }
 
   public void updateEditorConfigFilePaths(@NotNull List<String> editorConfigFilePaths) {

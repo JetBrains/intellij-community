@@ -32,7 +32,6 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -289,7 +288,7 @@ public class ExternalProjectSerializer {
   }
 
   private static File getPluginSystemDir(ProjectSystemId externalSystemId, String folder) {
-    return new File(PathManager.getSystemPath(), StringUtil.toLowerCase(externalSystemId.getId()) + "/" + folder).getAbsoluteFile();
+    return new File(PathManager.getSystemPath(), externalSystemId.getId().toLowerCase() + "/" + folder).getAbsoluteFile();
   }
 
   private static class FileSerializer extends Serializer<File> {

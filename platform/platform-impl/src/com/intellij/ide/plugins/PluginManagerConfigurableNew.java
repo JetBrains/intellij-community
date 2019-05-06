@@ -737,6 +737,7 @@ public class PluginManagerConfigurableNew
       return true;
     }
 
+    Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     int rowCount = myPluginsModel.getRowCount();
 
     for (int i = 0; i < rowCount; i++) {
@@ -744,7 +745,7 @@ public class PluginManagerConfigurableNew
       boolean enabledInTable = myPluginsModel.isEnabled(descriptor);
 
       if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId().getIdString())) {
+        if (enabledInTable && !disabledPlugins.contains(descriptor.getPluginId().getIdString())) {
           continue; // was disabled automatically on startup
         }
         return true;
@@ -753,7 +754,7 @@ public class PluginManagerConfigurableNew
 
     for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
       Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey().getIdString())) {
+      if (enabled != null && !enabled && !disabledPlugins.contains(entry.getKey().getIdString())) {
         return true;
       }
     }
@@ -1430,10 +1431,10 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<? super PluginsGroup> groups,
+  private void addGroup(@NotNull List<PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<List<IdeaPluginDescriptor>, Boolean, IOException> function) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
@@ -1446,7 +1447,7 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<? super PluginsGroup> groups,
+  private void addGroup(@NotNull List<PluginsGroup> groups,
                         @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull String name,
                         @NotNull String query,

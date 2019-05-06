@@ -124,7 +124,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testAssert() {
-    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.HIGHEST
+    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.HIGHEST
     doTest()
   }
 
@@ -1215,14 +1215,14 @@ class Test {
   }
 
   fun testFormatCodeFragment() {
-    val factory = JavaCodeFragmentFactory.getInstance(getProject())
+    val factory = JavaCodeFragmentFactory.getInstance(LightPlatformTestCase.getProject())
     val fragment = factory.createCodeBlockCodeFragment("a=1;int b=2;", null, true)
     val result = arrayOfNulls<PsiElement>(1)
 
-    CommandProcessor.getInstance().executeCommand(getProject(), {
+    CommandProcessor.getInstance().executeCommand(LightPlatformTestCase.getProject(), {
       WriteCommandAction.runWriteCommandAction(null) {
         try {
-          result[0] = CodeStyleManager.getInstance(getProject()).reformat(fragment)
+          result[0] = CodeStyleManager.getInstance(LightPlatformTestCase.getProject()).reformat(fragment)
         }
         catch (e: IncorrectOperationException) {
           TestCase.fail(e.localizedMessage)

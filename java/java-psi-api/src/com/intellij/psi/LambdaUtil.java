@@ -2,6 +2,8 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -23,7 +25,8 @@ import java.util.function.Supplier;
  * @author anna
  */
 public class LambdaUtil {
-  private static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
+  public static final RecursionGuard<PsiParameter> ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
+  public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance(LambdaUtil.class);
 
   @Nullable
@@ -357,7 +360,7 @@ public class LambdaUtil {
 
     final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
     if (map != null) {
-      final PsiType type = ObjectUtils.chooseNotNull(map.get(expression), map.get(element));
+      final PsiType type = map.get(expression);
       if (type != null) {
         return type;
       }
@@ -401,8 +404,8 @@ public class LambdaUtil {
 
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
-          LOG.assertTrue(!MethodCandidateInfo.isOverloadCheck(contextCall.getArgumentList()));
-          JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
+          final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
+          JavaResolveResult resolveResult = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
           return getSubstitutedType(expression, tryToSubstitute, lambdaIdx, resolveResult);
         }
       }
@@ -478,7 +481,7 @@ public class LambdaUtil {
         if (results != null) {
           final Set<PsiType> types = new HashSet<>();
           for (JavaResolveResult result : results) {
-            final PsiType functionalExpressionType = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(functionalExpression, false, () -> getSubstitutedType(functionalExpression, true, lambdaIdx, result));
+            final PsiType functionalExpressionType = getSubstitutedType(functionalExpression, true, lambdaIdx, result);
             if (functionalExpressionType != null && types.add(functionalExpressionType)) {
               overloadProcessor.consume(functionalExpressionType);
             }
@@ -720,6 +723,10 @@ public class LambdaUtil {
     return null;
   }
 
+  public static boolean isLambdaParameterCheck() {
+    return !ourParameterGuard.currentStack().isEmpty();
+  }
+
   @Nullable
   public static PsiCall treeWalkUp(PsiElement context) {
     PsiCall top = null;
@@ -768,9 +775,12 @@ public class LambdaUtil {
       if (psiCall == null) {
         break;
       }
-      if (MethodCandidateInfo.isOverloadCheck(psiCall.getArgumentList()) ||
-          lambdaExpression != null && getFunctionalTypeMap().containsKey(lambdaExpression)) {
-        break;
+      PsiExpressionList argumentList = psiCall.getArgumentList();
+      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
+      if (currentMethod != null) {
+        if (MethodCandidateInfo.isOverloadCheck(argumentList) || lambdaExpression != null) {
+          break;
+        }
       }
 
       top = psiCall;
@@ -791,7 +801,7 @@ public class LambdaUtil {
       return null;
     }
 
-    LOG.assertTrue(!MethodCandidateInfo.isOverloadCheck(argumentList));
+    LOG.assertTrue(MethodCandidateInfo.getCurrentMethod(argumentList) == null);
     return top;
   }
 
@@ -853,18 +863,13 @@ public class LambdaUtil {
     }
   }
 
-  public static <T> T performWithTargetType(@NotNull PsiElement element, @NotNull PsiType targetType, @NotNull Supplier<? extends T> producer) {
-    Map<PsiElement, PsiType> map = getFunctionalTypeMap();
-    PsiType prev = map.put(element, targetType);
+  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Supplier<? extends T> producer) {
     try {
+      getFunctionalTypeMap().put(lambdaExpression, targetType);
       return producer.get();
     }
     finally {
-      if (prev == null) {
-        map.remove(element);
-      } else {
-        map.put(element, prev);
-      }
+      getFunctionalTypeMap().remove(lambdaExpression);
     }
   }
 

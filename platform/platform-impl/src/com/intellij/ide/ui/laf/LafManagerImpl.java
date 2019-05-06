@@ -25,7 +25,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -476,7 +475,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchLafFonts(uiDefaults);
 
-    patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
@@ -536,18 +534,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
-  private static void patchBorder(UIDefaults defaults, String key) {
-    if (defaults.getBorder(key) == null) {
-      defaults.put(key, JBUI.Borders.empty(1, 0).asUIResource());
-    }
-  }
-
-  private static void patchListUI(UIDefaults defaults) {
-    patchBorder(defaults, "List.border");
-  }
-
   private static void patchTreeUI(UIDefaults defaults) {
-    patchBorder(defaults, "Tree.border");
     if (Registry.is("ide.tree.ui.experimental")) {
       defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
       defaults.put("Tree.repaintWholeRow", true);
@@ -663,7 +650,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = StringUtil.toLowerCase(property).trim();
+    if (property != null) property = property.toLowerCase(Locale.ENGLISH).trim();
     if (SystemInfo.isMacOSLeopard) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;

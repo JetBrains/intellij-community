@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,9 +47,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.commit.ChangesViewCommitPanel;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,8 +87,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
-  private ChangesViewCommitPanel myCommitPanel;
-  private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
@@ -161,7 +157,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
-    if (myCommitPanel != null) Disposer.register(myContent, myCommitPanel);
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -186,11 +181,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return "ChangesViewManager";
   }
 
-  @Nullable
-  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return myCommitWorkflowHandler;
-  }
-
   private JComponent createChangeViewComponent() {
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
@@ -204,10 +194,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     };
     contentPanel.addToCenter(changesPanel);
     if (isNonModalCommit()) {
-      myCommitPanel = new ChangesViewCommitPanel(myView);
-      contentPanel.addToBottom(myCommitPanel);
-
-      myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
+      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
     }
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
@@ -233,13 +220,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return panel;
   }
 
-  private void registerShortcuts(@NotNull JComponent component) {
+  private static void registerShortcuts(@NotNull JComponent component) {
     registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
     registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
-
-    if (myCommitPanel != null) myCommitPanel.setupShortcuts(component);
   }
 
   @NotNull
@@ -253,6 +238,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
     ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
     ignoreGroup.add(new ToggleShowIgnoredAction());
+    ignoreGroup.add(new IgnoredSettingsAction());
     group.add(ignoreGroup);
     group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
     group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));

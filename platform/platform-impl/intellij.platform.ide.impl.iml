@@ -59,6 +59,5 @@
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.annotation-api" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.objectSerializer" scope="RUNTIME" />
   </component>
 </module>

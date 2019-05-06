@@ -16,10 +16,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IdeaFreezeReporter {
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
+  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 15; // seconds
 
   public IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
@@ -97,8 +98,7 @@ public class IdeaFreezeReporter {
                 if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
                   for (ThreadInfo info : threadInfos) {
                     if (info.getThreadState() == Thread.State.RUNNABLE &&
-                        ContainerUtil.find(info.getStackTrace(), s ->
-                          "runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) != null) {
+                        ContainerUtil.find(info.getStackTrace(), s -> "runReadAction".equals(s.getMethodName())) != null) {
                       causeThreadId = info.getThreadId();
                       reasonStacks.add(info.getStackTrace());
                       break;
@@ -137,8 +137,8 @@ public class IdeaFreezeReporter {
     // build tree
     for (StackTraceElement[] stack : stacks) {
       CallTreeNode node = root;
-      for (int i = stack.length - 1; i >= 0; i--) {
-        node = node.addCallee(stack[i]);
+      for (StackTraceElement element : stack) {
+        node = node.addCallee(element);
       }
     }
     // find dominant
@@ -162,6 +162,7 @@ public class IdeaFreezeReporter {
       res.add(node.myStackTraceElement);
       node = node.myParent;
     }
+    Collections.reverse(res);
     return res;
   }
 

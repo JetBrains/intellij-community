@@ -1011,7 +1011,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     boolean isInt = PsiLiteralExpressionImpl.INTEGER_LITERALS.contains(type);
     boolean isFP = PsiLiteralExpressionImpl.REAL_LITERALS.contains(type);
-    String text = isInt || isFP ? StringUtil.toLowerCase(literal.getText()) : literal.getText();
+    String text = isInt || isFP ? literal.getText().toLowerCase() : literal.getText();
     Object value = expression.getValue();
 
     if (file != null) {

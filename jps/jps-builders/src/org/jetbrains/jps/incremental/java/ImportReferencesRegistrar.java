@@ -30,10 +30,10 @@ public class ImportReferencesRegistrar implements JavacFileReferencesRegistrar {
   @Override
   public void registerFile(CompileContext context,
                            String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
-                           Collection<? extends JavacDef> defs,
-                           Collection<? extends JavacTypeCast> casts,
-                           Collection<? extends JavacRef> implicitToString) {
+                           TObjectIntHashMap<JavacRef> refs,
+                           Collection<JavacDef> defs,
+                           Collection<JavacTypeCast> casts,
+                           Collection<JavacRef> implicitToString) {
     if (refs.isEmpty() || defs.isEmpty()) {
       return;
     }

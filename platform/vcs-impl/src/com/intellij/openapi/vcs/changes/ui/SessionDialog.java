@@ -18,8 +18,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.removeEllipsisSuffix;
-
 public class SessionDialog extends DialogWrapper {
 
   @NonNls public static final String VCS_CONFIGURATION_UI_TITLE = "Vcs.SessionDialog.title";
@@ -46,7 +44,8 @@ public class SessionDialog extends DialogWrapper {
       configurationComponent == null ? createConfigurationUI(mySession, myChanges, myCommitMessage) : configurationComponent;
     String configurationComponentName =
       myConfigurationComponent != null ? (String)myConfigurationComponent.getClientProperty(VCS_CONFIGURATION_UI_TITLE) : null;
-    setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName) ? removeEllipsisSuffix(title) : configurationComponentName);
+    setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName)
+             ? CommitChangeListDialog.trimEllipsis(title) : configurationComponentName);
     init();
     initValidation();
   }

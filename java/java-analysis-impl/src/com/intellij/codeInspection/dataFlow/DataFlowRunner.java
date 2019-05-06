@@ -200,9 +200,6 @@ public class DataFlowRunner {
           LOG.trace("Too complex because too many different possible states");
           return RunnerResult.TOO_COMPLEX;
         }
-        assert !states.isEmpty();
-        Instruction instruction = states.get(0).getInstruction();
-        beforeInstruction(instruction);
         for (DfaInstructionState instructionState : states) {
           lastInstructionState = instructionState;
           if (count++ > stateLimit) {
@@ -216,6 +213,8 @@ public class DataFlowRunner {
           }
           // useful for quick debugging by uncommenting and hot-swapping
           //System.out.println(instructionState.toString());
+
+          Instruction instruction = instructionState.getInstruction();
 
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
@@ -272,7 +271,6 @@ public class DataFlowRunner {
             queue.offer(state);
           }
         }
-        afterInstruction(instruction);
         if (myCancelled) {
           return RunnerResult.CANCELLED;
         }
@@ -295,14 +293,6 @@ public class DataFlowRunner {
       reportDfaProblem(psiBlock, flow, lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
-  }
-
-  protected void beforeInstruction(Instruction instruction) {
-    
-  }
-
-  protected void afterInstruction(Instruction instruction) {
-    
   }
 
   @NotNull

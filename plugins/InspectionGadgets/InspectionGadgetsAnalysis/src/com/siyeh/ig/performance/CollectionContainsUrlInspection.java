@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -207,7 +206,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     @NotNull
     public String toString() {
       final String string = super.toString();
-      return string.charAt(0) + StringUtil.toLowerCase(string.substring(1));
+      return string.charAt(0) + string.substring(1).toLowerCase();
     }
   }
 }

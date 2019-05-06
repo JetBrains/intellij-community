@@ -22,7 +22,6 @@ public class EnumWhiteListRule extends PerformanceCareRule implements FUSRegexpA
     myEnumValues = strings == null ? Collections.emptySet() : ContainerUtil.unmodifiableOrEmptyCollection(strings);
   }
 
-  @NotNull
   @Override
   public ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     if (myEnumValues.isEmpty()) return INCORRECT_RULE;

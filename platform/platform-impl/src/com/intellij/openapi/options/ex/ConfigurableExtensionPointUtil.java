@@ -32,7 +32,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @NotNull
-  public static List<Configurable> buildConfigurablesList(@NotNull List<? extends ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
+  public static List<Configurable> buildConfigurablesList(@NotNull List<ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
     final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<>();
     List<String> idsInEpOrder = new ArrayList<>();
@@ -453,7 +453,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @Nullable
-  private static Configurable createConfigurableForProvider(@NotNull List<? extends ConfigurableEP<Configurable>> extensions, Class<? extends ConfigurableProvider> providerClass) {
+  private static Configurable createConfigurableForProvider(@NotNull List<ConfigurableEP<Configurable>> extensions, Class<? extends ConfigurableProvider> providerClass) {
     for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.providerClass != null) {
         final Class<Object> aClass = extension.findClassNoExceptions(extension.providerClass);

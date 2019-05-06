@@ -16,7 +16,6 @@
 package com.intellij.formatting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +58,7 @@ public enum FormattingStateId {
 
   FormattingStateId(double weight) {
     myWeight = weight;
-    myDescription = CodeInsightBundle.message("progress.reformat.stage." + StringUtil.toLowerCase(toString().replace('_', '.')));
+    myDescription = CodeInsightBundle.message("progress.reformat.stage." + toString().replace('_', '.').toLowerCase());
   }
 
   /**

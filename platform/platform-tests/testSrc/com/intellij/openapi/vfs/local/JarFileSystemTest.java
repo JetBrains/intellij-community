@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -20,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -42,7 +42,6 @@ import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
-import static org.junit.Assert.*;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -51,18 +50,18 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   public void testFindFile() throws IOException {
     assertNull(JarFileSystem.getInstance().findFileByPath("/invalid/path"));
 
-    String jarPath = PathManager.getJarPathForClass(Test.class);
+    String rtJarPath = PlatformTestUtil.getRtJarPath();
 
-    VirtualFile jarRoot = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR);
+    VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
 
-    VirtualFile file2 = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org");
+    VirtualFile file2 = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java");
     assertTrue(file2.isDirectory());
 
-    VirtualFile file3 = jarRoot.findChild("org");
+    VirtualFile file3 = jarRoot.findChild("java");
     assertEquals(file2, file3);
 
-    VirtualFile file4 = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/junit/Test.class");
+    VirtualFile file4 = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
     assertFalse(file4.isDirectory());
 
     byte[] bytes = file4.contentsToByteArray();
@@ -77,7 +76,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMetaInf() {
-    VirtualFile jarRoot = findByPath(PathManager.getJarPathForClass(Test.class) + JarFileSystem.JAR_SEPARATOR);
+    VirtualFile jarRoot = findByPath(PlatformTestUtil.getRtJarPath() + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
 
     VirtualFile metaInf = jarRoot.findChild("META-INF");
@@ -235,18 +234,18 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testJarRootForLocalFile() {
-    String jarPath = PathManager.getJarPathForClass(Test.class);
+    String rtJarPath = PlatformTestUtil.getRtJarPath();
 
-    VirtualFile jarFile = LocalFileSystem.getInstance().findFileByPath(jarPath);
-    assertNotNull(jarFile);
-    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarFile);
-    assertNotNull(jarRoot);
+    VirtualFile rtJarFile = LocalFileSystem.getInstance().findFileByPath(rtJarPath);
+    assertNotNull(rtJarFile);
+    VirtualFile rtJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(rtJarFile);
+    assertNotNull(rtJarRoot);
 
-    VirtualFile entryFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/junit/Test.class");
+    VirtualFile entryFile = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
     VirtualFile entryRoot = JarFileSystem.getInstance().getJarRootForLocalFile(entryFile);
     assertNull(entryRoot);
 
-    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(PlatformTestUtil.getJavaExe());
+    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getJavaHome() + "/lib/calendars.properties");
     assertNotNull(nonJarFile);
     VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
     assertNull(nonJarRoot);

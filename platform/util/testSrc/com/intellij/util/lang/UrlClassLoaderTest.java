@@ -2,11 +2,10 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableConsumer;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
@@ -32,24 +31,22 @@ import static org.junit.Assert.*;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class UrlClassLoaderTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();
-
   @Test
   public void testBootstrapResources() {
-    String name = JavaVersion.current().feature > 8 ? "META-INF/services/java.nio.file.spi.FileSystemProvider"
-                                                    : "com/sun/xml/internal/messaging/saaj/soap/LocalStrings.properties";
-    assertNotNull(ClassLoader.getSystemResourceAsStream(name));
+    String name = "com/sun/xml/internal/messaging/saaj/soap/LocalStrings.properties";
+    assertNotNull(UrlClassLoaderTest.class.getClassLoader().getResourceAsStream(name));
     assertNull(UrlClassLoader.build().get().getResourceAsStream(name));
     assertNotNull(UrlClassLoader.build().allowBootstrapResources().get().getResourceAsStream(name));
   }
 
   @Test
   public void testNonCanonicalPaths() throws IOException {
-    tempDir.newFile("dir/a.txt");
+    File root = FileUtil.createTempDirectory("testNonCanonicalPaths", "");
+    File subDir = createTestDir(root, "dir");
+    createTestFile(subDir, "a.txt");
 
-    URL url = tempDir.getRoot().toURI().toURL();
+    URL url = root.toURI().toURL();
     UrlClassLoader customCl = UrlClassLoader.build().urls(url).get();
     try (URLClassLoader standardCl = new URLClassLoader(new URL[]{url})) {
       String relativePathToFile = "dir/a.txt";
@@ -61,7 +58,7 @@ public class UrlClassLoaderTest {
       assertNotNull(standardCl.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
-      assertNotNull(customCl.getResourceAsStream(absolutePathToFile));  // non-standard CL behavior
+      assertNotNull(customCl.getResourceAsStream(absolutePathToFile)); // non-standard CL behavior
       assertNull(standardCl.findResource(absolutePathToFile));
 
       String absoluteNonCanonicalPathToFile = "/dir/a.txt/../a.txt";
@@ -133,43 +130,55 @@ public class UrlClassLoaderTest {
 
   @Test
   public void testInvalidJarsInClassPath() throws IOException {
-    String entryName = "test_res_dir/test_res.txt";
-    File theGood = createTestJar(createTestFile(tempDir.getRoot(), "1_normal.jar"), entryName, "-");
-    File theBad = createTestFile(tempDir.getRoot(), "2_broken.jar", new String(new char[1024]));
+    File sadHill = createTestDir("testInvalidJarsInClassPath");
+    try {
+      String entryName = "test_res_dir/test_res.txt";
+      File theGood = createTestJar(createTestFile(sadHill, "1_normal.jar"), entryName, "-");
+      File theBad = createTestFile(sadHill, "2_broken.jar", new String(new char[1024]));
 
-    UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).useLazyClassloadingCaches(false).get();
-    assertNotNull(findResource(flat, entryName, false));
+      UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).useLazyClassloadingCaches(false).get();
+      assertNotNull(findResource(flat, entryName, false));
 
-    String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
-                     Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
-    File theUgly = createTestJar(createTestFile(tempDir.getRoot(), ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content);
+      String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
+                       Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
+      File theUgly = createTestJar(createTestFile(sadHill, ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content);
 
-    UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).useLazyClassloadingCaches(false).get();
-    assertNotNull(findResource(recursive, entryName, false));
+      UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).useLazyClassloadingCaches(false).get();
+      assertNotNull(findResource(recursive, entryName, false));
+    }
+    finally {
+      FileUtil.delete(sadHill);
+    }
   }
 
   @Test
   public void testDirEntry() throws IOException {
-    String resourceDirName = "test_res_dir";
-    String resourceDirName2 = "test_res_dir2";
-    File theGood = createTestJar(createTestFile(tempDir.getRoot(), "1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
-    UrlClassLoader flat = UrlClassLoader.build().urls(theGood.toURI().toURL()).get();
+    File sadHill = createTestDir("testDirEntry");
+    try {
+      String resourceDirName = "test_res_dir";
+      String resourceDirName2 = "test_res_dir2";
+      File theGood = createTestJar(createTestFile(sadHill, "1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
+      UrlClassLoader flat = UrlClassLoader.build().urls(theGood.toURI().toURL()).get();
 
-    String resourceDirNameWithSlash = resourceDirName + "/";
-    String resourceDirNameWithSlash_ = "/" + resourceDirNameWithSlash;
-    String resourceDirNameWithSlash2 = resourceDirName2 + "/";
-    String resourceDirNameWithSlash2_ = "/" + resourceDirNameWithSlash2;
+      String resourceDirNameWithSlash = resourceDirName + "/";
+      String resourceDirNameWithSlash_ = "/" + resourceDirNameWithSlash;
+      String resourceDirNameWithSlash2 = resourceDirName2 + "/";
+      String resourceDirNameWithSlash2_ = "/" + resourceDirNameWithSlash2;
 
-    assertNull(findResource(flat, resourceDirNameWithSlash, false));
-    assertNull(findResource(flat, resourceDirNameWithSlash_, false));
-    assertNotNull(findResource(flat, resourceDirNameWithSlash2, false));
-    assertNotNull(findResource(flat, resourceDirNameWithSlash2_, false)); // non-standard CL behavior
+      assertNull(findResource(flat, resourceDirNameWithSlash, false));
+      assertNull(findResource(flat, resourceDirNameWithSlash_, false));
+      assertNotNull(findResource(flat, resourceDirNameWithSlash2, false));
+      assertNotNull(findResource(flat, resourceDirNameWithSlash2_, false)); // non-standard CL behavior
 
-    try (URLClassLoader recursive2 = new URLClassLoader(new URL[]{theGood.toURI().toURL()})) {
-      assertNotNull(recursive2.findResource(resourceDirNameWithSlash2));
-      assertNull(recursive2.findResource(resourceDirNameWithSlash2_));
-      assertNull(recursive2.findResource(resourceDirNameWithSlash));
-      assertNull(recursive2.findResource(resourceDirNameWithSlash_));
+      try (URLClassLoader recursive2 = new URLClassLoader(new URL[]{theGood.toURI().toURL()})) {
+        assertNotNull(recursive2.findResource(resourceDirNameWithSlash2));
+        assertNull(recursive2.findResource(resourceDirNameWithSlash2_));
+        assertNull(recursive2.findResource(resourceDirNameWithSlash));
+        assertNull(recursive2.findResource(resourceDirNameWithSlash_));
+      }
+    }
+    finally {
+      FileUtil.delete(sadHill);
     }
   }
 
@@ -192,9 +201,9 @@ public class UrlClassLoaderTest {
   @Test
   public void testFindDirWhenUsingCache() throws IOException {
     int counter = 1;
-    for (String dirName : new String[]{"dir", "dir/", "dir.class", "dir.class/"}) {
-      for (String resourceName : new String[]{"a.class", "a.txt"}) {
-        File root = tempDir.newFolder("testFindDirWhenUsingCache" + (counter++));
+    for (String dirName : new String[]{ "dir", "dir/", "dir.class", "dir.class/"}) {
+      for(String resourceName: new String[] {"a.class", "a.txt"} ) {
+        File root = FileUtil.createTempDirectory("testFindDirWhenUsingCache", String.valueOf(counter++));
         File subDir = createTestDir(root, dirName);
         createTestFile(subDir, resourceName);
 

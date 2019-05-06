@@ -29,11 +29,11 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 
 public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
   implements PsiLambdaExpression {
@@ -167,7 +167,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public boolean isAcceptable(PsiType leftType, @Nullable PsiMethod method) {
+  public boolean isAcceptable(PsiType leftType) {
     if (leftType instanceof PsiIntersectionType) {
       for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {
         if (isAcceptable(conjunctType)) return true;
@@ -176,13 +176,17 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
-    if (MethodCandidateInfo.isOverloadCheck(argsList) && method != null) {
-      if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
-        return true;
-      }
+    if (MethodCandidateInfo.isOverloadCheck(argsList)) {
+      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argsList);
+      if (currentMethod != null) {
+        final PsiMethod method = currentMethod.getElement();
+        if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
+          return true;
+        }
 
-      if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
-        return true;
+        if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
+          return true;
+        }
       }
     }
 
@@ -221,8 +225,16 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
     if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) {
-      return LambdaUtil.performWithTargetType(this, leftType, () ->
-               LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null);
+      Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+      try {
+        if (map.put(this, leftType) != null) {
+          return false;
+        }
+        return LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null;
+      }
+      finally {
+        map.remove(this);
+      }
     }
     return true;
   }

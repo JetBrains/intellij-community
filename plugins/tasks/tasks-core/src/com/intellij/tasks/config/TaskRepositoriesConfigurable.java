@@ -47,7 +47,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   private JPanel myPanel;
   private JPanel myServersPanel;
-  private final JBList<TaskRepository> myRepositoriesList;
+  private final JBList myRepositoriesList;
   @SuppressWarnings({"UnusedDeclaration"})
   private JPanel myToolbarPanel;
   private JPanel myRepositoryEditor;
@@ -160,10 +160,14 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
       }
     });
 
-    myRepositoriesList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-      label.setIcon(value.getIcon());
-      label.setText(value.getPresentableName());
-    }));
+    myRepositoriesList.setCellRenderer(new ColoredListCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        TaskRepository repository = (TaskRepository)value;
+        setIcon(repository.getIcon());
+        append(repository.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+    });
 
     myChangeListener = repository -> ((CollectionListModel)myRepositoriesList.getModel()).contentsChanged(repository);
   }
@@ -186,7 +190,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   @Nullable
   private TaskRepository getSelectedRepository() {
-    return myRepositoriesList.getSelectedValue();
+    return (TaskRepository)myRepositoriesList.getSelectedValue();
   }
 
   @Override

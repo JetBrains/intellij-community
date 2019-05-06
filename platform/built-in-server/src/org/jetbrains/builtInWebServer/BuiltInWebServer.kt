@@ -37,9 +37,11 @@ import org.jetbrains.io.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
+import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -127,10 +129,17 @@ private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MIN
 fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
-    token = DigestUtil.randomToken()
+    token = TokenGenerator.generate()
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
+}
+
+// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
+private object TokenGenerator {
+  private val random = SecureRandom()
+
+  fun generate(): String = BigInteger(130, random).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -177,7 +178,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   public static String defaultScriptPath() {
     String scriptName = ApplicationNamesInfo.getInstance().getDefaultLauncherName();
-    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
+    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     return "/usr/local/bin/" + scriptName;
   }
 }

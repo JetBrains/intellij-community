@@ -74,15 +74,7 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
   }
 
   private static void runSensitiveDataValidatorUpdater() {
-    JobScheduler.getScheduler().scheduleWithFixedDelay(
-      () -> {
-        final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
-        for (StatisticsEventLoggerProvider provider : providers) {
-          if (provider.isRecordEnabled()) {
-            SensitiveDataValidator.getInstance(provider.getRecorderId()).update();
-          }
-        }
-      }, 3, 180, TimeUnit.MINUTES);
+    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> SensitiveDataValidator.getInstance().update(), 3, 180, TimeUnit.MINUTES);
   }
 
   private static void runEventLogStatisticsService() {

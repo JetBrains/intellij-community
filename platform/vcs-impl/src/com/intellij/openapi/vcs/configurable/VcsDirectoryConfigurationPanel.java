@@ -7,12 +7,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -77,7 +77,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
     static final Comparator<MapInfo> COMPARATOR = (o1, o2) -> {
       if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
-        return Comparing.compare(o1.mapping.getDirectory(), o2.mapping.getDirectory());
+        return NewMappings.MAPPINGS_COMPARATOR.compare(o1.mapping, o2.mapping);
       }
       return o1.type.ordinal() - o2.type.ordinal();
     };
@@ -102,7 +102,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     }
 
     private final Type type;
-    private VcsDirectoryMapping mapping;
+    private final VcsDirectoryMapping mapping;
 
     private MapInfo(@NotNull VcsDirectoryMapping mapping, @NotNull Type type) {
       this.mapping = mapping;
@@ -200,7 +200,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       @Override
       public void setValue(final MapInfo o, final String aValue) {
         Collection<AbstractVcs> activeVcses = getActiveVcses();
-        o.mapping = new VcsDirectoryMapping(o.mapping.getDirectory(), aValue, o.mapping.getRootSettings());
+        o.mapping.setVcs(aValue);
         checkNotifyListeners(activeVcses);
       }
 
@@ -279,7 +279,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myProject = project;
     myVcsConfiguration = getInstance(myProject);
     myProjectMessage = XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
-                                                DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage()
+                                                DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject)
                                                   .replace('\n', ' '));
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -377,9 +377,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private boolean isMappingValid(@NotNull VcsDirectoryMapping mapping) {
-    if (mapping.isDefaultMapping()) return true;
-    VcsRootChecker checker = myCheckers.get(mapping.getVcs());
-    return checker == null || checker.isRoot(mapping.getDirectory());
+    String vcs = mapping.getVcs();
+    VcsRootChecker checker = myCheckers.get(vcs);
+    return checker == null ||
+           (mapping.isDefaultMapping() ? checker.isRoot(myProject.getBasePath()) : checker.isRoot(mapping.getDirectory()));
   }
 
   @NotNull
@@ -505,29 +506,23 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private JComponent createMappingsTable() {
     JPanel panelForTable = ToolbarDecorator.createDecorator(myDirectoryMappingTable, null)
-      .setAddActionUpdater(e -> !myIsDisabled && rootsOfOneKindInSelection())
       .setAddAction(button -> {
-        List<MapInfo> unregisteredRoots = getSelectedUnregisteredRoots();
-        if (unregisteredRoots.isEmpty()) {
+        if (onlyRegisteredRootsInSelection()) {
           addMapping();
         }
         else {
-          addSelectedUnregisteredMappings(unregisteredRoots);
+          addSelectedUnregisteredMappings(getSelectedUnregisteredRoots());
         }
         updateRootCheckers();
-      })
-      .setEditActionUpdater(e -> !myIsDisabled && onlyRegisteredRootsInSelection())
-      .setEditAction(button -> {
+      }).setEditAction(button -> {
         editMapping();
         updateRootCheckers();
-      })
-      .setRemoveActionUpdater(e -> !myIsDisabled && onlyRegisteredRootsInSelection())
-      .setRemoveAction(button -> {
+      }).setRemoveAction(button -> {
         removeMapping();
         updateRootCheckers();
-      })
-      .disableUpDownActions()
-      .createPanel();
+      }).setAddActionUpdater(e -> !myIsDisabled && rootsOfOneKindInSelection()).setEditActionUpdater(
+        e -> !myIsDisabled && onlyRegisteredRootsInSelection()).setRemoveActionUpdater(
+        e -> !myIsDisabled && onlyRegisteredRootsInSelection()).disableUpDownActions().createPanel();
     panelForTable.setPreferredSize(new JBDimension(-1, 200));
     return panelForTable;
   }
@@ -543,7 +538,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       return true;
     }
     if (selection.size() == 1 && selection.iterator().next().type == MapInfo.Type.SEPARATOR) {
-      return true;
+      return false;
     }
     List<MapInfo> selectedRegisteredRoots = getSelectedRegisteredRoots();
     return selectedRegisteredRoots.size() == selection.size() || selectedRegisteredRoots.size() == 0;

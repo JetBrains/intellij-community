@@ -57,7 +57,7 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
     return result;
   }
 
-  protected void addUsageTypes(@NotNull LinkedHashSet<? super String> to) {
+  protected void addUsageTypes(@NotNull LinkedHashSet<String> to) {
     if (isUsages) {
       to.add(FindBundle.message("find.usages.panel.title.usages"));
     }

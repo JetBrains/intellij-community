@@ -4,16 +4,13 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
-import com.intellij.build.events.impl.OutputBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,17 +23,12 @@ public class MavenLogOutputParser implements BuildOutputParser {
   private final List<MavenLoggedEventParser> myRegisteredEvents;
   private final ExternalSystemTaskId myTaskId;
 
-  private final MavenSpyOutputParser mavenSpyOutputParser;
-  private final MavenParsingContext myParsingContext;
-
-
   public MavenLogOutputParser(ExternalSystemTaskId taskId,
                               List<MavenLoggedEventParser> registeredEvents) {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
-    myParsingContext = new MavenParsingContext(taskId);
-    mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
   }
+
 
   public void finish(Consumer<? super BuildEvent> messageConsumer) {
     completeParsers(messageConsumer);
@@ -58,37 +50,23 @@ public class MavenLogOutputParser implements BuildOutputParser {
   public boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer) {
     if (myCompleted) return false;
 
-    if (line == null || StringUtil.isEmptyOrSpaces(line)) {
+    MavenLogEntryReader.MavenLogEntry logLine = nextLine(line);
+    if (logLine == null || StringUtil.isEmptyOrSpaces(logLine.myLine)) {
       return false;
     }
-    if (MavenSpyOutputParser.isSpyLog(line)) {
-      mavenSpyOutputParser.processLine(line, messageConsumer);
-      return true;
-    }
-    else {
-      messageConsumer.accept(new OutputBuildEventImpl(myParsingContext.getLastId(), withSeparator(line), true));
-      MavenLogEntryReader.MavenLogEntry logLine = nextLine(line);
 
-      MavenLogEntryReader mavenLogReader = wrapReader(reader);
-
-      for (MavenLoggedEventParser event : myRegisteredEvents) {
-        if (!event.supportsType(logLine.myType)) {
-          continue;
-        }
-        if (event.checkLogLine(myParsingContext.getLastId(), logLine, mavenLogReader, messageConsumer)) {
-          return true;
-        }
+    MavenLogEntryReader mavenLogReader = wrapReader(reader);
+    for (MavenLoggedEventParser event : myRegisteredEvents) {
+      if (!event.supportsType(logLine.myType)) {
+        continue;
       }
-      if (checkComplete(messageConsumer, logLine, mavenLogReader)) return true;
+      if (event.checkLogLine(myTaskId, logLine, mavenLogReader, messageConsumer)) {
+        return true;
+      }
     }
-    return false;
-  }
 
-  private static String withSeparator(@NotNull String line) {
-    if (line.endsWith("\n")) {
-      return line;
-    }
-    return line + "\n";
+    if (checkComplete(messageConsumer, logLine, mavenLogReader)) return true;
+    return false;
   }
 
   private static MavenLogEntryReader wrapReader(BuildOutputInstantReader reader) {

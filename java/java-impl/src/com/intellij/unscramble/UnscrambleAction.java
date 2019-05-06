@@ -35,10 +35,6 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
                                                                             new UnscrambleListener());
   }
 
-  public UnscrambleAction() {
-    super("Analyze _Stack Trace or Thread Dump...", "Open console with the navigatable stack trace or a thread dump", null);
-  }
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);

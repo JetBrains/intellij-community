@@ -587,6 +587,11 @@ public class PlatformTestUtil {
   }
 
   @NotNull
+  public static String getRtJarPath() {
+    return SystemProperties.getJavaHome() + "/lib/rt.jar";
+  }
+
+  @NotNull
   public static URL getRtJarURL() {
     String home = SystemProperties.getJavaHome();
     try {
@@ -809,7 +814,6 @@ public class PlatformTestUtil {
     System.setProperty("file.encoding", encoding);
   }
 
-  @SuppressWarnings("ImplicitDefaultCharsetUsage")
   public static void withStdErrSuppressed(@NotNull Runnable r) {
     PrintStream std = System.err;
     System.setErr(new PrintStream(NULL));

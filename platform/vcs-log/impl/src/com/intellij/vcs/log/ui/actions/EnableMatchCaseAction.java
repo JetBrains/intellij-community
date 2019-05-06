@@ -48,7 +48,7 @@ public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
           e.getPresentation().setText(MATCH_CASE);
         }
         else {
-          String supportedText = StringUtil.join(ContainerUtil.map(supported, p -> StringUtil.toLowerCase(p.getSupportedVcs().getName())), ", ");
+          String supportedText = StringUtil.join(ContainerUtil.map(supported, p -> p.getSupportedVcs().getName().toLowerCase()), ", ");
           e.getPresentation().setText(MATCH_CASE + " (" + supportedText + " only)");
         }
       }

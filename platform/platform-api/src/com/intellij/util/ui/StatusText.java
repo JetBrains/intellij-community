@@ -136,7 +136,7 @@ public abstract class StatusText {
 
   @Nullable
   private static ActionListener findListener(@NotNull SimpleColoredComponent component,
-                                             @NotNull List<? extends ActionListener> listeners,
+                                             @NotNull List<ActionListener> listeners,
                                              int xCoord) {
     int index = component.findFragmentAt(xCoord);
     if (index >= 0 && index < listeners.size()) {

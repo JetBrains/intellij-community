@@ -130,7 +130,7 @@ public class TroveUtil {
     what.forEach(value -> where.add(value));
   }
 
-  public static void addAll(@NotNull Collection<? super Integer> where, @NotNull TIntHashSet what) {
+  public static void addAll(@NotNull Collection<Integer> where, @NotNull TIntHashSet what) {
     what.forEach(value -> where.add(value));
   }
 
@@ -142,7 +142,7 @@ public class TroveUtil {
   }
 
   @NotNull
-  public static TIntHashSet union(@NotNull Collection<? extends TIntHashSet> sets) {
+  public static TIntHashSet union(@NotNull Collection<TIntHashSet> sets) {
     TIntHashSet result = new TIntHashSet();
     for (TIntHashSet set : sets) {
       addAll(result, set);

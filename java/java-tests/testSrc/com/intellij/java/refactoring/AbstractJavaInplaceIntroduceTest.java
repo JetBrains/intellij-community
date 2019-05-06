@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.AbstractInplaceIntroduceTest;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,10 +57,10 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
   protected AbstractInplaceIntroducer invokeRefactoring(MyIntroduceHandler introduceHandler) {
     final PsiExpression expression = getExpressionFromEditor();
     if (expression != null) {
-      introduceHandler.invokeImpl(getProject(), expression, getEditor());
+      introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), expression, getEditor());
     } else {
       final PsiLocalVariable localVariable = getLocalVariableFromEditor();
-      introduceHandler.invokeImpl(getProject(), localVariable, getEditor());
+      introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), localVariable, getEditor());
     }
     return introduceHandler.getInplaceIntroducer();
   }

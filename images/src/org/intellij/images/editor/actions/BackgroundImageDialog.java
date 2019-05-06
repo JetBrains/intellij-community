@@ -48,10 +48,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
@@ -475,7 +473,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     IdeBackgroundUtil.Anchor[] values = IdeBackgroundUtil.Anchor.values();
     String[] names = new String[values.length];
     for (int i = 0; i < names.length; i++) {
-      names[i] = StringUtil.toLowerCase(values[i].name().replace('_', '-'));
+      names[i] = values[i].name().replace('_', '-').toLowerCase(Locale.ENGLISH);
     }
     Color color = getSelectionBackground();
     p.setLayout(new GridLayout(3, 3, 1, 1));
@@ -492,7 +490,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     String[] names = new String[values.length];
     BufferedImage image = sampleImage();
     for (int i = 0; i < names.length; i++) {
-      names[i] = StringUtil.toLowerCase(values[i].name().replace('_', '-'));
+      names[i] = values[i].name().replace('_', '-').toLowerCase(Locale.ENGLISH);
     }
     Color color = getSelectionBackground();
     p.setLayout(new GridLayout(1, values.length, 1, 1));

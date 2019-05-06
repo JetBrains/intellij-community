@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
@@ -9,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
@@ -124,34 +124,12 @@ class ServiceViewActionProvider {
     if (contextComponent == null) return AnAction.EMPTY_ARRAY;
 
     List<ServiceViewItem> selectedItems = ((ServiceView)contextComponent).getSelectedItems();
-    if (selectedItems.isEmpty()) return AnAction.EMPTY_ARRAY;
-
-    ServiceViewDescriptor descriptor = null;
-    if (selectedItems.size() == 1) {
-      descriptor = selectedItems.get(0).getViewDescriptor();
-    }
-    else {
-      ServiceViewContributor contributor = getTheOnlyRootContributor(selectedItems);
-      descriptor = contributor == null ? null : contributor.getViewDescriptor();
-    }
+    ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
+    ServiceViewDescriptor descriptor = selectedItem == null ? null : selectedItem.getViewDescriptor();
     if (descriptor == null) return AnAction.EMPTY_ARRAY;
 
     ActionGroup group = toolbar ? descriptor.getToolbarActions() : descriptor.getPopupActions();
     return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
-  }
-
-  @Nullable
-  private static ServiceViewContributor getTheOnlyRootContributor(@NotNull List<ServiceViewItem> items) {
-    ServiceViewContributor contributor = null;
-    for (ServiceViewItem item : items) {
-      if (contributor == null) {
-        contributor = item.getRootContributor();
-      }
-      else if (!contributor.equals(item.getRootContributor())) {
-        return null;
-      }
-    }
-    return contributor;
   }
 
   public static class ItemToolbarActionGroup extends ActionGroup {

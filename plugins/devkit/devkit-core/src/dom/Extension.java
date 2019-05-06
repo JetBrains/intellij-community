@@ -25,38 +25,21 @@ import org.jetbrains.annotations.Nullable;
 @Presentation(typeName = "Extension")
 public interface Extension extends DomElement {
 
-  String ID_ATTRIBUTE = "id";
-  String ORDER_ATTRIBUTE = "order";
-  String OS_ATTRIBUTE = "os";
-
-  String IMPLEMENTATION_ATTRIBUTE = "implementation";
-
   @NotNull
   @Override
   XmlTag getXmlTag();
 
   @NameValue
   @Required(value = false)
-  @Attribute(ID_ATTRIBUTE)
   GenericAttributeValue<String> getId();
 
   @Referencing(value = ExtensionOrderConverter.class, soft = true)
   @Required(value = false)
-  @Attribute(ORDER_ATTRIBUTE)
   GenericAttributeValue<String> getOrder();
 
   @NotNull
-  @Attribute(OS_ATTRIBUTE)
   GenericAttributeValue<Extensions.OS> getOs();
 
   @Nullable
   ExtensionPoint getExtensionPoint();
-
-  static boolean isClassField(@NotNull String fieldName) {
-    return fieldName.equals(IMPLEMENTATION_ATTRIBUTE) ||
-           fieldName.equals("className") ||
-           fieldName.equals("serviceInterface") ||
-           fieldName.equals("serviceImplementation") ||
-           (fieldName.endsWith("Class") && !fieldName.equals("forClass"));
-  }
 }

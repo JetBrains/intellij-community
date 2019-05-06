@@ -182,8 +182,4 @@ public class DtdParsingTest extends ParsingTestCase {
               "<!ELEMENT ANY ANY>\n" +
               "<!ELEMENT AND (FIELD|PUBLIC|EMPTY|ANY)*>");
   }
-
-  public void testKeywordsAsAttributeName() throws Exception {
-    doTestDtd("<!ATTLIST park conditionType (DONT_CARE|EMPTY|VALUE|REGEXP) 'DONT_CARE'>");
-  }
 }

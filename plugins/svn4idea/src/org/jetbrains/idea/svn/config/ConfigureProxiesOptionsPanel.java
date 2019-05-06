@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn.config;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InsertPathAction;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -222,7 +221,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private static boolean booleanPropertySelected(final String value) {
-    return value != null && SvnServerFileKeys.YES_OPTIONS.contains(StringUtil.toLowerCase(value));
+    return value != null && SvnServerFileKeys.YES_OPTIONS.contains(value.toLowerCase());
   }
 
   public boolean isDefault() {

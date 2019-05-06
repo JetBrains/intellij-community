@@ -19,8 +19,9 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.*;
-import com.intellij.execution.dashboard.RunDashboardManager.RunDashboardService;
+import com.intellij.execution.dashboard.RunDashboardCustomizer;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
@@ -40,15 +41,15 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
-public class RunConfigurationNode extends AbstractTreeNode<RunDashboardService>
+public class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
   implements RunDashboardRunConfigurationNode {
 
   private final List<RunDashboardCustomizer> myCustomizers;
   private final UserDataHolder myUserDataHolder = new UserDataHolderBase();
 
-  public RunConfigurationNode(Project project, @NotNull RunDashboardService service,
+  public RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value,
                               @NotNull List<RunDashboardCustomizer> customizers) {
-    super(project, service);
+    super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
     myCustomizers = customizers;
   }
 
@@ -56,21 +57,23 @@ public class RunConfigurationNode extends AbstractTreeNode<RunDashboardService>
   @NotNull
   public RunnerAndConfigurationSettings getConfigurationSettings() {
     //noinspection ConstantConditions ???
-    return getValue().getSettings();
+    return getValue().first;
   }
 
   @Nullable
   @Override
   public RunContentDescriptor getDescriptor() {
-    //noinspection ConstantConditions ???
-    return getValue().getDescriptor();
+    Content content = getContent();
+    if (content == null) return null;
+
+    return RunContentManagerImpl.getRunContentDescriptorByContent(content);
   }
 
   @Nullable
   @Override
   public Content getContent() {
     //noinspection ConstantConditions ???
-    return getValue().getContent();
+    return getValue().second;
   }
 
   @Override

@@ -42,7 +42,6 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.UnsupportedMethodException;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
 import org.gradle.util.GradleVersion;
@@ -254,7 +253,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       DefaultGradleExtensions extensions = new DefaultGradleExtensions(gradleExtensions);
       ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
       if (externalProject != null) {
-        extensions.addTasks(externalProject.getTasks().values());
+        extensions.getTasks().addAll(externalProject.getTasks().values());
       }
       ideModule.createChild(GradleExtensionsDataService.KEY, extensions);
     }
@@ -807,11 +806,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                      @NotNull Throwable error,
+  public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
                                                       @NotNull String projectPath,
                                                       @Nullable String buildFilePath) {
-    return myErrorHandler.getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
+    return myErrorHandler.getUserFriendlyError(error, projectPath, buildFilePath);
   }
 
   @Override
@@ -856,7 +854,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     return "";
   }
 
-  public void setupDebugForAllJvmForkedTasks(@NotNull Consumer<? super String> initScriptConsumer, int debugPort) {
+  public void setupDebugForAllJvmForkedTasks(@NotNull Consumer<String> initScriptConsumer, int debugPort) {
     // external-system-rt.jar
     String esRtJarPath = PathUtil.getCanonicalPath(PathManager.getJarPathForClass(ExternalSystemSourceType.class));
     final String[] lines = {

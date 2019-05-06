@@ -91,7 +91,7 @@ public class RefreshWorker {
     while (!myRefreshQueue.isEmpty()) {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
-      if (!VfsEventGenerationHelper.checkDirty(file)) continue;
+      if (!myHelper.checkDirty(file)) continue;
 
       checkCancelled(file);
 
@@ -200,8 +200,8 @@ public class RefreshWorker {
     }
 
     // generating events unless a directory was changed in between
-    myHelper.beginTransaction();
     boolean transactionSucceeded = false;
+    myHelper.beginTransaction();
     try {
       checkCancelled(dir);
       if (isDirectoryChanged(persistence, dir, persistedNames, children)) {
@@ -216,7 +216,7 @@ public class RefreshWorker {
       }
 
       for (ChildInfo record : newKids) {
-        myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
+        myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, ()->checkCancelled(dir));
       }
 
       for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -241,10 +241,10 @@ public class RefreshWorker {
     return transactionSucceeded;
   }
 
-  private static boolean isDirectoryChanged(@NotNull PersistentFS persistence,
-                                            @NotNull VirtualDirectoryImpl dir,
-                                            @NotNull String[] persistedNames,
-                                            @NotNull VirtualFile[] children) {
+  private boolean isDirectoryChanged(@NotNull PersistentFS persistence,
+                                     @NotNull VirtualDirectoryImpl dir,
+                                     @NotNull String[] persistedNames,
+                                     @NotNull VirtualFile[] children) {
     return ReadAction.compute(() -> {
       if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
         if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
@@ -260,10 +260,10 @@ public class RefreshWorker {
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
       checkCancelled(dir);
-
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
         ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
+
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
 
@@ -271,7 +271,8 @@ public class RefreshWorker {
         fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
 
       if (LOG.isTraceEnabled()) {
-        LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
+        LOG.trace("cached=" + cached + " actual=" + actualNames);
+        LOG.trace("suspicious=" + wanted);
       }
 
       // reading children attributes
@@ -312,7 +313,7 @@ public class RefreshWorker {
         }
 
         for (ChildInfo record : newKids) {
-          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, ()->checkCancelled(dir));
         }
 
         return true;
@@ -332,7 +333,7 @@ public class RefreshWorker {
     return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
-  static class RefreshCancelledException extends RuntimeException { }
+  private static class RefreshCancelledException extends RuntimeException { }
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
     Function<? super VirtualFile, Boolean> cancellingCondition;
@@ -378,7 +379,7 @@ public class RefreshWorker {
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
       String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, ()->checkCancelled(parent));
       return true;
     }
 

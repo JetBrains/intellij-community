@@ -90,6 +90,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   private void updateButtonsState() {
     boolean hasSelection = !myIndicesTable.getSelectionModel().isSelectionEmpty();
+    hasSelection = getSelectedIndices().stream().anyMatch(i -> i.getKind() == REMOTE);
     myUpdateButton.setEnabled(hasSelection);
   }
 

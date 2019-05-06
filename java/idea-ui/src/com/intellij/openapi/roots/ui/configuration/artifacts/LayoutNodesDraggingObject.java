@@ -31,9 +31,9 @@ import java.util.List;
  */
 public class LayoutNodesDraggingObject extends PackagingElementDraggingObject {
   private final ArtifactEditorEx myArtifactsEditor;
-  private final List<? extends PackagingElementNode<?>> myNodes;
+  private final List<PackagingElementNode<?>> myNodes;
 
-  public LayoutNodesDraggingObject(ArtifactEditorEx artifactsEditor, List<? extends PackagingElementNode<?>> nodes) {
+  public LayoutNodesDraggingObject(ArtifactEditorEx artifactsEditor, List<PackagingElementNode<?>> nodes) {
     myArtifactsEditor = artifactsEditor;
     myNodes = nodes;
   }

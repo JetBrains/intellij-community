@@ -229,7 +229,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     }
   }
 
-  public void setValues(List<? extends T> envVariables) {
+  public void setValues(List<T> envVariables) {
     myElements.clear();
     for (T envVariable : envVariables) {
       myElements.add(cloneElement(envVariable));

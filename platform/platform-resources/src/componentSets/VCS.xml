@@ -1,7 +1,7 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>com.intellij.vcs.commit.VetoSavingCommittingDocumentsAdapter</implementation-class>
+      <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
     </component>
   </application-components>
   <project-components>
@@ -99,14 +99,11 @@
     <lang.parserDefinition language="IgnoreLang"
                            implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
 
-    <lang.syntaxHighlighterFactory language="IgnoreLang"
-                                   implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguageHighlighterFactory"/>
-
     <localInspection
         bundle="messages.VcsBundle"
         enabledByDefault="true"
         groupKey="ignore.codeInspection.group"
-        implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInspection.IgnoreFileDuplicateEntryInspection"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInspection.IgnoreDuplicateEntryInspection"
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
   </extensions>

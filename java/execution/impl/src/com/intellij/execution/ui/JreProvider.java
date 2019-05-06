@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * Extension point for providing custom jre to be shown at run configuration control.
  * 
  * @author Denis Zhdanov
- * @author Konstantin Bulenkov
  */
 public interface JreProvider {
 
@@ -30,12 +29,4 @@ public interface JreProvider {
   
   @NotNull
   String getJrePath();
-
-  default boolean isAvailable() {
-    return true;
-  }
-
-  default String getPresentableName() {
-    return getJrePath();
-  }
 }

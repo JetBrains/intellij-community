@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -42,7 +41,7 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM
 
 public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
   protected DirectoryProjectGenerator<T> myProjectGenerator;
-  protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
+  protected AbstractNewProjectStep.AbstractCallback myCallback;
   protected TextFieldWithBrowseButton myLocationField;
   protected File myProjectDirectory;
   protected JButton myCreateButton;
@@ -50,7 +49,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
-                                 AbstractNewProjectStep.AbstractCallback<T> callback) {
+                                 AbstractNewProjectStep.AbstractCallback callback) {
     super();
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     getTemplatePresentation().setText(projectGenerator.getName());
@@ -133,7 +132,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          TransactionGuard.getInstance().submitTransactionAndWait(() -> myCallback.consume(ProjectSettingsStepBase.this, getPeer()));
+          myCallback.consume(ProjectSettingsStepBase.this, getPeer());
         }
       }
     };

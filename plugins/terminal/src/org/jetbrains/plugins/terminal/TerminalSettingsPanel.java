@@ -3,13 +3,9 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -18,11 +14,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +24,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -56,7 +48,6 @@ public class TerminalSettingsPanel {
   private JBCheckBox myHighlightHyperlinks;
 
   private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
-  private ActionLink myConfigureTerminalKeybindingsActionLink;
 
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
@@ -195,25 +186,6 @@ public class TerminalSettingsPanel {
 
   public Color getDefaultValueColor() {
     return findColorByKey("TextField.inactiveForeground", "nimbusDisabledText");
-  }
-
-  private void createUIComponents() {
-    myConfigureTerminalKeybindingsActionLink = new ActionLink(null, new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Settings settings = e.getData(Settings.KEY);
-        if (settings != null) {
-          Configurable configurable = settings.find("preferences.keymap");
-          settings.select(configurable, "Terminal").doWhenDone(() -> {
-            // Remove once https://youtrack.jetbrains.com/issue/IDEA-212247 is fixed
-            EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-              settings.select(configurable, "Terminal");
-            }, 100, TimeUnit.MILLISECONDS);
-          });
-        }
-      }
-    });
-    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myConfigureTerminalKeybindingsActionLink);
   }
 
   @NotNull
