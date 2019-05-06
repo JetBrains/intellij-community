@@ -2003,7 +2003,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_warnings_suppressing.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 14);
+        toggleBreakpoint(getFilePath(getScriptName()), 15);
       }
 
       @Override
@@ -2015,9 +2015,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         String out = output();
         assertTrue(out.contains("This warning should appear in the output."));
         assertFalse(out.contains("This property is deprecated!"));
-        toggleBreakpoint(getFilePath(getScriptName()), 15);
         resume();
-        waitForPause();
         waitForOutput("This property is deprecated!");
       }
     });
