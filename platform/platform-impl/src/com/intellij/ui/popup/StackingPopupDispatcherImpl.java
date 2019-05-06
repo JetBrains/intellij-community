@@ -207,9 +207,15 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   @Override
   public boolean close() {
     if (!closeActivePopup()) return false;
-    // try to close other popups in the stack
+
+    int size = myStack.size();
     while (closeActivePopup()) {
-      // close all popups one by one
+      int next = myStack.size();
+      if (size == next) {
+        // no popup was actually closed, break
+        break;
+      }
+      size = next;
     }
     return true; // at least one popup was closed
   }
@@ -233,7 +239,8 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     final AbstractPopup popup = (AbstractPopup)myStack.peek();
     if (popup != null && popup.isVisible() && popup.isCancelOnWindowDeactivation() && popup.canClose()) {
       popup.cancel();
-      return true;
+      // setCancelCallback(..) can override cancel()
+      return !popup.isVisible();
     }
     return false;
   }
