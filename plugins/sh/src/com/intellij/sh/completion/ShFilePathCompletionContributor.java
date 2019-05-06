@@ -4,6 +4,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -14,11 +15,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.sh.ShStringUtil;
+import com.intellij.sh.ShTypes;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.psi.ShString;
-import com.intellij.sh.psi.ShVariable;
-import com.intellij.sh.psi.impl.ShPsiImplUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
@@ -159,12 +159,17 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
     }
   }
 
-  private static boolean isStringOfVar(LeafPsiElement e) {
-    return e.getElementType() == ShTokenTypes.QUOTE
-        && e.getParent() != null
-        && e.getParent() instanceof ShString
-        && ShPsiImplUtil.getChildren(e.getParent()).length == 3
-        && e.getPrevSibling() instanceof ShVariable;
+  // e.g. "$HOME"/<caret>
+  private static boolean isStringOfVar(@NotNull LeafPsiElement e) {
+    if (e.getElementType() != ShTokenTypes.QUOTE) return false;
+    PsiElement str = e.getParent();
+    if (!(str instanceof ShString)) return false;
+
+    ASTNode[] children = str.getNode().getChildren(null);
+    return children.length == 3 &&
+        children[0].getElementType() == ShTypes.QUOTE &&
+        children[1].getElementType() == ShTypes.VARIABLE &&
+        children[2].getElementType() == ShTypes.QUOTE;
   }
 
   @NotNull
