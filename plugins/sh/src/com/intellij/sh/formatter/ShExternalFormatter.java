@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.lang.ASTNode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -27,7 +26,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
-import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,8 +37,8 @@ import java.util.List;
 
 // todo: rewrite with the future API, see IDEA-203568
 public class ShExternalFormatter implements ExternalFormatProcessor {
-  private final static Logger LOG = Logger.getInstance(ShExternalFormatter.class);
-  private static final List<String> KNOWN_SHELLS = ContainerUtil.list("sh", "posix", "mksh");
+  private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
+  private static final List<String> KNOWN_SHELLS = ContainerUtil.list("bash", "posix", "mksh");
 
   @Override
   public boolean activeForFile(@NotNull PsiFile file) {
@@ -81,17 +79,8 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     long before = document.getModificationStamp();
     documentManager.saveDocument(document);
 
-    String interpreter = "sh";
-    ASTNode shebang = psiFile.getNode().findChildByType(ShTokenTypes.SHEBANG);
-    if (shebang != null) {
-      String detectedInterpreter = ShShebangParserUtil.getInterpreter(shebang.getText());
-      if (KNOWN_SHELLS.contains(detectedInterpreter)) {
-        interpreter = detectedInterpreter;
-      }
-    }
-
     List<String> params = ContainerUtil.newSmartList();
-    params.add("-ln=" + interpreter);
+    params.add("-ln=" + ShShebangParserUtil.getInterpreter(psiFile, KNOWN_SHELLS, "bash"));
     if (!settings.useTabCharacter(file.getFileType())) {
       int tabSize = settings.getIndentSize(file.getFileType());
       params.add("-i=" + tabSize);

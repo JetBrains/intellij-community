@@ -1,49 +1,67 @@
 package com.intellij.sh.parser;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.psi.PsiFile;
+import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Locale;
 
 public class ShShebangParserUtil {
-
   private static final List<String> KNOWN_EXTENSIONS = ContainerUtil.list("exe", "bat", "cmd");
-  private static final String prefix = "#!";
+  private static final String PREFIX = "#!";
 
   private ShShebangParserUtil() {
   }
 
+  @NotNull
+  public static String getInterpreter(@NotNull PsiFile file, @NotNull List<String> knownShells, @NotNull String defaultShell) {
+    String shebang = getShebang(file);
+    String detectedInterpreter = shebang != null ? detectInterpreter(shebang) : null;
+    return detectedInterpreter != null && knownShells.contains(detectedInterpreter) ? detectedInterpreter : defaultShell;
+  }
+
   @Nullable
-  public static String getInterpreter(String shebang) {
-    if (shebang != null && shebang.startsWith(prefix)) {
-      String path = shebang.substring(prefix.length()).trim();
-      int index = path.indexOf(" ");
-      String interpreter = index < 0 ? path : path.substring(0, index);
-      if (interpreter.equals("/usr/bin/env")) {
-        interpreter = path.substring(index + 1);
-        index = interpreter.indexOf(" ");
-        interpreter = index < 0 ? interpreter : interpreter.substring(0, index);
-      }
-      if (SystemInfo.isFileSystemCaseSensitive) {
-        interpreter = interpreter.toLowerCase(Locale.ENGLISH);
-      }
-      interpreter = PathUtil.getFileName(interpreter);
-      return trimKnownExt(interpreter);
-    }
-    return null;
+  private static String getShebang(@NotNull PsiFile file) {
+    ASTNode shebang = file.getNode().findChildByType(ShTokenTypes.SHEBANG);
+    return shebang != null ? shebang.getText() : null;
+  }
+
+  @Nullable
+  private static String detectInterpreter(@Nullable String shebang) {
+    if (shebang == null || !shebang.startsWith(PREFIX)) return null;
+
+    String interpreterPath = getInterpreterPath(shebang.substring(PREFIX.length()).trim());
+    String lowerCasePath = SystemInfo.isFileSystemCaseSensitive ? interpreterPath.toLowerCase(Locale.ENGLISH) : interpreterPath;
+
+    return trimKnownExt(PathUtil.getFileName(lowerCasePath));
+  }
+
+  @NotNull
+  private static String getInterpreterPath(@NotNull String shebang) {
+    int index = shebang.indexOf(" ");
+    String possiblePath = index < 0 ? shebang : shebang.substring(0, index);
+    if (!possiblePath.equals("/usr/bin/env")) return possiblePath;
+
+    String interpreterPath = shebang.substring(index + 1);
+    index = interpreterPath.indexOf(" ");
+    return index < 0 ? interpreterPath : interpreterPath.substring(0, index);
   }
 
   @NotNull
   private static String trimKnownExt(@NotNull String name) {
     String ext = PathUtil.getFileExtension(name);
-    if (ext != null && KNOWN_EXTENSIONS.contains(ext)) {
-      name = name.substring(0, name.length() - ext.length() - 1);
-    }
-    return name;
+    return ext != null && KNOWN_EXTENSIONS.contains(ext) ? name.substring(0, name.length() - ext.length() - 1) : name;
   }
 
+  @TestOnly
+  static String getInterpreter(@Nullable String shebang) {
+    return detectInterpreter(shebang);
+  }
 }

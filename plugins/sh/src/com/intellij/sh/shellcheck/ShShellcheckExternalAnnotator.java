@@ -5,7 +5,6 @@ import com.google.gson.reflect.TypeToken;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.DocumentUtil;
@@ -36,9 +34,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Collection<ShShellcheckExternalAnnotator.Result>> {
-
-  private static final List<String> KNOWN_SHELLS = ContainerUtil.list("sh", "dash", "ksh", "sh");
-  private String shebangText;
+  private static final List<String> KNOWN_SHELLS = ContainerUtil.list("bash", "dash", "ksh", "sh");
+  private static final String DEFAULT_SHELL = "bash";
+  private String interpreter;
 
   @Override
   public String getPairedBatchInspectionShortName() {
@@ -49,7 +47,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
   @Override
   public String collectInformation(@NotNull PsiFile file) {
     if (file instanceof ShFile) {
-      readShebang(file);
+      interpreter = ShShebangParserUtil.getInterpreter(file, KNOWN_SHELLS, DEFAULT_SHELL);
       return file.getText();
     }
     return null;
@@ -59,7 +57,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
   @Override
   public String collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
     if (file instanceof ShFile) {
-      readShebang(file);
+      interpreter = ShShebangParserUtil.getInterpreter(file, KNOWN_SHELLS, DEFAULT_SHELL);
     }
     return editor.getDocument().getText();
   }
@@ -73,11 +71,6 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
     }
 
     try {
-      String interpreter = ShShebangParserUtil.getInterpreter(shebangText);
-      if (interpreter == null || !KNOWN_SHELLS.contains(interpreter)) {
-        interpreter = "sh";
-      }
-
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath(shellcheckExecutable)
@@ -153,13 +146,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
     }
   }
 
-  private void readShebang(@NotNull PsiFile file) {
-    ASTNode shebang = file.getNode().findChildByType(ShTokenTypes.SHEBANG);
-    if (shebang != null)
-      shebangText = shebang.getText();
-  }
-
-  private int calcOffset(CharSequence sequence, int startOffset, int column) {
+  private static int calcOffset(CharSequence sequence, int startOffset, int column) {
     int i = 1;
     while (i < column) {
       int c = Character.codePointAt(sequence, startOffset);
@@ -180,7 +167,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
     return HighlightSeverity.WEAK_WARNING;
   }
 
-  private void writeFileContentToStdin(@NotNull Process process, @NotNull String content, @NotNull Charset charset) throws IOException {
+  private static void writeFileContentToStdin(@NotNull Process process, @NotNull String content, @NotNull Charset charset) throws IOException {
     try (OutputStream stdin = ObjectUtils.assertNotNull(process.getOutputStream())) {
       stdin.write(content.getBytes(charset));
       stdin.flush();
