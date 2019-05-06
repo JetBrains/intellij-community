@@ -47,7 +47,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
   @Override
   public String collectInformation(@NotNull PsiFile file) {
     if (file instanceof ShFile) {
-      interpreter = ShShebangParserUtil.getInterpreter(file, KNOWN_SHELLS, DEFAULT_SHELL);
+      interpreter = ShShebangParserUtil.getInterpreter((ShFile) file, KNOWN_SHELLS, DEFAULT_SHELL);
       return file.getText();
     }
     return null;
@@ -57,7 +57,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
   @Override
   public String collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
     if (file instanceof ShFile) {
-      interpreter = ShShebangParserUtil.getInterpreter(file, KNOWN_SHELLS, DEFAULT_SHELL);
+      interpreter = ShShebangParserUtil.getInterpreter((ShFile) file, KNOWN_SHELLS, DEFAULT_SHELL);
     }
     return editor.getDocument().getText();
   }

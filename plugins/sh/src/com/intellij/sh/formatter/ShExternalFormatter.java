@@ -56,8 +56,10 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     if (file == null || !file.exists()) return;
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    CodeStyleSettings settings = psiFile == null ? null : CodeStyle.getSettings(psiFile);
-    if (settings == null) return;
+
+    if (!(psiFile instanceof ShFile)) return;
+
+    CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
 
     ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     String shFmtExecutable = bashSettings.SHFMT_PATH;
@@ -80,7 +82,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     documentManager.saveDocument(document);
 
     List<String> params = ContainerUtil.newSmartList();
-    params.add("-ln=" + ShShebangParserUtil.getInterpreter(psiFile, KNOWN_SHELLS, "bash"));
+    params.add("-ln=" + ShShebangParserUtil.getInterpreter((ShFile) psiFile, KNOWN_SHELLS, "bash"));
     if (!settings.useTabCharacter(file.getFileType())) {
       int tabSize = settings.getIndentSize(file.getFileType());
       params.add("-i=" + tabSize);

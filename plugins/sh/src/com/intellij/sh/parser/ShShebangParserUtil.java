@@ -1,9 +1,7 @@
 package com.intellij.sh.parser;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.PsiFile;
-import com.intellij.sh.lexer.ShTokenTypes;
+import com.intellij.sh.psi.ShFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,16 +19,10 @@ public class ShShebangParserUtil {
   }
 
   @NotNull
-  public static String getInterpreter(@NotNull PsiFile file, @NotNull List<String> knownShells, @NotNull String defaultShell) {
-    String shebang = getShebang(file);
+  public static String getInterpreter(@NotNull ShFile file, @NotNull List<String> knownShells, @NotNull String defaultShell) {
+    String shebang = file.findShebang();
     String detectedInterpreter = shebang != null ? detectInterpreter(shebang) : null;
     return detectedInterpreter != null && knownShells.contains(detectedInterpreter) ? detectedInterpreter : defaultShell;
-  }
-
-  @Nullable
-  private static String getShebang(@NotNull PsiFile file) {
-    ASTNode shebang = file.getNode().findChildByType(ShTokenTypes.SHEBANG);
-    return shebang != null ? shebang.getText() : null;
   }
 
   @Nullable
