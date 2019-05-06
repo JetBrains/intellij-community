@@ -142,7 +142,7 @@ class ShShellcheckUtil {
     });
     tar.extract(tmpDir);
 
-    //Cleaning tmp dir and archive
+    // Cleaning tmp dir and archive
     FileUtil.delete(tmpDir);
     FileUtil.delete(archive);
 

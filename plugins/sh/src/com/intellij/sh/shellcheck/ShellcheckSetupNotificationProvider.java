@@ -1,9 +1,12 @@
 package com.intellij.sh.shellcheck;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.sh.ShFileType;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -31,6 +34,10 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
       panel.createActionLabel("Download", () -> {
         ShShellcheckUtil.download(null, null);
         EditorNotifications.getInstance(project).updateAllNotifications();
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (psiFile != null) {
+          DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+        }
       });
       return panel;
     }
