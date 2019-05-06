@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShLanguage;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
@@ -30,14 +31,14 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class ShShellcheckUtil {
+class ShShellcheckUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String APP_NAME = "shellcheck";
   private static final String APP_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
   @SuppressWarnings("UnresolvedPropertyKey")
   private static final String REGISTRY_KEY = "sh.shellcheck.path";
 
-  public static void download(@Nullable Project project, @Nullable JComponent parent) {
+  static void download(@Nullable Project project, @Nullable JComponent parent) {
     File directory = new File(APP_PATH);
     if (!directory.exists()) {
       directory.mkdirs();
@@ -58,7 +59,7 @@ public class ShShellcheckUtil {
         return;
       }
       catch (IOException e) {
-        LOG.debug("Can't evaluate formatter path", e);
+        LOG.debug("Can't evaluate shellcheck path", e);
         showErrorNotification();
         return;
       }
@@ -79,8 +80,9 @@ public class ShShellcheckUtil {
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
     try {
       List<VirtualFile> virtualFiles = downloader.downloadFilesWithProgress(APP_PATH, project, parent);
-      if (virtualFiles != null && virtualFiles.size() == 1) {
-        String path = virtualFiles.get(0).getCanonicalPath();
+      VirtualFile file = ContainerUtil.getFirstItem(virtualFiles);
+      if (file != null) {
+        String path = file.getCanonicalPath();
         if (path != null) {
           if (SystemInfoRt.isMac) {
             path = decompressShellcheck(path, directory);
@@ -99,7 +101,7 @@ public class ShShellcheckUtil {
     }
   }
 
-  public static boolean isValidPath(@NotNull String path) {
+  static boolean isValidPath(@NotNull String path) {
     if (!new File(path).exists()) return false;
 
     try {
@@ -115,11 +117,11 @@ public class ShShellcheckUtil {
   }
 
   @NotNull
-  public static String getShellcheckPath() {
+  static String getShellcheckPath() {
     return Registry.stringValue(REGISTRY_KEY);
   }
 
-  public static void setShellcheckPath(@NotNull String path) {
+  static void setShellcheckPath(@NotNull String path) {
     Registry.get(REGISTRY_KEY).setValue(path);
   }
 
