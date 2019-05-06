@@ -995,7 +995,7 @@ public class PluginManagerConfigurableNewLayout
                 }
               }
 
-              if (!result.descriptors.isEmpty() && parser.needUpdate) {
+              if (!result.descriptors.isEmpty()) {
                 Collection<PluginDownloader> updates = PluginUpdatesService.getUpdates();
                 if (!ContainerUtil.isEmpty(updates)) {
                   myPostFillGroupCallback = () -> {
