@@ -1412,7 +1412,7 @@
                      displayName="Loop can be replaced with Collection.removeIf()"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArrayFilling"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitArrayFillingInspection"
                      displayName="Explicit array filling"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExplicitMinMaxCheck"
