@@ -193,7 +193,7 @@ public class TabLabel extends JPanel implements Accessible {
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
-               JBColor.namedColor("EditorTabs.selectedForeground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
+               JBUI.CurrentTheme.EditorTabs.underlinedTabForeground() : super.getActiveTextColor(attributesColor);
       }
 
     };

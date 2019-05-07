@@ -77,7 +77,7 @@
       "key": "DefaultTabs.hoverColor"
     },
     {
-      "key": "DefaultTabs.hoverMaskColor"
+      "key": "DefaultTabs.hoverBackground"
     },
     {
       "key": "DefaultTabs.inactiveMaskColor"
@@ -90,6 +90,9 @@
     },
     {
       "key": "DefaultTabs.underlineHeight"
+    },
+    {
+      "key": "DefaultTabs.underlinedTabBackground"
     },
     {
       "key": "Editor.background",
@@ -112,10 +115,10 @@
       "key": "EditorTabs.hoverColor"
     },
     {
-      "key": "EditorTabs.hoverMaskColor"
+      "key": "EditorTabs.hoverBackground"
     },
     {
-      "key": "EditorTabs.inactiveMaskColor",
+      "key": "EditorTabs.inactiveColoredFileBackground",
       "description": "Masks inactive tabs to make them darker"
     },
     {
@@ -124,10 +127,10 @@
 
     {
       "key": "EditorTabs.selectedBackground",
-      "description": "Background for all tabs. Inactive tabs also use inactiveMaskColor."
+      "description": "Background for all tabs. Inactive tabs also use inactiveColoredFileBackground."
     },
     {
-      "key": "EditorTabs.selectedForeground",
+      "key": "EditorTabs.underlinedTabForeground",
       "description": "Foreground of the selected tab when a file status color is not used. Inactive tabs use Label.foreground."
     },
     {
@@ -136,6 +139,9 @@
     },
     {
       "key": "EditorTabs.underlineHeight"
+    },
+    {
+      "key": "EditorTabs.underlinedTabBackground"
     },
     {
       "key": "FileColor.Blue",

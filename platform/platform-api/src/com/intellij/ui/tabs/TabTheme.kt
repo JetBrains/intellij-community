@@ -9,9 +9,9 @@ class TabTheme(
   val borderColor: Color = JBUI.CurrentTheme.DefaultTabs.borderColor(),
   val underlineColor: Color = JBUI.CurrentTheme.DefaultTabs.underlineColor(),
   val inactiveUnderlineColor: Color = JBUI.CurrentTheme.DefaultTabs.inactiveUnderlineColor(),
-  val hoverMaskColor: Color = JBUI.CurrentTheme.DefaultTabs.hoverMaskColor(),
-  val inactiveMaskColor: Color = JBUI.CurrentTheme.DefaultTabs.inactiveMaskColor(),
-  val uncoloredTabSelectedColor: Color? = null,
+  val hoverBackground: Color = JBUI.CurrentTheme.DefaultTabs.hoverBackground(),
+  val inactiveColoredFileBackground: Color? = null,
+  val underlinedTabBackground: Color? = null,
   val underlineHeight: Int = JBUI.CurrentTheme.DefaultTabs.underlineHeight()
 ) {
   companion object {
@@ -20,17 +20,17 @@ class TabTheme(
                           JBUI.CurrentTheme.EditorTabs.borderColor(),
                           JBUI.CurrentTheme.EditorTabs.underlineColor(),
                           JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
-                          JBUI.CurrentTheme.EditorTabs.hoverMaskColor(),
-                          JBUI.CurrentTheme.EditorTabs.inactiveMaskColor(),
-                          JBUI.CurrentTheme.EditorTabs.uncoloredTabSelectedColor(),
+                          JBUI.CurrentTheme.EditorTabs.hoverBackground(),
+                          JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground(),
+                          JBUI.CurrentTheme.EditorTabs.underlinedTabBackground(),
                           JBUI.CurrentTheme.EditorTabs.underlineHeight())
     @JvmField
     val TOOL_WINDOW = TabTheme(null,
                                JBUI.CurrentTheme.EditorTabs.borderColor(),
                                JBUI.CurrentTheme.EditorTabs.underlineColor(),
                                JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
-                               JBUI.CurrentTheme.EditorTabs.hoverMaskColor(),
-                               JBUI.CurrentTheme.EditorTabs.inactiveMaskColor(),
+                               JBUI.CurrentTheme.EditorTabs.hoverBackground(),
+                               JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground(),
                                null,
                                JBUI.CurrentTheme.ToolWindow.underlineHeight())
   }
