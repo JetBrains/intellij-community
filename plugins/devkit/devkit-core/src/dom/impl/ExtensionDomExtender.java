@@ -16,9 +16,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
@@ -381,12 +378,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
       final String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
-      AbstractCollectionChildDescription collectionChildDescription =
-        (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
-      DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
-      assert handler != null;
-      List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
-      for (ExtensionPoints points : children) {
+      for (ExtensionPoints points : plugin.getExtensionPoints()) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
           registerExtensionPoint(registrar, point, epPrefix, pluginId);
         }

@@ -290,17 +290,20 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   private void showInvalidRequestNotification() {
-    if (!myNotificationPanel.isNull()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myDisposed) return;
+      if (!myNotificationPanel.isNull()) return;
 
-    EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
-    notification.setText("Conflict is not valid and no longer can be resolved.");
-    notification.createActionLabel("Abort Resolve", () -> {
-      applyRequestResult(MergeResult.CANCEL);
-      closeDialog();
-    });
-    myNotificationPanel.setContent(notification);
-    myMainPanel.validate();
-    myMainPanel.repaint();
+      EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
+      notification.setText("Conflict is not valid and no longer can be resolved.");
+      notification.createActionLabel("Abort Resolve", () -> {
+        applyRequestResult(MergeResult.CANCEL);
+        closeDialog();
+      });
+      myNotificationPanel.setContent(notification);
+      myMainPanel.validate();
+      myMainPanel.repaint();
+    }, ModalityState.stateForComponent(myPanel));
   }
 
   @Override
