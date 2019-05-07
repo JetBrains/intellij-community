@@ -1,18 +1,17 @@
 package com.intellij.sh.rename;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ShRenameIntention extends BaseIntentionAction {
-  public ShRenameIntention() {
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+public class ShRenameIntention extends BaseIntentionAction implements ShortcutProvider {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -38,5 +37,11 @@ public class ShRenameIntention extends BaseIntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     ShSelectAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
+  }
+
+  @Nullable
+  @Override
+  public ShortcutSet getShortcut() {
+    return CommonShortcuts.getRename();
   }
 }
