@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
-import com.google.gson.stream.JsonWriter
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
@@ -11,6 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ObjectLongHashMap
+import com.intellij.util.io.jackson.IntelliJPrettyPrinter
+import com.intellij.util.io.jackson.array
+import com.intellij.util.io.jackson.obj
 import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit
@@ -103,58 +107,76 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     val stringWriter = StringWriter()
     val logPrefix = "=== Start: StartUp Measurement ===\n"
     stringWriter.write(logPrefix)
-    val writer = JsonWriter(stringWriter)
-    writer.setIndent("  ")
-    writer.beginObject()
 
-    writer.name("version").value("5")
-    writeServiceStats(writer)
+    val writer = JsonFactory().createGenerator(stringWriter)
+    writer.prettyPrinter = MyJsonPrettyPrinter()
+    writer.use {
+      writer.obj {
+        writer.writeStringField("version", "5")
+        writeServiceStats(writer)
 
-    val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
+        val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
+        var totalDuration: Long = 0
+        writer.array("items") {
+          totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
 
-    writer.name("items")
-    writer.beginArray()
-    var totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start,
-                                                                                        startTime)
-    else 0
-    for ((index, item) in items.withIndex()) {
-      writer.beginObject()
-      writer.name("name").value(item.name)
-      if (item.description != null) {
-        writer.name("description").value(item.description)
+          for ((index, item) in items.withIndex()) {
+            writer.obj {
+              writer.writeStringField("name", item.name)
+              if (item.description != null) {
+                writer.writeStringField("description", item.description)
+              }
+
+              val duration = item.end - item.start
+              if (!isSubItem(item, index, items)) {
+                totalDuration += duration
+              }
+
+              writeItemTimeInfo(item, duration, startTime, writer)
+            }
+          }
+          totalDuration += writeUnknown(writer, items.last().end, end, startTime)
+        }
+
+        writeParallelActivities(activities, startTime, writer)
+
+        writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
+        writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
+
       }
-
-      val duration = item.end - item.start
-      if (!isSubItem(item, index, items)) {
-        totalDuration += duration
-      }
-
-      writeItemTimeInfo(item, duration, startTime, writer)
-      writer.endObject()
     }
-    totalDuration += writeUnknown(writer, items.last().end, end, startTime)
-    writer.endArray()
-
-    writeParallelActivities(activities, startTime, writer)
-
-    writer.name("totalDurationComputed").value(TimeUnit.NANOSECONDS.toMillis(totalDuration))
-    writer.name("totalDurationActual").value(TimeUnit.NANOSECONDS.toMillis(end - startTime))
-
-    writer.endObject()
-    writer.flush()
 
     lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
 
-    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", true)) { stringWriter.write("\n=== Stop: StartUp Measurement ===")
-      var string = stringWriter.toString()
-      // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
-      string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\"thread\"|\\{)"), ", $1")
-      LOG.info(string)
+    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", true)) {
+      stringWriter.write("\n=== Stop: StartUp Measurement ===")
+      LOG.info(stringWriter.toString())
     }
   }
 }
 
-private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
+// to make output more compact (quite a lot slow components)
+private class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
+  private var objectLevel = 0
+
+  override fun writeStartObject(g: JsonGenerator) {
+    objectLevel++
+    if (objectLevel > 1) {
+      _objectIndenter = FixedSpaceIndenter.instance
+    }
+    super.writeStartObject(g)
+  }
+
+  override fun writeEndObject(g: JsonGenerator, nrOfEntries: Int) {
+    super.writeEndObject(g, nrOfEntries)
+    objectLevel--
+    if (objectLevel <= 1) {
+      _objectIndenter = UNIX_LINE_FEED_INSTANCE
+    }
+  }
+}
+
+private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonGenerator) {
   val ownDurations = ObjectLongHashMap<ActivityImpl>()
 
   // sorted to get predictable JSON
@@ -214,7 +236,7 @@ private fun isInclusive(otherItem: ActivityImpl, item: ActivityImpl): Boolean {
   return otherItem.start >= item.start && otherItem.end <= item.end
 }
 
-private fun writeServiceStats(writer: JsonWriter) {
+private fun writeServiceStats(writer: JsonGenerator) {
   class StatItem(val name: String) {
     var app = 0
     var project = 0
@@ -236,21 +258,17 @@ private fun writeServiceStats(writer: JsonWriter) {
     component.module += plugin.moduleComponents.size
   }
 
-  writer.name("stats")
-  writer.beginObject()
+  writer.obj("stats") {
+    writer.writeNumberField("plugin", plugins.size)
 
-  writer.name("plugin").value(plugins.size)
-
-  for (statItem in listOf(component, service)) {
-    writer.name(statItem.name)
-    writer.beginObject()
-    writer.name("app").value(statItem.app)
-    writer.name("project").value(statItem.project)
-    writer.name("module").value(statItem.module)
-    writer.endObject()
+    for (statItem in listOf(component, service)) {
+      writer.obj(statItem.name) {
+        writer.writeNumberField("app", statItem.app)
+        writer.writeNumberField("project", statItem.project)
+        writer.writeNumberField("module", statItem.module)
+      }
+    }
   }
-
-  writer.endObject()
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
@@ -260,35 +278,32 @@ private fun activityNameToJsonFieldName(name: String): String {
   }
 }
 
-private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonWriter, fieldName: String, ownDurations: ObjectLongHashMap<ActivityImpl>) {
+private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonGenerator, fieldName: String, ownDurations: ObjectLongHashMap<ActivityImpl>) {
   if (activities.isEmpty()) {
     return
   }
 
-  writer.name(fieldName)
-  writer.beginArray()
+  writer.array(fieldName) {
+    for (item in activities) {
+      val computedOwnDuration = ownDurations.get(item)
+      val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
+      if (duration <= ParallelActivity.MEASURE_THRESHOLD) {
+        continue
+      }
 
-  for (item in activities) {
-    val computedOwnDuration = ownDurations.get(item)
-    val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
-    if (duration <= ParallelActivity.MEASURE_THRESHOLD) {
-      continue
+      writer.obj {
+        writer.writeStringField("name", item.name)
+        writeItemTimeInfo(item, duration, offset, writer)
+      }
     }
-
-    writer.beginObject()
-    writer.name("name").value(item.name)
-    writeItemTimeInfo(item, duration, offset, writer)
-    writer.endObject()
   }
-
-  writer.endArray()
 }
 
-private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonWriter) {
-  writer.name("duration").value(TimeUnit.NANOSECONDS.toMillis(duration))
-  writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(item.start - offset))
-  writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(item.end - offset))
-  writer.name("thread").value(normalizeThreadName(item.thread))
+private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
+  writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(duration))
+  writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(item.start - offset))
+  writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(item.end - offset))
+  writer.writeStringField("thread", normalizeThreadName(item.thread))
 }
 
 private fun normalizeThreadName(name: String): String {
@@ -315,19 +330,19 @@ private fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImp
   }
 }
 
-private fun writeUnknown(writer: JsonWriter, start: Long, end: Long, offset: Long): Long {
+private fun writeUnknown(writer: JsonGenerator, start: Long, end: Long, offset: Long): Long {
   val duration = end - start
   val durationInMs = TimeUnit.NANOSECONDS.toMillis(duration)
   if (durationInMs <= 1) {
     return 0
   }
 
-  writer.beginObject()
-  writer.name("name").value("unknown")
-  writer.name("duration").value(durationInMs)
-  writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(start - offset))
-  writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(end - offset))
-  writer.endObject()
+  writer.obj {
+    writer.writeStringField("name", "unknown")
+    writer.writeNumberField("duration", durationInMs)
+    writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(start - offset))
+    writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(end - offset))
+  }
   return duration
 }
 

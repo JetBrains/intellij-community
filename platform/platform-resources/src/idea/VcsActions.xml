@@ -127,7 +127,6 @@
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
-      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
               icon="AllIcons.General.Remove"/>
       <action id="ChangesView.Edit" class="com.intellij.openapi.vcs.changes.actions.EditAction"/>
@@ -153,7 +152,6 @@
       <reference ref="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="$Delete"/>
-      <reference ref="ChangesView.Ignore"/>
     </group>
 
     <group id="ShelvedChangesPopupMenu" popup="true">
@@ -286,7 +284,7 @@
       <reference id="Diff.ShowDiff"/>
     </group>
 
-    <action id="Vcs.ReformatCommitMessage" class="com.intellij.vcs.commit.ReformatCommitMessageAction" use-shortcut-of="ReformatCode"/>
+    <action id="Vcs.ReformatCommitMessage" class="com.intellij.vcs.commit.message.ReformatCommitMessageAction" use-shortcut-of="ReformatCode"/>
     <group id="Vcs.MessageActionGroup">
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
@@ -296,6 +294,8 @@
     <group id="Vcs.CommitExecutor.Actions"/>
 
     <group id="ChangesView.CommitToolbar">
+      <action id="ChangesView.ShowCommitOptions" text="Show Commit Options"
+              class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
       <reference id="Vcs.MessageActionGroup"/>
     </group>
 
@@ -415,7 +415,6 @@
       <reference ref="Diff.ShowDiff"/>
       <reference ref="$Delete"/>
       <reference ref="ChangesView.AddUnversioned"/>
-      <reference ref="ChangesView.Ignore"/>
       <reference ref="ChangesView.RemoveDeleted"/>
       <reference ref="ChangesView.Edit"/>
       <reference ref="ChangesView.Rename"/>

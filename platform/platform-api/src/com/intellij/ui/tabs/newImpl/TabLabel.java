@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.util.Pass;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -165,7 +164,7 @@ public class TabLabel extends JPanel implements Accessible {
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
-          JBColor.namedColor("EditorTabs.selectedForeground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
+               JBUI.CurrentTheme.EditorTabs.underlinedTabForeground() : super.getActiveTextColor(attributesColor);
       }
 
     };
@@ -182,19 +181,13 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    boolean hasCloseButtonOnTheLeft = false;
     if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
       if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
         insets.right -= JBUI.scale(4);
       }
       else {
-        hasCloseButtonOnTheLeft = true;
         insets.left -= JBUI.scale(4);
       }
-    }
-    // We reserve extra space inside file icon for (*) marker but mostly this space looks like wasted one
-    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getMarkModifiedTabsWithAsterisk() && !hasCloseButtonOnTheLeft) {
-      insets.left -= JBUI.scale(7);
     }
     return insets;
   }
@@ -382,13 +375,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     if (group == null) return;
 
-    myActionPanel = new ActionPanel(myTabs, myInfo, new Pass<MouseEvent>() {
-      @Override
-      public void pass(final MouseEvent event) {
-        final MouseEvent me = SwingUtilities.convertMouseEvent(event.getComponent(), event, TabLabel.this);
-        processMouseEvent(me);
-      }
-    });
+    myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)));
 
     toggleShowActions(false);
 
@@ -396,7 +383,6 @@ public class TabLabel extends JPanel implements Accessible {
 
     myTabs.revalidateAndRepaint(false);
   }
-
 
   private void removeOldActionPanel() {
     if (myActionPanel != null) {

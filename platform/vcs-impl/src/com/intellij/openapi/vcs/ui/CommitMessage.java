@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -25,18 +25,20 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.commit.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -44,12 +46,11 @@ import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
+import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
@@ -131,7 +132,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @NotNull
   private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
-    Set<EditorCustomization> features = newHashSet();
+    Set<EditorCustomization> features = new HashSet<>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {
@@ -181,8 +182,20 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return myEditorField;
   }
 
+  @NotNull
+  @Override
+  public String getText() {
+    return getComment();
+  }
+
+  @Override
   public void setText(@Nullable String initialMessage) {
     myEditorField.setText(initialMessage == null ? "" : convertLineSeparators(initialMessage));
+  }
+
+  @Override
+  public void focus() {
+    requestFocusInMessage();
   }
 
   @NotNull

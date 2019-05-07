@@ -18,8 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Logs load time statistics for PNG/SVG images, such as: average, median, ide startup total, first N icons total.
@@ -39,8 +39,8 @@ public class IconsLoadTime extends DumbAwareAction {
 
   static {
     if (IS_INTERNAL_MODE) {
-      new FieldAccessor<>(ImageLoader.class, "measureLoad").set(null,
-        (LoadFunction)(func, type) -> measure(Objects.requireNonNull(func), Objects.requireNonNull(type)));
+      new FieldAccessor<>(ImageLoader.class, "measureLoad", LoadFunction.class)
+        .set(null, (func, type) -> measure(Objects.requireNonNull(func), Objects.requireNonNull(type)));
     }
   }
 

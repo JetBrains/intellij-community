@@ -2,7 +2,6 @@
 package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonReader;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class CVPReader {
 
   @NotNull
   private List<CVPInfo> read() throws IOException {
-    ArrayList<CVPInfo> list = ContainerUtil.newArrayList();
+    ArrayList<CVPInfo> list = new ArrayList<>();
     myReader.beginArray();
     while (myReader.hasNext()) {
       list.add(readInfo());

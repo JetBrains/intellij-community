@@ -15,9 +15,9 @@
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
   <customize-ide-wizard provider="com.jetbrains.python.PyCharmCustomizeIDEWizardStepsProvider"/>
 
-  <plugins url="http://plugins.jetbrains.com/"/>
-  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
-               patches="http://download.jetbrains.com/python/"/>
+  <plugins url="https://plugins.jetbrains.com/"/>
+  <update-urls check="https://www.jetbrains.com/updates/updates.xml"
+               patches="https://download.jetbrains.com/python/"/>
 
   <help webhelp-url="https://www.jetbrains.com/pycharm/webhelp"/>
   <documentation url="https://www.jetbrains.com/pycharm/documentation"/>

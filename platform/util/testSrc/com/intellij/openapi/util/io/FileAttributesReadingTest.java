@@ -499,7 +499,7 @@ public abstract class FileAttributesReadingTest {
   @Test
   public void stamps() throws IOException, InterruptedException {
     FileAttributes attributes = FileSystemUtil.getAttributes(tempDir.getRoot());
-    assumeTrue("Didn't like attributes: "+attributes+"; "+(attributes==null?"":attributes.lastModified), attributes != null && attributes.lastModified > (attributes.lastModified/1000)*1000);
+    assumeTrue("Didn't like attributes: "+attributes, attributes != null && attributes.lastModified > (attributes.lastModified/1000)*1000);
 
     long t1 = System.currentTimeMillis();
     TimeoutUtil.sleep(10);

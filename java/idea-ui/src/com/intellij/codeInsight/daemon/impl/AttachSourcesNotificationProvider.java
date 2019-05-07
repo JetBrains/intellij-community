@@ -278,7 +278,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       else {
         librariesToAppendSourcesTo.put(null, null);
         String title = ProjectBundle.message("library.choose.one.to.attach");
-        List<LibraryOrderEntry> entries = ContainerUtil.newArrayList(librariesToAppendSourcesTo.values());
+        List<LibraryOrderEntry> entries = new ArrayList<>(librariesToAppendSourcesTo.values());
         JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryOrderEntry>(title, entries) {
           @Override
           public ListSeparator getSeparatorAbove(LibraryOrderEntry value) {

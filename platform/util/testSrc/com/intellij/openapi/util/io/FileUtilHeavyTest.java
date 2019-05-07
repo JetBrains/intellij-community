@@ -239,7 +239,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testJunctionDeletion() {
-    assumeTrue(SystemInfo.isWindows);
+    assumeTrue("windows only", SystemInfo.isWindows);
 
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_1");
     IoTestUtil.createTestFile(targetDir, "file");

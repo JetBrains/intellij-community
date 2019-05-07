@@ -16,11 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class IdeaFreezeReporter {
-  private static final int FREEZE_THRESHOLD = 15; // seconds
+  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 15; // seconds
 
   public IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
@@ -131,21 +130,25 @@ public class IdeaFreezeReporter {
     });
   }
 
+  @Nullable
   private static List<StackTraceElement> findDominantCommonStack(List<StackTraceElement[]> stacks) {
     CallTreeNode root = new CallTreeNode(null, null);
     // build tree
     for (StackTraceElement[] stack : stacks) {
       CallTreeNode node = root;
-      for (StackTraceElement element : stack) {
-        node = node.addCallee(element);
+      for (int i = stack.length - 1; i >= 0; i--) {
+        node = node.addCallee(stack[i]);
       }
     }
     // find dominant
     int half = stacks.size() / 2;
     CallTreeNode node = root.getMostHitChild();
+    if (node == null) {
+      return null;
+    }
     while (!node.myChildren.isEmpty()) {
       CallTreeNode mostHitChild = node.getMostHitChild();
-      if (mostHitChild.myTotalHits > half) {
+      if (mostHitChild != null && mostHitChild.myTotalHits > half) {
         node = mostHitChild;
       }
       else {
@@ -158,7 +161,6 @@ public class IdeaFreezeReporter {
       res.add(node.myStackTraceElement);
       node = node.myParent;
     }
-    Collections.reverse(res);
     return res;
   }
 
@@ -185,6 +187,7 @@ public class IdeaFreezeReporter {
       return child;
     }
 
+    @Nullable
     CallTreeNode getMostHitChild() {
       CallTreeNode currentMax = null;
       for (CallTreeNode child : myChildren) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -23,7 +23,10 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -169,8 +172,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private static WindowManagerEx getWindowManager() {
     WindowManagerEx windowManager = null;
     Application application = ApplicationManager.getApplication();
-    if (application != null && application.hasComponent(WindowManager.class)) {
-      windowManager = (WindowManagerEx)WindowManager.getInstance();
+    if (application != null) {
+      windowManager = (WindowManagerEx)application.getComponent(WindowManager.class);
     }
     return windowManager;
   }
@@ -264,7 +267,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   /**
-   * @see javax.swing.JDialog#validate
+   * @see JDialog#validate
    */
   @Override
   public void validate() {
@@ -272,7 +275,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   /**
-   * @see javax.swing.JDialog#repaint
+   * @see JDialog#repaint
    */
   @Override
   public void repaint() {
@@ -305,7 +308,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   /**
-   * @see java.awt.Window#pack
+   * @see Window#pack
    */
   @Override
   public void pack() {
@@ -842,7 +845,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && ApplicationManagerEx.getApplicationEx().isActive()) {
+            if (isShowing() && (ApplicationManagerEx.getApplicationEx() == null || ApplicationManagerEx.getApplicationEx().isActive())) {
               toFocus.requestFocus();
             } else {
               toFocus.requestFocusInWindow();

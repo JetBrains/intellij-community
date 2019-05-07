@@ -29,6 +29,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     Extensions.cleanRootArea(getTestRootDisposable());
   }
 
+  @NotNull
   public static MockApplicationEx getApplication() {
     return (MockApplicationEx)ApplicationManager.getApplication();
   }
@@ -53,14 +54,14 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     }
   }
 
-  protected <T> void registerExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull T t) {
-    registerExtension(Extensions.getRootArea(), extensionPointName, t);
+  protected <T> void registerExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull T extension) {
+    registerExtension(Extensions.getRootArea(), extensionPointName, extension);
   }
 
-  public <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull T t) {
+  public <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull T extension) {
     //noinspection unchecked
-    registerExtensionPoint(area, name, (Class<T>)t.getClass());
-    PlatformTestUtil.registerExtension(area, name, t, getTestRootDisposable());
+    registerExtensionPoint(area, name, (Class<T>)extension.getClass());
+    PlatformTestUtil.registerExtension(area, name, extension, getTestRootDisposable());
   }
 
   protected <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
@@ -76,12 +77,12 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     }
   }
 
-  protected void registerComponentImplementation(final MutablePicoContainer container, final Class<?> key, final Class<?> implementation) {
+  protected void registerComponentImplementation(@NotNull MutablePicoContainer container, @NotNull Class<?> key, @NotNull Class<?> implementation) {
     container.unregisterComponent(key);
     container.registerComponentImplementation(key, implementation);
   }
 
-  public static <T> T registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
+  public static <T> T registerComponentInstance(@NotNull MutablePicoContainer container, @NotNull Class<T> key, @NotNull T implementation) {
     Object old = container.getComponentInstance(key);
     container.unregisterComponent(key);
     container.registerComponentInstance(key, implementation);
@@ -89,7 +90,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     return (T)old;
   }
 
-  public static <T> T registerComponentInstance(final ComponentManager container, final Class<T> key, final T implementation) {
+  public static <T> T registerComponentInstance(@NotNull ComponentManager container, @NotNull Class<T> key, @NotNull T implementation) {
     return registerComponentInstance((MutablePicoContainer)container.getPicoContainer(), key, implementation);
   }
 

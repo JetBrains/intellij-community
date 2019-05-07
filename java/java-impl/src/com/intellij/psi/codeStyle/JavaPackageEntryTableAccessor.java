@@ -2,11 +2,11 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.toCommaSeparatedString;
@@ -59,7 +59,7 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
   @NotNull
   @Override
   protected List<String> toExternal(@NotNull PackageEntryTable value) {
-    List<String> externalList = ContainerUtil.newArrayList();
+    List<String> externalList = new ArrayList<>();
     for (PackageEntry entry : value.getEntries()) {
       if (entry == PackageEntry.BLANK_LINE_ENTRY) {
         externalList.add(String.valueOf(BLANK_LINE_CHAR));

@@ -25,8 +25,14 @@ import java.util.concurrent.atomic.AtomicReference
  * Class is not thread safe in that matter that you can't call [process] for same stream (i.e. stderr) from different threads,
  * but [flush] could be called from any thread.
  *
+ * If [bufferTextUntilNewLine] is set, any output (including service messages) is buffered until newline arrives.
+ * Otherwise, this is done only for service messages.
+ * It is recommended not to enable [bufferTextUntilNewLine] because it gives user ability to see text as fast as possible.
+ * In some cases like when there is a separate protocol exists on top of text message that does not support messages
+ * flushed in random places, this option must be enabled
+ *
  */
-abstract class OutputEventSplitter {
+abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false) {
 
   private val currentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize()
 
@@ -101,7 +107,7 @@ abstract class OutputEventSplitter {
       if (serviceMessageStarted) {
         return unprocessed
       }
-      val preserveSuffixLength = findSuffixLengthToPreserve(unprocessed)
+      val preserveSuffixLength = if (bufferTextUntilNewLine) unprocessed.length else findSuffixLengthToPreserve(unprocessed)
       if (preserveSuffixLength < unprocessed.length) {
         flushStdOut(unprocessed.substring(0, unprocessed.length - preserveSuffixLength), outputType)
       }

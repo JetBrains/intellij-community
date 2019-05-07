@@ -97,6 +97,44 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     }
   }
 
+  public void testFlushOnNewLineOnlyModeTcMessage() {
+    final List<String> result = new ArrayList<>();
+    final OutputEventSplitter splitter = new OutputEventSplitter(true) {
+      @Override
+      public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
+        result.add(text);
+      }
+    };
+    splitter.process("a", ProcessOutputTypes.STDOUT);
+    splitter.process("bc", ProcessOutputTypes.STDOUT);
+    splitter.process("d##teamcity[start]\n", ProcessOutputTypes.STDOUT);
+    splitter.process("bc", ProcessOutputTypes.STDOUT);
+    splitter.flush();
+    Assert.assertEquals(
+      "Must be flushed on new line and TC message start",
+      Arrays.asList("abcd", "##teamcity[start]\n", "bc"),
+      result);
+  }
+
+  public void testFlushOnNewLineOnlyMode() {
+    final List<String> result = new ArrayList<>();
+    final OutputEventSplitter splitter = new OutputEventSplitter(true) {
+      @Override
+      public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
+        result.add(text);
+      }
+    };
+    splitter.process("a", ProcessOutputTypes.STDOUT);
+    splitter.process("bc", ProcessOutputTypes.STDOUT);
+    splitter.process("d\na", ProcessOutputTypes.STDOUT);
+    splitter.process("bc", ProcessOutputTypes.STDOUT);
+    splitter.flush();
+    Assert.assertEquals(
+      "Must be flushed on new line only",
+      Arrays.asList("abcd\n", "abc"),
+      result);
+  }
+
   /**
    * When tc message is in the middle of line it should reported as separate line like if it has \n before it
    */

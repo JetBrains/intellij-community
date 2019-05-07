@@ -6,13 +6,17 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.TabsHeightController;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tabs.JBTabsBackgroundAndBorder;
 import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.newImpl.JBEditorTabs;
-import com.intellij.ui.tabs.JBTabsBackgroundAndBorder;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.util.ui.JBUI;
+import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
+import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +38,11 @@ public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
 
   public JBRunnerTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
+  }
+
+  @Override
+  protected SingleRowLayout createSingleRowLayout() {
+    return new ScrollableSingleRowLayout(this);
   }
 
   @Override
@@ -103,28 +112,33 @@ public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
 
   @Override
   protected TabLabel createTabLabel(TabInfo info) {
-    return new MyTabLabel(this, info);
-  }
-
-  private static class MyTabLabel extends TabLabel {
-    MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
-      super(tabs, info);
-    }
-
-    @Override
-    public void setTabActionsAutoHide(boolean autoHide) {
-      super.setTabActionsAutoHide(autoHide);
-      apply(null);
-    }
-
-    @Override
-    public void setTabActions(ActionGroup group) {
-      super.setTabActions(group);
-      if (myActionPanel != null) {
-        final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
-        wrapper.remove(0);
-        wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
+    return new TabLabel(this, info) {
+      @Override
+      public void setTabActionsAutoHide(boolean autoHide) {
+        super.setTabActionsAutoHide(autoHide);
+        apply(new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
       }
-    }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+
+        Insets insets = getInsets();
+
+        return new Dimension(size.width, TabsHeightController.getToolWindowHeight().getValue() - insets.top - insets.bottom);
+      }
+
+      @Override
+      public void setTabActions(ActionGroup group) {
+        super.setTabActions(group);
+        if (myActionPanel != null) {
+          final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
+          wrapper.remove(0);
+          wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
+        }
+      }
+    };
+
   }
+
 }

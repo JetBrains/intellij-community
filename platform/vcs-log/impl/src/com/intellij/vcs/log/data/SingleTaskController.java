@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -22,12 +8,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -64,7 +51,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
                               @NotNull Disposable parent) {
     myName = name;
     myResultHandler = handler;
-    myAwaitingRequests = ContainerUtil.newLinkedList();
+    myAwaitingRequests = new LinkedList<>();
 
     Disposer.register(parent, this);
     VcsLogUtil.registerWithParentAndProject(parent, project, () -> closeQueue());
@@ -120,7 +107,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   public final List<Request> popRequests() {
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
-      myAwaitingRequests = ContainerUtil.newLinkedList();
+      myAwaitingRequests = new LinkedList<>();
       debug("Popped requests: " + requests);
       return requests;
     }
@@ -129,7 +116,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   @NotNull
   public final List<Request> peekRequests() {
     synchronized (LOCK) {
-      List<Request> requests = ContainerUtil.newArrayList(myAwaitingRequests);
+      List<Request> requests = new ArrayList<>(myAwaitingRequests);
       debug("Peeked requests: " + requests);
       return requests;
     }

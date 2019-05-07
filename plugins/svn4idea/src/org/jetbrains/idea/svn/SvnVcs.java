@@ -736,8 +736,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   private <S> List<S> filterUniqueByUrl(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    List<MyPair<S>> infos = newArrayList();
-    List<S> notMatched = newArrayList();
+    List<MyPair<S>> infos = new ArrayList<>();
+    List<S> notMatched = new ArrayList<>();
     for (S s : in) {
       VirtualFile vf = convertor.apply(s);
       if (vf == null) continue;

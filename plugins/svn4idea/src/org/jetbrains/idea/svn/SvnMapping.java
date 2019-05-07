@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.ClearableLazyValue;
@@ -12,15 +12,15 @@ import java.util.*;
 import static com.intellij.openapi.util.SystemInfo.isFileSystemCaseSensitive;
 import static com.intellij.openapi.util.io.FileUtil.comparePaths;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
-import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.util.containers.ContainerUtilRt.newHashMap;
+import static com.intellij.util.containers.ContainerUtil.find;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 public class SvnMapping {
   private static final Comparator<String> FILE_PATHS_COMPARATOR = (path1, path2) -> comparePaths(path1, path2);
 
-  @NotNull private final List<VirtualFile> myLonelyRoots = newArrayList();
+  @NotNull private final List<VirtualFile> myLonelyRoots = new ArrayList<>();
   @NotNull private final TreeMap<String, RootUrlInfo> myFile2UrlMap = new TreeMap<>(FILE_PATHS_COMPARATOR);
-  @NotNull private final Map<Url, RootUrlInfo> myUrl2FileMap = newHashMap();
+  @NotNull private final Map<Url, RootUrlInfo> myUrl2FileMap = new HashMap<>();
   // no additional info. for caching only (convert roots)
   @NotNull private final ClearableLazyValue<List<VirtualFile>> myPreCalculatedUnderVcsRoots = new ClearableLazyValue<List<VirtualFile>>() {
     @NotNull
@@ -57,7 +57,7 @@ public class SvnMapping {
 
   @NotNull
   public List<RootUrlInfo> getAllCopies() {
-    return newArrayList(myFile2UrlMap.values());
+    return new ArrayList<>(myFile2UrlMap.values());
   }
 
   @Nullable

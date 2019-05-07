@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.util.ObjectUtils;
@@ -76,7 +62,7 @@ public class SimpleRefGroup implements RefGroup {
       return multiple ? Arrays.asList(color, color) : Collections.singletonList(color);
     }
     else {
-      List<Color> colorsList = ContainerUtil.newArrayList();
+      List<Color> colorsList = new ArrayList<>();
       for (VcsRefType type : referencesByType.keySet()) {
         if (referencesByType.get(type).size() > 1) {
           colorsList.add(type.getBackgroundColor());
@@ -98,7 +84,7 @@ public class SimpleRefGroup implements RefGroup {
       RefGroup group = ContainerUtil.getFirstItem(result);
       if (group == null) {
         result.add(new SimpleRefGroup(firstRef.getType().isBranch() || showTagNames ? firstRef.getName() : "",
-                                      ContainerUtil.newArrayList(groupedRefs.values())));
+                                      new ArrayList<>(groupedRefs.values())));
       }
       else {
         group.getRefs().addAll(groupedRefs.values());
@@ -113,7 +99,7 @@ public class SimpleRefGroup implements RefGroup {
         }
         else {
           result.add(new SimpleRefGroup(showTagNames ? ObjectUtils.notNull(ContainerUtil.getFirstItem(entry.getValue())).getName() : "",
-                                        ContainerUtil.newArrayList(entry.getValue())));
+                                        new ArrayList<>(entry.getValue())));
         }
       }
     }

@@ -302,12 +302,12 @@ public abstract class PluginManagerMain implements Disposable {
     setDownloadStatus(true);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
-      Map<String, String> errors = ContainerUtil.newLinkedHashMap();
+      List<IdeaPluginDescriptor> list = new ArrayList<>();
+      Map<String, String> errors = new LinkedHashMap<>();
       ProgressIndicator indicator = new EmptyProgressIndicator();
 
       List<String> hosts = RepositoryHelper.getPluginHosts();
-      Set<PluginId> unique = ContainerUtil.newHashSet();
+      Set<PluginId> unique = new HashSet<>();
       for (String host : hosts) {
         try {
           if (host == null || acceptHost(host)) {

@@ -17,9 +17,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExpressionStatisticsAction extends AnAction {
@@ -80,7 +80,7 @@ public class ExpressionStatisticsAction extends AnAction {
 
   @NotNull
   private static List<VirtualFile> collectJavaFiles(VirtualFile dir, Project project) {
-    final List<VirtualFile> javaFiles = ContainerUtil.newArrayList();
+    final List<VirtualFile> javaFiles = new ArrayList<>();
     ProjectFileIndex.SERVICE.getInstance(project).iterateContentUnderDirectory(dir, file -> {
       if (file.getName().endsWith(".java")) {
         javaFiles.add(file);

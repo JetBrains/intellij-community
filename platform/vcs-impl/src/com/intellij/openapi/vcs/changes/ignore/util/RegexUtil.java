@@ -25,10 +25,10 @@
 package com.intellij.openapi.vcs.changes.ignore.util;
 
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -120,7 +120,7 @@ public class RegexUtil {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    List<String> parts = ContainerUtil.newArrayList();
+    List<String> parts = new ArrayList<>();
     String sPattern = pattern.toString();
 
     StringBuilder part = new StringBuilder();

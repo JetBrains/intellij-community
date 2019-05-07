@@ -496,6 +496,16 @@ public class PsiTestUtil {
   public static Sdk addRootsToJdk(@NotNull Sdk sdk,
                                   @NotNull OrderRootType rootType,
                                   @NotNull VirtualFile... roots) {
+    return modifyJdkRoots(sdk, sdkModificator -> {
+      for (VirtualFile root : roots) {
+        sdkModificator.addRoot(root, rootType);
+      }
+    });
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static Sdk modifyJdkRoots(@NotNull Sdk sdk, Consumer<? super SdkModificator> modifier) {
     Sdk clone;
     try {
       clone = (Sdk)sdk.clone();
@@ -504,9 +514,7 @@ public class PsiTestUtil {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
-    for (VirtualFile root : roots) {
-      sdkModificator.addRoot(root, rootType);
-    }
+    modifier.accept(sdkModificator);
     sdkModificator.commitChanges();
     return clone;
   }

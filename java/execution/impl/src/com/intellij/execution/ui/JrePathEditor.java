@@ -67,10 +67,12 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     final Set<String> jrePaths = new HashSet<>();
     for (JreProvider provider : JreProvider.EP_NAME.getExtensionList()) {
-      String path = provider.getJrePath();
-      if (!StringUtil.isEmpty(path)) {
-        jrePaths.add(path);
-        myComboBoxModel.add(new CustomJreItem(path));
+      if (provider.isAvailable()) {
+        String path = provider.getJrePath();
+        if (!StringUtil.isEmpty(path)) {
+          jrePaths.add(path);
+          myComboBoxModel.add(new CustomJreItem(path, provider.getPresentableName()));
+        }
       }
     }
 
@@ -247,9 +249,15 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
   static class CustomJreItem implements JreComboBoxItem {
     private final String myPath;
+    private final String myName;
 
     CustomJreItem(String path) {
+      this(path, null);
+    }
+
+    CustomJreItem(String path, String name) {
       myPath = path;
+      myName = name;
     }
 
     @Override
@@ -260,7 +268,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     @Override
     public String getPresentableText() {
-      return FileUtil.toSystemDependentName(myPath);
+      return myName != null && !myPath.equals(myName) ? myName : FileUtil.toSystemDependentName(myPath);
     }
 
     @Override

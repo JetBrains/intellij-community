@@ -2,8 +2,8 @@
 package git4idea.merge;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.*;
@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -71,7 +70,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @NotNull
   private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
-    Set<VirtualFile> reverseMap = ContainerUtil.newHashSet();
+    Set<VirtualFile> reverseMap = new HashSet<>();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
       boolean reverse;
       if (reverseOrDetect == ReverseRequest.DETECT) {
@@ -90,18 +89,9 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   @NotNull
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
-    final Ref<MergeData> mergeDataRef = new Ref<>(new MergeData());
-    final VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
-    final FilePath path = VcsUtil.getFilePath(file);
-
-    VcsRunnable runnable = new VcsRunnable() {
-      @Override
-      public void run() throws VcsException {
-        mergeDataRef.set(loadMergeData(myProject, root, path, myReverseRoots.contains(root)));
-      }
-    };
-    VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
-    return mergeDataRef.get();
+    VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
+    FilePath path = VcsUtil.getFilePath(file);
+    return loadMergeData(myProject, root, path, myReverseRoots.contains(root));
   }
 
   @Override
@@ -122,7 +112,8 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   @NotNull
   public MergeSession createMergeSession(@NotNull List<VirtualFile> files) {
-    return new MyMergeSession(files);
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> new MyMergeSession(files), "Loading Unmerged Files", true, myProject);
   }
 
   @Override

@@ -221,14 +221,20 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private static void setComponentPopupMenuTo(JTree tree) {
     tree.setComponentPopupMenu(new JPopupMenu() {
-      private Transferable transferable;
+      @Nullable
+      private Collection<String> names;
 
       @Override
       public void show(Component invoker, int x, int y) {
+        names = null;
+
         if (invoker != tree) return;
         TreePath path = tree.getClosestPathForLocation(x, y);
-        transferable = createTransferable(path);
-        if (transferable == null) return;
+        names = getPathNames(extractNode(path));
+        if (names.isEmpty()) {
+          return;
+        }
+
         Rectangle bounds = tree.getPathBounds(path);
         if (bounds == null || bounds.y > y) return;
         bounds.y += bounds.height;
@@ -237,7 +243,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       }
 
       {
-        add(CopySettingsPathAction.createSwingAction(() -> transferable));
+        for (Action action : CopySettingsPathAction.createSwingActions(() -> names)) {
+          add(action);
+        }
       }
     });
   }
@@ -265,13 +273,15 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @NotNull
   private static Collection<String> getPathNames(@Nullable MyNode node) {
+    if (node == null) {
+      return Collections.emptyList();
+    }
+
     ArrayDeque<String> path = new ArrayDeque<>();
     while (node != null) {
       path.push(node.myDisplayName);
       SimpleNode parent = node.getParent();
-      node = parent instanceof MyNode
-             ? (MyNode)parent
-             : null;
+      node = parent instanceof MyNode ? (MyNode)parent : null;
     }
     return path;
   }

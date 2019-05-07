@@ -1,5 +1,6 @@
 package com.intellij.configurationScript
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -11,6 +12,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.inputStreamIfExists
 import org.yaml.snakeyaml.nodes.MappingNode
+import org.yaml.snakeyaml.nodes.ScalarNode
 import org.yaml.snakeyaml.parser.ParserImpl
 import org.yaml.snakeyaml.reader.StreamReader
 import java.io.Reader
@@ -36,6 +38,10 @@ internal class ConfigurationFileManager(project: Project) {
 
   init {
     registerClearableLazyValue(yamlData)
+  }
+
+  companion object {
+    fun getInstance(project: Project) = project.service<ConfigurationFileManager>()
   }
 
   fun registerClearableLazyValue(value: SynchronizedClearableLazy<*>) {
@@ -74,6 +80,27 @@ internal class ConfigurationFileManager(project: Project) {
   }
 
   fun getConfigurationNode() = yamlData.value
+
+  fun findValueNode(namePath: String): MappingNode? {
+    return findValueNodeByPath(namePath, yamlData.value ?: return null)
+  }
+}
+
+internal fun findValueNodeByPath(namePath: String, rootNode: MappingNode): MappingNode? {
+  var node = rootNode
+  loop@
+  for (name in namePath.splitToSequence('.')) {
+    for (tuple in node.value) {
+      val keyNode = tuple.keyNode
+      if (keyNode is ScalarNode && keyNode.value == name) {
+        node = tuple.valueNode as? MappingNode ?: continue
+        continue@loop
+      }
+    }
+    return null
+  }
+
+  return if (node === rootNode) null else node
 }
 
 internal fun doRead(reader: Reader): MappingNode? {

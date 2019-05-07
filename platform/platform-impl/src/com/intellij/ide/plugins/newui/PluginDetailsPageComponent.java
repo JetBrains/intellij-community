@@ -239,7 +239,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private void createBottomPanel() {
     JPanel bottomPanel =
       new OpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5()), PluginManagerConfigurableNew.MAIN_BG_COLOR);
-    bottomPanel.setBorder(JBUI.Borders.emptyBottom(15));
+    bottomPanel.setBorder(JBUI.Borders.empty(0, 0, 15, 20));
 
     JBScrollPane scrollPane = new JBScrollPane(bottomPanel);
     scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
@@ -410,6 +410,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
       showProgress();
     }
+    else {
+      fullRepaint();
+    }
   }
 
   private void updateIcon() {
@@ -425,7 +428,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     if (errors) {
       Ref<String> enableAction = new Ref<>();
-      String message = PluginManagerConfigurableNew.getErrorMessage(myPluginModel, myPlugin, enableAction);
+      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
       ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : this::handleErrors);
     }
     myErrorComponent.setVisible(errors);
@@ -496,6 +499,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (myEnableDisableUninstallButton != null) {
       myEnableDisableUninstallButton.setText(title);
     }
+
+    fullRepaint();
   }
 
   private void doUninstall() {

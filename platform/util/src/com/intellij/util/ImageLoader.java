@@ -282,7 +282,7 @@ public class ImageLoader implements Serializable {
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
 
       if (path.contains("://") && !path.startsWith("file:")) {
-        list.add(StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : IMG);
+        list.add(StringUtil.endsWithIgnoreCase(StringUtil.substringBeforeLast(path, "?"), ".svg") ? SVG : IMG);
       }
       else if (retina && dark) {
         list.add(true, true);

@@ -15,25 +15,59 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+class XsltChooseByNameContributor implements ChooseByNameContributorEx {
+  @Override
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    FileBasedIndex.getInstance().processAllKeys(XsltSymbolIndex.NAME, processor, scope, filter);
+  }
 
-class XsltChooseByNameContributor implements ChooseByNameContributor {
-    @Override
-    @NotNull
-    public String[] getNames(Project project, boolean includeNonProjectItems) {
-        final Collection<String> symbols = XsltSymbolIndex.getSymbolNames(project);
-      return ArrayUtil.toStringArray(symbols);
-    }
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
+    FileBasedIndex.getInstance().processValues(XsltSymbolIndex.NAME, name, null, (file, kind) -> {
+      if (kind == null) return true;
+      PsiFile psiFile = psiManager.findFile(file);
+      if (psiFile == null || !XsltSupport.isXsltFile(psiFile)) return true;
+      XmlTag root = ((XmlFile)psiFile).getRootTag();
+      if (root == null) return true;
+      JBIterable<XmlTag> tags =
+        kind == XsltSymbolIndex.Kind.ANYTHING
+        ? JBIterable.<XmlTag>empty()
+          .append(root.findSubTags("variable", XsltSupport.XSLT_NS))
+          .append(root.findSubTags("param", XsltSupport.XSLT_NS))
+          .append(root.findSubTags("template", XsltSupport.XSLT_NS))
+        : JBIterable.of(root.findSubTags(kind.name().toLowerCase(), XsltSupport.XSLT_NS));
 
-    @Override
-    @NotNull
-    public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-        return XsltSymbolIndex.getSymbolsByName(name, project, includeNonProjectItems);
-    }
+      return tags.processEach(tag -> {
+        XsltElement el = kind.wrap(tag);
+        if (el instanceof PsiNamedElement && el instanceof NavigationItem) {
+          if (name.equals(((PsiNamedElement)el).getName())) {
+            return processor.process((NavigationItem)el);
+          }
+        }
+        return true;
+      });
+    }, parameters.getSearchScope(), parameters.getIdFilter());
+  }
+
 }

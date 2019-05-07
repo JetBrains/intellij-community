@@ -176,7 +176,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     if (!single) {
-      List<VirtualFile> files = ContainerUtil.newArrayList();
+      List<VirtualFile> files = new ArrayList<>();
       for (JsonSchemaFileProvider provider : providers) {
         VirtualFile schemaFile = getSchemaForProvider(myProject, provider);
         if (schemaFile != null) {
@@ -231,8 +231,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   public List<JsonSchemaInfo> getAllUserVisibleSchemas() {
     List<JsonSchemaCatalogEntry> schemas = myCatalogManager.getAllCatalogEntries();
     Collection<? extends JsonSchemaFileProvider> providers = myState.getProviders();
-    List<JsonSchemaInfo> results = ContainerUtil.newArrayListWithCapacity(schemas.size() + providers.size());
-    Map<String, JsonSchemaInfo> processedRemotes = ContainerUtil.newHashMap();
+    List<JsonSchemaInfo> results = new ArrayList<>(schemas.size() + providers.size());
+    Map<String, JsonSchemaInfo> processedRemotes = new HashMap<>();
     for (JsonSchemaFileProvider provider: providers) {
       if (provider.isUserVisible()) {
         final String remoteSource = provider.getRemoteSource();

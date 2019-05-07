@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContr
       @NotNull
       @Override
       protected Collection<Contributor> compute() {
-        List<Contributor> list = ContainerUtil.newArrayList();
+        List<Contributor> list = new ArrayList<>();
         list.add(new Contributor("/maven/dsl/groovy/pom.groovy", ""));
         list.add(new Contributor("/maven/dsl/groovy/model.groovy", "project"));
         list.add(new Contributor("/maven/dsl/groovy/modelBase.groovy",

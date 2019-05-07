@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.google.gson.GsonBuilder;
@@ -79,7 +65,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -203,7 +188,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         for (ExternalSourceDirectorySet directorySet : sourceSet.getSources().values()) {
           artifacts.addAll(directorySet.getGradleOutputDirs());
         }
-        sourceSetData.setArtifacts(ContainerUtil.newArrayList(artifacts));
+        sourceSetData.setArtifacts(new ArrayList<>(artifacts));
 
         DataNode<GradleSourceSetData> sourceSetDataNode = mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData);
         final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
@@ -424,7 +409,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                         @NotNull ExternalProject externalProject,
                                         @NotNull DataNode<ModuleData> ideModule,
                                         @NotNull SourceSetsProcessor processor) {
-    Map<String, DataNode<GradleSourceSetData>> sourceSetsMap = ContainerUtil.newHashMap();
+    Map<String, DataNode<GradleSourceSetData>> sourceSetsMap = new HashMap<>();
     for (DataNode<GradleSourceSetData> dataNode : ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)) {
       sourceSetsMap.put(dataNode.getData().getId(), dataNode);
     }
@@ -456,7 +441,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap = projectDataNode.getUserData(MODULES_OUTPUTS);
       assert moduleOutputsMap != null;
 
-      Set<String> outputDirs = ContainerUtil.newHashSet();
+      Set<String> outputDirs = new HashSet<>();
       processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
@@ -614,8 +599,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     if (dependencies == null) return;
 
-    List<String> orphanModules = ContainerUtil.newArrayList();
-    Map<String, ModuleData> modulesIndex = ContainerUtil.newHashMap();
+    List<String> orphanModules = new ArrayList<>();
+    Map<String, ModuleData> modulesIndex = new HashMap<>();
 
     for (DataNode<ModuleData> dataNode : ExternalSystemApiUtil.getChildren(ideProject, ProjectKeys.MODULE)) {
       modulesIndex.put(dataNode.getData().getExternalName(), dataNode.getData());
@@ -674,7 +659,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                                   @NotNull DataNode<ProjectData> ideProject)
     throws IllegalArgumentException, IllegalStateException {
 
-    final Collection<TaskData> tasks = ContainerUtil.newArrayList();
+    final Collection<TaskData> tasks = new ArrayList<>();
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
@@ -787,7 +772,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public List<Pair<String, String>> getExtraJvmArgs() {
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
-      final List<Pair<String, String>> extraJvmArgs = ContainerUtil.newArrayList();
+      final List<Pair<String, String>> extraJvmArgs = new ArrayList<>();
 
       final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
       if (!StringUtil.isEmpty(httpConfigurable.PROXY_EXCEPTIONS)) {

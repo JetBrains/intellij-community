@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
@@ -34,8 +34,8 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
   @NotNull private final ReentrantReadWriteLock.WriteLock MODIFY_LOCK = new ReentrantReadWriteLock().writeLock();
 
-  @NotNull private final Map<VirtualFile, Repository> myRepositories = ContainerUtil.newHashMap();
-  @NotNull private final Map<VirtualFile, Repository> myExternalRepositories = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, Repository> myRepositories = new HashMap<>();
+  @NotNull private final Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
   @NotNull private final List<VcsRepositoryCreator> myRepositoryCreators;
 
   private volatile boolean myDisposed;
@@ -181,7 +181,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
       try {
         REPO_LOCK.readLock().lock();
         if (myRepositories.containsKey(checkedRoot)) return;
-        repositories = ContainerUtil.newHashMap(myRepositories);
+        repositories = new HashMap<>(myRepositories);
       }
       finally {
         REPO_LOCK.readLock().unlock();
@@ -211,7 +211,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @NotNull
   private Map<VirtualFile, Repository> findNewRoots(@NotNull Set<VirtualFile> knownRoots) {
-    Map<VirtualFile, Repository> newRootsMap = ContainerUtil.newHashMap();
+    Map<VirtualFile, Repository> newRootsMap = new HashMap<>();
     for (VcsRoot root : myVcsManager.getAllVcsRoots()) {
       VirtualFile rootPath = root.getPath();
       if (rootPath != null && !knownRoots.contains(rootPath)) {

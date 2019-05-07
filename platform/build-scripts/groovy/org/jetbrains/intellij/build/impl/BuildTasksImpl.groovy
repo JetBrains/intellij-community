@@ -180,6 +180,9 @@ idea.fatal.error.notification=disabled
     def builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
       builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
+      if (!builtinPluginsRepoUrl.startsWith("https:")) {
+        buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
+      }
     }
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,

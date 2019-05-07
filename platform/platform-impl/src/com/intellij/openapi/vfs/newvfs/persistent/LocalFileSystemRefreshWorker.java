@@ -301,10 +301,10 @@ class LocalFileSystemRefreshWorker {
     private final Map<String, VirtualFile> myPersistentChildren;
     private final Set<String> myChildrenWeAreInterested; // null - no limit
 
-    private final VirtualFile myFileOrDir;
+    private final NewVirtualFile myFileOrDir;
     private final RefreshContext myRefreshContext;
 
-    RefreshingFileVisitor(@NotNull VirtualFile fileOrDir,
+    RefreshingFileVisitor(@NotNull NewVirtualFile fileOrDir,
                           @NotNull RefreshContext refreshContext,
                           @Nullable("null means all") Collection<String> childrenToRefresh,
                           @NotNull Collection<VirtualFile> existingPersistentChildren) {
@@ -362,7 +362,7 @@ class LocalFileSystemRefreshWorker {
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
 
         String symlinkTarget = isLink ? file.toRealPath().toString() : null;
-        myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs, isLink), symlinkTarget);
+        myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs, isLink), symlinkTarget, ()->checkCancelled(myFileOrDir, myRefreshContext));
         return FileVisitResult.CONTINUE;
       }
 
@@ -384,7 +384,7 @@ class LocalFileSystemRefreshWorker {
         myHelper.scheduleDeletion(child);
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
         String symlinkTarget = isLink ? file.toRealPath().toString() : null;
-        myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs, isLink), symlinkTarget);
+        myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs, isLink), symlinkTarget, ()->checkCancelled(myFileOrDir, myRefreshContext));
         // ignore everything else
         child.markClean();
         return FileVisitResult.CONTINUE;

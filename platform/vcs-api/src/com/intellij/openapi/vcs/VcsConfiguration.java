@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
@@ -76,7 +75,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean RELOAD_CONTEXT = true;
 
   @XCollection(elementName = "path", propertyElementName = "ignored-roots")
-  public List<String> IGNORED_UNREGISTERED_ROOTS = ContainerUtil.newArrayList();
+  public List<String> IGNORED_UNREGISTERED_ROOTS = new ArrayList<>();
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -356,7 +356,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     double delta = 1 / (2 * Math.max(0.5, modules.size()));
     JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
     VirtualFileManager vfsManager = VirtualFileManager.getInstance();
-    Set<VirtualFile> addedRoots = ContainerUtil.newTroveSet();
+    Set<VirtualFile> addedRoots = new THashSet<>();
     for (JpsModule o : modules) {
       indicator.setFraction(indicator.getFraction() + delta);
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {

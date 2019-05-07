@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 
@@ -6,15 +6,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
@@ -22,14 +19,14 @@ import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 @State(name = "Vcs.Log.History.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
-  @NotNull private final Collection<PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
+  @NotNull private final Collection<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
   private State myState = new State();
 
   public static class State {
     public boolean SHOW_DETAILS = false;
     public boolean SHOW_OTHER_BRANCHES = false;
-    public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
-    public List<Integer> COLUMN_ORDER = ContainerUtil.newArrayList();
+    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
+    public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public boolean SHOW_DIFF_PREVIEW = true;
   }
 

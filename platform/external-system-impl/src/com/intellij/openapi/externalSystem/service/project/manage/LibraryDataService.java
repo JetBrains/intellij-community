@@ -57,7 +57,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    Map<String, LibraryData> processedLibraries = ContainerUtil.newHashMap();
+    Map<String, LibraryData> processedLibraries = new HashMap<>();
     for (DataNode<LibraryData> dataNode: toImport) {
       LibraryData libraryData = dataNode.getData();
       String libraryName = libraryData.getInternalName();
@@ -91,7 +91,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
 
   @NotNull
   public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
-    Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
+    Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
       Set<String> paths = data.getPaths(pathType);
       if (paths.isEmpty()) {
@@ -167,8 +167,8 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
 
     final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    final Map<String, Library> namesToLibs = ContainerUtil.newHashMap();
-    final Set<Library> potentialOrphans = ContainerUtil.newHashSet();
+    final Map<String, Library> namesToLibs = new HashMap<>();
+    final Set<Library> potentialOrphans = new HashSet<>();
     RootPolicy<Void> excludeUsedLibraries = new RootPolicy<Void>() {
       @Override
       public Void visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Void value) {
@@ -233,7 +233,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       if(pathType != LibraryPathType.BINARY && toAddPerType.isEmpty()) {
         continue;
       }
-      HashSet<String> toRemovePerType = ContainerUtilRt.newHashSet();
+      HashSet<String> toRemovePerType = new HashSet<>();
       toRemove.put(ideType, toRemovePerType);
 
       for (VirtualFile ideFile: ideLibrary.getFiles(ideType)) {
@@ -255,7 +255,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
 
     for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
-      Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
+      Map<OrderRootType, Collection<File>> roots = new HashMap<>();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
       registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.IdeBundle;
@@ -14,13 +14,9 @@ import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   private final String myCurrentScopeType;
@@ -62,7 +58,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   @NotNull
   private static Collection<PsiClass> searchInheritors(@NotNull PsiClass psiClass, @NotNull SearchScope searchScope) {
     if (psiClass.isAnnotationType()) {
-      final Set<PsiClass> result = ContainerUtil.newHashSet();
+      final Set<PsiClass> result = new HashSet<>();
 
       AnnotatedElementsSearch.searchPsiClasses(psiClass, searchScope).forEach(processorResult -> {
         if (processorResult.isAnnotationType()) {

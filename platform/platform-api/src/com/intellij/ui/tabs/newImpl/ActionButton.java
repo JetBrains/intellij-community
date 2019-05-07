@@ -7,20 +7,17 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pass;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.TimedDeadzone;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 
 class ActionButton extends IconButton implements ActionListener {
-
   private final InplaceButton myButton;
   private Presentation myPrevPresentation;
   private final AnAction myAction;
@@ -30,7 +27,7 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass, TimedDeadzone.Length deadzone) {
+  ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Consumer<MouseEvent> pass, TimedDeadzone.Length deadzone) {
     super(null, action.getTemplatePresentation().getIcon());
     myTabs = tabs;
     myTabInfo = tabInfo;
@@ -59,9 +56,7 @@ class ActionButton extends IconButton implements ActionListener {
   }
 
   public boolean update() {
-    AnActionEvent event = createAnEvent(null, 0);
-
-    if (event == null) return false;
+    AnActionEvent event = createAnEvent(0);
 
     myAction.update(event);
     Presentation p = event.getPresentation();
@@ -81,7 +76,6 @@ class ActionButton extends IconButton implements ActionListener {
     return changed;
   }
 
-
   private static boolean areEqual(Presentation p1, Presentation p2) {
     if (p1 == null || p2 == null) return false;
 
@@ -90,22 +84,20 @@ class ActionButton extends IconButton implements ActionListener {
            && Comparing.equal(p1.getHoveredIcon(), p2.getHoveredIcon())
            && p1.isEnabled() == p2.isEnabled()
            && p1.isVisible() == p2.isVisible();
-
   }
 
   @Override
   public void actionPerformed(final ActionEvent e) {
-    AnActionEvent event = createAnEvent(null, e.getModifiers());
-    if (event != null && ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
+    AnActionEvent event = createAnEvent(e.getModifiers());
+    if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
       ActionUtil.performActionDumbAware(myAction, event);
     }
   }
 
-  @Nullable
-  private AnActionEvent createAnEvent(InputEvent e, final int modifiers) {
+  private AnActionEvent createAnEvent(int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
     DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
-    return new AnActionEvent(e, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myTabs.myActionManager, modifiers);
+    return new AnActionEvent(null, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myTabs.myActionManager, modifiers);
   }
 
   public void setAutoHide(final boolean autoHide) {
@@ -124,5 +116,4 @@ class ActionButton extends IconButton implements ActionListener {
 
     myToShow = show;
   }
-
 }

@@ -44,18 +44,20 @@ internal class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcce
     }
   }
 
-  private fun serializeBaseStateInto(o: BaseState, _element: Element?, filter: SerializationFilter?): Element? {
+  fun serializeBaseStateInto(o: BaseState, _element: Element?, filter: SerializationFilter?, excludedPropertyNames: Collection<String>? = null): Element? {
     var element = _element
     // order of bindings must be used, not order of properties
     var bindingIndices: IntArrayList? = null
     for (property in o.__getProperties()) {
-      if (property.isEqualToDefault()) {
+      val propertyName = property.name!!
+
+      if (property.isEqualToDefault() || (excludedPropertyNames != null && excludedPropertyNames.contains(propertyName))) {
         continue
       }
 
-      val propertyBindingIndex = findBindingIndex(property.name!!)
+      val propertyBindingIndex = findBindingIndex(propertyName)
       if (propertyBindingIndex < 0) {
-        logger<BaseState>().debug("cannot find binding for property ${property.name}")
+        logger<BaseState>().debug("cannot find binding for property ${propertyName}")
         continue
       }
 

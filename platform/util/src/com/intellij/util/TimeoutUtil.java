@@ -18,6 +18,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -70,8 +71,8 @@ public final class TimeoutUtil {
    */
   @ApiStatus.Experimental
   public static <E extends Throwable> long measureExecutionTime(@NotNull ThrowableRunnable<E> runnable) throws E {
-    long startTime = System.currentTimeMillis();
+    long startTime = System.nanoTime();
     runnable.run();
-    return System.currentTimeMillis() - startTime;
+    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
   }
 }

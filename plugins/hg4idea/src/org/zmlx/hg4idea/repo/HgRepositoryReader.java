@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
 import com.google.common.io.BaseEncoding;
@@ -242,7 +242,7 @@ public class HgRepositoryReader {
 
   @NotNull
   private Collection<HgNameWithHashInfo> readReferences(@NotNull File fileWithReferences) {
-    HashSet<HgNameWithHashInfo> result = ContainerUtil.newHashSet();
+    HashSet<HgNameWithHashInfo> result = new HashSet<>();
     readReferences(fileWithReferences, result);
     return result;
   }
@@ -274,7 +274,7 @@ public class HgRepositoryReader {
 
   @NotNull
   public List<HgNameWithHashInfo> readMQAppliedPatches() {
-    ArrayList<HgNameWithHashInfo> mqPatchRefs = ContainerUtil.newArrayList();
+    ArrayList<HgNameWithHashInfo> mqPatchRefs = new ArrayList<>();
     readReferences(new File(myMqInternalDir, "status"), mqPatchRefs);
     return mqPatchRefs;
   }

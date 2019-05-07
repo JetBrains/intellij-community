@@ -13,9 +13,9 @@ import java.io.IOException;
  * @author Bas Leijdekkers
  */
 public class ConfigurationUtil {
-
   private ConfigurationUtil() {}
 
+  @NotNull
   public static String toXml(@NotNull Configuration configuration) {
     configuration = configuration.copy();
     configuration.getMatchOptions().setScope(null); // don't export scope

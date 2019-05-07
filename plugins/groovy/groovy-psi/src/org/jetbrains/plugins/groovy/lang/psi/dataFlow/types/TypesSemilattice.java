@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,11 +55,11 @@ class TypeDfaState {
   private final Map<VariableDescriptor, DFAType> myVarTypes;
 
   TypeDfaState() {
-    myVarTypes = ContainerUtil.newHashMap();
+    myVarTypes = new HashMap<>();
   }
 
   TypeDfaState(TypeDfaState another) {
-    myVarTypes = ContainerUtil.newHashMap(another.myVarTypes);
+    myVarTypes = new HashMap<>(another.myVarTypes);
   }
 
   Map<VariableDescriptor, DFAType> getVarTypes() {

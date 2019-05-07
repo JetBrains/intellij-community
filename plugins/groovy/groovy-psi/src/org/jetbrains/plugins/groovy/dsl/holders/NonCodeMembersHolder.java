@@ -20,10 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
@@ -145,7 +142,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
         method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place));
 
         if (isNamed) {
-          Map<String, NamedArgumentDescriptor> namedParams = ContainerUtil.newHashMap();
+          Map<String, NamedArgumentDescriptor> namedParams = new HashMap<>();
           for (Object o : (List)value) {
             if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
               namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,

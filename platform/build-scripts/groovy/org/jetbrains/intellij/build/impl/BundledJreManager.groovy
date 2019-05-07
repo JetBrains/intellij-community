@@ -268,7 +268,7 @@ class BundledJreManager {
   }
 
   String jreSuffix() {
-    isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
+    isBundledJreModular() ? "" : "-jbr8"
   }
 
   boolean is32bitArchSupported() {

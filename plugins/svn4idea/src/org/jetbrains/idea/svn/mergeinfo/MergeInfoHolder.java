@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
@@ -18,6 +17,7 @@ import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnMergeInfoRootPanelManual;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class MergeInfoHolder {
@@ -38,7 +38,7 @@ public class MergeInfoHolder {
     myMainPanel = mainPanel;
     myPanel = panel;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
-    myCachedMap = ContainerUtil.newHashMap();
+    myCachedMap = new HashMap<>();
   }
 
   @NotNull

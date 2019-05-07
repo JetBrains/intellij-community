@@ -1,11 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar
-import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.text.nullize
@@ -29,18 +26,12 @@ internal class OpenSettingsService : RestService() {
   }
 }
 
-// name must be trimmed
 private fun doOpenSettings(name: String): Boolean {
   val effectiveProject = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
-  val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(effectiveProject, true))
-  val configurables = (SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl).findByNameOnly(name, groups)
-  if (configurables.nameFullHits.isEmpty()) {
-    return false
-  }
-
-  val nameTopHit = configurables.nameFullHits.firstOrNull()
+  val searchConfigurableByNameHelper = SearchConfigurableByNameHelper(name, effectiveProject)
+  val result = searchConfigurableByNameHelper.searchByName()
   ApplicationManager.getApplication().invokeLater(Runnable {
-    SettingsDialogFactory.getInstance().create(effectiveProject, groups, nameTopHit, null).show()
+    SettingsDialogFactory.getInstance().create(effectiveProject, listOf(searchConfigurableByNameHelper.rootGroup), result, null).show()
   }, effectiveProject.disposed)
   return true
 }

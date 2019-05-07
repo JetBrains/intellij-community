@@ -4,13 +4,13 @@ package org.jetbrains.idea.maven.config
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeConsumer
 import com.intellij.openapi.fileTypes.FileTypeFactory
+import com.intellij.openapi.util.Comparing
 
 class MavenConfigFileTypeFactory : FileTypeFactory() {
   override fun createFileTypes(consumer: FileTypeConsumer) {
     consumer.consume(MavenConfigFileType.INSTANCE, object : FileNameMatcher {
-
-      override fun accept(fileName: String): Boolean {
-        return "maven.config" == fileName
+      override fun acceptsCharSequence(fileName: CharSequence): Boolean {
+        return Comparing.equal("maven.config", fileName)
       }
 
       override fun getPresentableString(): String {

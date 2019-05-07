@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -35,10 +35,8 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.ContentUtilEx.getFullName;
@@ -52,7 +50,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
   public static final String Sync = "Sync";
   public static final String Run = "Run";
   public static final String Debug = "Debug";
-  private static final String[] ourPresetOrder = {Build, Sync, Run, Debug};
+  private static final String[] ourPresetOrder = {Sync, Build, Run, Debug};
   private static final Key<Map<Object, CloseListener>> CONTENT_CLOSE_LISTENERS = Key.create("CONTENT_CLOSE_LISTENERS");
 
   private Project myProject;
@@ -142,12 +140,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
         }
 
         int place = 0;
-        for (int i = 0; i < idx; i++) {
+        for (int i = 0; i <= idx; i++) {
           String key = ourPresetOrder[i];
           Collection<String> tabNames = existingCategoriesNames.get(key);
-          if (!key.equals(category)) {
-            place += tabNames.size();
-          }
+          place += tabNames.size();
         }
         contentManager.addContent(content, place);
       }
@@ -230,7 +226,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
     if (processHandler != null) {
       Map<Object, CloseListener> closeListenerMap = content.getUserData(CONTENT_CLOSE_LISTENERS);
       if (closeListenerMap == null) {
-        closeListenerMap = ContainerUtil.newHashMap();
+        closeListenerMap = new HashMap<>();
         content.putUserData(CONTENT_CLOSE_LISTENERS, closeListenerMap);
       }
       closeListenerMap.put(buildDescriptor.getId(), new CloseListener(content, processHandler));

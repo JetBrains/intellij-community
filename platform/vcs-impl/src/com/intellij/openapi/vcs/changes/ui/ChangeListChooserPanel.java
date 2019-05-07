@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,7 +51,7 @@ public class ChangeListChooserPanel extends JPanel {
                                            boolean hasFocus) {
         if (value != null) {
           String name = value.getName();
-          int visibleWidth = getSize().width;
+          int visibleWidth = list.getSize().width;
           if (visibleWidth == 0) {
             visibleWidth = MyEditorComboBox.PREF_WIDTH;
           }
@@ -59,9 +59,9 @@ public class ChangeListChooserPanel extends JPanel {
           final int width = fm.stringWidth(name);
           if (width > visibleWidth) {
             final String truncated = CommittedChangeListRenderer
-              .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
+              .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ...") - 7);
             if (truncated.length() > 5) {
-              name = truncated + " ..";
+              name = truncated + " ...";
             }
           }
           append(name, value instanceof LocalChangeList && ((LocalChangeList)value).isDefault()

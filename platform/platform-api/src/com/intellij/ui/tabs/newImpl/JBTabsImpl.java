@@ -282,14 +282,15 @@ public class JBTabsImpl extends JComponent
       }
     });
     AWTEventListener listener = new AWTEventListener() {
-      Alarm afterScroll = new Alarm(com.intellij.ui.tabs.newImpl.JBTabsImpl.this);
+      final Alarm afterScroll = new Alarm(com.intellij.ui.tabs.newImpl.JBTabsImpl.this);
       @Override
       public void eventDispatched(AWTEvent event) {
+        if (mySingleRowLayout.myLastSingRowLayout == null) return;
+
         MouseEvent me = (MouseEvent)event;
         Point point = me.getPoint();
         SwingUtilities.convertPointToScreen(point, me.getComponent());
         Rectangle rect = com.intellij.ui.tabs.newImpl.JBTabsImpl.this.getVisibleRect();
-        if (mySingleRowLayout.myLastSingRowLayout == null) return;
         rect = rect.intersection(mySingleRowLayout.myLastSingRowLayout.tabRectangle);
         Point p = rect.getLocation();
         SwingUtilities.convertPointToScreen(p, com.intellij.ui.tabs.newImpl.JBTabsImpl.this);
@@ -2681,7 +2682,7 @@ public class JBTabsImpl extends JComponent
     @Override
     @NotNull
     public UiDecoration getDecoration() {
-      return new UiDecoration(null, new Insets(0, 4, 0, 5));
+        return new UiDecoration(null, new JBInsets(7, 13, 9, 13));
     }
   }
 

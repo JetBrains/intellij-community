@@ -47,7 +47,6 @@ public abstract class MatchingHandler {
     final PsiElement currentMatchNode = matchNodes.current();
 
     skipIfNecessary(matchNodes, currentPatternNode, strategy);
-    skipComments(matchNodes, currentPatternNode);
     skipIfNecessary(patternNodes, matchNodes.current(), strategy);
 
     if (!patternNodes.hasNext()) {
@@ -56,6 +55,7 @@ public abstract class MatchingHandler {
 
     final PsiElement patternElement = patternNodes.current();
     final MatchingHandler handler = context.getPattern().getHandler(patternElement);
+    if (!(handler instanceof TopLevelMatchingHandler)) skipComments(matchNodes, currentPatternNode);
     if (matchNodes.hasNext() && handler.match(patternElement, matchNodes.current(), context)) {
 
       patternNodes.advance();

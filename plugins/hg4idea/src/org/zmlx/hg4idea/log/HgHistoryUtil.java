@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -100,7 +100,7 @@ public class HgHistoryUtil {
     HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
 
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = new ArrayList<>();
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -148,7 +148,7 @@ public class HgHistoryUtil {
                                                    @NotNull VirtualFile root,
                                                    @NotNull VcsLogObjectsFactory factory,
                                                    @NotNull HgFileRevision revision) {
-    List<List<VcsFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
+    List<List<VcsFileStatusInfo>> reportedChanges = new ArrayList<>();
     reportedChanges.add(getStatusInfo(revision));
 
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
@@ -194,8 +194,8 @@ public class HgHistoryUtil {
 
   @NotNull
   private static List<VcsFileStatusInfo> convertHgChanges(@NotNull Set<HgChange> changes) {
-    Set<String> deleted = ContainerUtil.newHashSet();
-    Set<String> copied = ContainerUtil.newHashSet();
+    Set<String> deleted = new HashSet<>();
+    Set<String> copied = new HashSet<>();
 
     for (HgChange change : changes) {
       Change.Type type = getType(change.getStatus());
@@ -207,7 +207,7 @@ public class HgHistoryUtil {
       }
     }
 
-    List<VcsFileStatusInfo> result = ContainerUtil.newArrayList();
+    List<VcsFileStatusInfo> result = new ArrayList<>();
     for (HgChange change : changes) {
       Change.Type type = getType(change.getStatus());
       LOG.assertTrue(type != null, "Unsupported status for change " + change);

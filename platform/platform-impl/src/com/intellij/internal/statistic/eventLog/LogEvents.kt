@@ -1,11 +1,8 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 fun newLogEvent(session: String,
@@ -130,7 +127,7 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
 
   fun addData(key: String, value: Any) {
     if (data.isEmpty()) {
-      data = ContainerUtil.newHashMap()
+      data = HashMap()
     }
 
     val escapedValue = if (value is String) escape(value) else value

@@ -3,13 +3,13 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class ChangeSetMergerFactory implements MergerFactory {
 
   public ChangeSetMergerFactory(@NotNull CommittedChangeList changeList, @NotNull Collection<Change> changes) {
     myChangeList = changeList;
-    myChanges = ContainerUtil.newArrayList(changes);
+    myChanges = new ArrayList<>(changes);
   }
 
   @Override

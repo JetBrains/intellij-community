@@ -193,7 +193,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String PROGRESS_SLIDE = "progressSlide";
   private static final String PROGRESS_PERCENT = "progressPercent";
 
-  static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+  static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   ApplicationInfoImpl() {

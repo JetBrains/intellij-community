@@ -104,7 +104,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     @Attribute("show_recycled")
     public boolean myShowRecycled;
     @XCollection
-    public Set<String> groupingKeys = newHashSet();
+    public Set<String> groupingKeys = new HashSet<>();
   }
 
   @Nullable
@@ -227,7 +227,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void filterNonValidShelvedChangeLists() {
-    final List<ShelvedChangeList> allSchemes = newArrayList(mySchemeManager.getAllSchemes());
+    final List<ShelvedChangeList> allSchemes = new ArrayList<>(mySchemeManager.getAllSchemes());
     process(allSchemes, shelvedChangeList -> {
       if (!shelvedChangeList.isValid()) {
         mySchemeManager.removeScheme(shelvedChangeList);
@@ -338,7 +338,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
    */
   @NotNull
   public Collection<String> checkAndMigrateOldPatchResourcesToNewSchemeStorage() {
-    Collection<String> nonMigratedPaths = newArrayList();
+    Collection<String> nonMigratedPaths = new ArrayList<>();
     for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
       File newPatchDir = new File(getShelfResourcesDirectory(), list.getName());
       // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
@@ -353,7 +353,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   private static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
                                                        @NotNull File targetDirectory,
                                                        boolean deleteOld) {
-    Collection<String> nonMigratedPaths = newArrayList();
+    Collection<String> nonMigratedPaths = new ArrayList<>();
     //try to copy/move .patch file
     File patchFile = new File(list.PATH);
     if (patchFile.exists()) {
@@ -733,7 +733,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                              @NotNull List<? extends ShelvedChange> changesToDelete,
                                              @NotNull List<? extends ShelvedBinaryFile> binariesToDelete) {
     // filter changes
-    ArrayList<ShelvedChangeList> shelvedListsFromChangesToDelete = newArrayList(shelvedListsFromChanges);
+    ArrayList<ShelvedChangeList> shelvedListsFromChangesToDelete = new ArrayList<>(shelvedListsFromChanges);
     shelvedListsFromChangesToDelete.removeAll(shelvedListsToDelete);
 
     if (shelvedListsFromChangesToDelete.size() + binariesToDelete.size() == 0 && shelvedListsToDelete.isEmpty()) {
@@ -741,7 +741,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
 
     //store original dates to restore if needed
-    Map<ShelvedChangeList, Date> deletedListsWithOriginalDate = newHashMap();
+    Map<ShelvedChangeList, Date> deletedListsWithOriginalDate = new HashMap<>();
     for (ShelvedChangeList changeList : shelvedListsToDelete) {
       Date originalDate = changeList.DATE;
       if (changeList.isDeleted()) {
@@ -848,7 +848,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes) {
-    final List<ShelvedChangeList> result = newArrayList();
+    final List<ShelvedChangeList> result = new ArrayList<>();
     new Task.Backgroundable(myProject, VcsBundle.getString("shelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -866,7 +866,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
-    Set<VirtualFile> fileSet = newHashSet();
+    Set<VirtualFile> fileSet = new HashSet<>();
     fileSet.addAll(map2SetNotNull(changes, Change::getVirtualFile));
     myShelvingFiles = fileSet;
   }
@@ -882,9 +882,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @NotNull
   private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes) {
-    List<String> failedChangeLists = newArrayList();
-    List<ShelvedChangeList> result = newArrayList();
-    List<Change> shelvedChanges = newArrayList();
+    List<String> failedChangeLists = new ArrayList<>();
+    List<ShelvedChangeList> result = new ArrayList<>();
+    List<Change> shelvedChanges = new ArrayList<>();
 
     try {
       SHELVED_FILES_LOCK.writeLock().lock();
@@ -970,9 +970,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : selectedChangeLists) {
           List<ShelvedChange> changesForChangelist =
-            newArrayList(intersection(changeList.getChanges(myProject), selectedChanges));
+            new ArrayList<>(intersection(changeList.getChanges(myProject), selectedChanges));
           List<ShelvedBinaryFile> binariesForChangelist =
-            newArrayList(intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
+            new ArrayList<>(intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
           boolean shouldUnshelveAllList = changesForChangelist.isEmpty() && binariesForChangelist.isEmpty();
           unshelveChangeList(changeList, shouldUnshelveAllList ? null : changesForChangelist,
                              shouldUnshelveAllList ? null : binariesForChangelist,

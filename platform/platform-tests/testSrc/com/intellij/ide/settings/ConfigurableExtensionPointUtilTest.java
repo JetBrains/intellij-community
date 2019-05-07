@@ -18,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Nikolay Matveev
@@ -479,8 +476,8 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   private static List<Node> build(Configurable... configurables) {
     Map<String, List<Configurable>> map = ConfigurableExtensionPointUtil.groupConfigurables(Arrays.asList(configurables));
-    List<Node> children = ContainerUtil.newArrayList();
-    for (Map.Entry<String, List<Configurable>> entry : ContainerUtil.newTreeMap(map).entrySet()) {
+    List<Node> children = new ArrayList<>();
+    for (Map.Entry<String, List<Configurable>> entry : new TreeMap<>(map).entrySet()) {
       children.add(node(entry.getKey(), entry.getValue()));
     }
     return children;
@@ -506,7 +503,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static Node node(String id, List<Configurable> configurables) {
-    List<Node> children = ContainerUtil.newArrayList();
+    List<Node> children = new ArrayList<>();
     for (Configurable configurable : configurables) {
       children.add(node(configurable));
     }

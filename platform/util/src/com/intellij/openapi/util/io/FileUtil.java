@@ -1481,7 +1481,7 @@ public class FileUtil extends FileUtilRt {
    */
   @NotNull
   public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
-    final Map<String, String> map = ContainerUtil.newLinkedHashMap();
+    final Map<String, String> map = new LinkedHashMap<>();
 
     new Properties() {
       @Override

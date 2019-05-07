@@ -8,14 +8,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -1033,7 +1030,7 @@ public class PluginManagerConfigurableNew
           case "repository:":
             return UpdateSettings.getInstance().getPluginHosts();
           case "sortBy:":
-            return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
+            return Arrays.asList("downloads", "name", "rating", "featured", "updated");
         }
         return null;
       }
@@ -1128,7 +1125,7 @@ public class PluginManagerConfigurableNew
 
             if (query.length() > 1) {
               try {
-                for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
+                for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query))) {
                   IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
                   if (descriptor != null) {
                     result.add(descriptor);
@@ -1150,7 +1147,7 @@ public class PluginManagerConfigurableNew
         }
         catch (Exception ignore) {
         }
-        return ContainerUtil.newArrayList(result);
+        return new ArrayList<>(result);
       }
 
       @Override
@@ -1203,7 +1200,7 @@ public class PluginManagerConfigurableNew
               return;
             }
 
-            for (String pluginId : requestToPluginRepository(createSearchUrl(parser.getUrlQuery(), 10000), forceHttps())) {
+            for (String pluginId : requestToPluginRepository(createSearchUrl(parser.getUrlQuery(), 10000))) {
               IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
               if (descriptor != null) {
                 result.descriptors.add(descriptor);
@@ -1239,7 +1236,7 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       protected List<String> getAttributes() {
-        return ContainerUtil.list("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
+        return Arrays.asList("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
       }
 
       @Nullable
@@ -1461,14 +1458,13 @@ public class PluginManagerConfigurableNew
   public static boolean loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
                                     @NotNull String query) throws IOException {
-    boolean forceHttps = forceHttps();
     Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
     Url offsetUrl = baseUrl;
     Map<String, String> offsetParameters = new HashMap<>();
     int offset = 0;
 
     while (true) {
-      List<String> pluginIds = requestToPluginRepository(offsetUrl, forceHttps);
+      List<String> pluginIds = requestToPluginRepository(offsetUrl);
       if (pluginIds.isEmpty()) {
         return false;
       }
@@ -1490,10 +1486,10 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  public static List<String> requestToPluginRepository(@NotNull Url url, boolean forceHttps) throws IOException {
+  public static List<String> requestToPluginRepository(@NotNull Url url) throws IOException {
     List<String> ids = new ArrayList<>();
 
-    HttpRequests.request(url).forceHttps(forceHttps).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
+    HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
       URLConnection connection = request.getConnection();
       if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() != HttpURLConnection.HTTP_OK) {
         return null;
@@ -1533,11 +1529,6 @@ public class PluginManagerConfigurableNew
                                "&productCode=" + URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
   }
 
-  public static boolean forceHttps() {
-    return IdeaApplication.isLoaded() && !ApplicationManager.getApplication().isDisposed() &&
-           UpdateSettings.getInstance().canUseSecureConnection();
-  }
-
   @NotNull
   private List<IdeaPluginDescriptor> getPluginRepositories() {
     synchronized (myRepositoriesLock) {
@@ -1555,43 +1546,6 @@ public class PluginManagerConfigurableNew
       PluginManagerMain.LOG.info(e);
     }
     return Collections.emptyList();
-  }
-
-  @NotNull
-  public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
-                                       @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<String> enableAction) {
-    String message;
-
-    Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());
-    if (ContainerUtil.isEmpty(requiredPlugins)) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
-    }
-    else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-      message = "The plugin requires IntelliJ IDEA Ultimate.";
-    }
-    else {
-      String deps = StringUtil.join(requiredPlugins, id -> {
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-        if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
-          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (descriptor instanceof IdeaPluginDescriptorImpl) {
-              if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
-                plugin = descriptor;
-                break;
-              }
-            }
-          }
-        }
-        return plugin != null ? plugin.getName() : id.getIdString();
-      }, ", ");
-
-      int size = requiredPlugins.size();
-      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
-    }
-
-    return message;
   }
 
   @NotNull

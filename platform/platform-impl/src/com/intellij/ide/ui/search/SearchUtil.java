@@ -342,7 +342,7 @@ public class SearchUtil {
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
     final Set<String> options = configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
-    if (options == null || options.isEmpty()) {
+    if (options.isEmpty()) {
       return text.toLowerCase(Locale.US).contains(option.toLowerCase(Locale.US));
     }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
@@ -581,11 +581,15 @@ public class SearchUtil {
     }
 
     for (Configurable configurable : result) {
-      //noinspection deprecation
-      if (!(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible()) {
+      if (isAcceptable(configurable)) {
         consumer.accept(configurable);
       }
     }
+  }
+
+  public static boolean isAcceptable(@NotNull Configurable configurable) {
+    //noinspection deprecation
+    return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
   }
 
   private static void addChildren(@NotNull Configurable configurable, @NotNull List<? super Configurable> list) {

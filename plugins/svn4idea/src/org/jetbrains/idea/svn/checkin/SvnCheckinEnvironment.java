@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,14 +14,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -52,9 +50,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     mySvnVcs = svnVcs;
   }
 
+  @NotNull
   @Override
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
-                                                             PairConsumer<Object, Object> additionalDataConsumer) {
+  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     return new KeepLocksComponent();
   }
 
@@ -165,37 +163,33 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return SvnBundle.message("checkin.operation.name");
   }
 
+  @NotNull
   @Override
-  public List<VcsException> commit(List<Change> changes,
-                                   final String preparedComment,
-                                   @NotNull NullableFunction<Object, Object> parametersHolder,
-                                   final Set<String> feedback) {
+  public List<VcsException> commit(@NotNull List<Change> changes,
+                                   @NotNull String commitMessage,
+                                   @NotNull CommitContext commitContext,
+                                   @NotNull Set<String> feedback) {
     final List<VcsException> exception = new ArrayList<>();
     final Collection<FilePath> committables = getCommitables(changes);
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
     if (progress != null) {
-      doCommit(committables, preparedComment, exception, feedback);
+      doCommit(committables, commitMessage, exception, feedback);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> doCommit(committables, preparedComment, exception, feedback), SvnBundle.message("progress.title.commit"), false,
+        () -> doCommit(committables, commitMessage, exception, feedback), SvnBundle.message("progress.title.commit"), false,
         mySvnVcs.getProject());
     }
     else {
-      doCommit(committables, preparedComment, exception, feedback);
+      doCommit(committables, commitMessage, exception, feedback);
     }
 
     return exception;
   }
 
   @Override
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
-  }
-
-  @Override
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> filePaths) {
     List<VcsException> exceptions = new ArrayList<>();
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
 
@@ -212,7 +206,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
     return scheduleUnversionedFilesForAddition(mySvnVcs, files);
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.google.common.base.Supplier;
@@ -75,19 +61,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   }
 
   public int size() {
-    int size = 0;
-    Changes changes = myChanges.get();
-    if (changes instanceof UnparsedChanges) {
-      for (int i = 0; i < getParents().size(); i++) {
-        size += ((UnparsedChanges)changes).getChangesOutput().get(i).size();
-      }
-    }
-    else {
-      for (int i = 0; i < getParents().size(); i++) {
-        size += changes.getChanges(i).size();
-      }
-    }
-    return size;
+    return myChanges.get().size();
   }
 
   protected interface Changes {
@@ -96,6 +70,8 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
     @NotNull
     Collection<Change> getChanges(int parent);
+
+    int size();
   }
 
   protected static class EmptyChanges implements Changes {
@@ -109,6 +85,11 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @Override
     public Collection<Change> getChanges(int parent) {
       return ContainerUtil.emptyList();
+    }
+
+    @Override
+    public int size() {
+      return 0;
     }
   }
 
@@ -162,13 +143,22 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       return parseChanges().getChanges(parent);
     }
 
+    @Override
+    public int size() {
+      int size = 0;
+      for (List<VcsFileStatusInfo> changesToParent: myChangesOutput) {
+        size += changesToParent.size();
+      }
+      return size;
+    }
+
     @NotNull
     private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges) {
       if (myChangesOutput.size() == 1) {
         return Collections.singletonList(mergedChanges);
       }
       else {
-        List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myChangesOutput.size());
+        List<Collection<Change>> changes = new ArrayList<>(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
           changes.add(myParser.apply(myChangesOutput.get(i), i));
         }
@@ -185,11 +175,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
       return myStatusMerger.merge(myChangesOutput);
     }
-
-    @NotNull
-    public List<List<VcsFileStatusInfo>> getChangesOutput() {
-      return myChangesOutput;
-    }
   }
 
   private static class MyMergedChange extends MergedChange {
@@ -199,7 +184,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
                    @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> parser) {
       super(change);
       mySourceChanges = Suppliers.memoize(() -> {
-        List<Change> sourceChanges = ContainerUtil.newArrayList();
+        List<Change> sourceChanges = new ArrayList<>();
         for (int parent = 0; parent < statusInfo.getMergedStatusInfos().size(); parent++) {
           List<VcsFileStatusInfo> statusInfos = Collections.singletonList(statusInfo.getMergedStatusInfos().get(parent));
           sourceChanges.addAll(parser.apply(statusInfos, parent));
@@ -233,6 +218,15 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @Override
     public Collection<Change> getChanges(int parent) {
       return myChanges.get(parent);
+    }
+
+    @Override
+    public int size() {
+      int size = 0;
+      for (Collection<Change> changesToParent : myChanges) {
+        size += changesToParent.size();
+      }
+      return size;
     }
   }
 

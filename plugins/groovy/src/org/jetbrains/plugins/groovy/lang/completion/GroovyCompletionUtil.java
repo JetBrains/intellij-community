@@ -69,7 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -228,7 +228,7 @@ public class GroovyCompletionUtil {
                                                           boolean afterNew,
                                                           PrefixMatcher matcher,
                                                           PsiElement position) {
-    List<LookupElement> result = ContainerUtil.newArrayList();
+    List<LookupElement> result = new ArrayList<>();
     for (GroovyResolveResult candidate : candidates) {
       result.addAll(createLookupElements(candidate, afterNew, matcher, position));
       ProgressManager.checkCanceled();
@@ -241,7 +241,7 @@ public class GroovyCompletionUtil {
                                                           boolean afterNew,
                                                           PrefixMatcher matcher,
                                                           PsiElement position) {
-    List<LookupElement> result = ContainerUtil.newArrayList();
+    List<LookupElement> result = new ArrayList<>();
     for (GroovyResolveResult candidate : candidates) {
       result.addAll(createLookupElements(candidate, afterNew, matcher, position));
       ProgressManager.checkCanceled();
@@ -302,7 +302,7 @@ public class GroovyCompletionUtil {
     }
 
     LookupElementBuilder builder = LookupElementBuilder.create(element instanceof PsiPackage ? element : candidate, name);
-    return Arrays.asList(setupLookupBuilder(element, candidate.getSubstitutor(), builder, position));
+    return Collections.singletonList(setupLookupBuilder(element, candidate.getSubstitutor(), builder, position));
   }
 
   private static boolean setterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
@@ -325,7 +325,7 @@ public class GroovyCompletionUtil {
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).withPresentableText(importedName);
-    return Arrays.asList(setupLookupBuilder(element, substitutor, builder, null));
+    return Collections.singletonList(setupLookupBuilder(element, substitutor, builder, null));
   }
 
   public static LookupElement createLookupElement(PsiNamedElement o) {

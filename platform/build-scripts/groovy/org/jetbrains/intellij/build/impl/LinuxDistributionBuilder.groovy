@@ -68,7 +68,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
       if (secondJreBuild != null) {
         def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
-        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}")
+        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "")
       }
     }
   }

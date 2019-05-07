@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,7 +15,6 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
-import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
@@ -31,7 +30,8 @@ import static org.editorconfig.core.EditorConfig.OutPair;
 
 @SuppressWarnings("SameParameterValue")
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
-  private final static Map<String,List<String>> DEPENDENCIES = ContainerUtil.newHashMap();
+  private final static Map<String,List<String>> DEPENDENCIES = new HashMap<>();
+
   static {
     addDependency("indent_size", "continuation_indent_size");
   }
@@ -75,7 +75,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(context.getLanguage());
     if (provider != null) {
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(context.getSettings());
-      Set<String> processed = ContainerUtil.newHashSet();
+      Set<String> processed = new HashSet<>();
       boolean isModified = processOptions(context, mapper, false, processed);
       isModified = processOptions(context, mapper, true, processed) || isModified;
       return isModified;

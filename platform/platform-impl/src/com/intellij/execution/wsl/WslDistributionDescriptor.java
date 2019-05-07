@@ -157,10 +157,10 @@ final class WslDistributionDescriptor {
     String wslCurrentDirectory = pwdOutputLines.get(0).trim();
 
     String currentPathSuffix = WSLDistribution.convertWindowsPath(windowsCurrentDirectory);
-    if (wslCurrentDirectory.endsWith(currentPathSuffix)) {
-      return StringUtil.trimEnd(wslCurrentDirectory, currentPathSuffix);
+    if (StringUtil.endsWithIgnoreCase(wslCurrentDirectory, currentPathSuffix)) {
+      return StringUtil.trimEnd(wslCurrentDirectory, currentPathSuffix, true);
     }
-    LOG.warn("Wsl current directory does not ens with windows converted suffix: " +
+    LOG.warn("Wsl current directory does not ends with windows converted suffix: " +
              "[pwd=" + wslCurrentDirectory + "; " +
              "suffix=" + currentPathSuffix + "]");
     return WSLDistribution.DEFAULT_WSL_MNT_ROOT;

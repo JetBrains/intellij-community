@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +31,8 @@ public class JavaArrangementParseInfo {
   private final Set<PsiMethod> myDependentMethods = new HashSet<>();
   private boolean myRebuildMethodDependencies;
 
-  private final HashMap<PsiField, JavaElementArrangementEntry> myFields = ContainerUtil.newLinkedHashMap();
-  private final Map<PsiField, Set<PsiField>> myFieldDependencies = ContainerUtil.newHashMap();
+  private final HashMap<PsiField, JavaElementArrangementEntry> myFields = new LinkedHashMap<>();
+  private final Map<PsiField, Set<PsiField>> myFieldDependencies = new HashMap<>();
 
   @NotNull
   public List<JavaElementArrangementEntry> getEntries() {
@@ -96,7 +80,7 @@ public class JavaArrangementParseInfo {
     Stack<Pair<PsiMethod, ArrangementEntryDependencyInfo>> toProcess
       = new Stack<>();
     toProcess.push(Pair.create(method, result));
-    Set<PsiMethod> usedMethods = ContainerUtilRt.newHashSet();
+    Set<PsiMethod> usedMethods = new HashSet<>();
     while (!toProcess.isEmpty()) {
       Pair<PsiMethod, ArrangementEntryDependencyInfo> pair = toProcess.pop();
       Set<PsiMethod> dependentMethods = myMethodDependencies.get(pair.first);
@@ -210,7 +194,7 @@ public class JavaArrangementParseInfo {
   public void registerFieldInitializationDependency(@NotNull PsiField fieldToInitialize, @NotNull PsiField usedInInitialization) {
     Set<PsiField> fields = myFieldDependencies.get(fieldToInitialize);
     if (fields == null) {
-      fields = ContainerUtil.newHashSet();
+      fields = new HashSet<>();
       myFieldDependencies.put(fieldToInitialize, fields);
     }
     fields.add(usedInInitialization);

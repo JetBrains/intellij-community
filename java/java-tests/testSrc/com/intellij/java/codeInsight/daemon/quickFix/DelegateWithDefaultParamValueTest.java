@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DelegateWithDefaultParamValueTest extends LightQuickFixParameterizedTestCase {
   @Override
-  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName)
+  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName)
     throws Exception {
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     super.doAction(actionHint, testFullPath, testName);

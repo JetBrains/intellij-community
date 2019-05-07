@@ -162,7 +162,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
   public List<AttachItem> collectAttachHostsItems(@NotNull final Project project,
                                                   @NotNull ProgressIndicator indicator) {
 
-    List<AttachItem> currentItems = ContainerUtil.newArrayList();
+    List<AttachItem> currentItems = new ArrayList<>();
 
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
@@ -189,7 +189,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
                                                           @NotNull XAttachHost host,
                                                           @NotNull Project project,
                                                           @NotNull UserDataHolder dataHolder) {
-    final List<AttachToProcessItem> result = ContainerUtil.newArrayList();
+    final List<AttachToProcessItem> result = new ArrayList<>();
     final List<RecentItem> recentItems = getRecentItems(host, project);
 
     for (int i = recentItems.size() - 1; i >= 0; i--) {
@@ -255,7 +255,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
                                                                @NotNull List<? extends XAttachDebuggerProvider> providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
-    List<AttachToProcessItem> currentItems = ContainerUtil.newArrayList();
+    List<AttachToProcessItem> currentItems = new ArrayList<>();
 
     for (ProcessInfo process : processInfos) {
 
@@ -290,7 +290,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     Map<XAttachHost, LinkedHashSet<RecentItem>> recentItems = project.getUserData(RECENT_ITEMS_KEY);
 
     if (recentItems == null) {
-      project.putUserData(RECENT_ITEMS_KEY, recentItems = ContainerUtil.newHashMap());
+      project.putUserData(RECENT_ITEMS_KEY, recentItems = new HashMap<>());
     }
 
     XAttachHost host = item.getHost();
@@ -298,7 +298,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     LinkedHashSet<RecentItem> hostRecentItems = recentItems.get(host);
 
     if(hostRecentItems == null) {
-      recentItems.put(host, ContainerUtil.newLinkedHashSet());
+      recentItems.put(host, new LinkedHashSet<>());
       hostRecentItems = recentItems.get(host);
     }
 

@@ -689,10 +689,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
+      LocalQuickFix fix = null;
       if (reporter.isOnTheFly()) {
-        reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()),
-                                 createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
+        fix = createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType());
       }
+      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fix);
     }
   }
 

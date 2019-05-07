@@ -40,8 +40,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
@@ -128,17 +126,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return true;
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
-                                                             PairConsumer<Object, Object> additionalDataConsumer) {
-    return new GitCheckinOptions(myProject, panel);
+  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+    return new GitCheckinOptions(myProject, commitPanel);
   }
 
   @Override
   @Nullable
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    LinkedHashSet<String> messages = newLinkedHashSet();
+  public String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
+    LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
@@ -183,10 +180,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return GitBundle.getString("commit.action.name");
   }
 
+  @NotNull
   @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
-                                   @NotNull String message,
-                                   @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
+                                   @NotNull String commitMessage,
+                                   @NotNull CommitContext commitContext,
+                                   @NotNull Set<String> feedback) {
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
@@ -198,7 +197,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
       if (myNextCommitCommitRenamesSeparately) {
-        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, message);
+        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
         toCommit = pair.first;
         List<VcsException> moveExceptions = pair.second;
 
@@ -208,14 +207,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
 
-      exceptions.addAll(commitRepository(repository, toCommit, message));
+      exceptions.addAll(commitRepository(repository, toCommit, commitMessage));
     }
 
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
       ModalityState modality = ModalityState.defaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
-      List<GitRepository> preselectedRepositories = newArrayList(repositories);
+      List<GitRepository> preselectedRepositories = new ArrayList<>(repositories);
       GuiUtils.invokeLaterIfNeeded(
         () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
                                            GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),
@@ -766,12 +765,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-
-  @Override
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
-  }
-
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
                               @NotNull Collection<? extends CommitChange> rootChanges,
@@ -988,7 +981,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
@@ -1043,7 +1036,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
@@ -1166,7 +1159,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
       authorLabel.setLabelFor(myAuthorField);
 
-      myAmendComponent = new MyAmendComponent(project, getRepositoryManager(project), panel);
+      myAmendComponent = new MyAmendComponent(getRepositoryManager(project), panel);
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
       mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
@@ -1184,7 +1177,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     public boolean isAmend() {
-      return myAmendComponent.isAmend();
+      return myAmendComponent.isAmendMode();
     }
 
     @Nullable
@@ -1236,14 +1229,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
-        super(project, manager, panel);
-        myAmend.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            updateRenamesCheckboxState();
-          }
-        });
+      MyAmendComponent(@NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+        super(manager, panel);
+      }
+
+      @Override
+      protected void amendModeToggled() {
+        updateRenamesCheckboxState();
+        super.amendModeToggled();
       }
 
       @NotNull
@@ -1285,7 +1278,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       else {
         myCommitRenamesSeparatelyCheckbox.setVisible(true);
-        myCommitRenamesSeparatelyCheckbox.setEnabled(!myAmendComponent.isAmend());
+        myCommitRenamesSeparatelyCheckbox.setEnabled(!myAmendComponent.isAmendMode());
       }
     }
 

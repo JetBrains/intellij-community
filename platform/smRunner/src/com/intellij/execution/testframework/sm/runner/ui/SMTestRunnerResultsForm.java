@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -48,7 +34,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -175,34 +160,31 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     Disposer.register(this, myTreeBuilder);
     Disposer.register(this, asyncTreeModel);
 
-    TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, new Pass<AbstractTestProxy>() {
-      @Override
-      public void pass(AbstractTestProxy testProxy) {
-        if (testProxy == null) return;
-        final AbstractTestProxy selectedProxy = testProxy;
-        //drill to the first leaf
-        while (!testProxy.isLeaf()) {
-          final List<? extends AbstractTestProxy> children = testProxy.getChildren();
-          if (!children.isEmpty()) {
-            final AbstractTestProxy firstChild = children.get(0);
-            if (firstChild != null) {
-              testProxy = firstChild;
-              continue;
-            }
+    TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, testProxy -> {
+      if (testProxy == null) return;
+      final AbstractTestProxy selectedProxy = testProxy;
+      //drill to the first leaf
+      while (!testProxy.isLeaf()) {
+        final List<? extends AbstractTestProxy> children = testProxy.getChildren();
+        if (!children.isEmpty()) {
+          final AbstractTestProxy firstChild = children.get(0);
+          if (firstChild != null) {
+            testProxy = firstChild;
+            continue;
           }
-          break;
         }
+        break;
+      }
 
-        //pretend the selection on the first leaf
-        //so if test would be run, tracking would be restarted
-        myLastSelected = testProxy;
+      //pretend the selection on the first leaf
+      //so if test would be run, tracking would be restarted
+      myLastSelected = testProxy;
 
-        //ensure scroll to source on explicit selection only
-        if (ScrollToTestSourceAction.isScrollEnabled(SMTestRunnerResultsForm.this)) {
-          final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedProxy, SMTestRunnerResultsForm.this);
-          if (descriptor != null) {
-            OpenSourceUtil.navigate(false, descriptor);
-          }
+      //ensure scroll to source on explicit selection only
+      if (ScrollToTestSourceAction.isScrollEnabled(SMTestRunnerResultsForm.this)) {
+        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedProxy, SMTestRunnerResultsForm.this);
+        if (descriptor != null) {
+          OpenSourceUtil.navigate(false, descriptor);
         }
       }
     });

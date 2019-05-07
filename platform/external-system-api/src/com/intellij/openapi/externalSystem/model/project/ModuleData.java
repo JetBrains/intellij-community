@@ -1,14 +1,15 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +22,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = ContainerUtil.newHashMap();
-  @NotNull private final Map<ExternalSystemSourceType, String> myExternalCompilerOutputPaths = ContainerUtil.newHashMap();
+  @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = new HashMap<>();
+  @NotNull private final Map<ExternalSystemSourceType, String> myExternalCompilerOutputPaths = new HashMap<>();
   @Nullable private Map<String, String> myProperties;
   @NotNull private final String myId;
   @NotNull private final String myModuleTypeId;
@@ -230,7 +231,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   public void setProperty(String key, String value) {
     if (myProperties == null) {
-      myProperties = ContainerUtil.newHashMap();
+      myProperties = new HashMap<>();
     }
     myProperties.put(key, value);
   }

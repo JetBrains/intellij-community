@@ -483,7 +483,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         throw new CommitStepException(null);
       }
     }
-    reportStatistics("new.project.wizard.finish");
+    reportStatistics("finish");
   }
 
   @Override
@@ -709,18 +709,19 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   @Override
   public void onStepLeaving() {
-    reportStatistics("new.project.wizard.attempt");
+    reportStatistics("attempt");
   }
 
   private void reportStatistics(String groupId) {
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
     FeatureUsageData data = new FeatureUsageData();
+    data.addData("projectType", group.isSafeToReport() ? group.getId() : "third-party");
     myFrameworksPanel.reportFeatureUsageData(data);
     ModuleWizardStep step = getCustomStep();
     if (step instanceof StatisticsAwareModuleWizardStep) {
       ((StatisticsAwareModuleWizardStep) step).reportFeatureUsageData(data);
     }
 
-    FUCounterUsageLogger.getInstance().logEvent(groupId, group.isSafeToReport() ? group.getId() : "third-party");
+    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", groupId, data);
   }
 }

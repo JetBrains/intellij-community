@@ -9,7 +9,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -41,7 +41,7 @@ public class GrHighlightUtil {
   }
 
   private static Set<GrVariable> collectReassignedVariables(PsiElement scope) {
-    final Set<GrVariable> result = ContainerUtil.newHashSet();
+    final Set<GrVariable> result = new HashSet<>();
     PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions.history
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -80,7 +66,7 @@ class CompareRevisionsFromFolderHistoryActionProvider : AnActionExtensionProvide
     val filePath = getFilePath(e)!!
 
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
-    
+
     val commits = log.selectedCommits
     if (commits.size >= 2) {
       val handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER)
@@ -93,10 +79,8 @@ class CompareRevisionsFromFolderHistoryActionProvider : AnActionExtensionProvide
       val detail = notNull(ContainerUtil.getFirstItem(details))
       val changes = FileHistoryUtil.collectRelevantChanges(detail,
                                                            Condition { change -> FileHistoryUtil.affectsDirectory(change, filePath) })
-      VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.id.toShortString() + " for " + filePath.name,
-                                    ContainerUtil.newArrayList(changes))
-    }, { t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.message, MessageType.ERROR) },
-                                                null)
+      VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.id.toShortString() + " for " + filePath.name, changes.toMutableList())
+    }, { t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.message, MessageType.ERROR) }, null)
   }
 
   companion object {

@@ -66,7 +66,6 @@ import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static git4idea.GitUtil.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -143,7 +142,7 @@ public class GitRebaseProcess {
     LOG.info("Started rebase");
     LOG.debug("Started rebase with the following spec: " + myRebaseSpec);
 
-    Map<GitRepository, GitRebaseStatus> statuses = newLinkedHashMap(myRebaseSpec.getStatuses());
+    Map<GitRepository, GitRebaseStatus> statuses = new LinkedHashMap<>(myRebaseSpec.getStatuses());
     List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
@@ -233,7 +232,7 @@ public class GitRebaseProcess {
     String repoName = getShortRepositoryName(repository);
     LOG.info("Rebasing root " + repoName + ", mode: " + notNull(customMode, "standard"));
 
-    Collection<GitRebaseUtils.CommitInfo> skippedCommits = newArrayList();
+    Collection<GitRebaseUtils.CommitInfo> skippedCommits = new ArrayList<>();
     MultiMap<GitRepository, GitRebaseUtils.CommitInfo> allSkippedCommits = getSkippedCommits(alreadyRebased);
     boolean retryWhenDirty = false;
 
@@ -572,7 +571,7 @@ public class GitRebaseProcess {
 
   @NotNull
   private static Map<GitRepository, GitSuccessfulRebase> getSuccessfulRepositories(@NotNull Map<GitRepository, GitRebaseStatus> statuses) {
-    Map<GitRepository, GitSuccessfulRebase> map = newLinkedHashMap();
+    Map<GitRepository, GitSuccessfulRebase> map = new LinkedHashMap<>();
     for (GitRepository repository : statuses.keySet()) {
       GitRebaseStatus status = statuses.get(repository);
       if (status instanceof GitSuccessfulRebase) map.put(repository, (GitSuccessfulRebase)status);
@@ -637,7 +636,7 @@ public class GitRebaseProcess {
                            @NotNull Git git,
                            @NotNull GitRepository repository,
                            @NotNull Params params, boolean calledFromNotification) {
-      super(project, git, singleton(repository.getRoot()), params);
+      super(project, singleton(repository.getRoot()), params);
       myCalledFromNotification = calledFromNotification;
     }
 

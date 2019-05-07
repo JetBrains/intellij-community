@@ -102,7 +102,7 @@ public class ExternalSystemTaskActivator {
       () -> ContainerUtil.mapNotNull(context.getCompileScope().getAffectedModules(),
                                      module -> ExternalSystemApiUtil.getExternalProjectPath(module)));
 
-    final Collection<Phase> phases = ContainerUtil.newArrayList();
+    final Collection<Phase> phases = new ArrayList<>();
     if (myBefore) {
       if(context.isRebuild()) {
         phases.add(Phase.BEFORE_REBUILD);
@@ -143,7 +143,7 @@ public class ExternalSystemTaskActivator {
     for (final ExternalProjectsStateProvider.TasksActivation activation : stateProvider.getAllTasksActivation()) {
       final boolean hashPath = modules.contains(activation.projectPath);
 
-      final Set<String> tasks = ContainerUtil.newLinkedHashSet();
+      final Set<String> tasks = new LinkedHashSet<>();
       for (Phase phase : phases) {
         List<String> activationTasks = activation.state.getTasks(phase);
         if (hashPath || (phase.isSyncPhase() && !activationTasks.isEmpty() &&  isShareSameRootPath(modules, activation))) {
@@ -331,7 +331,7 @@ public class ExternalSystemTaskActivator {
 
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider();
     final Map<String, TaskActivationState> activationMap = stateProvider.getProjectsTasksActivationMap(systemId);
-    final List<String> currentPaths = ContainerUtil.newArrayList(activationMap.keySet());
+    final List<String> currentPaths = new ArrayList<>(activationMap.keySet());
     if (pathsGroup != null) {
       currentPaths.retainAll(pathsGroup);
     }
@@ -344,7 +344,7 @@ public class ExternalSystemTaskActivator {
       }
     }
 
-    Map<String, TaskActivationState> rearrangedMap = ContainerUtil.newLinkedHashMap();
+    Map<String, TaskActivationState> rearrangedMap = new LinkedHashMap<>();
     for (String path : currentPaths) {
       rearrangedMap.put(path, activationMap.get(path));
       activationMap.remove(path);

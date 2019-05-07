@@ -16,7 +16,7 @@ public class TouchBarSettingsTest extends TestCase {
 
   @Test
   public void testGetProcessOutput() {
-    Assume.assumeTrue(NST.isSupportedOS());
+    Assume.assumeTrue("NST-unsupported OS", NST.isSupportedOS());
 
     final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", "ser");
     try {
@@ -36,7 +36,7 @@ public class TouchBarSettingsTest extends TestCase {
 
   @Test
   public void testSettingsRead() {
-    Assume.assumeTrue(SystemInfo.isMac);
+    Assume.assumeTrue("mac only", SystemInfo.isMac);
 
     final String sysVer = NSDefaults.readStringVal("loginwindow", "SystemVersionStampAsString");
     assertNotNull(sysVer);
@@ -45,9 +45,9 @@ public class TouchBarSettingsTest extends TestCase {
 
   @Test
   public void testTouchBarSettingsWrite() {
-    Assume.assumeTrue(NST.isSupportedOS());
+    Assume.assumeTrue("NST-unsupported OS", NST.isSupportedOS());
 
-    Assume.assumeTrue(NSDefaults.isDomainExists(NSDefaults.ourTouchBarDomain));
+    Assume.assumeTrue(NSDefaults.ourTouchBarDomain +" doesn't exist", NSDefaults.isDomainExists(NSDefaults.ourTouchBarDomain));
 
     final boolean enabled = NSDefaults.isShowFnKeysEnabled(testAppID);
     NSDefaults.setShowFnKeysEnabled(testAppID, !enabled);

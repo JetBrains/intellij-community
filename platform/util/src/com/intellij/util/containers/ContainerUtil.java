@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -28,14 +28,22 @@ public class ContainerUtil extends ContainerUtilRt {
     return elements;
   }
 
+  /**
+   * @deprecated Use {@link HashMap#HashMap()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> HashMap<K, V> newHashMap() {
     return new HashMap<>();
   }
 
+  /**
+   * @deprecated Use {@link HashMap#HashMap(Map)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return new HashMap<>(map);
   }
@@ -53,32 +61,53 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newHashMap(keys, values);
   }
 
+  /**
+   * @deprecated Use {@link TreeMap#TreeMap()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
-    return ContainerUtilRt.newTreeMap();
+    return new TreeMap<>();
   }
 
+  /**
+   * @deprecated Use {@link TreeMap#TreeMap(Map)}
+   */
+  @SuppressWarnings("unused")
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return new TreeMap<>(map);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<>();
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
     return new LinkedHashMap<>(capacity);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return new LinkedHashMap<>(map);
   }
@@ -90,8 +119,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
+  /**
+   * @deprecated Use {@link THashMap#THashMap(Map)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K, V> THashMap<K, V> newTroveMap() {
     return new THashMap<>();
   }
@@ -102,8 +135,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashMap<>(strategy);
   }
 
+  /**
+   * @deprecated Use {@link EnumMap#EnumMap(Class)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <K extends Enum<K>, V> EnumMap<K, V> newEnumMap(@NotNull Class<K> keyType) {
     return new EnumMap<>(keyType);
   }
@@ -128,8 +165,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new IdentityHashMap<>();
   }
 
+  /**
+   * @deprecated Use {@link LinkedList#LinkedList()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> LinkedList<T> newLinkedList() {
     return new LinkedList<>();
   }
@@ -138,17 +179,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
-    return ContainerUtilRt.newLinkedList(elements);
+    final LinkedList<T> list = new LinkedList<>();
+    Collections.addAll(list, elements);
+    return list;
   }
 
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList()}
+   */
   @NotNull
   @Contract(pure=true)
-  public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.newLinkedList(elements);
-  }
-
-  @NotNull
-  @Contract(pure=true)
+  @Deprecated
   public static <T> ArrayList<T> newArrayList() {
     return new ArrayList<>();
   }
@@ -166,8 +207,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newArrayList(iterable);
   }
 
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList(int)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
     return new ArrayList<>(size);
   }
@@ -282,14 +327,22 @@ public class ContainerUtil extends ContainerUtilRt {
     return new SmartList<>(elements);
   }
 
+  /**
+   * @deprecated Use {@link HashSet#HashSet()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> HashSet<T> newHashSet() {
     return new HashSet<>();
   }
 
+  /**
+   * @deprecated Use {@link HashSet#HashSet(int)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> HashSet<T> newHashSet(int initialCapacity) {
     return new HashSet<>(initialCapacity);
   }
@@ -308,7 +361,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated simply use {@code new HashSet<>(collection)}.
+   * @deprecated Use {@link HashSet#HashSet(Collection)}
    */
   @NotNull
   @Contract(pure=true)
@@ -316,7 +369,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> collection) {
     return new HashSet<>(collection);
   }
-  
+
   @NotNull
   public static <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
     return ContainerUtilRt.newHashSet(iterator);
@@ -329,8 +382,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return empty ? Collections.emptySet() : ContainerUtilRt.newHashSet(iterable);
   }
 
+  /**
+   * @deprecated Use {@link LinkedHashSet#LinkedHashSet()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> LinkedHashSet<T> newLinkedHashSet() {
     return new LinkedHashSet<>();
   }
@@ -338,7 +395,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.newLinkedHashSet(elements);
+    if (elements instanceof Collection) {
+      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
+      return new LinkedHashSet<>(collection);
+    }
+    return copy(new LinkedHashSet<>(), elements);
   }
 
   @SafeVarargs
@@ -348,8 +409,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newLinkedHashSet(elements);
   }
 
+  /**
+   * @deprecated Use {@link THashSet#THashSet()}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> THashSet<T> newTroveSet() {
     return new THashSet<>();
   }
@@ -364,7 +429,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> THashSet<T> newTroveSet(@NotNull T... elements) {
-    return newTroveSet(Arrays.asList(elements));
+    return new THashSet<>(Arrays.asList(elements));
   }
 
   @SafeVarargs
@@ -380,8 +445,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashSet<>(elements, strategy);
   }
 
+  /**
+   * @deprecated Use {@link THashSet#THashSet(Collection)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> THashSet<T> newTroveSet(@NotNull Collection<? extends T> elements) {
     return new THashSet<>(elements);
   }
@@ -421,8 +490,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newTreeSet(elements);
   }
 
+  /**
+   * @deprecated Use {@link TreeSet#TreeSet(Comparator)}
+   */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
     return new TreeSet<>(comparator);
   }
@@ -1392,7 +1465,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> append(@NotNull List<? extends T> list, @NotNull T... values) {
-    return concat(list, list(values));
+    return concat(list, Arrays.asList(values));
   }
 
   /**
@@ -1403,7 +1476,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> prepend(@NotNull List<? extends T> list, @NotNull T... values) {
-    return concat(list(values), list);
+    return concat(Arrays.asList(values), list);
   }
 
   /**
@@ -1880,7 +1953,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD 
+   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD
    */
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
     int size = a.length;
@@ -2049,7 +2122,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> set(@NotNull T ... items) {
-    return ContainerUtilRt.newHashSet(items);
+    return new HashSet<>(Arrays.asList(items));
   }
 
   public static <K, V> void putIfAbsent(final K key, @Nullable V value, @NotNull final Map<? super K, ? super V> result) {
@@ -2181,9 +2254,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return items.subList(0, items.size() - 1);
   }
 
+  /**
+   * @deprecated Use {@link Arrays#asList(Object[])}
+   */
   @NotNull
   @SafeVarargs
   @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> list(@NotNull T... items) {
     return Arrays.asList(items);
   }
@@ -2458,23 +2535,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return list;
   }
 
+  /**
+   * @deprecated Use {@link Stack#Stack()}
+   */
+  @SuppressWarnings("unused")
   @NotNull
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static <T> Stack<T> newStack() {
     return new Stack<>();
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> Stack<T> newStack(@NotNull Collection<? extends T> initial) {
-    return new Stack<>(initial);
-  }
-
-  @SafeVarargs
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> Stack<T> newStack(@NotNull T... initial) {
-    return new Stack<>(Arrays.asList(initial));
   }
 
   @NotNull
@@ -2910,6 +2979,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
+    //noinspection deprecation
     return new SoftKeySoftValueHashMap<>(true);
   }
 

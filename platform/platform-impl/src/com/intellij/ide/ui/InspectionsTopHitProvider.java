@@ -5,9 +5,9 @@ import com.intellij.codeInspection.ex.Tools;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,7 +24,7 @@ final class InspectionsTopHitProvider implements OptionsSearchTopHitProvider.Pro
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions(@NotNull Project project) {
-    List<OptionDescription> result = ContainerUtil.newArrayList();
+    List<OptionDescription> result = new ArrayList<>();
     List<Tools> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllEnabledInspectionTools(project);
     for (Tools tool : tools) {
       result.add(new ToolOptionDescription(tool, project));

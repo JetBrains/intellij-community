@@ -34,8 +34,8 @@ public class ConfigurableExtensionPointUtil {
   @NotNull
   public static List<Configurable> buildConfigurablesList(@NotNull List<ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
-    final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
-    List<String> idsInEpOrder = ContainerUtil.newArrayList();
+    final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<>();
+    List<String> idsInEpOrder = new ArrayList<>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (isSuppressed(configurable, filter)) continue;
@@ -50,7 +50,7 @@ public class ConfigurableExtensionPointUtil {
       }
     }
 
-    Set<String> visited = ContainerUtil.newHashSet();
+    Set<String> visited = new HashSet<>();
     Map<String, List<String>> idTree = buildIdTree(idToConfigurable, idsInEpOrder);
     // modify configurables (append children)
     // Before adding a child to a parent, all children of the child should be already added to the child,
@@ -94,7 +94,7 @@ public class ConfigurableExtensionPointUtil {
   @NotNull
   private static Map<String, List<String>> buildIdTree(@NotNull Map<String, ConfigurableWrapper> idToConfigurable,
                                                        @NotNull List<String> idsInEpOrder) {
-    Map<String, List<String>> tree = ContainerUtil.newHashMap();
+    Map<String, List<String>> tree = new HashMap<>();
     for (String id : idsInEpOrder) {
       ConfigurableWrapper wrapper = idToConfigurable.get(id);
       String parentId = wrapper.getParentId();
@@ -106,7 +106,7 @@ public class ConfigurableExtensionPointUtil {
         }
         List<String> children = tree.get(parentId);
         if (children == null) {
-          children = ContainerUtil.newArrayListWithCapacity(5);
+          children = new ArrayList<>(5);
           tree.put(parentId, children);
         }
         children.add(id);
@@ -120,6 +120,7 @@ public class ConfigurableExtensionPointUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return the root configurable group that represents a tree of settings
    */
+  @NotNull
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
     if (!withIdeSettings && project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
@@ -315,11 +316,12 @@ public class ConfigurableExtensionPointUtil {
   private static List<Configurable> getConfigurables(Map<String, Node<ConfigurableWrapper>> tree, Node<ConfigurableWrapper> node) {
     if (node.myChildren == null) {
       if (node.myValue == null) {
-        return ContainerUtil.newArrayList(); // for group only
+        // for group only
+        return new ArrayList<>();
       }
       return null;
     }
-    List<Configurable> list = ContainerUtil.newArrayListWithCapacity(node.myChildren.size());
+    List<Configurable> list = new ArrayList<>(node.myChildren.size());
     for (Iterator<Object> iterator = node.myChildren.iterator(); iterator.hasNext(); iterator.remove()) {
       Object child = iterator.next();
       if (child instanceof Configurable) {

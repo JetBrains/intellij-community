@@ -5,12 +5,12 @@ import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 @ApiStatus.Experimental
@@ -27,14 +27,8 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
 
   public static MavenLogOutputParser createMavenOutputParser(ExternalSystemTaskId taskId) {
     return new MavenLogOutputParser(taskId,
-                                    ContainerUtil.list(
-                                      new ArtifactDownloadScanning(),
-                                      new JavaBuildErrorNotification(),
-                                      new KotlinBuildErrorNotification(),
-                                      new ProjectScanning(),
-                                      new WarningNotifier(),
-                                      new CommonErrorParser(),
-                                      new MavenBadConfigEventParser()
-                                    ));
+                                    Arrays.asList(new ArtifactDownloadScanning(), new JavaBuildErrorNotification(),
+                                                  new KotlinBuildErrorNotification(), new ProjectScanning(), new WarningNotifier(),
+                                                  new CommonErrorParser(), new MavenBadConfigEventParser()));
   }
 }

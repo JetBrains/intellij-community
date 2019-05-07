@@ -39,10 +39,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class GroovyTypeCheckVisitorHelper {
-  
-  @SuppressWarnings("unchecked") 
+
+  @SuppressWarnings("unchecked")
   private static final Function<PsiType, PsiType> id = (Function<PsiType, PsiType>)Function.ID;
-  
+
   @Nullable
   @Contract("null -> null")
   protected static GrListOrMap getTupleInitializer(@Nullable GrExpression initializer) {
@@ -156,7 +156,7 @@ public class GroovyTypeCheckVisitorHelper {
 
   @Nullable
   public static List<GrExpression> getExpressionArgumentsOfCall(@NotNull GrArgumentList argumentList) {
-    final ArrayList<GrExpression> args = ContainerUtil.newArrayList();
+    final ArrayList<GrExpression> args = new ArrayList<>();
 
     for (GroovyPsiElement arg : argumentList.getAllArguments()) {
       if (arg instanceof GrSpreadArgument) {

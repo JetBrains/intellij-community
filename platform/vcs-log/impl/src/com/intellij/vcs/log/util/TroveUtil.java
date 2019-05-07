@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.IntIntFunction;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -100,9 +99,9 @@ public class TroveUtil {
 
   @NotNull
   public static Set<Integer> createJavaSet(@Nullable TIntHashSet set) {
-    if (set == null) return ContainerUtil.newHashSet();
+    if (set == null) return new HashSet<>();
 
-    Set<Integer> result = ContainerUtil.newHashSet(set.size());
+    Set<Integer> result = new HashSet<>(set.size());
     set.forEach(value -> {
       result.add(value);
       return true;
@@ -196,7 +195,7 @@ public class TroveUtil {
 
   @NotNull
   public static <T> Map<T, TIntHashSet> group(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
-    Map<T, TIntHashSet> result = ContainerUtil.newHashMap();
+    Map<T, TIntHashSet> result = new HashMap<>();
     set.forEach(it -> {
       T key = function.apply(it);
       TIntHashSet values = result.get(key);

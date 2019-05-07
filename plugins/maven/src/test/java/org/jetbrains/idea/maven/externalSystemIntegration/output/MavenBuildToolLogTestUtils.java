@@ -35,8 +35,8 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
   }
 
   protected class TestCaseBuider {
-    private List<String> myLines = ContainerUtil.newArrayList();
-    private List<MavenLoggedEventParser> myParsers = ContainerUtil.newArrayList();
+    private List<String> myLines = new ArrayList<>();
+    private List<MavenLoggedEventParser> myParsers = new ArrayList<>();
     private List<Pair<String, Matcher<BuildEvent>>> myExpectedEvents = new ArrayList<>();
 
     public TestCaseBuider withLines(String... lines) {

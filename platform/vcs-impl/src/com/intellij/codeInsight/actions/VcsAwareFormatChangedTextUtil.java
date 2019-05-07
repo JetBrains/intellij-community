@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +21,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.function.Function;
@@ -30,7 +31,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
     ChangedRangesInfo helper = getChangedRangesInfo(file);
-    return helper != null ? helper.allChangedRanges : ContainerUtil.newArrayList();
+    return helper != null ? helper.allChangedRanges : new ArrayList<>();
   }
 
   @Override
@@ -211,8 +212,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
 
   @NotNull
   private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
-    final List<TextRange> ranges = ContainerUtil.newArrayList();
-    final List<TextRange> insertedRanges = ContainerUtil.newArrayList();
+    final List<TextRange> ranges = new ArrayList<>();
+    final List<TextRange> insertedRanges = new ArrayList<>();
 
     for (Range range : changedRanges) {
       if (range.getType() != Range.DELETED) {

@@ -2,13 +2,13 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,8 +54,8 @@ class RepositoryContentHandler extends DefaultHandler {
 
   @Override
   public void startDocument() {
-    plugins = ContainerUtil.newArrayList();
-    categories = ContainerUtil.newStack();
+    plugins = new ArrayList<>();
+    categories = new Stack<>();
   }
 
   @Override

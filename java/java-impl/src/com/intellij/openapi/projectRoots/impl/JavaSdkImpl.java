@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
@@ -263,29 +262,12 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    attachIDEAAnnotationsToJdk(modificator);
+  }
+
+  public static boolean attachIDEAAnnotationsToJdk(@NotNull SdkModificator modificator) {
     List<String> pathsChecked = new ArrayList<>();
-
-    // community idea under idea
-    String path = FileUtil.toSystemIndependentName(PathManager.getCommunityHomePath()) + "/java/jdkAnnotations";
-    VirtualFile root = lfs.findFileByPath(path);
-    pathsChecked.add(path);
-
-    if (root == null) { // build
-      String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
-      LOG.assertTrue(javaPluginClassesRootPath != null);
-      File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
-      if (javaPluginClassesRoot.isFile()) {
-        String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
-        root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath  + "!/");
-        pathsChecked.add(annotationsJarPath);
-      }
-      if (root == null) {
-        String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
-        root = VirtualFileManager.getInstance().findFileByUrl(url);
-        pathsChecked.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar");
-      }
-    }
+    VirtualFile root = internalJdkAnnotationsPath(pathsChecked);
 
     if (root == null) {
       StringBuilder msg = new StringBuilder("Paths checked:\n");
@@ -294,12 +276,39 @@ public class JavaSdkImpl extends JavaSdk {
         msg.append(p).append("; ").append(f.exists()).append("; ").append(Arrays.toString(f.getParentFile().list())).append('\n');
       }
       LOG.error("JDK annotations not found", msg.toString());
-      return;
+      return false;
     }
 
     OrderRootType annoType = AnnotationOrderRootType.getInstance();
-    modificator.removeRoot(root, annoType);
+    if (modificator.getRoots(annoType).length != 0) {
+      modificator.removeRoot(root, annoType);
+    }
     modificator.addRoot(root, annoType);
+    return true;
+  }
+
+  static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked) {
+    String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
+    LOG.assertTrue(javaPluginClassesRootPath != null);
+    File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
+    VirtualFile root = null;
+    if (javaPluginClassesRoot.isFile()) {
+      String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
+      root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath + "!/");
+      pathsChecked.add(annotationsJarPath);
+    }
+    if (root == null) {
+      String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
+      root = VirtualFileManager.getInstance().findFileByUrl(url);
+      pathsChecked.add(url);
+    }
+    if (root == null) {
+      // community idea under idea
+      String path = FileUtil.toSystemIndependentName(PathManager.getCommunityHomePath()) + "/java/jdkAnnotations";
+      root = LocalFileSystem.getInstance().findFileByPath(path);
+      pathsChecked.add(path);
+    }
+    return root;
   }
 
   @Override
@@ -348,6 +357,8 @@ public class JavaSdkImpl extends JavaSdk {
     addClasses(jdkHomeFile, sdkModificator, isJre);
     addSources(jdkHomeFile, sdkModificator);
     addDocs(jdkHomeFile, sdkModificator, null);
+    attachJdkAnnotations(sdkModificator);
+
     sdkModificator.commitChanges();
 
     return jdk;
@@ -370,7 +381,7 @@ public class JavaSdkImpl extends JavaSdk {
       @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
       @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
       @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
-      @Override public @NotNull VirtualFile[] getRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
+      @Override public @NotNull VirtualFile[] getRoots(@NotNull OrderRootType rootType) { return roots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY); }
       @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
@@ -385,6 +396,7 @@ public class JavaSdkImpl extends JavaSdk {
 
     addClasses(jdkHomeFile, sdkModificator, isJre);
     addSources(jdkHomeFile, sdkModificator);
+    attachJdkAnnotations(sdkModificator);
 
     return new MockSdk(jdkName, homePath, jdkName, roots, this);
   }
@@ -403,8 +415,8 @@ public class JavaSdkImpl extends JavaSdk {
   private static List<String> readModulesFromReleaseFile(File jrtBaseDir) {
     File releaseFile = new File(jrtBaseDir, "release");
     if (releaseFile.isFile()) {
-      Properties p = new Properties();
       try (FileInputStream stream = new FileInputStream(releaseFile)) {
+        Properties p = new Properties();
         p.load(stream);
         String modules = p.getProperty("MODULES");
         if (modules != null) {
@@ -419,20 +431,20 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @NotNull
-  private static List<String> findClasses(@NotNull File file, boolean isJre) {
-    List<String> result = ContainerUtil.newArrayList();
+  private static List<String> findClasses(@NotNull File jdkHome, boolean isJre) {
+    List<String> result = new ArrayList<>();
 
-    if (JdkUtil.isExplodedModularRuntime(file.getPath())) {
-      File[] exploded = new File(file, "modules").listFiles();
+    if (JdkUtil.isExplodedModularRuntime(jdkHome.getPath())) {
+      File[] exploded = new File(jdkHome, "modules").listFiles();
       if (exploded != null) {
         for (File root : exploded) {
           result.add(VfsUtil.getUrlForLibraryRoot(root));
         }
       }
     }
-    else if (JdkUtil.isModularRuntime(file)) {
-      String jrtBaseUrl = JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR;
-      List<String> modules = readModulesFromReleaseFile(file);
+    else if (JdkUtil.isModularRuntime(jdkHome)) {
+      String jrtBaseUrl = JrtFileSystem.PROTOCOL_PREFIX + getPath(jdkHome) + JrtFileSystem.SEPARATOR;
+      List<String> modules = readModulesFromReleaseFile(jdkHome);
       if (modules != null) {
         for (String module : modules) {
           result.add(jrtBaseUrl + module);
@@ -448,7 +460,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
     else {
-      for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
+      for (File root : JavaSdkUtil.getJdkClassesRoots(jdkHome, isJre)) {
         result.add(VfsUtil.getUrlForLibraryRoot(root));
       }
     }

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
@@ -14,12 +15,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EditorConfigActionUtil {
@@ -28,7 +29,7 @@ public class EditorConfigActionUtil {
 
 
   public static AnAction[] createNavigationActions(@NotNull PsiFile file) {
-    List<AnAction> actions = ContainerUtil.newArrayList();
+    List<AnAction> actions = new ArrayList<>();
     EditorConfigNavigationActionsFactory navigationActionsFactory =
       EditorConfigNavigationActionsFactory.getInstance(file.getVirtualFile());
     actions.addAll(navigationActionsFactory.getNavigationActions(file.getProject()));

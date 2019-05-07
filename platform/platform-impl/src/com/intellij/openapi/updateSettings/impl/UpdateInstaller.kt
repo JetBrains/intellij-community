@@ -36,7 +36,7 @@ object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun downloadPatchChain(chain: List<BuildNumber>, forceHttps: Boolean, indicator: ProgressIndicator): List<File> {
+  fun downloadPatchChain(chain: List<BuildNumber>, indicator: ProgressIndicator): List<File> {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
     val files = mutableListOf<File>()
@@ -56,7 +56,7 @@ object UpdateInstaller {
           super.setFraction((i - 1) * share + fraction / share)
         }
       }
-      HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, partIndicator)
+      HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
       ZipFile(patchFile).use {
         if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
           throw IOException("Corrupted patch file: ${patchFile.name}")

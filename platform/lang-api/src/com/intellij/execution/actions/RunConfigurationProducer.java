@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -102,6 +103,13 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     }
     catch (ClassCastException e) {
       LOG.error(getConfigurationFactory() + " produced wrong type", e);
+      return null;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
       return null;
     }
     return new ConfigurationFromContextImpl(this, settings, ref.get());

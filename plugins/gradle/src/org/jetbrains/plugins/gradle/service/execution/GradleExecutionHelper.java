@@ -144,7 +144,7 @@ public class GradleExecutionHelper {
       }
     }
 
-    List<String> filteredArgs = ContainerUtil.newArrayList();
+    List<String> filteredArgs = new ArrayList<>();
     if (!settings.getArguments().isEmpty()) {
       String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
       LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
@@ -605,7 +605,7 @@ public class GradleExecutionHelper {
   }
 
   private static void replaceTestCommandOptionWithInitScript(@NotNull List<String> args) {
-    Set<String> testIncludePatterns = ContainerUtil.newLinkedHashSet();
+    Set<String> testIncludePatterns = new LinkedHashSet<>();
     Iterator<String> it = args.iterator();
     while (it.hasNext()) {
       final String next = it.next();
@@ -718,7 +718,7 @@ public class GradleExecutionHelper {
                                              @NotNull ExternalSystemTaskNotificationListener listener,
                                              @NotNull List<String> extraJvmArgs) {
     ModelBuilder<T> result = connection.model(modelType);
-    prepare(result, id, settings, listener, extraJvmArgs, ContainerUtil.newArrayList(), connection);
+    prepare(result, id, settings, listener, extraJvmArgs, new ArrayList<>(), connection);
     return result;
   }
 

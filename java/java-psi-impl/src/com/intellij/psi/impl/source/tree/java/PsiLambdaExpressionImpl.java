@@ -176,10 +176,10 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (candidateProperties != null) {
-        final PsiMethod method = candidateProperties.getMethod();
+    if (MethodCandidateInfo.isOverloadCheck(argsList)) {
+      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argsList);
+      if (currentMethod != null) {
+        final PsiMethod method = currentMethod.getElement();
         if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
           return true;
         }
@@ -195,7 +195,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
       return false;
     }
 
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList) && !hasFormalParameterTypes()) {
+    if (MethodCandidateInfo.isOverloadCheck(argsList) && !hasFormalParameterTypes()) {
       return true;
     }
 

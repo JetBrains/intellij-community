@@ -199,7 +199,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
     else if (element instanceof PsiJavaCodeReferenceElement) {
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnnotation) {
+      if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression
+          || parent instanceof PsiAnnotation || parent instanceof PsiAnonymousClass) {
         return parent;
       }
     }
@@ -318,7 +319,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       else if (shouldTryClassPattern(result)) {
         final PsiElement[] classPattern =
           createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, extension, project, false);
-        if (classPattern.length == 1) {
+        if (classPattern.length <= result.size()) {
           return classPattern;
         }
       }
@@ -366,10 +367,16 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean shouldTryClassPattern(List<PsiElement> elements) {
-    if (elements.size() < 2) {
+    if (elements.isEmpty()) {
       return false;
     }
     final PsiElement firstElement = elements.get(0);
+    if (firstElement instanceof PsiDeclarationStatement && firstElement.getFirstChild() instanceof PsiClass) {
+      return true;
+    }
+    if (elements.size() < 2) {
+      return false;
+    }
     final PsiElement secondElement = elements.get(1);
     final PsiElement lastElement = elements.get(elements.size() - 1);
 

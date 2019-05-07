@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * Used to group ordered collections of {@link StdArrangementTokens} along with their {@link StdArrangementTokenUiRole roles}.
- * 
+ *
  * @author Denis Zhdanov
  */
 public class CompositeArrangementSettingsToken {
@@ -33,7 +20,7 @@ public class CompositeArrangementSettingsToken {
   private static final Function<ArrangementSettingsToken, CompositeArrangementSettingsToken> WRAPPER =
     token -> new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.<CompositeArrangementSettingsToken>emptyList());
 
-  @NotNull private final List<CompositeArrangementSettingsToken> myChildren = ContainerUtilRt.newArrayList();
+  @NotNull private final List<CompositeArrangementSettingsToken> myChildren = new ArrayList<>();
 
   @NotNull private final ArrangementSettingsToken  myToken;
   @NotNull private final StdArrangementTokenUiRole myRole;
@@ -43,7 +30,7 @@ public class CompositeArrangementSettingsToken {
    * <p/>
    * <b>Note:</b> given token is expected to be one of {@link StdArrangementTokens standard tokens} because
    * {@link StdArrangementTokenUiRole its role} is deduced.
-   * 
+   *
    * @param token  token to wrap
    */
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token) {
@@ -56,7 +43,7 @@ public class CompositeArrangementSettingsToken {
    * <p/>
    * <b>Note:</b> given tokens are expected to be from {@link StdArrangementTokens standard tokens} because
    * {@link StdArrangementTokenUiRole their roles} are deduced.
-   * 
+   *
    * @param token     token to wrap
    * @param children  children to wrap
    */

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -271,7 +271,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     abstract WhitespacesAndCommentsBinder getBinder(boolean done);
 
     abstract void setLexemeIndex(int lexemeIndex, boolean done);
-    
+
     abstract int getLexemeIndex(boolean done);
   }
 
@@ -611,16 +611,16 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private TokenSequence getParsedTokenSequence() {
       int tokenCount = myEndIndex - myStartIndex;
       if (tokenCount == 1) return null; // not expand single lazy parseable token case
-      
+
       int[] lexStarts = new int[tokenCount + 1];
       System.arraycopy(myBuilder.myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
       int diff = myBuilder.myLexStarts[myStartIndex];
       for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
       lexStarts[tokenCount] = getEndOffset() - getStartOffset();
-      
+
       IElementType[] lexTypes = new IElementType[tokenCount + 1];
       System.arraycopy(myBuilder.myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
-      
+
       return new TokenSequence(lexStarts, lexTypes, tokenCount);
     }
   }
@@ -1037,7 +1037,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
-    final Stack<StartMarker> nodes = ContainerUtil.newStack();
+    final Stack<StartMarker> nodes = new Stack<>();
     nodes.push(rootMarker);
 
     int lastErrorIndex = -1;

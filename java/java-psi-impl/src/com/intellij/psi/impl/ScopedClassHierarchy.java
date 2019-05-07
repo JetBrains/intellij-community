@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.RecursionGuard;
@@ -26,14 +12,12 @@ import com.intellij.psi.util.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -86,7 +70,7 @@ class ScopedClassHierarchy {
 
   @NotNull
   private static List<PsiType> getSuperTypes(PsiClass psiClass) {
-    List<PsiType> superTypes = ContainerUtil.newArrayList();
+    List<PsiType> superTypes = new ArrayList<>();
     if (psiClass instanceof PsiAnonymousClass) {
       ContainerUtil.addIfNotNull(superTypes, ((PsiAnonymousClass)psiClass).getBaseClassType());
     }
@@ -131,7 +115,7 @@ class ScopedClassHierarchy {
     PsiSubstitutor answer = PsiSubstitutor.EMPTY;
     while (baseParams.hasNext()) {
       // if equivalent classes "from" and "to" have different number of type parameters, then treat "to" as a raw type
-      if (!candidateParams.hasNext()) return JavaClassSupersImpl.createRawSubstitutor(to); 
+      if (!candidateParams.hasNext()) return JavaClassSupersImpl.createRawSubstitutor(to);
 
       answer = answer.put(baseParams.next(), substitutor.substitute(candidateParams.next()));
     }
@@ -157,7 +141,7 @@ class ScopedClassHierarchy {
   @NotNull
   private List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
     PsiUtilCore.ensureValid(myPlaceClass);
-    List<PsiClassType.ClassResolveResult> list = ContainerUtil.newArrayList();
+    List<PsiClassType.ClassResolveResult> list = new ArrayList<>();
     for (PsiClassType type : myPlaceClass.getSuperTypes()) {
       PsiUtil.ensureValidType(type);
       PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
@@ -174,7 +158,7 @@ class ScopedClassHierarchy {
 
   @NotNull
   private Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
-    final Map<PsiClass, PsiSubstitutor> map = ContainerUtil.newTroveMap();
+    final Map<PsiClass, PsiSubstitutor> map = new THashMap<>();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myPlaceClass.getProject());
     new PairProcessor<PsiClass, PsiSubstitutor>() {
       @Override

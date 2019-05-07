@@ -8,13 +8,12 @@ import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.psi.PsiFile
-import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
@@ -35,7 +34,7 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
-  private var data: MutableMap<String, Any> = ContainerUtil.newHashMap<String, Any>()
+  private var data: MutableMap<String, Any> = HashMap<String, Any>()
   companion object {
     val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
                                                               "lang", "current_file", "input_event", "place")
@@ -164,7 +163,8 @@ class FeatureUsageData {
   }
 
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
-    if (!platformDataKeys.contains(key))  data[key] = value
+    if (ApplicationManager.getApplication().isUnitTestMode || !platformDataKeys.contains(key)) data[key] = value
+
     return this
   }
 

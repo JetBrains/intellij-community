@@ -2,22 +2,10 @@
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.navigation.ColoredItemPresentation;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.navigation.PsiElementNavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -30,49 +18,14 @@ import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.CommonElement;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.Grammar;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
-  @NonNls
   public static final ID<String, Void> NAME = ID.create("RelaxSymbolIndex");
-
-  public static Collection<String> getSymbolNames(Project project) {
-    return FileBasedIndex.getInstance().getAllKeys(NAME, project);
-  }
-
-  public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
-    final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    final Collection<NavigationItem> result = new ArrayList<>();
-    PsiManager psiManager = PsiManager.getInstance(project);
-
-    for(VirtualFile file:FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope)) {
-      final PsiFile psiFile = psiManager.findFile(file);
-
-      if (psiFile instanceof XmlFile) {
-        final Grammar grammar = GrammarFactory.getGrammar((XmlFile)psiFile);
-
-        if (grammar != null) {
-          grammar.acceptChildren(new CommonElement.Visitor() {
-            @Override
-            public void visitDefine(Define define) {
-              if (name.equals(define.getName())) {
-                final PsiElement psi = define.getPsiElement();
-                if (psi != null) {
-                  MyNavigationItem.add((NavigationItem)define.getPsiElement(), result);
-                }
-              }
-            }
-          });
-        }
-      }
-    }
-    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
-  }
 
   @NotNull
   @Override
@@ -126,7 +79,8 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
               depth--;
             }
           });
-        } else if (inputData.getFileType() == RncFileType.getInstance()) {
+        }
+        else if (inputData.getFileType() == RncFileType.getInstance()) {
           final PsiFile file = inputData.getPsiFile();
           if (file instanceof XmlFile) {
             final Grammar grammar = GrammarFactory.getGrammar((XmlFile)file);
@@ -175,112 +129,4 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     return 0;
   }
 
-  private static class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
-    private final NavigationItem myItem;
-    private final ItemPresentation myPresentation;
-
-    private MyNavigationItem(NavigationItem item, @NotNull final ItemPresentation presentation) {
-      myItem = item;
-      myPresentation = presentation;
-    }
-
-    @Override
-    public String getPresentableText() {
-      return myPresentation.getPresentableText();
-    }
-
-    @Override
-    @Nullable
-    public String getLocationString() {
-      return getLocationString((PsiElement)myItem);
-    }
-
-    private static String getLocationString(PsiElement element) {
-      return "(in " + element.getContainingFile().getName() + ")";
-    }
-
-    @Override
-    @Nullable
-    public Icon getIcon(boolean open) {
-      return myPresentation.getIcon(open);
-    }
-
-    @Nullable
-    public TextAttributesKey getTextAttributesKey() {
-      return myPresentation instanceof ColoredItemPresentation ? ((ColoredItemPresentation) myPresentation).getTextAttributesKey() : null;
-    }
-
-    @Override
-    public String getName() {
-      return myItem.getName();
-    }
-
-    @Override
-    public ItemPresentation getPresentation() {
-      return this;
-    }
-
-    @Override
-    public PsiElement getTargetElement() {
-      return (PsiElement) myItem;
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-      myItem.navigate(requestFocus);
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return myItem.canNavigate();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return myItem.canNavigateToSource();
-    }
-
-    public static void add(final NavigationItem item, Collection<? super NavigationItem> symbolNavItems) {
-      final ItemPresentation presentation;
-      if (item instanceof PsiMetaOwner) {
-        final PsiMetaData data = ((PsiMetaOwner)item).getMetaData();
-        if (data instanceof PsiPresentableMetaData) {
-          final PsiPresentableMetaData metaData = (PsiPresentableMetaData)data;
-          presentation = new ColoredItemPresentation() {
-            @Override
-            public String getPresentableText() {
-              return metaData.getName();
-            }
-
-            @NotNull
-            @Override
-            public String getLocationString() {
-              return MyNavigationItem.getLocationString((PsiElement)item);
-            }
-
-            @Override
-            @Nullable
-            public Icon getIcon(boolean open) {
-              return metaData.getIcon();
-            }
-
-            @Nullable
-            @Override
-            public TextAttributesKey getTextAttributesKey() {
-              final ItemPresentation p = item.getPresentation();
-              return p instanceof ColoredItemPresentation ? ((ColoredItemPresentation) p).getTextAttributesKey() : null;
-            }
-          };
-        } else {
-          presentation = item.getPresentation();
-        }
-      } else {
-        presentation = item.getPresentation();
-      }
-
-      if (presentation != null) {
-        symbolNavItems.add(new MyNavigationItem(item, presentation));
-      }
-    }
-  }
 }

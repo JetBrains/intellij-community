@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -11,7 +11,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   @NotNull
   @Override
   protected List<CodeStyleObjectDescriptor> getSupportedFields() {
-    List<CodeStyleObjectDescriptor> fieldsDescriptors = ContainerUtil.newArrayList();
+    List<CodeStyleObjectDescriptor> fieldsDescriptors = new ArrayList<>();
     IndentOptions indentOptions = getRootSettings().getCommonSettings(myLanguage).getIndentOptions();
     if (indentOptions != null) {
       fieldsDescriptors.add(new CodeStyleObjectDescriptor(indentOptions, getSupportedIndentOptions()));
@@ -114,7 +113,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private Set<String> getSupportedIndentOptions() {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
     if (provider == null) return Collections.emptySet();
-    Set<String> indentOptions = ContainerUtil.newHashSet();
+    Set<String> indentOptions = new HashSet<>();
     IndentOptionsEditor editor = provider.getIndentOptionsEditor();
     if (editor != null) {
       indentOptions.add("TAB_SIZE");

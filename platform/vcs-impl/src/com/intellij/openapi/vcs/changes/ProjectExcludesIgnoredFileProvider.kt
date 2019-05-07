@@ -8,12 +8,14 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vfs.VirtualFileManager
 
 class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
 
   override fun isIgnoredFile(project: Project, filePath: FilePath) =
+    VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED &&
     !Registry.`is`("ide.hide.excluded.files") &&
     filePath.virtualFile?.let { file ->
       val projectFileIndex = ProjectFileIndex.getInstance(project)

@@ -65,7 +65,9 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         it.hasNext() ? JBUI.insets(0, 0, 10, 0) : JBUI.emptyInsets(), 0, 0)
       );
     }
-    addHintLabel(body, "Data sharing preferences apply to all installed " + ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " products.");
+    if (!ConsentOptions.getInstance().isEAP()) {
+      addHintLabel(body, "Data sharing preferences apply to all installed " + ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " products.");
+    }
     if (!myPreferencesMode) {
       addHintLabel(body, "You can always change this behavior in " +
                            ShowSettingsUtil.getSettingsMenuName() +
@@ -176,9 +178,6 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   public void apply(@NotNull List<Consent> consents) {
     consents.clear();
     consents.addAll(getState());
-    if (myPreferencesMode) {
-      ConsentOptions.getInstance().setConsents(consents);
-    }
   }
 
   @NotNull

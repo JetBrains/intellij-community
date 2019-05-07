@@ -20,7 +20,6 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.ActionLink;
-import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +70,6 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myPanel.myUseSecureConnection.isSelected() && !NetUtils.isSniEnabled()) {
-      throw new ConfigurationException(IdeBundle.message("update.sni.disabled.error"));
-    }
-
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
@@ -90,30 +85,20 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     }
 
     mySettings.setSelectedChannelStatus(myPanel.getSelectedChannelType());
-    mySettings.setSecureConnection(myPanel.myUseSecureConnection.isSelected());
   }
 
   @Override
   public void reset() {
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
-    myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
     myPanel.updateLastCheckedLabel();
     myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
 
   @Override
   public boolean isModified() {
-    if (myPanel == null) {
-      return false;
-    }
-
-    if (mySettings.isCheckNeeded() != myPanel.myCheckForUpdates.isSelected() ||
-        mySettings.isSecureConnection() != myPanel.myUseSecureConnection.isSelected()) {
-      return true;
-    }
-
-    Object channel = myPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(mySettings.getSelectedActiveChannel());
+    return myPanel != null &&
+           (myPanel.myCheckForUpdates.isSelected() != mySettings.isCheckNeeded() ||
+            myPanel.myUpdateChannels.getSelectedItem() != mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -128,7 +113,6 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private JComboBox<ChannelStatus> myUpdateChannels;
     private JButton myCheckNow;
     private JBLabel myChannelWarning;
-    private JCheckBox myUseSecureConnection;
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
@@ -167,7 +151,6 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
           UpdateSettings settings = new UpdateSettings();
           settings.loadState(mySettings.getState());
           settings.setSelectedChannelStatus(getSelectedChannelType());
-          settings.setSecureConnection(myUseSecureConnection.isSelected());
           UpdateChecker.updateAndShowResult(project, settings);
           updateLastCheckedLabel();
         });

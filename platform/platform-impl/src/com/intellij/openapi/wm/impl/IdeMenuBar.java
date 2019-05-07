@@ -270,24 +270,23 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
-    if (e instanceof MouseEvent) {
-      MouseEvent mouseEvent = (MouseEvent)e;
-      Component component = findActualComponent(mouseEvent);
-
-      if (getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
-        boolean mouseInside = myActivated || UIUtil.isDescendingFrom(component, this);
-        if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
-        if (mouseInside && getState() == State.COLLAPSED) {
-          setState(State.EXPANDING);
-          restartAnimator();
-        }
-        else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
-          setState(State.COLLAPSING);
-          restartAnimator();
-        }
-      }
+    if (e instanceof MouseEvent && getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
+      considerRestartingAnimator((MouseEvent)e);
     }
     return false;
+  }
+
+  private void considerRestartingAnimator(MouseEvent mouseEvent) {
+    boolean mouseInside = myActivated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), this);
+    if (mouseEvent.getID() == MouseEvent.MOUSE_EXITED && mouseEvent.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+    if (mouseInside && getState() == State.COLLAPSED) {
+      setState(State.EXPANDING);
+      restartAnimator();
+    }
+    else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
+      setState(State.COLLAPSING);
+      restartAnimator();
+    }
   }
 
   @Nullable

@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.*;
@@ -248,18 +247,11 @@ public class PluginLogo {
     try {
       Url url = Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() +
                                     "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme);
-
-      HttpRequests.request(url).forceHttps(PluginManagerConfigurableNew.forceHttps()).productNameAsUserAgent()
-        .connect(request -> {
-          request.getConnection();
-          request.saveToFile(file, null);
-          return null;
-        });
+      HttpRequests.request(url).productNameAsUserAgent().saveToFile(file, null);
     }
-    catch (HttpRequests.HttpStatusException ignore) {
-    }
+    catch (HttpRequests.HttpStatusException ignore) { }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 

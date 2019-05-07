@@ -9,9 +9,9 @@
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
 
-  <plugins url="http://plugins.jetbrains.com/"/>
-  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
-               patches="http://download.jetbrains.com/idea/"/>
+  <plugins url="https://plugins.jetbrains.com/"/>
+  <update-urls check="https://www.jetbrains.com/updates/updates.xml"
+               patches="https://download.jetbrains.com/idea/"/>
 
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="https://www.jetbrains.com/idea/documentation"/>

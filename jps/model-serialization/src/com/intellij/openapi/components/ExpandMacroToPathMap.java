@@ -1,21 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ExpandMacroToPathMap extends PathMacroMap {
-  private final Map<String, String> myPlainMap = ContainerUtilRt.newLinkedHashMap();
-  private final Map<String, String> myMacroExpands = ContainerUtil.newHashMap();
+  private final Map<String, String> myPlainMap = new LinkedHashMap<>();
+  private final Map<String, String> myMacroExpands = new HashMap<>();
 
   public void addMacroExpand(@NotNull String macroName, @NotNull String path) {
     myMacroExpands.put(macroName, FileUtil.toSystemIndependentName(path));

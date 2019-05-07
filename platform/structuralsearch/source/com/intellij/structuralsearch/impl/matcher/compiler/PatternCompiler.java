@@ -28,7 +28,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -106,15 +106,15 @@ public class PatternCompiler {
       }
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
-        optimizeScope(options, result, context);
       }
+      optimizeScope(options, checkForErrors, context, result);
       return result;
     } finally {
       context.clear();
     }
   }
 
-  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context)
+  private static void optimizeScope(MatchOptions options, boolean checkForErrors, CompileContext context, CompiledPattern result)
     throws NoMatchFoundException {
 
     final OptimizingSearchHelper searchHelper = context.getSearchHelper();
@@ -123,7 +123,7 @@ public class PatternCompiler {
 
       final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
       assert scope != null;
-      if (filesToScan.isEmpty()) {
+      if (checkForErrors && filesToScan.isEmpty()) {
         throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
       }
       result.setScope(scope.isSearchInLibraries()
@@ -424,7 +424,7 @@ public class PatternCompiler {
     final int segmentsCount = template.getSegmentsCount();
     final String text = template.getTemplateText();
     int prevOffset = 0;
-    final Set<String> variableNames = ContainerUtil.newTroveSet();
+    final Set<String> variableNames = new THashSet<>();
 
     for(int i = 0; i < segmentsCount; i++) {
       final int offset = template.getSegmentOffset(i);

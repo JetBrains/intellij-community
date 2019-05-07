@@ -1,18 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class AbstractCodeStylePropertyMapper {
@@ -29,7 +25,7 @@ public abstract class AbstractCodeStylePropertyMapper {
   }
 
   private Map<String, CodeStylePropertyAccessor> createMap() {
-    Map<String, CodeStylePropertyAccessor> accessorMap = ContainerUtil.newHashMap();
+    Map<String, CodeStylePropertyAccessor> accessorMap = new HashMap<>();
     for (CodeStyleObjectDescriptor descriptor : getSupportedFields()) {
       addAccessorsFor(accessorMap, descriptor.getCodeStyleObject(), descriptor.getSupportedFields());
     }

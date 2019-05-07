@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
@@ -54,7 +39,7 @@ public class DataPack extends DataPackBase {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
-      refsModel = new RefsModel(refs, ContainerUtil.newHashSet(), storage, providers);
+      refsModel = new RefsModel(refs, new HashSet<>(), storage, providers);
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
@@ -80,7 +65,7 @@ public class DataPack extends DataPackBase {
       }
     }
 
-    Set<Integer> heads = ContainerUtil.newHashSet();
+    Set<Integer> heads = new HashSet<>();
     for (GraphCommit<Integer> commit : commits) {
       if (!parents.contains(commit.getId())) {
         heads.add(commit.getId());
@@ -100,7 +85,7 @@ public class DataPack extends DataPackBase {
 
   @NotNull
   public static Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
-    Map<VirtualFile, VcsLogRefManager> map = ContainerUtil.newHashMap();
+    Map<VirtualFile, VcsLogRefManager> map = new HashMap<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
       map.put(entry.getKey(), entry.getValue().getReferenceManager());
     }
@@ -110,7 +95,7 @@ public class DataPack extends DataPackBase {
   @NotNull
   private static DataPack createEmptyInstance() {
     RefsModel emptyModel =
-      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), VcsLogStorageImpl.EMPTY, ContainerUtil.newHashMap());
+      new RefsModel(new HashMap<>(), new HashSet<>(), VcsLogStorageImpl.EMPTY, new HashMap<>());
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
   }
 

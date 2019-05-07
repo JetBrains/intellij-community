@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -27,9 +13,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -74,7 +58,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
       List<String> classNames = ContainerUtil.map(HtmlUtil.splitClassNames(classValue), (s) -> normalizeClassName(s, elementSeparator, shortElementPrefix));
 
       BEM_STATE.set(node, new BemState(suggestBlockName(classNames), null, null));
-      Set<String> newClassNames = ContainerUtil.newLinkedHashSet();
+      Set<String> newClassNames = new LinkedHashSet<>();
       for (String className : classNames) {
         ContainerUtil.addAll(newClassNames, processClassName(className, node, elementSeparator, modifierSeparator));
       }
@@ -95,7 +79,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
 
     BemState nodeBemState = BEM_STATE.get(node);
     BemState bemState = extractBemStateFromClassName(className, elementSeparator, modifierSeparator);
-    List<String> result = ContainerUtil.newArrayList();
+    List<String> result = new ArrayList<>();
     if (!bemState.isEmpty()) {
       String nodeBlockValue = nodeBemState != null ? nodeBemState.getBlock() : null;
 
@@ -117,7 +101,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
 
       BemState newNodeBemState = bemState.copy();
       if (StringUtil.isNotEmpty(nodeBlockValue) && StringUtil.isEmpty(modifier)) {
-        // save old value 
+        // save old value
         newNodeBemState.setBlock(nodeBlockValue);
       }
       BEM_STATE.set(node, newNodeBemState);

@@ -185,7 +185,7 @@ public final class StringEditorDialog extends DialogWrapper{
   }
 
   private static Collection<PsiReference> findPropertyReferences(final Property property, final Module module) {
-    final Collection<PsiReference> references = Collections.synchronizedList(new ArrayList<PsiReference>());
+    final Collection<PsiReference> references = Collections.synchronizedList(new ArrayList<>());
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       (Runnable)() -> ReferencesSearch.search(property).forEach(psiReference -> {
         PsiMethod method = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethod.class);

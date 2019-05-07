@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -23,10 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -108,6 +105,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     if (myShowCheckboxes) {
       new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+      installCheckBoxClickHandler();
     }
     installEnterKeyHandler();
     installDoubleClickHandler();
@@ -119,6 +117,33 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setEmptyText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+  }
+
+  /**
+   * There is special logic for {@link com.intellij.ide.dnd.DnDAware} components in
+   * {@link com.intellij.openapi.wm.impl.IdeGlassPaneImpl#dispatch(AWTEvent)} that doesn't call
+   * {@link Component#processMouseEvent(MouseEvent)} in case of mouse clicks over selection.
+   *
+   * So we add "checkbox mouse clicks" handling as a listener.
+   */
+  private void installCheckBoxClickHandler() {
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        if (myShowCheckboxes && isEnabled()) {
+          int row = getRowForLocation(event.getX(), event.getY());
+          if (row >= 0) {
+            final Rectangle baseRect = getRowBounds(row);
+            baseRect.setSize(myCheckboxWidth, baseRect.height);
+            if (baseRect.contains(event.getPoint())) {
+              setSelectionRow(row);
+              toggleChanges(getSelectedUserObjects());
+            }
+          }
+        }
+        return false;
+      }
+    }.installOn(this);
   }
 
   protected void installEnterKeyHandler() {
@@ -264,6 +289,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull
   public ChangesGroupingPolicyFactory getGrouping() {
     return getGroupingSupport().getGrouping();
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   public boolean isShowFlatten() {
@@ -732,24 +762,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private static VirtualFile getVirtualFileFor(@NotNull FilePath filePath) {
     if (filePath.isNonLocal()) return null;
     return ChangesUtil.findValidParentAccurately(filePath);
-  }
-
-  @Override
-  protected void processMouseEvent(MouseEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-      if (myShowCheckboxes && isEnabled() && !e.isPopupTrigger()) {
-        int row = getRowForLocation(e.getX(), e.getY());
-        if (row >= 0) {
-          final Rectangle baseRect = getRowBounds(row);
-          baseRect.setSize(myCheckboxWidth, baseRect.height);
-          if (baseRect.contains(e.getPoint())) {
-            setSelectionRow(row);
-            toggleChanges(getSelectedUserObjects());
-          }
-        }
-      }
-    }
-    super.processMouseEvent(e);
   }
 
   @Override

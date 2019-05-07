@@ -11,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveResult;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
-  private static final Set<Class> ourReportedValueClasses = Collections.synchronizedSet(ContainerUtil.newTroveSet());
+  private static final Set<Class> ourReportedValueClasses = Collections.synchronizedSet(new THashSet<>());
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
   private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");
 

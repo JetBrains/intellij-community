@@ -156,8 +156,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       else {
         parentArgList = null;
       }
-      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(parentArgList);
-      final boolean genericMethodCall = properties != null && properties.getInfo().isToInferApplicability();
+      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(parentArgList);
+      final boolean genericMethodCall = currentMethod != null && currentMethod.isToInferApplicability();
 
       PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {

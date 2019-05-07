@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.intellij.ide.highlighter.JavaFileType
@@ -22,7 +22,6 @@ import com.intellij.psi.stub.JavaStubImplUtil
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorIntegerDescriptor
@@ -65,10 +64,10 @@ data class PropertyIndexValue(val propertyRefText: String, val getter: Boolean)
 class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>(), PsiDependentIndex {
   private val allowedExpressions by lazy {
     TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
-  } 
-  
+  }
+
   override fun getIndexer(): DataIndexer<Int, PropertyIndexValue, FileContent> = DataIndexer { inputData ->
-    val result = ContainerUtil.newHashMap<Int, PropertyIndexValue>()
+    val result = HashMap<Int, PropertyIndexValue>()
     val tree = (inputData as FileContentImpl).lighterASTForPsiDependentIndex
 
     object : RecursiveLighterASTNodeWalkingVisitor(tree) {

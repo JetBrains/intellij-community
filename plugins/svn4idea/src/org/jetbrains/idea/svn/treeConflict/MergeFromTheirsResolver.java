@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.CommonBundle;
@@ -43,10 +43,7 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder.buildPatch;
@@ -97,8 +94,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
 
-    myTheirsChanges = newArrayList();
-    myTheirsBinaryChanges = newArrayList();
+    myTheirsChanges = new ArrayList<>();
+    myTheirsBinaryChanges = new ArrayList<>();
     myTextPatches = emptyList();
   }
 
@@ -232,7 +229,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void applyBinaryChanges() throws VcsException {
-    List<FilePath> dirtyPaths = newArrayList();
+    List<FilePath> dirtyPaths = new ArrayList<>();
     for (Change change : myTheirsBinaryChanges) {
       try {
         WriteAction.runAndWait(() -> {
@@ -331,7 +328,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private List<Change> convertPaths(@NotNull List<Change> changes) throws VcsException {
     initAddOption();
 
-    List<Change> result = newArrayList();
+    List<Change> result = new ArrayList<>();
     for (Change change : changes) {
       if (isUnderOldDir(change, myOldFilePath)) {
         result

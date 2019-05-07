@@ -65,6 +65,15 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return canCopyClass(fromUpdate, elements);
   }
 
+  @Nullable
+  @Override
+  public String getActionName(PsiElement[] elements) {
+    if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements [0] instanceof PsiDirectory)) {
+      return "Copy Class...";
+    }
+    return "Copy Classes...";
+  }
+
   public static boolean canCopyClass(PsiElement... elements) {
     return canCopyClass(false, elements);
   }
