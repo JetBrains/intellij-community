@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,10 +34,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Collection<ShShellcheckExternalAnnotator.Result>> {
+public class ShShellcheckExternalAnnotator extends ExternalAnnotator<Couple<String>, Collection<ShShellcheckExternalAnnotator.Result>> {
   private static final List<String> KNOWN_SHELLS = ContainerUtil.list("bash", "dash", "ksh", "sh");
   private static final String DEFAULT_SHELL = "bash";
-  private String interpreter;
 
   @Override
   public String getPairedBatchInspectionShortName() {
@@ -45,37 +45,31 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
 
   @Nullable
   @Override
-  public String collectInformation(@NotNull PsiFile file) {
-    if (file instanceof ShFile) {
-      interpreter = ShShebangParserUtil.getInterpreter((ShFile) file, KNOWN_SHELLS, DEFAULT_SHELL);
-      return file.getText();
-    }
-    return null;
+  public Couple<String> collectInformation(@NotNull PsiFile file) {
+    return file instanceof ShFile ? Couple.of(file.getText(), getInterpreter(file)) : null;
   }
 
   @Nullable
   @Override
-  public String collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
-    if (file instanceof ShFile) {
-      interpreter = ShShebangParserUtil.getInterpreter((ShFile) file, KNOWN_SHELLS, DEFAULT_SHELL);
-    }
-    return editor.getDocument().getText();
+  public Couple<String> collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
+    return collectInformation(file);
   }
 
   @Nullable
   @Override
-  public Collection<ShShellcheckExternalAnnotator.Result> doAnnotate(String fileContent) {
+  public Collection<ShShellcheckExternalAnnotator.Result> doAnnotate(@NotNull Couple<String> couple) {
     String shellcheckExecutable = ShShellcheckUtil.getShellcheckPath();
-    if (!ShShellcheckUtil.isValidPath(shellcheckExecutable)) {
-      return null;
-    }
+    if (!ShShellcheckUtil.isValidPath(shellcheckExecutable)) return null;
+
+    String fileContent = couple.first;
+    String interpreter = couple.second;
 
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath(shellcheckExecutable)
           .withParameters(
-              "--color=never", "--format=json", "--severity=style", "--shell="+interpreter, "--wiki-link-count=10",
+              "--color=never", "--format=json", "--severity=style", "--shell=" + interpreter, "--wiki-link-count=10",
               "--exclude=SC1091",
               "-");
       Process process = commandLine.createProcess();
@@ -124,7 +118,6 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
         private String getMessage() {
           String m = message.endsWith(".") ? message.substring(0, message.length() - 1) : message;
           return "'" + StringUtil.first(m, 60, true) + "'";
-
         }
 
         @NotNull
@@ -182,6 +175,12 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<String, Col
     catch (IOException e) {
       throw new IOException("Failed to write file content to stdin\n\n" + content, e);
     }
+  }
+
+  @NotNull
+  private static String getInterpreter(@NotNull PsiFile file) {
+    if (!(file instanceof ShFile)) return DEFAULT_SHELL;
+    return ShShebangParserUtil.getInterpreter((ShFile) file, KNOWN_SHELLS, DEFAULT_SHELL);
   }
 
   class Result {
