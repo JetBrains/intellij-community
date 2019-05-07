@@ -324,6 +324,13 @@ public final class UIUtil extends StartupUiUtil {
   @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
   @NonNls public static final String ARIAL_FONT_NAME = "Arial";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
+  /**
+   * Prevent component DataContext from returning parent editor
+   * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
+   *
+   * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
+   */
+  @NonNls public static final String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
   @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
   @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 

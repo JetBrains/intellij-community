@@ -136,7 +136,7 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
           editorKit = UIUtil.JBWordWrapHtmlEditorKit()
           update()
 
-          putClientProperty("AuxEditorComponent", true)
+          putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
         }
 
         override fun getBody() = comment.body
