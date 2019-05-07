@@ -50,9 +50,11 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     }
 
     for (JreProvider provider : JreProvider.EP_NAME.getExtensionList()) {
-      String path = provider.getJrePath();
-      if (!StringUtil.isEmpty(path)) {
-        foundJDKs.add(path);
+      if (provider.isAvailable()) {
+        String path = provider.getJrePath();
+        if (!StringUtil.isEmpty(path)) {
+          foundJDKs.add(path);
+        }
       }
     }
 
