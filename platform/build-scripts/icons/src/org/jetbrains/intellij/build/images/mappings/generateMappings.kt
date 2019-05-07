@@ -99,7 +99,7 @@ private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
       val images = imageCollector.collect(module, includePhantom = true)
       if (images.isNotEmpty()) {
         val icons = images.asSequence()
-          .filter { it.file != null && isValidIcon(it.file!!) }
+          .filter { it.file != null && Icon(it.file!!.toFile()).isValid }
           .map { it.sourceRoot.file }.toSet()
         return@map when {
           icons.isEmpty() -> null
