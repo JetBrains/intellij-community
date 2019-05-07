@@ -2431,6 +2431,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "    }\n" +
                  "}",
                  replace(in, what, by, true));
+
+    options.getMatchOptions().setRecursiveSearch(true);
+    String in2 = "class X {{" +
+                 "  int i = (((3)));" +
+                 "}}";
+    String what2 = "('_expr:[exprtype( int )])";
+    String by2 = "2";
+    assertEquals("don't throw exceptions when replacing",
+                 "class X {{" +
+                 "  int i = 2;" +
+                 "}}",
+                 replace(in2, what2, by2, true));
   }
 
   public void testReplaceTarget() {
