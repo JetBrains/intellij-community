@@ -38,10 +38,36 @@ import java.util.stream.Stream;
 public class TrackingRunner extends StandardDataFlowRunner {
   private final List<MemoryStateChange> myHistoryForContext = new ArrayList<>();
   private final PsiExpression myExpression;
+  private final List<DfaInstructionState> afterStates = new ArrayList<>();
+  private final List<TrackingDfaMemoryState> killedStates = new ArrayList<>();
 
   private TrackingRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context, PsiExpression expression) {
     super(unknownMembersAreNullable, context);
     myExpression = expression;
+  }
+
+  @Override
+  protected void beforeInstruction(Instruction instruction) {
+    afterStates.clear();
+    killedStates.clear();
+  }
+
+  @Override
+  protected void afterInstruction(Instruction instruction) {
+    if (afterStates.size() <= 1 && killedStates.isEmpty()) return;
+    Map<Instruction, List<TrackingDfaMemoryState>> instructionToState =
+      StreamEx.of(afterStates).mapToEntry(s -> s.getInstruction(), s -> (TrackingDfaMemoryState)s.getMemoryState()).grouping();
+    if (instructionToState.size() <= 1 && killedStates.isEmpty()) return;
+    instructionToState.forEach((target, memStates) -> {
+      List<TrackingDfaMemoryState> bridgeChanges =
+        StreamEx.of(afterStates).filter(s -> s.getInstruction() != target)
+          .map(s -> ((TrackingDfaMemoryState)s.getMemoryState()))
+          .append(killedStates)
+          .toList();
+      for (TrackingDfaMemoryState state : memStates) {
+        state.addBridge(instruction, bridgeChanges);
+      }
+    });
   }
 
   @NotNull
@@ -57,7 +83,11 @@ public class TrackingRunner extends StandardDataFlowRunner {
     TrackingDfaMemoryState memState = (TrackingDfaMemoryState)instructionState.getMemoryState().createCopy();
     DfaInstructionState[] states = super.acceptInstruction(visitor, instructionState);
     for (DfaInstructionState state : states) {
+      afterStates.add(state);
       ((TrackingDfaMemoryState)state.getMemoryState()).recordChange(instruction, memState);
+    }
+    if (states.length == 0) {
+      killedStates.add(memState);
     }
     if (instruction instanceof ExpressionPushingInstruction) {
       ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
@@ -77,7 +107,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     PsiElement body = DfaUtil.getDataflowContext(expression);
     if (body == null) return Collections.emptyList();
     TrackingRunner runner = new TrackingRunner(unknownAreNullables, body, expression);
-    StandardInstructionVisitor visitor = new StandardInstructionVisitor();
+    StandardInstructionVisitor visitor = new StandardInstructionVisitor(true);
     RunnerResult result = runner.analyzeMethodRecursively(body, visitor, ignoreAssertions);
     if (result != RunnerResult.OK) return Collections.emptyList();
     CauseItem cause = null;
@@ -507,6 +537,9 @@ public class TrackingRunner extends StandardDataFlowRunner {
           if (causeItem != null) return new CauseItem[]{causeItem};
         }
       }
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      return new CauseItem[]{fromCallContract(history, (PsiMethodCallExpression)expression, ContractReturnValue.returnBoolean(value))};
     }
     return new CauseItem[0];
   }
