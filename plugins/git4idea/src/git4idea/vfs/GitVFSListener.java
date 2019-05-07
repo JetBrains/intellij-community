@@ -51,26 +51,6 @@ public class GitVFSListener extends VcsVFSListener {
     return listener;
   }
 
-  /**
-   * Set events suppressed, the events should be unsuppressed later
-   *
-   * @param value true if events should be suppressed, false otherwise
-   */
-  public void setEventsSuppressed(boolean value) {
-    if (value) {
-      myEventsSuppressLevel.incrementAndGet();
-    }
-    else {
-      int v = myEventsSuppressLevel.decrementAndGet();
-      assert v >= 0;
-    }
-  }
-
-  @Override
-  protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
-    return super.isEventIgnored(event) || myEventsSuppressLevel.get() != 0;
-  }
-
   @NotNull
   @Override
   protected String getAddTitle() {
