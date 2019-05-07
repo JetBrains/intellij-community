@@ -182,7 +182,7 @@ class ShShellcheckUtil {
   }
 
   private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Shellcheck was successfully installed",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Shellcheck has been successfully installed",
         NotificationType.INFORMATION));
   }
 
