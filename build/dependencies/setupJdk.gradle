@@ -11,6 +11,7 @@ cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
 def isModular = jdkVersion > 8
+project.ext.build = isModular ? secondJreBuild : jdkBuild
 project.ext.jdkArtifactPrefix = isModular ? 'jbr-' : 'jbrsdk-'
 
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
@@ -48,12 +49,12 @@ task downloadJdk {
   def arch = jdkArch()
   def platform = currentPlatformName()
   def jdkUrl = jdkUrl()
-  def (update, buildNumber) = splitJdkBuild(jdkBuild.toString(), jdkVersion.toString())
+  def (update, buildNumber) = splitJdkBuild(build.toString(), jdkVersion.toString())
   def artifactName = "$jdkArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
   def outputFile = "$project.buildDir/jbsdk/${artifactName}"
 
   inputs.property('version', jdkVersion)
-  inputs.property('build', jdkBuild)
+  inputs.property('build', build)
   inputs.property('url', jdkUrl)
   outputs.file(outputFile)
   doLast {
@@ -133,7 +134,7 @@ static def jdkArch() {
 def jdkUrl() {
   def arch = jdkArch()
   def platform = currentPlatformName()
-  def (update, buildNumber) = splitJdkBuild(jdkBuild.toString(), jdkVersion.toString())
+  def (update, buildNumber) = splitJdkBuild(build.toString(), jdkVersion.toString())
   // base url of TeamCity build to download JDK from
   def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
   "${teamCityBuild != null ? teamCityBuild : jdkRepo}/${jdkArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
