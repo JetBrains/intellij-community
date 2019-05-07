@@ -25,6 +25,8 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
   private val editorTextWidth: Int
   private val verticalScrollbarFlipped: Boolean
 
+  private val managedInlays = mutableSetOf<Inlay<out ComponentWrapperPlaceholder>>()
+
   init {
     val metrics = editor.getFontMetrics(Font.PLAIN)
     val spaceWidth = FontLayoutService.getInstance().charWidth2D(metrics, ' '.toInt())
@@ -59,15 +61,11 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
   }
 
   private fun updateLocationForAllInlays() {
-    getAllInlays().forEach { updateWrapperLocation(it, it.renderer.wrapper) }
+    managedInlays.forEach { updateWrapperLocation(it, it.renderer.wrapper) }
   }
 
   private fun updateWidthForAllInlays() {
-    getAllInlays().forEach { updateWrapperWidth(it.renderer.wrapper) }
-  }
-
-  private fun getAllInlays(): List<Inlay<out ComponentWrapperPlaceholder>> {
-    return editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength - 1, ComponentWrapperPlaceholder::class.java)
+    managedInlays.forEach { updateWrapperWidth(it.renderer.wrapper) }
   }
 
   @CalledInAwt
@@ -99,8 +97,10 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
     updateWrapperLocation(inlay, wrapper)
 
     editor.contentComponent.add(wrapper)
+    managedInlays.add(inlay)
     Disposer.register(inlay, Disposable {
       editor.contentComponent.remove(wrapper)
+      managedInlays.remove(inlay)
     })
     return inlay
   }
@@ -164,7 +164,10 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
   }
 
   override fun dispose() {
-    for (inlay in getAllInlays()) {
+    val iter = managedInlays.iterator()
+    while (iter.hasNext()) {
+      val inlay = iter.next()
+      iter.remove()
       Disposer.dispose(inlay)
     }
   }
