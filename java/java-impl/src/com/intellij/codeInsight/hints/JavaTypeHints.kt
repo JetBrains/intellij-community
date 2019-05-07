@@ -35,7 +35,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
         else -> classHint(qualifier, level)
       }
     }
-    val className = factory.navigateSingle(factory.smallText(classType.className)) {
+    val className = factory.psiSingleReference(factory.smallText(classType.className)) {
       classType.resolve()
     }
     if (classType.parameterCount == 0) {
@@ -68,7 +68,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
       else -> null
     }
 
-    val className = factory.navigateSingle(getName(aClass)) { aClass }
+    val className = factory.psiSingleReference(getName(aClass)) { aClass }
     if (!aClass.hasTypeParameters()) {
       return if (containingClassPresentation != null) {
         factory.seq(containingClassPresentation, factory.smallText("."), className)
@@ -80,7 +80,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     val presentations = mutableListOf(joinWithDot(containingClassPresentation, className))
     presentations.add(factory.smallText("<"))
     aClass.typeParameters.mapTo(presentations) {
-      factory.navigateSingle(getName(it)) { it }
+      factory.psiSingleReference(getName(it)) { it }
     }
     presentations.add(factory.smallText(">"))
     return SequencePresentation(presentations)
