@@ -175,6 +175,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
   private fun removeHostsFromConcatenation(hostsToRemove: List<MarkersMapping>): TextRange? {
+    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().singleOrNull()
+
     for (marker in hostsToRemove.reversed()) {
       val host = marker.host ?: continue
       val relatedElements = getFollowingElements(host) ?: host.prevSiblings.takeWhile(::intermediateElement).toList()
@@ -189,9 +191,9 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       }
     }
 
-    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().singleOrNull()
     if (psiPolyadicExpression != null) {
-      psiPolyadicExpression.operands.singleOrNull()?.let { onlyRemaining ->
+      // distinct because Java could duplicate operands sometimes (EA-142380), mb something is wrong with the removal code upper ?
+      psiPolyadicExpression.operands.distinct().singleOrNull()?.let { onlyRemaining ->
         return psiPolyadicExpression.replace(onlyRemaining).textRange
       }
     }
