@@ -194,17 +194,21 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateMethod());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
     myUpdateBranchInfoCheckBox.setSelected(projectSettings.shouldUpdateBranchInfo());
-    boolean branchInfoSupported = isBranchInfoSupported();
-    myUpdateBranchInfoCheckBox.setEnabled(Registry.is("git.update.incoming.outgoing.info") && branchInfoSupported);
-    UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
-    updateSupportedBranchInfo();
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
+    updateBranchInfoPanel();
     myPreviewPushOnCommitAndPush.setSelected(projectSettings.shouldPreviewPushOnCommitAndPush());
     myPreviewPushProtectedOnly.setSelected(projectSettings.isPreviewPushProtectedOnly());
     updateEnabled();
   }
 
-  private void updateSupportedBranchInfo() {
+  private void updateBranchInfoPanel() {
+    boolean branchInfoSupported = isBranchInfoSupported();
+    myUpdateBranchInfoCheckBox.setEnabled(Registry.is("git.update.incoming.outgoing.info") && branchInfoSupported);
+    UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
+    updateBranchSupportedHint();
+  }
+
+  private void updateBranchSupportedHint() {
     boolean branchInfoSupported = isBranchInfoSupported();
     mySupportedBranchUpLabel.setVisible(!branchInfoSupported);
     mySupportedBranchUpLabel.setForeground(!branchInfoSupported && myUpdateBranchInfoCheckBox.isSelected()
@@ -295,10 +299,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
 
   private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
     if (!Registry.is("git.update.incoming.outgoing.info")) return;
-    boolean branchInfoSupported = isBranchInfoSupported();
-    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
-    UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
-    updateSupportedBranchInfo();
+    updateBranchInfoPanel();
     if (isUpdateBranchSettingsModified(projectSettings)) {
       projectSettings.setBranchInfoUpdateTime((Integer)myBranchUpdateTimeField.getValue());
       projectSettings.setUpdateBranchInfo(myUpdateBranchInfoCheckBox.isSelected());
