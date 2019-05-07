@@ -2,22 +2,29 @@ package com.intellij.sh;
 
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.sh.lexer.ShTokenTypes;
+import com.intellij.psi.tree.IElementType;
+
+import static com.intellij.sh.lexer.ShTokenTypes.*;
+
 
 public class ShQuoteHandler extends SimpleTokenSetQuoteHandler {
   public ShQuoteHandler() {
-    super(ShTokenTypes.BAD_CHARACTER, ShTypes.RAW_STRING, ShTokenTypes.OPEN_QUOTE, ShTokenTypes.CLOSE_QUOTE, ShTypes.BACKQUOTE);
+    super(BAD_CHARACTER, RAW_STRING, OPEN_QUOTE, CLOSE_QUOTE, OPEN_BACKQUOTE, CLOSE_BACKQUOTE);
   }
 
   @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
-    if (iterator.getTokenType() == ShTokenTypes.OPEN_QUOTE) return false;
+    final IElementType tokenType = iterator.getTokenType();
+
+    if (tokenType == OPEN_QUOTE || tokenType == OPEN_BACKQUOTE) return false;
     return super.isClosingQuote(iterator, offset);
   }
 
   @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
-    if (iterator.getTokenType() == ShTokenTypes.CLOSE_QUOTE) return false;
+    final IElementType tokenType = iterator.getTokenType();
+
+    if (tokenType == CLOSE_QUOTE || tokenType == CLOSE_BACKQUOTE) return false;
     return super.isOpeningQuote(iterator, offset);
   }
 }

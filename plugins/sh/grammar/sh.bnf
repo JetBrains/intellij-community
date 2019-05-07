@@ -72,7 +72,6 @@
     RIGHT_CURLY = '}'
     LEFT_SQUARE = '['
     RIGHT_SQUARE = ']'
-    BACKQUOTE = '`'
 
     EXPR_CONDITIONAL_LEFT = "[ "
     EXPR_CONDITIONAL_RIGHT = " ]"
@@ -100,6 +99,9 @@
 
     OPEN_QUOTE = 'OPEN_QUOTE'
     CLOSE_QUOTE = 'CLOSE_QUOTE'
+
+    OPEN_BACKQUOTE = 'OPEN_BACKQUOTE'
+    CLOSE_BACKQUOTE = 'CLOSE_BACKQUOTE'
 
     FILEDESCRIPTOR='file descriptor'
 
@@ -132,8 +134,8 @@ pipeline_command ::=  '!'? pipeline
                     | let_command {recoverWhile=pipeline_recover}
 let_command ::= let expression
 
-private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'|
-                               '\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
+private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
+                               time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
 
 pipeline ::= command (('|&'|'|') newlines command)* {pin(".*")=1}
 
@@ -251,7 +253,7 @@ private composed_var_inner ::= arithmetic_expansion
                               | subshell_command
                               | shell_parameter_expansion
 
-command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
+command_substitution_command ::= !<<isModeOn "BACKQUOTE">> OPEN_BACKQUOTE <<withOn "BACKQUOTE" list?>> CLOSE_BACKQUOTE {pin=2}
 
 arithmetic_expansion ::= '((' expression? '))' {pin=1}
 

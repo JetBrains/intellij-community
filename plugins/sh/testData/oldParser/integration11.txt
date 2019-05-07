@@ -11,8 +11,8 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')
           PsiWhiteSpace(' ')
           LITERAL
             PsiElement(word)('echo')
@@ -22,5 +22,5 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')

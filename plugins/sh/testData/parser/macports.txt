@@ -64,7 +64,7 @@ BASH_FILE
             PsiElement(=)('=')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
@@ -83,7 +83,7 @@ BASH_FILE
                           PsiElement(<<<)('<<< ')
                           VARIABLE
                             PsiElement(var)('$MACPORTS')
-              PsiElement(`)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

@@ -239,7 +239,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 
 <HERE_STRING> {
   ">"  | ";" | "|" | "(" | ")"  |
-  "&"                           { popState(); yypushback(1);}
+  "&"  | "`"                    { popState(); yypushback(1);}
   {LineTerminator}              { popState(); return LINEFEED; }
   {WhiteSpace}+                 { popState(); return WHITESPACE; }
   {HereString}+                 { return WORD; }
@@ -330,8 +330,8 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     "}"                           { return RIGHT_CURLY; }
 
     "!"                           { return BANG; }
-    "`"                           { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) popState(); else pushState(BACKQUOTE_COMMAND_SUBSTITUTION);
-                                  return BACKQUOTE; }
+    "`"                           { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) { popState(); return CLOSE_BACKQUOTE; }
+                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); return OPEN_BACKQUOTE; } }
 
     /***** Pipeline separators *****/
     "&&"                          { return AND_AND; }

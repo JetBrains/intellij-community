@@ -7,4 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface ShCommandSubstitutionCommand extends ShCommand {
 
+  @Nullable
+  PsiElement getCloseBackquote();
+
+  @NotNull
+  PsiElement getOpenBackquote();
+
 }

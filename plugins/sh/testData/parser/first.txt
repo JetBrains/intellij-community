@@ -245,14 +245,14 @@ BASH_FILE
             PsiElement(word)('report')
             PsiWhiteSpace(' ')
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('date')
-              PsiElement(`)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
@@ -520,14 +520,14 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
                       LITERAL
                         PsiElement(word)('hello')
-              PsiElement(`)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')
           PsiWhiteSpace(' ')
           LITERAL
             PsiElement(word)('world')

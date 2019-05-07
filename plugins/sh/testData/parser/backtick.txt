@@ -9,7 +9,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
@@ -17,7 +17,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('cat')
               PsiWhiteSpace(' ')
-              PsiElement(`)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')
           LITERAL
             PsiElement(word)('cat')
           PsiWhiteSpace(' ')
@@ -25,5 +25,5 @@ BASH_FILE
             PsiElement(var)('$0')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')

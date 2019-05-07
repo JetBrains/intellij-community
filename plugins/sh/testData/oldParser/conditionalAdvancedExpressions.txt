@@ -70,7 +70,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           LITERAL_CONDITION
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
@@ -81,7 +81,7 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       LITERAL
                         PsiElement(word)('a')
-              PsiElement(`)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
   PsiElement(\n)('\n')

@@ -15,6 +15,7 @@ public class ShTypingTest extends LightCodeInsightFixtureTestCase {
 
   public void testQuoteAfterFoo()      { doTypingTest("\"foo<caret>", "\"", "\"foo\"<caret>");   }
   public void testRawStringAfterFoo()  { doTypingTest("'foo<caret>", "'", "'foo'<caret>");       }
+  public void testBackQuoteAfterFoo()  { doTypingTest("`foo<caret>", "`", "`foo`<caret>");       }
 
   public void testStringAfter()         { doTypingTest("\"<caret>\"", "\"", "\"\"<caret>");     }
   public void testRawStringAfter()      { doTypingTest("'<caret>'", "'", "''<caret>");          }

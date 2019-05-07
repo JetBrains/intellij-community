@@ -93,7 +93,6 @@ public interface ShTypes {
   IElementType ARITH_SQUARE_LEFT = new ShTokenType("ARITH_SQUARE_LEFT");
   IElementType ARITH_SQUARE_RIGHT = new ShTokenType("ARITH_SQUARE_RIGHT");
   IElementType ASSIGN = new ShTokenType("=");
-  IElementType BACKQUOTE = new ShTokenType("`");
   IElementType BACKSLASH = new ShTokenType("\\\\");
   IElementType BANG = new ShTokenType("!");
   IElementType BITWISE_NEGATION = new ShTokenType("~");
@@ -102,6 +101,7 @@ public interface ShTypes {
   IElementType BIT_XOR_ASSIGN = new ShTokenType("^=");
   IElementType CASE = new ShTokenType("case");
   IElementType CASE_END = new ShTokenType(";;");
+  IElementType CLOSE_BACKQUOTE = new ShTokenType("CLOSE_BACKQUOTE");
   IElementType CLOSE_QUOTE = new ShTokenType("CLOSE_QUOTE");
   IElementType COLON = new ShTokenType(":");
   IElementType COMMA = new ShTokenType(",");
@@ -149,6 +149,7 @@ public interface ShTypes {
   IElementType MULT_ASSIGN = new ShTokenType("*=");
   IElementType NE = new ShTokenType("!=");
   IElementType OCTAL = new ShTokenType("octal");
+  IElementType OPEN_BACKQUOTE = new ShTokenType("OPEN_BACKQUOTE");
   IElementType OPEN_QUOTE = new ShTokenType("OPEN_QUOTE");
   IElementType OR_OR = new ShTokenType("||");
   IElementType PARAMETER_EXPANSION_BODY = new ShTokenType("parameter_expansion_body");

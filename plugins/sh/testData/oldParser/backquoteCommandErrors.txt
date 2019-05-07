@@ -3,7 +3,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
-          PsiElement(`)('`')
+          PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
             PIPELINE_COMMAND
               PIPELINE
@@ -11,4 +11,4 @@ BASH_FILE
                   LITERAL
                     PsiElement(word)('echo')
             PsiElement(\n)('\n')
-          PsiElement(`)('`')
+          PsiElement(CLOSE_BACKQUOTE)('`')

@@ -928,7 +928,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       COMMAND_SUBSTITUTION_COMMAND
-                        PsiElement(`)('`')
+                        PsiElement(OPEN_BACKQUOTE)('`')
                         COMPOUND_LIST
                           PIPELINE_COMMAND
                             PIPELINE
@@ -939,7 +939,7 @@ BASH_FILE
                                 PsiWhiteSpace(' ')
                                 LITERAL
                                   PsiElement(word)('-r')
-                        PsiElement(`)('`')
+                        PsiElement(CLOSE_BACKQUOTE)('`')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
@@ -986,7 +986,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
                       COMMAND_SUBSTITUTION_COMMAND
-                        PsiElement(`)('`')
+                        PsiElement(OPEN_BACKQUOTE)('`')
                         COMPOUND_LIST
                           PIPELINE_COMMAND
                             PIPELINE
@@ -1003,7 +1003,7 @@ BASH_FILE
                                 PsiWhiteSpace(' ')
                                 LITERAL
                                   PsiElement(word)('SystemVersionStampAsString')
-                        PsiElement(`)('`')
+                        PsiElement(CLOSE_BACKQUOTE)('`')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')

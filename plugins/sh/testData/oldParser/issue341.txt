@@ -17,7 +17,7 @@ BASH_FILE
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
                       COMMAND_SUBSTITUTION_COMMAND
-                        PsiElement(`)('`')
+                        PsiElement(OPEN_BACKQUOTE)('`')
                         COMPOUND_LIST
                           PIPELINE_COMMAND
                             PIPELINE
@@ -31,7 +31,7 @@ BASH_FILE
                                   VARIABLE
                                     PsiElement(var)('$0')
                                   PsiElement(CLOSE_QUOTE)('"')
-                        PsiElement(`)('`')
+                        PsiElement(CLOSE_BACKQUOTE)('`')
                       PsiElement(CLOSE_QUOTE)('"')
             PsiElement())(')')
   PsiElement(\n)('\n')
@@ -39,7 +39,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
-          PsiElement(`)('`')
+          PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
             PIPELINE_COMMAND
               PIPELINE
@@ -53,7 +53,7 @@ BASH_FILE
                     VARIABLE
                       PsiElement(var)('$0')
                     PsiElement(CLOSE_QUOTE)('"')
-          PsiElement(`)('`')
+          PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   PsiWhiteSpace(' ')
   COMMANDS_LIST
@@ -63,7 +63,7 @@ BASH_FILE
           STRING
             PsiElement(OPEN_QUOTE)('"')
             COMMAND_SUBSTITUTION_COMMAND
-              PsiElement(`)('`')
+              PsiElement(OPEN_BACKQUOTE)('`')
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
@@ -77,7 +77,7 @@ BASH_FILE
                         VARIABLE
                           PsiElement(var)('$0')
                         PsiElement(CLOSE_QUOTE)('"')
-              PsiElement(`)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiWhiteSpace(' ')
@@ -99,7 +99,7 @@ BASH_FILE
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
                       COMMAND_SUBSTITUTION_COMMAND
-                        PsiElement(`)('`')
+                        PsiElement(OPEN_BACKQUOTE)('`')
                         COMPOUND_LIST
                           PIPELINE_COMMAND
                             PIPELINE
@@ -113,7 +113,7 @@ BASH_FILE
                                   VARIABLE
                                     PsiElement(var)('$0')
                                   PsiElement(CLOSE_QUOTE)('"')
-                        PsiElement(`)('`')
+                        PsiElement(CLOSE_BACKQUOTE)('`')
                       PsiElement(CLOSE_QUOTE)('"')
                     LITERAL
                       PsiElement(word)('/..')
@@ -147,7 +147,7 @@ BASH_FILE
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
                         COMMAND_SUBSTITUTION_COMMAND
-                          PsiElement(`)('`')
+                          PsiElement(OPEN_BACKQUOTE)('`')
                           COMPOUND_LIST
                             PIPELINE_COMMAND
                               PIPELINE
@@ -161,7 +161,7 @@ BASH_FILE
                                     VARIABLE
                                       PsiElement(var)('$0')
                                     PsiElement(CLOSE_QUOTE)('"')
-                          PsiElement(`)('`')
+                          PsiElement(CLOSE_BACKQUOTE)('`')
                         PsiElement(CLOSE_QUOTE)('"')
                       LITERAL
                         PsiElement(word)('/..')

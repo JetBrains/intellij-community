@@ -3,40 +3,40 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
-          PsiElement(`)('`')
-          PsiElement(`)('`')
+          PsiElement(OPEN_BACKQUOTE)('`')
+          PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
-          PsiElement(`)('`')
+          PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
                   LITERAL
                     PsiElement(word)('echo')
-          PsiElement(`)('`')
+          PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
-          PsiElement(`)('`')
+          PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
                   VARIABLE
                     PsiElement(var)('$a')
-          PsiElement(`)('`')
+          PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
-          PsiElement(`)('`')
+          PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
             PIPELINE_COMMAND
               PIPELINE
@@ -48,13 +48,13 @@ BASH_FILE
                       NUMBER
                         PsiElement(int)('123')
                     PsiElement()))('))')
-          PsiElement(`)('`')
+          PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
-          PsiElement(`)('`')
+          PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
             PIPELINE_COMMAND
               PIPELINE
@@ -65,4 +65,4 @@ BASH_FILE
                       NUMBER
                         PsiElement(int)('123')
                     PsiElement(ARITH_SQUARE_RIGHT)(']')
-          PsiElement(`)('`')
+          PsiElement(CLOSE_BACKQUOTE)('`')

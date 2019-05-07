@@ -20,6 +20,7 @@ import static com.intellij.sh.lexer.ShTokenTypes.*;
 public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
 
   private static final TokenSet bracesSet = TokenSet.create(LEFT_CURLY, RIGHT_CURLY);
+  private static final TokenSet backQuoteSet = TokenSet.create(OPEN_BACKQUOTE, CLOSE_BACKQUOTE);
   private static final TokenSet numberSet = TokenSet.create(NUMBER, OCTAL, HEX, INT);
   private static final TokenSet bracketSet = TokenSet.create(LEFT_SQUARE, RIGHT_SQUARE);
   private static final TokenSet parenthesisSet = TokenSet.create(LEFT_PAREN, RIGHT_PAREN);
@@ -32,7 +33,6 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
 
   static {
     map.put(VAR, ShHighlighterColors.VARIABLE);
-    map.put(BACKQUOTE, ShHighlighterColors.BACKQUOTE);
     map.put(COMMENT, ShHighlighterColors.LINE_COMMENT);
     map.put(RAW_STRING, ShHighlighterColors.RAW_STRING);
     map.put(SHEBANG, ShHighlighterColors.SHEBANG_COMMENT);
@@ -42,6 +42,7 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
     map.put(LET, ShHighlighterColors.LET_COMMAND);
     map.put(BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
     fillMap(map, bracesSet, ShHighlighterColors.BRACE);
+    fillMap(map, backQuoteSet, ShHighlighterColors.BACKQUOTE);
     fillMap(map, keywords, ShHighlighterColors.KEYWORD);
     fillMap(map, numberSet, ShHighlighterColors.NUMBER);
     fillMap(map, bracketSet, ShHighlighterColors.BRACKET);

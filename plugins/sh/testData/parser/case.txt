@@ -464,7 +464,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           PsiElement(word)('x')
           COMMAND_SUBSTITUTION_COMMAND
-            PsiElement(`)('`')
+            PsiElement(OPEN_BACKQUOTE)('`')
             COMPOUND_LIST
               PIPELINE_COMMAND
                 PIPELINE
@@ -475,7 +475,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     LITERAL
                       PsiElement(word)('-r')
-            PsiElement(`)('`')
+            PsiElement(CLOSE_BACKQUOTE)('`')
           PsiWhiteSpace(' ')
           PsiElement(in)('in')
           CASE_CLAUSE
@@ -531,7 +531,7 @@ BASH_FILE
                       PsiElement(=)('=')
                     SIMPLE_COMMAND_ELEMENT
                       COMMAND_SUBSTITUTION_COMMAND
-                        PsiElement(`)('`')
+                        PsiElement(OPEN_BACKQUOTE)('`')
                         COMPOUND_LIST
                           PIPELINE_COMMAND
                             PIPELINE
@@ -549,7 +549,7 @@ BASH_FILE
                                   REDIRECTION
                                     PsiElement(>)('>')
                                     PsiElement(word)('/dev/null')
-                        PsiElement(`)('`')
+                        PsiElement(CLOSE_BACKQUOTE)('`')
               PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
           PsiElement(;;)(';;')
@@ -564,7 +564,7 @@ BASH_FILE
           PsiElement(case)('case')
           PsiWhiteSpace(' ')
           COMMAND_SUBSTITUTION_COMMAND
-            PsiElement(`)('`')
+            PsiElement(OPEN_BACKQUOTE)('`')
             COMPOUND_LIST
               PIPELINE_COMMAND
                 PIPELINE
@@ -636,7 +636,7 @@ BASH_FILE
                         PsiElement(int)('2')
                       PsiElement(>)('>')
                       PsiElement(word)('/dev/null')
-            PsiElement(`)('`')
+            PsiElement(CLOSE_BACKQUOTE)('`')
           PsiWhiteSpace(' ')
           PsiElement(in)('in')
           CASE_CLAUSE

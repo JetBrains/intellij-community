@@ -25,4 +25,16 @@ public class ShCommandSubstitutionCommandImpl extends ShCommandImpl implements S
     else super.accept(visitor);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getCloseBackquote() {
+    return findChildByType(CLOSE_BACKQUOTE);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getOpenBackquote() {
+    return findNotNullChildByType(OPEN_BACKQUOTE);
+  }
+
 }
