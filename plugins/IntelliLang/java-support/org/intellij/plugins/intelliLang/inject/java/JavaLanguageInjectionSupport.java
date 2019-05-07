@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
@@ -257,9 +258,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
     Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
     if (!configuration.isSourceModificationAllowed()) {
-      InjectLanguageAction.addFixer(host,
-                                    annotationFixer,
-                                    addAnnotation ? "Do you want to insert annotation?" : "Do you want to insert comment?");
+      String fixText = addAnnotation ?
+                       IntelliLangBundle.message("intelliLang.suggest.insert.annotation") :
+                       IntelliLangBundle.message("intelliLang.suggest.insert.comment");
+      InjectLanguageAction.addFixer(host, annotationFixer, fixText);
       return false;
     }
 
