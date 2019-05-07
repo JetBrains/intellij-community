@@ -37,18 +37,19 @@ import java.util.List;
 
 class ShShellcheckUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
-  private static final String APP_NAME = "shellcheck";
-  private static final String APP_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
+  private static final String SHELLCHECK = "shellcheck";
+  private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
   @SuppressWarnings("UnresolvedPropertyKey")
   private static final String REGISTRY_KEY = "sh.shellcheck.path";
 
   static void download(@Nullable Project project, @Nullable Runnable onSuccess) {
-    File directory = new File(APP_PATH);
+    File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
+      //noinspection ResultOfMethodCallIgnored
       directory.mkdirs();
     }
 
-    File shellcheck = new File(APP_PATH + File.separator + APP_NAME);
+    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK);
     if (shellcheck.exists()) {
       try {
         String path = getShellcheckPath();
@@ -78,7 +79,7 @@ class ShShellcheckUtil {
       return;
     }
 
-    String downloadName = APP_NAME;
+    String downloadName = SHELLCHECK;
     if (SystemInfoRt.isMac) {
       downloadName += "Archive";
     }
@@ -90,7 +91,7 @@ class ShShellcheckUtil {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(new File(APP_PATH));
+          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(new File(DOWNLOAD_PATH));
           Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
           File file = first != null ? first.first : null;
           if (file != null) {
@@ -162,7 +163,7 @@ class ShShellcheckUtil {
     FileUtil.delete(tmpDir);
     FileUtil.delete(archive);
 
-    File shellcheck = new File(APP_PATH + File.separator + APP_NAME);
+    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK);
     return shellcheck.exists() ? shellcheck.getCanonicalPath() : "";
   }
 
