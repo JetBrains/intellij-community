@@ -10,9 +10,14 @@ import java.awt.Rectangle
 
 interface JBTabPainter {
   companion object {
+    @JvmStatic
     val EDITOR = JBEditorTabPainter()
+    @JvmStatic
     val TOOL_WINDOW: JBTabPainter = JBDefaultTabPainter(TabTheme.TOOL_WINDOW)
+    @JvmStatic
     val DEFAULT: JBTabPainter = JBDefaultTabPainter()
+    @JvmStatic
+    val DEBUGGER: JBTabPainter = JBDefaultTabPainter(TabTheme(underlineHeight = 2))
   }
 
   fun getBackgroundColor(): Color

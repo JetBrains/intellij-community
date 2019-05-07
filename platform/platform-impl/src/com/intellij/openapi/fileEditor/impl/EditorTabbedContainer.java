@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.TabsHeightController;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
@@ -681,7 +680,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private class EditorTabs extends JBEditorTabs {
+  private class EditorTabs extends SameHeightTabs {
     private EditorTabs(Project project) {
       super(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), EditorTabbedContainer.this);
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
@@ -704,26 +703,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     protected JBEditorTabPainter createTabPainter() {
-      return JBTabPainter.Companion.getEDITOR();
+      return JBTabPainter.getEDITOR();
     }
 
     @Override
     protected JBTabsBackgroundAndBorder createTabBorder() {
       return new JBEditorTabsBackgroundAndBorder(this);
-    }
-
-    @Override
-    protected TabLabel createTabLabel(TabInfo info) {
-      return new TabLabel(this, info) {
-        @Override
-        public Dimension getPreferredSize() {
-          Dimension size = super.getPreferredSize();
-
-          Insets insets = getLayoutInsets();
-
-          return new Dimension(size.width, TabsHeightController.getToolWindowHeight().getValue() - insets.top - insets.bottom);
-        }
-      };
     }
 
     private boolean active = false;

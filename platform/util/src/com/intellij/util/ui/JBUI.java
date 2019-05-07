@@ -663,7 +663,7 @@ public class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt("DefaultTabs.underlineHeight", scale(2));
+        return getInt("DefaultTabs.underlineHeight", scale(3));
       }
 
       @NotNull
