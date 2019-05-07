@@ -15,6 +15,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
+import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
@@ -93,7 +94,7 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
   processExtensionDeclarations(searchString, project, strictMatch = strictMatch) { extension, tag ->
     val point = extension.extensionPoint ?: return@processExtensionDeclarations true
     if (point.beanClass.stringValue == null) {
-      if (tag.attributes.any { it.name == "implementation" && it.value == qualifiedName }) {
+      if (tag.attributes.any { it.name == Extension.IMPLEMENTATION_ATTRIBUTE && it.value == qualifiedName }) {
         result = point
         return@processExtensionDeclarations false
       }
@@ -124,7 +125,7 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 
   return tag.attributes.any {
-    it.name.startsWith("implementation") && it.value == qualifiedName
+    it.name.startsWith(Extension.IMPLEMENTATION_ATTRIBUTE) && it.value == qualifiedName
   }
 }
 

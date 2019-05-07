@@ -666,6 +666,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @NotNull
   public XmlTag[] getSubTags() {
     boolean processIncludes = shouldProcessIncludesNow();
+    return getSubTags(processIncludes);
+  }
+
+  public XmlTag[] getSubTags(boolean processIncludes) {
     Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
     XmlTag[] cached = CachedValuesManager.getCachedValue(this, key, () ->
       Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));

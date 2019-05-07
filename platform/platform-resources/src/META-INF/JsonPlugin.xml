@@ -2,14 +2,6 @@
 
   <module value="com.intellij.modules.json"/>
 
-  <application-components>
-    <!-- Add your application components here -->
-  </application-components>
-
-  <actions>
-    <!-- Add your actions here -->
-  </actions>
-
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <fileTypeFactory implementation="com.intellij.json.json5.Json5FileTypeFactory"/>

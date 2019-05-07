@@ -115,11 +115,11 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     return addUnversionedFilesToVcs(project, list, files, null, null);
   }
 
-  protected static boolean addUnversionedFilesToVcs(@NotNull Project project,
-                                                    @NotNull LocalChangeList list,
-                                                    @NotNull List<? extends VirtualFile> files,
-                                                    @Nullable Consumer<? super List<Change>> changesConsumer,
-                                                    @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
+  public static boolean addUnversionedFilesToVcs(@NotNull Project project,
+                                                 @NotNull LocalChangeList list,
+                                                 @NotNull List<? extends VirtualFile> files,
+                                                 @Nullable Consumer<? super List<Change>> changesConsumer,
+                                                 @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     final List<VcsException> exceptions = new ArrayList<>();

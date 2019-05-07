@@ -1908,6 +1908,8 @@
     <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
     <java.externalAnnotation.locationProvider
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
+    <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
+    <registryKey key="ide.java.show.bundled.runtime" defaultValue="false" description="Enables using bundled JetBrains Runtime for execution"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

@@ -106,15 +106,15 @@ public class PatternCompiler {
       }
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
-        optimizeScope(options, result, context);
       }
+      optimizeScope(options, checkForErrors, context, result);
       return result;
     } finally {
       context.clear();
     }
   }
 
-  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context)
+  private static void optimizeScope(MatchOptions options, boolean checkForErrors, CompileContext context, CompiledPattern result)
     throws NoMatchFoundException {
 
     final OptimizingSearchHelper searchHelper = context.getSearchHelper();
@@ -123,7 +123,7 @@ public class PatternCompiler {
 
       final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
       assert scope != null;
-      if (filesToScan.isEmpty()) {
+      if (checkForErrors && filesToScan.isEmpty()) {
         throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
       }
       result.setScope(scope.isSearchInLibraries()

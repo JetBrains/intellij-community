@@ -15,7 +15,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.JBTabsFactory;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -184,10 +183,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     setOpaque(true);
     if (JBTabsFactory.getUseNewTabs()) {
-      setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
+      setBorder(JBUI.CurrentTheme.ToolWindow.tabHeaderBorder());
     }
     else {
-      setBorder(JBUI.CurrentTheme.ToolWindow.tabHeaderBorder());
+      setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
     }
 
     new DoubleClickListener() {
@@ -240,6 +239,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   public void dispose() {
     removeAll();
     myToolWindow = null;
+
+    TabsHeightController.unregister(this);
   }
 
   void setTabActions(@NotNull AnAction[] actions) {
@@ -351,7 +352,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     if (JBTabsFactory.getUseNewTabs()) {
-      return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
+      TabsHeightController.registerHeight(this, size.height);
+      return new Dimension(size.width, TabsHeightController.getToolWindowHeight().getValue());
     }
     return size;
   }
@@ -360,7 +362,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   public Dimension getMinimumSize() {
     Dimension size = super.getMinimumSize();
     if (JBTabsFactory.getUseNewTabs()) {
-      return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
+      return new Dimension(size.width, getPreferredSize().height);
     }
     return size;
   }

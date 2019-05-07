@@ -1,6 +1,6 @@
 /*
-Value is always false (s == null)
-  The 'instanceof' check implies non-nullity (s instanceof String)
+Value is always false (s == null; line#8)
+  The 'instanceof' check implies non-nullity (s instanceof String; line#7)
  */
 class Test {
   void test(Object s) {

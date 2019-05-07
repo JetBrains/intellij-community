@@ -35,7 +35,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
   @Nullable
   @Override
   public Pair<Component, Layout> getDecorator(@NotNull SimpleTree tree, @Nullable UnnamedConfigurable configurable, boolean selected) {
-    if (!Registry.is("show.new.plugin.page", false)) {
+    if (!Registry.is("show.new.plugin.page", false) && !Registry.is("show.new.layout.plugin.page", false)) {
       return null;
     }
     if (myTree == null) {

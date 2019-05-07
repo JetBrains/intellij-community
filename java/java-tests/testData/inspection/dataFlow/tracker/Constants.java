@@ -1,6 +1,6 @@
 /*
-Value is always false (E.A == E.B)
-  Comparison arguments are different constants (==)
+Value is always false (E.A == E.B; line#9)
+  Comparison arguments are different constants (==; line#9)
  */
 class Test {
   enum E {A, B, C}

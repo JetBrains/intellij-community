@@ -239,7 +239,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private void createBottomPanel() {
     JPanel bottomPanel =
       new OpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5()), PluginManagerConfigurableNew.MAIN_BG_COLOR);
-    bottomPanel.setBorder(JBUI.Borders.emptyBottom(15));
+    bottomPanel.setBorder(JBUI.Borders.empty(0, 0, 15, 20));
 
     JBScrollPane scrollPane = new JBScrollPane(bottomPanel);
     scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);

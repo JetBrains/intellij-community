@@ -360,6 +360,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
 
   init {
+    // TODO Remove the registry keys and migration code in 2019.3
     if (Registry.`is`("tabs.alphabetical")) {
       sortTabsAlphabetically = true
     }

@@ -1,7 +1,7 @@
 /*
-Value is always false (list == null)
-  'list' was assigned (=)
-    According to contract, method 'loadList' always returns 'new' value (loadList)
+Value is always false (list == null; line#18)
+  'list' was assigned (=; line#17)
+    According to contract, method 'loadList' always returns 'new' value (loadList; line#17)
  */
 
 import java.util.List;

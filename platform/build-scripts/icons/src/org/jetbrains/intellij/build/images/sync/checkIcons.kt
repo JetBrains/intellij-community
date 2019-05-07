@@ -2,11 +2,9 @@
 package org.jetbrains.intellij.build.images.sync
 
 import org.jetbrains.intellij.build.images.ImageExtension
-import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -20,7 +18,7 @@ catch (e: Throwable) {
   e.printStackTrace()
 }
 
-internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer { println(it) }) {
+internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer(::println)) {
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
   context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
@@ -69,7 +67,7 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
   log("Searching for all")
   val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
-  context.icons.forEach { icon, gitObject ->
+  context.icons.forEach { (icon, gitObject) ->
     when {
       !devIconsTmp.containsKey(icon) -> context.byDesigners.added += icon
       gitObject.hash != devIconsTmp[icon]?.hash -> modified += icon
@@ -167,7 +165,7 @@ private fun readIconsRepo(context: Context) = protectStdErr {
   val (iconsRepo, iconsRepoDir) = context.iconsRepo to context.iconsRepoDir
   listGitObjects(iconsRepo, iconsRepoDir) { file ->
     // read icon hashes
-    isValidIcon(file.toPath())
+    Icon(file).isValid
   }.also {
     if (it.isEmpty()) error("${context.iconsRepoName} repo doesn't contain icons")
   }
@@ -191,26 +189,12 @@ private fun readDevRepo(context: Context, devRepoVcsRoots: List<File>) = protect
 
 internal fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Regex?, context: Context): Boolean {
   val path = file.toPath()
-  if (doSkip(file, testRoots, skipDirsRegex)) return false
-  return Files.exists(path) && isValidIcon(path) ||
+  if (!isImage(path) || doSkip(file, testRoots, skipDirsRegex)) return false
+  val icon = Icon(file)
+  return icon.isValid ||
          // if not exists then check respective icon in icons repo
-         !Files.exists(path) && isValidIcon(context.iconsRepoDir.resolve(file.toRelativeString(context.devRepoRoot)).toPath()) ||
+         !Files.exists(path) && Icon(context.iconsRepoDir.resolve(file.toRelativeString(context.devRepoRoot))).isValid ||
          IconRobotsDataReader.isSyncForced(file)
-}
-
-internal fun isValidIcon(file: Path) = muteStdErr {
-  try {
-    // image
-    Files.exists(file) && isImage(file) && imageSize(file)?.let { size ->
-      val pixels = if (file.fileName.toString().contains("@2x")) 64 else 32
-      // small
-      size.height <= pixels && size.width <= pixels
-    } ?: false
-  }
-  catch (e: Exception) {
-    log("WARNING: $file: ${e.message}")
-    false
-  }
 }
 
 @Volatile

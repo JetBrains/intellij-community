@@ -341,7 +341,17 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    DialogWrapper dialog = new DialogWrapper(true) {
+    final String title = isPrivacyPolicy
+                         ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
+                         : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement";
+    showEndUserAgreementText(title, htmlText);
+  }
+
+  /**
+   * Used by {@link com.intellij.idea.StartupListener}
+   */
+  public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
+      DialogWrapper dialog = new DialogWrapper(true) {
 
       private JEditorPane myViewer;
 
@@ -413,12 +423,7 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    if (isPrivacyPolicy) {
-      dialog.setTitle(ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy");
-    }
-    else {
-      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement");
-    }
+    dialog.setTitle(title);
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }

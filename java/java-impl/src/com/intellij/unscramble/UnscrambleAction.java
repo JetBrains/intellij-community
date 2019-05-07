@@ -19,6 +19,7 @@ import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -48,6 +49,9 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    event.getPresentation().setEnabled(event.getProject() != null);
+    Presentation presentation = event.getPresentation();
+    presentation.setEnabled(event.getProject() != null);
+    presentation.setText("Analyze _Stack Trace or Thread Dump...");
+    presentation.setDescription("Open console with the navigatable stack trace or a thread dump");
   }
 }

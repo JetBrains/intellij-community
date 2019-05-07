@@ -4,13 +4,10 @@ package com.intellij.ui.tabs.newImpl
 import com.intellij.openapi.rd.fill2DRect
 import com.intellij.openapi.rd.paint2DLine
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.ui.paint.RectanglePainter
-import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.TabTheme
 import com.jetbrains.rd.swing.fillRect
-import org.jetbrains.annotations.NotNull
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
@@ -29,24 +26,26 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, hovered: Boolean) {
     tabColor?.let {
       g.fill2DRect(rect, tabColor)
-      g.fill2DRect(rect, theme.inactiveMaskColor)
+      theme.inactiveColoredFileBackground?.let {
+        g.fill2DRect(rect, it)
+      }
     }
 
     if(hovered) {
-      g.fillRect(rect, theme.hoverMaskColor)
+      g.fillRect(rect, theme.hoverBackground)
       return
     }
   }
 
   override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    val color = tabColor ?: theme.uncoloredTabSelectedColor
+    val color = tabColor ?: theme.underlinedTabBackground
 
     color?.let {
       g.fill2DRect(rect, color)
     }
 
     if(hovered) {
-      g.fill2DRect(rect, theme.hoverMaskColor)
+      g.fill2DRect(rect, theme.hoverBackground)
     }
 
     val underline = underlineRectangle(position, rect, theme.underlineHeight)

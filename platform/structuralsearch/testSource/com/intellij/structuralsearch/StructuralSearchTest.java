@@ -2293,6 +2293,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     String pattern3 = "3 * 8 + 2 + 2";
     assertEquals(1, findMatchesCount(source2, pattern3));
+
+    String source3 = "class C {" +
+                     "  static int foo() {\n" +
+                     "    return (Integer.parseInt(\"3\"));\n" +
+                     "  }" +
+                     "}";
+    String pattern4 = "Integer.parseInt('_x)";
+    assertEquals(1, findMatchesCount(source3, pattern4));
   }
 
   public void testFindSelfAssignment() {

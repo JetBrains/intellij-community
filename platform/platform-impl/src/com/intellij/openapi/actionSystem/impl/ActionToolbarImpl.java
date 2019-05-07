@@ -220,6 +220,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     super.removeNotify();
     ourToolbars.remove(this);
 
+    if (myPopup != null) {
+      myPopup.cancel();
+      myPopup = null;
+    }
+
     CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
     if (lastUpdate != null) {
       lastUpdate.cancel();
@@ -1271,15 +1276,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     });
     myPopup = builder.createPopup();
-    ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-        final JBPopup popup = myPopup;
-        if (popup != null && !popup.isDisposed() && popup.isVisible()) {
-          popup.cancel();
-        }
-      }
-    });
     Disposer.register(myPopup, popupToolbar);
 
     myPopup.showInScreenCoordinates(this, location);
@@ -1329,10 +1325,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private void processClosed() {
     if (myPopup == null) return;
-
-    Disposer.dispose(myPopup);
+    if (myPopup.isVisible()) {
+      // setCancelCallback(..) can override cancel()
+      return;
+    }
+    // cancel() already called Disposer.dispose()
     myPopup = null;
-
     myUpdater.updateActions(false, false);
   }
 

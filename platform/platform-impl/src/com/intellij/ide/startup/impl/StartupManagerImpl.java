@@ -47,10 +47,12 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
+  private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
   private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<>());
   private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<>());
@@ -181,7 +183,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
 
     long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass());
-    if (duration > 100) {
+    if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && app.isDispatchThread() && uiFreezeWarned.compareAndSet(false, true)) {
         LOG.info(

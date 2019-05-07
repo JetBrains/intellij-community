@@ -1,6 +1,6 @@
 /*
-Value is always true (b)
-  'b == true' was established from condition (!b)
+Value is always true (b; line#11)
+  'b == true' was established from condition (!b; line#9)
  */
 import org.jetbrains.annotations.NotNull;
 

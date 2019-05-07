@@ -21,13 +21,9 @@ public class ExplicitArrayFillingInspectionMerger extends InspectionElementsMerg
   }
 
   @Override
-  protected boolean isEnabledByDefault(@NotNull String sourceToolName) {
-    return false;
-  }
-
-  @Override
   protected Element transformElement(@NotNull String sourceToolName, @NotNull Element sourceElement, @NotNull Element toolElement) {
-    if (HighlightSeverity.WARNING.getName().equals(sourceElement.getAttributeValue("level"))) {
+    if (HighlightSeverity.WARNING.getName().equals(sourceElement.getAttributeValue("level")) &&
+        Boolean.parseBoolean(sourceElement.getAttributeValue("enabled"))) {
       toolElement.addContent(new Element("option").setAttribute("name", "mySuggestSetAll").setAttribute("value", "true"));
     }
     return toolElement;

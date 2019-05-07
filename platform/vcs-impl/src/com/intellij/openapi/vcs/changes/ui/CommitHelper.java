@@ -1,14 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.CommitResultHandler;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.util.NullableFunction;
+import com.intellij.vcs.commit.AbstractCommitter;
+import com.intellij.vcs.commit.ChangeListCommitState;
+import com.intellij.vcs.commit.DefaultCommitResultHandler;
+import com.intellij.vcs.commit.SingleChangeListCommitter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,13 @@ public class CommitHelper {
                       @Nullable CommitResultHandler resultHandler) {
     myActionName = actionName;
     myForceSyncCommit = synchronously;
+
+    ChangeListCommitState commitState = new ChangeListCommitState((LocalChangeList)changeList, changes, commitMessage);
+    // for compatibility with external plugins
+    CommitContext commitContext =
+      additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
     myCommitter =
-      new SingleChangeListCommitter(project, (LocalChangeList)changeList, changes, commitMessage, handlers, additionalData, null,
-                                    actionName, isDefaultChangeListFullyIncluded);
+      new SingleChangeListCommitter(project, commitState, commitContext, handlers, null, actionName, isDefaultChangeListFullyIncluded);
 
     myCommitter.addResultHandler(notNull(resultHandler, new DefaultCommitResultHandler(myCommitter)));
   }
