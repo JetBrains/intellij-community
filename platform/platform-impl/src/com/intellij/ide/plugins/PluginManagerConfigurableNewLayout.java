@@ -832,14 +832,12 @@ public class PluginManagerConfigurableNewLayout
 
         myPluginUpdatesService.connectInstalled(updates -> {
           if (ContainerUtil.isEmpty(updates)) {
-            for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-              for (CellPluginComponent plugin : group.plugins) {
-                ((NewListPluginComponent)plugin).setUpdateDescriptor(null);
-              }
-            }
+            clearUpdates(myInstalledPanel);
+            clearUpdates(myInstalledSearchPanel.getPanel());
           }
           else {
             applyUpdates(myInstalledPanel, updates);
+            applyUpdates(myInstalledSearchPanel.getPanel(), updates);
           }
           selectionListener.accept(myInstalledPanel);
         });
@@ -1020,6 +1018,14 @@ public class PluginManagerConfigurableNewLayout
         return myInstalledSearchPanel;
       }
     };
+  }
+
+  private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
+    for (UIPluginGroup group : panel.getGroups()) {
+      for (CellPluginComponent plugin : group.plugins) {
+        ((NewListPluginComponent)plugin).setUpdateDescriptor(null);
+      }
+    }
   }
 
   private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginDownloader> updates) {
