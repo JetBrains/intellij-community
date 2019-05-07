@@ -156,4 +156,6 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testInstanceOfSecondCheck() { doTest(); }
   public void testNullCheckNpeNullCheck() { doTest(); }
   public void testListAddContract() { doTest(); }
+  public void testConstantStrings() { doTest(); }
+  public void testConstantStrings2() { doTest(); }
 }

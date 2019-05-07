@@ -369,7 +369,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
             Warning caused by narrowing conversion
             Warning caused by unary minus
             Warning caused by final field initializer
-            Literal is not-null
   TODO: 3. Check how it works with:
             Inliners (notably: Stream API)
             Boxed numbers
@@ -932,23 +931,25 @@ public class TrackingRunner extends StandardDataFlowRunner {
   }
 
   private static MemoryStateChange findRelationAddedChange(MemoryStateChange history, DfaVariableValue var, Relation relation) {
-    List<Relation> subRelations;
+    List<RelationType> subRelations;
     switch (relation.myRelationType) {
       case NE:
-        subRelations = Arrays.asList(relation, new Relation(RelationType.GT, relation.myCounterpart),
-                                     new Relation(RelationType.LT, relation.myCounterpart));
+        if (relation.myCounterpart instanceof DfaConstValue) {
+          return history.findRelation(var, rel -> rel.equals(relation) ||
+                                                  rel.myRelationType == RelationType.EQ && rel.myCounterpart instanceof DfaConstValue,
+                                      true);
+        }
+        subRelations = Arrays.asList(RelationType.NE, RelationType.GT, RelationType.LT);
         break;
       case LE:
-        subRelations = Arrays.asList(new Relation(RelationType.EQ, relation.myCounterpart),
-                                     new Relation(RelationType.LT, relation.myCounterpart));
+        subRelations = Arrays.asList(RelationType.EQ, RelationType.LT);
         break;
       case GE:
-        subRelations = Arrays.asList(new Relation(RelationType.EQ, relation.myCounterpart),
-                                     new Relation(RelationType.GT, relation.myCounterpart));
+        subRelations = Arrays.asList(RelationType.EQ, RelationType.GT);
         break;
       default:
-        subRelations = Collections.singletonList(relation);
+        subRelations = Collections.singletonList(relation.myRelationType);
     }
-    return history.findRelation(var, subRelations::contains, true);
+    return history.findRelation(var, rel -> rel.myCounterpart == relation.myCounterpart && subRelations.contains(rel.myRelationType), true);
   }
 }
