@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -189,7 +190,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         final FileType fileType = file.getFileType();
         document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
 
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
+        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)
+            || file instanceof BackedVirtualFile) {
           document.addDocumentListener(myPhysicalDocumentChangeTracker);
         }
 
@@ -364,7 +366,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     VirtualFile file = getFile(document);
     if (LOG.isTraceEnabled()) LOG.trace("saving: " + file);
 
-    if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
+    if (file == null ||
+        (file instanceof LightVirtualFile && !(file instanceof BackedVirtualFile)) ||
+        file.isValid() && !isFileModified(file)) {
       removeFromUnsaved(document);
       return;
     }
