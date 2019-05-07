@@ -116,8 +116,10 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
         writeServiceStats(writer)
 
         val startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
-        var totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
+        var totalDuration: Long = 0
         writer.array("items") {
+          totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
+
           for ((index, item) in items.withIndex()) {
             writer.obj {
               writer.writeStringField("name", item.name)
