@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -366,7 +367,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
             Warning caused by contract
             Warning caused by CustomMethodHandler
             Warning caused by polyadic math
-            Warning caused by narrowing conversion
             Warning caused by unary minus
             Warning caused by final field initializer
   TODO: 3. Check how it works with:
@@ -842,6 +842,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
     PsiExpression expression = factUse.getExpression();
     if (expression != null) {
+      PsiType type = expression.getType();
       if (expression instanceof PsiLiteralExpression) {
         return null; // Literal range is quite evident
       }
@@ -856,39 +857,62 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
         }
       }
-      if (expression instanceof PsiBinaryExpression &&
-          (PsiType.LONG.equals(expression.getType()) || PsiType.INT.equals(expression.getType()))) {
-        boolean isLong = PsiType.LONG.equals(expression.getType());
-        PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
-        PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
-        PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
-        MemoryStateChange leftPush = factUse.findExpressionPush(left);
-        MemoryStateChange rightPush = factUse.findExpressionPush(right);
-        if (leftPush != null && rightPush != null) {
-          DfaValue leftValue = leftPush.myTopOfStack;
-          DfaValue rightValue = rightPush.myTopOfStack;
-          Pair<MemoryStateChange, LongRangeSet> leftSet = leftPush.findFact(leftValue, DfaFactType.RANGE);
-          Pair<MemoryStateChange, LongRangeSet> rightSet = rightPush.findFact(rightValue, DfaFactType.RANGE);
-          LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(expression.getType()));
-          if (leftSet.second == null) {
-            leftSet = Pair.create(null, fromType);
-          }
-          if (rightSet.second == null) {
-            rightSet = Pair.create(null, fromType);
-          }
-          LongRangeSet result = leftSet.second.binOpFromToken(binOp.getOperationTokenType(), rightSet.second, isLong);
-          if (range.equals(result)) {
-            CauseItem cause = new CauseItem("result of '" + binOp.getOperationSign().getText() +
-                                            "' is " + range.getPresentationText(expression.getType()), factUse);
-            CauseItem leftCause = null, rightCause = null;
-            if (!leftSet.second.equals(fromType)) {
-              leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "left operand is %s");
+      if (expression instanceof PsiTypeCastExpression && type instanceof PsiPrimitiveType && TypeConversionUtil.isNumericType(type)) {
+        PsiExpression operand = ((PsiTypeCastExpression)expression).getOperand();
+        MemoryStateChange operandPush = factUse.findExpressionPush(operand);
+        if (operandPush != null) {
+          Pair<MemoryStateChange, LongRangeSet> operandInfo = operandPush.findFact(operandPush.myTopOfStack, DfaFactType.RANGE);
+          LongRangeSet operandRange = operandInfo.second == null ? LongRangeSet.fromType(type) : operandInfo.second;
+          if (operandRange != null) {
+            LongRangeSet result = operandRange.castTo((PsiPrimitiveType)type);
+            if (range.equals(result)) {
+              CauseItem cause =
+                new CauseItem("result of '(" + type.getCanonicalText() + ")' cast is " + range.getPresentationText(null), expression);
+              if (!operandRange.equals(LongRangeSet.fromType(operand.getType()))) {
+                cause.addChildren(findRangeCause(operandPush, operandInfo.first, operandRange, "cast operand is %s"));
+              }
+              return cause;
             }
-            if (!rightSet.second.equals(fromType)) {
-              rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "right operand is %s");
+          }
+        }
+      }
+      if (range.equals(LongRangeSet.fromType(type))) {
+        return null; // Range is any value of given type: no need to explain (except narrowing cast)
+      }
+      if (PsiType.LONG.equals(type) || PsiType.INT.equals(type)) {
+        if (expression instanceof PsiBinaryExpression) {
+          boolean isLong = PsiType.LONG.equals(type);
+          PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+          PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+          PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
+          MemoryStateChange leftPush = factUse.findExpressionPush(left);
+          MemoryStateChange rightPush = factUse.findExpressionPush(right);
+          if (leftPush != null && rightPush != null) {
+            DfaValue leftValue = leftPush.myTopOfStack;
+            DfaValue rightValue = rightPush.myTopOfStack;
+            Pair<MemoryStateChange, LongRangeSet> leftSet = leftPush.findFact(leftValue, DfaFactType.RANGE);
+            Pair<MemoryStateChange, LongRangeSet> rightSet = rightPush.findFact(rightValue, DfaFactType.RANGE);
+            LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(type));
+            if (leftSet.second == null) {
+              leftSet = Pair.create(null, fromType);
             }
-            cause.addChildren(leftCause, rightCause);
-            return cause;
+            if (rightSet.second == null) {
+              rightSet = Pair.create(null, fromType);
+            }
+            LongRangeSet result = leftSet.second.binOpFromToken(binOp.getOperationTokenType(), rightSet.second, isLong);
+            if (range.equals(result)) {
+              CauseItem cause = new CauseItem("result of '" + binOp.getOperationSign().getText() +
+                                              "' is " + range.getPresentationText(type), factUse);
+              CauseItem leftCause = null, rightCause = null;
+              if (!leftSet.second.equals(fromType)) {
+                leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "left operand is %s");
+              }
+              if (!rightSet.second.equals(fromType)) {
+                rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "right operand is %s");
+              }
+              cause.addChildren(leftCause, rightCause);
+              return cause;
+            }
           }
         }
       }
