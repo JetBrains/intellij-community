@@ -263,7 +263,7 @@ open class MultipleFileMergeDialog(
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
 
-    ProgressManager.getInstance().run(object : Task.Modal(project, "Resolving Conflicts", false) {
+    ProgressManager.getInstance().run(object : Task.Modal(project, "Resolving Conflicts...", false) {
       override fun run(indicator: ProgressIndicator) {
         if (!beforeResolve(files)) {
           return
@@ -377,7 +377,7 @@ open class MultipleFileMergeDialog(
           val title = mergeDialogCustomizer.getMergeWindowTitle(file)
 
           ConflictData(mergeData, title, listOf(leftTitle, baseTitle, rightTitle))
-        }, "Loading Revisions", true, project)
+        }, "Loading Revisions...", true, project)
       }
       catch (ex: VcsException) {
         Messages.showErrorDialog(contentPanel, "Error loading revisions to merge: " + ex.message)
