@@ -47,13 +47,13 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('Welcome')
                       PsiWhiteSpace(' ')
                       VARIABLE
                         PsiElement(var)('$c')
                       PsiWhiteSpace(' ')
                       PsiElement(word)('times...')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')

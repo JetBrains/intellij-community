@@ -20,6 +20,6 @@ BASH_FILE
                       PsiElement(word)('-p')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(CLOSE_QUOTE)('"')
             PsiElement())(')')

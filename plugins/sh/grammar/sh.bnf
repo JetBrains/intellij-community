@@ -73,7 +73,6 @@
     LEFT_SQUARE = '['
     RIGHT_SQUARE = ']'
     BACKQUOTE = '`'
-    QUOTE = '"'
 
     EXPR_CONDITIONAL_LEFT = "[ "
     EXPR_CONDITIONAL_RIGHT = " ]"
@@ -98,6 +97,9 @@
     REDIRECT_AMP_GREATER_GREATER = "&>>"
     REDIRECT_LESS_GREATER = "<>"
     REDIRECT_GREATER_BAR = ">|"
+
+    OPEN_QUOTE = 'OPEN_QUOTE'
+    CLOSE_QUOTE = 'CLOSE_QUOTE'
 
     FILEDESCRIPTOR='file descriptor'
 
@@ -276,7 +278,7 @@ bash_expansion ::= '{' (word | bash_expansion)* '}'
 variable ::= var {extends=literal}
 
 number ::= int | hex | octal {extends=literal}
-string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
+string ::= (OPEN_QUOTE (word | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING {
   pin(".*")=1
   methods=[getReferences]
   extends=literal

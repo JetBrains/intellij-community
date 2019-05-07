@@ -52,6 +52,18 @@ public class ShStringImpl extends ShLiteralImpl implements ShString {
 
   @Override
   @Nullable
+  public PsiElement getCloseQuote() {
+    return findChildByType(CLOSE_QUOTE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getOpenQuote() {
+    return findChildByType(OPEN_QUOTE);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getRawString() {
     return findChildByType(RAW_STRING);
   }

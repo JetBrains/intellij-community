@@ -14,11 +14,11 @@ BASH_FILE
                       PsiElement(word)('test')
                   PsiWhiteSpace(' ')
                   STRING
-                    PsiElement(")('"')
+                    PsiElement(OPEN_QUOTE)('"')
                     PsiElement(word)('X')
                     VARIABLE
                       PsiElement(var)('$1')
-                    PsiElement(")('"')
+                    PsiElement(CLOSE_QUOTE)('"')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE

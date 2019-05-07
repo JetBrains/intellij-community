@@ -25,8 +25,8 @@ BASH_FILE
                         PsiElement(=)('=')
                         PsiWhiteSpace(' ')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement(word)('a')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(})('}')

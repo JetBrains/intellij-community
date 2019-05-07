@@ -19,10 +19,10 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$CONCURRENCY')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiWhiteSpace(' ')
@@ -55,9 +55,9 @@ BASH_FILE
                       PsiElement(word)('CONCURRENCY')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('none')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
               PIPELINE_COMMAND
@@ -82,8 +82,8 @@ BASH_FILE
                       PsiElement(word)('CONCURRENCY')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('none')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

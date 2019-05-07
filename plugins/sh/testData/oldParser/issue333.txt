@@ -16,8 +16,8 @@ BASH_FILE
               PsiElement(word)('eval')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('ech')
             VARIABLE
               PsiElement(var)('$a')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

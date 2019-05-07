@@ -18,10 +18,10 @@ BASH_FILE
                       PsiElement(word)('foo')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$1')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(;)(';')
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
@@ -66,10 +66,10 @@ BASH_FILE
                               PsiElement(case)('case')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 VARIABLE
                                   PsiElement(var)('$1')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               PsiElement(in)('in')
                               PsiWhiteSpace(' ')

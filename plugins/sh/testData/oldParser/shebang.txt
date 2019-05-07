@@ -38,25 +38,25 @@ BASH_FILE
               PsiElement(word)('printf')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('#')
             PsiElement(!)('!')
             PsiElement(word)('/bin/sh\n')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PsiElement(>)('>')
               PsiWhiteSpace(' ')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 VARIABLE
                   PsiElement(var)('$usrcfd')
                 PsiElement(word)('/tmp/session.tell.')
                 VARIABLE
                   PsiElement(var)('$nametmp')
                 PsiElement(word)('.sh')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiWhiteSpace('    ')
   PsiComment(Comment)('#!/bin/sh')

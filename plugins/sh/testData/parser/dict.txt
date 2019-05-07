@@ -75,9 +75,9 @@ BASH_FILE
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement(word)('a')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                     PsiElement(=)('=')
                     INDEX_EXPRESSION
@@ -88,9 +88,9 @@ BASH_FILE
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement(word)('aa')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                   PsiElement(=)('=')
                   INDEX_EXPRESSION
@@ -101,9 +101,9 @@ BASH_FILE
                     PsiElement([)('[')
                     LITERAL_EXPRESSION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(int)('2')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                 PsiElement(=)('=')
                 LITERAL_EXPRESSION
@@ -130,9 +130,9 @@ BASH_FILE
                     PsiElement([)('[')
                     LITERAL_EXPRESSION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('aa')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                   PsiElement(=)('=')
                   INDEX_EXPRESSION
@@ -143,9 +143,9 @@ BASH_FILE
                     PsiElement([)('[')
                     LITERAL_EXPRESSION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(int)('2')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                 PsiElement(=)('=')
                 LITERAL_EXPRESSION
@@ -194,9 +194,9 @@ BASH_FILE
                   PsiElement([)('[')
                   LITERAL_EXPRESSION
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('a')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
                 PsiElement(=)('=')
                 LITERAL_EXPRESSION
@@ -222,9 +222,9 @@ BASH_FILE
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement(word)('a')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                     PsiElement(=)('=')
                     INDEX_EXPRESSION
@@ -235,9 +235,9 @@ BASH_FILE
                       PsiElement([)('[')
                       LITERAL_EXPRESSION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement(word)('aa')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                   PsiElement(=)('=')
                   INDEX_EXPRESSION
@@ -248,9 +248,9 @@ BASH_FILE
                     PsiElement([)('[')
                     LITERAL_EXPRESSION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(int)('2')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                 PsiElement(=)('=')
                 LITERAL_EXPRESSION

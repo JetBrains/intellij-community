@@ -146,17 +146,17 @@ BASH_FILE
                   EQUALITY_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(int)('1')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(==)('==')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(int)('1')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -195,17 +195,17 @@ BASH_FILE
                   ASSIGNMENT_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('foo')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=)('=')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('foo')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -244,17 +244,17 @@ BASH_FILE
                   ASSIGNMENT_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('foo')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=)('=')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('foo')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -375,7 +375,7 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('Usage:')
                       PsiWhiteSpace(' ')
                       PsiElement([)('[')
@@ -393,7 +393,7 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(word)('path')
                       PsiElement(])(']')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -437,7 +437,7 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('Usage:')
                       PsiWhiteSpace(' ')
                       PsiElement([)('[')
@@ -455,7 +455,7 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(word)('path')
                       PsiElement(])(']')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -476,21 +476,21 @@ BASH_FILE
                     EQUALITY_CONDITION
                       LITERAL_CONDITION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement($)('$')
                           SHELL_PARAMETER_EXPANSION
                             PsiElement({)('{')
                             PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
                             PsiElement(})('}')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(!=)('!=')
                       PsiWhiteSpace(' ')
                       LITERAL_CONDITION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement(word)('true')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                     PsiWhiteSpace('      ')
                     PsiElement(&&)('&&')
@@ -500,13 +500,13 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   LITERAL_CONDITION
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
                         PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
                         PsiElement(})('}')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -545,21 +545,21 @@ BASH_FILE
                     EQUALITY_CONDITION
                       LITERAL_CONDITION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement($)('$')
                           SHELL_PARAMETER_EXPANSION
                             PsiElement({)('{')
                             PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
                             PsiElement(})('}')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(!=)('!=')
                       PsiWhiteSpace(' ')
                       LITERAL_CONDITION
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement(word)('true')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(&&)('&&')
                     LITERAL_CONDITION
@@ -569,13 +569,13 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   LITERAL_CONDITION
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
                         PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
                         PsiElement(})('}')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -613,17 +613,17 @@ BASH_FILE
                   ASSIGNMENT_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$key')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=)('=')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiWhiteSpace(' ')
@@ -648,7 +648,7 @@ BASH_FILE
                       PsiElement(word)('-e')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('Executing')
                       PsiWhiteSpace(' ')
                       PsiElement(word)('\\e')
@@ -662,7 +662,7 @@ BASH_FILE
                       PsiElement(word)('PID')
                       PsiWhiteSpace(' ')
                       PsiElement(word)('1.')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
             PsiElement(else)('else')
@@ -700,18 +700,18 @@ BASH_FILE
                   EQUALITY_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$PACKER_BUILD_NAME')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(==)('==')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('virtualbox')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -869,10 +869,10 @@ BASH_FILE
                   EQUALITY_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$VERSION_ID')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(!=)('!=')
                     PsiWhiteSpace('  ')
@@ -978,9 +978,9 @@ BASH_FILE
                   ASSIGNMENT_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('10.12.6')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=)('=')
                     PsiWhiteSpace(' ')
@@ -1109,7 +1109,7 @@ BASH_FILE
                       PsiElement(word)('KERNCONFDIR')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SUBSHELL_COMMAND
                         PsiElement(()('(')
@@ -1141,7 +1141,7 @@ BASH_FILE
                                                 PsiElement(})('}')
                                     PsiElement())(')')
                         PsiElement())(')')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
             PsiElement(else)('else')
@@ -1161,13 +1161,13 @@ BASH_FILE
                           PsiElement(word)('KERNCONF')
                         PsiElement(=)('=')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement($)('$')
                           SHELL_PARAMETER_EXPANSION
                             PsiElement({)('{')
                             PsiElement(parameter_expansion_body)('NANO_KERNEL')
                             PsiElement(})('}')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -1214,10 +1214,10 @@ BASH_FILE
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('a')
               PsiElement(})('}')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

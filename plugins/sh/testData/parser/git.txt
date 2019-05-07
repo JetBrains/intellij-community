@@ -28,14 +28,14 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('***')
                       PsiWhiteSpace(' ')
                       PsiElement(word)('GIT:')
                       PsiWhiteSpace(' ')
                       VARIABLE
                         PsiElement(var)('$repo')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
@@ -46,11 +46,11 @@ BASH_FILE
                         PsiElement(word)('FOLDER_PREFIX')
                       PsiElement(=)('=')
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$repo')
                         PsiElement(word)('/')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
@@ -58,11 +58,11 @@ BASH_FILE
                           PsiElement(word)('AUTHORS_REWRITE_TABLE_FILE')
                         PsiElement(=)('=')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$ROOT')
                           PsiElement(word)('/authors-rewrite-table')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     LITERAL
                       PsiElement(word)('git')
@@ -198,17 +198,17 @@ BASH_FILE
                                 PsiElement(word)('tag')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('    ')
                         PIPELINE_COMMAND
@@ -225,11 +225,11 @@ BASH_FILE
                                 PsiElement(word)('-D')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
                       PsiElement(done)('done')
@@ -306,17 +306,17 @@ BASH_FILE
                                 PsiElement(word)('tag')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('    ')
                         PIPELINE_COMMAND
@@ -333,11 +333,11 @@ BASH_FILE
                                 PsiElement(word)('-D')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
                       PsiElement(done)('done')
@@ -414,17 +414,17 @@ BASH_FILE
                                 PsiElement(word)('branch')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('    ')
                         PIPELINE_COMMAND
@@ -441,11 +441,11 @@ BASH_FILE
                                 PsiElement(word)('-D')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
                       PsiElement(done)('done')
@@ -459,11 +459,11 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('Available')
                       PsiWhiteSpace(' ')
                       PsiElement(word)('branches:')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND

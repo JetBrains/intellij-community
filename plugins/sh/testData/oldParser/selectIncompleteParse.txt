@@ -55,10 +55,10 @@ BASH_FILE
                       PsiWhiteSpace('        ')
                       PATTERN
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$QUIT')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiElement())(')')
                       PsiElement(\n)('\n')
                       PsiWhiteSpace('          ')
@@ -71,9 +71,9 @@ BASH_FILE
                                   PsiElement(word)('echo')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('Exiting.')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('          ')
                         PIPELINE_COMMAND
@@ -101,7 +101,7 @@ BASH_FILE
                                   PsiElement(word)('echo')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('You')
                                 PsiWhiteSpace(' ')
                                 PsiElement(word)('picked')
@@ -113,7 +113,7 @@ BASH_FILE
                                 VARIABLE
                                   PsiElement(var)('$REPLY')
                                 PsiElement())(')')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                     PsiWhiteSpace('          ')
                     PsiElement(;;)(';;')
@@ -160,8 +160,8 @@ BASH_FILE
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('Example')
             PsiWhiteSpace(' ')
             PsiElement(word)('text')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

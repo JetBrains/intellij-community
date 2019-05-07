@@ -25,10 +25,10 @@ BASH_FILE
                           PsiElement(word)('file')
                         PsiElement(=)('=')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$1')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
@@ -67,10 +67,10 @@ BASH_FILE
                               PsiElement(word)('-f')
                             PsiWhiteSpace(' ')
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               VARIABLE
                                 PsiElement(var)('$file')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -124,10 +124,10 @@ BASH_FILE
                           PsiElement(word)('file')
                         PsiElement(=)('=')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$1')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
@@ -166,10 +166,10 @@ BASH_FILE
                               PsiElement(word)('-f')
                             PsiWhiteSpace(' ')
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               VARIABLE
                                 PsiElement(var)('$file')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -221,10 +221,10 @@ BASH_FILE
                           PsiElement(word)('file')
                         PsiElement(=)('=')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$1')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
@@ -263,10 +263,10 @@ BASH_FILE
                               PsiElement(word)('-f')
                             PsiWhiteSpace(' ')
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               VARIABLE
                                 PsiElement(var)('$file')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')

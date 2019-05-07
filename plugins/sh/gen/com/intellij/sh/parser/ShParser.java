@@ -2371,10 +2371,10 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING
+  // (OPEN_QUOTE (word | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
-    if (!nextTokenIs(b, "<string>", QUOTE, RAW_STRING)) return false;
+    if (!nextTokenIs(b, "<string>", OPEN_QUOTE, RAW_STRING)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, STRING, "<string>");
     r = string_0(b, l + 1);
@@ -2383,15 +2383,15 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '"' (word | vars | <<notQuote>>)* '"'
+  // OPEN_QUOTE (word | vars | <<notQuote>>)* CLOSE_QUOTE
   private static boolean string_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, QUOTE);
+    r = consumeToken(b, OPEN_QUOTE);
     p = r; // pin = 1
     r = r && report_error_(b, string_0_1(b, l + 1));
-    r = p && consumeToken(b, QUOTE) && r;
+    r = p && consumeToken(b, CLOSE_QUOTE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }

@@ -71,9 +71,9 @@ BASH_FILE
             PsiElement(word)('ENV_FILE')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('a.env')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
     PsiElement(;)(';')
   PsiElement(\n)('\n')
   COMMANDS_LIST

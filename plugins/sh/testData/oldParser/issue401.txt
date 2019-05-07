@@ -7,7 +7,7 @@ BASH_FILE
             PsiElement(word)('NAME_IN_CONTENT')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -20,12 +20,12 @@ BASH_FILE
                           PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement($)('$')
                         SHELL_PARAMETER_EXPANSION
                           PsiElement({)('{')
                           PsiElement(parameter_expansion_body)('NAME_IN_CONTENT%<')
                           PsiElement(})('}')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

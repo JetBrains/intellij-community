@@ -13,7 +13,7 @@ public class ShBackspaceHandler extends BackspaceHandlerDelegate {
 
   @Override
   public boolean charDeleted(char c, @NotNull PsiFile file, @NotNull Editor editor) {
-    if ((c == '\"' || c == '`' || c == '\'') && file instanceof ShFile) {
+    if ((c == '`' || c == '\'') && file instanceof ShFile) {
       int offset = editor.getCaretModel().getOffset();
       if (offset < 0) return false;
       CharSequence charsSequence = editor.getDocument().getCharsSequence();

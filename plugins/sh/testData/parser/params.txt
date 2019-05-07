@@ -448,7 +448,7 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   LITERAL_CONDITION
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
@@ -472,7 +472,7 @@ BASH_FILE
                           PsiElement(})('}')
                         PsiElement(parameter_expansion_body)(']-')
                         PsiElement(})('}')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -490,9 +490,9 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('Example')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -529,7 +529,7 @@ BASH_FILE
             PsiElement(word)('msg')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('Entering')
             PsiWhiteSpace(' ')
             VARIABLE
@@ -550,7 +550,7 @@ BASH_FILE
               PsiElement(})('}')
             VARIABLE
               PsiElement(var)('$3')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -576,14 +576,14 @@ BASH_FILE
             PsiElement(word)('REPOSITORY')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('http://repo.labs.intellij.net/cache/')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('REPOSITORY/https:\//https')
               PsiElement(})('}')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -600,13 +600,13 @@ BASH_FILE
                 PsiElement(word)('wait_seconds')
               PsiElement(=)('=')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement($)('$')
                 SHELL_PARAMETER_EXPANSION
                   PsiElement({)('{')
                   PsiElement(parameter_expansion_body)('2:-10')
                   PsiElement(})('}')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('# 10 seconds as default timeout')
   PsiElement(\n)('\n')
@@ -633,13 +633,13 @@ BASH_FILE
             PsiElement(word)('DISTRIB_MAJOR')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('DISTRIB_RELEASE%.*')
               PsiElement(})('}')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -651,7 +651,7 @@ BASH_FILE
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('export')
             PsiWhiteSpace(' ')
             PsiElement($)('$')
@@ -663,7 +663,7 @@ BASH_FILE
             PsiElement(=)('=')
             VARIABLE
               PsiElement(var)('$DIR')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -742,13 +742,13 @@ BASH_FILE
                 PsiElement(word)('URL')
               PsiElement(=)('=')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement($)('$')
                 SHELL_PARAMETER_EXPANSION
                   PsiElement({)('{')
                   PsiElement(parameter_expansion_body)('3:-http://repo.labs.intellij.net/download/oracle/$FILE')
                   PsiElement(})('}')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -786,14 +786,14 @@ BASH_FILE
                       PsiElement(word)('-nv')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('http://repo.labs.intellij.net/download/oracle/')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
                         PsiElement(parameter_expansion_body)('component')
                         PsiElement(})('}')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -806,7 +806,7 @@ BASH_FILE
             PsiElement(word)('ARGS')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('--install')
             PsiWhiteSpace(' ')
             PsiElement(word)('/usr/bin/java')
@@ -818,7 +818,7 @@ BASH_FILE
             PsiElement(word)('/bin/java')
             PsiWhiteSpace(' ')
             PsiElement(int)('100')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -832,13 +832,13 @@ BASH_FILE
             PsiElement(word)('in')
             PsiWhiteSpace(' ')
             STRING
-              PsiElement(")('"')
+              PsiElement(OPEN_QUOTE)('"')
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
                 PsiElement(parameter_expansion_body)('commands[@]')
                 PsiElement(})('}')
-              PsiElement(")('"')
+              PsiElement(CLOSE_QUOTE)('"')
             LIST_TERMINATOR
               PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -854,7 +854,7 @@ BASH_FILE
                       PsiElement(word)('ARGS')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$ARGS')
                       PsiWhiteSpace(' ')
@@ -872,7 +872,7 @@ BASH_FILE
                       PsiElement(word)('/bin/')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -979,46 +979,46 @@ BASH_FILE
                           PsiElement([)('[')
                           LITERAL_EXPRESSION
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               PsiElement(int)('11')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                           PsiElement(])(']')
                         PsiElement(=)('=')
                         INDEX_EXPRESSION
                           LITERAL_EXPRESSION
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               PsiElement(word)('3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                           PsiWhiteSpace(' \\n        ')
                           PsiElement([)('[')
                           LITERAL_EXPRESSION
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               PsiElement(word)('9.0.4')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                           PsiElement(])(']')
                       PsiElement(=)('=')
                       INDEX_EXPRESSION
                         LITERAL_EXPRESSION
                           STRING
-                            PsiElement(")('"')
+                            PsiElement(OPEN_QUOTE)('"')
                             PsiElement(word)('39362fb9bfb341fcc802e55e8ea59f4664ca58fd821ce956d48e1aa4fb3d2dec')
-                            PsiElement(")('"')
+                            PsiElement(CLOSE_QUOTE)('"')
                         PsiWhiteSpace(' \\n        ')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
                           STRING
-                            PsiElement(")('"')
+                            PsiElement(OPEN_QUOTE)('"')
                             PsiElement(int)('10')
-                            PsiElement(")('"')
+                            PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(])(']')
                     PsiElement(=)('=')
                     LITERAL_EXPRESSION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -1031,7 +1031,7 @@ BASH_FILE
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
@@ -1041,7 +1041,7 @@ BASH_FILE
             PsiElement(word)('/tmp/')
             VARIABLE
               PsiElement(var)('$FILE')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
         PsiWhiteSpace(' ')
@@ -1109,17 +1109,17 @@ BASH_FILE
                         PsiElement(word)('reportDebugFuncEntry')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$*')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('type')
                       PsiWhiteSpace(' ')
                       PsiElement(word)('name')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
@@ -1153,10 +1153,10 @@ BASH_FILE
                       PsiElement(word)('entry')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$*')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
               PIPELINE_COMMAND
@@ -1166,10 +1166,10 @@ BASH_FILE
                       PsiElement(word)('addConfEntry')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$entry')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
               PIPELINE_COMMAND
@@ -1179,13 +1179,13 @@ BASH_FILE
                       PsiElement(word)('type')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
                         PsiElement(parameter_expansion_body)('entry%%[[:space:]]*')
                         PsiElement(})('}')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
@@ -1199,7 +1199,7 @@ BASH_FILE
                       PsiElement(word)('entryFound')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SUBSHELL_COMMAND
                         PsiElement(()('(')
@@ -1218,10 +1218,10 @@ BASH_FILE
                                   PsiElement(RAW_STRING)(''^#'')
                                 PsiWhiteSpace(' ')
                                 STRING
-                                  PsiElement(")('"')
+                                  PsiElement(OPEN_QUOTE)('"')
                                   VARIABLE
                                     PsiElement(var)('$usrcff')
-                                  PsiElement(")('"')
+                                  PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               PsiElement(|)('|')
                               PsiWhiteSpace(' ')
@@ -1231,14 +1231,14 @@ BASH_FILE
                                     PsiElement(word)('grep')
                                 PsiWhiteSpace(' ')
                                 STRING
-                                  PsiElement(")('"')
+                                  PsiElement(OPEN_QUOTE)('"')
                                   PsiWhiteSpace(' ')
                                   VARIABLE
                                     PsiElement(var)('$name')
                                   PsiElement(()('(')
-                                  PsiElement(")('"')
+                                  PsiElement(CLOSE_QUOTE)('"')
                         PsiElement())(')')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
               PIPELINE_COMMAND
@@ -1254,10 +1254,10 @@ BASH_FILE
                             PsiWhiteSpace(' ')
                             LITERAL_CONDITION
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 VARIABLE
                                   PsiElement(var)('$entryFound')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                             PsiWhiteSpace(' ')
                             PsiElement(])(']')
                       PsiElement(;)(';')
@@ -1275,7 +1275,7 @@ BASH_FILE
                                   PsiElement(word)('reportError')
                               PsiWhiteSpace(' ')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement(word)('An')
                                 PsiWhiteSpace(' ')
                                 PsiElement(word)('entry')
@@ -1297,7 +1297,7 @@ BASH_FILE
                                 PsiWhiteSpace(' ')
                                 VARIABLE
                                   PsiElement(var)('$usrcff')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('        ')
                         PIPELINE_COMMAND
@@ -1332,18 +1332,18 @@ BASH_FILE
                             ASSIGNMENT_CONDITION
                               LITERAL_CONDITION
                                 STRING
-                                  PsiElement(")('"')
+                                  PsiElement(OPEN_QUOTE)('"')
                                   VARIABLE
                                     PsiElement(var)('$type')
-                                  PsiElement(")('"')
+                                  PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               PsiElement(=)('=')
                               PsiWhiteSpace(' ')
                               LITERAL_CONDITION
                                 STRING
-                                  PsiElement(")('"')
+                                  PsiElement(OPEN_QUOTE)('"')
                                   PsiElement(word)('host')
-                                  PsiElement(")('"')
+                                  PsiElement(CLOSE_QUOTE)('"')
                             PsiWhiteSpace(' ')
                             LITERAL_CONDITION
                               PsiElement(word)('-o')
@@ -1351,18 +1351,18 @@ BASH_FILE
                             ASSIGNMENT_CONDITION
                               LITERAL_CONDITION
                                 STRING
-                                  PsiElement(")('"')
+                                  PsiElement(OPEN_QUOTE)('"')
                                   VARIABLE
                                     PsiElement(var)('$type')
-                                  PsiElement(")('"')
+                                  PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               PsiElement(=)('=')
                               PsiWhiteSpace(' ')
                               LITERAL_CONDITION
                                 STRING
-                                  PsiElement(")('"')
+                                  PsiElement(OPEN_QUOTE)('"')
                                   PsiElement(word)('guest')
-                                  PsiElement(")('"')
+                                  PsiElement(CLOSE_QUOTE)('"')
                             PsiWhiteSpace(' ')
                             PsiElement(])(']')
                       PsiElement(;)(';')
@@ -1379,7 +1379,7 @@ BASH_FILE
                                 PsiElement(word)('entryFound')
                               PsiElement(=)('=')
                               STRING
-                                PsiElement(")('"')
+                                PsiElement(OPEN_QUOTE)('"')
                                 PsiElement($)('$')
                                 SUBSHELL_COMMAND
                                   PsiElement(()('(')
@@ -1398,10 +1398,10 @@ BASH_FILE
                                             PsiElement(RAW_STRING)(''^#'')
                                           PsiWhiteSpace(' ')
                                           STRING
-                                            PsiElement(")('"')
+                                            PsiElement(OPEN_QUOTE)('"')
                                             VARIABLE
                                               PsiElement(var)('$usrcff')
-                                            PsiElement(")('"')
+                                            PsiElement(CLOSE_QUOTE)('"')
                                         PsiWhiteSpace(' ')
                                         PsiElement(|)('|')
                                         PsiWhiteSpace(' ')
@@ -1437,12 +1437,12 @@ BASH_FILE
                                               PsiElement(word)('grep')
                                           PsiWhiteSpace(' ')
                                           STRING
-                                            PsiElement(")('"')
+                                            PsiElement(OPEN_QUOTE)('"')
                                             VARIABLE
                                               PsiElement(var)('$addr')
-                                            PsiElement(")('"')
+                                            PsiElement(CLOSE_QUOTE)('"')
                                   PsiElement())(')')
-                                PsiElement(")('"')
+                                PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('        ')
                         PIPELINE_COMMAND
@@ -1458,10 +1458,10 @@ BASH_FILE
                                       PsiWhiteSpace(' ')
                                       LITERAL_CONDITION
                                         STRING
-                                          PsiElement(")('"')
+                                          PsiElement(OPEN_QUOTE)('"')
                                           VARIABLE
                                             PsiElement(var)('$entryFound')
-                                          PsiElement(")('"')
+                                          PsiElement(CLOSE_QUOTE)('"')
                                       PsiWhiteSpace(' ')
                                       PsiElement(])(']')
                                 PsiElement(;)(';')
@@ -1479,7 +1479,7 @@ BASH_FILE
                                             PsiElement(word)('reportError')
                                         PsiWhiteSpace(' ')
                                         STRING
-                                          PsiElement(")('"')
+                                          PsiElement(OPEN_QUOTE)('"')
                                           PsiElement(word)('An')
                                           PsiWhiteSpace(' ')
                                           PsiElement(word)('entry')
@@ -1501,7 +1501,7 @@ BASH_FILE
                                           PsiWhiteSpace(' ')
                                           VARIABLE
                                             PsiElement(var)('$usrcff')
-                                          PsiElement(")('"')
+                                          PsiElement(CLOSE_QUOTE)('"')
                                   PsiElement(\n)('\n')
                                   PsiWhiteSpace('            ')
                                   PIPELINE_COMMAND
@@ -1533,21 +1533,21 @@ BASH_FILE
                         PsiElement(word)('printf')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$addConfEntry')
                       PsiElement(word)('\n')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
                         PsiElement(>>)('>>')
                         PsiWhiteSpace(' ')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$usrcff')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
               PIPELINE_COMMAND
@@ -1558,7 +1558,7 @@ BASH_FILE
                         PsiElement(word)('reportInfo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('Successfully')
                       PsiWhiteSpace(' ')
                       PsiElement(word)('added')
@@ -1567,7 +1567,7 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       VARIABLE
                         PsiElement(var)('$*')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
               PIPELINE_COMMAND

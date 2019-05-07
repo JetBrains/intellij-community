@@ -177,7 +177,7 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$output')
                       PsiWhiteSpace(' ')
@@ -194,7 +194,7 @@ BASH_FILE
                                   VARIABLE
                                     PsiElement(var)('$1')
                         PsiElement())(')')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION

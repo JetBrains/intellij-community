@@ -39,8 +39,8 @@ BASH_FILE
                               PsiWhiteSpace(' ')
                               LITERAL_CONDITION
                                 STRING
-                                  PsiElement(")('"')
-                                  PsiElement(")('"')
+                                  PsiElement(OPEN_QUOTE)('"')
+                                  PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               PsiElement(])(']')
                         PsiWhiteSpace(' ')

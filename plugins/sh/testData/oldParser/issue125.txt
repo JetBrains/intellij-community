@@ -14,10 +14,10 @@ BASH_FILE
             PsiElement(word)('-p')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiWhiteSpace('   ')
             PsiElement(word)('Language:')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
             PsiElement(word)('lang')

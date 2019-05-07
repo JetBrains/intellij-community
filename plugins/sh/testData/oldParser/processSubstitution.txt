@@ -24,13 +24,13 @@ BASH_FILE
                           PsiElement(RAW_STRING)(''%s\n'')
                         PsiWhiteSpace(' ')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement($)('$')
                           SHELL_PARAMETER_EXPANSION
                             PsiElement({)('{')
                             PsiElement(parameter_expansion_body)('BEFORE[@]')
                             PsiElement(})('}')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       PsiElement(|)('|')
                       PsiWhiteSpace(' ')

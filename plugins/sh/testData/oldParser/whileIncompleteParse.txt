@@ -95,8 +95,8 @@ BASH_FILE
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('Example')
             PsiWhiteSpace(' ')
             PsiElement(word)('text')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

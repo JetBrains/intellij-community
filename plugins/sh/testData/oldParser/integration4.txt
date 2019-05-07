@@ -6,10 +6,10 @@ BASH_FILE
           PsiElement(case)('case')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             VARIABLE
               PsiElement(var)('$CONCURRENCY')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           PsiElement(in)('in')
           CASE_CLAUSE
@@ -47,10 +47,10 @@ BASH_FILE
                                 PsiWhiteSpace(' ')
                                 LITERAL_CONDITION
                                   STRING
-                                    PsiElement(")('"')
+                                    PsiElement(OPEN_QUOTE)('"')
                                     VARIABLE
                                       PsiElement(var)('$backgrounded')
-                                    PsiElement(")('"')
+                                    PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               PsiElement(])(']')
                         PsiElement(\n)('\n')

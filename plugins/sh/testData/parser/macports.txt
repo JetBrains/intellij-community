@@ -29,13 +29,13 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   LITERAL_CONDITION
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
                         PsiElement(parameter_expansion_body)('MACPORTS')
                         PsiElement(})('}')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -74,9 +74,9 @@ BASH_FILE
                           PsiElement(word)('sed')
                       PsiWhiteSpace(' ')
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION
@@ -181,7 +181,7 @@ BASH_FILE
             PsiElement(word)('MSG')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -204,4 +204,4 @@ BASH_FILE
                           PsiElement(>)('>')
                           PsiElement(word)('/dev/null')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

@@ -21,6 +21,12 @@ public interface ShString extends ShLiteral {
   List<ShVariable> getVariableList();
 
   @Nullable
+  PsiElement getCloseQuote();
+
+  @Nullable
+  PsiElement getOpenQuote();
+
+  @Nullable
   PsiElement getRawString();
 
   @NotNull

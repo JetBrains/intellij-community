@@ -19,9 +19,9 @@ BASH_FILE
                             PsiElement(word)('echo')
                         PsiWhiteSpace(' ')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$1')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
                 PsiElement())(')')
             PsiElement()))('))')

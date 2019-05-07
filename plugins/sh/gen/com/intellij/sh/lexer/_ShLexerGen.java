@@ -901,6 +901,7 @@ public class _ShLexerGen implements FlexLexer {
   private static final int PARENTHESES = 1;
 
   private boolean isArithmeticExpansion;
+  private boolean isQuoteOpen;
   private String heredocMarker;
   private boolean heredocWithWhiteSpaceIgnore;
   private final IntStack stateStack = new IntStack(1_000);
@@ -941,6 +942,7 @@ public class _ShLexerGen implements FlexLexer {
     heredocWithWhiteSpaceIgnore = false;
     heredocMarker = null;
     isArithmeticExpansion = false;
+    isQuoteOpen = false;
   }
 
 
@@ -1247,7 +1249,7 @@ public class _ShLexerGen implements FlexLexer {
             // fall through
           case 123: break;
           case 6: 
-            { pushState(STRING_EXPRESSION); return QUOTE;
+            { pushState(STRING_EXPRESSION); return OPEN_QUOTE;
             } 
             // fall through
           case 124: break;
@@ -1397,7 +1399,8 @@ public class _ShLexerGen implements FlexLexer {
             // fall through
           case 152: break;
           case 35: 
-            { return QUOTE;
+            { if (isQuoteOpen) { isQuoteOpen = false; return CLOSE_QUOTE; }
+                                    else { isQuoteOpen = true; return OPEN_QUOTE; }
             } 
             // fall through
           case 153: break;
@@ -1412,7 +1415,7 @@ public class _ShLexerGen implements FlexLexer {
             // fall through
           case 155: break;
           case 38: 
-            { popState(); return QUOTE;
+            { popState(); return CLOSE_QUOTE;
             } 
             // fall through
           case 156: break;

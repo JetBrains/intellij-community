@@ -36,8 +36,8 @@ BASH_FILE
                       PsiElement(\n)('\n')
                       PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('abc')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiErrorElement:'&', '&&', ';', '\n' or '||' expected
                 <empty list>

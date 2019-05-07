@@ -12,9 +12,9 @@ BASH_FILE
               PsiElement(<)('<')
               PsiWhiteSpace(' ')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement(word)('x')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

@@ -46,8 +46,8 @@ BASH_FILE
       PsiWhiteSpace(' ')
       LITERAL_EXPRESSION
         STRING
-          PsiElement(")('"')
+          PsiElement(OPEN_QUOTE)('"')
           PsiElement(word)('a')
           PsiElement(=)('=')
           PsiElement(int)('1')
-          PsiElement(")('"')
+          PsiElement(CLOSE_QUOTE)('"')

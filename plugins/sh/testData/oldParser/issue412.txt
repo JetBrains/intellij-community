@@ -39,9 +39,9 @@ BASH_FILE
                           PsiWhiteSpace(' ')
                           LITERAL_CONDITION
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               PsiElement(word)('a')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                         PsiWhiteSpace(' ')
                         PsiElement(||)('||')
                         PsiWhiteSpace(' ')
@@ -72,8 +72,8 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('pong')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

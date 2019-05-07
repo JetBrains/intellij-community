@@ -154,15 +154,15 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
 
   // e.g. "$HOME"/<caret>
   private static boolean isStringOfVar(@NotNull LeafPsiElement e) {
-    if (e.getElementType() != ShTokenTypes.QUOTE) return false;
+    if (e.getElementType() != ShTokenTypes.CLOSE_QUOTE) return false;
     PsiElement str = e.getParent();
     if (!(str instanceof ShString)) return false;
 
     ASTNode[] children = str.getNode().getChildren(null);
     return children.length == 3 &&
-        children[0].getElementType() == ShTypes.QUOTE &&
+        children[0].getElementType() == ShTypes.OPEN_QUOTE &&
         children[1].getElementType() == ShTypes.VARIABLE &&
-        children[2].getElementType() == ShTypes.QUOTE;
+        children[2].getElementType() == ShTypes.CLOSE_QUOTE;
   }
 
   @NotNull

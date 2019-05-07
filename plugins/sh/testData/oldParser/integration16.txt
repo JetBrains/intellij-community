@@ -4,7 +4,7 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('case')
             PsiWhiteSpace(' ')
             PsiElement(word)('a')
@@ -25,4 +25,4 @@ BASH_FILE
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(word)('esac')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

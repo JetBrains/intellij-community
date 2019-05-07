@@ -8,9 +8,9 @@ BASH_FILE
               PsiElement(word)('eval')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('executable')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           NUMBER
             PsiElement(int)('2')
@@ -27,7 +27,7 @@ BASH_FILE
             PsiElement(word)('res')
           PsiElement(=)('=')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -40,10 +40,10 @@ BASH_FILE
                           PsiElement(word)('eval')
                       PsiWhiteSpace(' ')
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$executable')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       NUMBER
                         PsiElement(int)('2')
@@ -52,4 +52,4 @@ BASH_FILE
                           PsiElement(>)('>')
                           PsiElement(word)('/dev/null')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')

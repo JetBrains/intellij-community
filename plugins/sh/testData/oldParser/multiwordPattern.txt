@@ -12,11 +12,11 @@ BASH_FILE
           CASE_CLAUSE
             PATTERN
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement(word)('a')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('b')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
             PsiElement())(')')
             PsiWhiteSpace(' ')
             COMPOUND_LIST

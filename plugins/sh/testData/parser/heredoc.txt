@@ -33,7 +33,7 @@ BASH_FILE
             PsiElement(word)('-p')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('/etc/systemd/system/')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
@@ -41,7 +41,7 @@ BASH_FILE
               PsiElement(parameter_expansion_body)('MAIN_SERVICE')
               PsiElement(})('}')
             PsiElement(word)('.service.d')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -52,7 +52,7 @@ BASH_FILE
               PsiElement(word)('tee')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('/etc/systemd/system/')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
@@ -60,7 +60,7 @@ BASH_FILE
               PsiElement(parameter_expansion_body)('MAIN_SERVICE')
               PsiElement(})('}')
             PsiElement(word)('.service.d/add-localhost.conf')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -465,7 +465,7 @@ BASH_FILE
                         PsiElement(word)('-s')
                       PsiWhiteSpace(' ')
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('Warning:')
                         PsiWhiteSpace(' ')
                         VARIABLE
@@ -474,7 +474,7 @@ BASH_FILE
                         PsiElement(word)('Exceeds')
                         PsiWhiteSpace(' ')
                         PsiElement(word)('Quota')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       VARIABLE
                         PsiElement(var)('$account')
@@ -603,13 +603,13 @@ BASH_FILE
                           PsiElement(word)('fail')
                       PsiWhiteSpace(' ')
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('Couldn')
                         PsiElement(word)(''')
                         PsiElement(word)('t')
                         PsiWhiteSpace(' ')
                         PsiElement(word)('cat')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('android_sdk_repository(\n    name = "androidsdk",\n    path = "/fake/path",\n    api_level = 23,\n    build_tools_version="23.0.0"\n)\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
@@ -640,11 +640,11 @@ BASH_FILE
                           PsiElement(word)('die')
                       PsiWhiteSpace(' ')
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('execution')
                         PsiWhiteSpace(' ')
                         PsiElement(word)('failed')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('#!/bin/sh\necho "Hello World"\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')

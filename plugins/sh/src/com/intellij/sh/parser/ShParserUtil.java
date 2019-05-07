@@ -70,7 +70,7 @@ public class ShParserUtil extends GeneratedParserUtilBase {
   }
 
   static boolean notQuote(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
-    if (b.getTokenType() == ShTypes.QUOTE) return false;
+    if (b.getTokenType() == ShTypes.OPEN_QUOTE || b.getTokenType() == ShTypes.CLOSE_QUOTE) return false;
     b.advanceLexer();
     return true;
   }

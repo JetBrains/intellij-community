@@ -11,13 +11,13 @@ BASH_FILE
             REDIRECTION
               PsiElement(<<<)('<<< ')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement(word)('CREATE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('DATABASE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('dev')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
     PsiWhiteSpace(' ')
     PsiElement(||)('||')
     PsiWhiteSpace(' ')
@@ -43,13 +43,13 @@ BASH_FILE
             REDIRECTION
               PsiElement(<<<)('<<<')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement(word)('CREATE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('DATABASE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('dev')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
     PsiElement(||)('||')
     PIPELINE_COMMAND
       PIPELINE
@@ -99,13 +99,13 @@ BASH_FILE
             REDIRECTION
               PsiElement(<<<)('<<<')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement(word)('CREATE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('DATABASE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('dev')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
     PsiElement(||)('||')
     PIPELINE_COMMAND
       PIPELINE
@@ -129,13 +129,13 @@ BASH_FILE
             REDIRECTION
               PsiElement(<<<)('<<< ')
               STRING
-                PsiElement(")('"')
+                PsiElement(OPEN_QUOTE)('"')
                 PsiElement(word)('CREATE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('DATABASE')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('dev')
-                PsiElement(")('"')
+                PsiElement(CLOSE_QUOTE)('"')
     PsiWhiteSpace(' ')
     PsiElement(&&)('&&')
     PsiWhiteSpace(' ')
@@ -270,7 +270,7 @@ BASH_FILE
                       REDIRECTION
                         PsiElement(<<<)('<<< ')
                         STRING
-                          PsiElement(")('"')
+                          PsiElement(OPEN_QUOTE)('"')
                           PsiElement([[)('[[')
                           PsiElement(word)('8+8')
                           PsiElement(]])(']]')
@@ -291,7 +291,7 @@ BASH_FILE
                           PsiElement(})('}')
                           PsiWhiteSpace('    ')
                           PsiElement(word)('p')
-                          PsiElement(")('"')
+                          PsiElement(CLOSE_QUOTE)('"')
             PsiWhiteSpace('  ')
             PsiElement())(')')
     PsiElement(;)(';')

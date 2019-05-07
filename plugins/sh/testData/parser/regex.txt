@@ -14,10 +14,10 @@ BASH_FILE
                   EQUALITY_CONDITION
                     LITERAL_CONDITION
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$JAVAC_VERSION')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=~)('=~')
                     PsiWhiteSpace(' ')
@@ -39,14 +39,14 @@ BASH_FILE
                       PsiElement(word)('XCODE_VERSION')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
                         PsiElement(parameter_expansion_body)('XCODE_VERSION')
                         PsiElement(})('}')
                       PsiElement(word)('.0')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -101,9 +101,9 @@ BASH_FILE
                           PsiWhiteSpace(' ')
                           LITERAL_CONDITION
                             STRING
-                              PsiElement(")('"')
+                              PsiElement(OPEN_QUOTE)('"')
                               PsiElement(word)('a')
-                              PsiElement(")('"')
+                              PsiElement(CLOSE_QUOTE)('"')
                       PsiElement())(')')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
@@ -122,8 +122,8 @@ BASH_FILE
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('pong')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

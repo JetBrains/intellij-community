@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
   private static final int PARENTHESES = 1;
 
   private boolean isArithmeticExpansion;
+  private boolean isQuoteOpen;
   private String heredocMarker;
   private boolean heredocWithWhiteSpaceIgnore;
   private final IntStack stateStack = new IntStack(1_000);
@@ -65,6 +66,7 @@ import com.intellij.openapi.util.text.StringUtil;
     heredocWithWhiteSpaceIgnore = false;
     heredocMarker = null;
     isArithmeticExpansion = false;
+    isQuoteOpen = false;
   }
 %}
 
@@ -144,7 +146,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 %%
 
 <STRING_EXPRESSION> {
-    {Quote}                       { popState(); return QUOTE; }
+    {Quote}                       { popState(); return CLOSE_QUOTE; }
     {RawString}                   |
     {UnclosedRawString}           { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }
                                     else return RAW_STRING; }
@@ -152,7 +154,8 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 
 <LET_EXPRESSION> {
     "let"                         { return LET; }
-    {Quote}                       { return QUOTE; }
+    {Quote}                       { if (isQuoteOpen) { isQuoteOpen = false; return CLOSE_QUOTE; }
+                                    else { isQuoteOpen = true; return OPEN_QUOTE; } }
     ";"                           { popState(); return SEMI; }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
@@ -371,7 +374,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     {LineTerminator}              { return LINEFEED; }
     {Variable}                    { return VAR; }
 
-    {Quote}                       { pushState(STRING_EXPRESSION); return QUOTE; }
+    {Quote}                       { pushState(STRING_EXPRESSION); return OPEN_QUOTE; }
 
     {RawString}                   |
     {UnclosedRawString}           { return RAW_STRING; }

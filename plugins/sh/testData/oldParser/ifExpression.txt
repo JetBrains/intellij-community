@@ -54,9 +54,9 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   LITERAL_CONDITION
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('a')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(\n)('\n')

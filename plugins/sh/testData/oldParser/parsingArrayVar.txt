@@ -37,9 +37,9 @@ BASH_FILE
                   PsiElement([)('[')
                   LITERAL_EXPRESSION
                     STRING
-                      PsiElement(")('"')
+                      PsiElement(OPEN_QUOTE)('"')
                       PsiElement(word)('x')
-                      PsiElement(")('"')
+                      PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
                 PsiElement(=)('=')
                 LITERAL_EXPRESSION

@@ -5,17 +5,17 @@ BASH_FILE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
             STRING
-              PsiElement(")('"')
+              PsiElement(OPEN_QUOTE)('"')
               PsiElement(word)(''')
-              PsiElement(")('"')
+              PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           NUMBER
             PsiElement(int)('1234')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)(''')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -31,10 +31,10 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('a')
             PsiElement($)('$')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -48,17 +48,17 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('abc')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -66,47 +66,47 @@ BASH_FILE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
             STRING
-              PsiElement(")('"')
+              PsiElement(OPEN_QUOTE)('"')
               PsiElement(word)('abc')
-              PsiElement(")('"')
+              PsiElement(CLOSE_QUOTE)('"')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('abc')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('\.')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('\n')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiWhiteSpace(' ')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -119,28 +119,28 @@ BASH_FILE
                         PsiElement(word)('a')
               PsiWhiteSpace(' ')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             VARIABLE
               PsiElement(var)('$a')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('a')
             PsiWhiteSpace(' ')
             PsiElement(word)('b\"')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -154,18 +154,18 @@ BASH_FILE
             PsiElement(word)('b')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('a')
             PsiWhiteSpace(' ')
             PsiElement(word)('b')
             PsiWhiteSpace(' ')
             PsiElement(word)('\"')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('a')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
             PsiElement(word)('b')
@@ -175,17 +175,17 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('a')
             PsiElement($)('$')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -194,20 +194,20 @@ BASH_FILE
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
                       STRING
-                        PsiElement(")('"')
+                        PsiElement(OPEN_QUOTE)('"')
                         PsiElement(word)('hey')
                         PsiWhiteSpace(' ')
                         PsiElement(word)('there')
-                        PsiElement(")('"')
+                        PsiElement(CLOSE_QUOTE)('"')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -222,7 +222,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('\"\"')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -230,7 +230,7 @@ BASH_FILE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
             STRING
-              PsiElement(")('"')
+              PsiElement(OPEN_QUOTE)('"')
               PsiElement($)('$')
               SUBSHELL_COMMAND
                 PsiElement(()('(')
@@ -245,7 +245,7 @@ BASH_FILE
                         LITERAL
                           PsiElement(word)('\"\"')
                 PsiElement())(')')
-              PsiElement(")('"')
+              PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
             PsiElement(word)('a')
@@ -255,7 +255,7 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -274,14 +274,14 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -300,14 +300,14 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -318,14 +318,14 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('abc')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -336,14 +336,14 @@ BASH_FILE
                       NUMBER
                         PsiElement(int)('1')
               PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             ARITHMETIC_EXPANSION
               PsiElement((()('((')
@@ -351,14 +351,14 @@ BASH_FILE
                 NUMBER
                   PsiElement(int)('1')
               PsiElement()))('))')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('s/.*\(iphoneos')
             PsiElement(()('(')
             PsiElement(()('(')
@@ -371,7 +371,7 @@ BASH_FILE
             PsiElement(word)('+')
             PsiElement())(')')
             PsiElement(word)('\).*/\1/')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# "$("s/(/")" #todo check s/(')
   PsiElement(\n)('\n')
@@ -408,18 +408,18 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(||)('||')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(&&)('&&')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiComment(Comment)('#"$(&&)"  # todo: michail')
   PsiElement(\n)('\n')
@@ -553,8 +553,8 @@ BASH_FILE
           GENERIC_COMMAND_DIRECTIVE
             PsiElement($)('$')
           STRING
-            PsiElement(")('"')
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -563,9 +563,9 @@ BASH_FILE
           GENERIC_COMMAND_DIRECTIVE
             PsiElement($)('$')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('abc')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -590,7 +590,7 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(()('(')
             PsiElement(()('(')
             PsiWhiteSpace(' ')
@@ -599,29 +599,29 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement())(')')
             PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('a')
             PsiElement(\n)('\n')
             PsiElement(word)('b')
             PsiElement(\n)('\n')
             PsiElement(word)('c')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(\n)('\n')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

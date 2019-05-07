@@ -8,13 +8,13 @@ BASH_FILE
               PsiElement(word)('eval')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             VARIABLE
               PsiElement(var)('$a')
             PsiElement(=)('=')
             PsiElement(()('(')
             PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -25,7 +25,7 @@ BASH_FILE
               PsiElement(word)('eval')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement(word)('printf')
             PsiWhiteSpace(' ')
             PsiElement(RAW_STRING)(''%s\n'')
@@ -42,7 +42,7 @@ BASH_FILE
             PsiElement(])(']')
             PsiElement(})('}')
             PsiElement(word)('\"')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -53,7 +53,7 @@ BASH_FILE
               PsiElement(word)('eval')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(")('"')
+            PsiElement(OPEN_QUOTE)('"')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
@@ -66,4 +66,4 @@ BASH_FILE
               PsiElement(var)('$REPLY')
             PsiElement(word)('\"')
             PsiElement())(')')
-            PsiElement(")('"')
+            PsiElement(CLOSE_QUOTE)('"')
