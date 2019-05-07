@@ -154,7 +154,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   private static JavaResolveResult getStaticFactory(final PsiNewExpression newExpression, final PsiElement context) {
-    return context == newExpression && !MethodCandidateInfo.isOverloadCheck()
+    return context == newExpression && !MethodCandidateInfo.isOverloadCheck(newExpression.getArgumentList())
            ? CachedValuesManager.getCachedValue(newExpression,
                                                 () -> new CachedValueProvider.Result<>(
                                                   getStaticFactoryCandidateInfo(newExpression, newExpression),

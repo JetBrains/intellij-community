@@ -167,7 +167,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public boolean isAcceptable(PsiType leftType) {
+  public boolean isAcceptable(PsiType leftType, @Nullable PsiMethod method) {
     if (leftType instanceof PsiIntersectionType) {
       for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {
         if (isAcceptable(conjunctType)) return true;
@@ -176,17 +176,13 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
-    if (MethodCandidateInfo.isOverloadCheck(argsList)) {
-      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (currentMethod != null) {
-        final PsiMethod method = currentMethod.getElement();
-        if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
-          return true;
-        }
+    if (MethodCandidateInfo.isOverloadCheck(argsList) && method != null) {
+      if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
+        return true;
+      }
 
-        if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
-          return true;
-        }
+      if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
+        return true;
       }
     }
 

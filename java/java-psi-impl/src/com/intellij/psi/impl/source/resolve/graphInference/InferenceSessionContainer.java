@@ -233,7 +233,7 @@ public class InferenceSessionContainer {
       return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(topLevelCall, true, () -> {
         final InferenceSession topLevelSession =
           new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
-        topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
+        topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, method, ((MethodCandidateInfo)result).isVarargs());
         topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result));
         return topLevelSession;
       });
