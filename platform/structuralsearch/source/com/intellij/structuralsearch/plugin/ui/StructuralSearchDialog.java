@@ -89,6 +89,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls private static final String SHORTEN_FQN_STATE = "structural.search.shorten.fqn";
   @NonNls private static final String REFORMAT_STATE = "structural.search.reformat";
   @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
+  @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
@@ -105,7 +106,6 @@ public class StructuralSearchDialog extends DialogWrapper {
   private boolean myUseLastConfiguration;
   private final boolean myEditConfigOnly;
   private boolean myDoingOkAction;
-  boolean myFilterButtonEnabled = false;
 
   // components
   JCheckBox myRecursive;
@@ -174,7 +174,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
         SubstitutionShortInfoHandler.install(editor, variableName -> {
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-          if (isFilterPanelEnabled()) {
+          if (isFilterPanelVisible()) {
             myConfiguration.setCurrentVariableName(variableName);
           }
         });
@@ -212,13 +212,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     myAlarm.addRequest(() -> {
       try {
         final boolean valid = isValid();
-        final boolean compiled = isCompiled();
+        initializeFilterPanel();
         final JRootPane component = getRootPane();
         if (component == null) {
           return;
         }
         ApplicationManager.getApplication().invokeLater(() -> {
-          myFilterButtonEnabled = compiled;
           setSearchTargets(myConfiguration.getMatchOptions());
           getOKAction().setEnabled(valid);
         }, ModalityState.stateForComponent(component));
@@ -232,7 +231,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }, 250);
   }
 
-  private boolean isCompiled() {
+  private void initializeFilterPanel() {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false);
       if (compiledPattern != null) {
@@ -241,9 +240,9 @@ public class StructuralSearchDialog extends DialogWrapper {
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
         }
       }
-      return compiledPattern != null;
+      myFilterPanel.setValid(compiledPattern != null);
     } catch (MalformedPatternException e) {
-      return false;
+      myFilterPanel.setValid(false);
     }
   }
 
@@ -520,18 +519,12 @@ public class StructuralSearchDialog extends DialogWrapper {
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return isFilterPanelEnabled();
+        return isFilterPanelVisible();
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        setFilterPanelEnabled(state);
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(myFilterButtonEnabled);
-        super.update(e);
+        setFilterPanelVisible(state);
       }
     };
     final DefaultActionGroup optionsActionGroup = new DefaultActionGroup(filterAction, templateActionGroup);
@@ -614,16 +607,21 @@ public class StructuralSearchDialog extends DialogWrapper {
         setSize(otherSize.width, getSize().height);
       }
     }
+
+    final PropertiesComponent properties = PropertiesComponent.getInstance();
+    if (properties.getBoolean(FILTERS_VISIBLE_STATE, true)) {
+      setFilterPanelVisible(true);
+    }
   }
 
   private void startTemplate() {
     if (!Registry.is("ssr.template.from.selection.builder")) {
       return;
     }
-    Document document = mySearchCriteriaEdit.getDocument();
-    PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    final Document document = mySearchCriteriaEdit.getDocument();
+    final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
     assert psiFile != null;
-    TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
+    final TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
     WriteCommandAction
       .runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
@@ -754,28 +752,26 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   public void showFilterPanel(String variableName) {
-    if (myFilterButtonEnabled) {
-      myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-      setFilterPanelEnabled(true);
-      myConfiguration.setCurrentVariableName(variableName);
-    }
+    myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+    setFilterPanelVisible(true);
+    myConfiguration.setCurrentVariableName(variableName);
   }
 
-  void setFilterPanelEnabled(boolean enabled) {
-    if (enabled) {
-      if (!isFilterPanelEnabled()) {
+  void setFilterPanelVisible(boolean visible) {
+    if (visible) {
+      if (!isFilterPanelVisible()) {
         mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
       }
     }
     else {
-      if (isFilterPanelEnabled()) {
+      if (isFilterPanelVisible()) {
         mySearchEditorPanel.setSecondComponent(null);
         myConfiguration.setCurrentVariableName(null);
       }
     }
   }
 
-  boolean isFilterPanelEnabled() {
+  boolean isFilterPanelVisible() {
     return mySearchEditorPanel.getSecondComponent() != null;
   }
 
@@ -922,6 +918,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
     else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
 
+    final PropertiesComponent properties = PropertiesComponent.getInstance();
+    properties.setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
     myAlarm.cancelAllRequests();
     mySearchCriteriaEdit.removeNotify();
