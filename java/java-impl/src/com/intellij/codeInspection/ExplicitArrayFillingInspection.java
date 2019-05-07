@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +13,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
@@ -53,6 +56,13 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         if (rValue == null) return;
         if (!VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) &&
             !SideEffectChecker.mayHaveSideEffects(rValue)) {
+          Object constValue = ExpressionUtils.computeConstantExpression(rValue);
+          if (constValue != null && constValue.equals(PsiTypesUtil.getDefaultValue(assignment.getType()))) {
+            holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
+                                   QuickFixBundle.message("delete.element.fix.text"),
+                                   QuickFixFactory.getInstance().createDeleteFix(statement));
+            return;
+          }
           registerProblem(statement, false);
           return;
         }
