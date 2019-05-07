@@ -6,9 +6,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
-public interface ServiceViewEventListener {
-  Topic<ServiceViewEventListener> TOPIC =
-    Topic.create("services topic", ServiceViewEventListener.class, Topic.BroadcastDirection.TO_CHILDREN);
+public interface ServiceEventListener {
+  Topic<ServiceEventListener> TOPIC =
+    Topic.create("services topic", ServiceEventListener.class, Topic.BroadcastDirection.TO_CHILDREN);
 
   void handle(@NotNull ServiceEvent event);
 
