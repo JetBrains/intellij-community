@@ -35,8 +35,8 @@
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="delight-rhino-sandbox" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
-    <orderEntry type="library" exported="" name="rd-swing" level="project" />
-    <orderEntry type="library" exported="" name="rd-core" level="project" />
+    <orderEntry type="library" name="rd-swing" level="project" />
+    <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
   </component>
 </module>

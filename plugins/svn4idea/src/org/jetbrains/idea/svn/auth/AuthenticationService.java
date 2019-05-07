@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IdeHttpClientHelpers;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -37,8 +38,6 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -56,7 +55,7 @@ public class AuthenticationService {
     myVcs = vcs;
     myIsActive = isActive;
     myConfiguration = myVcs.getSvnConfiguration();
-    myRequestedCredentials = new HashSet<>();
+    myRequestedCredentials = ContainerUtil.newHashSet();
   }
 
   @NotNull
@@ -225,7 +224,7 @@ public class AuthenticationService {
 
   @NotNull
   private List<String> getSupportedSslProtocols() {
-    List<String> result = new ArrayList<>();
+    List<String> result = ContainerUtil.newArrayList();
 
     switch (myConfiguration.getSslProtocols()) {
       case sslv3:

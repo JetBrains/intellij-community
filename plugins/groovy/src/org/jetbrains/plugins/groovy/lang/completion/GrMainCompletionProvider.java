@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -17,6 +17,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -43,7 +44,9 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.canResolveToPackage;
 
@@ -166,7 +169,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
                                     final PrefixMatcher matcher,
                                     final Consumer<? super LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-      final Set<LookupElement> added = new HashSet<>();
+      final Set<LookupElement> added = ContainerUtil.newHashSet();
       @Override
       public void consume(LookupElement element) {
         if (added.add(element)) {
@@ -175,7 +178,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     };
 
-    final Map<PsiModifierListOwner, LookupElement> staticMembers = new HashMap<>();
+    final Map<PsiModifierListOwner, LookupElement> staticMembers = ContainerUtil.newHashMap();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = GroovyCompletionUtil.getQualifierType(qualifier);
 
@@ -191,7 +194,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     }
 
-    final List<LookupElement> zeroPriority = new ArrayList<>();
+    final List<LookupElement> zeroPriority = ContainerUtil.newArrayList();
 
     PsiClass qualifierClass = com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     final boolean honorExcludes = qualifierClass == null || !JavaCompletionUtil.isInExcludedPackage(qualifierClass, false);

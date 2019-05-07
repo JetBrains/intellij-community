@@ -38,6 +38,7 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +53,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -468,8 +468,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
-  private final Set<String> widgetIDs = new HashSet<>();
-
+  private final Set<String> widgetIDs = ContainerUtil.newHashSet();
   private void addWidget(StatusBar statusBar, StatusBarWidget widget, String anchor) {
     if (!widgetIDs.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());

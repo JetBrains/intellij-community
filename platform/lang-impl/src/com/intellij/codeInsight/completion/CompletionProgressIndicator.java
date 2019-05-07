@@ -118,7 +118,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private boolean myLookupUpdated;
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
-  private final List<CompletionResult> myDelayedMiddleMatches = new ArrayList<>();
+  private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
   private final CompletionThreadingBase myThreading;
   private final Object myLock = ObjectUtils.sentinel("CompletionProgressIndicator");
@@ -461,7 +461,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ArrayList<CompletionResult> delayed;
     synchronized (myDelayedMiddleMatches) {
       if (myDelayedMiddleMatches.isEmpty()) return;
-      delayed = new ArrayList<>(myDelayedMiddleMatches);
+      delayed = ContainerUtil.newArrayList(myDelayedMiddleMatches);
       myDelayedMiddleMatches.clear();
     }
     for (CompletionResult item : delayed) {

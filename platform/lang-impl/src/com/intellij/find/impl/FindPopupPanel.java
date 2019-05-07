@@ -638,7 +638,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     DumbAwareAction.create(__ -> myReplaceAllButton.doClick()).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);
     myReplaceAllButton.setToolTipText(KeymapUtil.getKeystrokeText(REPLACE_ALL));
 
-    List<Shortcut> navigationKeyStrokes = new ArrayList<>();
+    List<Shortcut> navigationKeyStrokes = ContainerUtil.newArrayList();
     KeyStroke viewSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getViewSource());
     if (viewSourceKeyStroke != null && !Comparing.equal(viewSourceKeyStroke, ENTER_WITH_MODIFIERS) && !Comparing.equal(viewSourceKeyStroke, ENTER)) {
       navigationKeyStrokes.add(new KeyboardShortcut(viewSourceKeyStroke, null));
@@ -1506,7 +1506,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       int row = rows[i];
       Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
       if (valueAt instanceof Usage) {
-        if (result == null) result = new LinkedHashMap<>();
+        if (result == null) result = ContainerUtil.newLinkedHashMap();
         result.put(row, (Usage)valueAt);
       }
     }

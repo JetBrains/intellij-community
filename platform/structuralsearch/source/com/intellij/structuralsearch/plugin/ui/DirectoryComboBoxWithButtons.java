@@ -38,9 +38,8 @@ import java.util.List;
 public class DirectoryComboBoxWithButtons extends JPanel {
   @NotNull private final ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
     new ComponentWithBrowseButton<>(new ComboBox<>(200), null);
-  private volatile boolean myUpdating = false;
-
   boolean myRecursive = true;
+  volatile boolean myUpdating = false;
   Runnable myCallback;
 
   public DirectoryComboBoxWithButtons(@NotNull Project project) {
@@ -118,8 +117,8 @@ public class DirectoryComboBoxWithButtons extends JPanel {
   }
 
   public void setDirectory(@NotNull VirtualFile directory) {
-    final String url = directory.getPresentableUrl();
-    final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
+    String url = directory.getPresentableUrl();
+    ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     comboBox.getEditor().setItem(url);
     setDirectory(url);
   }

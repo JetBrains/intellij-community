@@ -12,7 +12,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.*;
@@ -47,8 +46,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -1784,17 +1781,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     if (clickAction != null) {
       if (PluginInfoDetectorKt.getPluginInfo(renderer.getClass()).isSafeToReport()) {
-        FeatureUsageData usageData = new FeatureUsageData();
-        Project project = myEditor.getProject();
-        if (project != null) {
-          usageData.addProject(project);
-          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
-          if (file != null) {
-            usageData.addCurrentFile(file.getLanguage());
-          }
-        }
-
-        FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getFeatureId(), usageData);
+        FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getFeatureId());
       }
 
       performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext());

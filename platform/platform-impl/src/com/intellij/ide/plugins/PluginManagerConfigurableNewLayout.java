@@ -36,7 +36,6 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
-import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.JBDimension;
@@ -322,11 +321,6 @@ public class PluginManagerConfigurableNewLayout
 
   private void createMarketplaceTab() {
     myMarketplaceTab = new PluginsTab() {
-      @Override
-      protected void createSearchTextField(int flyDelay) {
-        super.createSearchTextField(250);
-      }
-
       @NotNull
       @Override
       protected PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
@@ -420,8 +414,9 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
-        SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(mySearchTextField) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
+                                                    @NotNull PluginSearchTextField searchTextField) {
+        SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(searchTextField) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
@@ -454,7 +449,7 @@ public class PluginManagerConfigurableNewLayout
                 }
                 return myTagsSorted;
               case "/sortBy:":
-                return Arrays.asList("downloads", "name", "rating", "updated");
+                return ContainerUtil.list("downloads", "name", "rating", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
                   myVendorsSorted = MyPluginModel.getVendors(getPluginRepositories());
@@ -467,24 +462,13 @@ public class PluginManagerConfigurableNewLayout
           }
 
           @Override
-          protected void handleAppendToQuery() {
-            showPopupForQuery();
-          }
-
-          @Override
-          protected void handleAppendAttributeValue() {
-            showPopupForQuery();
-          }
-
-          @Override
           protected void showPopupForQuery() {
             hidePopup();
-            showSearchPanel(mySearchTextField.getText());
           }
 
           @Override
           protected void handleEnter() {
-            if (!mySearchTextField.getText().isEmpty()) {
+            if (!searchTextField.getText().isEmpty()) {
               handleTrigger("marketplace.suggest.popup.enter");
             }
           }
@@ -576,7 +560,7 @@ public class PluginManagerConfigurableNewLayout
           }
 
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.Marketplace(mySearchTextField.getText()) {
+          new SearchQueryParser.Marketplace(searchTextField.getText()) {
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               super.addToSearchQuery(query);
@@ -603,7 +587,7 @@ public class PluginManagerConfigurableNewLayout
           }
 
           String query = StringUtil.join(queries, " ");
-          mySearchTextField.setTextIgnoreEvents(query);
+          searchTextField.setTextIgnoreEvents(query);
           if (query.isEmpty()) {
             myMarketplaceTab.hideSearchPanel();
           }
@@ -666,8 +650,9 @@ public class PluginManagerConfigurableNewLayout
                   return;
                 }
 
-                Url url = PluginManagerConfigurableNew.createSearchUrl(parser.getUrlQuery(), 10000);
-                for (String pluginId : PluginManagerConfigurableNew.requestToPluginRepository(url)) {
+                for (String pluginId : PluginManagerConfigurableNew
+                  .requestToPluginRepository(PluginManagerConfigurableNew.createSearchUrl(parser.getUrlQuery(), 10000),
+                                             PluginManagerConfigurableNew.forceHttps())) {
                   IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
                   if (descriptor != null) {
                     result.descriptors.add(descriptor);
@@ -728,8 +713,8 @@ public class PluginManagerConfigurableNewLayout
 
     myInstalledTab = new PluginsTab() {
       @Override
-      protected void createSearchTextField(int flyDelay) {
-        super.createSearchTextField(flyDelay);
+      protected void createSearchTextField() {
+        super.createSearchTextField();
 
         JBTextField textField = mySearchTextField.getTextEditor();
         textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
@@ -866,12 +851,13 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
-        SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
+                                                    @NotNull PluginSearchTextField searchTextField) {
+        SearchUpDownPopupController installedController = new SearchUpDownPopupController(searchTextField) {
           @NotNull
           @Override
           protected List<String> getAttributes() {
-            return Arrays.asList("/downloaded", "/outdated", "/enabled", "/disabled", "/invalid", "/bundled", "/vendor:");
+            return ContainerUtil.list("/downloaded", "/outdated", "/enabled", "/disabled", "/invalid", "/bundled", "/vendor:");
           }
 
           @Nullable
@@ -892,7 +878,7 @@ public class PluginManagerConfigurableNewLayout
 
           @Override
           protected void showPopupForQuery() {
-            showSearchPanel(mySearchTextField.getText());
+            showSearchPanel(searchTextField.getText());
           }
         };
 
@@ -908,7 +894,7 @@ public class PluginManagerConfigurableNewLayout
 
         myInstalledSearchCallback = updateAction -> {
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.InstalledWithVendor(mySearchTextField.getText()) {
+          new SearchQueryParser.InstalledWithVendor(searchTextField.getText()) {
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               super.addToSearchQuery(query);
@@ -941,7 +927,7 @@ public class PluginManagerConfigurableNewLayout
             myInstalledSearchSetState = false;
 
             String query = StringUtil.join(queries, " ");
-            mySearchTextField.setTextIgnoreEvents(query);
+            searchTextField.setTextIgnoreEvents(query);
             if (query.isEmpty()) {
               myInstalledTab.hideSearchPanel();
             }
@@ -995,7 +981,7 @@ public class PluginManagerConfigurableNewLayout
                 }
               }
 
-              if (!result.descriptors.isEmpty()) {
+              if (!result.descriptors.isEmpty() && parser.needUpdate) {
                 Collection<PluginDownloader> updates = PluginUpdatesService.getUpdates();
                 if (!ContainerUtil.isEmpty(updates)) {
                   myPostFillGroupCallback = () -> {

@@ -161,8 +161,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     return result;
   }
 
-  /** @deprecated use {@link #getSearchService()} */
   @Deprecated
+  /* @deprecated use getSearchService */
   public List<MavenIndex> getIndices() {
     return new ArrayList<>(myProjectIndices);
   }
@@ -188,14 +188,14 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     return mySearchService;
   }
 
-  /** @deprecated use {@link DependencySearchService#findGroupCandidates} or{@link DependencySearchService#findByTemplate} instead**/
   @Deprecated
+  /** @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findGroupCandidates} or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead**/
   public Set<String> getGroupIds() {
     return getGroupIds("");
   }
 
-  /** @deprecated use {@link DependencySearchService#findGroupCandidates} or{@link DependencySearchService#findByTemplate} instead**/
   @Deprecated
+  /** @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findGroupCandidates} or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead**/
   public Set<String> getGroupIds(String pattern) {
     pattern = pattern == null ? "" : pattern;
     //todo fix
@@ -205,8 +205,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         Collectors.toSet());
   }
 
-  /** @deprecated use {@link DependencySearchService#findArtifactCandidates} or{@link DependencySearchService#findByTemplate} instead**/
   @Deprecated
+  /** @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findArtifactCandidates} or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead**/
   public Set<String> getArtifactIds(String groupId) {
     ProgressIndicatorProvider.checkCanceled();
     return getSearchService().findArtifactCandidates(new MavenDependencyCompletionItem(groupId)).stream().map(d -> d.getArtifactId())
@@ -215,9 +215,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link DependencySearchService#findAllVersions or{@link DependencySearchService#findByTemplate} instead
+   * @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findAllVersions or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead
    **/
-  @Deprecated
   public Set<String> getVersions(String groupId, String artifactId) {
     ProgressIndicatorProvider.checkCanceled();
     return getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream()

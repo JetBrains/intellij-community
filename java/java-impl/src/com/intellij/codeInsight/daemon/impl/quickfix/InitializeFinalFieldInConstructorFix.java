@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -139,7 +139,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     if (ctors.length == 1) {
-      return Collections.singletonList(ctors[0]);
+      return Arrays.asList(ctors[0]);
     }
 
     if (ctors.length > 1) {

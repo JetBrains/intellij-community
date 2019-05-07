@@ -22,12 +22,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Enabling amend mode loads the previous commit message from the provider, and substitutes current message in the editor,
+ * Provides a checkbox to amend current commit to the previous commit.
+ * Selecting a checkbox loads the previous commit message from the provider, and substitutes current message in the editor,
  * unless it was already modified by user.
  */
 public abstract class AmendComponent {
@@ -36,17 +39,20 @@ public abstract class AmendComponent {
 
   @NotNull private final RepositoryManager<? extends Repository> myRepoManager;
   @NotNull private final CheckinProjectPanel myCheckinPanel;
-  @NotNull private final JCheckBox myAmend;
+  @NotNull protected final JCheckBox myAmend;
 
   @Nullable private Map<VirtualFile, String> myMessagesForRoots;
   @Nullable private String myAmendedMessage;
   @Nullable private String myPreviousMessage;
 
-  public AmendComponent(@NotNull RepositoryManager<? extends Repository> repoManager, @NotNull CheckinProjectPanel panel) {
-    this(repoManager, panel, DvcsBundle.message("commit.amend"));
+  public AmendComponent(@NotNull Project project,
+                        @NotNull RepositoryManager<? extends Repository> repoManager,
+                        @NotNull CheckinProjectPanel panel) {
+    this(project, repoManager, panel, DvcsBundle.message("commit.amend"));
   }
 
-  public AmendComponent(@NotNull RepositoryManager<? extends Repository> repoManager,
+  public AmendComponent(@NotNull Project project,
+                        @NotNull RepositoryManager<? extends Repository> repoManager,
                         @NotNull CheckinProjectPanel panel,
                         @NotNull String title) {
     myRepoManager = repoManager;
@@ -54,43 +60,36 @@ public abstract class AmendComponent {
     myAmend = new NonFocusableCheckBox(title);
     myAmend.setMnemonic('m');
     myAmend.setToolTipText(DvcsBundle.message("commit.amend.tooltip"));
-    myAmend.addActionListener(e -> amendModeToggled());
-  }
 
-  protected void amendModeToggled() {
-    updateCommitWorkflow();
-    updateCommitMessage();
-  }
-
-  private void updateCommitWorkflow() {
-    myCheckinPanel.getCommitWorkflowHandler().setAmendCommitMode(isAmendMode());
-  }
-
-  private void updateCommitMessage() {
-    if (isAmendMode()) {
-      if (myCheckinPanel.getCommitMessage().equals(myPreviousMessage)) { // if user has already typed something, don't revert it
-        if (myMessagesForRoots == null) {
-          loadMessagesInModalTask(myRepoManager.getVcs().getProject()); // load all commit messages for all repositories
+    myAmend.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myAmend.isSelected()) {
+          if (myCheckinPanel.getCommitMessage().equals(myPreviousMessage)) { // if user has already typed something, don't revert it
+            if (myMessagesForRoots == null) {
+              loadMessagesInModalTask(project); // load all commit messages for all repositories
+            }
+            String message = constructAmendedMessage();
+            if (!StringUtil.isEmptyOrSpaces(message)) {
+              myAmendedMessage = message;
+              substituteCommitMessage(myAmendedMessage);
+            }
+          }
         }
-        String message = constructAmendedMessage();
-        if (!StringUtil.isEmptyOrSpaces(message)) {
-          myAmendedMessage = message;
-          substituteCommitMessage(myAmendedMessage);
+        else {
+          // there was the amended message, but user has changed it => not reverting
+          if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
+            myCheckinPanel.setCommitMessage(myPreviousMessage);
+          }
         }
       }
-    }
-    else {
-      // there was the amended message, but user has changed it => not reverting
-      if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
-        myCheckinPanel.setCommitMessage(myPreviousMessage);
-      }
-    }
+    });
   }
 
   @Nullable
   private String constructAmendedMessage() {
     Set<VirtualFile> selectedRoots = getVcsRoots(getSelectedFilePaths()); // get only selected files
-    LinkedHashSet<String> messages = new LinkedHashSet<>();
+    LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     if (myMessagesForRoots != null) {
       for (VirtualFile root : selectedRoots) {
         String message = myMessagesForRoots.get(root);
@@ -105,11 +104,15 @@ public abstract class AmendComponent {
   public void refresh() {
     myPreviousMessage = myCheckinPanel.getCommitMessage();
     myAmend.setSelected(false);
-    updateCommitWorkflow();
   }
 
   @NotNull
   public Component getComponent() {
+    return myAmend;
+  }
+
+  @NotNull
+  public JCheckBox getCheckBox() {
     return myAmend;
   }
 
@@ -132,7 +135,7 @@ public abstract class AmendComponent {
     }
   }
 
-  @NotNull
+  @Nullable
   private Map<VirtualFile, String> getLastCommitMessages() throws VcsException {
     Map<VirtualFile, String> messagesForRoots = new HashMap<>();
     // load all vcs roots visible in the commit dialog (not only selected ones), to avoid another loading task if selection changes
@@ -163,15 +166,7 @@ public abstract class AmendComponent {
   @Nullable
   protected abstract String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException;
 
-  public boolean isAmendMode() {
+  public boolean isAmend() {
     return myAmend.isSelected();
-  }
-
-  public void setAmendMode(boolean value) {
-    myAmend.setSelected(value);
-  }
-
-  public void setAmendModeTogglingEnabled(boolean value) {
-    myAmend.setEnabled(value);
   }
 }

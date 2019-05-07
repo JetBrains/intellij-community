@@ -10,6 +10,9 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class TopLevelMatchingHandler extends MatchingHandler implements DelegatingHandler {
   private final MatchingHandler delegate;
 
@@ -23,6 +26,12 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
     final boolean matched = delegate.match(patternNode, matchedNode, matchContext);
 
     if (matched) {
+      List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
+      if (matchedNodes == null) {
+        matchedNodes = new ArrayList<>();
+        matchContext.setMatchedNodes(matchedNodes);
+      }
+
       PsiElement elementToAdd = matchedNode;
 
       if (patternNode instanceof PsiComment && StructuralSearchUtil.isDocCommentOwner(matchedNode)) {
@@ -32,14 +41,14 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
         assert elementToAdd instanceof PsiComment;
       }
 
-      matchContext.addMatchedNode(elementToAdd);
+      matchedNodes.add(elementToAdd);
     }
 
     if ((!matched || matchContext.getOptions().isRecursiveSearch()) &&
         matchContext.getPattern().getStrategy().continueMatching(matchedNode) &&
         matchContext.shouldRecursivelyMatch()
        ) {
-      final PsiElement child = matchedNode.getFirstChild();
+      PsiElement child = matchedNode.getFirstChild();
       if (child != null) {
         matchContext.getMatcher().matchContext(new SsrFilteringNodeIterator(new SiblingNodeIterator(child)));
       }

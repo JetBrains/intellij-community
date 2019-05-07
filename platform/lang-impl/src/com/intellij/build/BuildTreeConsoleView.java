@@ -567,15 +567,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                            }, messageEvent.getNavigatable(myProject), nodesMap, myProject);
     }
 
-    if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
+    if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING) {
       SimpleNode p = parentNode;
       do {
         ExecutionNode executionNode = (ExecutionNode)p;
-        boolean warningOrInfoUpdate =
-          (eventKind == MessageEvent.Kind.WARNING && !executionNode.hasWarnings()) ||
-          (eventKind == MessageEvent.Kind.INFO && !executionNode.hasInfos());
+        boolean warningUpdate = eventKind == MessageEvent.Kind.WARNING && !executionNode.hasWarnings();
         executionNode.reportChildMessageKind(eventKind);
-        if (warningOrInfoUpdate) {
+        if (warningUpdate) {
           executionNode.cleanUpCache();
           scheduleUpdate(executionNode);
         }

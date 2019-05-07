@@ -90,8 +90,10 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
@@ -163,7 +165,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private List<AnAction> fillRunActionsToolbar(final DefaultActionGroup toolbarActions) {
-    List<AnAction> actions = new ArrayList<>();
+    List<AnAction> actions = ContainerUtil.newArrayList();
     // Rerun
     actions.add(createRerunAction());
     // Stop
@@ -193,7 +195,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private List<AnAction> fillOutputActionsToolbar(final DefaultActionGroup toolbarActions) {
-    List<AnAction> actions = new ArrayList<>();
+    List<AnAction> actions = ContainerUtil.newArrayList();
     // Use soft wraps
     actions.add(new SoftWrapAction());
     // Scroll to the end

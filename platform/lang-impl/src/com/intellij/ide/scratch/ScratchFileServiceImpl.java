@@ -55,7 +55,10 @@ import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
@@ -268,7 +271,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @NotNull
     @Override
     public Collection<VirtualFile> additionalRoots(Project project) {
-      Set<VirtualFile> result = new LinkedHashSet<>();
+      Set<VirtualFile> result = ContainerUtil.newLinkedHashSet();
       LocalFileSystem fileSystem = LocalFileSystem.getInstance();
       ScratchFileService app = ScratchFileService.getInstance();
       for (RootType r : RootType.getAllRootTypes()) {
@@ -338,7 +341,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     public Set<VirtualFile> getAdditionalRootsToIndex() {
       ScratchFileService instance = ScratchFileService.getInstance();
       LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      HashSet<VirtualFile> result = new HashSet<>();
+      HashSet<VirtualFile> result = ContainerUtil.newHashSet();
       for (RootType rootType : RootType.getAllRootTypes()) {
         if (rootType.isHidden()) continue;
         ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));

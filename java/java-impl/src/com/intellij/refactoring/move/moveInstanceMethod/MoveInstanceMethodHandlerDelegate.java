@@ -61,10 +61,4 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     new MoveInstanceMethodHandler().invoke(project, elements, null);
   }
-
-  @Nullable
-  @Override
-  public String getActionName(PsiElement[] elements) {
-    return "Move Instance Method...";
-  }
 }

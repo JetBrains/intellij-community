@@ -615,7 +615,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
-    checkHintContents("<html><font color=a8a8a8>@NonNls @NotNull String key</font></html>\n" +
+    checkHintContents("<html><font color=a8a8a8>@NotNull String key</font></html>\n" +
                       "-\n" +
                       "[<html>@NotNull String key, <b>String def</b></html>]");
   }
@@ -627,14 +627,14 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("setProperty");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
-    checkHintContents("<html><b>@NonNls @NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
+    checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>, <HINT text=\"value:\"/><caret>) } }");
-    checkHintContents("<html><b>@NonNls @NotNull String</b>&nbsp;&nbsp;<i>the value of the system property.  </i></html>");
+    checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>the value of the system property.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
-    checkHintContents("<html>@NonNls @NotNull String key, <b>@NonNls @NotNull String value</b></html>");
+    checkHintContents("<html>@NotNull String key, <b>String value</b></html>");
   }
 
   public void testUpInEditor() {
@@ -646,7 +646,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
-    checkHintContents("<html><b>@NonNls @NotNull String key</b></html>\n" +
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "-\n" +
                       "[<html><b>@NotNull String key</b>, String def</html>]");
     up();
@@ -664,7 +664,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
-    checkHintContents("<html><b>@NonNls @NotNull String key</b></html>\n" +
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "-\n" +
                       "[<html><b>@NotNull String key</b>, String def</html>]");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
@@ -693,7 +693,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
     waitForAllAsyncStuff();
-    checkHintContents("<html><b>@NonNls @NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
+    checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
   }
 
   public void testSwitchIsPossibleForManuallyEnteredUnmatchedMethodCall() {
@@ -730,7 +730,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
     showParameterInfo();
-    checkHintContents("<html><b>@NonNls @NotNull String key</b></html>\n" +
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "-\n" +
                       "[<html><b>@NotNull String key</b>, String def</html>]");
     escape();
@@ -748,7 +748,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("getProperty(String key, String def)");
     checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
     waitForAllAsyncStuff();
-    checkHintContents("<html><b>@NonNls @NotNull String key</b></html>\n" +
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "-\n" +
                       "[<html><b>@NotNull String key</b>, String def</html>]");
   }
@@ -879,7 +879,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("format(String format, Object... args)");
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\",args:\"/>) } }");
     waitForAllAsyncStuff();
-    checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
+    checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
   }
 
   public void testBasicScenarioForConstructor() {

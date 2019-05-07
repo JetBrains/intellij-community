@@ -20,8 +20,12 @@ class ImportProjectFromScriptAction: ExternalSystemAction() {
     val virtualFile = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE) ?: return false
     val project = e.getData<Project>(CommonDataKeys.PROJECT) ?: return false
 
-    return GradleConstants.KNOWN_GRADLE_FILES.contains(virtualFile.name)
-           && GradleSettings.getInstance(project).getLinkedProjectSettings(virtualFile.parent.path) == null
+    if (virtualFile.name  != GradleConstants.DEFAULT_SCRIPT_NAME
+        && virtualFile.name != GradleConstants.KOTLIN_DSL_SCRIPT_NAME) {
+      return false
+    }
+
+    return GradleSettings.getInstance(project).getLinkedProjectSettings(virtualFile.parent.path) == null
   }
 
   override fun actionPerformed(e: AnActionEvent) {

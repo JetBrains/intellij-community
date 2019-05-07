@@ -31,11 +31,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class IoTestUtil {
-  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
+  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && holdsEnoughPrivilegesToCreateSymlinks();
 
   private IoTestUtil() { }
 
-  private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
+  @SuppressWarnings("SpellCheckingInspection") private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
 
   @Nullable
   public static String getUnicodeName() {
@@ -322,21 +322,24 @@ public class IoTestUtil {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection", "ResultOfMethodCallIgnored"})
-  private static boolean canCreateSymlinks() {
-    File target = null, link = null;
+  private static boolean holdsEnoughPrivilegesToCreateSymlinks() {
     try {
-      target = File.createTempFile("IOTestUtil_link_target.", ".txt");
-      link = new File(target.getParent(), target.getName().replace("IOTestUtil_link_target", "IOTestUtil_link"));
-      Files.createSymbolicLink(link.toPath(), target.toPath());
-      return true;
+      File src = File.createTempFile("tempSrc", ".txt");
+      src.delete();
+      File dest = File.createTempFile("tempDst", ".txt");
+      try {
+        Files.createSymbolicLink(src.toPath(), dest.toPath());
+      }
+      catch (IOException e) {
+        return false;
+      }
+      finally {
+        dest.delete();
+      }
     }
     catch (IOException e) {
       return false;
     }
-    finally {
-      if (link != null) link.delete();
-      if (target != null) target.delete();
-    }
+    return true;
   }
 }

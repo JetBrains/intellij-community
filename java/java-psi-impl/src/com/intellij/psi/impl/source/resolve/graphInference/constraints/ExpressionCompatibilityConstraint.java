@@ -127,12 +127,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
-      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
       PsiType returnType = null;
       PsiTypeParameter[] typeParams = null;
-      final JavaResolveResult resolveResult = currentMethod != null ? null : PsiDiamondType
+      final JavaResolveResult resolveResult = candidateProperties != null ? null : PsiDiamondType
         .getDiamondsAwareResolveResult((PsiCall)expression);
-      PsiMethod method = currentMethod != null ? currentMethod.getElement() :
+      PsiMethod method = candidateProperties != null ? candidateProperties.getMethod() :
                          resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getElement() :
                          null;
 
@@ -155,14 +155,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
 
       if (typeParams != null) {
-        PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(currentMethod, resolveResult, method);
+        PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
         final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
         callSession.propagateVariables(session);
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();
           final PsiParameter[] parameters = method.getParameterList().getParameters();
           callSession.initExpressionConstraints(parameters, args, expression, method, InferenceSession
-            .chooseVarargsMode(currentMethod, resolveResult));
+            .chooseVarargsMode(candidateProperties, resolveResult));
         }
         if (callSession.repeatInferencePhases()) {
 

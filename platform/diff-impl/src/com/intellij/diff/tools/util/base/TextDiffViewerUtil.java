@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -37,6 +51,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
+import static com.intellij.util.containers.ContainerUtil.list;
 
 public class TextDiffViewerUtil {
   private static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
@@ -273,12 +288,12 @@ public class TextDiffViewerUtil {
     @Override
     protected List<HighlightPolicy> getValueSubstitutes(@NotNull HighlightPolicy value) {
       if (value == HighlightPolicy.BY_WORD_SPLIT) {
-        return Collections.singletonList(HighlightPolicy.BY_WORD);
+        return list(HighlightPolicy.BY_WORD);
       }
       if (value == HighlightPolicy.DO_NOT_HIGHLIGHT) {
-        return Collections.singletonList(HighlightPolicy.BY_LINE);
+        return list(HighlightPolicy.BY_LINE);
       }
-      return Collections.singletonList(HighlightPolicy.BY_WORD);
+      return list(HighlightPolicy.BY_WORD);
     }
 
     @NotNull
@@ -314,12 +329,12 @@ public class TextDiffViewerUtil {
     @Override
     protected List<IgnorePolicy> getValueSubstitutes(@NotNull IgnorePolicy value) {
       if (value == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) {
-        return Collections.singletonList(IgnorePolicy.IGNORE_WHITESPACES);
+        return list(IgnorePolicy.IGNORE_WHITESPACES);
       }
       if (value == IgnorePolicy.FORMATTING) {
-        return Collections.singletonList(IgnorePolicy.TRIM_WHITESPACES);
+        return list(IgnorePolicy.TRIM_WHITESPACES);
       }
-      return Collections.singletonList(IgnorePolicy.DEFAULT);
+      return list(IgnorePolicy.DEFAULT);
     }
 
     @NotNull

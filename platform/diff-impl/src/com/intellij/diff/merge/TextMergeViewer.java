@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -109,7 +109,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     final DocumentContent right = ThreeSide.RIGHT.select(contents);
     final DocumentContent output = mergeRequest.getOutputContent();
 
-    return Arrays.asList(left, output, right);
+    return ContainerUtil.list(left, output, right);
   }
 
   @NotNull
@@ -523,7 +523,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     private class MyInnerDiffWorker {
-      @NotNull private final Set<TextMergeChange> myScheduled = new HashSet<>();
+      @NotNull private final Set<TextMergeChange> myScheduled = ContainerUtil.newHashSet();
 
       @NotNull private final Alarm myAlarm = new Alarm(MyThreesideViewer.this);
       @Nullable private ProgressIndicator myProgress;
@@ -611,7 +611,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       private void launchRediff(boolean trySync) {
         myStatusPanel.setBusy(true);
 
-        final List<TextMergeChange> scheduled = new ArrayList<>(myScheduled);
+        final List<TextMergeChange> scheduled = ContainerUtil.newArrayList(myScheduled);
         myScheduled.clear();
 
         List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
@@ -883,7 +883,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     private void applyNonConflictedChanges(@NotNull ThreeSide side) {
       executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
-        List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
+        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
           if (!change.isConflict()) {
             resolveChangeAutomatically(change, side);
@@ -901,7 +901,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     private void applyResolvableConflictedChanges() {
       executeMergeCommand("Resolve Simple Conflicted Changes", true, null, () -> {
-        List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
+        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
           resolveChangeAutomatically(change, ThreeSide.BASE);
         }

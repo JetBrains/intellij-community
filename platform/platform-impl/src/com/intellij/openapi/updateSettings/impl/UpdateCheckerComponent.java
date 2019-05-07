@@ -51,6 +51,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
     Disposer.register(this, myCheckForUpdatesAlarm);
 
     updateDefaultChannel();
+    checkSecureConnection();
     scheduleOnStartCheck();
     cleanupPatch();
     snapPackageNotification();
@@ -75,6 +76,15 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
     if (!eap && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
       settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
       LOG.info("channel set to 'release'");
+    }
+  }
+
+  private static void checkSecureConnection() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isSecureConnection() && !settings.canUseSecureConnection()) {
+      String title = IdeBundle.message("update.notifications.title");
+      String message = IdeBundle.message("update.sni.disabled.message");
+      UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, null).notify(null);
     }
   }
 
@@ -168,7 +178,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
       if (!currentBuild.equals(lastBuildChecked)) {
         UpdatesInfo updatesInfo = null;
         try {
-          updatesInfo = UpdateChecker.getUpdatesInfo();
+          updatesInfo = UpdateChecker.getUpdatesInfo(UpdateSettings.getInstance());
         }
         catch (IOException | JDOMException e) {
           LOG.warn(e);

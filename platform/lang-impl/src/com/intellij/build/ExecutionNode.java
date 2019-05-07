@@ -60,7 +60,6 @@ public class ExecutionNode extends CachingSimpleNode {
   private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>();
   private final AtomicInteger myErrors = new AtomicInteger();
   private final AtomicInteger myWarnings = new AtomicInteger();
-  private final AtomicInteger myInfos = new AtomicInteger();
   private long startTime;
   private long endTime;
   @Nullable
@@ -165,7 +164,6 @@ public class ExecutionNode extends CachingSimpleNode {
     myChildrenList.clear();
     myErrors.set(0);
     myWarnings.set(0);
-    myInfos.set(0);
     myResult = null;
     cleanUpCache();
   }
@@ -235,11 +233,6 @@ public class ExecutionNode extends CachingSimpleNode {
            (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.WARNING);
   }
 
-  public boolean hasInfos() {
-    return myInfos.get() > 0 ||
-           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.INFO);
-  }
-
   public boolean isFailed() {
     return isFailed(myResult) ||
            myErrors.get() > 0 ||
@@ -304,9 +297,6 @@ public class ExecutionNode extends CachingSimpleNode {
     }
     else if (kind == MessageEvent.Kind.WARNING) {
       myWarnings.incrementAndGet();
-    }
-    else if (kind == MessageEvent.Kind.INFO) {
-      myInfos.incrementAndGet();
     }
   }
 

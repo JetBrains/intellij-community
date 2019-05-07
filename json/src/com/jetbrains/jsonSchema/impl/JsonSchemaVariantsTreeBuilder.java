@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -248,9 +262,11 @@ public class JsonSchemaVariantsTreeBuilder {
         final List<JsonSchemaObject> mergedAny = andGroups(op.myAnyOfGroup, myAnyOfGroup);
 
         final List<List<JsonSchemaObject>> mergedExclusive =
-          new ArrayList<>(op.myAnyOfGroup.size() * maxSize(myOneOfGroup) +
-                          myAnyOfGroup.size() * maxSize(op.myOneOfGroup) +
-                          maxSize(myOneOfGroup) * maxSize(op.myOneOfGroup));
+          ContainerUtil.newArrayListWithCapacity(
+            op.myAnyOfGroup.size() * maxSize(myOneOfGroup) +
+            myAnyOfGroup.size() * maxSize(op.myOneOfGroup) +
+            maxSize(myOneOfGroup) * maxSize(op.myOneOfGroup)
+          );
 
         for (List<JsonSchemaObject> objects : myOneOfGroup) {
           mergedExclusive.add(andGroups(op.myAnyOfGroup, objects));
@@ -274,7 +290,7 @@ public class JsonSchemaVariantsTreeBuilder {
 
   private static List<JsonSchemaObject> andGroups(@NotNull List<JsonSchemaObject> g1,
                                                   @NotNull List<JsonSchemaObject> g2) {
-    List<JsonSchemaObject> result = new ArrayList<>(g1.size() * g2.size());
+    List<JsonSchemaObject> result = ContainerUtil.newArrayListWithCapacity(g1.size() * g2.size());
     for (JsonSchemaObject s: g1) {
       result.addAll(andGroup(s, g2));
     }
@@ -283,7 +299,7 @@ public class JsonSchemaVariantsTreeBuilder {
 
   // here is important, which pointer gets the result: lets make them all different, otherwise two schemas of branches of oneOf would be equal
   private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
-    List<JsonSchemaObject> list = new ArrayList<>(group.size());
+    List<JsonSchemaObject> list = ContainerUtil.newArrayListWithCapacity(group.size());
     for (JsonSchemaObject s: group) {
       JsonSchemaObject schemaObject = JsonSchemaObject.merge(object, s, s);
       if (schemaObject.isValidByExclusion()) {

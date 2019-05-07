@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.util.TestTimeOut;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
@@ -339,9 +338,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     }
   }
 
-  private static void waitAndPump(Semaphore semaphore, int timeoutMs) {
-    TestTimeOut t = TestTimeOut.setTimeout(timeoutMs, TimeUnit.MILLISECONDS);
-    while (!t.timedOut()) {
+  private static void waitAndPump(Semaphore semaphore, int timeout) {
+    final long limit = System.currentTimeMillis() + timeout;
+    while (System.currentTimeMillis() < limit) {
       if (semaphore.waitFor(1)) return;
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -382,8 +381,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       waitForCommits();
       assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
 
-      TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
-      while (!alienDocManager.isCommitted(alienDocument) && !t.timedOut()) {
+      long t2 = System.currentTimeMillis() + TIMEOUT;
+      while (!alienDocManager.isCommitted(alienDocument) && System.currentTimeMillis() < t2) {
         UIUtil.dispatchAllInvocationEvents();
       }
       assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -31,13 +30,12 @@ public abstract class SearchableOptionsRegistrar{
   @Nullable
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);
 
-  public abstract void addOption(@NotNull String option, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName);
-
-  public abstract void addOptions(@NotNull Collection<String> words, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName);
+  public abstract void addOption(String option, String path, String hit, final String configurableId, final String configurableDisplayName);
 
   public abstract boolean isStopWord(String word);
 
-  @NotNull
+  public abstract Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable);
+
   public abstract Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable);
 
   public abstract Set<String> getProcessedWordsWithoutStemming(@NotNull String text);

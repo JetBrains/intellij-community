@@ -30,7 +30,6 @@ public class SensitiveDataValidator {
 
   private final Semaphore mySemaphore;
   private final AtomicBoolean isWhiteListInitialized;
-  protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
   public static SensitiveDataValidator getInstance() {
     return me.getValue();
@@ -42,10 +41,11 @@ public class SensitiveDataValidator {
     updateValidators(FUSWhiteListPersistence.getCachedWhiteList());
   }
 
+  protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
+
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
     if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST.getDescription();
-    if (isSystemEventId(context.eventId)) return context.eventId;
 
     ValidationResultType validationResultType = validateEvent(group, context);
     return validationResultType == ACCEPTED ? context.eventId : validationResultType.getDescription();
@@ -64,6 +64,16 @@ public class SensitiveDataValidator {
       validatedData.put(key, resultType == ACCEPTED ? entryValue : resultType.getDescription());
     }
     return validatedData;
+  }
+
+  private ValidationResultType validateEventData(@NotNull EventContext context,
+                                                 @Nullable WhiteListGroupRules whiteListRule,
+                                                 @NotNull String key,
+                                                 @NotNull Object entryValue) {
+    if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST;
+    if (whiteListRule == null) return UNDEFINED_RULE;
+    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return ACCEPTED;
+    return whiteListRule.validateEventData(key, entryValue, context);
   }
 
   public SensitiveDataValidator update() {
@@ -99,10 +109,6 @@ public class SensitiveDataValidator {
     return !isWhiteListInitialized.get();
   }
 
-  private static boolean isSystemEventId(@Nullable String eventId) {
-    return "invoked".equals(eventId) || "registered".equals(eventId);
-  }
-
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
     WhiteListGroupRules whiteListRule = eventsValidators.get(group.getId());
     if (whiteListRule == null || !whiteListRule.areEventIdRulesDefined()) {
@@ -110,16 +116,6 @@ public class SensitiveDataValidator {
     }
 
     return whiteListRule.validateEventId(context);
-  }
-
-  private ValidationResultType validateEventData(@NotNull EventContext context,
-                                                 @Nullable WhiteListGroupRules whiteListRule,
-                                                 @NotNull String key,
-                                                 @NotNull Object entryValue) {
-    if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST;
-    if (whiteListRule == null) return UNDEFINED_RULE;
-    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return ACCEPTED;
-    return whiteListRule.validateEventData(key, entryValue, context);
   }
 
   @NotNull

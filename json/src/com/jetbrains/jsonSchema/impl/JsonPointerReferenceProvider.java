@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -32,8 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
@@ -53,7 +65,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (!(element instanceof JsonStringLiteral)) return PsiReference.EMPTY_ARRAY;
-    List<PsiReference> refs = new ArrayList<>();
+    List<PsiReference> refs = ContainerUtil.newArrayList();
 
     List<Pair<TextRange, String>> fragments = ((JsonStringLiteral)element).getTextFragments();
     if (fragments.size() != 1)  return PsiReference.EMPTY_ARRAY;
@@ -137,7 +149,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
 
           @NotNull
           private Object[] collectCatalogVariants() {
-            List<LookupElement> elements = new ArrayList<>();
+            List<LookupElement> elements = ContainerUtil.newArrayList();
             final Project project = getElement().getProject();
             final List<JsonSchemaInfo> schemas = JsonSchemaService.Impl.get(project).getAllUserVisibleSchemas();
             for (JsonSchemaInfo schema : schemas) {
@@ -261,7 +273,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
         }
         else if (element instanceof JsonArray) {
           List<JsonValue> list = ((JsonArray)element).getValueList();
-          List<Object> values = new LinkedList<>();
+          List<Object> values = ContainerUtil.newLinkedList();
           for (int i = 0; i < list.size(); i++) {
             String stringValue = String.valueOf(i);
             if (prefix != null && !stringValue.startsWith(prefix)) continue;

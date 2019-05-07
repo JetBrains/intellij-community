@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -110,7 +113,7 @@ public class GitLogParser<R extends GitLogRecord> {
 
   @NotNull
   public List<R> parse(@NotNull CharSequence output) {
-    List<R> result = new ArrayList<>();
+    List<R> result = ContainerUtil.newArrayList();
 
     List<CharSequence> lines = StringUtil.split(output, "\n", true, false);
     for (CharSequence line : lines) {
@@ -442,7 +445,7 @@ public class GitLogParser<R extends GitLogRecord> {
   }
 
   private static class PartialResult {
-    @NotNull private List<String> myResult = new ArrayList<>();
+    @NotNull private List<String> myResult = ContainerUtil.newArrayList();
     @NotNull private final StringBuilder myCurrentItem = new StringBuilder();
 
     public void append(char c) {
@@ -461,7 +464,7 @@ public class GitLogParser<R extends GitLogRecord> {
 
     public void clear() {
       myCurrentItem.setLength(0);
-      myResult = new ArrayList<>();
+      myResult = ContainerUtil.newArrayList();
     }
 
     public boolean isEmpty() {

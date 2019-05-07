@@ -3826,7 +3826,7 @@ public class AbstractTreeUi {
   final Set<Object> getSelectedElements() {
     TreePath[] paths = myTree.getSelectionPaths();
 
-    Set<Object> result = new LinkedHashSet<>();
+    Set<Object> result = ContainerUtil.newLinkedHashSet();
     if (paths != null) {
       for (TreePath eachPath : paths) {
         if (eachPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {

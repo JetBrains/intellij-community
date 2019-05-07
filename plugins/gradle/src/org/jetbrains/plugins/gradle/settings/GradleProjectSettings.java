@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.*;
 import org.gradle.util.GradleVersion;
@@ -17,7 +18,6 @@ import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -200,13 +200,13 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     }
 
     public void setCompositeParticipants(List<BuildParticipant> compositeParticipants) {
-      myCompositeParticipants = compositeParticipants == null ? new SmartList<>() : new ArrayList<>(compositeParticipants);
+      myCompositeParticipants = compositeParticipants == null ? new SmartList<>() : ContainerUtil.newArrayList(compositeParticipants);
     }
 
     @NotNull
     public CompositeBuild copy() {
       CompositeBuild result = new CompositeBuild();
-      result.myCompositeParticipants = new ArrayList<>();
+      result.myCompositeParticipants = ContainerUtil.newArrayList();
       for (BuildParticipant participant : myCompositeParticipants) {
         result.myCompositeParticipants.add(participant.copy());
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static com.intellij.util.containers.ContainerUtil.map2List;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>, VcsLogTabsProperties {
@@ -57,7 +56,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
 
   @NotNull
   public List<String> getTabs() {
-    return new ArrayList<>(myState.OPEN_TABS);
+    return newArrayList(myState.OPEN_TABS);
   }
 
   public static void addRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField,
@@ -65,7 +64,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
                                     @NotNull Collection<String> values) {
     List<RecentGroup> recentGroups = stateField.get(filterName);
     if (recentGroups == null) {
-      recentGroups = new ArrayList<>();
+      recentGroups = newArrayList();
       stateField.put(filterName, recentGroups);
     }
     RecentGroup group = new RecentGroup(values);
@@ -86,14 +85,14 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   }
 
   public static class State {
-    public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = new TreeMap<>();
-    public LinkedHashSet<String> OPEN_TABS = new LinkedHashSet<>();
-    public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
+    public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = newTreeMap();
+    public LinkedHashSet<String> OPEN_TABS = newLinkedHashSet();
+    public Map<String, List<RecentGroup>> RECENT_FILTERS = newHashMap();
   }
 
   public static class RecentGroup {
     @XCollection
-    public List<String> FILTER_VALUES = new ArrayList<>();
+    public List<String> FILTER_VALUES = newArrayList();
 
     public RecentGroup() {
     }

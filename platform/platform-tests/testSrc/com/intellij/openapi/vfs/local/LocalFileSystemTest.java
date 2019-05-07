@@ -26,6 +26,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -40,7 +41,10 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
@@ -546,7 +550,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(vFile2);
     topDir.refresh(false, true);
 
-    Set<VirtualFile> processed = new HashSet<>();
+    Set<VirtualFile> processed = ContainerUtil.newHashSet();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -632,12 +636,12 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     VirtualFile topDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(top);
     assertNotNull(topDir);
-    Set<VirtualFile> files = new HashSet<>();
+    Set<VirtualFile> files = ContainerUtil.newHashSet();
     VfsUtilCore.processFilesRecursively(topDir, file -> { if (!file.isDirectory()) files.add(file); return true; });
     assertEquals(39, files.size());  // 13 dirs of 3 files
     topDir.refresh(false, true);
 
-    Set<VirtualFile> processed = new HashSet<>();
+    Set<VirtualFile> processed = ContainerUtil.newHashSet();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override

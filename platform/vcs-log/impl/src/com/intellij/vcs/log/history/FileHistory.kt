@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
@@ -25,17 +26,17 @@ import java.util.function.BiConsumer
 
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
-                                  private val fileHistoryData: FileHistoryData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
+                                  private val fileNamesData: FileNamesData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
   val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
-    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
+    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileNamesData, this::reportTrivialMerges)
 
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
     if (needToRepeat) {
       LOG.info("Some merge commits were not excluded from file history for ${startPath.path}")
-      removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
+      removeTrivialMerges(controller, permanentGraphInfo, fileNamesData, this::reportTrivialMerges)
     }
   }
 
@@ -46,14 +47,14 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
                      permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
-    if (fileHistoryData.hasRenames && Registry.`is`("vcs.history.refine")) {
+    if (fileNamesData.hasRenames && Registry.`is`("vcs.history.refine")) {
       val visibleLinearGraph = controller.compiledGraph
 
       val (row, path) = startCommit?.let {
         findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
       } ?: Pair(0, MaybeDeletedFilePath(startPath))
       if (row >= 0) {
-        val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileHistoryData)
+        val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
         val (paths, excluded) = refiner.refine(row, path)
         if (excluded.isNotEmpty()) {
           LOG.info("Excluding ${excluded.size} commits from history for ${startPath.path}")
@@ -63,7 +64,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
         return paths
       }
     }
-    return fileHistoryData.buildPathsMap()
+    return fileNamesData.buildPathsMap()
   }
 
   private fun findAncestorRowAffectingFile(commitId: Int,
@@ -75,8 +76,8 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
     val row = findVisibleAncestorRow(commitId, visibleLinearGraph, permanentGraphInfo) { nodeId ->
       val id = permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId)
       when {
-        fileHistoryData.affects(id, existing) -> true
-        fileHistoryData.affects(id, deleted) -> {
+        fileNamesData.affects(id, existing) -> true
+        fileNamesData.affects(id, deleted) -> {
           isDeleted.set(true)
           true
         }
@@ -93,11 +94,11 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
 fun removeTrivialMerges(controller: LinearGraphController,
                         permanentGraphInfo: PermanentGraphInfo<Int>,
-                        fileHistoryData: FileHistoryData,
+                        fileNamesData: FileNamesData,
                         report: (Set<Int>) -> Unit): Boolean {
   val trivialCandidates = TIntHashSet()
   val nonTrivialMerges = TIntHashSet()
-  fileHistoryData.forEach { _, commit, changes ->
+  fileNamesData.forEach { _, commit, changes ->
     if (changes.size() > 1) {
       if (changes.containsValue(ChangeKind.NOT_CHANGED)) {
         trivialCandidates.add(commit)
@@ -118,7 +119,7 @@ fun removeTrivialMerges(controller: LinearGraphController,
         trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
       }
       if (trivialMerges.isNotEmpty()) report(trivialMerges)
-      fileHistoryData.removeAll(trivialMerges.map { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) })
+      fileNamesData.removeAll(trivialMerges.map { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) })
     }
   }
 
@@ -166,21 +167,21 @@ private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGr
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
                                   permanentGraphInfo: PermanentGraphInfo<Int>,
-                                  private val historyData: FileHistoryData) : Dfs.NodeVisitor {
+                                  private val namesData: FileNamesData) : Dfs.NodeVisitor {
   private val permanentCommitsInfo: PermanentCommitsInfo<Int> = permanentGraphInfo.permanentCommitsInfo
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
   private val paths = Stack<MaybeDeletedFilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
-  private val pathsForCommits = HashMap<Int, MaybeDeletedFilePath>()
+  private val pathsForCommits = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
 
-  fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<Map<Int, MaybeDeletedFilePath>, Set<Int>> {
+  fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<HashMap<Int, MaybeDeletedFilePath>, HashSet<Int>> {
     paths.push(startPath)
     LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph).walk(row, this)
 
-    val excluded = THashSet<Int>()
-    for ((commit, path) in pathsForCommits) {
-      if (!historyData.affects(commit, path, true)) {
+    val excluded = ContainerUtil.newHashSet<Int>()
+    pathsForCommits.forEach { commit, path ->
+      if (path != null && !namesData.affects(commit, path, true)) {
         excluded.add(commit)
       }
     }
@@ -202,14 +203,14 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
       currentPath = if (down) {
         val pathGetter = { parentIndex: Int ->
-          historyData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         val path = findPathWithoutConflict(previousNodeId, pathGetter)
         path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
       }
       else {
         val pathGetter = { parentIndex: Int ->
-          historyData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
         }
         val path = findPathWithoutConflict(currentNodeId, pathGetter)
         // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
@@ -235,7 +236,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 }
 
-abstract class FileHistoryData(startPaths: Collection<FilePath>) {
+abstract class FileNamesData(startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
   private val affectedCommits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
   private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()

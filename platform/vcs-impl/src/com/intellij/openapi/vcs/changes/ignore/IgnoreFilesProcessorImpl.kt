@@ -175,10 +175,7 @@ class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
 
   private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
-  override fun needDoForCurrentProject(): Boolean {
-    val appSettings = VcsApplicationSettings.getInstance()
-    return !appSettings.DISABLE_MANAGE_IGNORE_FILES && (appSettings.MANAGE_IGNORE_FILES || super.needDoForCurrentProject())
-  }
+  override fun needDoForCurrentProject() = VcsApplicationSettings.getInstance().MANAGE_IGNORE_FILES || super.needDoForCurrentProject()
 
   private fun getAffectedFile(event: VFileEvent): VirtualFile? =
     runReadAction {

@@ -44,7 +44,7 @@ public class BackgroundTaskQueue {
   @NotNull protected final QueueProcessor<TaskData> myProcessor;
 
   @NotNull private final Object TEST_TASK_LOCK = new Object();
-  private volatile boolean myForceAsyncInTests;
+  private volatile boolean myForceAsyncInTests = false;
 
   public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
     myTitle = title;
@@ -81,9 +81,16 @@ public class BackgroundTaskQueue {
 
 
   @TestOnly
-  public void setForceAsyncInTests(boolean value, @NotNull Disposable disposable) {
+  public void setForceAsyncInTests(boolean value, @Nullable Disposable disposable) {
     myForceAsyncInTests = value;
-    Disposer.register(disposable, () -> myForceAsyncInTests = false);
+    if (disposable != null) {
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          myForceAsyncInTests = false;
+        }
+      });
+    }
   }
 
   private void runTaskInCurrentThread(@NotNull BackgroundableTaskData data) {

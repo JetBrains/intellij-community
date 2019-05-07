@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
@@ -300,11 +299,13 @@ public class SubstitutionHandler extends MatchingHandler {
     final MatchResultImpl substitution = context.getResult().findChild(name);
 
     if (substitution != null) {
+      final List<PsiElement> matchedNodes = context.getMatchedNodes();
+
       if (substitution.hasChildren()) {
         while (numberOfResults > 0) {
           --numberOfResults;
           final MatchResult matchResult = substitution.removeLastChild();
-          context.removeMatchedNode(matchResult.getMatch());
+          if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
         }
         if (!substitution.hasChildren()) {
           context.getResult().removeChild(name);
@@ -312,7 +313,7 @@ public class SubstitutionHandler extends MatchingHandler {
       } else {
         final MatchResult matchResult = context.getResult().removeChild(name);
         assert matchResult != null;
-        context.removeMatchedNode(matchResult.getMatch());
+        if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
       }
     }
   }
@@ -332,22 +333,18 @@ public class SubstitutionHandler extends MatchingHandler {
 
   protected boolean doMatchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final int previousMatchedOccurs = matchedOccurs;
-    final FilteringNodeIterator fNodes = new FilteringNodeIterator(matchNodes, VARS_DELIM_FILTER);
+    FilteringNodeIterator fNodes = new FilteringNodeIterator(matchNodes, VARS_DELIM_FILTER);
 
     try {
-      final CompiledPattern pattern = context.getPattern();
-      final PsiElement currentPatternNode = patternNodes.current();
-      final MatchingHandler handler = pattern.getHandler(currentPatternNode);
+      MatchingHandler handler = context.getPattern().getHandler(patternNodes.current());
       matchedOccurs = 0;
 
       boolean flag = false;
 
-      while (fNodes.hasNext() && matchedOccurs < minOccurs) {
-        if (handler.match(currentPatternNode, matchNodes.current(), context)) {
+      while(fNodes.hasNext() && matchedOccurs < minOccurs) {
+        if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
           ++matchedOccurs;
-        } else if (handler instanceof TopLevelMatchingHandler ||
-                   currentPatternNode instanceof PsiComment ||
-                   !(matchNodes.current() instanceof PsiComment)) {
+        } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
           break;
         }
         fNodes.advance();
@@ -364,12 +361,10 @@ public class SubstitutionHandler extends MatchingHandler {
       if (greedy)  {
         // go greedily to maxOccurs
 
-        while (fNodes.hasNext() && matchedOccurs < maxOccurs) {
-          if (handler.match(currentPatternNode, matchNodes.current(), context)) {
+        while(fNodes.hasNext() && matchedOccurs < maxOccurs) {
+          if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
             ++matchedOccurs;
-          } else if (handler instanceof TopLevelMatchingHandler ||
-                     currentPatternNode instanceof PsiComment ||
-                     !(matchNodes.current() instanceof PsiComment)) {
+          } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
             break;
           }
           fNodes.advance();
@@ -384,9 +379,9 @@ public class SubstitutionHandler extends MatchingHandler {
         patternNodes.advance();
 
         if (patternNodes.hasNext()) {
-          final MatchingHandler nextHandler = pattern.getHandler(patternNodes.current());
+          final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
 
-          while (matchedOccurs >= minOccurs && patternNodes.hasNext()) {
+          while(matchedOccurs >= minOccurs && patternNodes.hasNext()) {
             if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
               totalMatchedOccurs = matchedOccurs;
               // match found
@@ -421,11 +416,11 @@ public class SubstitutionHandler extends MatchingHandler {
         }
 
         if (patternNodes.hasNext()) {
-          final MatchingHandler nextHandler = pattern.getHandler(patternNodes.current());
+          final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
 
           flag = false;
 
-          while (matchNodes.hasNext() && matchedOccurs <= maxOccurs) {
+          while(matchNodes.hasNext() && matchedOccurs <= maxOccurs) {
             if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
               return checkSameOccurrencesConstraint(context);
             }

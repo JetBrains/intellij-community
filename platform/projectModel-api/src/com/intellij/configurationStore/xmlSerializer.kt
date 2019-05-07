@@ -61,11 +61,6 @@ fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerialization
   }
 }
 
-fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyNames: Collection<String>): Element? {
-  val binding = serializer.getClassBinding(state.javaClass) as KotlinAwareBeanBinding
-  return binding.serializeBaseStateInto(state, null, getDefaultSerializationFilter(), excludedPropertyNames)
-}
-
 inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java)
 
 fun <T> Element.deserialize(clazz: Class<T>): T {

@@ -40,26 +40,17 @@ public abstract class BundleBase {
       value = bundle.getString(key);
     }
     catch (MissingResourceException e) {
-      value = useDefaultValue(bundle, key, defaultValue);
+      if (defaultValue != null) {
+        value = defaultValue;
+      }
+      else {
+        value = "!" + key + "!";
+        if (assertOnMissedKeys) {
+          assert false : "'" + key + "' is not found in " + bundle;
+        }
+      }
     }
 
-    return postprocessValue(bundle, value, params);
-  }
-
-  @NotNull
-  static String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue) {
-    if (defaultValue != null) {
-      return defaultValue;
-    }
-
-    if (assertOnMissedKeys) {
-      assert false : "'" + key + "' is not found in " + bundle;
-    }
-    return "!" + key + "!";
-  }
-
-  @Nullable
-  static String postprocessValue(@NotNull ResourceBundle bundle, String value, @NotNull Object[] params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {

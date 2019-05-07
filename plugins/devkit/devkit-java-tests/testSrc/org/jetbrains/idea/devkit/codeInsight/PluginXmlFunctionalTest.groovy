@@ -132,8 +132,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
         <module value="com.intellij.modules.vcs"/>
     """)
     addPluginXml("custom", "<id>com.intellij.custom</id>")
-    addPluginXml("custom2", "<id>com.intellij.custom2</id>")
-    addPluginXml("duplicated", "<id>com.intellij.duplicated</id>")
 
     myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional.xml")
     configureByFile()
@@ -178,10 +176,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     configureByFile()
     myFixture.checkHighlighting(false, false, false)
-  }
-
-  void testExtensionQualifiedNameUnnecessaryDeclaration() {
-    doHighlightingTest("ExtensionQualifiedNameUnnecessaryDeclaration.xml")
   }
 
   void testInnerClassReferenceHighlighting() {

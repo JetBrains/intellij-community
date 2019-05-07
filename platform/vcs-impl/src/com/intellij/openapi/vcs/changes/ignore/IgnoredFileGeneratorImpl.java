@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
@@ -152,9 +152,6 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   private static boolean needGenerateIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
-    VcsApplicationSettings vcsApplicationSettings = VcsApplicationSettings.getInstance();
-    if (vcsApplicationSettings.DISABLE_MANAGE_IGNORE_FILES) return false;
-
     boolean wasGeneratedPreviously = IgnoredFileRootStore.getInstance(project).containsRoot(ignoreFileRoot.getPath());
     if (wasGeneratedPreviously) {
       LOG.debug("Ignore file generated previously for root " + ignoreFileRoot.getPath());
@@ -191,7 +188,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
 
     static class State {
-      public Set<String> generatedRoots = new HashSet<>();
+      public Set<String> generatedRoots = ContainerUtil.newHashSet();
     }
 
     State myState = new State();

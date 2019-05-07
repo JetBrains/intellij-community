@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
@@ -198,7 +197,7 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
 
   private static void check(boolean testCharByCharProcessing, @NotNull List<ColoredText> texts) {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
-    List<Pair<String, String>> actualColoredChunks = new ArrayList<>();
+    List<Pair<String, String>> actualColoredChunks = ContainerUtil.newArrayList();
     AnsiEscapeDecoder.ColoredTextAcceptor acceptor = (text, attributes) ->
       actualColoredChunks.add(Pair.create(text, StringUtil.trimStart(attributes.toString(), "\u001b[0;")));
     for (ColoredText text : texts) {

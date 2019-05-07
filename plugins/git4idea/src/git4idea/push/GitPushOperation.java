@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -118,7 +132,7 @@ public class GitPushOperation {
     mySettings = GitVcsSettings.getInstance(myProject);
     myRepositoryManager = GitRepositoryManager.getInstance(myProject);
 
-    Map<GitRepository, GitRevisionNumber> currentHeads = new HashMap<>();
+    Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
     for (GitRepository repository : pushSpecs.keySet()) {
       repository.update();
       String head = repository.getCurrentRevision();
@@ -141,8 +155,8 @@ public class GitPushOperation {
     Map<GitRepository, String> preUpdatePositions = updateRootInfoAndRememberPositions();
     Boolean rebaseOverMergeProblemDetected = null;
 
-    final Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
-    Map<GitRepository, GitUpdateResult> updatedRoots = new HashMap<>();
+    final Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
+    Map<GitRepository, GitUpdateResult> updatedRoots = ContainerUtil.newHashMap();
 
     try {
       Collection<GitRepository> remainingRoots = myPushSpecs.keySet();
@@ -289,7 +303,7 @@ public class GitPushOperation {
                                               @NotNull Map<GitRepository, String> preUpdatePositions,
                                               @Nullable Label beforeUpdateLabel,
                                               @Nullable Label afterUpdateLabel) {
-    Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
+    Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : allRoots.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -308,7 +322,7 @@ public class GitPushOperation {
 
   @NotNull
   private Map<GitRepository, GitPushRepoResult> push(@NotNull List<GitRepository> repositories) {
-    Map<GitRepository, GitPushRepoResult> results = new LinkedHashMap<>();
+    Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newLinkedHashMap();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
       ResultWithOutput resultWithOutput = doPush(repository, spec);

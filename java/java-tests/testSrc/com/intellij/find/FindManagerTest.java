@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.JavaTestUtil;
@@ -57,12 +57,16 @@ import com.intellij.usages.Usage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.WaitFor;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -310,7 +314,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setGlobal(true);
     findModel.setMultipleFiles(true);
     findModel.setCustomScope(true);
-    findModel.setCustomScope(GlobalSearchScope.filesScope(myProject, Arrays.asList(nonProjectFile)));
+    findModel.setCustomScope(GlobalSearchScope.filesScope(myProject, ContainerUtil.list(nonProjectFile)));
 
     assertSize(1, findInProject(findModel));
   }
@@ -1073,7 +1077,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     VirtualFile directory = mySourceDirs[0].findFileByRelativePath("x");
     VirtualFile file = directory.findChild("dd.properties");
     assertNotNull(file);
-    SearchScope scope = GlobalSearchScope.filesScope(myProject, Arrays.asList(directory));
+    SearchScope scope = GlobalSearchScope.filesScope(myProject, ContainerUtil.list(directory));
     Module module = ModuleManager.getInstance(myProject).getModules()[0];
     String moduleName = module.getName();
     String dirName = directory.getPresentableUrl();

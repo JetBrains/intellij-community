@@ -4,6 +4,7 @@ package org.zmlx.hg4idea.log;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.zmlx.hg4idea.log.HgHistoryUtil.createChange;
@@ -28,7 +28,7 @@ class HgChangesParser implements VcsChangesLazilyParsedDetails.ChangesParser {
                                       @NotNull VcsShortCommitDetails commit,
                                       @NotNull List<VcsFileStatusInfo> changes,
                                       int parentIndex) {
-    List<Change> result = new ArrayList<>();
+    List<Change> result = ContainerUtil.newArrayList();
     for (VcsFileStatusInfo info : changes) {
       String filePath = info.getFirstPath();
       HgRevisionNumber parentRevision =

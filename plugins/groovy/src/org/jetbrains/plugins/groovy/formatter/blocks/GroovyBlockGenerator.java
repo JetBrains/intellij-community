@@ -419,7 +419,7 @@ public class GroovyBlockGenerator {
   }
 
   private static List<ASTNode> flattenChildren(List<ASTNode> children) {
-    ArrayList<ASTNode> result = new ArrayList<>();
+    ArrayList<ASTNode> result = ContainerUtil.newArrayList();
     for (ASTNode child : children) {
       processNodeFlattening(result, child);
     }
@@ -447,7 +447,7 @@ public class GroovyBlockGenerator {
       PsiElement psi = child.getPsi();
       if (psi instanceof GrLabeledStatement) {
         alignGroup(currentGroup, spock, classLevel);
-        currentGroup = new ArrayList<>();
+        currentGroup = ContainerUtil.newArrayList();
         spock = true;
       }
       else if (currentGroup != null && spock && isTablePart(psi)) {
@@ -458,7 +458,7 @@ public class GroovyBlockGenerator {
         if (variables.length > 0) {
           if (!classLevel || currentGroup == null || fieldGroupEnded(psi) || spock) {
             alignGroup(currentGroup, spock, classLevel);
-            currentGroup = new ArrayList<>();
+            currentGroup = ContainerUtil.newArrayList();
             spock = false;
           }
           currentGroup.add((GrStatement)psi);

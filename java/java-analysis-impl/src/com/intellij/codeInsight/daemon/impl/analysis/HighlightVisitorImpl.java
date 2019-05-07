@@ -1453,7 +1453,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       if (results.length == 0 || results[0] instanceof MethodCandidateInfo &&
                                  !((MethodCandidateInfo)results[0]).isApplicable() &&
-                                 functionalInterfaceType != null || results.length > 1) {
+                                 functionalInterfaceType != null) {
         String description = null;
         if (results.length == 1) {
           description = ((MethodCandidateInfo)results[0]).getInferenceErrorMessage();

@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * @author yole
@@ -149,7 +152,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
     @Nullable private String myId;
     @NotNull private String myComment = "";
-    @NotNull private Set<Change> myChanges = new HashSet<>();
+    @NotNull private Set<Change> myChanges = ContainerUtil.newHashSet();
     @Nullable private ChangeListData myData = null;
     private boolean myIsDefault = false;
     private boolean myIsReadOnly = false;

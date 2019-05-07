@@ -123,7 +123,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
 
   // IDEA-143791
   fun `test branches are case-insensitive on case-insensitive systems`() {
-    assumeTrue("case-insensitive FS only", !SystemInfo.isFileSystemCaseSensitive)
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
 
     makeCommit("file.txt")
     git("branch UpperCase")

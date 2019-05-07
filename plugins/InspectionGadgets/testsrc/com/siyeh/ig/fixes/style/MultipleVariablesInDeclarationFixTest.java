@@ -21,5 +21,4 @@ public class MultipleVariablesInDeclarationFixTest extends IGQuickFixesTestCase 
   public void testLocalVariable() { doTest(); }
   public void testField() { doTest(); }
   public void testMultipleDeclarationsLocalWithComments() { doTest(); }
-  public void testMutuallyDependentForDeclarations() { doTest(); }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ class GitLogFullRecord extends GitLogRecord {
 
   @NotNull
   private Collection<String> getPaths() {
-    LinkedHashSet<String> result = new LinkedHashSet<>();
+    LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
     for (VcsFileStatusInfo info : myStatusInfo) {
       result.add(info.getFirstPath());
       if (info.getSecondPath() != null) result.add(info.getSecondPath());

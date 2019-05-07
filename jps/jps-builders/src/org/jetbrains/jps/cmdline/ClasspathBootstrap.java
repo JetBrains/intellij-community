@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.google.protobuf.Message;
@@ -51,7 +51,7 @@ public class ClasspathBootstrap {
   };
 
   public static List<String> getBuildProcessApplicationClasspath() {
-    final Set<String> cp = new HashSet<>();
+    final Set<String> cp = ContainerUtil.newHashSet();
 
     cp.add(getResourcePath(BuildMain.class));
     cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
@@ -85,7 +85,7 @@ public class ClasspathBootstrap {
     catch (Throwable ignored) {
     }
 
-    return new ArrayList<>(cp);
+    return ContainerUtil.newArrayList(cp);
   }
 
   public static void appendJavaCompilerClasspath(Collection<? super String> cp, boolean includeEcj) {

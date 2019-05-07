@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.sun.jna.Platform;
@@ -34,7 +35,10 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -268,7 +272,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
     private WatcherOp myLastOp;
-    private final List<String> myLines = new ArrayList<>();
+    private final List<String> myLines = ContainerUtil.newArrayList();
 
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
       super(process, commandLine, CHARSET);
@@ -368,7 +372,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     private void processRemap() {
-      Set<Pair<String, String>> pairs = new HashSet<>();
+      Set<Pair<String, String>> pairs = ContainerUtil.newHashSet();
       for (int i = 0; i < myLines.size() - 1; i += 2) {
         pairs.add(Pair.create(myLines.get(i), myLines.get(i + 1)));
       }

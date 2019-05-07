@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.isEmpty
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   internal fun <S : Any> createGetSession(component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reload: Boolean = false): StateGetter<S> {
@@ -32,12 +31,13 @@ internal fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, st
       return storage.getState(component, componentName, stateClass, mergeInto, reloadData)
     }
 
-    override fun archiveState(): S? = null
+    override fun archiveState() : S? {
+      return null
+    }
   }
 }
 
-@ApiStatus.Internal
-interface StateGetter<S : Any> {
+internal interface StateGetter<S : Any> {
   fun getState(mergeInto: S? = null): S?
 
   fun archiveState(): S?

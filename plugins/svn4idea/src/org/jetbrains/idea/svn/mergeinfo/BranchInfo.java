@@ -21,7 +21,10 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.addAll;
 import static org.jetbrains.idea.svn.SvnUtil.*;
@@ -51,11 +54,11 @@ public class BranchInfo {
     myInfo = info;
     myBranch = branch;
 
-    myPathMergedMap = new HashMap<>();
+    myPathMergedMap = ContainerUtil.newHashMap();
     myPartlyMerged = MultiMap.create();
-    myNonInheritablePathMergedMap = new HashMap<>();
+    myNonInheritablePathMergedMap = ContainerUtil.newHashMap();
 
-    myAlreadyCalculatedMap = new HashMap<>();
+    myAlreadyCalculatedMap = ContainerUtil.newHashMap();
   }
 
   private long calculateCopyRevision(final String branchPath) {
@@ -328,8 +331,8 @@ public class BranchInfo {
   }
 
   private void fillMergedRevisions(String pathWithRevisionNumber, @NotNull MergeRangeList mergeRangeList) {
-    Set<Long> revisions = new HashSet<>();
-    Set<Long> nonInheritableRevisions = new HashSet<>();
+    Set<Long> revisions = ContainerUtil.newHashSet();
+    Set<Long> nonInheritableRevisions = ContainerUtil.newHashSet();
 
     for (MergeRange range : mergeRangeList.getRanges()) {
       // TODO: Seems there is no much sense in converting merge range to list of revisions - we need just implement smart search

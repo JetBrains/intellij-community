@@ -45,7 +45,7 @@ class TabContentLayout extends ContentLayout {
       return myLastLayout.moreRect;
     }
   };
-  List<AnAction> myDoubleClickActions = new ArrayList<>();
+  List<AnAction> myDoubleClickActions = ContainerUtil.newArrayList();
 
   TabContentLayout(ToolWindowContentUi ui) {
     super(ui);

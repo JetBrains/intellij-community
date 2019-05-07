@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -15,13 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static com.intellij.util.BitUtil.isSet;
 
 public abstract class Decompressor {
   /**
@@ -36,15 +30,9 @@ public abstract class Decompressor {
       mySource = stream;
     }
 
-    public Tar withSymlinks() {
-      symlinks = true;
-      return this;
-    }
-
     //<editor-fold desc="Implementation">
     private final Object mySource;
     private TarArchiveInputStream myStream;
-    private boolean symlinks;
 
     @Override
     protected void openStream() throws IOException {
@@ -60,15 +48,9 @@ public abstract class Decompressor {
     }
 
     @Override
-    @SuppressWarnings("OctalInteger")
     protected Entry nextEntry() throws IOException {
-      TarArchiveEntry te;
-      while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink() && symlinks)) /* skips unsupported */;
-      return te == null ? null : new Entry(te.getName(), type(te), isSet(te.getMode(), 0200), isSet(te.getMode(), 0100), te.getLinkName());
-    }
-
-    private static Type type(TarArchiveEntry te) {
-      return te.isSymbolicLink() ? Type.SYMLINK : te.isDirectory() ? Type.DIR : Type.FILE;
+      TarArchiveEntry tarEntry = myStream.getNextTarEntry();
+      return tarEntry == null ? null : new Entry(tarEntry.getName(), tarEntry.isDirectory());
     }
 
     @Override
@@ -155,50 +137,26 @@ public abstract class Decompressor {
       Entry entry;
       while ((entry = nextEntry()) != null) {
         String name = entry.name;
-
-        if (myFilter != null) {
-          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(name, '/') ? name + '/' : name;
-          if (!myFilter.value(entryName)) {
-            continue;
-          }
+        if (myFilter != null && !myFilter.value(name)) {
+          continue;
         }
 
         File outputFile = entryFile(outputDir, name);
 
-        switch (entry.type) {
-          case DIR:
-            FileUtil.createDirectory(outputFile);
-            break;
-
-          case FILE:
-            if (!outputFile.exists() || myOverwrite) {
-              InputStream inputStream = openEntryStream(entry);
-              try {
-                FileUtil.createParentDirs(outputFile);
-                try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-                  FileUtil.copy(inputStream, outputStream);
-                }
-                if (!entry.isWritable && !outputFile.setWritable(false, false)) {
-                  throw new IOException("Can't make file read-only: " + outputFile);
-                }
-                if (entry.isExecutable && SystemInfo.isUnix && !outputFile.setExecutable(true, true)) {
-                  throw new IOException("Can't make file executable: " + outputFile);
-                }
-              }
-              finally {
-                closeEntryStream(inputStream);
-              }
-            }
-            break;
-
-          case SYMLINK:
-            if (StringUtil.isEmpty(entry.linkTarget) ||
-                !FileUtil.isAncestor(outputDir, new File(FileUtil.toCanonicalPath(outputFile.getParent() + '/' + entry.linkTarget)), true)) {
-              throw new IOException("Invalid symlink entry: " + name + " -> " + entry.linkTarget);
-            }
+        if (entry.isDirectory) {
+          FileUtil.createDirectory(outputFile);
+        }
+        else if (!outputFile.exists() || myOverwrite) {
+          InputStream inputStream = openEntryStream(entry);
+          try {
             FileUtil.createParentDirs(outputFile);
-            Files.createSymbolicLink(outputFile.toPath(), Paths.get(entry.linkTarget));
-            break;
+            try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+              FileUtil.copy(inputStream, outputStream);
+            }
+          }
+          finally {
+            closeEntryStream(inputStream);
+          }
         }
 
         if (myConsumer != null) {
@@ -214,25 +172,13 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  private enum Type {FILE, DIR, SYMLINK}
-
   protected static class Entry {
-    final String name;
-    final Type type;
-    final boolean isWritable;
-    final boolean isExecutable;
-    final String linkTarget;
+    private final String name;
+    private final boolean isDirectory;
 
-    protected Entry(String name, boolean isDirectory) {
-      this(name, isDirectory ? Type.DIR : Type.FILE, true, false, null);
-    }
-
-    protected Entry(String name, Type type, boolean isWritable, boolean isExecutable, String linkTarget) {
+    Entry(String name, boolean isDirectory) {
       this.name = name;
-      this.type = type;
-      this.isWritable = isWritable;
-      this.isExecutable = isExecutable;
-      this.linkTarget = linkTarget;
+      this.isDirectory = isDirectory;
     }
   }
 

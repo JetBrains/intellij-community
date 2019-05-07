@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,7 +207,7 @@ public class ProcessListUtil {
 
   @Nullable
   private static List<MacProcessInfo> doParseMacOutput(String output) {
-    List<MacProcessInfo> result = new ArrayList<>();
+    List<MacProcessInfo> result = ContainerUtil.newArrayList();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
 
@@ -320,7 +321,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> parseWMICOutput(@NotNull String output) {
-    List<ProcessInfo> result = new ArrayList<>();
+    List<ProcessInfo> result = ContainerUtil.newArrayList();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
 
@@ -369,7 +370,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> parseListTasksOutput(@NotNull String output) {
-    List<ProcessInfo> result = new ArrayList<>();
+    List<ProcessInfo> result = ContainerUtil.newArrayList();
 
     CSVReader reader = new CSVReader(new StringReader(output));
     try {

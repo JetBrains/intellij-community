@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.Disposable;
@@ -331,7 +331,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     private static List<String> getBranchFilterValues(@NotNull VcsLogBranchFilter filter) {
-      return new ArrayList<>(ContainerUtil.sorted(filter.getTextPresentation()));
+      return ContainerUtil.newArrayList(ContainerUtil.sorted(filter.getTextPresentation()));
     }
 
     @NotNull
@@ -341,7 +341,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     private static List<String> getRangeFilterValues(@NotNull VcsLogRangeFilter rangeFilter) {
-      return new ArrayList<>(rangeFilter.getTextPresentation());
+      return ContainerUtil.newArrayList(rangeFilter.getTextPresentation());
     }
 
     @NotNull
@@ -363,9 +363,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @Nullable
     BranchFilters createFilterFromPresentation(@NotNull List<String> values) {
-      List<String> hashes = new ArrayList<>();
-      List<String> branches = new ArrayList<>();
-      List<String> ranges = new ArrayList<>();
+      List<String> hashes = ContainerUtil.newArrayList();
+      List<String> branches = ContainerUtil.newArrayList();
+      List<String> ranges = ContainerUtil.newArrayList();
       for (String s : values) {
         int twoDots = s.indexOf("..");
         if (twoDots > 0 && twoDots == s.lastIndexOf("..")) {
@@ -504,7 +504,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected List<String> getFilter2Values(@NotNull VcsLogHashFilter filter) {
-      return new ArrayList<>(filter.getHashes());
+      return ContainerUtil.newArrayList(filter.getHashes());
     }
 
     @Nullable
@@ -577,7 +577,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Override
     @Nullable
     protected VcsLogRootFilter createFilter2(@NotNull List<String> values) {
-      List<VirtualFile> selectedRoots = new ArrayList<>();
+      List<VirtualFile> selectedRoots = ContainerUtil.newArrayList();
       for (String path : values) {
         VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
         if (root != null) {
@@ -674,7 +674,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
-      return new ArrayList<>(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
+      return ContainerUtil.newArrayList(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = Logger.getInstance(DataNode.class);
 
-  @NotNull private final List<DataNode<?>> myChildren = new ArrayList<>();
+  @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
   @NotNull private transient List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
   @NotNull private transient UserDataHolderBase myUserData = new UserDataHolderBase();
 

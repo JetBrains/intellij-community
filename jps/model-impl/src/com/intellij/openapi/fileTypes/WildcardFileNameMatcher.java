@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
 /**
  * @author max
  */
-public class WildcardFileNameMatcher implements FileNameMatcher {
+public class WildcardFileNameMatcher extends FileNameMatcherEx {
   private final String myPattern;
   private final MaskMatcher myMatcher;
 

@@ -110,7 +110,7 @@ class MacDmgBuilder {
     def jreManager = buildContext.bundledJreManager
     String suffix = "-no-jdk", javaExePath = null
     if (secondJreArchive != null) {
-      suffix = ""
+      suffix = "-jbr${jreManager.getSecondJreVersion()}"
       javaExePath = getJavaExePath(secondJreArchive, jreManager.isSecondBundledJreModular())
     }
     else if (jreArchivePath != null) {

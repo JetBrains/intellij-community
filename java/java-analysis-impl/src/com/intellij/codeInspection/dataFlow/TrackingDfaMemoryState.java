@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -116,14 +115,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
 
   void recordChange(Instruction instruction, TrackingDfaMemoryState previous) {
-    Map<DfaVariableValue, Change> result = getChangeMap(previous);
-    DfaValue value = isEmptyStack() ? DfaUnknownValue.getInstance() : peek();
-    myHistory.replaceAll(prev -> MemoryStateChange.create(prev, instruction, result, value));
-  }
-
-  @NotNull
-  private Map<DfaVariableValue, Change> getChangeMap(TrackingDfaMemoryState previous) {
-    Map<DfaVariableValue, Change> changeMap = new HashMap<>();
+    Map<DfaVariableValue, Change> result = new HashMap<>();
     Set<DfaVariableValue> varsToCheck = new HashSet<>();
     previous.forVariableStates((value, state) -> varsToCheck.add(value));
     forVariableStates((value, state) -> varsToCheck.add(value));
@@ -143,7 +135,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
             removed = removed.with((DfaFactType<Object>)type, oldVal);
           }
         }
-        changeMap.put(value, new Change(Collections.emptySet(), Collections.emptySet(), removed, added));
+        result.put(value, new Change(Collections.emptySet(), Collections.emptySet(), removed, added));
       }
     }
     Map<DfaVariableValue, Set<Relation>> oldRelations = previous.getRelations();
@@ -159,61 +151,18 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         added.removeAll(oldValueRelations);
         Set<Relation> removed = new HashSet<>(oldValueRelations);
         removed.removeAll(newValueRelations);
-        changeMap.compute(
+        result.compute(
           value, (v, change) -> change == null
                                 ? Change.create(removed, added, DfaFactMap.EMPTY, DfaFactMap.EMPTY)
                                 : Change.create(removed, added, change.myRemovedFacts, change.myAddedFacts));
       }
     }
-    return changeMap;
+    DfaValue value = isEmptyStack() ? DfaUnknownValue.getInstance() : peek();
+    myHistory.replaceAll(prev -> MemoryStateChange.create(prev, instruction, result, value));
   }
 
   List<MemoryStateChange> getHistory() {
     return myHistory;
-  }
-
-  /**
-   * Records a bridge changes. A bridge states are states which process the same input instruction,
-   * but in result jump to another place in the program (other than this state target).
-   * A bridge change is the difference between this state and all states which have different
-   * target instruction. Bridges allow to track what else is processed in parallel with current state, 
-   * including states which may not arrive into target place. E.g. consider two states like this:
-   * 
-   * <pre>
-   *   this_state  other_state
-   *       |            |
-   *       some_condition    <-- bridge is recorded here
-   *       |(true)      |(false)
-   *       |         return
-   *       |
-   *   always_true_condition <-- explanation is requested here
-   * </pre>
-   * 
-   * Thanks to the bridge we know that {@code some_condition} could be important for 
-   * {@code always_true_condition} explanation.
-   * 
-   * @param instruction instruction which 
-   * @param bridgeStates
-   */
-  void addBridge(Instruction instruction, List<TrackingDfaMemoryState> bridgeStates) {
-    Map<DfaVariableValue, Change> changeMap = null;
-    for (TrackingDfaMemoryState bridge : bridgeStates) {
-      Map<DfaVariableValue, Change> newChangeMap = getChangeMap(bridge);
-      if (changeMap == null) {
-        changeMap = newChangeMap;
-      } else {
-        changeMap.keySet().retainAll(newChangeMap.keySet());
-        changeMap.replaceAll((var, old) -> old.unite(newChangeMap.get(var)));
-        changeMap.values().removeIf(Objects::isNull);
-      }
-      if (changeMap.isEmpty()) {
-        break;
-      }
-    }
-    if (changeMap != null && !changeMap.isEmpty()) {
-      Map<DfaVariableValue, Change> finalChangeMap = changeMap;
-      myHistory.replaceAll(s -> s.withBridge(instruction, finalChangeMap));
-    }
   }
 
   static class Relation {
@@ -258,26 +207,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       myAddedFacts = addedFacts;
     }
 
-    @Nullable
     static Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfaFactMap removedFacts, DfaFactMap addedFacts) {
       if (removedRelations.isEmpty() && addedRelations.isEmpty() && removedFacts == DfaFactMap.EMPTY && addedFacts == DfaFactMap.EMPTY) {
         return null;
       }
       return new Change(removedRelations, addedRelations, removedFacts, addedFacts);
-    }
-
-    /**
-     * Creates a Change which reflects changes actual for both this and other change
-     * @param other other change to unite with
-     * @return new change or null if this and other change has nothing in common
-     */
-    @Nullable
-    Change unite(Change other) {
-      Set<Relation> added = new HashSet<>(ContainerUtil.intersection(myAddedRelations, other.myAddedRelations));
-      Set<Relation> removed = new HashSet<>(ContainerUtil.intersection(myRemovedRelations, other.myRemovedRelations));
-      DfaFactMap addedFacts = myAddedFacts.unite(other.myAddedFacts);
-      DfaFactMap removedFacts = myRemovedFacts.unite(other.myRemovedFacts);
-      return create(removed, added, removedFacts, addedFacts);
     }
 
     @Override
@@ -295,18 +229,15 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     final @NotNull Instruction myInstruction;
     final @NotNull Map<DfaVariableValue, Change> myChanges;
     final @NotNull DfaValue myTopOfStack;
-    final @NotNull Map<DfaVariableValue, Change> myBridgeChanges;
 
     private MemoryStateChange(@Nullable MemoryStateChange previous,
                               @NotNull Instruction instruction,
                               @NotNull Map<DfaVariableValue, Change> changes,
-                              @NotNull DfaValue topOfStack,
-                              @NotNull Map<DfaVariableValue, Change> bridgeChanges) {
+                              @NotNull DfaValue topOfStack) {
       myPrevious = previous;
       myInstruction = instruction;
       myChanges = changes;
       myTopOfStack = topOfStack;
-      myBridgeChanges = bridgeChanges;
     }
 
     @Contract("null -> null")
@@ -333,9 +264,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate, boolean startFromSelf) {
       return findChange(change -> {
         Change varChange = change.myChanges.get(value);
-        if (varChange != null && varChange.myAddedRelations.stream().anyMatch(relationPredicate)) return true;
-        Change bridgeVarChange = change.myBridgeChanges.get(value);
-        return bridgeVarChange != null && bridgeVarChange.myAddedRelations.stream().anyMatch(relationPredicate);
+        return varChange != null && varChange.myAddedRelations.stream().anyMatch(relationPredicate);
       }, startFromSelf);
     }
     
@@ -343,30 +272,20 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     <T> Pair<MemoryStateChange, T> findFact(DfaValue value, DfaFactType<T> type) {
       if (value instanceof DfaVariableValue) {
         for (MemoryStateChange change = this; change != null; change = change.myPrevious) {
-          Pair<MemoryStateChange, T> factPair = factFromChange(type, change, change.myChanges.get(value));
-          if (factPair != null) return factPair;
-          factPair = factFromChange(type, change, change.myBridgeChanges.get(value));
-          if (factPair != null) return factPair;
+          Change varChange = change.myChanges.get(value);
+          if (varChange != null) {
+            T added = varChange.myAddedFacts.get(type);
+            if (added != null) {
+              return Pair.create(change, added); 
+            }
+            if (varChange.myRemovedFacts.get(type) != null) {
+              return Pair.create(change, null);
+            }
+          }
         }
         return Pair.create(null, ((DfaVariableValue)value).getInherentFacts().get(type));
       }
       return Pair.create(null, type.fromDfaValue(value));
-    }
-
-    @Nullable
-    private static <T> Pair<MemoryStateChange, T> factFromChange(DfaFactType<T> type,
-                                                                 MemoryStateChange change,
-                                                                 Change varChange) {
-      if (varChange != null) {
-        T added = varChange.myAddedFacts.get(type);
-        if (added != null) {
-          return Pair.create(change, added); 
-        }
-        if (varChange.myRemovedFacts.get(type) != null) {
-          return Pair.create(change, null);
-        }
-      }
-      return null;
     }
 
     @Nullable
@@ -399,13 +318,12 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       return myInstruction.equals(change.myInstruction) &&
              myTopOfStack.equals(change.myTopOfStack) &&
              myChanges.equals(change.myChanges) &&
-             myBridgeChanges.equals(change.myBridgeChanges) &&
              Objects.equals(myPrevious, change.myPrevious);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myPrevious, myInstruction, myChanges, myBridgeChanges, myTopOfStack);
+      return Objects.hash(myPrevious, myInstruction, myChanges, myTopOfStack);
     }
 
     @Nullable
@@ -453,19 +371,6 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       }
     }
 
-    MemoryStateChange withBridge(@NotNull Instruction instruction, @NotNull Map<DfaVariableValue, Change> bridge) {
-      if (myInstruction != instruction) {
-        if (instruction instanceof ConditionalGotoInstruction &&
-            getExpression() == ((ConditionalGotoInstruction)instruction).getPsiAnchor()) {
-          instruction = myInstruction;
-        } else {
-          return new MemoryStateChange(this, instruction, Collections.emptyMap(), DfaUnknownValue.getInstance(), bridge);
-        }
-      }
-      assert myBridgeChanges.isEmpty();
-      return new MemoryStateChange(myPrevious, instruction, myChanges, myTopOfStack, bridge);
-    }
-
     @Nullable
     static MemoryStateChange create(@Nullable MemoryStateChange previous,
                                     @NotNull Instruction instruction,
@@ -474,7 +379,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       if (result.isEmpty() && value == DfaUnknownValue.getInstance()) {
         return previous;
       }
-      return new MemoryStateChange(previous, instruction, result, value, Collections.emptyMap());
+      return new MemoryStateChange(previous, instruction, result, value);
     }
 
     MemoryStateChange[] flatten() {
@@ -491,9 +396,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     public String toString() {
       return myInstruction.getIndex() + " " + myInstruction + ": " + myTopOfStack +
              (myChanges.isEmpty() ? "" :
-              "; Changes: " + EntryStream.of(myChanges).join(": ", "\n\t", "").joining()) +
-             (myBridgeChanges.isEmpty() ? "" :
-              "; Bridge changes: " + EntryStream.of(myBridgeChanges).join(": ", "\n\t", "").joining());
+              "; Changes: " + EntryStream.of(myChanges).join(": ", "\n\t", "").joining());
     }
   }
 }

@@ -5,18 +5,17 @@ import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePr
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.*;
 
 public class IntellijPropertyKindMap {
-  private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = new HashMap<>();
+  private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = ContainerUtil.newHashMap();
 
   static {
     collectCommonLanguageProperties();
@@ -51,7 +50,7 @@ public class IntellijPropertyKindMap {
       @NotNull
       @Override
       protected List<CodeStyleObjectDescriptor> getSupportedFields() {
-        List<CodeStyleObjectDescriptor> descriptors = new ArrayList<>();
+        List<CodeStyleObjectDescriptor> descriptors = ContainerUtil.newArrayList();
         descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings(Language.ANY), null));
         descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings.IndentOptions(), null));
         return descriptors;

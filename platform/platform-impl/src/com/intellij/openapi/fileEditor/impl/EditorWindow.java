@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -31,11 +32,9 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBRectangle;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -916,7 +915,7 @@ public class EditorWindow {
     final LayeredIcon result = new LayeredIcon(count);
     result.setIcon(baseIcon, i++);
     if (pinIcon != null) result.setIcon(pinIcon, i++);
-    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth() / 2, 0);
+    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth(), 0);
 
     return JBUI.scale(result);
   }
@@ -1113,7 +1112,7 @@ public class EditorWindow {
     final VirtualFile[] allFiles = getFiles();
     final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileList();
 
-    LinkedHashSet<VirtualFile> closingOrder = new LinkedHashSet<>();
+    LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
 
     // first, we search for files not in history
     for (final VirtualFile file : allFiles) {

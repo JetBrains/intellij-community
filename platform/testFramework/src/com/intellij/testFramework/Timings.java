@@ -19,7 +19,6 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -40,7 +39,7 @@ public class Timings {
   static {
     CPU_TIMING = CpuTimings.calcStableCpuTiming();
 
-    long start = System.nanoTime();
+    long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
@@ -71,7 +70,7 @@ public class Timings {
         throw new RuntimeException(e);
       }
     }
-    IO_TIMING = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    IO_TIMING = System.currentTimeMillis() - start;
   }
 
   /**

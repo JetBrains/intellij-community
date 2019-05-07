@@ -28,7 +28,7 @@ import static org.junit.Assert.assertThat;
 public class FoundationTest {
   @BeforeClass
   public static void assumeMac() {
-    Assume.assumeTrue("mac only", SystemInfo.isMac);
+    Assume.assumeTrue(SystemInfo.isMac);
   }
 
   @Test

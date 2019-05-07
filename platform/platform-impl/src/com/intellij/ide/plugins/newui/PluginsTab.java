@@ -66,7 +66,7 @@ public abstract class PluginsTab {
 
   @NotNull
   public JComponent createPanel() {
-    createSearchTextField(100);
+    createSearchTextField();
 
     myCardPanel = new MultiPanel() {
       @Override
@@ -104,14 +104,14 @@ public abstract class PluginsTab {
     splitter.setFirstComponent(listPanel);
     splitter.setSecondComponent(myDetailsPage = createDetailsPanel(mySearchListener));
 
-    mySearchPanel = createSearchPanel(mySelectionListener);
+    mySearchPanel = createSearchPanel(mySelectionListener, mySearchTextField);
 
     myCardPanel.select(0, true);
 
     return splitter;
   }
 
-  protected void createSearchTextField(int flyDelay) {
+  protected void createSearchTextField() {
     mySearchTextField = new PluginSearchTextField() {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent event) {
@@ -181,7 +181,7 @@ public abstract class PluginsTab {
       protected void textChanged(@NotNull DocumentEvent e) {
         if (!mySearchTextField.isSkipDocumentEvents()) {
           mySearchUpdateAlarm.cancelAllRequests();
-          mySearchUpdateAlarm.addRequest(this::searchOnTheFly, flyDelay, ModalityState.stateForComponent(mySearchTextField));
+          mySearchUpdateAlarm.addRequest(this::searchOnTheFly, 100, ModalityState.stateForComponent(mySearchTextField));
         }
       }
 
@@ -224,7 +224,8 @@ public abstract class PluginsTab {
   protected abstract void updateMainSelection(@NotNull Consumer<PluginsGroupComponent> selectionListener);
 
   @NotNull
-  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener);
+  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
+                                                         @NotNull PluginSearchTextField searchTextField);
 
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {

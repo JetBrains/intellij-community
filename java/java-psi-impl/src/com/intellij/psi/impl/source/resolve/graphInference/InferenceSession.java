@@ -128,8 +128,8 @@ public class InferenceSession {
   }
 
   void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
-    final MethodCandidateInfo currentMethod = getCurrentProperties(parent);
-    initExpressionConstraints(parameters, args, parent, null, currentMethod != null && currentMethod.isVarargs());
+    final MethodCandidateInfo.CurrentCandidateProperties currentProperties = getCurrentProperties(parent);
+    initExpressionConstraints(parameters, args, parent, null, currentProperties != null && currentProperties.isVarargs());
   }
 
   public void initExpressionConstraints(PsiParameter[] parameters,
@@ -137,10 +137,10 @@ public class InferenceSession {
                                         PsiElement parent,
                                         PsiMethod method,
                                         boolean varargs) {
-    final MethodCandidateInfo currentMethod = getCurrentProperties(parent);
+    final MethodCandidateInfo.CurrentCandidateProperties currentProperties = getCurrentProperties(parent);
     if (method == null) {
-      if (currentMethod != null) {
-        method = currentMethod.getElement();
+      if (currentProperties != null) {
+        method = currentProperties.getMethod();
       }
     }
     if (method != null) {
@@ -169,20 +169,15 @@ public class InferenceSession {
       }
     }
   }
-  
-  private static PsiExpressionList getArgumentList(PsiElement parent) {
+
+  private static MethodCandidateInfo.CurrentCandidateProperties getCurrentProperties(PsiElement parent) {
     if (parent instanceof PsiCall) {
-      return ((PsiCall)parent).getArgumentList();
+      return MethodCandidateInfo.getCurrentMethod(((PsiCall)parent).getArgumentList());
     }
     if (parent instanceof PsiAnonymousClass) {
-      return getArgumentList(parent.getParent());
+      return getCurrentProperties(parent.getParent());
     }
     return null;
-  }
-
-  private static MethodCandidateInfo getCurrentProperties(PsiElement parent) {
-    PsiExpressionList argumentList = getArgumentList(parent);
-    return argumentList != null ? MethodCandidateInfo.getCurrentMethod(argumentList) : null;
   }
 
   /**
@@ -289,7 +284,7 @@ public class InferenceSession {
 
   PsiSubstitutor collectAdditionalAndInfer(@NotNull PsiParameter[] parameters,
                                            @NotNull PsiExpression[] args,
-                                           @NotNull MethodCandidateInfo properties,
+                                           @NotNull MethodCandidateInfo.CurrentCandidateProperties properties,
                                            @NotNull PsiSubstitutor psiSubstitutor) {
     return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor);
   }
@@ -305,18 +300,18 @@ public class InferenceSession {
   public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
-                              @Nullable MethodCandidateInfo currentMethod) {
-    return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY);
+                              @Nullable MethodCandidateInfo.CurrentCandidateProperties properties) {
+    return performGuardedInference(parameters, args, parent, properties, PsiSubstitutor.EMPTY);
   }
 
   @NotNull
   private PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
                                                  @Nullable PsiExpression[] args,
                                                  @Nullable PsiElement parent,
-                                                 @Nullable MethodCandidateInfo currentMethod,
+                                                 @Nullable MethodCandidateInfo.CurrentCandidateProperties properties,
                                                  @NotNull PsiSubstitutor initialSubstitutor) {
     try {
-      doInfer(parameters, args, parent, currentMethod, initialSubstitutor);
+      doInfer(parameters, args, parent, properties, initialSubstitutor);
       return prepareSubstitution();
     }
     finally {
@@ -326,8 +321,8 @@ public class InferenceSession {
         }
       }
 
-      if (currentMethod != null && myErrorMessages != null) {
-        currentMethod.setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
+      if (properties != null && myErrorMessages != null) {
+        properties.getInfo().setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
       }
     }
   }
@@ -335,16 +330,15 @@ public class InferenceSession {
   private void doInfer(@Nullable PsiParameter[] parameters,
                        @Nullable PsiExpression[] args,
                        @Nullable PsiElement parent,
-                       @Nullable MethodCandidateInfo properties,
+                       @Nullable MethodCandidateInfo.CurrentCandidateProperties properties,
                        @NotNull PsiSubstitutor initialSubstitutor) {
     if (!repeatInferencePhases()) {
       return;
     }
 
-    PsiExpressionList argumentList = getArgumentList(parent);
-    if (properties != null && argumentList != null && !MethodCandidateInfo.isOverloadCheck(argumentList)) {
+    if (properties != null && !properties.isApplicabilityCheck()) {
       String expectedActualErrorMessage = null;
-      final PsiMethod method = properties.getElement();
+      final PsiMethod method = properties.getMethod();
       if (parent instanceof PsiCallExpression && PsiPolyExpressionUtil.isMethodCallPolyExpression((PsiExpression)parent, method)) {
         final PsiType returnType = method.getReturnType();
         if (!PsiType.VOID.equals(returnType) && returnType != null) {
@@ -371,10 +365,10 @@ public class InferenceSession {
         }
       }
       //proceed to B3 constraints
-      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {//todo
+      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
-        collectAdditionalConstraints(parameters, args, properties.getElement(), mySiteSubstitutor, additionalConstraints,
+        collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints,
                                      ignoredConstraints, properties.isVarargs(), initialSubstitutor);
 
         proceedWithAdditionalConstraints(additionalConstraints, ignoredConstraints);
@@ -482,9 +476,9 @@ public class InferenceSession {
       return null;
     }
 
-    MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
-    if (currentMethod != null) {
-      return currentMethod.getElement();
+    MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
+    if (properties != null) {
+      return properties.getMethod();
     }
     final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(arg);
     if (resolveResult instanceof MethodCandidateInfo) {
@@ -548,32 +542,32 @@ public class InferenceSession {
                                             PsiSubstitutor initialSubstitutor) {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
-      MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
-      final JavaResolveResult result = currentMethod != null ? null : PsiDiamondType.getDiamondsAwareResolveResult(callExpression);
-      final PsiMethod method = currentMethod != null ? currentMethod.getElement() : result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() :  null;
+      MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
+      final JavaResolveResult result = properties != null ? null : PsiDiamondType.getDiamondsAwareResolveResult(callExpression);
+      final PsiMethod method = properties != null ? properties.getMethod() : result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() :  null;
       if (method != null) {
         final PsiExpression[] newArgs = argumentList.getExpressions();
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
-          collectAdditionalConstraints(newParams, newArgs, method, chooseSiteSubstitutor(currentMethod, result, method), additionalConstraints,
-                                       ignoredConstraints, chooseVarargsMode(currentMethod, result), initialSubstitutor);
+          collectAdditionalConstraints(newParams, newArgs, method, chooseSiteSubstitutor(properties, result, method), additionalConstraints,
+                                       ignoredConstraints, chooseVarargsMode(properties, result), initialSubstitutor);
         }
       }
     }
   }
 
-  public static PsiSubstitutor chooseSiteSubstitutor(MethodCandidateInfo currentMethod,
+  public static PsiSubstitutor chooseSiteSubstitutor(MethodCandidateInfo.CurrentCandidateProperties candidateProperties,
                                                      JavaResolveResult resolveResult, PsiMethod method) {
     return resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() //constructor reference was erased 
            ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() 
-           : currentMethod != null ? currentMethod.getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+           : candidateProperties != null ? candidateProperties.getSubstitutor() : PsiSubstitutor.EMPTY;
   }
 
 
-  public static boolean chooseVarargsMode(MethodCandidateInfo currentMethod,
+  public static boolean chooseVarargsMode(MethodCandidateInfo.CurrentCandidateProperties candidateProperties,
                                           JavaResolveResult resolveResult) {
     return resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs() ||
-           currentMethod != null && currentMethod.isVarargs();
+           candidateProperties != null && candidateProperties.isVarargs();
   }
 
   PsiSubstitutor getInstantiations(Collection<InferenceVariable> variables) {
@@ -835,9 +829,9 @@ public class InferenceSession {
       if (gParent instanceof PsiCall) {
         final PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
         if (argumentList != null) {
-          final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
-          if (currentMethod != null && MethodCandidateInfo.isOverloadCheck(argumentList)) {
-            return getTypeByMethod(context, argumentList, currentMethod.getElement(), currentMethod.isVarargs(), currentMethod.getSiteSubstitutor(), inferParent);
+          final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
+          if (properties != null && properties.isApplicabilityCheck()) {
+            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor(), inferParent);
           }
 
           final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)gParent);
@@ -1124,7 +1118,7 @@ public class InferenceSession {
   }
 
   public void setUncheckedInContext() {
-    if (myContext != null && !MethodCandidateInfo.isOverloadCheck(getArgumentList(myContext))) {//todo
+    if (myContext != null && !MethodCandidateInfo.isOverloadCheck()) {
       myContext.putUserData(ERASED, myErased);
     }
   }
@@ -1462,6 +1456,13 @@ public class InferenceSession {
                                        Set<ConstraintFormula> additionalConstraints,
                                        PsiSubstitutor substitutor, 
                                        Set<ConstraintFormula> ignoredConstraints) {
+
+    if (myContext instanceof PsiCall) {
+      PsiExpressionList argumentList = ((PsiCall)myContext).getArgumentList();
+      LOG.assertTrue(argumentList != null);
+      MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
+    }
+
     formula.apply(substitutor, true);
 
     addConstraint(formula);

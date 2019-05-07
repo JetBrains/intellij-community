@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -148,7 +147,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
   protected void reparse() {
     ProgressManager.checkCanceled();
     String str = StringUtil.trimEnd(getPathString(), getSeparatorString());
-    List<FileReference> referencesList = new ArrayList<>();
+    List<FileReference> referencesList = ContainerUtil.newArrayList();
 
     String separatorString = getSeparatorString(); // separator's length can be more then 1 char
     int sepLen = separatorString.length();
@@ -239,7 +238,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
           VirtualFile root = parent != null ? parent.getVirtualFile() : null;
           PsiManager psiManager = getElement().getManager();
 
-          List<VirtualFile> files = new ArrayList<>();
+          List<VirtualFile> files = ContainerUtil.newArrayList();
           files.addAll(myIgnorePatternsMatchedFilesCache.getFilesForPattern(pattern));
           if (files.isEmpty()) {
             files.addAll(ContainerUtil.filter(

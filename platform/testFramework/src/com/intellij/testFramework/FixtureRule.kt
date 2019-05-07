@@ -10,7 +10,6 @@ import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -98,12 +97,6 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
 
   public override fun after() {
     if (projectOpened.compareAndSet(true, false)) {
-      if (sharedProject != null) {
-        ApplicationManager.getApplication().invokeAndWait {
-          (UndoManager.getInstance(sharedProject!!) as UndoManagerImpl).dropHistoryInTests()
-          (UndoManager.getInstance(sharedProject!!) as UndoManagerImpl).flushCurrentCommandMerger()
-        }
-      }
       sharedProject?.let { runInEdtAndWait { ProjectManagerEx.getInstanceEx().forceCloseProject(it, false) } }
     }
   }

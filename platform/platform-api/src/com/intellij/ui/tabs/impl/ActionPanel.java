@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Pass;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
@@ -13,16 +14,16 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class ActionPanel extends NonOpaquePanel {
+
   private final List<ActionButton> myButtons = new ArrayList<>();
   private final JBTabsImpl myTabs;
 
   private boolean myAutoHide;
   private boolean myActionsIsVisible = false;
 
-  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Consumer<MouseEvent> pass) {
+  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Pass<MouseEvent> pass) {
     myTabs = tabs;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = group.getChildren(null);
@@ -90,4 +91,5 @@ public class ActionPanel extends NonOpaquePanel {
       each.toggleShowActions(show);
     }
   }
+
 }

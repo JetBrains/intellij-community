@@ -283,8 +283,8 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
 
-    Set<VcsRef> refs = new HashSet<>();
-    Set<VcsCommitMetadata> commits = new HashSet<>();
+    Set<VcsRef> refs = ContainerUtil.newHashSet();
+    Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
       String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
       DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
@@ -293,7 +293,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     });
 
     sw.report();
-    return new LogDataImpl(refs, new ArrayList<>(commits));
+    return new LogDataImpl(refs, ContainerUtil.newArrayList(commits));
   }
 
   @Override
@@ -433,7 +433,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       return Collections.emptyList();
     }
 
-    List<String> filterParameters = new ArrayList<>();
+    List<String> filterParameters = ContainerUtil.newArrayList();
 
     VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
     VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
@@ -447,7 +447,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
         Collection<GitBranch> branches = ContainerUtil
           .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
         Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-        Collection<String> predefinedNames = Collections.singletonList(GitUtil.HEAD);
+        Collection<String> predefinedNames = ContainerUtil.list(GitUtil.HEAD);
 
         for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
           if (branchFilter.matches(branchName)) {
@@ -529,7 +529,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       }
     }
 
-    List<TimedVcsCommit> commits = new ArrayList<>();
+    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
     GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
                                 EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;

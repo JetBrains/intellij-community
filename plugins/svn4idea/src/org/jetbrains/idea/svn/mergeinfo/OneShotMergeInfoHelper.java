@@ -42,7 +42,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
-    myPartiallyMerged = new HashMap<>();
+    myPartiallyMerged = newHashMap();
     myMergeInfoLock = new Object();
     myMergeInfoMap = new TreeMap<>(reverseOrder());
   }
@@ -65,7 +65,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @Override
   @NotNull
   public MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
-    Set<String> notMergedPaths = new HashSet<>();
+    Set<String> notMergedPaths = newHashSet();
     boolean hasMergedPaths = false;
 
     for (String path : changeList.getAffectedPaths()) {

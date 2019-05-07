@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnFileSystemListener;
@@ -17,7 +18,10 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class Reverter {
 
@@ -31,8 +35,8 @@ public class Reverter {
     myVcs = vcs;
     myHandler = createRevertHandler(exceptions, listener);
     myExceptions = exceptions;
-    myFromToModified = new ArrayList<>();
-    myProperties = new HashMap<>();
+    myFromToModified = ContainerUtil.newArrayList();
+    myProperties = ContainerUtil.newHashMap();
   }
 
   public void revert(@NotNull Collection<File> files, boolean recursive) {

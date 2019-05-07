@@ -25,7 +25,6 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -67,7 +66,7 @@ public class GitMergeHandler {
     String rightTitle = myDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER);
 
     return new Resolver(myProject, conflict, isReversed, file, mergeData,
-                        windowTitle, Arrays.asList(leftTitle, centerTitle, rightTitle));
+                        windowTitle, ContainerUtil.list(leftTitle, centerTitle, rightTitle));
   }
 
   public void acceptOneVersion(@NotNull Collection<GitConflict> conflicts,

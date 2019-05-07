@@ -8,7 +8,6 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletion
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +55,7 @@ public class MavenCentralModel {
       }
       JsonObject object = json.getAsJsonObject();
       Highlighting result = new Highlighting();
-      result.results = new ArrayList<>(object.size());
+      result.results = ContainerUtil.newArrayListWithCapacity(object.size());
 
       for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
         JsonArray fch = entry.getValue().getAsJsonObject().get("fch").getAsJsonArray();

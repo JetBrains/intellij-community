@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -80,7 +79,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       }
       else if (!list.isEmpty()) {
         if (copyList) {
-          result = new ArrayList<>(ContainerUtil.concat(result, list));
+          result = ContainerUtil.newArrayList(ContainerUtil.concat(result, list));
           copyList = false;
         }
         else {

@@ -1,7 +1,7 @@
 /*
-May be null (s; line#12)
-  's' was assigned (=; line#11)
-    Method 'loadString' is annotated as 'nullable' (@Nullable; line#15)
+May be null (s)
+  's' was assigned (=)
+    Method 'loadString' is annotated as 'nullable' (@Nullable)
  */
 
 import org.jetbrains.annotations.Nullable;

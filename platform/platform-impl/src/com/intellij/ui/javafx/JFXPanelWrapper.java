@@ -13,7 +13,7 @@ import javafx.scene.Scene;
 import java.awt.*;
 
 public class JFXPanelWrapper extends JFXPanel {
-  private static final FieldAccessor<JFXPanel, Integer> myScaleFactorAccessor = new FieldAccessor<>(JFXPanel.class, "scaleFactor", Integer.TYPE);
+  private static final FieldAccessor<JFXPanel, Integer> myScaleFactorAccessor = new FieldAccessor<>(JFXPanel.class, "scaleFactor");
 
   public JFXPanelWrapper() {
     Platform.setImplicitExit(false);

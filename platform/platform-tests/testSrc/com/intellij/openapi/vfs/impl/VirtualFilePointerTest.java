@@ -22,7 +22,10 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +39,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -364,9 +366,9 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
     VirtualFilePointer[] pointersToWatch = {jarPointer};
     assertTrue(jar.delete());
 
-    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+    long stop = System.currentTimeMillis() + 10_000;
     int i;
-    for (i = 0; !t.timedOut() && i < 30; i++) {
+    for (i = 0; System.currentTimeMillis() < stop && i < 30; i++) {
       vTemp.refresh(false, true);
       verifyPointersInCorrectState(pointersToWatch);
       assertFalse(jarPointer.isValid());
@@ -571,11 +573,11 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
   public void testStressConcurrentAccess() throws Exception {
     VirtualFilePointer fileToCreatePointer = createPointerByFile(new File(myTempDir), null);
     VirtualFilePointerListener listener = new VirtualFilePointerListener() { };
-    TestTimeOut t = TestTimeOut.setTimeout(15, TimeUnit.SECONDS);
+    long stop = System.currentTimeMillis() + 15_000;
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<Throwable> exception = new AtomicReference<>(null);
     int i;
-    for (i = 0; !t.timedOut(); i++) {
+    for (i = 0; System.currentTimeMillis() < stop; i++) {
       Disposable disposable = Disposer.newDisposable();
       // supply listener to separate pointers under one root so that it will be removed on dispose
       VirtualFilePointerImpl bb =
@@ -593,8 +595,8 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
             bb.getUrl();
           }
         }
-        catch (Throwable e) {
-          exception.set(e);
+        catch (Throwable t) {
+          exception.set(t);
         }
       };
 
@@ -618,9 +620,9 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
     File file = new File(myTempDir, "x.txt");
     VirtualFilePointer pointer = createPointerByFile(file, null);
 
-    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+    long stop = System.currentTimeMillis() + 10_000;
     int i;
-    for (i = 0; !t.timedOut() && i < 30; i++) {
+    for (i = 0; System.currentTimeMillis() < stop && i < 30; i++) {
       LOG.info("i = " + i);
       assertTrue(file.createNewFile());
       vTemp.refresh(false, true);

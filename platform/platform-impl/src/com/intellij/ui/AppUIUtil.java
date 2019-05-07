@@ -11,7 +11,6 @@ import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.Main;
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -27,7 +26,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
@@ -55,9 +53,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -315,9 +313,15 @@ public class AppUIUtil {
 
   public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
     final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
-    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+    AtomicBoolean result = new AtomicBoolean();
     if (consentsToShow.second) {
-      Runnable runnable = () -> result.set(confirmConsentOptions(consentsToShow.first));
+      Runnable runnable = () -> {
+        List<Consent> confirmed = confirmConsentOptions(consentsToShow.first);
+        if (confirmed != null) {
+          ConsentOptions.getInstance().setConsents(confirmed);
+          result.set(true);
+        }
+      };
       if (SwingUtilities.isEventDispatchThread()) {
         runnable.run();
       }
@@ -341,17 +345,7 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    final String title = isPrivacyPolicy
-                         ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
-                         : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement";
-    showEndUserAgreementText(title, htmlText);
-  }
-
-  /**
-   * Used by {@link com.intellij.idea.StartupListener}
-   */
-  public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
-      DialogWrapper dialog = new DialogWrapper(true) {
+    DialogWrapper dialog = new DialogWrapper(true) {
 
       private JEditorPane myViewer;
 
@@ -423,15 +417,19 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(title);
+    if (isPrivacyPolicy) {
+      dialog.setTitle(ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy");
+    }
+    else {
+      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement");
+    }
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
 
-  public static boolean confirmConsentOptions(@NotNull List<Consent> consents) {
-    if (consents.isEmpty()) {
-      return false;
-    }
+  @Nullable
+  public static List<Consent> confirmConsentOptions(@NotNull List<Consent> consents) {
+    if (consents.isEmpty()) return null;
 
     ConsentSettingsUi ui = new ConsentSettingsUi(false);
     final DialogWrapper dialog = new DialogWrapper(true) {
@@ -493,63 +491,17 @@ public class AppUIUtil {
 
     int exitCode = dialog.getExitCode();
     if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      return false; //Don't save any changes in this case: user hasn't made a choice
+      return null; //Don't save any changes in this case: user hasn't made a choice
     }
-
-    final List<Consent> result;
     if (consents.size() == 1) {
-      result = Collections.singletonList(consents.iterator().next().derive(exitCode == DialogWrapper.OK_EXIT_CODE));
+      consents.set(0, consents.get(0).derive(exitCode == DialogWrapper.OK_EXIT_CODE));
+      return consents;
     }
-    else {
-      result = new ArrayList<>();
-      ui.apply(result);
-    }
-    saveConsents(result);
-    return true;
-  }
 
-  public static List<Consent> loadConsentsForEditing() {
-    final ConsentOptions options = ConsentOptions.getInstance();
-    List<Consent> result = options.getConsents().first;
-    if (options.isEAP()) {
-      final Consent statConsent = options.getUsageStatsConsent();
-      if (statConsent != null) {
-        // init stats consent for EAP from the dedicated location
-        final List<Consent> consents = result;
-        result = new ArrayList<>();
-        result.add(statConsent.derive(UsageStatisticsPersistenceComponent.getInstance().isAllowed()));
-        result.addAll(consents);
-      }
-    }
+    List<Consent> result = new ArrayList<>();
+    ui.apply(result);
     return result;
   }
-
-  public static void saveConsents(List<Consent> consents) {
-    final ConsentOptions options = ConsentOptions.getInstance();
-    final Application app = ApplicationManager.getApplication();
-
-    List<Consent> toSave = consents;
-
-    if (app != null && options.isEAP()) {
-      final Consent defaultStatsConsent = options.getUsageStatsConsent();
-      if (defaultStatsConsent != null) {
-        toSave = new ArrayList<>();
-        for (Consent consent : consents) {
-          if (defaultStatsConsent.getId().equals(consent.getId())) {
-            UsageStatisticsPersistenceComponent.getInstance().setAllowed(consent.isAccepted());
-          }
-          else {
-            toSave.add(consent);
-          }
-        }
-      }
-    }
-
-    if (!toSave.isEmpty()) {
-      options.setConsents(toSave);
-    }
-  }
-
 
   /**
    * Targets the component to a (screen) device before showing.

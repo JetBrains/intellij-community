@@ -36,7 +36,10 @@ import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class DefinitionResolver extends CommonElement.Visitor implements
         CachedValueProvider<Map<String, Set<Define>>>, Factory<Set<Define>> {
@@ -44,7 +47,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");
 
   private static final ThreadLocal<Set<PsiFile>> myVisitedFiles = new ThreadLocal<>();
-  private static final ThreadLocal<Map<String, Set<Define>>> myDefines = ThreadLocal.withInitial(() -> new HashMap<>());
+  private static final ThreadLocal<Map<String, Set<Define>>> myDefines = ThreadLocal.withInitial(ContainerUtil::newHashMap);
 
   private final Grammar myScope;
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.browse;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.*;
@@ -53,7 +54,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
   public long createDirectory(@NotNull Target target, @NotNull String message, boolean makeParents) throws VcsException {
     assertUrl(target);
 
-    List<String> parameters = new ArrayList<>();
+    List<String> parameters = ContainerUtil.newArrayList();
 
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, makeParents, "--parents");

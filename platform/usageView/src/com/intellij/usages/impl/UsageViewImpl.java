@@ -1823,7 +1823,7 @@ public class UsageViewImpl implements UsageViewEx {
         public Collection<String> getTextLinesToCopy() {
           final Node[] selectedNodes = getSelectedNodes();
           if (selectedNodes != null && selectedNodes.length > 0) {
-            ArrayList<String> lines = new ArrayList<>();
+            ArrayList<String> lines = ContainerUtil.newArrayList();
             for (Node node : selectedNodes) {
               lines.add(node.getText(UsageViewImpl.this));
             }

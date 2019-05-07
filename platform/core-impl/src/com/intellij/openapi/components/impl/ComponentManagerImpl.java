@@ -197,7 +197,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentAdapter adapter = picoContainer.getComponentAdapter(interfaceClass);
-    if (adapter == null) {
+    if (!(adapter instanceof ComponentConfigComponentAdapter)) {
       return null;
     }
 
@@ -214,6 +214,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Nullable
   protected ProgressIndicator getProgressIndicator() {
     return ProgressManager.getInstance().getProgressIndicator();
+  }
+
+  @Override
+  public void initializeComponent(@NotNull Object component, boolean service) {
   }
 
   protected void handleInitComponentError(@NotNull Throwable ex, String componentClassName, PluginId pluginId) {
@@ -507,7 +511,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               indicator.checkCanceled();
               setProgressDuringInit(indicator);
             }
-            initializeComponent(instance, null);
+            initializeComponent(instance, false);
             if (instance instanceof BaseComponent) {
               ((BaseComponent)instance).initComponent();
             }

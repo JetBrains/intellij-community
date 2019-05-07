@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.zmlx.hg4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -112,9 +126,9 @@ public class HgRefManager implements VcsLogRefManager {
     List<VcsRef> sortedRefs = sort(refs);
     MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedRefs, VcsRef::getType);
 
-    List<RefGroup> result = new ArrayList<>();
-    List<VcsRef> branches = new ArrayList<>();
-    List<VcsRef> bookmarks = new ArrayList<>();
+    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<VcsRef> branches = ContainerUtil.newArrayList();
+    List<VcsRef> bookmarks = ContainerUtil.newArrayList();
     for (Map.Entry<VcsRefType, Collection<VcsRef>> entry : groupedRefs.entrySet()) {
       if (entry.getKey().equals(TIP) || entry.getKey().equals(HEAD)) {
         for (VcsRef ref : entry.getValue()) {
@@ -140,7 +154,7 @@ public class HgRefManager implements VcsLogRefManager {
   public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
 
-    List<VcsRef> headAndTip = new ArrayList<>();
+    List<VcsRef> headAndTip = ContainerUtil.newArrayList();
     MultiMap<VcsRefType, VcsRef> groupedRefs = MultiMap.createLinked();
     for (VcsRef ref : sortedReferences) {
       if (ref.getType().equals(HEAD) || ref.getType().equals(TIP)) {
@@ -151,7 +165,7 @@ public class HgRefManager implements VcsLogRefManager {
       }
     }
 
-    List<RefGroup> result = new ArrayList<>();
+    List<RefGroup> result = ContainerUtil.newArrayList();
     SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
     RefGroup firstGroup = getFirstItem(result);
     if (firstGroup != null) {

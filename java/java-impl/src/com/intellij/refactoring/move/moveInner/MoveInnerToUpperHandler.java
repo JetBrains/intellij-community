@@ -67,10 +67,4 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
     }
     return false;
   }
-
-  @Nullable
-  @Override
-  public String getActionName(PsiElement[] elements) {
-    return "Move Inner Class to Upper Level...";
-  }
 }

@@ -16,6 +16,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
@@ -43,6 +46,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
 
+    private final XmlName OS_XML_NAME = new XmlName("os");
     private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
 
     @Override
@@ -72,11 +76,13 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
         registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
       }
+
+      registrar.registerGenericAttributeValueChildExtension(OS_XML_NAME, com.intellij.openapi.extensions.Extensions.OS.class);
     }
   };
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
-    Set<IdeaPlugin> result = new HashSet<>();
+    Set<IdeaPlugin> result = ContainerUtil.newHashSet();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
     collectDependencies(ideaPlugin, result, byId);
     result.addAll(byId.get(null));
@@ -378,7 +384,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
       final String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
-      for (ExtensionPoints points : plugin.getExtensionPoints()) {
+      AbstractCollectionChildDescription collectionChildDescription =
+        (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
+      DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
+      assert handler != null;
+      List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
+      for (ExtensionPoints points : children) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
           registerExtensionPoint(registrar, point, epPrefix, pluginId);
         }
@@ -401,7 +412,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static class MyRequired implements Required {
 
     private static final MyRequired INSTANCE = new MyRequired();
-
+    
     @Override
     public boolean value() {
       return true;

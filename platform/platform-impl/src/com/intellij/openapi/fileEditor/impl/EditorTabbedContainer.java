@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.TabsHeightController;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
@@ -721,7 +720,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
           Insets insets = getLayoutInsets();
 
-          return new Dimension(size.width, TabsHeightController.getToolWindowHeight().getValue() - insets.top - insets.bottom);
+          return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()) - insets.top - insets.bottom);
         }
       };
     }

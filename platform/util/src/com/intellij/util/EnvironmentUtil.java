@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.unmodifiableMap;
 
@@ -370,8 +369,8 @@ public class EnvironmentUtil {
 
   @Nullable
   private static Integer waitFor(@NotNull Process process, int timeoutMillis) {
-    long stop = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
-    while (System.nanoTime() < stop) {
+    long stop = System.currentTimeMillis() + timeoutMillis;
+    while (System.currentTimeMillis() < stop) {
       TimeoutUtil.sleep(100);
       try {
         return process.exitValue();

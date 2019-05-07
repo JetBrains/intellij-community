@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,7 +59,7 @@ public class CopyReferenceUtil {
 
   @NotNull
   static List<PsiElement> getElementsToCopy(@Nullable final Editor editor, final DataContext dataContext) {
-    List<PsiElement> elements = new ArrayList<>();
+    List<PsiElement> elements = ContainerUtil.newArrayList();
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);
       if (reference != null) {
@@ -123,7 +122,7 @@ public class CopyReferenceUtil {
   static String doCopy(List<? extends PsiElement> elements, @Nullable Editor editor) {
     if (elements.isEmpty()) return null;
 
-    List<String> fqns = new ArrayList<>();
+    List<String> fqns = ContainerUtil.newArrayList();
     for (PsiElement element : elements) {
       String fqn = elementToFqn(element, editor);
       if (fqn == null) return null;

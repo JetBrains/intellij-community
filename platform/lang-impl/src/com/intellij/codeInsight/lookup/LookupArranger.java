@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +84,7 @@ public abstract class LookupArranger implements WeighingContext {
   }
 
   public final void prefixReplaced(Lookup lookup, String newPrefix) {
-    ArrayList<LookupElement> itemCopy = new ArrayList<>(myItems);
+    ArrayList<LookupElement> itemCopy = ContainerUtil.newArrayList(myItems);
     myItems.clear();
     for (LookupElement item : itemCopy) {
       if (item.isValid()) {
@@ -114,8 +115,8 @@ public abstract class LookupArranger implements WeighingContext {
   }
 
   protected List<LookupElement> retainItems(final Set<LookupElement> retained) {
-    List<LookupElement> filtered = new ArrayList<>();
-    List<LookupElement> removed = new ArrayList<>();
+    List<LookupElement> filtered = ContainerUtil.newArrayList();
+    List<LookupElement> removed = ContainerUtil.newArrayList();
     for (LookupElement item : myItems) {
       (retained.contains(item) ? filtered : removed).add(item);
     }

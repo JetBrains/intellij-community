@@ -163,9 +163,11 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
         if (registrar == null) return;
         @NonNls String descriptionText = description.getText().toLowerCase();
         descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-        Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
+        final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
         words.addAll(registrar.getProcessedWords(metaData.getFamily()));
-        registrar.addOptions(words, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
+        for (String word : words) {
+          registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
+        }
       }
       catch (IOException e) {
         LOG.error(e);

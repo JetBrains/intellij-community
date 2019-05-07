@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class ExtensionFileNameMatcher implements FileNameMatcher {
+public class ExtensionFileNameMatcher extends FileNameMatcherEx {
   private final String myExtension;
   private final String myDotExtension;
 

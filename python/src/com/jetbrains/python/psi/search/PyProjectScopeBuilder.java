@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
@@ -100,16 +99,10 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
    * @return the resulting scope
    */
   public static GlobalSearchScope excludeSdkTestsScope(Project project) {
-    return excludeSdkTestScope(ProjectScope.getAllScope(project));
-  }
-
-  @NotNull
-  public static GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
-    Project project = ObjectUtils.notNull(scope.getProject());
-    Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    final Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
-    GlobalSearchScope exclude = excludeSdkTestsScope(project, sdk);
-    return exclude != null ? scope.intersectWith(exclude) : scope;
+    GlobalSearchScope scope = excludeSdkTestsScope(project, sdk);
+    return scope != null ? ProjectScope.getAllScope(project).intersectWith(scope) : ProjectScope.getAllScope(project);
   }
 
   public static GlobalSearchScope excludeSdkTestsScope(PsiElement anchor) {

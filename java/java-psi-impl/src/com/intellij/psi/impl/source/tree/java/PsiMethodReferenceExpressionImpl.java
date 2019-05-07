@@ -382,10 +382,10 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
 
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
     final boolean isExact = isExact();
-    if (MethodCandidateInfo.isOverloadCheck(argsList)) {
-      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (currentMethod != null) {
-        final PsiMethod method = currentMethod.getElement();
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
+      if (candidateProperties != null) {
+        final PsiMethod method = candidateProperties.getMethod();
         if (isExact && !InferenceSession.isPertinentToApplicability(this, method)) {
           return true;
         }
@@ -401,7 +401,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       return false;
     }
 
-    if (MethodCandidateInfo.isOverloadCheck(argsList)) {
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
       if (!isExact) {
         return true;
       }

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.management.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class CpuUsageData {
   private static final ThreadMXBean ourThreadMXBean = ManagementFactory.getThreadMXBean();
@@ -102,9 +101,9 @@ public class CpuUsageData {
 
     long compStart = ourCompilationMXBean.getTotalCompilationTime();
 
-    long start = System.nanoTime();
+    long start = System.currentTimeMillis();
     runnable.run();
-    long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    long duration = System.currentTimeMillis() - start;
 
     long compTime = ourCompilationMXBean.getTotalCompilationTime() - compStart;
 

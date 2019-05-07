@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
@@ -252,7 +253,7 @@ public class Utils {
 
   @NotNull
   public static List<VirtualFile> pathsToFiles(@NotNull List<String> paths) {
-    List<VirtualFile> files = new ArrayList<>();
+    List<VirtualFile> files = ContainerUtil.newArrayList();
     for (String path : paths) {
       VirtualFile file = VfsUtil.findFile(Paths.get(path), true);
       if (file != null) {

@@ -1,7 +1,7 @@
 /*
-May be null (foo; line#13)
-  'foo' was assigned (=; line#12)
-    Method 'getFoo' is annotated as 'nullable' (@Nullable; line#16)
+May be null (foo)
+  'foo' was assigned (=)
+    Method 'getFoo' is annotated as 'nullable' (@Nullable)
  */
 
 import org.jetbrains.annotations.Nullable;

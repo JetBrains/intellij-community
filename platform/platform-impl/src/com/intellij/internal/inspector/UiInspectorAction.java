@@ -44,6 +44,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import net.miginfocom.layout.*;
@@ -847,7 +848,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {
-    private static final Map<Class, Renderer> RENDERERS = new HashMap<>();
+    private static final Map<Class, Renderer> RENDERERS = ContainerUtil.newHashMap();
 
     static {
       RENDERERS.put(Point.class, new PointRenderer());
@@ -1164,7 +1165,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     );
 
     final Component myComponent;
-    final List<PropertyBean> myProperties = new ArrayList<>();
+    final List<PropertyBean> myProperties = ContainerUtil.newArrayList();
 
     InspectorTableModel(@NotNull List<? extends PropertyBean> clickInfo) {
       myComponent = null;

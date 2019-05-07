@@ -272,8 +272,6 @@ public class YAMLLexerTest extends LexerTestCase {
 
   public void testAliasInKey() { doTest(); }
 
-  public void testCommentJustAfterSymbol() { doTest(); }
-
   private void doTest() {
     doFileTest("yml");
   }

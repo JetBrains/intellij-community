@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider;
@@ -11,7 +12,6 @@ import org.editorconfig.language.schema.descriptors.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,8 +32,8 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
   }
 
   private static List<EditorConfigOptionDescriptor> getAllOptions() {
-    List<EditorConfigOptionDescriptor> descriptors = new ArrayList<>();
-    List<AbstractCodeStylePropertyMapper> mappers = new ArrayList<>();
+    List<EditorConfigOptionDescriptor> descriptors = ContainerUtil.newArrayList();
+    List<AbstractCodeStylePropertyMapper> mappers = ContainerUtil.newArrayList();
     CodeStylePropertiesUtil.collectMappers(CodeStyle.getDefaultSettings(), mapper -> mappers.add(mapper));
     for (AbstractCodeStylePropertyMapper mapper : mappers) {
       for (String property : mapper.enumProperties()) {

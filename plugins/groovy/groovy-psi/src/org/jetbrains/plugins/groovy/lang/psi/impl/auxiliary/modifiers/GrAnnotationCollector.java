@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.openapi.project.Project;
@@ -21,7 +21,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
@@ -35,7 +38,7 @@ public class GrAnnotationCollector {
 
     if (!mayHaveAnnotationCollector(rawAnnotations)) return rawAnnotations;
 
-    final List<GrAnnotation> result = new ArrayList<>();
+    final List<GrAnnotation> result = ContainerUtil.newArrayList();
     for (GrAnnotation annotation : rawAnnotations) {
       final PsiAnnotation annotationCollector = findAnnotationCollector(annotation);
       if (annotationCollector != null) {
@@ -65,14 +68,14 @@ public class GrAnnotationCollector {
 
     final PsiModifierList modifierList = (PsiModifierList)annotationCollector.getParent();
 
-    Map<String, Map<String, PsiNameValuePair>> annotations = new LinkedHashMap<>();
+    Map<String, Map<String, PsiNameValuePair>> annotations = ContainerUtil.newLinkedHashMap();
     collectAliasedAnnotationsFromAnnotationCollectorValueAttribute(annotationCollector, annotations);
     collectAliasedAnnotationsFromAnnotationCollectorAnnotations(modifierList, annotations);
 
     final PsiManager manager = alias.getManager();
     final GrAnnotationNameValuePair[] attributes = alias.getParameterList().getAttributes();
 
-    Set<String> allUsedAttrs = new LinkedHashSet<>();
+    Set<String> allUsedAttrs = ContainerUtil.newLinkedHashSet();
     for (Map.Entry<String, Map<String, PsiNameValuePair>> entry : annotations.entrySet()) {
       final String qname = entry.getKey();
       final PsiClass resolved = JavaPsiFacade.getInstance(alias.getProject()).findClass(qname, alias.getResolveScope());
@@ -80,7 +83,7 @@ public class GrAnnotationCollector {
 
       final GrLightAnnotation annotation = new GrLightAnnotation(manager, alias.getLanguage(), qname, modifierList);
 
-      Set<String> usedAttrs = new LinkedHashSet<>();
+      Set<String> usedAttrs = ContainerUtil.newLinkedHashSet();
       for (GrAnnotationNameValuePair attr : attributes) {
         final String name = attr.getName() != null ? attr.getName() : "value";
         if (resolved.findMethodsByName(name, false).length > 0) {
@@ -118,14 +121,14 @@ public class GrAnnotationCollector {
       for (PsiNameValuePair pair : attributes) {
         Map<String, PsiNameValuePair> map = annotations.get(qname);
         if (map == null) {
-          map = new LinkedHashMap<>();
+          map = ContainerUtil.newLinkedHashMap();
           annotations.put(qname, map);
         }
 
         map.put(pair.getName() != null ? pair.getName() : "value", pair);
       }
       if (attributes.length == 0 && !annotations.containsKey(qname)) {
-        annotations.put(qname, new LinkedHashMap<>());
+        annotations.put(qname, ContainerUtil.newLinkedHashMap());
       }
     }
   }
@@ -139,7 +142,7 @@ public class GrAnnotationCollector {
         if (member instanceof GrReferenceExpression) {
           final PsiElement resolved = ((GrReferenceExpression)member).resolve();
           if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-            annotations.put(((PsiClass)resolved).getQualifiedName(), new LinkedHashMap<>());
+            annotations.put(((PsiClass)resolved).getQualifiedName(), ContainerUtil.newLinkedHashMap());
           }
         }
       }

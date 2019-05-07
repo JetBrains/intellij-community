@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -9,6 +23,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +131,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   public void ensureSubProjectsStructure(@NotNull ExternalProjectPojo topLevelProject,
                                          @NotNull Collection<ExternalProjectPojo> subProjects) {
     ExternalSystemNode<ExternalProjectPojo> topLevelProjectNode = ensureProjectNodeExists(topLevelProject);
-    Map<String/*config path*/, ExternalProjectPojo> toAdd = new HashMap<>();
+    Map<String/*config path*/, ExternalProjectPojo> toAdd = ContainerUtilRt.newHashMap();
     for (ExternalProjectPojo subProject : subProjects) {
       toAdd.put(subProject.getPath(), subProject);
     }
@@ -158,7 +173,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
 //      ));
       return;
     }
-    Set<ExternalTaskExecutionInfo> toAdd = new HashSet<>();
+    Set<ExternalTaskExecutionInfo> toAdd = ContainerUtilRt.newHashSet();
     for (ExternalTaskPojo task : tasks) {
       toAdd.add(buildTaskInfo(task));
     }

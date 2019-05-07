@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -85,7 +85,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     Collection<Collection<BuildTarget<?>>> components = builder.getComponents();
     myTargetChunks = new ArrayList<>(components.size());
     for (Collection<BuildTarget<?>> component : components) {
-      myTargetChunks.add(new BuildTargetChunk(new LinkedHashSet<>(component)));
+      myTargetChunks.add(new BuildTargetChunk(ContainerUtil.newLinkedHashSet(component)));
     }
   }
 

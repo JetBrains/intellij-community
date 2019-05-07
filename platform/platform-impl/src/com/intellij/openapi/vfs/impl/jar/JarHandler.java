@@ -20,9 +20,9 @@ import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,10 @@ import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -351,10 +354,10 @@ public class JarHandler extends ZipHandler {
         }
       })));
 
-      final List<String> invalidLibraryFilePaths = new ArrayList<>();
-      final List<String> allLibraryFilePaths = new ArrayList<>();
+      final List<String> invalidLibraryFilePaths = ContainerUtil.newArrayList();
+      final List<String> allLibraryFilePaths = ContainerUtil.newArrayList();
       MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<>();
-      Set<String> validLibraryFilePathToJarSnapshotFilePaths = new THashSet<>();
+      Set<String> validLibraryFilePathToJarSnapshotFilePaths = newTroveSet();
 
       info.processKeys(new CommonProcessors.CollectProcessor<>(allLibraryFilePaths));
       for (String filePath:allLibraryFilePaths) {

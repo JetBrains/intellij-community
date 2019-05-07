@@ -590,7 +590,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @TestOnly
   private void flushMergers() {
-    assert myProject == null || !myProject.isDisposed() : myProject;
+    assert myProject == null || !myProject.isDisposed();
     // Run dummy command in order to flush all mergers...
     CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }

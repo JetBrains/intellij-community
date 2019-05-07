@@ -21,7 +21,6 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,36 +38,10 @@ import java.util.stream.Stream;
 public class TrackingRunner extends StandardDataFlowRunner {
   private final List<MemoryStateChange> myHistoryForContext = new ArrayList<>();
   private final PsiExpression myExpression;
-  private final List<DfaInstructionState> afterStates = new ArrayList<>();
-  private final List<TrackingDfaMemoryState> killedStates = new ArrayList<>();
 
   private TrackingRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context, PsiExpression expression) {
     super(unknownMembersAreNullable, context);
     myExpression = expression;
-  }
-
-  @Override
-  protected void beforeInstruction(Instruction instruction) {
-    afterStates.clear();
-    killedStates.clear();
-  }
-
-  @Override
-  protected void afterInstruction(Instruction instruction) {
-    if (afterStates.size() <= 1 && killedStates.isEmpty()) return;
-    Map<Instruction, List<TrackingDfaMemoryState>> instructionToState =
-      StreamEx.of(afterStates).mapToEntry(s -> s.getInstruction(), s -> (TrackingDfaMemoryState)s.getMemoryState()).grouping();
-    if (instructionToState.size() <= 1 && killedStates.isEmpty()) return;
-    instructionToState.forEach((target, memStates) -> {
-      List<TrackingDfaMemoryState> bridgeChanges =
-        StreamEx.of(afterStates).filter(s -> s.getInstruction() != target)
-          .map(s -> ((TrackingDfaMemoryState)s.getMemoryState()))
-          .append(killedStates)
-          .toList();
-      for (TrackingDfaMemoryState state : memStates) {
-        state.addBridge(instruction, bridgeChanges);
-      }
-    });
   }
 
   @NotNull
@@ -84,11 +57,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     TrackingDfaMemoryState memState = (TrackingDfaMemoryState)instructionState.getMemoryState().createCopy();
     DfaInstructionState[] states = super.acceptInstruction(visitor, instructionState);
     for (DfaInstructionState state : states) {
-      afterStates.add(state);
       ((TrackingDfaMemoryState)state.getMemoryState()).recordChange(instruction, memState);
-    }
-    if (states.length == 0) {
-      killedStates.add(memState);
     }
     if (instruction instanceof ExpressionPushingInstruction) {
       ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
@@ -108,7 +77,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     PsiElement body = DfaUtil.getDataflowContext(expression);
     if (body == null) return Collections.emptyList();
     TrackingRunner runner = new TrackingRunner(unknownAreNullables, body, expression);
-    StandardInstructionVisitor visitor = new StandardInstructionVisitor(true);
+    StandardInstructionVisitor visitor = new StandardInstructionVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(body, visitor, ignoreAssertions);
     if (result != RunnerResult.OK) return Collections.emptyList();
     CauseItem cause = null;
@@ -193,8 +162,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
         Segment range = myTarget.getRange();
         if (range != null) {
           text = doc.getText(TextRange.create(range));
-          int lineNumber = doc.getLineNumber(range.getStartOffset());
-          text += "; line#" + (lineNumber + 1);
         }
       }
       return StringUtil.repeat("  ", indent) + render(doc, parent) + (text == null ? "" : " (" + text + ")") + "\n" +
@@ -367,8 +334,10 @@ public class TrackingRunner extends StandardDataFlowRunner {
             Warning caused by contract
             Warning caused by CustomMethodHandler
             Warning caused by polyadic math
+            Warning caused by narrowing conversion
             Warning caused by unary minus
             Warning caused by final field initializer
+            Literal is not-null
   TODO: 3. Check how it works with:
             Inliners (notably: Stream API)
             Boxed numbers
@@ -536,9 +505,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
           if (causeItem != null) return new CauseItem[]{causeItem};
         }
       }
-    }
-    if (expression instanceof PsiMethodCallExpression) {
-      return new CauseItem[]{fromCallContract(history, (PsiMethodCallExpression)expression, ContractReturnValue.returnBoolean(value))};
     }
     return new CauseItem[0];
   }
@@ -842,7 +808,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
     PsiExpression expression = factUse.getExpression();
     if (expression != null) {
-      PsiType type = expression.getType();
       if (expression instanceof PsiLiteralExpression) {
         return null; // Literal range is quite evident
       }
@@ -857,62 +822,39 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
         }
       }
-      if (expression instanceof PsiTypeCastExpression && type instanceof PsiPrimitiveType && TypeConversionUtil.isNumericType(type)) {
-        PsiExpression operand = ((PsiTypeCastExpression)expression).getOperand();
-        MemoryStateChange operandPush = factUse.findExpressionPush(operand);
-        if (operandPush != null) {
-          Pair<MemoryStateChange, LongRangeSet> operandInfo = operandPush.findFact(operandPush.myTopOfStack, DfaFactType.RANGE);
-          LongRangeSet operandRange = operandInfo.second == null ? LongRangeSet.fromType(type) : operandInfo.second;
-          if (operandRange != null) {
-            LongRangeSet result = operandRange.castTo((PsiPrimitiveType)type);
-            if (range.equals(result)) {
-              CauseItem cause =
-                new CauseItem("result of '(" + type.getCanonicalText() + ")' cast is " + range.getPresentationText(null), expression);
-              if (!operandRange.equals(LongRangeSet.fromType(operand.getType()))) {
-                cause.addChildren(findRangeCause(operandPush, operandInfo.first, operandRange, "cast operand is %s"));
-              }
-              return cause;
-            }
+      if (expression instanceof PsiBinaryExpression &&
+          (PsiType.LONG.equals(expression.getType()) || PsiType.INT.equals(expression.getType()))) {
+        boolean isLong = PsiType.LONG.equals(expression.getType());
+        PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+        PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+        PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
+        MemoryStateChange leftPush = factUse.findExpressionPush(left);
+        MemoryStateChange rightPush = factUse.findExpressionPush(right);
+        if (leftPush != null && rightPush != null) {
+          DfaValue leftValue = leftPush.myTopOfStack;
+          DfaValue rightValue = rightPush.myTopOfStack;
+          Pair<MemoryStateChange, LongRangeSet> leftSet = leftPush.findFact(leftValue, DfaFactType.RANGE);
+          Pair<MemoryStateChange, LongRangeSet> rightSet = rightPush.findFact(rightValue, DfaFactType.RANGE);
+          LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(expression.getType()));
+          if (leftSet.second == null) {
+            leftSet = Pair.create(null, fromType);
           }
-        }
-      }
-      if (range.equals(LongRangeSet.fromType(type))) {
-        return null; // Range is any value of given type: no need to explain (except narrowing cast)
-      }
-      if (PsiType.LONG.equals(type) || PsiType.INT.equals(type)) {
-        if (expression instanceof PsiBinaryExpression) {
-          boolean isLong = PsiType.LONG.equals(type);
-          PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
-          PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
-          PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
-          MemoryStateChange leftPush = factUse.findExpressionPush(left);
-          MemoryStateChange rightPush = factUse.findExpressionPush(right);
-          if (leftPush != null && rightPush != null) {
-            DfaValue leftValue = leftPush.myTopOfStack;
-            DfaValue rightValue = rightPush.myTopOfStack;
-            Pair<MemoryStateChange, LongRangeSet> leftSet = leftPush.findFact(leftValue, DfaFactType.RANGE);
-            Pair<MemoryStateChange, LongRangeSet> rightSet = rightPush.findFact(rightValue, DfaFactType.RANGE);
-            LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(type));
-            if (leftSet.second == null) {
-              leftSet = Pair.create(null, fromType);
+          if (rightSet.second == null) {
+            rightSet = Pair.create(null, fromType);
+          }
+          LongRangeSet result = leftSet.second.binOpFromToken(binOp.getOperationTokenType(), rightSet.second, isLong);
+          if (range.equals(result)) {
+            CauseItem cause = new CauseItem("result of '" + binOp.getOperationSign().getText() +
+                                            "' is " + range.getPresentationText(expression.getType()), factUse);
+            CauseItem leftCause = null, rightCause = null;
+            if (!leftSet.second.equals(fromType)) {
+              leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "left operand is %s");
             }
-            if (rightSet.second == null) {
-              rightSet = Pair.create(null, fromType);
+            if (!rightSet.second.equals(fromType)) {
+              rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "right operand is %s");
             }
-            LongRangeSet result = leftSet.second.binOpFromToken(binOp.getOperationTokenType(), rightSet.second, isLong);
-            if (range.equals(result)) {
-              CauseItem cause = new CauseItem("result of '" + binOp.getOperationSign().getText() +
-                                              "' is " + range.getPresentationText(type), factUse);
-              CauseItem leftCause = null, rightCause = null;
-              if (!leftSet.second.equals(fromType)) {
-                leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "left operand is %s");
-              }
-              if (!rightSet.second.equals(fromType)) {
-                rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "right operand is %s");
-              }
-              cause.addChildren(leftCause, rightCause);
-              return cause;
-            }
+            cause.addChildren(leftCause, rightCause);
+            return cause;
           }
         }
       }
@@ -955,25 +897,23 @@ public class TrackingRunner extends StandardDataFlowRunner {
   }
 
   private static MemoryStateChange findRelationAddedChange(MemoryStateChange history, DfaVariableValue var, Relation relation) {
-    List<RelationType> subRelations;
+    List<Relation> subRelations;
     switch (relation.myRelationType) {
       case NE:
-        if (relation.myCounterpart instanceof DfaConstValue) {
-          return history.findRelation(var, rel -> rel.equals(relation) ||
-                                                  rel.myRelationType == RelationType.EQ && rel.myCounterpart instanceof DfaConstValue,
-                                      true);
-        }
-        subRelations = Arrays.asList(RelationType.NE, RelationType.GT, RelationType.LT);
+        subRelations = Arrays.asList(relation, new Relation(RelationType.GT, relation.myCounterpart),
+                                     new Relation(RelationType.LT, relation.myCounterpart));
         break;
       case LE:
-        subRelations = Arrays.asList(RelationType.EQ, RelationType.LT);
+        subRelations = Arrays.asList(new Relation(RelationType.EQ, relation.myCounterpart),
+                                     new Relation(RelationType.LT, relation.myCounterpart));
         break;
       case GE:
-        subRelations = Arrays.asList(RelationType.EQ, RelationType.GT);
+        subRelations = Arrays.asList(new Relation(RelationType.EQ, relation.myCounterpart),
+                                     new Relation(RelationType.GT, relation.myCounterpart));
         break;
       default:
-        subRelations = Collections.singletonList(relation.myRelationType);
+        subRelations = Collections.singletonList(relation);
     }
-    return history.findRelation(var, rel -> rel.myCounterpart == relation.myCounterpart && subRelations.contains(rel.myRelationType), true);
+    return history.findRelation(var, subRelations::contains, true);
   }
 }

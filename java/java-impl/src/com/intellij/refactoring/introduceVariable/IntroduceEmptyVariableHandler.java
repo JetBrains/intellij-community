@@ -16,9 +16,9 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -37,6 +37,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IntroduceEmptyVariableHandler {
   private static final String VARIABLE_NAME = "IntroducedVariable";
@@ -85,8 +86,7 @@ public class IntroduceEmptyVariableHandler {
 
       TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(context);
       templateBuilder.replaceElement(typeElement, TYPE_NAME, new ConstantNode(typeElement.getText()), true, true);
-      templateBuilder.replaceElement(localVariable.getNameIdentifier(), VARIABLE_NAME,
-                                     new ConstantNode(suggestedNameInfo.names[0]).withLookupStrings(suggestedNameInfo.names), true);
+      templateBuilder.replaceElement(localVariable.getNameIdentifier(), VARIABLE_NAME, new MyExpression(suggestedNameInfo), true);
       templateBuilder.replaceElement(variableReference, VARIABLE_NAME, (String)null, false);
       templateBuilder.replaceElement(ObjectUtils.assertNotNull(localVariable.getInitializer()), "");
       templateBuilder.setEndVariableAfter(variableReference);
@@ -105,4 +105,34 @@ public class IntroduceEmptyVariableHandler {
     return codeStyleManager.suggestUniqueVariableName(delegate, at, true);
   }
 
+  private static class MyExpression extends Expression {
+    private final SuggestedNameInfo myNameInfo;
+
+    private MyExpression(SuggestedNameInfo info) {
+      myNameInfo = info;
+    }
+
+    @Nullable
+    @Override
+    public Result calculateResult(ExpressionContext context) {
+      return new TextResult(myNameInfo.names[0]);
+    }
+
+    @Nullable
+    @Override
+    public Result calculateQuickResult(ExpressionContext context) {
+      return calculateResult(context);
+    }
+
+    @Nullable
+    @Override
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      LookupElement[] elements = new LookupElement[myNameInfo.names.length];
+      for (int i = 0; i < myNameInfo.names.length; i++) {
+        String name = myNameInfo.names[i];
+        elements[i] = LookupElementBuilder.create(name);
+      }
+      return elements;
+    }
+  }
 }

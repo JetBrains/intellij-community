@@ -21,6 +21,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,10 +95,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     myManager = manager;
   }
 
-  protected PsiJavaFile createDummyJavaFile(String text) {
-    return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(DUMMY_FILE_NAME, JavaFileType.INSTANCE, text);
-  }
-
   @NotNull
   @Override
   public PsiAnnotation createAnnotationFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
@@ -117,8 +114,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   @Override
-  public PsiDocComment createDocCommentFromText(@NotNull String text) throws IncorrectOperationException {
-    return createDocCommentFromText(text, null);
+  public PsiDocComment createDocCommentFromText(@NotNull String docCommentText) throws IncorrectOperationException {
+    return createDocCommentFromText(docCommentText, null);
   }
 
   @NotNull
@@ -268,6 +265,10 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       throw newException("Incorrect expression '" + text + "'", holder);
     }
     return (PsiExpression)element;
+  }
+
+  PsiJavaFile createDummyJavaFile(@NonNls String text) {
+    return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(DUMMY_FILE_NAME, JavaFileType.INSTANCE, text);
   }
 
   @NotNull

@@ -4,6 +4,7 @@ package org.zmlx.hg4idea.execution;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
 public class HgPromptCommandExecutor extends HgCommandExecutor {
@@ -44,7 +44,7 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
   }
 
   private List<String> prepareArguments(List<String> arguments, int port) {
-    List<String> cmdArguments = new ArrayList<>();
+    List<String> cmdArguments = ContainerUtil.newArrayList();
     cmdArguments.add("--config");
     cmdArguments.add("extensions.hg4ideapromptextension=" + myVcs.getPromptHooksExtensionFile().getAbsolutePath());
     cmdArguments.add("--config");

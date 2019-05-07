@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
@@ -91,7 +92,7 @@ public class GitHistoryUtils {
   public static List<? extends TimedVcsCommit> collectTimedCommits(@NotNull Project project,
                                                                    @NotNull VirtualFile root,
                                                                    @NotNull String... parameters) throws VcsException {
-    List<TimedVcsCommit> commits = new ArrayList<>();
+    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
     loadTimedCommits(project, root, commits::add, parameters);
     return commits;
   }
@@ -138,7 +139,7 @@ public class GitHistoryUtils {
       return Collections.emptyList();
     }
 
-    List<GitCommit> commits = new ArrayList<>();
+    List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
       GitLogUtil.readFullDetails(project, root, commits::add, parameters);
     }
@@ -162,7 +163,7 @@ public class GitHistoryUtils {
    */
   @NotNull
   public static String[] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
-    List<String> parameters = new ArrayList<>();
+    List<String> parameters = ContainerUtil.newArrayList();
 
     parameters.add(GitLogUtil.getNoWalkParameter(vcs));
     parameters.addAll(hashes);

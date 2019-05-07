@@ -10,6 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,7 +33,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -199,7 +204,7 @@ public class ExtensionsRootType extends RootType {
     if (resources == null) return ContainerUtil.emptyList();
     if (plugin.getUseIdeaClassLoader()) return ContainerUtil.toList(resources);
 
-    final Set<URL> urls = new LinkedHashSet<>(ContainerUtil.toList(resources));
+    final Set<URL> urls = ContainerUtil.newLinkedHashSet(ContainerUtil.toList(resources));
     // exclude parent classloader resources from list
     final List<ClassLoader> dependentPluginClassLoaders = StreamEx.of(plugin.getDependentPluginIds())
       .map(PluginManager::getPlugin)
@@ -211,7 +216,7 @@ public class ExtensionsRootType extends RootType {
     for (ClassLoader classLoader : dependentPluginClassLoaders) {
       urls.removeAll(ContainerUtil.toList(classLoader.getResources(resourcesPath)));
     }
-    return new ArrayList<>(urls);
+    return ContainerUtil.newArrayList(urls);
   }
 
   private static void extractResources(@NotNull VirtualFile from, @NotNull File to) throws IOException {

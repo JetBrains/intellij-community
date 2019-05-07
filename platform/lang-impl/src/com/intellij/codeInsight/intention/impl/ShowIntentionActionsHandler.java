@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -51,10 +50,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, false);
-  }
-
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file, boolean showFeedbackOnEmptyMenu) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
@@ -85,14 +80,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     Editor finalEditor = editor;
     PsiFile finalFile = file;
-    if (!intentions.isEmpty()) {
-      editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-        showIntentionHint(project, finalEditor, finalFile, intentions);
-      });
-    }
-    else if (showFeedbackOnEmptyMenu) {
-      HintManager.getInstance().showInformationHint(finalEditor, "No context actions available at this location");
-    }
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> showIntentionHint(project, finalEditor, finalFile, intentions));
   }
 
   protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {

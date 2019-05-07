@@ -22,7 +22,7 @@ public abstract class SearchResultPanel {
 
   protected final PluginsGroupComponent myPanel;
   private JScrollBar myVerticalScrollBar;
-  private PluginsGroup myGroup = new PluginsGroup("Search Results");
+  private final PluginsGroup myGroup = new PluginsGroup("Search Results");
   private String myQuery;
   private AtomicBoolean myRunQuery;
   private boolean myEmpty = true;
@@ -86,8 +86,6 @@ public abstract class SearchResultPanel {
   }
 
   public void setQuery(@NotNull String query) {
-    assert SwingUtilities.isEventDispatchThread();
-
     setEmptyText();
 
     if (query.equals(myQuery)) {
@@ -110,18 +108,17 @@ public abstract class SearchResultPanel {
   }
 
   private void handleQuery(@NotNull String query) {
+    myGroup.clear();
+
     if (isProgressMode()) {
       loading(true);
 
       AtomicBoolean runQuery = myRunQuery = new AtomicBoolean(true);
-      PluginsGroup group = myGroup;
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        handleQuery(query, group);
+        handleQuery(myQuery, myGroup);
 
         ApplicationManager.getApplication().invokeLater(() -> {
-          assert SwingUtilities.isEventDispatchThread();
-
           if (!runQuery.get()) {
             return;
           }
@@ -190,7 +187,6 @@ public abstract class SearchResultPanel {
       myPanel.removeGroup(myGroup);
       fullRepaint();
     }
-    myGroup = new PluginsGroup("Search Results");
   }
 
   private void fullRepaint() {

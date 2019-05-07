@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 // TODO: support merge request chains
@@ -228,7 +227,8 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> navigationActions = Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
+    List<AnAction> navigationActions = ContainerUtil.list(new MyPrevDifferenceAction(),
+                                                          new MyNextDifferenceAction());
     DiffUtil.addActionBlock(group, navigationActions);
 
     DiffUtil.addActionBlock(group, viewerActions);
@@ -290,20 +290,17 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   private void showInvalidRequestNotification() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (myDisposed) return;
-      if (!myNotificationPanel.isNull()) return;
+    if (!myNotificationPanel.isNull()) return;
 
-      EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
-      notification.setText("Conflict is not valid and no longer can be resolved.");
-      notification.createActionLabel("Abort Resolve", () -> {
-        applyRequestResult(MergeResult.CANCEL);
-        closeDialog();
-      });
-      myNotificationPanel.setContent(notification);
-      myMainPanel.validate();
-      myMainPanel.repaint();
-    }, ModalityState.stateForComponent(myPanel));
+    EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
+    notification.setText("Conflict is not valid and no longer can be resolved.");
+    notification.createActionLabel("Abort Resolve", () -> {
+      applyRequestResult(MergeResult.CANCEL);
+      closeDialog();
+    });
+    myNotificationPanel.setContent(notification);
+    myMainPanel.validate();
+    myMainPanel.repaint();
   }
 
   @Override

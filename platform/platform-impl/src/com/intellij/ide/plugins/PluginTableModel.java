@@ -1,8 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +38,8 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   protected static final String NAME = "Name";
 
   protected ColumnInfo[] columns;
-  protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
-  protected final List<IdeaPluginDescriptor> filtered = new ArrayList<>();
+  protected final List<IdeaPluginDescriptor> view = ContainerUtil.newArrayList();
+  protected final List<IdeaPluginDescriptor> filtered = ContainerUtil.newArrayList();
 
   private RowSorter.SortKey myDefaultSortKey;
   private boolean mySortByStatus;
@@ -188,7 +203,7 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   }
 
   public List<IdeaPluginDescriptor> getAllPlugins() {
-    List<IdeaPluginDescriptor> list = new ArrayList<>(view.size() + filtered.size());
+    List<IdeaPluginDescriptor> list = ContainerUtil.newArrayListWithCapacity(view.size() + filtered.size());
     list.addAll(view);
     list.addAll(filtered);
     return list;

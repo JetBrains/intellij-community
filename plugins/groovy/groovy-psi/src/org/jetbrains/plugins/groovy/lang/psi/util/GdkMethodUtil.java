@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -200,7 +199,7 @@ public class GdkMethodUtil {
 
       final String name = signatures.second;
 
-      final List<GrMethod> methods = new ArrayList<>();
+      final List<GrMethod> methods = ContainerUtil.newArrayList();
       final PsiClass closure = JavaPsiFacade.getInstance(statement.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
       if (closure == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 

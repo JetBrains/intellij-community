@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -72,7 +71,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
 
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XMLLanguage.INSTANCE, buf);
     psiFile.putUserData(ORIGINAL_POM_FILE, virtualFile);
-    List<Object> variants = new ArrayList<>();
+    List<Object> variants = ContainerUtil.newArrayList();
 
 
     String lastMethodCall = ContainerUtil.getLastItem(methodCallInfo);

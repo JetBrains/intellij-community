@@ -27,7 +27,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -312,6 +311,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
 
   private static void doSave(@NotNull final Project project, @NotNull Collection<InternalExternalProjectInfo> externalProjects)
     throws IOException {
+    final Path projectConfigurationFile = getProjectConfigurationFile(project);
+    if (!FileUtil.createParentDirs(projectConfigurationFile.toFile())) {
+      throw new IOException("Unable to save " + projectConfigurationFile);
+    }
 
     for (Iterator<InternalExternalProjectInfo> iterator = externalProjects.iterator(); iterator.hasNext(); ) {
       InternalExternalProjectInfo externalProject = iterator.next();
@@ -330,7 +333,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
       });
     }
 
-    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(PathKt.outputStream(getProjectConfigurationFile(project))))) {
+    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)))) {
       out.writeUTF(STORAGE_VERSION);
       out.writeInt(externalProjects.size());
       try (ObjectOutputStream os = new ObjectOutputStream(out)) {
@@ -358,10 +361,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
     final Path configurationFile = getProjectConfigurationFile(project);
-    //noinspection SSBasedInspection
-    if (!Files.isRegularFile(configurationFile)) {
-      return projects;
-    }
+    if (!configurationFile.toFile().isFile()) return projects;
 
     if (isInvalidated(configurationFile)) {
       throw new IOException("External projects data storage was invalidated");
@@ -385,17 +385,16 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     return projects;
   }
 
-  private static boolean isInvalidated(@NotNull Path configurationFile) throws IOException {
+  private static boolean isInvalidated(@NotNull Path configurationFile) {
     if (!Registry.is("external.system.invalidate.storage", true)) return false;
 
-    long lastModified = Files.getLastModifiedTime(configurationFile).toMillis();
-    if (lastModified == 0) {
-      return true;
-    }
-
+    long lastModified = configurationFile.toFile().lastModified();
+    if (lastModified == 0) return true;
     File brokenMarkerFile = getBrokenMarkerFile();
     if (brokenMarkerFile.exists() && lastModified < brokenMarkerFile.lastModified()) {
-      Files.delete(configurationFile);
+      if (!FileUtil.delete(configurationFile.toFile())) {
+        LOG.warn("Cannot delete invalidated external project cache file");
+      }
       return true;
     }
     return false;
@@ -403,7 +402,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
 
   @NotNull
   private static Path getProjectConfigurationFile(@NotNull Project project) {
-    return getProjectConfigurationDir(project).resolve("project.smile");
+    return getProjectConfigurationDir(project).resolve("project.dat");
   }
 
   @NotNull
@@ -419,7 +418,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
 
   @Override
   public synchronized void loadState(@NotNull State state) {
-    myState = state;
+    myState = state == null ? new State() : state;
   }
 
   synchronized void setIgnored(@NotNull final DataNode<?> dataNode, final boolean isIgnored) {
@@ -435,7 +434,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     saveInclusionSettings(projectDataNode);
   }
 
-  synchronized boolean isIgnored(@NotNull String rootProjectPath, @NotNull String modulePath, @SuppressWarnings("SameParameterValue") @NotNull Key key) {
+  synchronized boolean isIgnored(@NotNull String rootProjectPath, @NotNull String modulePath, @NotNull Key key) {
     final ProjectState projectState = myState.map.get(rootProjectPath);
     if (projectState == null) return false;
 
@@ -483,7 +482,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     @XCollection(elementName = "id")
     public final Set<String> set = ContainerUtil.newConcurrentSet();
 
-    @SuppressWarnings("unused")
     ModuleState() {
     }
 

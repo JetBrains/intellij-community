@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Pair;
@@ -97,11 +111,11 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
   private Set<Commit> getAllNewCommits(@NotNull List<? extends Commit> unsafeGreenPartSavedLog,
                                        @NotNull List<? extends Commit> firstBlock) {
-    Set<CommitId> existedCommitHashes = new HashSet<>();
+    Set<CommitId> existedCommitHashes = ContainerUtil.newHashSet();
     for (Commit commit : unsafeGreenPartSavedLog) {
       existedCommitHashes.add(commit.getId());
     }
-    Set<Commit> allNewsCommits = new HashSet<>();
+    Set<Commit> allNewsCommits = ContainerUtil.newHashSet();
     for (Commit newCommit : firstBlock) {
       if (!existedCommitHashes.contains(newCommit.getId())) {
         allNewsCommits.add(newCommit);
@@ -182,7 +196,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
       this.list = list;
-      newCommitsMap = new HashMap<>();
+      newCommitsMap = ContainerUtil.newHashMap();
       for (Commit commit : newCommits) {
         newCommitsMap.put(commit.getId(), commit);
       }

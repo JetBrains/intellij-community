@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.editor.markup.EffectType.*;
@@ -35,7 +37,7 @@ public class TextAttributesEffectsBuilder {
     .put(BOLD_DOTTED_LINE, UNDERLINE_SLOT)
     .build();
 
-  private final Map<EffectSlot, EffectDescriptor> myEffectsMap = new HashMap<>(EffectSlot.values().length);
+  private final Map<EffectSlot, EffectDescriptor> myEffectsMap = ContainerUtilRt.newHashMap(EffectSlot.values().length);
 
   private TextAttributesEffectsBuilder() {}
 
@@ -114,7 +116,7 @@ public class TextAttributesEffectsBuilder {
    */
   @NotNull
   List<EffectDescriptor> getDescriptorsList() {
-    return myEffectsMap.isEmpty() ? ContainerUtil.emptyList() : new ArrayList<>(myEffectsMap.values());
+    return myEffectsMap.isEmpty() ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(myEffectsMap.values());
   }
 
   /**
@@ -125,7 +127,7 @@ public class TextAttributesEffectsBuilder {
     if (myEffectsMap.isEmpty()) {
       return Collections.emptyMap();
     }
-    Map<EffectType, Color> result = new HashMap<>();
+    Map<EffectType, Color> result = ContainerUtil.newHashMap();
     myEffectsMap.forEach((key, val) -> {
       if (val != null) {
         result.put(val.effectType, val.effectColor);
@@ -148,7 +150,7 @@ public class TextAttributesEffectsBuilder {
       targetAttributes.setAdditionalEffects(Collections.emptyMap());
     }
     else {
-      Map<EffectType, Color> effectsMap = new HashMap<>();
+      Map<EffectType, Color> effectsMap = ContainerUtil.newHashMap();
       EffectDescriptor mainEffectDescriptor = allEffects.remove(0);
       targetAttributes.setEffectType(mainEffectDescriptor.effectType);
       targetAttributes.setEffectColor(mainEffectDescriptor.effectColor);

@@ -10,6 +10,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrReference
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -60,7 +60,7 @@ public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsC
 
     PsiManagerEx manager = getManager();
 
-    List<PsiJavaCodeReferenceElement> result = new ArrayList<>();
+    List<PsiJavaCodeReferenceElement> result = ContainerUtil.newArrayList();
     for (PsiClassType type : types) {
       PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
       PsiClass resolved = resolveResult.getElement();

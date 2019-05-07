@@ -660,7 +660,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void copyRootsFrom(@NotNull LibraryImpl fromModel) {
-    Map<OrderRootType, VirtualFilePointerContainer> clonedRoots = new HashMap<>();
+    Map<OrderRootType, VirtualFilePointerContainer> clonedRoots = ContainerUtil.newHashMap();
     for (Map.Entry<OrderRootType, VirtualFilePointerContainer> entry : fromModel.myRoots.entrySet()) {
       OrderRootType rootType = entry.getKey();
       VirtualFilePointerContainer container = entry.getValue();

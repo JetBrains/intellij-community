@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.util.containers.ContainerUtil
 
 class WhitelistBuilder {
-  val groups: MutableMap<String, List<FUSWhitelist.VersionRange>> = HashMap()
+  val groups: MutableMap<String, List<FUSWhitelist.VersionRange>> = ContainerUtil.newHashMap()
 
   fun add(id: String): WhitelistBuilder {
     groups[id] = ContainerUtil.emptyList()
@@ -13,7 +13,7 @@ class WhitelistBuilder {
   }
 
   fun add(id: String, vararg versions: FUSWhitelist.VersionRange): WhitelistBuilder {
-    val versionsList = mutableListOf<FUSWhitelist.VersionRange>()
+    val versionsList = ContainerUtil.newArrayList<FUSWhitelist.VersionRange>()
     for (version in versions) {
       versionsList.add(version)
     }

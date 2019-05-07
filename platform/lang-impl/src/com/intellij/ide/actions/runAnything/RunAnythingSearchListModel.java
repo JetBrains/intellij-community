@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Vector;
 
 @SuppressWarnings("unchecked")
@@ -27,7 +27,7 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
   }
 
   @NotNull
-  protected abstract List<RunAnythingGroup> getGroups();
+  protected abstract Collection<RunAnythingGroup> getGroups();
 
   void clearIndexes() {
     RunAnythingGroup.clearIndexes(getGroups());
@@ -45,16 +45,6 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
   @Nullable
   String getTitle(int titleIndex) {
     return RunAnythingGroup.getTitle(getGroups(), titleIndex);
-  }
-
-  @Nullable
-  Icon getIcon(int titleIndex) {
-    return RunAnythingGroup.getIcon(getGroups(), titleIndex);
-  }
-
-  @Nullable
-  RunAnythingGroup findItemGroup(int titleIndex) {
-    return RunAnythingGroup.findItemGroup(getGroups(), titleIndex);
   }
 
   int[] getAllIndexes() {
@@ -96,8 +86,8 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
   public static class RunAnythingMainListModel extends RunAnythingSearchListModel {
     @NotNull
     @Override
-    public List<RunAnythingGroup> getGroups() {
-      List<RunAnythingGroup> groups = ContainerUtil.newArrayList(RunAnythingRecentGroup.INSTANCE);
+    public Collection<RunAnythingGroup> getGroups() {
+      Collection<RunAnythingGroup> groups = ContainerUtil.newArrayList(RunAnythingRecentGroup.INSTANCE);
       groups.addAll(RunAnythingCompletionGroup.MAIN_GROUPS);
       return groups;
     }
@@ -106,7 +96,7 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
   public static class RunAnythingHelpListModel extends RunAnythingSearchListModel {
     @NotNull
     @Override
-    protected List<RunAnythingGroup> getGroups() {
+    protected Collection<RunAnythingGroup> getGroups() {
       return Arrays.asList(RunAnythingHelpGroup.EP_NAME.getExtensions());
     }
   }

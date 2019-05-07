@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -303,7 +303,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       commentTracker.replaceAndRestoreComments(statement, returnStatement);
       if (myReturnToDelete != null) {
         CommentTracker ct = new CommentTracker();
-        ct.markUnchanged(myReturnToDelete.getReturnValue());
+        PsiExpression returnValue = myReturnToDelete.getReturnValue();
+        if (returnValue != null) {
+          ct.markUnchanged(returnValue);
+        }
         ct.deleteAndRestoreComments(myReturnToDelete);
       }
     }

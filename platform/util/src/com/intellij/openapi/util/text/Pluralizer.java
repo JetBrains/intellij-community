@@ -32,7 +32,6 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,8 +60,8 @@ class Pluralizer {
   private final Map<String, String> irregularSingles = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
   private final Map<String, String> irregularPlurals = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
   private final Set<String> uncountables = ContainerUtil.newTroveSet(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final List<Pair<Pattern, String>> pluralRules = new ArrayList<>();
-  private final List<Pair<Pattern, String>> singularRules = new ArrayList<>();
+  private final List<Pair<Pattern, String>> pluralRules = ContainerUtil.newArrayList();
+  private final List<Pair<Pattern, String>> singularRules = ContainerUtil.newArrayList();
 
   /**
    * Pass in a word token to produce a function that can replicate the case on
@@ -183,8 +182,8 @@ class Pluralizer {
   }
 
   static {
-    final Pluralizer pluralizer = new Pluralizer();
-
+    final Pluralizer pluralizer = new Pluralizer(); 
+    
     /*
      * Irregular rules.
      */

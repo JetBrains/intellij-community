@@ -893,7 +893,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       replaceOptions.setToShortenFQN(myShortenFQN.isSelected());
       replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
       replaceOptions.setToUseStaticImport(myUseStaticImport.isSelected());
-      matchOptions.setRecursiveSearch(false);
     }
     else {
       matchOptions.setRecursiveSearch(myRecursive.isSelected());

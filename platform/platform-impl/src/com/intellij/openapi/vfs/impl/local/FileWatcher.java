@@ -16,16 +16,16 @@ import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -45,9 +45,9 @@ public class FileWatcher {
   };
 
   static class DirtyPaths {
-    final Set<String> dirtyPaths = new THashSet<>();
-    final Set<String> dirtyPathsRecursive = new THashSet<>();
-    final Set<String> dirtyDirectories = new THashSet<>();
+    final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
+    final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
+    final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
 
     static final DirtyPaths EMPTY = new DirtyPaths();
 
@@ -105,13 +105,13 @@ public class FileWatcher {
     Future<?> lastTask = myLastTask.get();
     if (lastTask != null) {
       lastTask.cancel(false);
-    }
-
-    try {
-      myFileWatcherExecutor.awaitTermination(1, TimeUnit.HOURS);
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
+      try {
+        lastTask.get();
+      }
+      catch (CancellationException ignored) { }
+      catch (InterruptedException | ExecutionException e) {
+        LOG.error(e);
+      }
     }
 
     for (PluggableFileWatcher watcher : myWatchers) {

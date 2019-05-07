@@ -61,8 +61,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
@@ -236,7 +238,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private DataContext createDataContext(@NotNull DataContext parentDataContext, boolean isAltPressed) {
-    Map<String, Object> map = new HashMap<>();
+    Map<String, Object> map = ContainerUtil.newHashMap();
     map.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory(getModule(), isAltPressed));
     map.put(EXECUTOR_KEY.getName(), getExecutor());
 
@@ -402,7 +404,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   public DataContext createDataContext(@NotNull AnActionEvent e) {
-    HashMap<String, Object> dataMap = new HashMap<>();
+    HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
     dataMap.put(CommonDataKeys.PROJECT.getName(), e.getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
     return createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
@@ -534,6 +536,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   private class MyListRenderer extends ColoredListCellRenderer<Object> {
     private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
+    private final JLabel myTitle = new JLabel();
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
@@ -544,7 +547,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, findIcon(index), isSelected, hasFocus);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -571,7 +574,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (model != null) {
         String title = model.getTitle(index);
         if (title != null) {
-          myMainPanel.add(RunAnythingUtil.createTitle(" " + title, model.getIcon(index)), BorderLayout.NORTH);
+          myTitle.setText(title);
+          myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
         }
       }
       JPanel wrapped = new JPanel(new BorderLayout());
@@ -585,19 +589,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
 
       return myMainPanel;
-    }
-
-    @Nullable
-    private Icon findIcon(int index) {
-      RunAnythingSearchListModel model = getSearchingModel(myResultsList);
-      Icon groupIcon = null;
-      if (model != null) {
-        RunAnythingGroup group = model.findItemGroup(index);
-        if (group != null) {
-          groupIcon = group.getIcon();
-        }
-      }
-      return groupIcon;
     }
 
     @Override
@@ -982,7 +973,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     @Override
     protected ElementsChooser<?> createChooser() {
       ElementsChooser<RunAnythingGroup> res =
-        new ElementsChooser<RunAnythingGroup>(new ArrayList<>(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
+        new ElementsChooser<RunAnythingGroup>(ContainerUtil.newArrayList(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
           @Override
           protected String getItemText(@NotNull RunAnythingGroup value) {
             return value.getTitle();

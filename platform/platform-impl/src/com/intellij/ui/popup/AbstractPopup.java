@@ -1533,7 +1533,7 @@ public class AbstractPopup implements JBPopup {
       switch (event.getID()) {
         case WINDOW_ACTIVATED:
         case WINDOW_GAINED_FOCUS:
-          if (myCancelOnWindow && myPopup != null && isCancelNeeded((WindowEvent)event, myPopup.getWindow())) {
+          if (myCancelOnWindow && myPopup != null && !myPopup.isPopupWindow(((WindowEvent)event).getWindow())) {
             cancel();
           }
           break;
@@ -1975,16 +1975,5 @@ public class AbstractPopup implements JBPopup {
   public void addResizeListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
     myResizeListeners.add(runnable);
     Disposer.register(parentDisposable, () -> myResizeListeners.remove(runnable));
-  }
-
-  /**
-   * @return {@code true} if focus moved to a popup window or its child window
-   */
-  private static boolean isCancelNeeded(@NotNull WindowEvent event, Window window) {
-    if (window == null) return true;
-    if (window == event.getWindow()) return false;
-    if (window != event.getOppositeWindow()) return true;
-    if (window == event.getWindow().getOwner()) return false;
-    return true;
   }
 }

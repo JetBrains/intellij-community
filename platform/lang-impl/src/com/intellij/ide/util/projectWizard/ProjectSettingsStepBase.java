@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.BundleBase;
@@ -22,6 +22,7 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
@@ -253,7 +253,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     if (settingsStep.isEmpty()) return createContentPanelWithAdvancedSettingsPanel();
 
     final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-    List<LabeledComponent> labeledComponentList = new ArrayList<>();
+    List<LabeledComponent> labeledComponentList = ContainerUtil.newArrayList();
     labeledComponentList.add(createLocationComponent());
     labeledComponentList.addAll(settingsStep.getFields());
 

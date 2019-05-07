@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  */
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard<PsiElement> ourOverloadGuard = RecursionManager.createGuard("overload.guard");
-  private static final ThreadLocal<Map<PsiElement, MethodCandidateInfo>> CURRENT_CANDIDATE = ThreadLocal.withInitial(HashMap::new);
+  private static final ThreadLocal<Map<PsiElement, CurrentCandidateProperties>> CURRENT_CANDIDATE = ThreadLocal.withInitial(HashMap::new);
   @ApplicabilityLevelConstant private volatile int myApplicabilityLevel;
   @ApplicabilityLevelConstant private volatile int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;
@@ -164,7 +164,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return level1;
-    }, true);
+    }, substitutor, isVarargs(), true);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -268,14 +268,14 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   private <T> T computeForOverloadedCandidate(final Computable<T> computable,
-                                              boolean applicabilityCheck) {
-    Map<PsiElement, MethodCandidateInfo> map = CURRENT_CANDIDATE.get();
+                                              final PsiSubstitutor substitutor,
+                                              boolean varargs, boolean applicabilityCheck) {
+    Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     final PsiElement argumentList = getMarkerList();
-    final MethodCandidateInfo alreadyThere = map.put(argumentList, this);
+    final CurrentCandidateProperties alreadyThere =
+      map.put(argumentList, new CurrentCandidateProperties(this, substitutor, varargs, applicabilityCheck));
     try {
-      return applicabilityCheck
-             ? ourOverloadGuard.doPreventingRecursion(argumentList, false, computable) 
-             : computable.compute();
+      return computable.compute();
     }
     finally {
       if (alreadyThere == null) {
@@ -317,13 +317,12 @@ public class MethodCandidateInfo extends CandidateInfo{
 
         myApplicabilityError.remove();
         try {
-
-          final PsiElement markerList = getMarkerList();
           final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
+
           if (!stackStamp.mayCacheNow() ||
               isOverloadCheck() ||
               !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-              markerList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(markerList.getParent()) ||
+              getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent()) ||
               LambdaUtil.isLambdaParameterCheck()
             ) {
             return inferredSubstitutor;
@@ -363,9 +362,6 @@ public class MethodCandidateInfo extends CandidateInfo{
     return !ourOverloadGuard.currentStack().isEmpty();
   }
 
-  public static boolean isOverloadCheck(PsiElement argumentList) {
-    return ourOverloadGuard.currentStack().contains(argumentList);
-  }
 
   public boolean isTypeArgumentsApplicable() {
     return isTypeArgumentsApplicable(() -> getSubstitutor(false));
@@ -431,7 +427,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       return javaPsiFacade.getResolveHelper()
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy,
                             myLanguageLevel);
-    }, !includeReturnConstraint);
+    }, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
   }
 
   public boolean isRawSubstitution() {
@@ -454,9 +450,16 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
 
-  public static MethodCandidateInfo getCurrentMethod(PsiElement context) {
-    final Map<PsiElement, MethodCandidateInfo> currentMethodCandidates = CURRENT_CANDIDATE.get();
+  public static CurrentCandidateProperties getCurrentMethod(PsiElement context) {
+    final Map<PsiElement, CurrentCandidateProperties> currentMethodCandidates = CURRENT_CANDIDATE.get();
     return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
+  }
+
+  public static void updateSubstitutor(PsiElement context, PsiSubstitutor newSubstitutor) {
+    CurrentCandidateProperties candidateProperties = getCurrentMethod(context);
+    if (candidateProperties != null) {
+      candidateProperties.setSubstitutor(newSubstitutor);
+    }
   }
 
   @Nullable
@@ -488,6 +491,48 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   public String getInferenceErrorMessageAssumeAlreadyComputed() {
     return myInferenceError;
+  }
+
+  public CurrentCandidateProperties createProperties() {
+    return new CurrentCandidateProperties(this, getSiteSubstitutor(), isVarargs(), false);
+  }
+
+  public static class CurrentCandidateProperties {
+    private final MethodCandidateInfo myMethod;
+    private PsiSubstitutor mySubstitutor;
+    private final boolean myVarargs;
+    private final boolean myApplicabilityCheck;
+
+    private CurrentCandidateProperties(MethodCandidateInfo info, PsiSubstitutor substitutor, boolean varargs, boolean applicabilityCheck) {
+      myMethod = info;
+      mySubstitutor = substitutor;
+      myVarargs = varargs;
+      myApplicabilityCheck = applicabilityCheck;
+    }
+
+    public PsiMethod getMethod() {
+      return myMethod.getElement();
+    }
+
+    public MethodCandidateInfo getInfo() {
+      return myMethod;
+    }
+
+    public PsiSubstitutor getSubstitutor() {
+      return mySubstitutor;
+    }
+
+    public void setSubstitutor(PsiSubstitutor substitutor) {
+      mySubstitutor = substitutor;
+    }
+
+    public boolean isVarargs() {
+      return myVarargs;
+    }
+
+    public boolean isApplicabilityCheck() {
+      return myApplicabilityCheck;
+    }
   }
 
   public static class ApplicabilityLevel {

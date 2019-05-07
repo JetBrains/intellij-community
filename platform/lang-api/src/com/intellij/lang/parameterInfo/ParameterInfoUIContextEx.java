@@ -43,5 +43,5 @@ public interface ParameterInfoUIContextEx extends ParameterInfoUIContext {
   /**
    * Escape function for convert custom tags to html.
    */
-  void setEscapeFunction(@Nullable Function<? super String, String> escapeFunction);
+  void setEscapeFunction(@Nullable Function<String, String> escapeFunction);
 }

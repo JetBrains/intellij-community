@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -26,8 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.getBranchPresentationBackground;
 
@@ -50,7 +52,7 @@ public class LabelPainter {
   @NotNull private final JComponent myComponent;
   @NotNull private final LabelIconCache myIconCache;
 
-  @NotNull private List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
+  @NotNull private List<Pair<String, LabelIcon>> myLabels = ContainerUtil.newArrayList();
   private int myHeight = JBUI.scale(22);
   private int myWidth = 0;
   @NotNull private Color myBackground = UIUtil.getTableBackground();
@@ -114,7 +116,7 @@ public class LabelPainter {
                                                                              boolean compact) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
-    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
+    List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
     if (compact) return calculateCompactPresentation(refGroups, fontMetrics, background, availableWidth);
@@ -129,7 +131,7 @@ public class LabelPainter {
                                                                                     int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
-    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
+    List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
     for (RefGroup group : refGroups) {
@@ -154,7 +156,7 @@ public class LabelPainter {
                                                                                  int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
-    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
+    List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
     int height = fontMetrics.getHeight();
@@ -197,7 +199,7 @@ public class LabelPainter {
 
   @NotNull
   private static List<Color> getColors(@NotNull Collection<? extends RefGroup> groups) {
-    LinkedHashMap<Color, Integer> usedColors = new LinkedHashMap<>();
+    LinkedHashMap<Color, Integer> usedColors = ContainerUtil.newLinkedHashMap();
 
     for (RefGroup group : groups) {
       List<Color> colors = group.getColors();
@@ -208,7 +210,7 @@ public class LabelPainter {
       }
     }
 
-    List<Color> result = new ArrayList<>();
+    List<Color> result = ContainerUtil.newArrayList();
     for (Map.Entry<Color, Integer> entry : usedColors.entrySet()) {
       result.add(entry.getKey());
       if (entry.getValue() > 1) {

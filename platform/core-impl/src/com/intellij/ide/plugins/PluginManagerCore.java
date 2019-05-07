@@ -1430,7 +1430,7 @@ public class PluginManagerCore {
   private static IdeaPluginDescriptorImpl[] initializePlugins(@Nullable StartupProgress progress) {
     configureExtensions();
 
-    List<String> errors = new ArrayList<>();
+    List<String> errors = ContainerUtil.newArrayList();
     IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress, errors);
     checkEssentialPluginsAreAvailable(pluginDescriptors);
 

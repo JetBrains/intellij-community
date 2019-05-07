@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.ui.actions;
 
 import com.intellij.execution.CantRunException;
@@ -20,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.configuration.SearchingForTestsTask;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer;
@@ -54,7 +54,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
             return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
-                final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = new HashMap<>();
+                final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = ContainerUtil.newHashMap();
                 super.fillTestObjects(fullClassList);
                 for (final PsiClass aClass : fullClassList.keySet()) {
                   if (!ReadAction.compute(() -> TestNGUtil.hasTest(aClass))) {

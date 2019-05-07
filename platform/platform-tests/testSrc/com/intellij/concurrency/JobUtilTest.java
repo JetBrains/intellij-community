@@ -29,7 +29,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.Processor;
-import com.intellij.util.TestTimeOut;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -44,16 +43,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import static com.intellij.util.TestTimeOut.*;
 
 public class JobUtilTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
-  private TestTimeOut t;
+  private long timeOutMs;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    t = setTimeout(2, TimeUnit.MINUTES);
+    setTimeout(TimeUnit.MINUTES.toMillis(2));
+  }
+
+  private void setTimeout(long ms) {
+    timeOutMs = System.currentTimeMillis() + ms;
+  }
+
+  private boolean timeOut(int workProgress) {
+    if (System.currentTimeMillis() > timeOutMs) {
+      System.err.println("Timed out. Stopped at "+workProgress);
+      return true;
+    }
+    return false;
   }
 
   public void testUnbalancedTaskJobUtilPerformance() {
@@ -120,7 +130,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testJobUtilProcessesAllItemsStress() throws Throwable {
     List<String> list = Collections.nCopies(Timings.adjustAccordingToMySpeed(1000, true), null);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       logElapsed(()->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, __ -> {
@@ -132,14 +142,14 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  private static void logElapsed(ThrowableRunnable<RuntimeException> r) {
-    LOG.debug("Elapsed: " + TimeoutUtil.measureExecutionTime(r) + "ms");
+  private static void logElapsed(Runnable r) {
+    LOG.debug("Elapsed: " + PlatformTestUtil.measure(r) + "ms");
   }
 
   public void testJobUtilRecursiveStress() {
     int N = Timings.adjustAccordingToMySpeed(40, true);
     List<String> list = Collections.nCopies(N, null);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       logElapsed(()->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, __ -> {
@@ -264,7 +274,7 @@ public class JobUtilTest extends LightPlatformTestCase {
   public void testJobUtilRecursiveCancel() {
     final List<String> list = Collections.nCopies(100, "");
     final List<Integer> ilist = Collections.nCopies(100, 0);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       boolean[] success = new boolean[1];
       logElapsed(()-> {
@@ -292,7 +302,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testSaturation() throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch(1);
-    for (int i = 0; i<100 && !t.timedOut(i); i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       JobLauncher.getInstance().submitToJobThread(() -> {
         try {
           latch.await();
@@ -321,7 +331,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       return next % 100 != 0;
     };
     int N = Timings.adjustAccordingToMySpeed(10_000, true);
-    for (int i = 0; i<100 && !t.timedOut(i); i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       processed.set(0);
       ProgressIndicator indicator = new ProgressIndicatorBase();
       boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, ""), indicator, processor);
@@ -336,14 +346,14 @@ public class JobUtilTest extends LightPlatformTestCase {
       return true;
     };
     int N = Timings.adjustAccordingToMySpeed(300, true);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       final ProgressIndicator indicator = new EmptyProgressIndicator();
       AtomicBoolean runReads = new AtomicBoolean(true);
       Semaphore startedReads = new Semaphore(1);
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         startedReads.up();
-        while (runReads.get() && !t.timedOut()) {
+        while (runReads.get() && !timeOut(0)) {
           JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, ""),
                                                                     indicator, true, false, processor);
           assertFalse(indicator.isCanceled());
@@ -363,7 +373,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() {
     Random random = new Random();
-    for (int i = 0; i<100 && !t.timedOut(i); i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       final AtomicBoolean finished = new AtomicBoolean();
       final AtomicBoolean started = new AtomicBoolean();
       Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
@@ -374,7 +384,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       assertFalse(job.isDone());
       TimeoutUtil.sleep(random.nextInt(100));
       job.cancel();
-      while (!job.isDone() && !t.timedOut(i)) {
+      while (!job.isDone() && !timeOut(i)) {
         boolean wasDone = job.isDone();
         boolean wasStarted = started.get();
         boolean wasFinished = finished.get();
@@ -393,7 +403,7 @@ public class JobUtilTest extends LightPlatformTestCase {
   }
 
   public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished() throws Exception {
-    for (int i=0; i<100 && !t.timedOut(i); i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       final AtomicBoolean finished = new AtomicBoolean();
       final AtomicBoolean started = new AtomicBoolean();
       Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
@@ -402,7 +412,7 @@ public class JobUtilTest extends LightPlatformTestCase {
         finished.set(true);
       }, null);
       assertFalse(job.isDone());
-      while (!started.get() && !t.timedOut(i)) {
+      while (!started.get() && !timeOut(i)) {
 
       }
       assertTrue(started.get());
@@ -429,13 +439,13 @@ public class JobUtilTest extends LightPlatformTestCase {
       }), null);
 
     for (int i = 0; i < N_EVENTS; i++) {
-      TestTimeOut n = setTimeout(10, TimeUnit.SECONDS);
+      setTimeout(TimeUnit.SECONDS.toMillis(10));
       int finalI = i;
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         int jobs0 = jobsStarted.get();
         while (jobsStarted.get() < jobs0 + JobSchedulerImpl.getJobPoolParallelism() && jobsStarted.get() < N_JOBS) {
-          if (n.timedOut(finalI)) {
+          if (timeOut(finalI)) {
             System.err.println(ThreadDumper.dumpThreadsToString());
             fail();
             break;
@@ -500,20 +510,18 @@ public class JobUtilTest extends LightPlatformTestCase {
         // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread and we can't do anything
         mainThread.set(Thread.currentThread());
         try {
-          elapsed.set(TimeoutUtil.measureExecutionTime(() -> ProgressManager.getInstance().runProcess(()-> {
-            // more than 1 to pass through processIfTooFew
-            List<Integer> things = Arrays.asList(1, 1, 1, COARSENESS);
-            boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, indicator, delay -> {
+          elapsed.set(PlatformTestUtil.measure(() -> ProgressManager.getInstance().runProcess(()-> {
+            boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(/* more than 1 to pass through processIfTooFew */Arrays.asList(1, 1, 1, COARSENESS), indicator, delay -> {
               if (delay == COARSENESS) {
                 indicator.cancel(); // emulate job external cancel
               }
-              // we seek to test the situation of "job submitted to FJP is waiting for lengthy task created via invokeConcurrentlyUnderProgress()"
+              // we seek to test the situation of "job submitted to FJP is waiting for lengthy task crated via invokeConcurrentlyUnderProgress()"
               // so when the main job steals that lengthy task from within .get() we balk out
-              if (Thread.currentThread() == mainThread.get()) {
-                stealHappened.set(true);
+              if (Thread.currentThread() != mainThread.get()) {
+                TimeoutUtil.sleep(delay);
               }
               else {
-                TimeoutUtil.sleep(delay);
+                stealHappened.set(true);
               }
               return true;
             });

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +170,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       performAction(environmentBuilder.runner(availableRunners.get(environment.getExecutor())));
     }
     else {
-      ArrayList<Executor> model = new ArrayList<>(availableRunners.keySet());
+      ArrayList<Executor> model = ContainerUtil.newArrayList(availableRunners.keySet());
       JBPopupFactory.getInstance().createPopupChooserBuilder(model)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(environment.getExecutor(), true)

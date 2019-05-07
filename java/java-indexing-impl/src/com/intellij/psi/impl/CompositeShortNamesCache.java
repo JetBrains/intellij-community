@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -277,6 +278,6 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Override
   public String toString() {
-    return "Composite cache: " + Collections.singletonList(myCaches);
+    return "Composite cache: " + Arrays.asList(myCaches);
   }
 }

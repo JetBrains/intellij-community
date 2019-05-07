@@ -3,11 +3,13 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
@@ -20,6 +22,7 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
@@ -217,7 +220,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     }
   }
 
-  public static class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {
+  public static class JavadocSeparatorContributor implements ChooseByNameContributor, GotoClassContributor {
     @Nullable
     @Override
     public String getQualifiedName(NavigationItem item) {
@@ -230,14 +233,17 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       return "#";
     }
 
+    @NotNull
     @Override
-    public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    public String[] getNames(Project project, boolean includeNonProjectItems) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
+    @NotNull
     @Override
-    public void processElementsWithName(@NotNull String name,
-                                        @NotNull Processor<NavigationItem> processor,
-                                        @NotNull FindSymbolParameters parameters) {
+    public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
+      return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
     }
   }
+
 }

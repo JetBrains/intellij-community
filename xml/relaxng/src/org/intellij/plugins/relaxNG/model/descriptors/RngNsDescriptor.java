@@ -54,7 +54,7 @@ import java.util.*;
 
 public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private final Map<QName, CachedValue<XmlElementDescriptor>> myDescriptorsMap =
-    Collections.synchronizedMap(new HashMap<>());
+    Collections.synchronizedMap(new HashMap<QName, CachedValue<XmlElementDescriptor>>());
 
   private XmlFile myFile;
   private PsiElement myElement;

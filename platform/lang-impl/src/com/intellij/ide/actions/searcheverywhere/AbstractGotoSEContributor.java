@@ -37,8 +37,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.OffsetIcon;
-import com.intellij.ui.TitledSeparator;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -49,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -359,8 +356,6 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   abstract static class ScopeChooserAction extends ActionGroup
     implements CustomComponentAction, DumbAware, SearchEverywhereUI.EverywhereToggleAction {
 
-    static char MNEMONIC = 'P';
-
     abstract void onScopeSelected(@NotNull ScopeDescriptor o);
 
     @NotNull
@@ -373,7 +368,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
     @NotNull @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       JComponent c = IconWithTextAction.createCustomComponentImpl(this, presentation, place);
-      MnemonicHelper.registerMnemonicAction(c, MNEMONIC);
+      MnemonicHelper.registerMnemonicAction(c, 'P');
       return c;
     }
 
@@ -381,31 +376,24 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
     public void update(@NotNull AnActionEvent e) {
       ScopeDescriptor selection = getSelectedScope();
       String name = StringUtil.trimMiddle(selection.getDisplayName(), 30);
-      String text = StringUtil.escapeMnemonics(name)
-        .replace(String.valueOf(Character.toLowerCase(MNEMONIC)), "_" + Character.toLowerCase(MNEMONIC))
-        .replace(String.valueOf(Character.toUpperCase(MNEMONIC)), "_" + Character.toUpperCase(MNEMONIC));
+      String text = StringUtil.escapeMnemonics(name).replace("p", "_p").replace("P", "_P");
       e.getPresentation().setText(text);
       e.getPresentation().setIcon(OffsetIcon.getOriginalIcon(selection.getIcon()));
       String shortcutText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(
-        MNEMONIC, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
-      e.getPresentation().setDescription("Choose scope (" + shortcutText +")");
+        'S', MnemonicHelper.getFocusAcceleratorKeyMask(), true));
+      e.getPresentation().setDescription("Target scope (" + shortcutText +")");
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
       if (button == null || !button.isValid()) return;
-      JList<ScopeDescriptor> fakeList = new JBList<>();
-      ListCellRenderer<ScopeDescriptor> renderer = ScopeChooserCombo.createDefaultRenderer();
       List<ScopeDescriptor> items = new ArrayList<>();
       ScopeChooserCombo.processScopes(e.getRequiredData(CommonDataKeys.PROJECT),
                                       e.getDataContext(),
                                       ScopeChooserCombo.OPT_LIBRARIES | ScopeChooserCombo.OPT_EMPTY_SCOPES, o -> {
-          Component c = renderer.getListCellRendererComponent(fakeList, o, -1, false, false);
-          if (c instanceof JSeparator || c instanceof TitledSeparator ||
-              !o.scopeEquals(null) && o.getScope() instanceof GlobalSearchScope) {
-            items.add(o);
-          }
+          if (o.scopeEquals(null) || !(o.getScope() instanceof GlobalSearchScope)) return true;
+          items.add(o);
           return true;
         });
       BaseListPopupStep<ScopeDescriptor> step = new BaseListPopupStep<ScopeDescriptor>("", items) {
@@ -426,12 +414,12 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
         @NotNull
         @Override
         public String getTextFor(ScopeDescriptor value) {
-          return value.getScope() instanceof GlobalSearchScope ? value.getDisplayName() : "";
+          return value.scopeEquals(null) ? "" : value.getDisplayName();
         }
 
         @Override
         public boolean isSelectable(ScopeDescriptor value) {
-          return value.getScope() instanceof GlobalSearchScope;
+          return !value.scopeEquals(null);
         }
       };
       ScopeDescriptor selection = getSelectedScope();
@@ -439,7 +427,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
         Comparing.equal(o.getDisplayName(), selection.getDisplayName())));
       ListPopupImpl popup = new ListPopupImpl(step, 10);
       //noinspection unchecked
-      popup.getList().setCellRenderer(renderer);
+      popup.getList().setCellRenderer(ScopeChooserCombo.createDefaultRenderer());
       popup.showUnderneathOf(button);
     }
   }

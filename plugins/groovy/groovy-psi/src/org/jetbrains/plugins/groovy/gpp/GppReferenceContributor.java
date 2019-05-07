@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.openapi.util.Pair;
@@ -8,6 +22,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -17,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -88,10 +102,10 @@ public class GppReferenceContributor extends PsiReferenceContributor {
 
     private List<ResolveResult> addMethodCandidates(PsiClassType classType, GrExpression value) {
       PsiType valueType = value == null ? null : value.getType();
-      final List<ResolveResult> applicable = new ArrayList<>();
+      final List<ResolveResult> applicable = ContainerUtil.newArrayList();
 
       if (value == null || InheritanceUtil.isInheritor(valueType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
-        final List<ResolveResult> byName = new ArrayList<>();
+        final List<ResolveResult> byName = ContainerUtil.newArrayList();
         for (Pair<PsiMethod, PsiSubstitutor> variant : GppClosureParameterTypeProvider.getMethodsToOverrideImplementInInheritor(classType, false)) {
           final PsiMethod method = variant.first;
           if (getValue().equals(method.getName())) {

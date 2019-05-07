@@ -27,7 +27,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.Matcher;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -127,7 +126,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Map<String, String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
-    List<Object> options = new ArrayList<>();
+    List<Object> options = ContainerUtil.newArrayList();
     final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
     final String actionManagerName = myActionManager.getComponentName();
@@ -150,7 +149,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     }
     if (!StringUtil.isEmptyOrSpaces(pattern)) {
       Matcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-      if (optionDescriptions == null) optionDescriptions = new THashSet<>();
+      if (optionDescriptions == null) optionDescriptions = ContainerUtil.newTroveSet();
       for (Map.Entry<String, String> entry : map.entrySet()) {
         if (matcher.matches(entry.getValue())) {
           optionDescriptions.add(new OptionDescription(null, entry.getKey(), entry.getValue(), null, entry.getValue()));

@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -17,7 +31,7 @@ import java.util.*;
 
 /**
  * Wraps {@link ArrangementStandardSettingsAware} for the common arrangement UI managing code.
- *
+ * 
  * @author Denis Zhdanov
  */
 public class ArrangementStandardSettingsManager {
@@ -81,7 +95,7 @@ public class ArrangementStandardSettingsManager {
       buildWeights(myMatchingTokens);
     }
 
-    final Set<ArrangementSettingsToken> aliasTokens = new HashSet<>();
+    final Set<ArrangementSettingsToken> aliasTokens = ContainerUtil.newHashSet();
     aliasTokens.addAll(aliases);
 
     myRuleAliases = aliases;
@@ -150,11 +164,11 @@ public class ArrangementStandardSettingsManager {
       return myMatchingTokens;
     }
 
-    final List<CompositeArrangementSettingsToken> allTokens = new ArrayList<>(myMatchingTokens);
+    final List<CompositeArrangementSettingsToken> allTokens = ContainerUtil.newArrayList(myMatchingTokens);
     allTokens.add(myRuleAliasToken);
     return allTokens;
   }
-
+  
   public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
     if (myRuleAliasMutex.contains(token)) {
       return true;
@@ -176,7 +190,7 @@ public class ArrangementStandardSettingsManager {
     if (myRuleAliasMutex.isEmpty()) {
       return myMutexes;
     }
-    final List<Set<ArrangementSettingsToken>> allMutexes = new ArrayList<>(myMutexes);
+    final List<Set<ArrangementSettingsToken>> allMutexes = ContainerUtil.newArrayList(myMutexes);
     allMutexes.add(myRuleAliasMutex);
     return allMutexes;
   }
@@ -206,7 +220,7 @@ public class ArrangementStandardSettingsManager {
     }
     return token.getRepresentationValue();
   }
-
+  
   public List<ArrangementSettingsToken> sort(@NotNull Collection<? extends ArrangementSettingsToken> tokens) {
     List<ArrangementSettingsToken> result = ContainerUtilRt.newArrayList(tokens);
     Collections.sort(result, myComparator);

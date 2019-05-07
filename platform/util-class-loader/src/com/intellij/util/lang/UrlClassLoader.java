@@ -85,7 +85,7 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtilRt.emptyList();
-    private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
+    private Set<URL> myURLsWithProtectionDomain = ContainerUtilRt.newHashSet();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -120,7 +120,7 @@ public class UrlClassLoader extends ClassLoader {
     public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtilRt.newHashSet(urls)); }
 
     /**
-     * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading
+     * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading 
      * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification
      * Thus, the option is recommended when jars are not modified or process that uses this option is transient
      */
@@ -128,9 +128,9 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowLock() { myLockJars = true; return this; }
     @NotNull
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
-
-    /**
-     * Build backward index of packages / class or resource names that allows to avoid IO during classloading
+    
+    /** 
+     * Build backward index of packages / class or resource names that allows to avoid IO during classloading 
      */
     @NotNull
     public Builder useCache() { myUseCache = true; return this; }
@@ -178,10 +178,10 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
     @NotNull
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
-
+    
     /**
-     * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading.
-     * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less
+     * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading. 
+     * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less 
      * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
      */
     @NotNull
@@ -266,7 +266,7 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
     Class clazz = _findClass(name);
-
+    
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }

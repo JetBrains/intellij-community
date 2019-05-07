@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.util.Ref;
@@ -17,7 +17,6 @@ import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class WcInfoLoader {
 
   @NotNull
   public List<WCInfoWithBranches> loadRoots() {
-    List<WCInfoWithBranches> result = new ArrayList<>();
+    List<WCInfoWithBranches> result = ContainerUtil.newArrayList();
 
     for (WCInfo info : myVcs.getAllWcInfos()) {
       ContainerUtil.addIfNotNull(result, createInfo(info));
@@ -80,7 +79,7 @@ public class WcInfoLoader {
     SvnBranchConfigurationNew configuration =
       SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootUrlInfo.getVirtualFile());
     Ref<WCInfoWithBranches.Branch> workingCopyBranch = Ref.create();
-    List<WCInfoWithBranches.Branch> branches = new ArrayList<>();
+    List<WCInfoWithBranches.Branch> branches = ContainerUtil.newArrayList();
 
     Url trunk = configuration.getTrunk();
     if (trunk != null) {

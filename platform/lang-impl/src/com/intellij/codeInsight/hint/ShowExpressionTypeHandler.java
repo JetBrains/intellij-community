@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -27,7 +27,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
@@ -82,7 +85,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     }
     else {
       IntroduceTargetChooser.showChooser(
-        editor, new ArrayList<>(map.keySet()), callback,
+        editor, ContainerUtil.newArrayList(map.keySet()), callback,
         PsiElement::getText
       );
     }
@@ -110,7 +113,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     if (handlers.isEmpty()) return Collections.emptyMap();
     boolean exactRange = false;
     TextRange range = EditorUtil.getSelectionInAnyMode(editor);
-    final Map<PsiElement, ExpressionTypeProvider> map = new LinkedHashMap<>();
+    final Map<PsiElement, ExpressionTypeProvider> map = ContainerUtil.newLinkedHashMap();
     int offset = !range.isEmpty() ? range.getStartOffset() : TargetElementUtil.adjustOffset(file, editor.getDocument(), range.getStartOffset());
     for (int i = 0; i < 3 && map.isEmpty() && offset >= i; i++) {
       PsiElement elementAt = file.findElementAt(offset - i);
@@ -131,8 +134,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   public static Set<ExpressionTypeProvider> getHandlers(final Project project, Language... languages) {
     DumbService dumbService = DumbService.getInstance(project);
     return JBIterable.of(languages).flatten(
-      language -> dumbService.filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(
-      new LinkedHashSet<>());
+      language -> dumbService.filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(ContainerUtil.newLinkedHashSet());
   }
 
   static final class DisplayedTypeInfo {
