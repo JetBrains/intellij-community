@@ -140,11 +140,11 @@ public class FUStatisticsWhiteListGroupsService {
     }
   }
 
-  private static class WLVersion {
+  public static class WLVersion {
     public final String from;
     public final String to;
 
-    private WLVersion(String from, String to) {
+    public WLVersion(String from, String to) {
       this.from = from;
       this.to = to;
     }

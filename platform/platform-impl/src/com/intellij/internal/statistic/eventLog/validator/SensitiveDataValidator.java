@@ -71,6 +71,10 @@ public class SensitiveDataValidator {
     return this;
   }
 
+  public void reload() {
+    updateValidators(FUSWhiteListPersistence.getCachedWhiteList());
+  }
+
   private void updateValidators(@Nullable String whiteListContent) {
     if (whiteListContent != null) {
       mySemaphore.down();
