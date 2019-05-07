@@ -193,6 +193,6 @@ public abstract class IdeFrameDecorator implements Disposable {
   }
 
   public static boolean isCustomDecorationActive() {
-    return Registry.is("ide.win.frame.decoration") || (Registry.is("ide.win.frame.decoration.internal") && Boolean.getBoolean("idea.is.internal"));
+    return Registry.is("ide.win.frame.decoration");
   }
 }
