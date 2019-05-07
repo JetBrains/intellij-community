@@ -162,6 +162,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
         Segment range = myTarget.getRange();
         if (range != null) {
           text = doc.getText(TextRange.create(range));
+          int lineNumber = doc.getLineNumber(range.getStartOffset());
+          text += "; line#" + (lineNumber + 1);
         }
       }
       return StringUtil.repeat("  ", indent) + render(doc, parent) + (text == null ? "" : " (" + text + ")") + "\n" +
