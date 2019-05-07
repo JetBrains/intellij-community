@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.idea.devkit.dom.Extension;
 
 import java.util.Objects;
 
@@ -28,7 +29,7 @@ public class ExtensionPointCandidate extends PointableCandidate {
                                  String epName) {
     super(pointer);
     this.epName = epName;
-    this.attributeName = "implementation";
+    this.attributeName = Extension.IMPLEMENTATION_ATTRIBUTE;
     this.tagName = null;
     this.beanClassName = null;
   }

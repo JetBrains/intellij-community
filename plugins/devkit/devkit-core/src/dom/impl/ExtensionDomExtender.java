@@ -46,7 +46,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
 
-    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
+    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName(Extension.IMPLEMENTATION_ATTRIBUTE);
 
     @Override
     public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
@@ -228,7 +228,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   public static boolean isClassField(@NotNull String fieldName) {
     return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) ||
            fieldName.equals("className") ||
-           fieldName.equals("implementation") ||
+           fieldName.equals(Extension.IMPLEMENTATION_ATTRIBUTE) ||
            fieldName.equals("serviceInterface") ||
            fieldName.equals("serviceImplementation");
   }
