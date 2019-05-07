@@ -164,7 +164,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper, fieldName);
       if (attrName != null) {
         Class clazz = String.class;
-        if (withElement != null || isClassField(fieldName)) {
+        if (withElement != null || Extension.isClassField(fieldName)) {
           clazz = PsiClass.class;
         } else if (PsiType.BOOLEAN.equals(field.getType())) {
           clazz = Boolean.class;
@@ -220,17 +220,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (withElement != null || isClassField(fieldName)) {
+    if (withElement != null || Extension.isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
-  }
-
-  public static boolean isClassField(@NotNull String fieldName) {
-    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) ||
-           fieldName.equals("className") ||
-           fieldName.equals(Extension.IMPLEMENTATION_ATTRIBUTE) ||
-           fieldName.equals("serviceInterface") ||
-           fieldName.equals("serviceImplementation");
   }
 
   @Nullable
