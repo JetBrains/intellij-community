@@ -45,9 +45,9 @@ public class Chains {
 
   public static void main(String[] args) {
     new A()
-      .b()<hint text="B"/>
-                .c()<hint text="C"/>
-                .a()<hint text="A"/>
+      .b()<hint text="[Chains . B]"/>
+                .c()<hint text="[Chains . C]"/>
+                .a()<hint text="[Chains . A]"/>
                 .c();
   }
 }""")
@@ -73,11 +73,11 @@ public class Chains {
 
   public static void main(String[] args) {
     new A()
-      .b()<hint text="B"/>
-      .c().b()<hint text="B"/>
-      .a()<hint text="A"/>
-      .c()<hint text="C"/>
-      .b()<hint text="B"/>
+      .b()<hint text="[Chains . B]"/>
+      .c().b()<hint text="[Chains . B]"/>
+      .a()<hint text="[Chains . A]"/>
+      .c()<hint text="[Chains . C]"/>
+      .b()<hint text="[Chains . B]"/>
       .c();
   }
 }
@@ -103,11 +103,11 @@ public class Chains {
 
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<hint text="C"/>
-     .a()<hint text="A"/>
-     .b()<hint text="B"/>
-     .a()<hint text="A"/>
-     .c()<hint text="C"/>
+    a.b().c()<hint text="[Chains . C]"/>
+     .a()<hint text="[Chains . A]"/>
+     .b()<hint text="[Chains . B]"/>
+     .a()<hint text="[Chains . A]"/>
+     .c()<hint text="[Chains . C]"/>
      .b();
   }
 }
