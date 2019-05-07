@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -202,7 +204,12 @@ public class TerminalSettingsPanel {
         Settings settings = e.getData(Settings.KEY);
         if (settings != null) {
           Configurable configurable = settings.find("preferences.keymap");
-          settings.select(configurable, "Terminal");
+          settings.select(configurable, "Terminal").doWhenDone(() -> {
+            // Remove once https://youtrack.jetbrains.com/issue/IDEA-130812 is fixed
+            EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+              settings.select(configurable, "Terminal");
+            }, 100, TimeUnit.MILLISECONDS);
+          });
         }
       }
     });
