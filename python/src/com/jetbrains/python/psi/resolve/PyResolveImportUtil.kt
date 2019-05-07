@@ -18,8 +18,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.codeInsight.typing.PyTypeShed
-import com.jetbrains.python.codeInsight.typing.filterTopPriorityResults
+import com.jetbrains.python.codeInsight.typing.*
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.psi.LanguageLevel
@@ -28,8 +27,10 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyImportResolver
 import com.jetbrains.python.pyi.PyiFile
+import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import java.util.regex.Pattern
 
 /**
  * Python resolve utilities for qualified names.
@@ -39,18 +40,6 @@ import com.jetbrains.python.sdk.PythonSdkType
  * @author vlan
  */
 
-/**
- * Resolves qualified [name] to the list of packages, modules and, sometimes, classes.
- *
- * This method does not take into account source roots order (see PY-28321 as an example).
- * The sole purpose of the method is to support classes that require class resolution until they can be migrated to [resolveQualifiedName].
- *
- * @see resolveQualifiedName
- */
-@Deprecated("This method does not provide proper source root resolution")
-fun resolveQualifiedNameWithClasses(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
-  return resolveQualifiedName(name, context, ::resultsFromRoots)
-}
 
 /**
  * Resolves a qualified [name] to the list of packages and modules according to the [context].
@@ -58,12 +47,6 @@ fun resolveQualifiedNameWithClasses(name: QualifiedName, context: PyQualifiedNam
  * @see resolveTopLevelMember
  */
 fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
-  return resolveQualifiedName(name, context, ::resolveModuleFromRoots)
-}
-
-private fun resolveQualifiedName(name: QualifiedName,
-                                 context: PyQualifiedNameResolveContext,
-                                 resolveFromRoots: (QualifiedName, PyQualifiedNameResolveContext) -> List<PsiElement>): List<PsiElement> {
   checkAccess()
   if (!context.isValid) {
     return emptyList()
@@ -87,8 +70,7 @@ private fun resolveQualifiedName(name: QualifiedName,
 
   val foreignResults = foreignResults(name, context)
   val pythonResults = listOf(relativeResults,
-                             // TODO: replace with resolveFromRoots when namespace package magic features PY-16688, PY-23087 are implemented
-                             resultsFromRoots(name, context),
+                             resolveModuleFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
   val results = if (name.componentCount > 0) filterTopPriorityResults(pythonResults, context.module) + foreignResults else allResults
@@ -106,7 +88,7 @@ private fun resolveQualifiedName(name: QualifiedName,
 private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   val head = name.removeTail(name.componentCount - 1)
   val nameNoHead = name.removeHead(1)
-  return nameNoHead.components.fold(resultsFromRoots(head, context)) { results, component ->
+  return nameNoHead.components.fold(resultsFromRoots(head, context).distinct()) { results, component ->
     filterTopPriorityResults(results, context.module)
       .asSequence()
       .filterIsInstance<PsiFileSystemItem>()
@@ -114,6 +96,7 @@ private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedName
       .toList()
   }
 }
+
 
 /**
  * Resolves a [name] to the first module member defined at the top-level.
@@ -340,4 +323,91 @@ private fun isRelativeImportResult(name: QualifiedName, directory: PsiDirectory,
 
 private fun checkAccess() {
   Preconditions.checkState(ApplicationManager.getApplication().isReadAccessAllowed, "This method requires read access")
+}
+
+/**
+ * Filters resolved elements according to their import priority in sys.path and
+ * [PEP 561](https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order) rules.
+ */
+private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?): List<PsiElement> {
+  if (resolved.isEmpty()) return emptyList()
+
+  val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
+
+  if (groupedResults.containsKey(Priority.NAMESPACE_PACKAGE) &&
+      groupedResults.headMap(Priority.NAMESPACE_PACKAGE).isEmpty()) return groupedResults[Priority.NAMESPACE_PACKAGE]!!
+
+  groupedResults.remove(Priority.NAMESPACE_PACKAGE)
+
+  return if (groupedResults.containsKey(Priority.STUB_PACKAGE) && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty()) {
+    // stub packages + next by priority
+    // because stub packages could be partial
+
+    val stub = groupedResults[Priority.STUB_PACKAGE]!!.first()
+    val nextByPriority = groupedResults.tailMap(Priority.STUB_PACKAGE).values.asSequence().drop(1).take(1).flatten().firstOrNull()
+
+    listOfNotNull(stub, nextByPriority)
+  }
+  else {
+    listOf(groupedResults.values.first().first())
+  }
+}
+
+/**
+ * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].
+ */
+private fun resolvedElementPriority(element: PsiElement, module: Module?) = when {
+  isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
+  isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
+  isInStubPackage(element) -> Priority.STUB_PACKAGE
+  isInTypeShed(element) -> Priority.TYPESHED
+  PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
+  isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
+  else -> Priority.OTHER
+}
+
+private fun isNamespacePackage(element: PsiElement): Boolean {
+  if (element is PsiDirectory) {
+    val level = PyUtil.getLanguageLevelForVirtualFile(element.project, element.virtualFile)
+    val initFile = PyUtil.turnDirIntoInit(element) ?: return !level.isPython2
+    val initText = initFile.text ?: return false
+    return isNamespaceDeclaration(initText, pkgutilsInitPatterns) || isNamespaceDeclaration(initText, pkgResourcesInitPatterns)
+  }
+  return false
+}
+
+private val pkgResourcesInitPatterns = listOf(Pattern.compile("^__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\)\\s*\$"),
+                                              Pattern.compile("^from pkg_resources import declare_namespace\\Rdeclare_namespace\\(__name__\\)\\s*\$"),
+                                              Pattern.compile("^import pkg_resources\\Rpkg_resources.declare_namespace\\(__name__\\)\\s*\$"))
+
+
+private val pkgutilsInitPatterns = listOf(Pattern.compile("^__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\)\\s*\$"),
+                                          Pattern.compile("^from pkgutil import extend_path\\R__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\)\\s*\$"),
+                                          Pattern.compile("^import pkgutil\\R__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\)\\s*\$"))
+
+private fun isNamespaceDeclaration(text: String, initTextPatterns: List<Pattern>): Boolean =
+  initTextPatterns.asSequence().map { it.matcher(text) }.any { it.matches() }
+
+
+private fun isUserFile(element: PsiElement, module: Module?) =
+  module != null &&
+  element is PsiFileSystemItem &&
+  element.virtualFile.let { it != null && ModuleUtilCore.moduleContainsFile(module, it, false) }
+
+private fun isInTypeShed(element: PsiElement) =
+  PyiUtil.isPyiFileOfPackage(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
+
+/**
+ * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].
+ * Order is important, see [filterTopPriorityResults].
+ */
+private enum class Priority {
+  USER_STUB, // pyi file located in user's project
+  USER_CODE, // py file located in user's project
+  PROVIDED_STUB, // pyi file provided with installed lib and located inside it
+  STUB_PACKAGE, // pyi file located in some stub package
+  INLINE_PACKAGE, // py file located in some inline package
+  TYPESHED, // pyi file located in typeshed
+  OTHER, // other cases, e.g. py file located inside installed lib
+  NAMESPACE_PACKAGE // namespace packag e has the lowest priority
 }

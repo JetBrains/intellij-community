@@ -116,6 +116,10 @@ public class PyiUtil {
     return ObjectUtils.notNull(PyUtil.as(getOriginalElement(element), cls), element);
   }
 
+  public static boolean isPyiFileOfPackage(@NotNull PsiElement element) {
+    return element instanceof PyiFile || PyUtil.turnDirIntoInit(element) instanceof PyiFile;
+  }
+
   private static boolean pyButNotPyiFile(@Nullable PsiFile file) {
     return file instanceof PyFile && !(file instanceof PyiFile);
   }
