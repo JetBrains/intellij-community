@@ -64,8 +64,8 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     String shFmtExecutable = bashSettings.SHFMT_PATH;
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      Notification notification = new Notification("Shell Script", "", "Shell script formatter not installed or incorrect path", NotificationType.WARNING);
-      notification.addAction(NotificationAction.createSimple("Download", () -> ShShfmtFormatterUtil.download(project, settings, null)));
+      Notification notification = new Notification("Shell Script", "", "Would you like to install a shell script formatter?", NotificationType.INFORMATION);
+      notification.addAction(NotificationAction.createSimple("Install", () -> ShShfmtFormatterUtil.download(project, settings, null)));
       Notifications.Bus.notify(notification);
       return;
     }
