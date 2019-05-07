@@ -362,18 +362,21 @@ public class VcsLogUtil {
   public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     int maxSize = 0;
     for (VcsFullCommitDetails details : detailsList) {
-      int size = 0;
-      if (details instanceof VcsChangesLazilyParsedDetails) {
-        size = ((VcsChangesLazilyParsedDetails)details).size();
-      }
-      else {
-        for (int i = 0; i < details.getParents().size(); i++) {
-          size += details.getChanges(i).size();
-        }
-      }
-      maxSize = Math.max(size, maxSize);
+      maxSize = Math.max(getSize(details), maxSize);
     }
     return maxSize;
+  }
+
+  public static int getSize(@NotNull VcsFullCommitDetails details) {
+    if (details instanceof VcsChangesLazilyParsedDetails) {
+      return ((VcsChangesLazilyParsedDetails)details).size();
+    }
+    
+    int size = 0;
+    for (int i = 0; i < details.getParents().size(); i++) {
+      size += details.getChanges(i).size();
+    }
+    return size;
   }
 
   public static int getShownChangesLimit() {
