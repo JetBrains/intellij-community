@@ -3,6 +3,9 @@ package com.siyeh.ig;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
@@ -35,6 +38,7 @@ public class JavaOverridingMethodUtil {
   public static Stream<PsiMethod> getOverridingMethodsIfCheapEnough(@NotNull PsiMethod method,
                                                                     @Nullable GlobalSearchScope searchScope,
                                                                     @NotNull Predicate<? super PsiMethod> preFilter) {
+    if (!isInSourceContent(method)) return null;
     Project project = method.getProject();
     String name = method.getName();
     SearchScope useScope = method.getUseScope();
@@ -73,5 +77,12 @@ public class JavaOverridingMethodUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isInSourceContent(@NotNull PsiElement e) {
+    final VirtualFile file = e.getContainingFile().getVirtualFile();
+    if (file == null) return false;
+    final ProjectFileIndex index = ProjectRootManager.getInstance(e.getProject()).getFileIndex();
+    return index.isInContent(file) || index.isInLibrary(file);
   }
 }
