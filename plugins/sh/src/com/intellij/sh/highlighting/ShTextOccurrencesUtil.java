@@ -19,7 +19,9 @@ public class ShTextOccurrencesUtil {
   public static TextRange findTextRangeOfIdentifierAtCaret(@NotNull Editor editor) {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     if (caret.hasSelection()) {
-      return TextRange.create(caret.getSelectionStart(), caret.getSelectionEnd());
+      TextRange textRange = TextRange.create(caret.getSelectionStart(), caret.getSelectionEnd());
+      CharSequence subSequence = textRange.subSequence(editor.getDocument().getCharsSequence());
+      return StringUtil.isEmptyOrSpaces(subSequence) ? null : textRange;
     }
     return SelectWordUtil.getWordSelectionRange(editor.getDocument().getImmutableCharSequence(),
         caret.getOffset(),
