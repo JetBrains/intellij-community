@@ -7,15 +7,20 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShLanguage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -25,7 +30,6 @@ import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -38,7 +42,7 @@ class ShShellcheckUtil {
   @SuppressWarnings("UnresolvedPropertyKey")
   private static final String REGISTRY_KEY = "sh.shellcheck.path";
 
-  static void download(@Nullable Project project, @Nullable JComponent parent) {
+  static void download(@Nullable Project project, @Nullable Runnable onSuccess) {
     File directory = new File(APP_PATH);
     if (!directory.exists()) {
       directory.mkdirs();
@@ -55,6 +59,9 @@ class ShShellcheckUtil {
         else {
           setShellcheckPath(shellcheckPath);
           showInfoNotification();
+        }
+        if (onSuccess != null) {
+          ApplicationManager.getApplication().invokeLater(onSuccess);
         }
         return;
       }
@@ -78,27 +85,36 @@ class ShShellcheckUtil {
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(url, downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
-    try {
-      List<VirtualFile> virtualFiles = downloader.downloadFilesWithProgress(APP_PATH, project, parent);
-      VirtualFile file = ContainerUtil.getFirstItem(virtualFiles);
-      if (file != null) {
-        String path = file.getCanonicalPath();
-        if (path != null) {
-          if (SystemInfoRt.isMac) {
-            path = decompressShellcheck(path, directory);
-          }
-          if (StringUtil.isNotEmpty(path)) {
-            FileUtilRt.setExecutableAttribute(path, true);
-            setShellcheckPath(path);
-            showInfoNotification();
+
+    Task.Backgroundable task = new Task.Backgroundable(project, "Download Shellcheck") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(new File(APP_PATH));
+          Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
+          File file = first != null ? first.first : null;
+          if (file != null) {
+            String path = file.getCanonicalPath();
+            if (SystemInfoRt.isMac) {
+              path = decompressShellcheck(path, directory);
+            }
+            if (StringUtil.isNotEmpty(path)) {
+              FileUtilRt.setExecutableAttribute(path, true);
+              setShellcheckPath(path);
+              showInfoNotification();
+              if (onSuccess != null) {
+                ApplicationManager.getApplication().invokeLater(onSuccess);
+              }
+            }
           }
         }
+        catch (IOException e) {
+          LOG.warn("Can't download shellcheck", e);
+          showErrorNotification();
+        }
       }
-    }
-    catch (IOException e) {
-      LOG.warn("Can't download shellcheck", e);
-      showErrorNotification();
-    }
+    };
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
   }
 
   static boolean isValidPath(@NotNull String path) {

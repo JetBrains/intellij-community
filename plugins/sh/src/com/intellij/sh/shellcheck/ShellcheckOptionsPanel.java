@@ -46,8 +46,7 @@ public class ShellcheckOptionsPanel {
     myShellcheckDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        ShShellcheckUtil.download(event.getProject(), getPanel());
-        myShellcheckSelector.setText(ShShellcheckUtil.getShellcheckPath());
+        ShShellcheckUtil.download(event.getProject(), () -> myShellcheckSelector.setText(ShShellcheckUtil.getShellcheckPath()));
       }
     });
   }

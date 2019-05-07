@@ -31,14 +31,13 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
     if (file.getFileType() instanceof ShFileType && !isValidPath(getShellcheckPath())) {
       EditorNotificationPanel panel = new EditorNotificationPanel();
       panel.setText("Would you like to install shellcheck to verify your shell scripts?");
-      panel.createActionLabel("Install", () -> {
-        ShShellcheckUtil.download(null, null);
+      panel.createActionLabel("Install", () -> ShShellcheckUtil.download(null, () -> {
         EditorNotifications.getInstance(project).updateAllNotifications();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (psiFile != null) {
           DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
         }
-      });
+      }));
       return panel;
     }
     return null;
