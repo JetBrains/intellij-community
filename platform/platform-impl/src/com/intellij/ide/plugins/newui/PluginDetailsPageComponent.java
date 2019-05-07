@@ -489,6 +489,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       return;
     }
 
+    updateIcon();
     updateEnableForNameAndIcon();
     updateErrors();
 
