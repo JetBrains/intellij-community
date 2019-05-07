@@ -28,7 +28,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
 
     Set<XmlTag> set = new THashSet<>();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
-      set.addAll(qname.getCollectionSubTags(handler, tag));
+      set.addAll(qname.getCollectionSubTags(handler, tag, true));
     }
     int index = args != null && args.length == 1 ? (Integer)args[0] : Integer.MAX_VALUE;
 
