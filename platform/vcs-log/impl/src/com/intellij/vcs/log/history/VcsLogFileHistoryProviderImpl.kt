@@ -28,7 +28,8 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val root = VcsLogUtil.getActualRoot(project, path) ?: return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
 
-    return dataManager.index.isIndexingEnabled(root)
+    return dataManager.index.isIndexingEnabled(root) ||
+           canShowHistoryInLog(dataManager, getCorrectedPath(project, path, root, revisionNumber), root)
   }
 
   override fun showFileHistory(project: Project, path: FilePath, revisionNumber: String?) {
