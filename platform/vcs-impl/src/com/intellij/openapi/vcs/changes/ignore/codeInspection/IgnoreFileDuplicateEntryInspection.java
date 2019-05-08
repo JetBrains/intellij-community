@@ -44,7 +44,7 @@ import java.util.Map;
 /**
  * Inspection tool that checks if entries are duplicated by others.
  */
-public class IgnoreDuplicateEntryInspection extends LocalInspectionTool {
+public class IgnoreFileDuplicateEntryInspection extends LocalInspectionTool {
   /**
    * Reports problems at file level. Checks if entries are duplicated by other entries.
    *
@@ -79,7 +79,7 @@ public class IgnoreDuplicateEntryInspection extends LocalInspectionTool {
       while (iterator.hasNext()) {
         IgnoreEntry entry = iterator.next();
         problemsHolder.registerProblem(entry, VcsBundle.message("ignore.codeInspection.duplicateEntry.message"),
-                                       new IgnoreRemoveEntryFix(entry));
+                                       new IgnoreFileRemoveEntryFix(entry));
       }
     }
 

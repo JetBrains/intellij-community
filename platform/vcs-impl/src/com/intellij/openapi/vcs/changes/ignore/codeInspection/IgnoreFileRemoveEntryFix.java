@@ -39,15 +39,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * QuickFix action that removes specified entry handled by code inspections like
- * {@link IgnoreDuplicateEntryInspection}
+ * {@link IgnoreFileDuplicateEntryInspection}
  */
-public class IgnoreRemoveEntryFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class IgnoreFileRemoveEntryFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   /**
-   * Builds a new instance of {@link IgnoreRemoveEntryFix}.
+   * Builds a new instance of {@link IgnoreFileRemoveEntryFix}.
    *
    * @param entry an element that will be handled with QuickFix
    */
-  public IgnoreRemoveEntryFix(@NotNull IgnoreEntry entry) {
+  public IgnoreFileRemoveEntryFix(@NotNull IgnoreEntry entry) {
     super(entry);
   }
 
