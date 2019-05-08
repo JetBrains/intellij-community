@@ -5,11 +5,6 @@
             <option name="FOREGROUND" value="c57633"/>
         </value>
     </option>
-    <option name="BASH.FUNCTION_CALL">
-        <value>
-            <option name="FONT_TYPE" value="2"/>
-        </value>
-    </option>
     <option name="BASH.HERE_DOC_END">
         <value>
             <option name="FONT_TYPE" value="1"/>
@@ -18,11 +13,6 @@
     <option name="BASH.HERE_DOC_START">
         <value>
             <option name="FONT_TYPE" value="1"/>
-        </value>
-    </option>
-    <option name="BASH.REDIRECTION">
-        <value>
-            <option name="FONT_TYPE" value="2"/>
         </value>
     </option>
     <option name="BASH.SHEBANG">
