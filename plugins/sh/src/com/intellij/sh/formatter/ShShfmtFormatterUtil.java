@@ -81,7 +81,7 @@ public class ShShfmtFormatterUtil {
     DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), SHFMT);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), SHFMT);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, "Download Shfmt formatter") {
+    Task.Backgroundable task = new Task.Backgroundable(project, "Download Shfmt Formatter") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
