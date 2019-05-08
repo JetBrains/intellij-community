@@ -62,21 +62,21 @@ class DecompressorTest {
   }
 
   @Test fun noInternalTraversalInTar() {
-    val tar = tempDir.newFile("test.tar")
+    val tar = tempDir.newFile("test.tgz")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "a/../bad.txt") }
     val dir = tempDir.newFolder("unpacked")
     testNoTraversal(Decompressor.Tar(tar), dir, File(dir, "bad.txt"))
   }
 
   @Test fun noExternalTraversalInTar() {
-    val tar = tempDir.newFile("test.tar")
+    val tar = tempDir.newFile("test.tgz")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "../evil.txt") }
     val dir = tempDir.newFolder("unpacked")
     testNoTraversal(Decompressor.Tar(tar), dir, File(dir.parent, "evil.txt"))
   }
 
   @Test fun noAbsolutePathsInTar() {
-    val tar = tempDir.newFile("test.tar")
+    val tar = tempDir.newFile("test.tgz")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "/root.txt") }
     val dir = tempDir.newFolder("unpacked")
     Decompressor.Tar(tar).extract(dir)
@@ -92,7 +92,7 @@ class DecompressorTest {
   }
 
   @Test fun tarFileModes() {
-    val tar = tempDir.newFile("test.tar")
+    val tar = tempDir.newFile("test.tgz")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
       writeEntry(it, "dir/r", mode = 0b100_000_000)
       writeEntry(it, "dir/rw", mode = 0b110_000_000)
@@ -115,6 +115,7 @@ class DecompressorTest {
     }
     val dir = tempDir.newFolder("unpacked")
     Decompressor.Zip(zip).filter { !it.startsWith("d2/") }.extract(dir)
+    assertThat(File(dir, "d1")).isDirectory()
     assertThat(File(dir, "d1/f1.txt")).isFile()
     assertThat(File(dir, "d2")).doesNotExist()
   }

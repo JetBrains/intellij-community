@@ -568,7 +568,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
   fun `test type new lines in fe then delete`() {
     with(myFixture) {
 
-      val hostFile = configureByText("classA.java", """
+      configureByText("classA.java", """
           class A {
             void foo() {
               String a = "<html></html><caret>";
@@ -580,9 +580,9 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       TestCase.assertEquals("<html></html>", fragmentFile.text)
 
       openFileInEditor(fragmentFile.virtualFile)
-      assertHostIsReachable(hostFile, file)
 
       moveCaret(fragmentFile.text.length)
+
       type("\n")
       type("\n")
 
@@ -596,8 +596,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
         }
       """.trimIndent(), true)
-      assertHostIsReachable(hostFile, file)
-
       type("\b")
       type("\b")
 
@@ -610,15 +608,8 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
         }
       """.trimIndent(), true)
-      assertHostIsReachable(hostFile, file)
     }
 
-  }
-
-  private fun assertHostIsReachable(hostFile: PsiFile, injectedFile: PsiFile) {
-    TestCase.assertEquals("host file should be reachable from the context",
-                          hostFile.virtualFile,
-                          injectedFile.context?.containingFile?.virtualFile)
   }
 
   fun `test edit with guarded blocks`() {

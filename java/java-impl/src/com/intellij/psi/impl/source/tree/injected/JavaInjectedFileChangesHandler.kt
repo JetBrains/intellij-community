@@ -14,9 +14,7 @@ import com.intellij.psi.*
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
-import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.impl.source.tree.injected.changesHandler.*
-import com.intellij.psi.util.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import kotlin.math.max
@@ -94,18 +92,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       hostPsiFile, workingRange.startOffset, workingRange.endOffset, true)
 
     rebuildMarkers(workingRange)
-
-    updateFileContextElementIfNeeded(hostPsiFile, workingRange)
-  }
-
-  private fun updateFileContextElementIfNeeded(hostPsiFile: PsiFile, workingRange: TextRange) {
-    val fragmentPsiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(myFragmentDocument) ?: return
-
-    val injectedPointer = fragmentPsiFile.getUserData(FileContextUtil.INJECTED_IN_ELEMENT) ?: return
-    if (injectedPointer.element != null) return // still valid no need to update
-
-    val newHost = getInjectionHostAtRange(hostPsiFile, workingRange) ?: return
-    fragmentPsiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, newHost.createSmartPointer())
   }
 
   private var myInvalidated = false
