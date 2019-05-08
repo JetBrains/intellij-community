@@ -184,10 +184,9 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   protected LightActionGroup createRepositoriesActions() {
     LightActionGroup popupGroup = new LightActionGroup(false);
     popupGroup.addSeparator("Repositories");
-    List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
-      .map(
-        repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo).createActions(), getDisplayableBranchText(repo)))
-      .collect(toList());
+    List<ActionGroup> rootActions = map(DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()),
+                                        repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo)
+                                          .createActions(), getDisplayableBranchText(repo)));
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);
     return popupGroup;
