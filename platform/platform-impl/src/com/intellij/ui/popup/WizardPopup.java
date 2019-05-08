@@ -437,6 +437,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     SpeedSearchFilter<Object> filter = myStep.getSpeedSearchFilter();
     if (filter == null) return true;
     if (!filter.canBeHidden(value)) return true;
+    if (!mySpeedSearch.isHoldingFilter()) return true;
     String text = filter.getIndexedString(value);
     return mySpeedSearch.shouldBeShowing(text);
   }

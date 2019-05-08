@@ -76,6 +76,7 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
 
   private void addToFiltered(T each) {
     myFilteredList.add(each);
+    if (!mySpeedSearch.isHoldingFilter()) return;
     String filterString = StringUtil.toUpperCase(mySpeedSearch.getFilter());
     String candidateString = StringUtil.toUpperCase(myStep.getTextFor(each));
     int index = myFilteredList.size() - 1;
