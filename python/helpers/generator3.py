@@ -169,7 +169,7 @@ def list_binaries(paths):
 
 
 def is_source_file(path):
-    # Want to see that files despite of their encoding.
+    # Want to see that files regardless of their encoding.
     if path.endswith(('.py', '-nspkg.pth', '.html')):
         return True
     has_bad_extension = path.endswith((
@@ -194,7 +194,7 @@ def is_source_file(path):
 
 def is_text_file(path):
     """
-    Check is some path is a text file (not a binary file).
+    Verify that some path is a text file (not a binary file).
     Ideally there should be usage of libmagic but it can be not
     installed on a target machine.
 
