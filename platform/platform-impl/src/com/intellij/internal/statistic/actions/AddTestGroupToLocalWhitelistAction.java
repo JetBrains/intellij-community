@@ -29,7 +29,7 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
 
     final AddGroupToLocalWhitelistDialog dialog = new AddGroupToLocalWhitelistDialog(project);
     final boolean result = dialog.showAndGet();
-    if (!result || StringUtil.isEmpty(dialog.getGroupId())) {
+    if (!result || StringUtil.isEmpty(dialog.getGroupId()) || StringUtil.isEmpty(dialog.getRecorderId())) {
       return;
     }
 
