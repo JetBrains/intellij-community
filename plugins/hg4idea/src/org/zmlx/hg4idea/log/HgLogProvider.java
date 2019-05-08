@@ -282,7 +282,7 @@ public final class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    return HgHistoryUtil.readAllHashes(myProject, root, Consumer.EMPTY_CONSUMER, filterParameters);
+    return HgHistoryUtil.readHashes(myProject, root, Consumer.EMPTY_CONSUMER, maxCount, filterParameters);
   }
 
   @Nullable
