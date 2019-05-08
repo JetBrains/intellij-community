@@ -44,7 +44,6 @@ import kotlin.test.assertTrue
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-
   private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
 
   @Rule @JvmField val tempDir = TempDirectory()
@@ -94,7 +93,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
   }
-
   //</editor-fold>
 
   @Test fun testWatchRequestConvention() {
