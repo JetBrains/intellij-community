@@ -6,6 +6,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Symbol declaration in PSI tree.
+ * <p>
+ * To provide symbol declarations by a PsiElement,
+ * you can either implement this interface in PsiElement directly
+ * or create a {@link PsiSymbolDeclarationProvider} extension.
+ */
 public interface PsiSymbolDeclaration extends SymbolDeclaration {
 
   /**
