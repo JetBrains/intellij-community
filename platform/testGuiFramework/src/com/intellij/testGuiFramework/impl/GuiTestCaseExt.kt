@@ -342,9 +342,13 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
   ideFrame {
     step("check whether $expectedNumberOfIcons '$gutterIcon' gutter icons are present") {
       editor {
-        step("wait for gutter icons appearing") {
+        step("wait for editor file has been loaded") {
           waitUntilFileIsLoaded()
           waitUntilErrorAnalysisFinishes()
+        }
+      }
+      editor {
+        step("wait for gutter icons appearing") {
           gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
           moveToLine(expectedNumberOfIcons)
         }
