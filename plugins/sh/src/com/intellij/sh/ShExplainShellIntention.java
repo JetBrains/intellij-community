@@ -74,7 +74,7 @@ public class ShExplainShellIntention extends BaseIntentionAction implements Shor
     String selectedText = editor.getSelectionModel().getSelectedText();
 
     if (selectedText != null) {
-      explain(selectedText);
+      explain(selectedText.trim());
     }
     else {
       Caret caret = editor.getCaretModel().getPrimaryCaret();
