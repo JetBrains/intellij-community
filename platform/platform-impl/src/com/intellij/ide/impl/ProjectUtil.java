@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
+import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
@@ -40,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -345,5 +348,35 @@ public class ProjectUtil {
       productName = ApplicationNamesInfo.getInstance().getProductName();
     }
     return userHome.replace('/', File.separatorChar) + File.separator + productName + "Projects";
+  }
+
+  public static boolean tryOpenFileList(@Nullable Project project, @NotNull List<? extends File> list, String location) {
+    for (File file : list) {
+      if (openOrImport(file.getAbsolutePath(), project, true) != null) {
+        LOG.debug(location + ": load project from ", file);
+        return true;
+      }
+    }
+
+    boolean result = false;
+    for (File file : list) {
+      if (file.exists()) {
+        LOG.debug(location + ": open file ", file);
+        String path = file.getAbsolutePath();
+        if (project != null) {
+          OpenFileAction.openFile(path, project);
+          result = true;
+        } else {
+          CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
+          if (processor != null) {
+            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+            if (virtualFile != null && virtualFile.isValid()) {
+              result |= processor.openProjectAndFile(virtualFile, -1, false) != null;
+            }
+          }
+        }
+      }
+    }
+    return result;
   }
 }
