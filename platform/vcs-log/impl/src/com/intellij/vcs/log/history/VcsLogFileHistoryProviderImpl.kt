@@ -1,176 +1,156 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.history;
+package com.intellij.vcs.log.history
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ObjectUtils.assertNotNull
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogFileHistoryProvider
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
+import com.intellij.vcs.log.ui.AbstractVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.matches
+import com.intellij.vcsUtil.VcsUtil
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.function.BiConsumer;
+private const val TAB_NAME = "History"
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
-public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider {
-  @NotNull
-  public static final String TAB_NAME = "History";
+  override fun canShowFileHistory(project: Project, path: FilePath, revisionNumber: String?): Boolean {
+    if (!Registry.`is`("vcs.new.history")) return false
 
-  @Override
-  public boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
-    if (!Registry.is("vcs.new.history")) return false;
+    val root = VcsLogUtil.getActualRoot(project, path) ?: return false
+    val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
 
-    VirtualFile root = VcsLogUtil.getActualRoot(project, path);
-    if (root == null) return false;
-
-    VcsLogData dataManager = VcsProjectLog.getInstance(project).getDataManager();
-    if (dataManager == null) return false;
-
-    return dataManager.getIndex().isIndexingEnabled(root);
+    return dataManager.index.isIndexingEnabled(root)
   }
 
-  @Override
-  public void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
-    VirtualFile root = assertNotNull(VcsLogUtil.getActualRoot(project, path));
-    FilePath correctedPath = getCorrectedPath(project, path, root, revisionNumber);
-    Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
-    
-    triggerFileHistoryUsage(path, hash);
+  override fun showFileHistory(project: Project, path: FilePath, revisionNumber: String?) {
+    val root = VcsLogUtil.getActualRoot(project, path)!!
+    val correctedPath = getCorrectedPath(project, path, root, revisionNumber)
+    val hash = if (revisionNumber != null) HashImpl.build(revisionNumber) else null
 
-    BiConsumer<AbstractVcsLogUi, Boolean> historyUiConsumer = (ui, firstTime) -> {
+    triggerFileHistoryUsage(path, hash)
+
+    val historyUiConsumer = { ui: AbstractVcsLogUi, firstTime: Boolean ->
       if (hash != null) {
-        ui.jumpToNearestCommit(hash, root);
+        ui.jumpToNearestCommit(hash, root)
       }
       else if (firstTime) {
-        ui.jumpToRow(0);
+        ui.jumpToRow(0)
       }
-    };
-    
-    VcsLogManager logManager = assertNotNull(VcsProjectLog.getInstance(project).getLogManager());
-    if (path.isDirectory() && VcsLogUtil.isFolderHistoryShownInLog()) {
-      findOrOpenFolderHistory(project, logManager, root, correctedPath, hash, historyUiConsumer);
+    }
+
+    val logManager = VcsProjectLog.getInstance(project).logManager!!
+    if (path.isDirectory && VcsLogUtil.isFolderHistoryShownInLog()) {
+      findOrOpenFolderHistory(project, logManager, root, correctedPath, hash, historyUiConsumer)
     }
     else {
-      findOrOpenHistory(project, logManager, root, correctedPath, hash, historyUiConsumer);
+      findOrOpenHistory(project, logManager, root, correctedPath, hash, historyUiConsumer)
     }
   }
 
-  private static void triggerFileHistoryUsage(@NotNull FilePath path, @Nullable Hash hash) {
-    String name = path.isDirectory() ? "Folder" : "File";
-    String suffix = hash != null ? "ForRevision" : "";
-    VcsLogUsageTriggerCollector.triggerUsage("Show" + name + "History" + suffix);
+  private fun triggerFileHistoryUsage(path: FilePath, hash: Hash?) {
+    val name = if (path.isDirectory) "Folder" else "File"
+    val suffix = if (hash != null) "ForRevision" else ""
+    VcsLogUsageTriggerCollector.triggerUsage("Show" + name + "History" + suffix)
   }
 
-  private static void findOrOpenHistory(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                        @NotNull VirtualFile root, @NotNull FilePath path, @Nullable Hash hash,
-                                        @NotNull BiConsumer<AbstractVcsLogUi, Boolean> consumer) {
-    FileHistoryUi fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi.class,
-                                                                  ui -> ui.matches(path, hash));
-    boolean firstTime = fileHistoryUi == null;
+  private fun findOrOpenHistory(project: Project, logManager: VcsLogManager,
+                                root: VirtualFile, path: FilePath, hash: Hash?,
+                                consumer: (AbstractVcsLogUi, Boolean) -> Unit) {
+    var fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi::class.java) { ui -> ui.matches(path, hash) }
+    val firstTime = fileHistoryUi == null
     if (firstTime) {
-      String suffix = hash != null ? " (" + hash.toShortString() + ")" : "";
-      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix,
-                                                   new FileHistoryUiFactory(path, root, hash), true);
+      val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
+      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.name + suffix,
+                                                   FileHistoryUiFactory(path, root, hash), true)
     }
-
-    consumer.accept(fileHistoryUi, firstTime);
+    consumer(fileHistoryUi!!, firstTime)
   }
 
-  private static void findOrOpenFolderHistory(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                              @NotNull VirtualFile root, @NotNull FilePath path, @Nullable Hash hash,
-                                              @NotNull BiConsumer<AbstractVcsLogUi, Boolean> consumer) {
-    VcsLogUiImpl ui = VcsLogContentUtil.findAndSelect(project, VcsLogUiImpl.class, logUi -> {
-      return matches(logUi.getFilterUi().getFilters(), path, hash);
-    });
-    boolean firstTime = ui == null;
+  private fun findOrOpenFolderHistory(project: Project, logManager: VcsLogManager,
+                                      root: VirtualFile, path: FilePath, hash: Hash?,
+                                      consumer: (AbstractVcsLogUi, Boolean) -> Unit) {
+    var ui = VcsLogContentUtil.findAndSelect(project, VcsLogUiImpl::class.java) { logUi -> matches(logUi.filterUi.filters, path, hash) }
+    val firstTime = ui == null
     if (firstTime) {
-      VcsLogFilterCollection filters = createFilters(path, hash, root);
-      ui = VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, filters);
-      ui.getProperties().set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, true);
+      val filters = createFilters(path, hash, root)
+      ui = VcsProjectLog.getInstance(project).tabsManager.openAnotherLogTab(logManager, filters)
+      ui.properties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, true)
     }
-    consumer.accept(ui, firstTime);
+    consumer(ui!!, firstTime)
   }
 
-  @NotNull
-  private static VcsLogFilterCollection createFilters(@NotNull FilePath filePath, @Nullable Hash hash, @NotNull VirtualFile root) {
-    VcsLogFilter pathFilter;
-    if (Objects.equals(filePath.getVirtualFile(), root)) {
-      pathFilter = VcsLogFilterObject.fromRoot(root);
+  private fun createFilters(filePath: FilePath, hash: Hash?, root: VirtualFile): VcsLogFilterCollection {
+    val pathFilter = if (filePath.virtualFile == root) {
+      VcsLogFilterObject.fromRoot(root)
     }
     else {
-      pathFilter = VcsLogFilterObject.fromPaths(Collections.singleton(filePath));
+      VcsLogFilterObject.fromPaths(setOf(filePath))
     }
-    if (hash == null) return VcsLogFilterObject.collection(pathFilter, VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD));
-    return VcsLogFilterObject.collection(pathFilter, VcsLogFilterObject.fromCommit(new CommitId(hash, root)));
-  }
 
-  private static boolean matches(@NotNull VcsLogFilterCollection filters, @NotNull FilePath filePath, @Nullable Hash hash) {
-    VcsLogFilterCollection.FilterKey<?> hashKey = hash == null ? VcsLogFilterCollection.BRANCH_FILTER :
-                                                  VcsLogFilterCollection.REVISION_FILTER;
-    if (!VcsLogFiltersKt.matches(filters, hashKey, VcsLogFilterCollection.STRUCTURE_FILTER) &&
-        !VcsLogFiltersKt.matches(filters, hashKey, VcsLogFilterCollection.ROOT_FILTER)) {
-      return false;
+    if (hash == null) {
+      return VcsLogFilterObject.collection(pathFilter, VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD))
     }
-    if (!Objects.equals(getSingleFilePath(filters), filePath)) return false;
-    if (hash != null) return Objects.equals(getSingleHash(filters), hash);
-    return isFilteredByHead(filters);
+
+    return VcsLogFilterObject.collection(pathFilter, VcsLogFilterObject.fromCommit(CommitId(hash, root)))
   }
 
-  private static boolean isFilteredByHead(@NotNull VcsLogFilterCollection filters) {
-    VcsLogBranchFilter branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
-    if (branchFilter == null) return false;
-    return branchFilter.getTextPresentation().equals(Collections.singletonList(VcsLogUtil.HEAD));
+  private fun matches(filters: VcsLogFilterCollection, filePath: FilePath, hash: Hash?): Boolean {
+    val hashKey = if (hash == null)
+      VcsLogFilterCollection.BRANCH_FILTER
+    else
+      VcsLogFilterCollection.REVISION_FILTER
+    if (!filters.matches(hashKey, VcsLogFilterCollection.STRUCTURE_FILTER) &&
+        !filters.matches(hashKey, VcsLogFilterCollection.ROOT_FILTER)) {
+      return false
+    }
+    if (getSingleFilePath(filters) != filePath) return false
+    return if (hash != null) getSingleHash(filters) == hash else isFilteredByHead(filters)
   }
 
-  @Nullable
-  private static Hash getSingleHash(@NotNull VcsLogFilterCollection filters) {
-    VcsLogRevisionFilter revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER);
-    if (revisionFilter == null) return null;
-    Collection<CommitId> heads = revisionFilter.getHeads();
-    if (heads.size() != 1) return null;
-    return assertNotNull(ContainerUtil.getFirstItem(heads)).getHash();
+  private fun isFilteredByHead(filters: VcsLogFilterCollection): Boolean {
+    val branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER) ?: return false
+    return branchFilter.textPresentation == listOf(VcsLogUtil.HEAD)
   }
 
-  @Nullable
-  private static FilePath getSingleFilePath(@NotNull VcsLogFilterCollection filters) {
-    VcsLogStructureFilter structureFilter = filters.get(VcsLogFilterCollection.STRUCTURE_FILTER);
+  private fun getSingleHash(filters: VcsLogFilterCollection): Hash? {
+    val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER) ?: return null
+    val heads = revisionFilter.heads
+    return if (heads.size != 1) null else assertNotNull(ContainerUtil.getFirstItem(heads)).hash
+  }
+
+  private fun getSingleFilePath(filters: VcsLogFilterCollection): FilePath? {
+    val structureFilter = filters.get(VcsLogFilterCollection.STRUCTURE_FILTER)
     if (structureFilter == null) {
-      VcsLogRootFilter rootFilter = filters.get(VcsLogFilterCollection.ROOT_FILTER);
-      if (rootFilter == null) return null;
-      Collection<VirtualFile> roots = rootFilter.getRoots();
-      if (roots.size() != 1) return null;
-      return VcsUtil.getFilePath(assertNotNull(ContainerUtil.getFirstItem(roots)));
+      val rootFilter = filters.get(VcsLogFilterCollection.ROOT_FILTER) ?: return null
+      val roots = rootFilter.roots
+      return if (roots.size != 1) null else VcsUtil.getFilePath(assertNotNull(ContainerUtil.getFirstItem(roots)))
     }
-    Collection<FilePath> filePaths = structureFilter.getFiles();
-    if (filePaths.size() != 1) return null;
-    return ContainerUtil.getFirstItem(filePaths);
+    val filePaths = structureFilter.files
+    return if (filePaths.size != 1) null else ContainerUtil.getFirstItem(filePaths)
   }
 
-  @NotNull
-  private static FilePath getCorrectedPath(@NotNull Project project, @NotNull FilePath path, @NotNull VirtualFile root,
-                                           @Nullable String revisionNumber) {
-    if (!root.equals(VcsUtil.getVcsRootFor(project, path)) && path.isDirectory()) {
-      path = VcsUtil.getFilePath(path.getPath(), false);
+  private fun getCorrectedPath(project: Project, path: FilePath, root: VirtualFile,
+                               revisionNumber: String?): FilePath {
+    var correctedPath = path
+    if (root != VcsUtil.getVcsRootFor(project, correctedPath) && correctedPath.isDirectory) {
+      correctedPath = VcsUtil.getFilePath(correctedPath.path, false)
     }
 
     if (revisionNumber == null) {
-      return VcsUtil.getLastCommitPath(project, path);
+      return VcsUtil.getLastCommitPath(project, correctedPath)
     }
 
-    return path;
+    return correctedPath
   }
 }
