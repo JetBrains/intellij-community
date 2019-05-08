@@ -3,6 +3,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.serialization.MutableAccessor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

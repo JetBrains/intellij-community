@@ -4,8 +4,8 @@ package com.intellij.openapi.components
 import com.intellij.configurationStore.properties.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.util.serialization.PropertyAccessor
 import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import gnu.trove.THashSet

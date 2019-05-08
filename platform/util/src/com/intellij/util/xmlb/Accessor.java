@@ -11,6 +11,7 @@ public interface Accessor {
 
   <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass);
 
+  @NotNull
   String getName();
 
   Class<?> getValueClass();

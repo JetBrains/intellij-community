@@ -1,31 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.xmlb;
+package com.intellij.util.serialization;
 
-import com.intellij.util.ExceptionUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ExceptionUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-import static com.intellij.util.xmlb.Binding.LOG;
+@ApiStatus.Internal
+public final class PropertyAccessor implements MutableAccessor {
+  private static final Logger LOG = Logger.getInstance(PropertyAccessor.class);
 
-public class PropertyAccessor implements MutableAccessor {
   private final String myName;
   private final Class<?> myType;
   private final Method myReadMethod;
   private final Method myWriteMethod;
   private final Type myGenericType;
 
-  public PropertyAccessor(PropertyDescriptor descriptor) {
-    this(descriptor.getName(), descriptor.getPropertyType(), descriptor.getReadMethod(), descriptor.getWriteMethod());
-  }
-
-  public PropertyAccessor(String name, Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
+  public PropertyAccessor(@NotNull String name, @NotNull Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
     myName = name;
     myType = type;
     myReadMethod = readMethod;
@@ -38,7 +36,8 @@ public class PropertyAccessor implements MutableAccessor {
         myWriteMethod.setAccessible(true);
       }
     }
-    catch (SecurityException ignored) { }
+    catch (SecurityException ignored) {
+    }
   }
 
   @NotNull
@@ -52,12 +51,11 @@ public class PropertyAccessor implements MutableAccessor {
       return myReadMethod.invoke(o);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException(e);
+      throw new SerializationException(e);
     }
     catch (InvocationTargetException e) {
-      Throwable exception = e.getTargetException();
-      ExceptionUtil.rethrowUnchecked(exception);
-      throw new XmlSerializationException(e);
+      ExceptionUtilRt.rethrowUnchecked(e.getTargetException());
+      throw new SerializationException(e);
     }
   }
 
@@ -67,7 +65,7 @@ public class PropertyAccessor implements MutableAccessor {
       myWriteMethod.invoke(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException(e);
+      throw new SerializationException(e);
     }
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
@@ -80,16 +78,13 @@ public class PropertyAccessor implements MutableAccessor {
             myWriteMethod.invoke(host, constants[0]);
             return;
           }
-          catch (IllegalAccessException e1) {
-            throw new XmlSerializationException(e);
-          }
-          catch (InvocationTargetException e1) {
-            throw new XmlSerializationException(cause);
+          catch (IllegalAccessException | InvocationTargetException e1) {
+            throw new SerializationException(e);
           }
         }
       }
 
-      throw new XmlSerializationException(cause);
+      throw new SerializationException(cause);
     }
   }
 
@@ -132,6 +127,7 @@ public class PropertyAccessor implements MutableAccessor {
     return annotation;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;

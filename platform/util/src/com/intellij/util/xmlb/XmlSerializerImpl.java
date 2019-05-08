@@ -4,6 +4,8 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.serialization.MutableAccessor;
+import com.intellij.util.serialization.SerializationException;
 import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -130,7 +132,7 @@ public final class XmlSerializerImpl {
   static final XmlSerializer serializer = new XmlSerializer();
 
   @NotNull
-  static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws XmlSerializationException {
+  static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
     try {
       Class<?> aClass = object.getClass();
       Binding binding = serializer.getClassBinding(aClass);
@@ -143,7 +145,7 @@ public final class XmlSerializerImpl {
         return (Element)binding.serialize(object, null, filter);
       }
     }
-    catch (XmlSerializationException e) {
+    catch (SerializationException e) {
       throw e;
     }
     catch (Exception e) {
