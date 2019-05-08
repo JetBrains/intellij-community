@@ -58,6 +58,10 @@
       <className>com.intellij.sh.rename.ShRenameIntention</className>
       <category>Shell Script</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.sh.ShExplainShellIntention</className>
+      <category>Shell Script</category>
+    </intentionAction>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" text="Run File"
