@@ -76,8 +76,12 @@ public abstract class ListTableWithButtons<T> extends Observable {
     myTableView.getTableViewModel().setSortable(false);
     myTableView.getComponent().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    myDecorator = ToolbarDecorator.createDecorator(myTableView);
+    myDecorator = createToolbarDecorator();
     myActionsPanel = myDecorator.getActionsPanel();
+  }
+
+  protected ToolbarDecorator createToolbarDecorator() {
+    return ToolbarDecorator.createDecorator(myTableView);
   }
 
   @Nullable
