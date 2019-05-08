@@ -1,9 +1,5 @@
 package com.intellij.sh.shellcheck;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -118,18 +114,18 @@ class ShShellcheckUtil {
   }
 
   static boolean isValidPath(@Nullable String path) {
-    if (StringUtil.isEmpty(path) || !new File(path).exists()) return false;
+    return path != null && new File(path).canExecute();
 
-    try {
-      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
-      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
-
-      return processOutput.getStdout().startsWith("ShellCheck");
-    }
-    catch (ExecutionException e) {
-      LOG.debug("Exception in process execution", e);
-    }
-    return false;
+//    try {
+//      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
+//      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
+//
+//      return processOutput.getStdout().startsWith("ShellCheck");
+//    }
+//    catch (ExecutionException e) {
+//      LOG.debug("Exception in process execution", e);
+//    }
+//    return false;
   }
 
   @NotNull
