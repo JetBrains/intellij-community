@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,12 @@ public class ShAnnotator implements Annotator {
     else if (o instanceof ShAssignmentCommand) {
       PsiElement literal = ((ShAssignmentCommand) o).getLiteral();
       mark(literal, holder, VARIABLE_DECLARATION);
+    }
+    else if (o instanceof ShShellParameterExpansion) {
+      ASTNode[] children = o.getNode().getChildren(TokenSet.create(ShTokenTypes.PARAMETER_EXPANSION_BODY));
+      for (ASTNode node : children) {
+        mark(node.getPsi(), holder, COMPOSED_VARIABLE);
+      }
     }
     else if (o instanceof ShSubshellCommand) {
       ShSubshellCommand subshellCommand = (ShSubshellCommand) o;

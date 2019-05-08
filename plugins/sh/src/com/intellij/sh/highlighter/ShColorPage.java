@@ -21,6 +21,7 @@ public class ShColorPage implements ColorSettingsPage {
       new AttributesDescriptor("Keyword", ShHighlighterColors.KEYWORD),
       new AttributesDescriptor("Variables//Variable Usage", ShHighlighterColors.VARIABLE),
       new AttributesDescriptor("Variables//Variable Declaration", ShHighlighterColors.VARIABLE_DECLARATION),
+      new AttributesDescriptor("Variables//Composed Variable", ShHighlighterColors.COMPOSED_VARIABLE),
       new AttributesDescriptor("String", ShHighlighterColors.STRING),
       new AttributesDescriptor("Raw String", ShHighlighterColors.RAW_STRING),
       new AttributesDescriptor("Line Comment", ShHighlighterColors.LINE_COMMENT),
@@ -47,6 +48,7 @@ public class ShColorPage implements ColorSettingsPage {
   private static final HashMap<String, TextAttributesKey> TAG_DESCRIPTOR_MAP = new HashMap<>();
   static {
     TAG_DESCRIPTOR_MAP.put("var", ShHighlighterColors.VARIABLE_DECLARATION);
+    TAG_DESCRIPTOR_MAP.put("composed_var", ShHighlighterColors.COMPOSED_VARIABLE);
     TAG_DESCRIPTOR_MAP.put("string", ShHighlighterColors.STRING);
     TAG_DESCRIPTOR_MAP.put("generic", ShHighlighterColors.GENERIC_COMMAND);
     TAG_DESCRIPTOR_MAP.put("function", ShHighlighterColors.FUNCTION_DECLARATION);
@@ -108,6 +110,7 @@ public class ShColorPage implements ColorSettingsPage {
         "}\n" +
         "\n" +
         "<generic>rm</generic> -f $<subshell>(</subshell>find / -name core<subshell>)</subshell> &> /dev/null\n" +
+        "<generic>mkdir</generic> -p <string>\"${<composed_var>AGENT_USER_HOME_</composed_var>${<composed_var>PLATFORM</composed_var>}}\"</string>\n" +
         "\n" +
         "<var>multiline</var>='first line\n" +
         "           second line\n" +

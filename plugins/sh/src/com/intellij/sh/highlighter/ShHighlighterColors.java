@@ -24,6 +24,8 @@ public class ShHighlighterColors {
       TextAttributesKey.createTextAttributesKey("BASH.VAR_USE", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
   public static final TextAttributesKey VARIABLE_DECLARATION =
       TextAttributesKey.createTextAttributesKey("BASH.VAR_DEF", VARIABLE);
+  public static final TextAttributesKey COMPOSED_VARIABLE =
+      TextAttributesKey.createTextAttributesKey("BASH.VAR_USE_COMPOSED", VARIABLE);
 
   public static final TextAttributesKey HERE_DOC =
       TextAttributesKey.createTextAttributesKey("BASH.HERE_DOC", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
@@ -60,9 +62,7 @@ public class ShHighlighterColors {
   public static final TextAttributesKey FUNCTION_CALL =
       TextAttributesKey.createTextAttributesKey("BASH.FUNCTION_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
   public static final TextAttributesKey VAR_USE_BUILTIN =
-      TextAttributesKey.createTextAttributesKey("BASH.VAR_USE_BUILTIN", VAR_USE);
-  public static final TextAttributesKey VAR_USE_COMPOSED =
-      TextAttributesKey.createTextAttributesKey("BASH.VAR_USE_COMPOSED", VAR_USE);*/
+      TextAttributesKey.createTextAttributesKey("BASH.VAR_USE_BUILTIN", VAR_USE);*/
 
 
 }
