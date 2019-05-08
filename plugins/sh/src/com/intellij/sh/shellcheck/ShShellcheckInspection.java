@@ -1,29 +1,29 @@
 package com.intellij.sh.shellcheck;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.EditorNotifications;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.*;
 
 public class ShShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
-  static final String SHORT_NAME = "ShellCheck";
-
-  @NotNull
-  @Override
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return SHORT_NAME;
-  }
+  public static final String SHORT_NAME = "ShellCheck";
+  private static final String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
+  private static final String DELIMITER = ",";
+  private Set<String> myDisabledInspections = new TreeSet<>();
+  private JComponent myOptionsPanel;
 
   @NotNull
   @Override
@@ -31,9 +31,54 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 
+  @Override
+  public void readSettings(@NotNull Element node) {
+    String inspectionSettings = JDOMExternalizerUtil.readCustomField(node, SHELLCHECK_SETTINGS_TAG);
+    if (StringUtil.isNotEmpty(inspectionSettings)) {
+      myDisabledInspections.addAll(StringUtil.split(inspectionSettings, DELIMITER));
+    }
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    if (!myDisabledInspections.isEmpty()) {
+      String joinedString = StringUtil.join(myDisabledInspections, DELIMITER);
+      JDOMExternalizerUtil.writeCustomField(node, SHELLCHECK_SETTINGS_TAG, joinedString);
+    }
+
+    Project project = ProjectUtil.guessCurrentProject(myOptionsPanel);
+    EditorNotifications.getInstance(project).updateAllNotifications();
+  }
+
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new ShellcheckOptionsPanel().getPanel();
+    myOptionsPanel = new ShellcheckOptionsPanel(getDisabledInspections(), this::onInspectionChange).getPanel();
+    return myOptionsPanel;
+  }
+
+  @NotNull
+  List<String> getDisabledInspections() {
+    return new ArrayList<>(myDisabledInspections);
+  }
+
+  public void disableInspection(String inspectionCode) {
+    if (StringUtil.isNotEmpty(inspectionCode)) myDisabledInspections.add(inspectionCode);
+  }
+
+  private void onInspectionChange(@NotNull String inspectionCode, boolean selected) {
+    if (selected) {
+      myDisabledInspections.add(inspectionCode);
+    }
+    else {
+      myDisabledInspections.remove(inspectionCode);
+    }
+  }
+
+  @NotNull
+  static ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
+    ShShellcheckInspection tool = (ShShellcheckInspection) profile.getUnwrappedTool(SHORT_NAME, element);
+    return tool == null ? new ShShellcheckInspection() : tool;
   }
 }

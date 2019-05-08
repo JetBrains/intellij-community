@@ -1,5 +1,7 @@
 package com.intellij.sh.shellcheck;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.OptionAccessor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,12 +9,16 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 public class ShellcheckOptionsPanel {
   private static final String BROWSE_SHELLCHECK_TITLE = "Choose Path to the Shellcheck:";
@@ -24,20 +30,37 @@ public class ShellcheckOptionsPanel {
   @SuppressWarnings("unused")
   private ActionLink myShellcheckDownloadLink;
   private TextFieldWithBrowseButton myShellcheckSelector;
+  private MultipleCheckboxOptionsPanel myInspectionsCheckboxPanel;
+  private BiConsumer<String, Boolean> myInspectionsChangeListener;
+  private ShSettings mySettings;
+  private Project myProject;
 
-  ShellcheckOptionsPanel() {
-    Project project = ProjectUtil.guessCurrentProject(getPanel());
-    myShellcheckSelector.addBrowseFolderListener(BROWSE_SHELLCHECK_TITLE, "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+  ShellcheckOptionsPanel(List<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
+    myInspectionsChangeListener = inspectionsChangeListener;
+    mySettings = ShSettings.getInstance();
+    myProject = ProjectUtil.guessCurrentProject(getPanel());
+
+    myShellcheckSelector.addBrowseFolderListener(BROWSE_SHELLCHECK_TITLE, "", myProject, FileChooserDescriptorFactory.createSingleFileDescriptor());
     myShellcheckSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
         String shellcheckPath = myShellcheckSelector.getText();
-        ShShellcheckUtil.setShellcheckPath(shellcheckPath);
+        mySettings.setShellcheckPath(shellcheckPath);
         myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
       }
     });
-    myShellcheckSelector.setText(ShShellcheckUtil.getShellcheckPath());
+
+    String shellcheckPath = mySettings.getShellcheckPath();
+    myShellcheckSelector.setText(shellcheckPath);
     myShellcheckSelector.setEditable(false);
+    myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
+
+    disabledInspections.forEach(setting -> {
+      String value = ShShellcheckUtil.shellCheckCodes.get(setting);
+      if (value != null) {
+        myInspectionsCheckboxPanel.addCheckbox(setting + " " + value, setting);
+      }
+    });
 
     myWarningLabel.setIcon(AllIcons.General.Warning);
   }
@@ -46,7 +69,20 @@ public class ShellcheckOptionsPanel {
     myShellcheckDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        ShShellcheckUtil.download(event.getProject(), () -> myShellcheckSelector.setText(ShShellcheckUtil.getShellcheckPath()));
+        ShShellcheckUtil.download(event.getProject(), () -> myShellcheckSelector.setText(ShSettings.getInstance().getShellcheckPath()));
+        EditorNotifications.getInstance(myProject).updateAllNotifications();
+      }
+    });
+
+    myInspectionsCheckboxPanel = new MultipleCheckboxOptionsPanel(new OptionAccessor() {
+      @Override
+      public boolean getOption(String optionName) {
+        return true;
+      }
+
+      @Override
+      public void setOption(String optionName, boolean optionValue) {
+        myInspectionsChangeListener.accept(optionName, optionValue);
       }
     });
   }

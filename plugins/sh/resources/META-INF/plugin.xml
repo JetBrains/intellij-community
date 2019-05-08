@@ -42,7 +42,7 @@
 
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 
-    <registryKey key="sh.shellcheck.path"/>
+    <applicationService serviceImplementation="com.intellij.sh.settings.ShSettings"/>
     <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.shellcheck.ShShellcheckExternalAnnotator"/>
     <localInspection language="Shell Script" groupName="Shell Script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>

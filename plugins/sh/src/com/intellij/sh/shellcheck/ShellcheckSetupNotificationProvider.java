@@ -8,12 +8,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.sh.ShFileType;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.sh.shellcheck.ShShellcheckUtil.getShellcheckPath;
 import static com.intellij.sh.shellcheck.ShShellcheckUtil.isValidPath;
 
 public class ShellcheckSetupNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
@@ -28,7 +28,8 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (file.getFileType() instanceof ShFileType && !isValidPath(getShellcheckPath())) {
+    ShSettings settings = ShSettings.getInstance();
+    if (file.getFileType() instanceof ShFileType && !isValidPath(settings.getShellcheckPath())) {
       EditorNotificationPanel panel = new EditorNotificationPanel();
       panel.setText("Would you like to install shellcheck to verify your shell scripts?");
       panel.createActionLabel("Install", () -> ShShellcheckUtil.download(null, () -> {

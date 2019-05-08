@@ -1,0 +1,59 @@
+package com.intellij.sh.shellcheck.intention;
+
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
+public class SuppressInspectionIntention implements IntentionAction {
+  private String myInspectionCode;
+  private String myMessage;
+  private int myOffset;
+
+  public SuppressInspectionIntention(String message, String inspectionCode, int offset) {
+    myInspectionCode = inspectionCode;
+    myMessage = message;
+    myOffset = offset;
+  }
+
+  @NotNull
+  @Override
+  public String getText() {
+    return "Suppress " + getMessage();
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Shell script";
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return true;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    Document document = editor.getDocument();
+    int lineStartOffset = DocumentUtil.getLineStartOffset(myOffset, document);
+    CharSequence indent = DocumentUtil.getIndent(document, lineStartOffset);
+    document.insertString(lineStartOffset, indent + "# shellcheck disable=" + myInspectionCode + "\n");
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+  @NotNull
+  private String getMessage() {
+    String m = myMessage.endsWith(".") ? myMessage.substring(0, myMessage.length() - 1) : myMessage;
+    return "'" + StringUtil.first(m, 60, true) + "'";
+  }
+}
