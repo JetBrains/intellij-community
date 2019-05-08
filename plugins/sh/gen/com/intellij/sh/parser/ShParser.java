@@ -339,40 +339,6 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' (word | bash_expansion)* '}'
-  public static boolean bash_expansion(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "bash_expansion")) return false;
-    if (!nextTokenIs(b, LEFT_CURLY)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LEFT_CURLY);
-    r = r && bash_expansion_1(b, l + 1);
-    r = r && consumeToken(b, RIGHT_CURLY);
-    exit_section_(b, m, BASH_EXPANSION, r);
-    return r;
-  }
-
-  // (word | bash_expansion)*
-  private static boolean bash_expansion_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "bash_expansion_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!bash_expansion_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "bash_expansion_1", c)) break;
-    }
-    return true;
-  }
-
-  // word | bash_expansion
-  private static boolean bash_expansion_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "bash_expansion_1_0")) return false;
-    boolean r;
-    r = consumeToken(b, WORD);
-    if (!r) r = bash_expansion(b, l + 1);
-    return r;
-  }
-
-  /* ********************************************************** */
   // '{' block_compound_list '}'
   public static boolean block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block")) return false;
@@ -446,6 +412,40 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, DO);
     if (!r) r = consumeToken(b, DONE);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '{' (word | brace_expansion)* '}'
+  public static boolean brace_expansion(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "brace_expansion")) return false;
+    if (!nextTokenIs(b, LEFT_CURLY)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LEFT_CURLY);
+    r = r && brace_expansion_1(b, l + 1);
+    r = r && consumeToken(b, RIGHT_CURLY);
+    exit_section_(b, m, BRACE_EXPANSION, r);
+    return r;
+  }
+
+  // (word | brace_expansion)*
+  private static boolean brace_expansion_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "brace_expansion_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!brace_expansion_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "brace_expansion_1", c)) break;
+    }
+    return true;
+  }
+
+  // word | brace_expansion
+  private static boolean brace_expansion_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "brace_expansion_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, WORD);
+    if (!r) r = brace_expansion(b, l + 1);
     return r;
   }
 
@@ -1636,7 +1636,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '!' | vars | '$' | bash_expansion | 'file descriptor'
+  // '!' | vars | '$' | brace_expansion | 'file descriptor'
   static boolean not_lvalue(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "not_lvalue")) return false;
     boolean r;
@@ -1644,7 +1644,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, BANG);
     if (!r) r = vars(b, l + 1);
     if (!r) r = consumeToken(b, DOLLAR);
-    if (!r) r = bash_expansion(b, l + 1);
+    if (!r) r = brace_expansion(b, l + 1);
     if (!r) r = consumeToken(b, FILEDESCRIPTOR);
     exit_section_(b, m, null, r);
     return r;

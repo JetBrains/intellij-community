@@ -275,8 +275,8 @@ assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
 literal ::= word | string | number | variable {extends=simple_command_element}
-private not_lvalue ::= '!' | vars | '$' | bash_expansion | 'file descriptor'
-bash_expansion ::= '{' (word | bash_expansion)* '}'
+private not_lvalue ::= '!' | vars | '$' | brace_expansion | 'file descriptor'
+brace_expansion ::= '{' (word | brace_expansion)* '}'
 variable ::= var {extends=literal}
 
 number ::= int | hex | octal {extends=literal}

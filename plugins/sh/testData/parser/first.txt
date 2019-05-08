@@ -920,7 +920,7 @@ SHELL_SCRIPT
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            BASH_EXPANSION
+            BRACE_EXPANSION
               PsiElement({)('{')
               PsiElement(word)('ex,edit')
               PsiElement(})('}')
@@ -934,9 +934,9 @@ SHELL_SCRIPT
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            BASH_EXPANSION
+            BRACE_EXPANSION
               PsiElement({)('{')
-              BASH_EXPANSION
+              BRACE_EXPANSION
                 PsiElement({)('{')
                 PsiElement(})('}')
               PsiElement(})('}')
@@ -973,7 +973,7 @@ SHELL_SCRIPT
             PsiElement(word)('-f')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            BASH_EXPANSION
+            BRACE_EXPANSION
               PsiElement({)('{')
               PsiElement(})('}')
           PsiWhiteSpace(' ')
@@ -994,15 +994,15 @@ SHELL_SCRIPT
           LITERAL
             PsiElement(word)('/usr/')
           SIMPLE_COMMAND_ELEMENT
-            BASH_EXPANSION
+            BRACE_EXPANSION
               PsiElement({)('{')
               PsiElement(word)('ucb/')
-              BASH_EXPANSION
+              BRACE_EXPANSION
                 PsiElement({)('{')
                 PsiElement(word)('ex,edit')
                 PsiElement(})('}')
               PsiElement(word)(',lib/')
-              BASH_EXPANSION
+              BRACE_EXPANSION
                 PsiElement({)('{')
                 PsiElement(word)('ex?.?*,how_ex')
                 PsiElement(})('}')

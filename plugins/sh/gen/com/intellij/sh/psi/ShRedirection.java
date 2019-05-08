@@ -11,7 +11,7 @@ public interface ShRedirection extends ShCompositeElement {
   List<ShArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
-  List<ShBashExpansion> getBashExpansionList();
+  List<ShBraceExpansion> getBraceExpansionList();
 
   @NotNull
   List<ShCommand> getCommandList();

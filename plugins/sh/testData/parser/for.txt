@@ -459,7 +459,7 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             PsiElement(word)('in')
             PsiWhiteSpace(' ')
-            BASH_EXPANSION
+            BRACE_EXPANSION
               PsiElement({)('{')
               PsiElement(word)('1..5')
               PsiElement(})('}')
@@ -523,7 +523,7 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             PsiElement(word)('in')
             PsiWhiteSpace(' ')
-            BASH_EXPANSION
+            BRACE_EXPANSION
               PsiElement({)('{')
               PsiElement(word)('0..10..2')
               PsiElement(})('}')

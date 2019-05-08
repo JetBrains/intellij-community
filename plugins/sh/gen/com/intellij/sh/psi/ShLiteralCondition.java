@@ -11,7 +11,7 @@ public interface ShLiteralCondition extends ShCondition {
   ShArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
-  ShBashExpansion getBashExpansion();
+  ShBraceExpansion getBraceExpansion();
 
   @Nullable
   ShCommand getCommand();

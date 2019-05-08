@@ -94,7 +94,7 @@ SHELL_SCRIPT
           LITERAL_CONDITION
             PsiElement(word)('\$')
           LITERAL_CONDITION
-            BASH_EXPANSION
+            BRACE_EXPANSION
               PsiElement({)('{')
               PsiElement(word)('a')
               PsiElement(})('}')

@@ -38,10 +38,6 @@ public class ShVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitBashExpansion(@NotNull ShBashExpansion o) {
-    visitCompositeElement(o);
-  }
-
   public void visitBinaryExpression(@NotNull ShBinaryExpression o) {
     visitExpression(o);
   }
@@ -64,6 +60,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitBlock(@NotNull ShBlock o) {
     visitCommand(o);
+  }
+
+  public void visitBraceExpansion(@NotNull ShBraceExpansion o) {
+    visitCompositeElement(o);
   }
 
   public void visitCaseClause(@NotNull ShCaseClause o) {

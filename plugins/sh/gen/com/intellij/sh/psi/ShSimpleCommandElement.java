@@ -11,7 +11,7 @@ public interface ShSimpleCommandElement extends ShCompositeElement {
   ShArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
-  ShBashExpansion getBashExpansion();
+  ShBraceExpansion getBraceExpansion();
 
   @Nullable
   ShCommand getCommand();

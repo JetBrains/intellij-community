@@ -11,7 +11,7 @@ public interface ShCaseCommand extends ShCommand {
   List<ShArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
-  List<ShBashExpansion> getBashExpansionList();
+  List<ShBraceExpansion> getBraceExpansionList();
 
   @NotNull
   List<ShCaseClause> getCaseClauseList();

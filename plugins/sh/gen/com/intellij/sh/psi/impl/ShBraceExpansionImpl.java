@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShBashExpansionImpl extends ShCompositeElementImpl implements ShBashExpansion {
+public class ShBraceExpansionImpl extends ShCompositeElementImpl implements ShBraceExpansion {
 
-  public ShBashExpansionImpl(ASTNode node) {
+  public ShBraceExpansionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull ShVisitor visitor) {
-    visitor.visitBashExpansion(this);
+    visitor.visitBraceExpansion(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,8 +27,8 @@ public class ShBashExpansionImpl extends ShCompositeElementImpl implements ShBas
 
   @Override
   @NotNull
-  public List<ShBashExpansion> getBashExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShBashExpansion.class);
+  public List<ShBraceExpansion> getBraceExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShBraceExpansion.class);
   }
 
   @Override

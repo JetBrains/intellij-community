@@ -33,8 +33,8 @@ public class ShLiteralConditionImpl extends ShConditionImpl implements ShLiteral
 
   @Override
   @Nullable
-  public ShBashExpansion getBashExpansion() {
-    return findChildByClass(ShBashExpansion.class);
+  public ShBraceExpansion getBraceExpansion() {
+    return findChildByClass(ShBraceExpansion.class);
   }
 
   @Override

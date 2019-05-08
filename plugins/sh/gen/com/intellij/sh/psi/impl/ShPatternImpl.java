@@ -33,8 +33,8 @@ public class ShPatternImpl extends ShCompositeElementImpl implements ShPattern {
 
   @Override
   @NotNull
-  public List<ShBashExpansion> getBashExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShBashExpansion.class);
+  public List<ShBraceExpansion> getBraceExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShBraceExpansion.class);
   }
 
   @Override

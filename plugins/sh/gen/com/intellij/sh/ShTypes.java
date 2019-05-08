@@ -18,12 +18,12 @@ public interface ShTypes {
   IElementType ASSIGNMENT_CONDITION = new ShCompositeElementType("ASSIGNMENT_CONDITION");
   IElementType ASSIGNMENT_EXPRESSION = new ShCompositeElementType("ASSIGNMENT_EXPRESSION");
   IElementType ASSIGNMENT_LIST = new ShCompositeElementType("ASSIGNMENT_LIST");
-  IElementType BASH_EXPANSION = new ShCompositeElementType("BASH_EXPANSION");
   IElementType BITWISE_AND_EXPRESSION = new ShCompositeElementType("BITWISE_AND_EXPRESSION");
   IElementType BITWISE_EXCLUSIVE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_EXCLUSIVE_OR_EXPRESSION");
   IElementType BITWISE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_OR_EXPRESSION");
   IElementType BITWISE_SHIFT_EXPRESSION = new ShCompositeElementType("BITWISE_SHIFT_EXPRESSION");
   IElementType BLOCK = new ShCompositeElementType("BLOCK");
+  IElementType BRACE_EXPANSION = new ShCompositeElementType("BRACE_EXPANSION");
   IElementType CASE_CLAUSE = new ShCompositeElementType("CASE_CLAUSE");
   IElementType CASE_COMMAND = new ShCompositeElementType("CASE_COMMAND");
   IElementType COMMAND = new ShCompositeElementType("COMMAND");
@@ -216,9 +216,6 @@ public interface ShTypes {
       else if (type == ASSIGNMENT_LIST) {
         return new ShAssignmentListImpl(node);
       }
-      else if (type == BASH_EXPANSION) {
-        return new ShBashExpansionImpl(node);
-      }
       else if (type == BITWISE_AND_EXPRESSION) {
         return new ShBitwiseAndExpressionImpl(node);
       }
@@ -233,6 +230,9 @@ public interface ShTypes {
       }
       else if (type == BLOCK) {
         return new ShBlockImpl(node);
+      }
+      else if (type == BRACE_EXPANSION) {
+        return new ShBraceExpansionImpl(node);
       }
       else if (type == CASE_CLAUSE) {
         return new ShCaseClauseImpl(node);

@@ -11,7 +11,7 @@ public interface ShGenericCommandDirective extends ShSimpleCommand {
   ShArithmeticExpansion getArithmeticExpansion();
 
   @Nullable
-  ShBashExpansion getBashExpansion();
+  ShBraceExpansion getBraceExpansion();
 
   @Nullable
   ShLiteral getLiteral();
