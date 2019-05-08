@@ -201,6 +201,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersion.putClientProperty("TextFieldWithoutMargins", Boolean.TRUE);
     myVersion.setEditable(false);
     myVersion.setFont(UIUtil.getLabelFont());
+    PluginManagerConfigurableNew.installTiny(myVersion);
     myVersion.setBorder(null);
     myVersion.setOpaque(false);
     myVersion.setForeground(CellPluginComponent.GRAY_COLOR);
@@ -215,6 +216,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersionSize = new JLabel();
     myVersionSize.setFont(UIUtil.getLabelFont());
+    PluginManagerConfigurableNew.installTiny(myVersionSize);
 
     int offset = JBUI.scale(10);
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
@@ -361,7 +363,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersion.setText(version);
     myVersionSize.setText(version);
-    myVersion.setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width, myVersion.getPreferredSize().height));
+    myVersion.setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUI.scale(4), myVersion.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 

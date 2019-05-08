@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -124,6 +125,19 @@ public class NewListPluginComponent extends CellPluginComponent {
               myBaseline = checkBox.getBaseline(size.width, size.height) - JBUI.scale(1);
             }
             return myBaseline;
+          }
+
+          @Override
+          public void setUI(ButtonUI ui) {
+            myBaseline = -1;
+            super.setUI(ui);
+          }
+
+          @Override
+          public Dimension getPreferredSize() {
+            Dimension size = super.getPreferredSize();
+            int scale = JBUI.scale(2);
+            return new Dimension(size.width + scale, size.height + scale);
           }
         });
 
