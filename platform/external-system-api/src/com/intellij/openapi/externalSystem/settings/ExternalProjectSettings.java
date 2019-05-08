@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +30,15 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   private boolean myUseAutoImport;
-  private boolean myUseQualifiedModuleNames = true;
+  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde(); // backward-compatible defaults
 
   @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated // left for settings backward-compatibility
   private boolean myCreateEmptyContentRootDirectories;
+
+  // Used to gradually migrate new project to the new defaults.
+  public void setupNewProjectDefault() {
+    myUseQualifiedModuleNames = true;
+  }
 
   public String getExternalProjectPath() {
     return myExternalProjectPath;
