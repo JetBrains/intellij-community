@@ -24,6 +24,7 @@ intellij {
     version ideaVersion
     downloadSources Boolean.valueOf(sources)
     sameSinceUntilBuild Boolean.valueOf(isEAP)
+    updateSinceUntilBuild false
     alternativeIdePath localIdePath
     plugins 'terminal'
 }

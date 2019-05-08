@@ -1,5 +1,5 @@
 <idea-plugin>
-  <idea-version/>
+  <idea-version since-build="191.6183" until-build="192.*"/>
   <id>com.jetbrains.sh</id>
   <vendor email="ignatov@jetbrains.com">Sergey Ignatov</vendor>
   <depends>com.intellij.modules.lang</depends>
