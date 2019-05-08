@@ -13,7 +13,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.ExceptionUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Pattern
-import org.jetbrains.org.objectweb.asm.ClassWriter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Rule
