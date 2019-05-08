@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstru
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -340,30 +339,28 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     }
     
     @NotNull
-    <T> Pair<MemoryStateChange, T> findFact(DfaValue value, DfaFactType<T> type) {
+    <T> FactDefinition<T> findFact(DfaValue value, DfaFactType<T> type) {
       if (value instanceof DfaVariableValue) {
         for (MemoryStateChange change = this; change != null; change = change.myPrevious) {
-          Pair<MemoryStateChange, T> factPair = factFromChange(type, change, change.myChanges.get(value));
+          FactDefinition<T> factPair = factFromChange(type, change, change.myChanges.get(value));
           if (factPair != null) return factPair;
           factPair = factFromChange(type, change, change.myBridgeChanges.get(value));
           if (factPair != null) return factPair;
         }
-        return Pair.create(null, ((DfaVariableValue)value).getInherentFacts().get(type));
+        return new FactDefinition<>(null, ((DfaVariableValue)value).getInherentFacts().get(type));
       }
-      return Pair.create(null, type.fromDfaValue(value));
+      return new FactDefinition<>(null, type.fromDfaValue(value));
     }
 
     @Nullable
-    private static <T> Pair<MemoryStateChange, T> factFromChange(DfaFactType<T> type,
-                                                                 MemoryStateChange change,
-                                                                 Change varChange) {
+    private static <T> FactDefinition<T> factFromChange(DfaFactType<T> type, MemoryStateChange change, Change varChange) {
       if (varChange != null) {
         T added = varChange.myAddedFacts.get(type);
         if (added != null) {
-          return Pair.create(change, added); 
+          return new FactDefinition<>(change, added); 
         }
         if (varChange.myRemovedFacts.get(type) != null) {
-          return Pair.create(change, null);
+          return new FactDefinition<>(change, null);
         }
       }
       return null;
@@ -494,6 +491,22 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
               "; Changes: " + EntryStream.of(myChanges).join(": ", "\n\t", "").joining()) +
              (myBridgeChanges.isEmpty() ? "" :
               "; Bridge changes: " + EntryStream.of(myBridgeChanges).join(": ", "\n\t", "").joining());
+    }
+  }
+
+  static class FactDefinition<T> {
+    final @Nullable MemoryStateChange myChange;
+    final @Nullable T myFact;
+
+    FactDefinition(@Nullable MemoryStateChange change, @Nullable T fact) {
+      myChange = change;
+      myFact = fact;
+    }
+
+    @Nullable
+    @Contract("!null -> !null")
+    T getFact(T defaultFact) {
+      return myFact == null ? defaultFact : myFact;
     }
   }
 }

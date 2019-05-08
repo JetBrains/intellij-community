@@ -88,6 +88,18 @@ public abstract class ContractValue {
     return OptionalInt.empty();
   }
 
+  public String getPresentationText(PsiMethod method) {
+    return toString();
+  }
+
+  public PsiExpression findLeftPlace(PsiCallExpression call) {
+    return null;
+  }
+
+  public PsiExpression findRightPlace(PsiCallExpression call) {
+    return null;
+  }
+
   public static ContractValue qualifier() {
     return Qualifier.INSTANCE;
   }
@@ -147,6 +159,18 @@ public abstract class ContractValue {
         return DfaUnknownValue.getInstance();
       }
       return arguments.myArguments[myIndex];
+    }
+
+    @Override
+    public String getPresentationText(PsiMethod method) {
+      PsiParameter[] params = method.getParameterList().getParameters();
+      if (myIndex == 0 && params.length == 1) {
+        return "parameter";
+      }
+      if (myIndex < params.length) {
+        return params[myIndex].getName();
+      }
+      return toString();
     }
 
     @Override
@@ -215,6 +239,11 @@ public abstract class ContractValue {
       if (!(obj instanceof Spec)) return false;
       Spec that = (Spec)obj;
       return myQualifier.equals(that.myQualifier) && myField == that.myField;
+    }
+
+    @Override
+    public String getPresentationText(PsiMethod method) {
+      return myQualifier.getPresentationText(method) + "." + myField + (myField == SpecialField.ARRAY_LENGTH ? "" : "()");
     }
 
     @Override
@@ -314,6 +343,41 @@ public abstract class ContractValue {
         left = DfaUtil.boxUnbox(left, right.getType());
       }
       return factory.createCondition(left, myRelationType, right);
+    }
+
+    @Override
+    public String getPresentationText(PsiMethod method) {
+      if (myLeft instanceof IndependentValue) {
+        return myRight.getPresentationText(method) + " " + myRelationType.getFlipped() + " " + myLeft.getPresentationText(method);
+      }
+      return myLeft.getPresentationText(method) + " " + myRelationType + " " + myRight.getPresentationText(method);
+    }
+
+    @Override
+    public PsiExpression findLeftPlace(PsiCallExpression call) {
+      return findPlace(call, myLeft);
+    }
+
+    @Override
+    public PsiExpression findRightPlace(PsiCallExpression call) {
+      return findPlace(call, myRight);
+    }
+
+    private static PsiExpression findPlace(PsiCallExpression call, ContractValue value) {
+      while (value instanceof Spec) {
+        value = ((Spec)value).myQualifier;
+      }
+      if (value instanceof Argument) {
+        PsiExpressionList list = call.getArgumentList();
+        if (list != null) {
+          PsiExpression[] args = list.getExpressions();
+          int index = ((Argument)value).myIndex;
+          if (index < args.length - 1 || (index == args.length - 1 && !MethodCallUtils.isVarArgCall(call))) {
+            return args[index];
+          }
+        }
+      }
+      return null;
     }
 
     @Override
