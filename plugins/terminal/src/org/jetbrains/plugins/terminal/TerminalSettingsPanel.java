@@ -205,7 +205,7 @@ public class TerminalSettingsPanel {
         if (settings != null) {
           Configurable configurable = settings.find("preferences.keymap");
           settings.select(configurable, "Terminal").doWhenDone(() -> {
-            // Remove once https://youtrack.jetbrains.com/issue/IDEA-130812 is fixed
+            // Remove once https://youtrack.jetbrains.com/issue/IDEA-212247 is fixed
             EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
               settings.select(configurable, "Terminal");
             }, 100, TimeUnit.MILLISECONDS);
