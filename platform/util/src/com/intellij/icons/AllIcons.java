@@ -56,6 +56,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Highlighting = IconLoader.getIcon("/actions/highlighting.svg");
     /** 16x16 */ public static final Icon Install = IconLoader.getIcon("/actions/install.svg");
     /** 16x16 */ public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.svg");
+    /** 16x16 */ public static final Icon IntentionBulbGrey = IconLoader.getIcon("/actions/intentionBulbGrey.svg");
     /** 16x16 */ public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.svg");
     /** 16x16 */ public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.svg");
     /** 16x16 */ public static final Icon ListFiles = IconLoader.getIcon("/actions/listFiles.svg");
