@@ -27,10 +27,12 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,12 +52,15 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
     Project project = context.getProject();
     if (project == null) return false;
 
-    FilePath selectedPath = getSelectedPath(context);
+    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().collect(Collectors.toList());
+    if (selectedFiles.isEmpty()) return false;
+    if (!ContainerUtil.all(selectedFiles, path -> AbstractVcs.fileInVcsByFileStatus(project, path))) return false;
+
+    if (canShowNewFileHistory(project, selectedFiles)) return true;
+    if (selectedFiles.size() > 1) return false;
+
+    FilePath selectedPath = ContainerUtil.getFirstItem(selectedFiles);
     if (selectedPath == null) return false;
-    if (!AbstractVcs.fileInVcsByFileStatus(project, selectedPath)) return false;
-
-    if (canShowNewFileHistory(project, selectedPath)) return true;
-
     VirtualFile fileOrParent = getExistingFileOrParent(selectedPath);
     if (fileOrParent == null) return false;
     return canShowOldFileHistory(project, selectedPath, fileOrParent);
@@ -71,16 +76,9 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
            provider.canShowHistoryFor(fileOrParent);
   }
 
-  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
+  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull Collection<FilePath> paths) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, path, null);
-  }
-
-  @Nullable
-  private static FilePath getSelectedPath(@NotNull VcsContext context) {
-    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().limit(2).collect(Collectors.toList());
-    if (selectedFiles.size() != 1) return null;
-    return selectedFiles.get(0);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, paths, null);
   }
 
   @Nullable
@@ -91,20 +89,20 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
   @Override
   protected void actionPerformed(@NotNull VcsContext context) {
     Project project = assertNotNull(context.getProject());
-    FilePath path = assertNotNull(getSelectedPath(context));
-
-    if (canShowNewFileHistory(project, path)) {
-      showNewFileHistory(project, path);
+    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().collect(Collectors.toList());
+    if (canShowNewFileHistory(project, selectedFiles)) {
+      showNewFileHistory(project, selectedFiles);
     }
-    else {
+    else if (selectedFiles.size() == 1) {
+      FilePath path = assertNotNull(ContainerUtil.getFirstItem(selectedFiles));
       AbstractVcs vcs = assertNotNull(ChangesUtil.getVcsForFile(assertNotNull(getExistingFileOrParent(path)), project));
       showOldFileHistory(project, vcs, path);
     }
   }
 
-  private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
+  private static void showNewFileHistory(@NotNull Project project, @NotNull Collection<FilePath> paths) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    historyProvider.showFileHistory(project, path, null);
+    historyProvider.showFileHistory(project, paths, null);
   }
 
   private static void showOldFileHistory(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull FilePath path) {
