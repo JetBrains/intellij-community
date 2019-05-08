@@ -17,9 +17,9 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -245,7 +245,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     VirtualFile entryRoot = JarFileSystem.getInstance().getJarRootForLocalFile(entryFile);
     assertNull(entryRoot);
 
-    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getJavaHome() + "/release");
+    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(PlatformTestUtil.getJavaExe());
     assertNotNull(nonJarFile);
     VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
     assertNull(nonJarRoot);
