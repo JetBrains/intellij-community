@@ -699,7 +699,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         Registry.is("linux.native.menu.force.disable") ||
         !Experiments.isFeatureEnabled("linux.native.menu") ||
         !JnaLoader.isLoaded() ||
-        isUnderVMWareWithSwiftPluginInstalled()) {
+        isSwiftPluginInstalled()) {
       return null;
     }
 
@@ -718,19 +718,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     return null;
   }
 
-  private static boolean isUnderVMWareWithSwiftPluginInstalled() {
-    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
-    if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
-      try {
-        String stdout = ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout();
-        return stdout.toLowerCase(Locale.ENGLISH).contains("vmware");
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-
-    return false;
+  private static boolean isSwiftPluginInstalled() {
+    // SourceKit in CLion crashes after opening Swift project on Linux (OC-18001, OC-18634)
+    return PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"));
   }
 
   private static class MenuItemInternal {
