@@ -156,7 +156,19 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
                          visitReferenceExpression(node);
                          processFunctionalExpression(node, getFunctionalInterfaceType(node));
+                         markParametersReferenced(node);
                          return false;
+                       }
+
+                       private void markParametersReferenced(@NotNull UCallableReferenceExpression node) {
+                         PsiElement resolved = node.resolve();
+                         if (resolved == null) return;
+                         RefElement refElement = refFrom.getRefManager().getReference(resolved);
+                         if (refElement instanceof RefMethod) {
+                           for (RefParameter parameter : ((RefMethod)refElement).getParameters()) {
+                             refFrom.addReference(parameter, parameter.getPsiElement(), decl, false, true, node);
+                           }
+                         }
                        }
 
                        @Override

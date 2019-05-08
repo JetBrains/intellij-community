@@ -1346,6 +1346,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myRefCountHolder.registerReference(expression, result);
     }
     final PsiElement method = result.getElement();
+    if (method instanceof PsiMethod && myRefCountHolder != null) {
+      for (PsiParameter parameter : ((PsiMethod)method).getParameterList().getParameters()) {
+        myRefCountHolder.registerLocallyReferenced(parameter);
+      }
+    }
     if (method != null && !result.isAccessible()) {
       String accessProblem = HighlightUtil.accessProblemDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
