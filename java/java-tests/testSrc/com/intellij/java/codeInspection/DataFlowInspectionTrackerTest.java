@@ -164,4 +164,5 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testSimpleContract() { doTest(); }
   public void testSimpleContract2() { doTest(); }
   public void testEqualsContract() { doTest(); }
+  public void testCollectionSizeEquality() { doTest(); }
 }

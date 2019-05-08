@@ -156,6 +156,11 @@ public class TrackingRunner extends StandardDataFlowRunner {
     CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
       return new CauseItem[0];
     }
+
+    @Nullable
+    DfaProblemType tryMerge(DfaProblemType other) {
+      return this.toString().equals(other.toString()) ? this : null; 
+    }
   }
 
   public static class CauseItem {
@@ -163,6 +168,12 @@ public class TrackingRunner extends StandardDataFlowRunner {
     final @NotNull DfaProblemType myProblem;
     final @Nullable SmartPsiFileRange myTarget;
 
+    private CauseItem(@NotNull List<CauseItem> children, @NotNull DfaProblemType problem, @Nullable SmartPsiFileRange target) {
+      myChildren = children;
+      myProblem = problem;
+      myTarget = target;
+    }
+    
     CauseItem(@NotNull String problem, @Nullable PsiElement target) {
       this(new CustomDfaProblemType(problem), target);
     }
@@ -270,9 +281,17 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
     public CauseItem merge(CauseItem other) {
       if (this.equals(other)) return this;
-      if (Objects.equals(this.myTarget, other.myTarget) && getProblemName().equals(other.getProblemName())) {
-        if(tryMergeChildren(other.myChildren)) return this;
-        if(other.tryMergeChildren(this.myChildren)) return other;
+      if (Objects.equals(this.myTarget, other.myTarget)) {
+        if (myChildren.equals(other.myChildren)) {
+          DfaProblemType mergedProblem = myProblem.tryMerge(other.myProblem);
+          if (mergedProblem != null) {
+            return new CauseItem(myChildren, mergedProblem, myTarget);
+          }
+        }
+        if (getProblemName().equals(other.getProblemName())) {
+          if (tryMergeChildren(other.myChildren)) return this;
+          if (other.tryMergeChildren(this.myChildren)) return other;
+        }
       }
       return null;
     }
@@ -348,6 +367,35 @@ public class TrackingRunner extends StandardDataFlowRunner {
     @Override
     public String toString() {
       return myComplete ? "one of the following happens:" : "an execution might exist where:";
+    }
+  }
+
+  static class RangeDfaProblemType extends DfaProblemType {
+    final @NotNull String myTemplate;
+    final @NotNull LongRangeSet myRangeSet;
+    final @Nullable PsiPrimitiveType myType;
+
+    RangeDfaProblemType(@NotNull String template, @NotNull LongRangeSet set, @Nullable PsiPrimitiveType type) {
+      myTemplate = template;
+      myRangeSet = set;
+      myType = type;
+    }
+
+    @Nullable
+    @Override
+    DfaProblemType tryMerge(DfaProblemType other) {
+      if (other instanceof RangeDfaProblemType) {
+        RangeDfaProblemType rangeProblem = (RangeDfaProblemType)other;
+        if (myTemplate.equals(rangeProblem.myTemplate) && Objects.equals(myType, rangeProblem.myType)) {
+          return new RangeDfaProblemType(myTemplate, myRangeSet.unite(((RangeDfaProblemType)other).myRangeSet), myType);
+        }
+      }
+      return super.tryMerge(other);
+    }
+
+    @Override
+    public String toString() {
+      return String.format(myTemplate, myRangeSet.getPresentationText(myType));
     }
   }
   
@@ -933,7 +981,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
             LongRangeSet result = operandRange.castTo((PsiPrimitiveType)type);
             if (range.equals(result)) {
               CauseItem cause =
-                new CauseItem("result of '(" + type.getCanonicalText() + ")' cast is " + range.getPresentationText(null), expression);
+                new CauseItem(new RangeDfaProblemType("result of '(" + type.getCanonicalText() + ")' cast is %s", range, null), expression);
               if (!operandRange.equals(LongRangeSet.fromType(operand.getType()))) {
                 cause.addChildren(findRangeCause(operandPush, castedValue, operandRange, "cast operand is %s"));
               }
@@ -963,8 +1011,9 @@ public class TrackingRunner extends StandardDataFlowRunner {
             LongRangeSet rightRange = rightSet.getFact(fromType);
             LongRangeSet result = leftRange.binOpFromToken(binOp.getOperationTokenType(), rightRange, isLong);
             if (range.equals(result)) {
-              CauseItem cause = new CauseItem("result of '" + binOp.getOperationSign().getText() +
-                                              "' is " + range.getPresentationText(type), factUse);
+              String sign = binOp.getOperationSign().getText();
+              CauseItem cause = new CauseItem(new RangeDfaProblemType("result of '" + (sign.equals("%")?"%%":sign) + "' is %s", 
+                                                                      range, ObjectUtils.tryCast(type, PsiPrimitiveType.class)), factUse);
               CauseItem leftCause = null, rightCause = null;
               if (!leftRange.equals(fromType)) {
                 leftCause = findRangeCause(leftPush, leftVal, leftRange, "left operand is %s");
@@ -979,8 +1028,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
         }
       }
     }
-    String rangeText = range.getPresentationText(expression != null ? expression.getType() : null);
-    CauseItem item = new CauseItem(String.format(template, rangeText), factUse);
+    PsiPrimitiveType type = expression != null ? ObjectUtils.tryCast(expression.getType(), PsiPrimitiveType.class) : null;
+    CauseItem item = new CauseItem(new RangeDfaProblemType(template, range, type), factUse);
     FactDefinition<LongRangeSet> info = factUse.findFact(value, DfaFactType.RANGE);
     MemoryStateChange factDef = range.equals(info.myFact) ? info.myChange : null;
     if (factDef != null) {
