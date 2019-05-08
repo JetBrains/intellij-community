@@ -192,58 +192,6 @@ def is_source_file(path):
     return is_text_file(path)
 
 
-def is_text_file(path):
-    """
-    Verify that some path is a text file (not a binary file).
-    Ideally there should be usage of libmagic but it can be not
-    installed on a target machine.
-
-    Actually this algorithm is inspired by function `file_encoding`
-    from libmagic.
-    """
-    try:
-        with open(path, 'rb') as candidate_stream:
-            # Buffer size like in libmagic
-            buffer = candidate_stream.read(256 * 1024)
-    except EnvironmentError:
-        return False
-    return (it_looks_like_ascii_or_utf8(buffer)
-            or it_looks_like_utf16(buffer)
-            or it_looks_like_popular_one_byte_encoding(buffer))
-
-
-def it_looks_like_ascii_or_utf8(buffer):
-    # Every valid ASCII string looks like UTF-8.
-    try:
-        buffer.decode('utf-8')
-    except UnicodeDecodeError as err:
-        return err.args[0].endswith('unexpected end of data')
-    else:
-        return True
-
-
-def it_looks_like_utf16(buffer):
-    for encoding in 'utf-16', 'utf-16-be', 'utf-16-le':
-        try:
-            buffer.decode(encoding)
-        except UnicodeDecodeError as err:
-            if err.args[0].endswith(('truncated data', 'unexpected end of data')):
-                return True
-        else:
-            return True
-    return False
-
-
-def it_looks_like_popular_one_byte_encoding(buffer):
-    """
-    Looks like ASCII, ISO-8859 or non-ISO extended ASCII.
-    """
-    return all(c not in _bytes_that_never_appears_in_text for c in buffer)
-
-
-_bytes_that_never_appears_in_text = set(range(7)) | {11} | set(range(14, 27)) | set(range(28, 32)) | {127}
-
-
 def list_sources(paths):
     # noinspection PyBroadException
     try:
