@@ -28,8 +28,7 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    ShSettings settings = ShSettings.getInstance();
-    if (file.getFileType() instanceof ShFileType && !isValidPath(settings.getShellcheckPath())) {
+    if (file.getFileType() instanceof ShFileType && !isValidPath(ShSettings.getShellcheckPath())) {
       EditorNotificationPanel panel = new EditorNotificationPanel();
       panel.setText("Would you like to install shellcheck to verify your shell scripts?");
       panel.createActionLabel("Install", () -> ShShellcheckUtil.download(null, () -> {

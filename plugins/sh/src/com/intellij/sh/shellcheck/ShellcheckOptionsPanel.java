@@ -32,12 +32,10 @@ public class ShellcheckOptionsPanel {
   private TextFieldWithBrowseButton myShellcheckSelector;
   private MultipleCheckboxOptionsPanel myInspectionsCheckboxPanel;
   private BiConsumer<String, Boolean> myInspectionsChangeListener;
-  private ShSettings mySettings;
   private Project myProject;
 
   ShellcheckOptionsPanel(List<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
     myInspectionsChangeListener = inspectionsChangeListener;
-    mySettings = ShSettings.getInstance();
     myProject = ProjectUtil.guessCurrentProject(getPanel());
 
     myShellcheckSelector.addBrowseFolderListener(BROWSE_SHELLCHECK_TITLE, "", myProject, FileChooserDescriptorFactory.createSingleFileDescriptor());
@@ -45,12 +43,12 @@ public class ShellcheckOptionsPanel {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
         String shellcheckPath = myShellcheckSelector.getText();
-        mySettings.setShellcheckPath(shellcheckPath);
+        ShSettings.setShellcheckPath(shellcheckPath);
         myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
       }
     });
 
-    String shellcheckPath = mySettings.getShellcheckPath();
+    String shellcheckPath = ShSettings.getShellcheckPath();
     myShellcheckSelector.setText(shellcheckPath);
     myShellcheckSelector.setEditable(false);
     myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
@@ -69,7 +67,7 @@ public class ShellcheckOptionsPanel {
     myShellcheckDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        ShShellcheckUtil.download(event.getProject(), () -> myShellcheckSelector.setText(ShSettings.getInstance().getShellcheckPath()));
+        ShShellcheckUtil.download(event.getProject(), () -> myShellcheckSelector.setText(ShSettings.getShellcheckPath()));
         EditorNotifications.getInstance(myProject).updateAllNotifications();
       }
     });

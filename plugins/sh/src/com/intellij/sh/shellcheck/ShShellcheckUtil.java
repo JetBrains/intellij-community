@@ -48,17 +48,16 @@ class ShShellcheckUtil {
       directory.mkdirs();
     }
 
-    ShSettings settings = ShSettings.getInstance();
     File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK);
     if (shellcheck.exists()) {
       try {
-        String path = settings.getShellcheckPath();
+        String path = ShSettings.getShellcheckPath();
         String shellcheckPath = shellcheck.getCanonicalPath();
         if (StringUtil.isNotEmpty(path) && path.equals(shellcheckPath)) {
           LOG.debug("Shellcheck already downloaded");
         }
         else {
-          settings.setShellcheckPath(shellcheckPath);
+          ShSettings.setShellcheckPath(shellcheckPath);
           showInfoNotification();
         }
         if (onSuccess != null) {
@@ -101,7 +100,7 @@ class ShShellcheckUtil {
             }
             if (StringUtil.isNotEmpty(path)) {
               FileUtilRt.setExecutableAttribute(path, true);
-              settings.setShellcheckPath(path);
+              ShSettings.setShellcheckPath(path);
               showInfoNotification();
               if (onSuccess != null) {
                 ApplicationManager.getApplication().invokeLater(onSuccess);
@@ -118,7 +117,7 @@ class ShShellcheckUtil {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
   }
 
-  static boolean isValidPath(String path) {
+  static boolean isValidPath(@Nullable String path) {
     if (StringUtil.isEmpty(path) || !new File(path).exists()) return false;
 
     try {
