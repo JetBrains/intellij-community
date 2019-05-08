@@ -7,22 +7,27 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -30,9 +35,9 @@ import java.util.List;
 
 public class ShShfmtFormatterUtil {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
-  private static final String APP_NAME = "shfmt";
-  private static final String APP_VERSION = "v2.6.4";
-  private static final String APP_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
+  private static final String SHFMT = "shfmt";
+  private static final String SHFMT_VERSION = "v2.6.4";
+  private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
   private static final String ARCH_i386 = "_386";
   private static final String ARCH_x86_64 = "_amd64";
@@ -41,23 +46,27 @@ public class ShShfmtFormatterUtil {
   private static final String LINUX = "_linux";
   private static final String FREE_BSD = "_freebsd";
 
-  public static void download(@Nullable Project project, @NotNull CodeStyleSettings settings, @Nullable JComponent parent) {
-    File directory = new File(APP_PATH);
+  public static void download(@Nullable Project project, @NotNull CodeStyleSettings settings, @Nullable Runnable onSuccess) {
+    File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
+      //noinspection ResultOfMethodCallIgnored
       directory.mkdirs();
     }
 
-    ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-    File formatter = new File(APP_PATH + File.separator + APP_NAME);
+    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+    File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT);
     if (formatter.exists()) {
       try {
         String formatterPath = formatter.getCanonicalPath();
-        if (bashSettings.SHFMT_PATH.equals(formatterPath)) {
+        if (shSettings.SHFMT_PATH.equals(formatterPath)) {
           LOG.debug("Shfmt formatter already downloaded");
         }
         else {
-          bashSettings.SHFMT_PATH = formatterPath;
+          shSettings.SHFMT_PATH = formatterPath;
           showInfoNotification();
+        }
+        if (onSuccess != null) {
+          ApplicationManager.getApplication().invokeLater(onSuccess);
         }
         return;
       }
@@ -68,25 +77,34 @@ public class ShShfmtFormatterUtil {
       }
     }
 
-
     DownloadableFileService service = DownloadableFileService.getInstance();
-    DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), APP_NAME);
-    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), APP_NAME);
-    try {
-      List<VirtualFile> virtualFiles = downloader.downloadFilesWithProgress(APP_PATH, project, parent);
-      if (virtualFiles != null && virtualFiles.size() == 1) {
-        String path = virtualFiles.get(0).getCanonicalPath();
-        if (path != null) {
-          FileUtilRt.setExecutableAttribute(path, true);
-          bashSettings.SHFMT_PATH = path;
-          showInfoNotification();
+    DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), SHFMT);
+    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), SHFMT);
+
+    Task.Backgroundable task = new Task.Backgroundable(project, "Download Shfmt formatter") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(new File(DOWNLOAD_PATH));
+          Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
+          File file = first != null ? first.first : null;
+          if (file != null) {
+            String path = file.getCanonicalPath();
+            FileUtilRt.setExecutableAttribute(path, true);
+            shSettings.SHFMT_PATH = path;
+            showInfoNotification();
+            if (onSuccess != null) {
+              ApplicationManager.getApplication().invokeLater(onSuccess);
+            }
+          }
+        }
+        catch (IOException e) {
+          LOG.warn("Can't download shfmt formatter", e);
+          showErrorNotification();
         }
       }
-    }
-    catch (IOException e) {
-      LOG.warn("Can't download shfmt formatter", e);
-      showErrorNotification();
-    }
+    };
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
   }
 
   public static boolean isValidPath(@NotNull String path) {
@@ -96,7 +114,7 @@ public class ShShfmtFormatterUtil {
       GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("-version");
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
-      return processOutput.getStdout().startsWith(ShShfmtFormatterUtil.APP_VERSION);
+      return processOutput.getStdout().startsWith(ShShfmtFormatterUtil.SHFMT_VERSION);
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);
@@ -107,11 +125,11 @@ public class ShShfmtFormatterUtil {
   @NotNull
   private static String getShfmtDistributionLink() {
     StringBuilder baseUrl = new StringBuilder("https://github.com/mvdan/sh/releases/download/")
-        .append(APP_VERSION)
+        .append(SHFMT_VERSION)
         .append("/")
-        .append(APP_NAME)
+        .append(SHFMT)
         .append("_")
-        .append(APP_VERSION);
+        .append(SHFMT_VERSION);
 
     if (SystemInfoRt.isMac) {
       baseUrl.append(MAC);
@@ -140,7 +158,7 @@ public class ShShfmtFormatterUtil {
   }
 
   private static void showErrorNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shfmt formatter. Please install in manually",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shfmt formatter. Please install it manually",
         NotificationType.ERROR));
   }
 }

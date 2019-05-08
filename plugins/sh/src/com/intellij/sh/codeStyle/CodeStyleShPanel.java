@@ -78,10 +78,8 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         CodeStyleSettings settings = getSettings();
-        ShShfmtFormatterUtil.download(event.getProject(), settings, getPanel());
-
-        ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-        myShfmtPathSelector.setText(bashSettings.SHFMT_PATH);
+        ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+        ShShfmtFormatterUtil.download(event.getProject(), settings, () -> myShfmtPathSelector.setText(shSettings.SHFMT_PATH));
       }
     });
   }
@@ -116,29 +114,29 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     indentOptions.INDENT_SIZE = myIndentField.getValue();
     indentOptions.USE_TAB_CHARACTER = myTabCharacter.isSelected();
 
-    ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-    bashSettings.BINARY_OPS_START_LINE = myBinaryOpsStartLine.isSelected();
-    bashSettings.SWITCH_CASES_INDENTED = mySwitchCasesIndented.isSelected();
-    bashSettings.REDIRECT_FOLLOWED_BY_SPACE = myRedirectFollowedBySpace.isSelected();
-    bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
-    bashSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
-    bashSettings.SHFMT_PATH = myShfmtPathSelector.getText();
+    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+    shSettings.BINARY_OPS_START_LINE = myBinaryOpsStartLine.isSelected();
+    shSettings.SWITCH_CASES_INDENTED = mySwitchCasesIndented.isSelected();
+    shSettings.REDIRECT_FOLLOWED_BY_SPACE = myRedirectFollowedBySpace.isSelected();
+    shSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
+    shSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
+    shSettings.SHFMT_PATH = myShfmtPathSelector.getText();
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getLanguageIndentOptions(ShLanguage.INSTANCE);
-    ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
 
-    return isFieldModified(myBinaryOpsStartLine, bashSettings.BINARY_OPS_START_LINE)
-        || isFieldModified(mySwitchCasesIndented, bashSettings.SWITCH_CASES_INDENTED)
-        || isFieldModified(myRedirectFollowedBySpace, bashSettings.REDIRECT_FOLLOWED_BY_SPACE)
-        || isFieldModified(myKeepColumnAlignmentPadding, bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING)
-        || isFieldModified(myMinifyProgram, bashSettings.MINIFY_PROGRAM)
+    return isFieldModified(myBinaryOpsStartLine, shSettings.BINARY_OPS_START_LINE)
+        || isFieldModified(mySwitchCasesIndented, shSettings.SWITCH_CASES_INDENTED)
+        || isFieldModified(myRedirectFollowedBySpace, shSettings.REDIRECT_FOLLOWED_BY_SPACE)
+        || isFieldModified(myKeepColumnAlignmentPadding, shSettings.KEEP_COLUMN_ALIGNMENT_PADDING)
+        || isFieldModified(myMinifyProgram, shSettings.MINIFY_PROGRAM)
         || isFieldModified(myTabCharacter, indentOptions.USE_TAB_CHARACTER)
         || isFieldModified(myIndentField, indentOptions.INDENT_SIZE)
-        || isFieldModified(myShfmtPathSelector, bashSettings.SHFMT_PATH);
+        || isFieldModified(myShfmtPathSelector, shSettings.SHFMT_PATH);
   }
 
   @Nullable
@@ -153,14 +151,14 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     myIndentField.setValue(indentOptions.INDENT_SIZE);
     myTabCharacter.setSelected(indentOptions.USE_TAB_CHARACTER);
 
-    ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-    myBinaryOpsStartLine.setSelected(bashSettings.BINARY_OPS_START_LINE);
-    mySwitchCasesIndented.setSelected(bashSettings.SWITCH_CASES_INDENTED);
-    myRedirectFollowedBySpace.setSelected(bashSettings.REDIRECT_FOLLOWED_BY_SPACE);
-    myKeepColumnAlignmentPadding.setSelected(bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
-    myMinifyProgram.setSelected(bashSettings.MINIFY_PROGRAM);
-    myShfmtPathSelector.setText(bashSettings.SHFMT_PATH);
-    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(bashSettings.SHFMT_PATH));
+    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+    myBinaryOpsStartLine.setSelected(shSettings.BINARY_OPS_START_LINE);
+    mySwitchCasesIndented.setSelected(shSettings.SWITCH_CASES_INDENTED);
+    myRedirectFollowedBySpace.setSelected(shSettings.REDIRECT_FOLLOWED_BY_SPACE);
+    myKeepColumnAlignmentPadding.setSelected(shSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
+    myMinifyProgram.setSelected(shSettings.MINIFY_PROGRAM);
+    myShfmtPathSelector.setText(shSettings.SHFMT_PATH);
+    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(shSettings.SHFMT_PATH));
   }
 
   private boolean isFieldModified(JCheckBox checkBox, boolean value) {

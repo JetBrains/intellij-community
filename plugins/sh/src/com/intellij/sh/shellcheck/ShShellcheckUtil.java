@@ -187,7 +187,7 @@ class ShShellcheckUtil {
   }
 
   private static void showErrorNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shellcheck. Please install in manually",
+    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shellcheck. Please install it manually",
         NotificationType.ERROR));
   }
 }

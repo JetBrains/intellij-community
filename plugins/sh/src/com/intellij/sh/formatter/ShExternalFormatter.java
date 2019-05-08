@@ -61,8 +61,8 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
     CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
 
-    ShCodeStyleSettings bashSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-    String shFmtExecutable = bashSettings.SHFMT_PATH;
+    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+    String shFmtExecutable = shSettings.SHFMT_PATH;
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       Notification notification = new Notification("Shell Script", "", "Would you like to install a shell script formatter?", NotificationType.INFORMATION);
       notification.addAction(NotificationAction.createSimple("Install", () -> ShShfmtFormatterUtil.download(project, settings, null)));
@@ -87,19 +87,19 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
       int tabSize = settings.getIndentSize(file.getFileType());
       params.add("-i=" + tabSize);
     }
-    if (bashSettings.BINARY_OPS_START_LINE) {
+    if (shSettings.BINARY_OPS_START_LINE) {
       params.add("-bn");
     }
-    if (bashSettings.SWITCH_CASES_INDENTED) {
+    if (shSettings.SWITCH_CASES_INDENTED) {
       params.add("-ci");
     }
-    if (bashSettings.REDIRECT_FOLLOWED_BY_SPACE) {
+    if (shSettings.REDIRECT_FOLLOWED_BY_SPACE) {
       params.add("-sr");
     }
-    if (bashSettings.KEEP_COLUMN_ALIGNMENT_PADDING) {
+    if (shSettings.KEEP_COLUMN_ALIGNMENT_PADDING) {
       params.add("-kp");
     }
-    if (bashSettings.MINIFY_PROGRAM) {
+    if (shSettings.MINIFY_PROGRAM) {
       params.add("-mn");
     }
     params.add(realPath);
