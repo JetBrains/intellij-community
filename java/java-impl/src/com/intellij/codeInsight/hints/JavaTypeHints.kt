@@ -8,20 +8,20 @@ import com.intellij.psi.*
 
 /**
  * Creates InlayPresentation for given PsiType.
- * @param foldingLevel level at which generics will be shown as placeholders, so they require click to expand it.
+ * @param myFoldingLevel level at which generics will be shown as placeholders, so they require click to expand it.
  */
-class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory, private val foldingLevel: Int) {
-  fun typeHint(type: PsiType): InlayPresentation = factory.roundWithBackground(hint(type, 0))
+class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactory, private val myFoldingLevel: Int) {
+  fun typeHint(type: PsiType): InlayPresentation = myFactory.roundWithBackground(hint(type, 0))
 
   private fun hint(type: PsiType, level: Int): InlayPresentation = when (type) {
-    is PsiArrayType -> factory.seq(hint(type.componentType, level), factory.smallText("[]"))
+    is PsiArrayType -> myFactory.seq(hint(type.componentType, level), myFactory.smallText("[]"))
     is PsiClassType -> classTypeHint(type, level)
-    is PsiCapturedWildcardType -> factory.seq(factory.smallText("capture of "), hint(type.wildcard, level))
+    is PsiCapturedWildcardType -> myFactory.seq(myFactory.smallText("capture of "), hint(type.wildcard, level))
     is PsiWildcardType -> wildcardHint(type, level)
-    is PsiEllipsisType -> factory.seq(hint(type.componentType, level), factory.smallText("..."))
+    is PsiEllipsisType -> myFactory.seq(hint(type.componentType, level), myFactory.smallText("..."))
     is PsiDisjunctionType -> join(type.disjunctions.map { hint(it, level) }, " | ")
     is PsiIntersectionType -> join(type.conjuncts.map { hint(it, level) }, " & ")
-    else -> factory.smallText(type.presentableText)
+    else -> myFactory.smallText(type.presentableText)
 
   }
 
@@ -35,7 +35,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
         else -> classHint(qualifier, level)
       }
     }
-    val className = factory.psiSingleReference(factory.smallText(classType.className)) {
+    val className = myFactory.psiSingleReference(myFactory.smallText(classType.className)) {
       classType.resolve()
     }
     if (classType.parameterCount == 0) {
@@ -47,12 +47,12 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
       }
     }
     val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
-    if (level > 0) {
-      presentations.add(factory.seq(factory.smallText("<"), factory.folding(factory.smallText("...")) { parametersHint(classType, level) }, factory.smallText(">")))
+    if (level > myFoldingLevel) {
+      presentations.add(myFactory.seq(myFactory.smallText("<"), myFactory.folding(myFactory.smallText("...")) { parametersHint(classType, level) }, myFactory.smallText(">")))
     } else {
-      presentations.add(factory.smallText("<"))
+      presentations.add(myFactory.smallText("<"))
       presentations.add(parametersHint(classType, level))
-      presentations.add(factory.smallText(">"))
+      presentations.add(myFactory.smallText(">"))
     }
     return SequencePresentation(presentations)
   }
@@ -68,21 +68,21 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
       else -> null
     }
 
-    val className = factory.psiSingleReference(getName(aClass)) { aClass }
+    val className = myFactory.psiSingleReference(getName(aClass)) { aClass }
     if (!aClass.hasTypeParameters()) {
       return if (containingClassPresentation != null) {
-        factory.seq(containingClassPresentation, factory.smallText("."), className)
+        myFactory.seq(containingClassPresentation, myFactory.smallText("."), className)
       }
       else {
         className
       }
     }
     val presentations = mutableListOf(joinWithDot(containingClassPresentation, className))
-    presentations.add(factory.smallText("<"))
+    presentations.add(myFactory.smallText("<"))
     aClass.typeParameters.mapTo(presentations) {
-      factory.psiSingleReference(getName(it)) { it }
+      myFactory.psiSingleReference(getName(it)) { it }
     }
-    presentations.add(factory.smallText(">"))
+    presentations.add(myFactory.smallText(">"))
     return SequencePresentation(presentations)
   }
 
@@ -91,24 +91,24 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     val (type, bound) = when {
       wildcardType.isExtends -> "extends" to wildcardType.extendsBound
       wildcardType.isSuper -> "super" to wildcardType.superBound
-      else -> return factory.smallText("?")
+      else -> return myFactory.smallText("?")
     }
-    return factory.seq(factory.smallText("? $type "), hint(bound, level))
+    return myFactory.seq(myFactory.smallText("? $type "), hint(bound, level))
   }
 
   private fun joinWithDot(first: InlayPresentation?, second: InlayPresentation): InlayPresentation {
     if (first == null) {
       return second
     }
-    return factory.seq(first, factory.smallText("."), second)
+    return myFactory.seq(first, myFactory.smallText("."), second)
   }
 
   private fun getName(element: PsiNamedElement): InlayPresentation {
     val name = element.name
     if (name != null) {
-      return factory.smallText(name)
+      return myFactory.smallText(name)
     }
-    return factory.asWrongReference(factory.smallText(NO_NAME_MARKER))
+    return myFactory.asWrongReference(myFactory.smallText(NO_NAME_MARKER))
   }
 
   private fun join(presentations: Iterable<InlayPresentation>, text: String) : InlayPresentation {
@@ -116,7 +116,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
     var first = true
     for (presentation in presentations) {
       if (!first) {
-        seq.add(factory.smallText(text))
+        seq.add(myFactory.smallText(text))
       }
       seq.add(presentation)
       first = false
@@ -127,7 +127,7 @@ class JavaTypeHintsPresentationFactory(private val factory: PresentationFactory,
   companion object {
     @JvmStatic
     fun presentation(type: PsiType, factory: PresentationFactory): InlayPresentation {
-      val base = JavaTypeHintsPresentationFactory(factory, 5).typeHint(type)
+      val base = JavaTypeHintsPresentationFactory(factory, 3).typeHint(type)
       return factory.roundWithBackground(base)
     }
 
