@@ -2,8 +2,6 @@ package com.intellij.sh;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.ShortcutProvider;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -23,14 +21,13 @@ import com.intellij.sh.psi.ShFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ShExplainShellIntention extends BaseIntentionAction implements ShortcutProvider {
+public class ShExplainShellIntention extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -104,11 +101,5 @@ public class ShExplainShellIntention extends BaseIntentionAction implements Shor
 
   private static void explain(@NotNull String text) {
     BrowserUtil.browse("https://explainshell.com/explain?cmd=" + text);
-  }
-
-  @Nullable
-  @Override
-  public ShortcutSet getShortcut() {
-    return null;
   }
 }
