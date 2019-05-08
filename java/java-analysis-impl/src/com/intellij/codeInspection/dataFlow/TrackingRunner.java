@@ -117,7 +117,6 @@ public class TrackingRunner extends StandardDataFlowRunner {
   /*
   TODO: 1. Find causes of other warnings:  
             Cause for AIOOBE
-            Cause for "Contract always fails"
             Cause for "modifying an immutable collection"
             Cause for "Collection is always empty" (separate inspection now)
   TODO: 2. Describe causes in more cases:
@@ -360,6 +359,22 @@ public class TrackingRunner extends StandardDataFlowRunner {
       return "may be null";
     }
   }
+
+  public static class FailingCallDfaProblemType extends DfaProblemType {
+    @Override
+    CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
+      if (expression instanceof PsiCallExpression) {
+        return new CauseItem[]{runner.fromCallContract(history, (PsiCallExpression)expression, ContractReturnValue.fail())};
+      }
+      return super.findCauses(runner, expression, history);
+    }
+
+    @Override
+    public String toString() {
+      return "call always fails";
+    }
+  }
+  
 
   static class PossibleExecutionDfaProblemType extends DfaProblemType {
     boolean myComplete = true;
@@ -901,8 +916,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (contract == null) return null;
     List<ContractValue> conditions = contract.getConditions();
     String conditionsText = StringUtil.join(conditions, c -> c.getPresentationText(method), " and ");
-    CauseItem causeItem = new CauseItem(
-      prefix + " returns '" + contract.getReturnValue() + "' value when " + conditionsText,
+    String returnValueText = contract.getReturnValue().isFail() ? "throws exception" : "returns '" + contract.getReturnValue() + "' value";
+    CauseItem causeItem = new CauseItem(prefix + " " + returnValueText + " when " + conditionsText,
       call.getMethodExpression().getReferenceNameElement());
     for (ContractValue condition : conditions) {
       DfaRelationValue relation = ObjectUtils.tryCast(condition.fromCall(getFactory(), call), DfaRelationValue.class);

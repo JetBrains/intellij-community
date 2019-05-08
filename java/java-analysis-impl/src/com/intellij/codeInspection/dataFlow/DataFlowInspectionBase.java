@@ -591,10 +591,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     holder.registerProblem(annoName, msg, fixes);
   }
 
-  private static void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
+  private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(call -> {
       String message = getContractMessage(JavaMethodContractUtil.getMethodCallContracts(call));
-      reporter.registerProblem(getElementToHighlight(call), message);
+      LocalQuickFix causeFix = reporter.isOnTheFly() ? createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType()) : null;
+      reporter.registerProblem(getElementToHighlight(call), message, causeFix);
     });
   }
 

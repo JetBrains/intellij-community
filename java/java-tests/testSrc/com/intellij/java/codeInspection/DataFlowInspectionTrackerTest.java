@@ -100,6 +100,9 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
       return new TrackingRunner.NullableDfaProblemType();
     }
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
+    if (expression instanceof PsiCallExpression && !result.cannotFailByContract((PsiCallExpression)expression)) {
+      return new TrackingRunner.FailingCallDfaProblemType();
+    }
     assertNotNull("No common dataflow result for expression: " + selectedText, result);
     Set<Object> values = result.getExpressionValues(expression);
     assertEquals("No single value for expression: "+selectedText, 1, values.size());
@@ -165,4 +168,5 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testSimpleContract2() { doTest(); }
   public void testEqualsContract() { doTest(); }
   public void testCollectionSizeEquality() { doTest(); }
+  public void testFailingCall() { doTest(); }
 }
