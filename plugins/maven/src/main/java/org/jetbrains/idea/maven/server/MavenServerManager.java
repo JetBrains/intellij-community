@@ -101,13 +101,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     static {
       final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
       final String root = pluginFileOrDir.getParent();
-
       if (pluginFileOrDir.isDirectory()) {
         File parentFile = getMavenPluginParentFile();
         myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
         myBundledMaven3Home = new File(parentFile, "maven36-server-impl/lib/maven3");
-        eventListenerJar = new File(new File(new File(pluginFileOrDir.getParentFile().getParentFile(), "artifacts"),
-                                             "maven_event_listener"), "maven-event-listener.jar");
+        eventListenerJar = getEventSpyPathForLocalBuild();
       }
       else {
         myBundledMaven2Home = new File(root, "maven2");
@@ -115,9 +113,14 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         eventListenerJar = new File(root, "maven-event-listener.jar");
       }
 
-      if (!eventListenerJar.isFile()) {
-        MavenLog.LOG.error("Event listener does not exist: " + eventListenerJar);
+      if (!eventListenerJar.exists()) {
+        MavenLog.LOG.error("Event listener does not exist" + eventListenerJar);
       }
+    }
+
+    private static File getEventSpyPathForLocalBuild() {
+      final File root = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+      return new File(root.getParent(), "intellij.maven.server.eventListener");
     }
   }
 

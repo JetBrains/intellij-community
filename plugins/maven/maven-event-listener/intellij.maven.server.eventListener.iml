@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-core:3.3.9" type="repository">
         <properties maven-id="org.apache.maven:maven-core:3.3.9" />
         <CLASSES>
@@ -46,6 +46,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="javax-inject" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="javax-inject" level="project" />
   </component>
 </module>
