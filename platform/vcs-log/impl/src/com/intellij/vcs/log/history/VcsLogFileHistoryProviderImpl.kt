@@ -38,7 +38,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val correctedPath = getCorrectedPath(project, path, root, revisionNumber)
     val hash = if (revisionNumber != null) HashImpl.build(revisionNumber) else null
 
-    triggerFileHistoryUsage(path, hash)
+    triggerFileHistoryUsage(correctedPath, hash)
 
     val historyUiConsumer = { ui: AbstractVcsLogUi, firstTime: Boolean ->
       if (hash != null) {
@@ -50,7 +50,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     }
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
-    if (path.isDirectory && VcsLogUtil.isFolderHistoryShownInLog()) {
+    if (correctedPath.isDirectory && VcsLogUtil.isFolderHistoryShownInLog()) {
       findOrOpenFolderHistory(project, logManager, root, correctedPath, hash, historyUiConsumer)
     }
     else {
