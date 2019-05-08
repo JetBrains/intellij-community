@@ -1,4 +1,4 @@
-BASH_FILE
+SHELL_SCRIPT
   PsiComment(Comment)('#error markers must be present, but the incomplete if should be parsed without remaining elements')
   PsiElement(\n)('\n')
   COMMANDS_LIST

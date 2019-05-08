@@ -7,6 +7,6 @@ public class ShFileElementType extends IFileElementType {
   public static final ShFileElementType INSTANCE = new ShFileElementType();
 
   public ShFileElementType() {
-    super("BASH_FILE", ShLanguage.INSTANCE);
+    super("SHELL_SCRIPT", ShLanguage.INSTANCE);
   }
 }

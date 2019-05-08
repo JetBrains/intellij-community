@@ -1,4 +1,4 @@
-BASH_FILE
+SHELL_SCRIPT
   PsiComment(Comment)('#the following code is invalid code, it is parsed completely though')
   PsiElement(\n)('\n')
   COMMANDS_LIST

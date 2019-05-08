@@ -1,4 +1,4 @@
-BASH_FILE
+SHELL_SCRIPT
   PsiComment(Comment)('# Try to join an new cluster')
   PsiElement(\n)('\n')
   COMMANDS_LIST

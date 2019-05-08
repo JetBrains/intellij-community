@@ -1,4 +1,4 @@
-BASH_FILE
+SHELL_SCRIPT
   PsiComment(Comment)('#This is an echo command which has four params: empty backquote, echo, a, empty backquote')
   PsiElement(\n)('\n')
   COMMANDS_LIST

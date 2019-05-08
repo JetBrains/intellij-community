@@ -1,4 +1,4 @@
-BASH_FILE
+SHELL_SCRIPT
   PsiComment(Comment)('#make sure that the -p option is not taken as a variable name')
   PsiElement(\n)('\n')
   COMMANDS_LIST

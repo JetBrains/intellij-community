@@ -1,4 +1,4 @@
-BASH_FILE
+SHELL_SCRIPT
   PsiComment(shebang)('#!/bin/bash\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

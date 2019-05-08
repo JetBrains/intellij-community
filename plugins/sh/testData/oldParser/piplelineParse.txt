@@ -1,4 +1,4 @@
-BASH_FILE
+SHELL_SCRIPT
   COMMANDS_LIST
     PIPELINE_COMMAND
       PsiElement(!)('!')
