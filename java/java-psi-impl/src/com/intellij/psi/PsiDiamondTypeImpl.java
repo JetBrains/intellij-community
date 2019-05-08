@@ -241,8 +241,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       }
 
       final JavaMethodsConflictResolver resolver = new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(newExpression));
-      final JavaResolveResult[] result = collectStaticFactories(newExpression, resolver);
-      final PsiMethod staticFactory = result != null && result.length == 1 ? (PsiMethod)result[0].getElement() : null;
+      final List<CandidateInfo> results = collectStaticFactories(newExpression);
+      CandidateInfo result = results != null ? resolver.resolveConflict(new ArrayList<>(results)) : null;
+      final PsiMethod staticFactory = result != null ? (PsiMethod)result.getElement() : null;
       if (staticFactory == null) {
         //additional diagnostics: inference fails due to unresolved constructor
         return JavaResolveResult.EMPTY;
@@ -261,7 +262,13 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @Nullable
-  public static JavaResolveResult[] collectStaticFactories(PsiNewExpression newExpression, final PsiConflictResolver... conflictResolvers) {
+  public static List<CandidateInfo> collectStaticFactories(PsiNewExpression newExpression) {
+    return CachedValuesManager.getCachedValue(newExpression,
+                                              () -> new CachedValueProvider.Result<>(collectStaticFactoriesInner(newExpression),
+                                                                                     PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static List<CandidateInfo> collectStaticFactoriesInner(PsiNewExpression newExpression) {
     PsiExpressionList argumentList = newExpression.getArgumentList();
     if (argumentList == null) {
       return null;
@@ -281,7 +288,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
 
     final MethodCandidatesProcessor
-      processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), conflictResolvers, candidates) {
+      processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), new PsiConflictResolver[0], candidates) {
       @Override
       protected boolean isAccepted(@NotNull PsiMethod candidate) {
         return true;
@@ -307,7 +314,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       }
     }
 
-    return processor.getResult();
+    return processor.getResults();
   }
 
   @Nullable
