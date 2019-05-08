@@ -174,7 +174,7 @@ public class EditorWindow {
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
       final Integer second = info.getSecond();
       if (file != null) {
-        getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
+        getManager().openFileImpl4(this, file, null, true, false, null, second == null ? -1 : second.intValue(), false);
       }
     }
   }
@@ -390,21 +390,21 @@ public class EditorWindow {
   }
 
   void setTabsPlacement(final int tabPlacement) {
+    boolean focusEditor = this == myOwner.getCurrentWindow() &&
+                          ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
     if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().getPresentationMode()) {
       if (myTabbedPane == null) {
         final EditorWithProviderComposite editor = getSelectedEditor();
         myPanel.removeAll();
         createTabs();
         restoreHiddenTabs();
-        setEditor (editor, true);
+        setEditor(editor, true, focusEditor);
       }
       else {
         myTabbedPane.setTabPlacement(tabPlacement);
       }
     }
     else if (myTabbedPane != null) {
-      final boolean focusEditor = this == myOwner.getCurrentWindow() &&
-                                  ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
       final VirtualFile currentFile = getSelectedFile();
       if (currentFile != null) {
         // do not close associated language console on tab placement change
@@ -414,7 +414,7 @@ public class EditorWindow {
       myHiddenTabs.clear();
       myTabsHidingInProgress.set(true);
       for (VirtualFile file : files) {
-        closeFile(file, false);
+        closeFile(file, false, false);
       }
       //Add flag switching activity to the end of queue
       getManager().runChange(splitters -> myTabsHidingInProgress.set(false), myOwner);
