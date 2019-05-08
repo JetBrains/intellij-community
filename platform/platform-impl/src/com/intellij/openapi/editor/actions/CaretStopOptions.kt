@@ -72,9 +72,9 @@ data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
     val DEFAULT_IDEA = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.START,
                                                   lineBoundary = CaretStopBoundary.END)
 
-    // TODO[eldar] revert once the decision on the OS defaults is made.
     @JvmField
-    val DEFAULT = DEFAULT_IDEA  // if (SystemInfo.isWindows) DEFAULT_WINDOWS else DEFAULT_UNIX
+    val DEFAULT = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
+                                             lineBoundary = CaretStopBoundary.NEIGHBOR)
 
     @JvmStatic
     fun fromCaretStopOptions(caretStopOptions: CaretStopOptions) = with(caretStopOptions) {

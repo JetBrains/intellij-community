@@ -26,6 +26,96 @@ class MoveToCaretStopTest : LightPlatformCodeInsightFixtureTestCase() {
     }
   }
 
+  fun `test Move to Next Word IDEA default`() {
+    doTest(MOVE, FORWARD, """doTest^(^"^test^"^,^ Direction^.^FORWARD^)^""")
+    doTest(MOVE, FORWARD, """
+^      assert^(^i^ <^ expectedCaretOffset^)^ {^ "^Duplicate^ carets^:^ '^${'$'}stringWithCaretStops^'^"^ }^
+""")
+
+    doTest(MOVE, FORWARD, """
+^  private^ fun^ doTest^(^stringWithCaretStops^:^ String^,^
+^                     direction^:^ Direction^,^
+^                     isDelete^:^ Boolean^ =^ false^)^ {^
+""")
+
+    doTest(MOVE, FORWARD, """
+^data^ class^ CaretStopOptions^(^@^OptionTag^(^"^BACKWARD^"^)^ val^ backwardPolicy^:^ CaretStopPolicy^,^
+^                            @^OptionTag^(^"^FORWARD^"^)^ val^ forwardPolicy^:^ CaretStopPolicy^)^ {^
+""")
+
+    doTest(MOVE, FORWARD, """
+^  public^ void^ setCaretStopOptions^(^@^NotNull^ CaretStopOptions^ options^)^ {^
+^    myOsSpecificState^.^CARET_STOP_OPTIONS^ =^ options^;^
+^  }^
+""")
+
+    doTest(MOVE, FORWARD, """
+^my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
+^           "^four^"^,^ "^five^"^,^
+^           "^six^"^.^six^,^ "^seven^"^seven^,^
+^           eight^"^eight^"^,^ nine^/^"^nine^"^,^
+^           "^...^"^"^ten^"^,^ (^"^...^"^"^eleven^"^"^...^"^)^,^ "^twelve^"^"^...^"^]^
+""")
+
+    doTest(MOVE, FORWARD, """
+^  [^  "^word^"^"^...^"^]^  ,^
+^  [^"^word^"^  "^...^"^]^  ,^
+^  [^"^word^"^"^...^"^  ]^  ,^
+^  [^ "^word^"^"^...^"^ ]^  ,^
+^  [^"^  word^"^"^...^"^]^  ,^
+^  [^"^ word^ "^"^...^"^]^  ,^
+^  [^"^word^  "^"^...^"^]^  ,^
+^  [^"^word^"^"^  ...^"^]^  ,^
+^  [^"^word^"^"^ ...^ "^]^  ,^
+^  [^"^word^"^"^...^  "^]^  ,^
+""")
+  }
+
+  fun `test Move to Previous Word IDEA default`() {
+    doTest(MOVE, BACKWARD, """^doTest^(^"^test^"^, ^Direction^.^FORWARD^)""")
+    doTest(MOVE, BACKWARD, """
+      ^assert^(^i ^< ^expectedCaretOffset^) ^{ ^"^Duplicate ^carets^: ^'^${'$'}stringWithCaretStops^'^" ^}^
+""")
+
+    doTest(MOVE, BACKWARD, """
+  ^private ^fun ^doTest^(^stringWithCaretStops^: ^String^,^
+                     ^direction^: ^Direction^,^
+                     ^isDelete^: ^Boolean ^= ^false^) ^{^
+""")
+
+    doTest(MOVE, BACKWARD, """
+^data ^class ^CaretStopOptions^(^@^OptionTag^(^"^BACKWARD^"^) ^val ^backwardPolicy^: ^CaretStopPolicy^,^
+                            ^@^OptionTag^(^"^FORWARD^"^) ^val ^forwardPolicy^: ^CaretStopPolicy^) ^{^
+""")
+
+    doTest(MOVE, BACKWARD, """
+  ^public ^void ^setCaretStopOptions^(^@^NotNull ^CaretStopOptions ^options^) ^{^
+    ^myOsSpecificState^.^CARET_STOP_OPTIONS ^= ^options^;^
+  ^}^
+""")
+
+    doTest(MOVE, BACKWARD, """
+^my_list ^= ^[^"^one^"^, ^"^two^"^, ^"^three^"^,^
+           ^"^four^"^, ^"^five^"^,^
+           ^"^six^"^.^six^, ^"^seven^"^seven^,^
+           ^eight^"^eight^"^, ^nine^/^"^nine^"^,^
+           ^"^...^"^"^ten^"^, ^(^"^...^"^"^eleven^"^"^...^"^)^, ^"^twelve^"^"^...^"^]]^
+""")
+
+    doTest(MOVE, BACKWARD, """
+  ^[  ^"^word^"^"^...^"^]  ^,^
+  ^[^"^word^"  ^"^...^"^]  ^,^
+  ^[^"^word^"^"^...^"  ^]  ^,^
+  ^[ ^"^word^"^"^...^" ^]  ^,^
+  ^[^"  ^word^"^"^...^"^]  ^,^
+  ^[^" ^word ^"^"^...^"^]  ^,^
+  ^[^"^word  ^"^"^...^"^]  ^,^
+  ^[^"^word^"^"  ^...^"^]  ^,^
+  ^[^"^word^"^" ^... ^"^]  ^,^
+  ^[^"^word^"^"^...  ^"^]  ^,^
+""")
+  }
+
   fun `test Move to Next Word on Unix`() {
     setupTestCaretStops(CaretStopOptionsTransposed.DEFAULT_UNIX)
 
