@@ -14,8 +14,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -75,13 +74,7 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
       }) {
         @Override
         protected ListCellRenderer getListElementRenderer() {
-          return new ColoredListCellRenderer<XExpression>() {
-            @Override
-            protected void customizeCellRenderer(@NotNull JList list, XExpression value, int index,
-                                                 boolean selected, boolean hasFocus) {
-              append(value.getExpression(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            }
-          };
+          return SimpleListCellRenderer.create("", XExpression::getExpression);
         }
       };
 

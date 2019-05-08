@@ -53,9 +53,9 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.textCompletion.TextCompletionUtil;
@@ -424,30 +424,23 @@ public class StructuralSearchDialog extends DialogWrapper {
         final Object source = e.getInputEvent().getSource();
         if (!(source instanceof Component)) return;
         JBPopupFactory.getInstance()
-                      .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
-                      .setRenderer(new ColoredListCellRenderer<Configuration>() {
-                        @Override
-                        protected void customizeCellRenderer(@NotNull JList<? extends Configuration> list,
-                                                             Configuration value,
-                                                             int index,
-                                                             boolean selected,
-                                                             boolean hasFocus) {
-                          if (value instanceof ReplaceConfiguration) {
-                            setIcon(AllIcons.Actions.Replace);
-                            append(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 49, 0, true)
-                                   + " ⇒ "
-                                   + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
-                          }
-                          else {
-                            setIcon(AllIcons.Actions.Find);
-                            append(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 100, 0, true));
-                          }
-                        }
-                      })
-                      .setItemChosenCallback(c -> loadConfiguration(c))
-                      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-                      .createPopup()
-                      .showUnderneathOf((Component)source);
+          .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
+          .setRenderer(SimpleListCellRenderer.<Configuration>create((label, value, index) -> {
+            if (value instanceof ReplaceConfiguration) {
+              label.setIcon(AllIcons.Actions.Replace);
+              label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 49, 0, true)
+                            + " ⇒ "
+                            + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
+            }
+            else {
+              label.setIcon(AllIcons.Actions.Find);
+              label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 100, 0, true));
+            }
+          }))
+          .setItemChosenCallback(c -> loadConfiguration(c))
+          .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+          .createPopup()
+          .showUnderneathOf((Component)source);
       }
     });
     final ActionManager actionManager = ActionManager.getInstance();
