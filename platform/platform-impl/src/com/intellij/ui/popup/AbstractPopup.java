@@ -1966,9 +1966,7 @@ public class AbstractPopup implements JBPopup {
    */
   private static boolean isCancelNeeded(@NotNull WindowEvent event, Window window) {
     if (window == null) return true;
-    if (window == event.getWindow()) return false;
-    if (window != event.getOppositeWindow()) return true;
-    if (window == event.getWindow().getOwner()) return false;
-    return true;
+    Window focused = event.getWindow();
+    return focused != window && (focused == null || window != focused.getOwner());
   }
 }
