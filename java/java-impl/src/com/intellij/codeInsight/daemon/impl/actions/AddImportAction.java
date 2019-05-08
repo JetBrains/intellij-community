@@ -129,7 +129,7 @@ public class AddImportAction implements QuestionAction {
           return aValue.getIcon(0);
         }
       };
-    ListPopupImpl popup = new ListPopupImpl(step) {
+    ListPopupImpl popup = new ListPopupImpl(myProject, step) {
       @Override
       protected ListCellRenderer getListElementRenderer() {
         final PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();

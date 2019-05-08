@@ -105,7 +105,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
           return true;
         }
       };
-    new ListPopupImpl(step) {
+    new ListPopupImpl(myProject, step) {
       @Override
       protected ListCellRenderer getListElementRenderer() {
         return new ListCellRendererWithRightAlignedComponent<ProjectStructureElementUsage>() {

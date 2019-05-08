@@ -1357,10 +1357,13 @@ public class AbstractPopup implements JBPopup {
     return myComponent;
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public void setProject(Project project) {
     myProject = project;
   }
-
 
   @Override
   public void dispose() {

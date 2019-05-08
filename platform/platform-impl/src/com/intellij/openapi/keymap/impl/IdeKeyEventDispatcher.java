@@ -848,8 +848,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static class SecondaryKeystrokePopup extends ListPopupImpl {
-    private SecondaryKeystrokePopup(@NotNull final KeyStroke firstKeystroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext context) {
-      super(buildStep(actions, context));
+
+    SecondaryKeystrokePopup(@NotNull KeyStroke firstKeystroke, @NotNull List<Pair<AnAction, KeyStroke>> actions, DataContext context) {
+      super(CommonDataKeys.PROJECT.getData(context), buildStep(actions, context));
       registerActions(firstKeystroke, actions, context);
     }
 

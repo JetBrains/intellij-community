@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -83,7 +86,9 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       }
     };
     step.setDefaultOptionIndex(myComboBox.getSelectedIndex());
-    myPopup = new ListPopupImpl(step, 10);
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
+    myPopup = new ListPopupImpl(project, step);
+    myPopup.setMaxRowCount(10);
     myPopup.setRequestFocus(false);
     myPopup.addListener(new JBPopupListener() {
       @Override

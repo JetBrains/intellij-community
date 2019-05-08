@@ -34,7 +34,7 @@ fun createSelectModulePopup(project: Project,
                             version: (Module) -> String,
                             consumer: (Module) -> Unit): ListPopup {
   val step = createSelectModulePopupStep(project, modules.sortedWith(ModulesAlphaComparator.INSTANCE), consumer)
-  return object : ListPopupImpl(step) {
+  return object : ListPopupImpl(project, step) {
     override fun getListElementRenderer() = RightTextCellRenderer(super.getListElementRenderer(), version)
   }
 }
