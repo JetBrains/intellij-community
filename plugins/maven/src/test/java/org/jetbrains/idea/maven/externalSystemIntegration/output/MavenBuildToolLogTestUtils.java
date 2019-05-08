@@ -22,6 +22,7 @@ import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +36,13 @@ import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskT
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
+  protected ExternalSystemTaskId myTaskId;
 
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    myTaskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project");
+  }
 
   @NotNull
   protected static String[] fromFile(String resource) throws IOException {
@@ -57,6 +64,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     private List<String> myLines = new ArrayList<>();
     private List<MavenLoggedEventParser> myParsers = new ArrayList<>();
     private List<Pair<String, Matcher<BuildEvent>>> myExpectedEvents = new ArrayList<>();
+    private boolean mySkipOutput = false;
 
     public TestCaseBuider withLines(String... lines) {
       List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
@@ -101,11 +109,17 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
           if (next instanceof FinishBuildEvent && !checkFinishEvent) {
             continue;
           }
+          if(next instanceof OutputBuildEvent && mySkipOutput) {
+            continue;
+          }
           fail("Event: " + next.getMessage() + " was not expected here");
         }
 
         BuildEvent next = events.next();
         if(next instanceof StartBuildEventImpl && !checkFinishEvent){
+          continue;
+        }
+        if(next instanceof OutputBuildEvent && mySkipOutput) {
           continue;
         }
         Pair<String, Matcher<BuildEvent>> matcher = expectedEvents.next();
@@ -148,6 +162,9 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
             level = integer + 1;
           }
           assertFalse("cannot calculate event level, possible bad parent id", level < 0);
+          if(event instanceof OutputBuildEvent && mySkipOutput){
+            continue;
+          }
           result.put(event.getId(), event.getMessage());
           levelMap.put(event.getId(), level);
         }
@@ -155,20 +172,22 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
       StringBuilder builder = new StringBuilder();
       for (Map.Entry<Object, String> entry : result.entrySet()) {
-        builder.append(StringUtil.repeatSymbol(' ', levelMap.get(entry.getKey()))).append(entry.getValue()).append("\n");
+        builder.append(StringUtil.repeatSymbol(' ', levelMap.get(entry.getKey()))).append(entry.getValue());
+        if(!entry.getValue().endsWith("\n")) {
+          builder.append("\n");
+        }
       }
       return builder.toString();
     }
 
     private List<BuildEvent> collect() {
       CollectConsumer collectConsumer = new CollectConsumer();
-      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project");
       MavenLogOutputParser parser =
-        new MavenLogOutputParser(taskId, myParsers);
+        new MavenLogOutputParser(myTaskId, myParsers);
 
 
       collectConsumer.accept(new StartBuildEventImpl(
-        new DefaultBuildDescriptor(taskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));
+        new DefaultBuildDescriptor(myTaskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));
       StubBuildOutputReader reader = new StubBuildOutputReader(myLines);
       String line;
       while ((line = reader.readLine()) != null) {
@@ -177,6 +196,11 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
       parser.finish(collectConsumer);
       return collectConsumer.myReceivedEvents;
+    }
+
+    public TestCaseBuider withSkippedOutput() {
+      mySkipOutput = true;
+      return this;
     }
   }
 

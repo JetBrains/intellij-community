@@ -2,202 +2,195 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.Failure;
 import com.intellij.build.events.impl.*;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class MavenSpyOutputParser implements MavenLoggedEventParser {
-  private final static String PREFIX = "-[IJ]-";
+public class MavenSpyOutputParser {
+  private final static String PREFIX = "[IJ]-";
+  private final static String SEPARATOR = "-[IJ]-";
   private final static String NEWLINE = "-[N]-";
-  private final IntObjectMap<ProjectStatus> threadProjectMap = ContainerUtil.createConcurrentIntObjectMap();
+  private final IntObjectMap<MavenParsingContext.MavenExecutionEntry> threadProjectMap = ContainerUtil.createConcurrentIntObjectMap();
+  private final MavenParsingContext myContext;
 
-  @Override
-  public boolean supportsType(@Nullable LogMessageType type) {
-    return type == LogMessageType.IJ;
+  public static boolean isSpyLog(String s) {
+    return s != null && s.startsWith(PREFIX);
   }
 
-  @Override
-  public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
-                              @NotNull MavenLogEntryReader.MavenLogEntry logLine,
-                              @NotNull MavenLogEntryReader logEntryReader,
-                              @NotNull Consumer<? super BuildEvent> messageConsumer) {
-    String line = logLine.getLine();
+  public MavenSpyOutputParser(MavenParsingContext context) {myContext = context;}
+
+
+  public void processLine(@NotNull String spyLine,
+                          @NotNull Consumer<? super BuildEvent> messageConsumer) {
+    String line = spyLine.substring(PREFIX.length());
     try {
       int threadSeparatorIdx = line.indexOf('-');
-      int threadId = Integer.parseInt(line.substring(0, threadSeparatorIdx));
-      int typeSeparatorIdx = line.indexOf(PREFIX, threadSeparatorIdx + 1);
+      if (threadSeparatorIdx < 0) {
+        return;
+      }
+      int threadId;
+      try {
+        threadId = Integer.parseInt(line.substring(0, threadSeparatorIdx));
+      }
+      catch (NumberFormatException ignore) {
+        return;
+      }
+      if (threadId < 0) {
+        return;
+      }
+      int typeSeparatorIdx = line.indexOf(SEPARATOR, threadSeparatorIdx + 1);
       if (typeSeparatorIdx < 0) {
-        return false;
+        return;
       }
       String type = line.substring(threadSeparatorIdx + 1, typeSeparatorIdx);
 
-      List<String> data = StringUtil.split(line.substring(typeSeparatorIdx + PREFIX.length()), PREFIX);
+      List<String> data = StringUtil.split(line.substring(typeSeparatorIdx + SEPARATOR.length()), SEPARATOR);
       Map<String, String> parameters =
         data.stream().map(d -> d.split("=")).filter(d -> d.length == 2).peek(d -> d[1] = d[1].replace(NEWLINE, "\n"))
           .collect(Collectors.toMap(d -> d[0], d -> d[1]));
-      return parse(threadId, type, parameters, id, messageConsumer);
+      parse(threadId, type, parameters, messageConsumer);
     }
     catch (Exception e) {
       MavenLog.LOG.error(e);
-      return false;
     }
   }
 
-  protected boolean parse(int threadId,
-                          String type,
-                          Map<String, String> parameters,
-                          ExternalSystemTaskId id,
-                          Consumer<? super BuildEvent> messageConsumer) {
+  protected void parse(int threadId,
+                       String type,
+                       Map<String, String> parameters,
+                       Consumer<? super BuildEvent> messageConsumer) {
     switch (type) {
       case "ProjectStarted": {
-        String projectId = parameters.get("id");
-        messageConsumer.accept(new StartEventImpl(projectId, id, System.currentTimeMillis(), "Project " + projectId));
-        threadProjectMap.put(threadId, new ProjectStatus(projectId));
-        return true;
+        MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, true);
+        messageConsumer
+          .accept(new StartEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName()));
+        return;
       }
       case "MojoStarted": {
-        String projectId = threadProjectMap.get(threadId).myName;
-        messageConsumer.accept(new StartEventImpl(parameters.get("goal"), projectId, System.currentTimeMillis(), parameters.get("goal")));
-        return true;
+        MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, true);
+        doStart(messageConsumer, mojoExecution);
+        return;
       }
       case "MojoSucceeded": {
-        String projectId = threadProjectMap.get(threadId).myName;
-        messageConsumer
-          .accept(new FinishEventImpl(parameters.get("goal"), projectId, System.currentTimeMillis(), parameters.get("goal"),
-                                      new SuccessResultImpl(false)));
-        return true;
+        MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
+        doSuccess(messageConsumer, mojoExecution);
+        return;
       }
       case "MojoFailed": {
-        String projectId = threadProjectMap.get(threadId).myName;
-        String error = parameters.get("error");
-        messageConsumer.accept(new FinishEventImpl(parameters.get("goal"), projectId, System.currentTimeMillis(), parameters.get("goal"),
-                                                   new FailureResultImpl(parameters.get("error"), null)));
-        threadProjectMap.get(threadId).addFailure(new FailureImpl(error, (Throwable)null));
-        return true;
+        MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
+        messageConsumer.accept(
+          new FinishEventImpl(mojoExecution.getId(), mojoExecution.getParentId(), System.currentTimeMillis(), mojoExecution.getName(),
+                              new FailureResultImpl(parameters.get("error"), null)));
+        mojoExecution.complete();
+        return;
       }
       case "MojoSkipped": {
-        String projectId = threadProjectMap.get(threadId).myName;
-        messageConsumer.accept(new FinishEventImpl(parameters.get("goal"), projectId, System.currentTimeMillis(), parameters.get("goal"),
-                                                   new SkippedResultImpl()));
-        return true;
+        MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
+        doSkip(messageConsumer, mojoExecution);
+        return;
       }
       case "ProjectSucceeded": {
-        String projectId = parameters.get("id");
-        messageConsumer.accept(new FinishEventImpl(projectId, id, System.currentTimeMillis(), "Project " + projectId,
-                                                   new SuccessResultImpl(false)));
-        return true;
+        MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
+        doSuccess(messageConsumer, execution);
+        return;
       }
 
       case "ProjectSkipped": {
-        String projectId = parameters.get("id");
-        messageConsumer.accept(new FinishEventImpl(projectId, id, System.currentTimeMillis(), "Project " + projectId,
-                                                   new SkippedResultImpl()));
-        return true;
+        MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
+        doSkip(messageConsumer, execution);
+        return;
       }
 
       case "ProjectFailed": {
-        String projectId = parameters.get("id");
-        messageConsumer.accept(new FinishEventImpl(projectId, id, System.currentTimeMillis(), "Project " + projectId,
-                                                   new SuccessResultImpl()));
-        //new FailureResultImpl(threadProjectMap.get(threadId).myFailures)));
-        return true;
+        MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
+        doError(messageConsumer, execution, parameters.get("error"));
+        return;
       }
       case "DependencyResolutionRequest": {
-        String projectId = threadProjectMap.get(threadId).myName;
-        messageConsumer.accept(
-          new StartEventImpl("Resolving Dependencies" + projectId, projectId, System.currentTimeMillis(), "Resolving Dependencies"));
-        return true;
+        MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, "Resolving Dependencies", true);
+        doStart(messageConsumer, mojoExecution);
+        return;
       }
+
       case "DependencyResolutionResult": {
-        String projectId = threadProjectMap.get(threadId).myName;
-        String error = parameters.get("error");
-        if (StringUtil.isEmpty(error)) {
-          messageConsumer
-            .accept(
-              new FinishEventImpl("Resolving Dependencies" + projectId, projectId, System.currentTimeMillis(), "Resolving Dependencies",
-                                  new SuccessResultImpl()));
-        }
-        else {
-          List<Failure> failureResults = ContainerUtil.map(error.split("\n"), s -> new FailureImpl(s, (Throwable)null));
-          messageConsumer.accept(
-            new FinishEventImpl("Resolving Dependencies" + projectId, projectId, System.currentTimeMillis(), "Resolving Dependencies",
-                                new FailureResultImpl(failureResults)));
-          threadProjectMap.get(threadId).addFailures(failureResults);
-        }
-        return true;
+        MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, "Resolving Dependencies", false);
+        doSuccess(messageConsumer, mojoExecution);
+        return;
       }
 
       case "ARTIFACT_DOWNLOADED": {
-        String projectId = threadProjectMap.get(threadId).myName;
         String artifactCoord = parameters.get("artifactCoord");
+        MavenParsingContext.NodeExecutionEntry execution = myContext.getNode(threadId, artifactCoord, false);
         String error = parameters.get("error");
-        if (StringUtil.isEmpty(error)) {
-          messageConsumer
-            .accept(
-              new FinishEventImpl(projectId + " download " + artifactCoord, "Resolving Dependencies" + projectId, System.currentTimeMillis(),
-                                  "Download " + artifactCoord,
-                                  new SuccessResultImpl()));
+        if (error != null) {
+          doError(messageConsumer, execution, error);
         }
         else {
-          List<Failure> failureResults = ContainerUtil.map(error.split("\n"), s -> new FailureImpl(s, (Throwable)null));
-          messageConsumer.accept(
-            new FinishEventImpl(projectId + " download " + artifactCoord, "Resolving Dependencies" + projectId, System.currentTimeMillis(),
-                                "Download " + artifactCoord,
-                                new FailureResultImpl(failureResults)));
-          threadProjectMap.get(threadId).addFailures(failureResults);
+          doSuccess(messageConsumer, execution);
         }
-        return true;
+        return;
       }
 
       case "ARTIFACT_DOWNLOADING": {
-        String projectId = threadProjectMap.get(threadId).myName;
         String artifactCoord = parameters.get("artifactCoord");
-        messageConsumer.accept(
-          new StartEventImpl(projectId + " download " + artifactCoord, "Resolving Dependencies" + projectId, System.currentTimeMillis(),
-                             "Download " + artifactCoord));
-        return true;
+        MavenParsingContext.NodeExecutionEntry execution = myContext.getNode(threadId, artifactCoord, true);
+        doStart(messageConsumer, execution);
       }
-
-      default:
-        return false;
     }
   }
 
-  private static class ProjectStatus {
-    String myName;
-    List<Failure> myFailures = null;
-
-    ProjectStatus(String name) {
-      myName = name;
+  private static void doSkip(Consumer<? super BuildEvent> messageConsumer, MavenParsingContext.MavenExecutionEntry execution) {
+    if (execution == null) {
+      MavenLog.LOG.warn("Error parsing maven log");
+      return;
     }
+    messageConsumer
+      .accept(new FinishEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName(),
+                                  new SkippedResultImpl()));
+    execution.complete();
+  }
 
-    public void addFailure(Failure failure) {
-      if (myFailures == null) {
-        myFailures = new ArrayList<>();
-      }
-      myFailures.add(failure);
+  private static void doStart(Consumer<? super BuildEvent> messageConsumer, MavenParsingContext.MavenExecutionEntry execution) {
+    if (execution == null) {
+      MavenLog.LOG.warn("Error parsing maven log");
+      return;
     }
+    messageConsumer
+      .accept(
+        new StartEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName()));
+  }
 
-    public void addFailures(List<Failure> failures) {
-      if (myFailures == null) {
-        myFailures = new ArrayList<>();
-      }
-      myFailures.addAll(failures);
+  private static void doError(Consumer<? super BuildEvent> messageConsumer,
+                              MavenParsingContext.MavenExecutionEntry execution,
+                              String errorMessage) {
+    if (execution == null) {
+      MavenLog.LOG.warn("Error parsing maven log");
+      return;
     }
+    messageConsumer
+      .accept(new FinishEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName(),
+                                  new FailureResultImpl(errorMessage, null)));
+    execution.complete();
+  }
+
+  private static void doSuccess(Consumer<? super BuildEvent> messageConsumer, MavenParsingContext.MavenExecutionEntry execution) {
+    if (execution == null) {
+      MavenLog.LOG.warn("Error parsing maven log");
+      return;
+    }
+    messageConsumer
+      .accept(
+        new FinishEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName(),
+                            new SuccessResultImpl(false)));
+    execution.complete();
   }
 }

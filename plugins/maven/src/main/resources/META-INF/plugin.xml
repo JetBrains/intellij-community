@@ -211,6 +211,9 @@
 
     <registryKey key="maven.build.tool.window.enabled" defaultValue="true"
                  description="Enable Maven tasks to use Build Tool Window"/>
+
+    <registryKey key="maven.spy.events.debug" defaultValue="false"
+                 description="Enable Maven spy events to be printed in Build Tool Window console"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

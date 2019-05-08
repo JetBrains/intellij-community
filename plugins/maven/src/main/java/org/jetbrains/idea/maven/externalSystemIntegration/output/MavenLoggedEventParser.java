@@ -14,7 +14,7 @@ public interface MavenLoggedEventParser {
 
   boolean supportsType(@Nullable LogMessageType type);
 
-  boolean checkLogLine(@NotNull ExternalSystemTaskId id,
+  boolean checkLogLine(@NotNull Object parentId,
                        @NotNull MavenLogEntryReader.MavenLogEntry logLine,
                        @NotNull MavenLogEntryReader logEntryReader,
                        @NotNull Consumer<? super BuildEvent> messageConsumer);

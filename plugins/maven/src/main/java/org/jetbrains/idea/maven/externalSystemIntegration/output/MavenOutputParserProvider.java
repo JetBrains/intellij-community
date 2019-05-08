@@ -30,7 +30,6 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
                                     Arrays.asList( new JavaBuildErrorNotification(),
                                                    new KotlinBuildErrorNotification(),
                                                    new WarningNotifier(),
-                                                   new CommonErrorParser(),
                                                    new MavenBadConfigEventParser()));
   }
 }
