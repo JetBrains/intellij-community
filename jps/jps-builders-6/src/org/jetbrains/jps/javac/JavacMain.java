@@ -172,9 +172,11 @@ public class JavacMain {
         }
       };
 
+      final StandardJavaFileManager fm = wrapWithCallDispatcher(fileManager);
       final JavaCompiler.CompilationTask task = compiler.getTask(
-        out, wrapWithCallDispatcher(fileManager), diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
+        out, fm, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
+      tryUnwrapFileManager(task, fileManager);
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
         try {
           extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
@@ -223,6 +225,41 @@ public class JavacMain {
       }
     }
     return false;
+  }
+
+  // Workaround for javac bug:
+  // the internal ClientCodeWrapper class may not implement some interface-declared methods
+  // which throw UnsupportedOperationException instead of delegating to our JpsFileManager instance
+  private static void tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
+    try {
+      final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
+      final Field contextField = findFiledOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
+      if (contextField != null) {
+        final Object contextObject = contextField.get(task);
+        final Method getMethod = contextObject.getClass().getMethod("get", Class.class);
+        if (getMethod.invoke(contextObject, JavaFileManager.class) != null) {
+          final Method putMethod = contextObject.getClass().getMethod("put", Class.class, Object.class);
+          putMethod.invoke(contextObject, JavaFileManager.class, null);  // must clear previous value first
+          putMethod.invoke(contextObject, JavaFileManager.class, manager);
+        }
+      }
+    }
+    catch (Throwable ignored) {
+    }
+  }
+
+  private static Field findFiledOfType(final Class<?> aClass, final Class<?> fieldType) {
+    for (Class<?> from = aClass; from != null && !Object.class.equals(from); from = from.getSuperclass()) {
+      for (Field field : from.getDeclaredFields()) {
+        if (fieldType.equals(field.getType())) {
+          if (!field.isAccessible()) {
+            field.setAccessible(true);
+          }
+          return field;
+        }
+      }
+    }
+    return null;
   }
 
   private static void setLocation(JpsJavacFileManager fileManager, String locationId, Iterable<? extends File> path) throws IOException {
