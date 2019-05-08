@@ -609,8 +609,36 @@ public class TrackingRunner extends StandardDataFlowRunner {
   @Nullable
   private CauseItem findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
     PsiExpression operand = Objects.requireNonNull(operandHistory.getExpression());
-    DfaValue operandValue = operandHistory.myTopOfStack;
     DfaPsiType wanted = getFactory().createDfaType(type);
+    PsiType operandType = operand.getType();
+    if (operandType != null) {
+      DfaPsiType dfaType = getFactory().createDfaType(operandType);
+      TypeConstraint constraint = Objects.requireNonNull(TypeConstraint.empty().withInstanceofValue(dfaType));
+      String explanation = constraint.getAssignabilityExplanation(wanted, isInstance);
+      if (explanation != null) {
+        String name = "an expression";
+        if (operand instanceof PsiMethodCallExpression) {
+          name = "method return";
+        }
+        else if (operand instanceof PsiReferenceExpression) {
+          PsiElement target = ((PsiReferenceExpression)operand).resolve();
+          if (target instanceof PsiField) {
+            name = "field";
+          }
+          else if (target instanceof PsiParameter) {
+            name = "parameter";
+          }
+          else if (target instanceof PsiVariable) {
+            name = "variable";
+          }
+        }
+        if (dfaType == wanted) {
+          explanation = "type is " + dfaType;
+        }
+        return new CauseItem(name + " " + explanation, operand);
+      }
+    }
+    DfaValue operandValue = operandHistory.myTopOfStack;
 
     FactDefinition<TypeConstraint> fact = operandHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
     String explanation = fact.myFact == null ? null : fact.myFact.getAssignabilityExplanation(wanted, isInstance);
@@ -623,7 +651,18 @@ public class TrackingRunner extends StandardDataFlowRunner {
       TypeConstraint prevConstraint = fact.getFact(TypeConstraint.empty());
       String prevExplanation = prevConstraint.getAssignabilityExplanation(wanted, isInstance);
       if (prevExplanation == null) {
-        CauseItem causeItem = new CauseItem(explanation, operand);
+        if (causeLocation.myInstruction instanceof AssignInstruction && causeLocation.myTopOfStack == operandValue) {
+          PsiExpression rExpression = ((AssignInstruction)causeLocation.myInstruction).getRExpression();
+          if (rExpression != null) {
+            MemoryStateChange rValuePush = causeLocation.findSubExpressionPush(rExpression);
+            if (rValuePush != null) {
+              CauseItem assignmentItem = createAssignmentCause((AssignInstruction)causeLocation.myInstruction, operandValue);
+              assignmentItem.addChildren(findTypeCause(rValuePush, type, isInstance));
+              return assignmentItem;
+            }
+          }
+        }
+        CauseItem causeItem = new CauseItem("an object " + explanation, operand);
         causeItem.addChildren(new CauseItem("type of '" + operand.getText() + "' is known from #ref", causeLocation));
         return causeItem;
       }
