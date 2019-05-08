@@ -68,11 +68,12 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
+  @Deprecated
   public WizardPopup(@NotNull PopupStep<Object> aStep) {
-    this(null, aStep);
+    this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep);
   }
 
-  public WizardPopup(@Nullable JBPopup aParent, @NotNull PopupStep<Object> aStep) {
+  public WizardPopup(@Nullable Project project, @Nullable JBPopup aParent, @NotNull PopupStep<Object> aStep) {
     myParent = (WizardPopup) aParent;
     myStep = aStep;
 
@@ -90,7 +91,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     scrollPane.setBorder(null);
 
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
          isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
@@ -393,13 +393,13 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
     if (step instanceof AsyncPopupStep) {
-      return new AsyncPopupImpl(parent, (AsyncPopupStep)step, parentValue);
+      return new AsyncPopupImpl(getProject(), parent, (AsyncPopupStep)step, parentValue);
     }
     if (step instanceof ListPopupStep) {
-      return new ListPopupImpl(parent, (ListPopupStep)step, parentValue);
+      return new ListPopupImpl(getProject(), parent, (ListPopupStep)step, parentValue);
     }
     else if (step instanceof TreePopupStep) {
-      return new TreePopupImpl(parent, (TreePopupStep)step, parentValue);
+      return new TreePopupImpl(getProject(), parent, (TreePopupStep)step, parentValue);
     }
     else {
       throw new IllegalArgumentException(step.getClass().toString());
@@ -437,6 +437,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     SpeedSearchFilter<Object> filter = myStep.getSpeedSearchFilter();
     if (filter == null) return true;
     if (!filter.canBeHidden(value)) return true;
+    if (!mySpeedSearch.isHoldingFilter()) return true;
     String text = filter.getIndexedString(value);
     return mySpeedSearch.shouldBeShowing(text);
   }

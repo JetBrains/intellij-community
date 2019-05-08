@@ -5,9 +5,9 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.IntArrayList
+import com.intellij.util.serialization.MutableAccessor
+import com.intellij.util.serialization.PropertyAccessor
 import com.intellij.util.xmlb.BeanBinding
-import com.intellij.util.xmlb.MutableAccessor
-import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import org.jdom.Element
 import java.lang.reflect.Constructor

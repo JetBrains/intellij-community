@@ -69,8 +69,6 @@ public class PyCharmInitialConfigurator {
         }
       });
     }
-
-    Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 
   public static void disableRunAnything() {

@@ -14,7 +14,9 @@ import com.intellij.psi.*
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.impl.source.tree.injected.changesHandler.*
+import com.intellij.psi.util.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import kotlin.math.max
@@ -92,6 +94,18 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       hostPsiFile, workingRange.startOffset, workingRange.endOffset, true)
 
     rebuildMarkers(workingRange)
+
+    updateFileContextElementIfNeeded(hostPsiFile, workingRange)
+  }
+
+  private fun updateFileContextElementIfNeeded(hostPsiFile: PsiFile, workingRange: TextRange) {
+    val fragmentPsiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(myFragmentDocument) ?: return
+
+    val injectedPointer = fragmentPsiFile.getUserData(FileContextUtil.INJECTED_IN_ELEMENT) ?: return
+    if (injectedPointer.element != null) return // still valid no need to update
+
+    val newHost = getInjectionHostAtRange(hostPsiFile, workingRange) ?: return
+    fragmentPsiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, newHost.createSmartPointer())
   }
 
   private var myInvalidated = false
@@ -175,6 +189,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
   private fun removeHostsFromConcatenation(hostsToRemove: List<MarkersMapping>): TextRange? {
+    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().singleOrNull()
+
     for (marker in hostsToRemove.reversed()) {
       val host = marker.host ?: continue
       val relatedElements = getFollowingElements(host) ?: host.prevSiblings.takeWhile(::intermediateElement).toList()
@@ -189,9 +205,9 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       }
     }
 
-    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().singleOrNull()
     if (psiPolyadicExpression != null) {
-      psiPolyadicExpression.operands.singleOrNull()?.let { onlyRemaining ->
+      // distinct because Java could duplicate operands sometimes (EA-142380), mb something is wrong with the removal code upper ?
+      psiPolyadicExpression.operands.distinct().singleOrNull()?.let { onlyRemaining ->
         return psiPolyadicExpression.replace(onlyRemaining).textRange
       }
     }

@@ -1273,6 +1273,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return pair != null && pair.getSecond();
   }
 
+  public void approveRemoval(@NotNull FileNameMatcher matcher) {
+    FileType type = getExtensionMap().findAssociatedFileType(matcher);
+    if (type != null) {
+      myRemovedMappings.put(matcher, Pair.create(type, true));
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Helper methods
   // -------------------------------------------------------------------------

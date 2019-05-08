@@ -4,9 +4,12 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -301,6 +304,19 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       cc.setBorder(JBUI.Borders.empty());
       icon = cc.getIcon();
       cc.setIcon(OffsetIcon.getOriginalIcon(icon));
+
+      String text = cc.getText();
+      int maxWidth = bounds.width - (padding == null ? 0 : padding.right);
+      if (StringUtil.isNotEmpty(text) && cc.getPreferredSize().width > maxWidth) {
+        int max0 = ObjectUtils.binarySearch(1, text.length() - 1, idx -> {
+          cc.setText(StringUtil.trimMiddle(text, idx));
+          return Comparing.compare(cc.getPreferredSize().width, maxWidth);
+        });
+        int max = max0 < 0 ? -max0 - 2 : max0;
+        if (max > 2 && max < text.length()) {
+          cc.setText(StringUtil.trimMiddle(text, max));
+        }
+      }
     }
     else if (c instanceof JComponent) {
       JComponent cc = (JComponent)c;

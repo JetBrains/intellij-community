@@ -34,8 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.serialization.SerializationException;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -635,7 +635,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
           repository.initializeRepository();
           repositories.add(repository);
         }
-        catch (XmlSerializationException e) {
+        catch (SerializationException e) {
           LOG.error(e.getMessage(), e);
         }
       }

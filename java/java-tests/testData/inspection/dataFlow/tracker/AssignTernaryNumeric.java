@@ -1,10 +1,7 @@
 /*
-Value is always false (foo > 3; line#16)
-  One of the following happens:
-    Left operand is 1 (foo; line#16)
-      'foo' was assigned (=; line#15)
-    or left operand is 2 (foo; line#16)
-      'foo' was assigned (=; line#15)
+Value is always false (foo > 3; line#13)
+  Left operand is 1 or 2 (foo; line#13)
+    'foo' was assigned (=; line#12)
  */
 
 import org.jetbrains.annotations.Nullable;

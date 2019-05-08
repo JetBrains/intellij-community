@@ -557,6 +557,14 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           super.configureList(list);
           list.setBackground(UIManager.getColor("TextField.background"));
         }
+
+        @Override
+        protected void customizeListRendererComponent(JComponent component) {
+          super.customizeListRendererComponent(component);
+          component.setBorder(getList().getComponentOrientation().isLeftToRight()
+                              ? JBUI.Borders.empty(0, 5, 0, 1)
+                              : JBUI.Borders.empty(0, 1, 0, 5));
+        }
       };
     }
     return new CustomComboPopup(comboBox) {

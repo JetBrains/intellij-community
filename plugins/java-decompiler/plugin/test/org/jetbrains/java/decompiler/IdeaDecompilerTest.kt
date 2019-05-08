@@ -23,6 +23,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.io.URLUtil
@@ -44,7 +45,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun testSimple() {
-    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/java/lang/String.class")
+    val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
     val decompiled = IdeaDecompiler().getText(file).toString()
     assertTrue(decompiled, decompiled.startsWith("${IdeaDecompiler.BANNER}package java.lang;\n"))
     assertTrue(decompiled, decompiled.contains("public final class String"))
@@ -59,7 +60,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
       VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${PlatformTestUtil.getRtJarPath()}!/java/lang"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
     }
   }
 

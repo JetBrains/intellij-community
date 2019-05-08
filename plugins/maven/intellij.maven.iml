@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/compatibilityResources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -68,9 +69,6 @@
     <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
-    <orderEntry type="module" module-name="intellij.maven.server.m2.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.maven.server.m30.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.maven.server.m36.impl" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

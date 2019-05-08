@@ -6,13 +6,11 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UCallableReferenceExpression;
 import org.jetbrains.uast.UastCallKind;
 
-import java.util.Locale;
 import java.util.Set;
 
 import static com.intellij.codeInspection.UastCallMatcher.builder;
@@ -22,7 +20,6 @@ public abstract class UastCallMatcherTestBase extends JavaCodeInsightFixtureTest
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
-    moduleBuilder.addLibrary("javaUtil", PathUtil.getJarPathForClass(Locale.class));
   }
 
   protected static int matchCallExpression(UastCallMatcher matcher, Set<? extends UCallExpression> expressions) {

@@ -128,21 +128,16 @@ public class InferenceSession {
   }
 
   void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
-    final MethodCandidateInfo currentMethod = getCurrentProperties(parent);
-    initExpressionConstraints(parameters, args, parent, null, currentMethod != null && currentMethod.isVarargs());
+    final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(getArgumentList(parent));
+    initExpressionConstraints(parameters, args,
+                              currentMethod != null ? currentMethod.getElement() : null, 
+                              currentMethod != null && currentMethod.isVarargs());
   }
 
   public void initExpressionConstraints(PsiParameter[] parameters,
                                         PsiExpression[] args,
-                                        PsiElement parent,
                                         PsiMethod method,
                                         boolean varargs) {
-    final MethodCandidateInfo currentMethod = getCurrentProperties(parent);
-    if (method == null) {
-      if (currentMethod != null) {
-        method = currentMethod.getElement();
-      }
-    }
     if (method != null) {
       initThrowsConstraints(method);
     }
@@ -178,11 +173,6 @@ public class InferenceSession {
       return getArgumentList(parent.getParent());
     }
     return null;
-  }
-
-  private static MethodCandidateInfo getCurrentProperties(PsiElement parent) {
-    PsiExpressionList argumentList = getArgumentList(parent);
-    return argumentList != null ? MethodCandidateInfo.getCurrentMethod(argumentList) : null;
   }
 
   /**
@@ -298,7 +288,7 @@ public class InferenceSession {
   public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent) {
-    return infer(parameters, args, parent, getCurrentProperties(parent));
+    return infer(parameters, args, parent, MethodCandidateInfo.getCurrentMethod(getArgumentList(parent)));
   }
 
   @NotNull
@@ -374,7 +364,7 @@ public class InferenceSession {
       else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {//todo
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
-        collectAdditionalConstraints(parameters, args, properties.getElement(), mySiteSubstitutor, additionalConstraints,
+        collectAdditionalConstraints(parameters, args, method, mySiteSubstitutor, additionalConstraints,
                                      ignoredConstraints, properties.isVarargs(), initialSubstitutor);
 
         proceedWithAdditionalConstraints(additionalConstraints, ignoredConstraints);
@@ -428,7 +418,8 @@ public class InferenceSession {
         if (arg instanceof PsiCall) {
           //If the expression is a poly class instance creation expression (15.9) or a poly method invocation expression (15.12), 
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
-          final PsiMethod calledMethod = getCalledMethod((PsiCall)arg);
+          final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)arg);
+          final PsiMethod calledMethod = resolveResult instanceof MethodCandidateInfo ? (PsiMethod)resolveResult.getElement() : null;
           if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
             collectAdditionalConstraints(additionalConstraints, ignoredConstraints, (PsiCall)arg, initialSubstitutor);
           }
@@ -476,23 +467,6 @@ public class InferenceSession {
     return false;
   }
 
-  private static PsiMethod getCalledMethod(PsiCall arg) {
-    final PsiExpressionList argumentList = arg.getArgumentList();
-    if (argumentList == null) {
-      return null;
-    }
-
-    MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
-    if (currentMethod != null) {
-      return currentMethod.getElement();
-    }
-    final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(arg);
-    if (resolveResult instanceof MethodCandidateInfo) {
-      return (PsiMethod)resolveResult.getElement();
-    }
-    return null;
-  }
-
   private void collectLambdaReturnExpression(Set<ConstraintFormula> additionalConstraints,
                                              Set<ConstraintFormula> ignoredConstraints, 
                                              PsiLambdaExpression lambdaExpression,
@@ -516,8 +490,9 @@ public class InferenceSession {
                                        PsiSubstitutor initialSubstitutor) {
     if (returnExpression instanceof PsiCallExpression) {
       if (addConstraint) {
-        final PsiMethod calledMethod = getCalledMethod((PsiCallExpression)returnExpression);
-        if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(returnExpression, calledMethod)) {
+        final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult((PsiCallExpression)returnExpression);
+        if (resolveResult instanceof MethodCandidateInfo && 
+            PsiPolyExpressionUtil.isMethodCallPolyExpression(returnExpression, ((MethodCandidateInfo)resolveResult).getElement())) {
           collectAdditionalConstraints(additionalConstraints, ignoredConstraints, (PsiCallExpression)returnExpression, initialSubstitutor);
         }
       }
@@ -548,15 +523,14 @@ public class InferenceSession {
                                             PsiSubstitutor initialSubstitutor) {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
-      MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
-      final JavaResolveResult result = currentMethod != null ? null : PsiDiamondType.getDiamondsAwareResolveResult(callExpression);
-      final PsiMethod method = currentMethod != null ? currentMethod.getElement() : result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() :  null;
+      final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(callExpression);
+      final PsiMethod method = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() :  null;
       if (method != null) {
         final PsiExpression[] newArgs = argumentList.getExpressions();
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
-          collectAdditionalConstraints(newParams, newArgs, method, chooseSiteSubstitutor(currentMethod, result, method), additionalConstraints,
-                                       ignoredConstraints, chooseVarargsMode(currentMethod, result), initialSubstitutor);
+          collectAdditionalConstraints(newParams, newArgs, method, chooseSiteSubstitutor(null, result, method), additionalConstraints,
+                                       ignoredConstraints, chooseVarargsMode(null, result), initialSubstitutor);
         }
       }
     }
@@ -835,8 +809,9 @@ public class InferenceSession {
       if (gParent instanceof PsiCall) {
         final PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
         if (argumentList != null) {
-          final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
-          if (currentMethod != null && MethodCandidateInfo.isOverloadCheck(argumentList)) {
+          if (MethodCandidateInfo.isOverloadCheck(argumentList)) {//todo overload resolution on method without type parameters: infer argument type
+            final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
+            LOG.assertTrue(currentMethod != null);
             return getTypeByMethod(context, argumentList, currentMethod.getElement(), currentMethod.isVarargs(), currentMethod.getSiteSubstitutor(), inferParent);
           }
 

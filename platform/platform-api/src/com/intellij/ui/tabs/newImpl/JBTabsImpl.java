@@ -182,7 +182,7 @@ public class JBTabsImpl extends JComponent
   private boolean myMouseInsideTabsArea = false;
 
   protected JBTabPainter createTabPainter() {
-    return JBTabPainter.Companion.getDEFAULT();
+    return JBTabPainter.getDEFAULT();
   }
 
   protected JBTabsBackgroundAndBorder createTabBorder() {
@@ -2682,7 +2682,7 @@ public class JBTabsImpl extends JComponent
     @Override
     @NotNull
     public UiDecoration getDecoration() {
-        return new UiDecoration(null, new JBInsets(7, 13, 9, 13));
+        return new UiDecoration(null, new JBInsets(6, 12, 8, 12));
     }
   }
 

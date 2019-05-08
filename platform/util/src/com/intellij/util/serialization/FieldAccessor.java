@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.xmlb;
+package com.intellij.util.serialization;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,7 +8,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
-class FieldAccessor implements MutableAccessor {
+final class FieldAccessor implements MutableAccessor {
   private final Field myField;
 
   FieldAccessor(@NotNull Field field) {
@@ -24,7 +23,7 @@ class FieldAccessor implements MutableAccessor {
       return myField.get(o);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Reading " + myField, e);
+      throw new SerializationException("Reading " + myField, e);
     }
   }
 
@@ -34,7 +33,7 @@ class FieldAccessor implements MutableAccessor {
       myField.set(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + myField, e);
     }
   }
 
@@ -44,7 +43,7 @@ class FieldAccessor implements MutableAccessor {
       myField.setBoolean(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + myField, e);
     }
   }
 
@@ -54,7 +53,7 @@ class FieldAccessor implements MutableAccessor {
       myField.setInt(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + myField, e);
     }
   }
 
@@ -64,7 +63,7 @@ class FieldAccessor implements MutableAccessor {
       myField.setShort(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + myField, e);
     }
   }
 
@@ -74,7 +73,7 @@ class FieldAccessor implements MutableAccessor {
       myField.setLong(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + myField, e);
     }
   }
 
@@ -84,7 +83,7 @@ class FieldAccessor implements MutableAccessor {
       myField.setFloat(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + myField, e);
     }
   }
 
@@ -94,7 +93,7 @@ class FieldAccessor implements MutableAccessor {
       myField.setDouble(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + myField, e);
     }
   }
 
@@ -103,6 +102,7 @@ class FieldAccessor implements MutableAccessor {
     return myField.getAnnotation(annotationClass);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myField.getName();
@@ -123,7 +123,7 @@ class FieldAccessor implements MutableAccessor {
     return myField.isAccessible();
   }
 
-  @NonNls
+  @NotNull
   public String toString() {
     return "FieldAccessor[" + myField.getDeclaringClass() + "." + myField.getName() + "]";
   }

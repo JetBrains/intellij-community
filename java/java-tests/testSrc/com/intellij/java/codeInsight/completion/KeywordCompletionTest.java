@@ -144,6 +144,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalAfterParameterAnno2() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() { doTest(3, "final", "float", "class"); }
   public void testNoCaseInsideWhileInSwitch() { doTest(0, "case", "default"); }
+  public void testIndentDefaultInSwitch() { doTest(); }
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
   public void testFinalInCompleteCatch() { doTest(1, "final"); }

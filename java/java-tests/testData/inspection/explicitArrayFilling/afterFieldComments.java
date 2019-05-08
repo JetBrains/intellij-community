@@ -1,6 +1,6 @@
 import java.util.Arrays;
 
-// "Replace loop with 'Arrays.setAll' method call" "true"
+// "Replace loop with 'Arrays.setAll()' method call" "true"
 public class Test {
     private Object[] data;
 

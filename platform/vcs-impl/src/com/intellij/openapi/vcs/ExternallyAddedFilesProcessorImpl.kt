@@ -27,7 +27,7 @@ private const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES"
 private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
 class ExternallyAddedFilesProcessorImpl(project: Project,
-                                        parentDisposable: Disposable,
+                                        private val parentDisposable: Disposable,
                                         private val vcs: AbstractVcs<*>,
                                         private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
@@ -44,7 +44,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
 
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-  init {
+  fun install() {
     runReadAction {
       if (!project.isDisposed) {
         changeListManager.addChangeListListener(this, parentDisposable)

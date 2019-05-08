@@ -27,7 +27,7 @@ public class WarningNotifier implements MavenLoggedEventParser {
   }
 
   @Override
-  public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
+  public boolean checkLogLine(@NotNull Object parendId,
                               @NotNull MavenLogEntryReader.MavenLogEntry logLine,
                               @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
@@ -37,7 +37,7 @@ public class WarningNotifier implements MavenLoggedEventParser {
     if (warnings.add(line)) {
       List<MavenLogEntryReader.MavenLogEntry> toConcat = logEntryReader.readWhile(l -> l.getType() == LogMessageType.WARNING);
       String contatenated = line + "\n" + StringUtil.join(toConcat, MavenLogEntryReader.MavenLogEntry::getLine, "\n");
-      messageConsumer.accept(new MessageEventImpl(id, MessageEvent.Kind.WARNING, "Warning", line, contatenated));
+      messageConsumer.accept(new MessageEventImpl(parendId, MessageEvent.Kind.WARNING, "Warning", line, contatenated));
       return true;
     }
     return false;

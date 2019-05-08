@@ -61,6 +61,7 @@ import java.util.concurrent.*;
  */
 public class StartupUtil {
   public static final String NO_SPLASH = "nosplash";
+  public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   public static final String IDEA_STARTUP_LISTENER_PROPERTY = "idea.startup.listener";
 
@@ -567,7 +568,7 @@ public class StartupUtil {
   }
 
   private static void installPluginUpdates() {
-    if (!Main.isCommandLine()) {
+    if (!Main.isCommandLine() || Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
       try {
         StartupActionScriptManager.executeActionScript();
       }

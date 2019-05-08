@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -353,15 +352,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-    if (policy != null && !policy.runInDispatchThread()) {
-      runnable.run();
-    }
-    else {
+    if (runInDispatchThread()) {
       EdtTestUtilKt.runInEdtAndWait(() -> {
         runnable.run();
         return null;
       });
+    }
+    else {
+      runnable.run();
     }
   }
 

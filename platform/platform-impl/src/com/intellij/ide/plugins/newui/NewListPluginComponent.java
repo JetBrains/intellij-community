@@ -45,6 +45,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   private JLabel myDownloads;
   private JLabel myVersion;
   private JLabel myVendor;
+  private JPanel myErrorPanel;
   private JComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
@@ -247,17 +248,25 @@ public class NewListPluginComponent extends CellPluginComponent {
     if (errors) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
 
+      if (myErrorPanel == null) {
+        myErrorPanel = new NonOpaquePanel();
+        myCenterPanel.add(myErrorPanel, VerticalLayout.FILL_HORIZONTAL);
+      }
+
       Ref<String> enableAction = new Ref<>();
       String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
-      myErrorComponent = ErrorComponent.show(myCenterPanel, VerticalLayout.FILL_HORIZONTAL, myErrorComponent, message, enableAction.get(),
+      myErrorComponent = ErrorComponent.show(myErrorPanel, BorderLayout.CENTER, myErrorComponent, message, enableAction.get(),
                                              enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
+      myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
 
       if (addListeners) {
+        myEventHandler.add(myErrorPanel);
         myEventHandler.add(myErrorComponent);
       }
     }
-    else if (myErrorComponent != null) {
-      myCenterPanel.remove(myErrorComponent);
+    else if (myErrorPanel != null) {
+      myCenterPanel.remove(myErrorPanel);
+      myErrorPanel = null;
       myErrorComponent = null;
     }
   }

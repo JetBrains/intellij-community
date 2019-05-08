@@ -168,6 +168,7 @@ public class PluginLogo {
       }
       else {
         tryLoadJarIcons(idPlugin, lazyIcon, path, true);
+        return;
       }
       putIcon(idPlugin, lazyIcon, null, null);
       return;
@@ -255,7 +256,8 @@ public class PluginLogo {
                                     "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme);
       HttpRequests.request(url).productNameAsUserAgent().saveToFile(file, null);
     }
-    catch (HttpRequests.HttpStatusException ignore) { }
+    catch (HttpRequests.HttpStatusException ignore) {
+    }
     catch (IOException e) {
       LOG.info(e);
     }

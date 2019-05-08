@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
-import com.intellij.build.events.impl.OutputBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputInstantReaderImpl;
@@ -87,14 +86,11 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
   }
 
   public void onTextAvailable(String text, boolean stdError) {
-    myBuildProgressListener.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
     myInstantReader.append(text);
   }
 
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key outputType) {
-    boolean stdError = outputType == ProcessOutputTypes.STDERR;
-    myBuildProgressListener.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
     myInstantReader.append(text);
   }
 }

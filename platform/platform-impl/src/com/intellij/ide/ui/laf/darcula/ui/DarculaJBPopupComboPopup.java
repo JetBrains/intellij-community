@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -9,6 +12,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +44,8 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   public DarculaJBPopupComboPopup(@NotNull JComboBox<T> comboBox) {
     myComboBox = comboBox;
     myProxyList.setModel(comboBox.getModel());
+    myComboBox.addPropertyChangeListener(this);
+    myComboBox.addItemListener(this);
   }
 
   @Override
@@ -83,7 +89,9 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       }
     };
     step.setDefaultOptionIndex(myComboBox.getSelectedIndex());
-    myPopup = new ListPopupImpl(step, 10);
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
+    myPopup = new ListPopupImpl(project, step);
+    myPopup.setMaxRowCount(10);
     myPopup.setRequestFocus(false);
     myPopup.addListener(new JBPopupListener() {
       @Override
@@ -120,9 +128,14 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     list.setSelectionForeground(UIManager.getColor("ComboBox.selectionForeground"));
     list.setSelectionBackground(UIManager.getColor("ComboBox.selectionBackground"));
     list.setBorder(null);
-    list.setCellRenderer(myComboBox.getRenderer());
+    //noinspection unchecked
+    list.setCellRenderer(new MyDelegateRenderer());
     list.setFocusable(false);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+  }
+
+  protected void customizeListRendererComponent(JComponent component) {
+    component.setBorder(JBUI.Borders.empty(2, 8));
   }
 
   @Override
@@ -158,6 +171,20 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   @Override
   public void uninstallingUI() {
+    myComboBox.removePropertyChangeListener(this);
+    myComboBox.removeItemListener(this);
+  }
+
+  @Override
+  public void propertyChange(PropertyChangeEvent e) {
+    String propertyName = e.getPropertyName();
+    if ("model".equals(propertyName) ||
+        "renderer".equals(propertyName) ||
+        "editable".equals(propertyName)) {
+      if (isVisible()) {
+        hide();
+      }
+    }
   }
 
   @Override
@@ -214,7 +241,19 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   public void mouseWheelMoved(MouseWheelEvent e) {
   }
 
-  @Override
-  public void propertyChange(PropertyChangeEvent evt) {
+  private class MyDelegateRenderer implements ListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList list,
+                                                  Object value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      //noinspection unchecked
+      Component component = myComboBox.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
+      if (component instanceof JComponent) {
+        customizeListRendererComponent((JComponent)component);
+      }
+      return component;
+    }
   }
 }

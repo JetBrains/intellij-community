@@ -7,6 +7,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.io.URLUtil
+import com.intellij.util.serialization.MutableAccessor
+import com.intellij.util.serialization.SerializationException
 import com.intellij.util.xmlb.*
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -53,7 +55,7 @@ fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerialization
       binding.serialize(this, null, filter) as Element
     }
   }
-  catch (e: XmlSerializationException) {
+  catch (e: SerializationException) {
     throw e
   }
   catch (e: Exception) {
@@ -78,7 +80,7 @@ fun <T> Element.deserialize(clazz: Class<T>): T {
   try {
     return (serializer.getClassBinding(clazz) as NotNullDeserializeBinding).deserialize(null, this) as T
   }
-  catch (e: XmlSerializationException) {
+  catch (e: SerializationException) {
     throw e
   }
   catch (e: Exception) {
@@ -105,7 +107,7 @@ fun Element.deserializeInto(bean: Any) {
   try {
     (serializer.getClassBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
   }
-  catch (e: XmlSerializationException) {
+  catch (e: SerializationException) {
     throw e
   }
   catch (e: Exception) {

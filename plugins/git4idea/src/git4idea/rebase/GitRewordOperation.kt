@@ -204,7 +204,7 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun undoInBackground() {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword") {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword...") {
       override fun run(indicator: ProgressIndicator) {
         undo()
       }

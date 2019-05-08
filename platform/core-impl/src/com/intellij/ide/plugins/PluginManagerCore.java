@@ -35,9 +35,9 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.serialization.SerializationException;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
-import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -688,7 +688,7 @@ public class PluginManagerCore {
       descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory());
       return descriptor;
     }
-    catch (XmlSerializationException | JDOMException | IOException e) {
+    catch (SerializationException | JDOMException | IOException e) {
       if (loadingContext.isEssential) ExceptionUtil.rethrow(e);
       getLogger().warn("Cannot load " + descriptorFile, e);
       prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));
@@ -721,7 +721,7 @@ public class PluginManagerCore {
         return descriptor;
       }
     }
-    catch (XmlSerializationException | InvalidDataException e) {
+    catch (SerializationException | InvalidDataException e) {
       if (context.isEssential) ExceptionUtil.rethrow(e);
       getLogger().info("Cannot load " + file + "!/META-INF/" + fileName, e);
       prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getName() + "' contains invalid plugin descriptor."));

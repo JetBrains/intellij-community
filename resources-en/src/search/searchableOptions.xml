@@ -25919,6 +25919,8 @@
     <option name="directory" hit="Service directory path:" />
     <option name="path" hit="Service directory path:" />
     <option name="service" hit="Service directory path:" />
+    <option name="jvm" hit="Gradle JVM:" />
+    <option name="gradle" hit="Gradle JVM:" />
   </configurable>
   <configurable id="reference.settingsdialog.project.gant" configurable_name="Gant">
     <option name="" hit="" />

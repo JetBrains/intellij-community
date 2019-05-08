@@ -29,13 +29,15 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author ven
  */
 public class BringVariableIntoScopeFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix");
   private final PsiReferenceExpression myUnresolvedReference;
-  private PsiLocalVariable myOutOfScopeVariable;
+  private volatile PsiLocalVariable myOutOfScopeVariable;
 
   BringVariableIntoScopeFix(@NotNull PsiReferenceExpression unresolvedReference) {
     myUnresolvedReference = unresolvedReference;
@@ -61,7 +63,8 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     if (!myUnresolvedReference.isValid() || !BaseIntentionAction.canModify(myUnresolvedReference)) return false;
-    if (myOutOfScopeVariable != null && !myOutOfScopeVariable.isValid()) return false;
+    PsiLocalVariable variable = myOutOfScopeVariable;
+    if (variable != null && !variable.isValid()) return false;
     if (myUnresolvedReference.isQualified()) return false;
 
     final String referenceName = myUnresolvedReference.getReferenceName();
@@ -71,9 +74,11 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     PsiElement container = PsiTreeUtil.getParentOfType(myUnresolvedReference, PsiCodeBlock.class, PsiClass.class);
     if (!(container instanceof PsiCodeBlock)) return false;
 
-    myOutOfScopeVariable = null;
     while(container.getParent() instanceof PsiStatement || container.getParent() instanceof PsiCatchSection) container = container.getParent();
-    container.accept(new JavaRecursiveElementWalkingVisitor() {
+
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
+      PsiLocalVariable myOutOfScopeVariable;
+      
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
@@ -93,25 +98,30 @@ public class BringVariableIntoScopeFix implements IntentionAction {
           }
         }
       }
-    });
+    }
+    Visitor visitor = new Visitor();
+    container.accept(visitor);
+    
+    myOutOfScopeVariable = variable = visitor.myOutOfScopeVariable;
 
-    return myOutOfScopeVariable != null && !(myOutOfScopeVariable instanceof PsiResourceVariable);
+    return variable != null && !(variable instanceof PsiResourceVariable);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-    LOG.assertTrue(myOutOfScopeVariable != null);
+    PsiLocalVariable outOfScopeVariable = myOutOfScopeVariable;
+    LOG.assertTrue(outOfScopeVariable != null);
     PsiManager manager = file.getManager();
-    myOutOfScopeVariable.normalizeDeclaration();
-    PsiUtil.setModifierProperty(myOutOfScopeVariable, PsiModifier.FINAL, false);
-    PsiElement commonParent = PsiTreeUtil.findCommonParent(myOutOfScopeVariable, myUnresolvedReference);
+    outOfScopeVariable.normalizeDeclaration();
+    PsiUtil.setModifierProperty(outOfScopeVariable, PsiModifier.FINAL, false);
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(outOfScopeVariable, myUnresolvedReference);
     LOG.assertTrue(commonParent != null);
-    PsiElement child = myOutOfScopeVariable.getTextRange().getStartOffset() < myUnresolvedReference.getTextRange().getStartOffset() ? myOutOfScopeVariable
-                       : myUnresolvedReference;
+    PsiElement child = outOfScopeVariable.getTextRange().getStartOffset() < myUnresolvedReference.getTextRange().getStartOffset() ? 
+                       outOfScopeVariable : myUnresolvedReference;
 
     while(child.getParent() != commonParent) child = child.getParent();
     PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText("int i = 0", null);
-    PsiVariable variable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(myOutOfScopeVariable);
+    PsiVariable variable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(outOfScopeVariable);
     if (variable.getInitializer() != null) {
       variable.getInitializer().delete();
     }
@@ -129,13 +139,13 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     CodeStyleManager.getInstance(manager.getProject()).reformat(commonParent);
 
     //Leave initializer assignment
-    PsiExpression initializer = myOutOfScopeVariable.getInitializer();
+    PsiExpression initializer = outOfScopeVariable.getInitializer();
     if (initializer != null) {
-      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText(myOutOfScopeVariable
-        .getName() + "= e;", null);
-      ((PsiAssignmentExpression)assignment.getExpression()).getRExpression().replace(initializer);
+      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText(
+        outOfScopeVariable.getName() + "= e;", null);
+      Objects.requireNonNull(((PsiAssignmentExpression)assignment.getExpression()).getRExpression()).replace(initializer);
       assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(manager.getProject()).reformat(assignment);
-      PsiDeclarationStatement declStatement = PsiTreeUtil.getParentOfType(myOutOfScopeVariable, PsiDeclarationStatement.class);
+      PsiDeclarationStatement declStatement = PsiTreeUtil.getParentOfType(outOfScopeVariable, PsiDeclarationStatement.class);
       LOG.assertTrue(declStatement != null);
       PsiElement parent = declStatement.getParent();
       if (parent instanceof PsiForStatement) {
@@ -146,8 +156,8 @@ public class BringVariableIntoScopeFix implements IntentionAction {
       }
     }
 
-    if (myOutOfScopeVariable.isValid()) {
-      myOutOfScopeVariable.delete();
+    if (outOfScopeVariable.isValid()) {
+      outOfScopeVariable.delete();
     }
 
     if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new THashMap<>(), file) != null) {

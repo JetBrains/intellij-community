@@ -154,13 +154,23 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     );
   }
 
-  public void resetSelectedDetails() {
+  private void updateModel(@NotNull Runnable update) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
-    myViewer.setEmptyText("");
+
+    update.run();
+
     myViewer.rebuildTree();
     myDispatcher.getMulticaster().onModelUpdated();
+  }
+
+  public void resetSelectedDetails() {
+    updateModel(() -> myViewer.setEmptyText(""));
+  }
+
+  public void showError(@NotNull String errorText) {
+    updateModel(() -> myViewer.setEmptyText(errorText));
   }
 
   public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
@@ -173,53 +183,48 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   private void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList, boolean showBigCommits) {
-    myChanges.clear();
-    myChangesToParents.clear();
-    myRoots.clear();
-
-    if (detailsList.isEmpty()) {
-      myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
-    }
-    else {
-      int maxSize = VcsLogUtil.getMaxSize(detailsList);
-      if (maxSize > VcsLogUtil.getShownChangesLimit() && !showBigCommits) {
-        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
-        String sizeText = getSizeText(maxSize);
-        myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
-          appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
+    updateModel(() -> {
+      if (detailsList.isEmpty()) {
+        myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
       }
       else {
-        myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
+        int maxSize = VcsLogUtil.getMaxSize(detailsList);
+        if (maxSize > VcsLogUtil.getShownChangesLimit() && !showBigCommits) {
+          String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
+          String sizeText = getSizeText(maxSize);
+          myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
+            appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
+        }
+        else {
+          myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
-        if (detailsList.size() == 1) {
-          VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
-          myChanges.addAll(detail.getChanges());
+          if (detailsList.size() == 1) {
+            VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
+            myChanges.addAll(detail.getChanges());
 
-          if (detail.getParents().size() > 1) {
-            for (int i = 0; i < detail.getParents().size(); i++) {
-              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
-              myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
+            if (detail.getParents().size() > 1) {
+              for (int i = 0; i < detail.getParents().size(); i++) {
+                THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+                myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
+              }
+            }
+
+            if (myChanges.isEmpty() && detail.getParents().size() > 1) {
+              myViewer.getEmptyText().setText("No merged conflicts.").
+                appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
+                                    e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+            }
+            else {
+              myViewer.setEmptyText("");
             }
           }
-
-          if (myChanges.isEmpty() && detail.getParents().size() > 1) {
-            myViewer.getEmptyText().setText("No merged conflicts.").
-              appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
-                                  e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
-          }
           else {
+            myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
             myViewer.setEmptyText("");
           }
         }
-        else {
-          myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-          myViewer.setEmptyText("");
-        }
       }
-    }
-
-    myViewer.rebuildTree();
-    myDispatcher.getMulticaster().onModelUpdated();
+    });
   }
 
   @NotNull

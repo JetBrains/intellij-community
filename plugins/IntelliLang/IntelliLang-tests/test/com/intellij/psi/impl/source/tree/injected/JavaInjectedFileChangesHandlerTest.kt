@@ -141,7 +141,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
-
   fun `test edit multipart in 4 steps`() {
     with(myFixture) {
 
@@ -288,7 +287,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
-
   fun `test complex insert-commit-broken-reformat`() {
     with(myFixture) {
 
@@ -382,7 +380,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
-
   fun `test suffix-prefix-edit-reformat`() {
     with(myFixture) {
 
@@ -459,7 +456,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }
 
   }
-
 
   fun `test delete-commit-delete`() {
     with(myFixture) {
@@ -569,6 +565,61 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+  fun `test type new lines in fe then delete`() {
+    with(myFixture) {
+
+      val hostFile = configureByText("classA.java", """
+          class A {
+            void foo() {
+              String a = "<html></html><caret>";
+            }
+          }
+      """.trimIndent())
+
+      val fragmentFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html></html>", fragmentFile.text)
+
+      openFileInEditor(fragmentFile.virtualFile)
+      assertHostIsReachable(hostFile, file)
+
+      moveCaret(fragmentFile.text.length)
+      type("\n")
+      type("\n")
+
+      checkResult("classA.java", """
+        import org.intellij.lang.annotations.Language;
+        
+        class A {
+          void foo() {
+            @Language("HTML") String a = "<html></html>\n" +
+                    "\n";
+          }
+        }
+      """.trimIndent(), true)
+      assertHostIsReachable(hostFile, file)
+
+      type("\b")
+      type("\b")
+
+      checkResult("classA.java", """
+        import org.intellij.lang.annotations.Language;
+        
+        class A {
+          void foo() {
+            @Language("HTML") String a = "<html></html>";
+          }
+        }
+      """.trimIndent(), true)
+      assertHostIsReachable(hostFile, file)
+    }
+
+  }
+
+  private fun assertHostIsReachable(hostFile: PsiFile, injectedFile: PsiFile) {
+    TestCase.assertEquals("host file should be reachable from the context",
+                          hostFile.virtualFile,
+                          injectedFile.context?.containingFile?.virtualFile)
+  }
 
   fun `test edit with guarded blocks`() {
     with(myFixture) {
@@ -612,7 +663,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }
 
   }
-
 
   fun `test edit guarded blocks ending`() {
     with(myFixture) {
@@ -747,7 +797,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       return quickEditHandler.newFile
     }
   }
-
 
   private fun undo(editor: Editor) = runWithUndoManager(editor, UndoManager::undo)
 

@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -159,7 +160,8 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
 
-      int level1 = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel);
+      int level1 = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel, true, true,
+                                                 (left, right, allowUncheckedConversion, argId) -> checkFunctionalInterfaceAcceptance(method, left, right, allowUncheckedConversion));
       if (!isVarargs() && level1 < ApplicabilityLevel.FIXED_ARITY) {
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
@@ -169,6 +171,19 @@ public class MethodCandidateInfo extends CandidateInfo{
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
     return level;
+  }
+
+  private static boolean checkFunctionalInterfaceAcceptance(PsiMethod method, PsiType left, PsiType right, boolean allowUncheckedConversion) {
+    PsiFunctionalExpression fun = null;
+    if (right instanceof PsiLambdaExpressionType) {
+      fun = ((PsiLambdaExpressionType)right).getExpression();
+    }
+    else if (right instanceof PsiMethodReferenceType) {
+      fun = ((PsiMethodReferenceType)right).getExpression();
+    }
+    return fun != null
+           ? !(left instanceof PsiArrayType) && fun.isAcceptable(left, method)
+           : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
   }
 
   //If m is a generic method and the method invocation does not provide explicit type

@@ -18,8 +18,8 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.serialization.SerializationException;
 import com.intellij.util.xmlb.SerializationFilter;
-import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -307,7 +307,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       try {
         XmlSerializer.deserializeInto(node, this);
       }
-      catch (XmlSerializationException e) {
+      catch (SerializationException e) {
         throw new InvalidDataException(e);
       }
     }

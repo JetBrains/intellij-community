@@ -30,7 +30,7 @@ public class FUSWhiteListPersistence {
   }
 
   @NotNull
-  private static File getWhiteListFile() {
+  static File getWhiteListFile() {
     return getFileInWhiteListCacheDirectory(WHITE_LIST_DATA_FILE);
   }
 

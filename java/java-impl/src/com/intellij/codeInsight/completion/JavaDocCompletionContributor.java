@@ -7,6 +7,9 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
@@ -17,6 +20,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -414,10 +418,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       final Editor editor = context.getEditor();
       final PsiMethod method = item.getObject();
 
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      final StringBuilder buffer = new StringBuilder();
-
-      final CharSequence chars = editor.getDocument().getCharsSequence();
+      Document document = editor.getDocument();
+      final CharSequence chars = document.getCharsSequence();
       int endOffset = editor.getCaretModel().getOffset();
       final Project project = context.getProject();
       int afterSharp = CharArrayUtil.shiftBackwardUntil(chars, endOffset - 1, "#") + 1;
@@ -434,41 +436,68 @@ public class JavaDocCompletionContributor extends CompletionContributor {
           context.setTailOffset(endOffset);
         }
       }
-      editor.getDocument().deleteString(afterSharp, endOffset);
+      document.deleteString(afterSharp, endOffset);
       editor.getCaretModel().moveToOffset(signatureOffset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
-      buffer.append(method.getName()).append("(");
-      final int afterParenth = afterSharp + buffer.length();
-      for (int i = 0; i < parameters.length; i++) {
-        final PsiType type = TypeConversionUtil.erasure(parameters[i].getType());
-        buffer.append(type.getCanonicalText());
 
-        if (i < parameters.length - 1) {
-          buffer.append(",");
-          if (styleSettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA) buffer.append(" ");
-        }
-      }
-      buffer.append(")");
+      String methodName = method.getName();
+      int beforeParenth = signatureOffset + methodName.length();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      String signature = "(" +
+                         StringUtil.join(parameters,
+                                         p -> TypeConversionUtil.erasure(p.getType()).getCanonicalText(),
+                                         "," + (styleSettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA ? " " : "")) +
+                         ")";
+      String insertString = methodName + signature;
       if (!(tag instanceof PsiInlineDocTag)) {
-        buffer.append(" ");
+        insertString += " ";
       }
       else {
-        final int currentOffset = editor.getCaretModel().getOffset();
-        if (chars.charAt(currentOffset) == '}') {
+        if (chars.charAt(signatureOffset) == '}') {
           afterSharp++;
         }
         else {
-          buffer.append("} ");
+          insertString += "} ";
         }
       }
-      String insertString = buffer.toString();
-      EditorModificationUtil.insertStringAtCaret(editor, insertString);
-      editor.getCaretModel().moveToOffset(afterSharp + buffer.length());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-      shortenReferences(project, editor, context, afterParenth);
+      document.insertString(signatureOffset, insertString);
+      RangeMarker paramListMarker = document.createRangeMarker(TextRange.from(beforeParenth, signature.length()));
+      editor.getCaretModel().moveToOffset(afterSharp + insertString.length());
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+
+      shortenReferences(project, editor, context, beforeParenth + 1);
+
+      if (parameters.length > 0) {
+        startParameterListTemplate(context, editor, document, project, paramListMarker);
+      }
+    }
+
+    private static void startParameterListTemplate(@NotNull InsertionContext context,
+                                                   Editor editor,
+                                                   Document document,
+                                                   Project project, RangeMarker paramListMarker) {
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+      int tail = editor.getCaretModel().getOffset();
+      if (paramListMarker.isValid() && tail >= paramListMarker.getEndOffset()) {
+        PsiDocComment docComment =
+          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), paramListMarker.getStartOffset(), PsiDocComment.class, false);
+        if (docComment != null) {
+          TemplateImpl template = new TemplateImpl("", "");
+          ConstantNode node = new ConstantNode(document.getText(TextRange.create(paramListMarker)));
+          template.addVariable("PARAMETERS", node, node, true);
+          template.addTextSegment(document.getText(TextRange.create(paramListMarker.getEndOffset(), tail)));
+          template.addEndVariable();
+          template.setToShortenLongNames(false);
+
+          editor.getCaretModel().moveToOffset(paramListMarker.getStartOffset());
+          document.deleteString(paramListMarker.getStartOffset(), tail);
+
+          TemplateManager.getInstance(project).startTemplate(editor, template);
+        }
+      }
     }
 
     private static void shortenReferences(final Project project, final Editor editor, InsertionContext context, int offset) {

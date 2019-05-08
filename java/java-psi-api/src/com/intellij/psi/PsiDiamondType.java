@@ -189,6 +189,17 @@ public abstract class PsiDiamondType extends PsiType {
         return factory != null ? factory : JavaResolveResult.EMPTY;
       }
     }
+    
+    if (expression instanceof PsiEnumConstant) {
+      final PsiEnumConstant enumConstant = (PsiEnumConstant)expression;
+      PsiClass containingClass = enumConstant.getContainingClass();
+      if (containingClass == null) return JavaResolveResult.EMPTY;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(enumConstant.getProject());
+      final PsiClassType type = facade.getElementFactory().createType(containingClass);
+      PsiExpressionList argumentList = enumConstant.getArgumentList();
+      if (argumentList == null) return JavaResolveResult.EMPTY;
+      return facade.getResolveHelper().resolveConstructor(type, argumentList, enumConstant);
+    }
 
     return expression.resolveMethodGenerics();
   }

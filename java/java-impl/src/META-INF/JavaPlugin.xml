@@ -84,6 +84,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
+      <headless-implementation-class/>
     </component>
 
   </project-components>

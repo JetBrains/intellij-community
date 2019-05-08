@@ -136,7 +136,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                     final XDebugSession session,
                                                                     Editor editor) {
     ScopeHighlighter highlighter = new ScopeHighlighter(editor);
-    ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<V>(handler.getPopupTitle(position), variants) {
+    ListPopupImpl popup = new ListPopupImpl(session.getProject(), new BaseListPopupStep<V>(handler.getPopupTitle(position), variants) {
       @Override
       public Icon getIconFor(V aValue) {
         return aValue.getIcon();

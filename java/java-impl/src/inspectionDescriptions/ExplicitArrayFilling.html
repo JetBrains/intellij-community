@@ -1,6 +1,8 @@
 <html>
 <body>
 Reports loops which could be replaced with <code>Arrays.setAll()</code> or <code>Arrays.fill()</code> calls.
+Only reports code replaceable with <code>Arrays.setAll()</code> when the project or module is configured to use a language level of 8 or
+higher.
 <p>For example:</p>
 <pre>
   for (int i=0; i&lt;array.length; i++) {

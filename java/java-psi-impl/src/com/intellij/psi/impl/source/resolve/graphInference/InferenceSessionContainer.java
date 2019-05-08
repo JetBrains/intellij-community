@@ -54,7 +54,6 @@ public class InferenceSessionContainer {
                               @NotNull final ParameterTypeInferencePolicy policy) {
     if (parent instanceof PsiCall) {
       final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
-      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
       //overload resolution can't depend on outer call => should not traverse to top
       if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
           //But overload resolution can depend on type of lambda parameter. As it can't depend on lambda body,
@@ -98,6 +97,7 @@ public class InferenceSessionContainer {
           }
 
           if (session != null) {
+            final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
             final PsiSubstitutor childSubstitutor = inferNested(parameters, arguments, (PsiCall)parent, currentMethod, session);
             if (childSubstitutor != null) return childSubstitutor;
           }
@@ -233,7 +233,7 @@ public class InferenceSessionContainer {
       return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(topLevelCall, true, () -> {
         final InferenceSession topLevelSession =
           new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
-        topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
+        topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, method, ((MethodCandidateInfo)result).isVarargs());
         topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result));
         return topLevelSession;
       });

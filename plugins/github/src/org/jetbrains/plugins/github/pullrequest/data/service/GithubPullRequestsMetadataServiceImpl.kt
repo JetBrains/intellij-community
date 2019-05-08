@@ -271,7 +271,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
       }
 
       if (!busyStateTracker.acquire(pullRequest)) return@handler
-      progressManager.run(object : Task.Backgroundable(project, "Adjusting List Of ${StringUtil.pluralize(entityName).capitalize()}",
+      progressManager.run(object : Task.Backgroundable(project, "Adjusting List of ${StringUtil.pluralize(entityName).capitalize()}...",
                                                        true) {
         override fun run(indicator: ProgressIndicator) {
           adjuster(delta, indicator)

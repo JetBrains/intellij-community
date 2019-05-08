@@ -307,7 +307,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myHgRemoteStatusUpdater.activate();
 
     messageBusConnection = myProject.getMessageBus().connect();
-    myVFSListener = new HgVFSListener(myProject, this);
+    myVFSListener = HgVFSListener.createInstance(this);
 
     // ignore temporary files
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();

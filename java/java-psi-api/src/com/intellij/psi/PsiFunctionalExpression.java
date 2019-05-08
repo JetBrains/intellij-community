@@ -30,7 +30,15 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
   /**
    * @return true if assignment SAM s = expr is correctly shaped
    */
-  boolean isAcceptable(PsiType left);
+  default boolean isAcceptable(PsiType left) {
+    return isAcceptable(left, null);
+  }
+
+  /**
+   * @param method 
+   * @return true if assignment SAM s = expr is correctly shaped
+   */
+  boolean isAcceptable(PsiType left, @Nullable PsiMethod method);
 
   /**
    * Potentially compatible check takes into account the presence and "shape" of functional interface target types.
