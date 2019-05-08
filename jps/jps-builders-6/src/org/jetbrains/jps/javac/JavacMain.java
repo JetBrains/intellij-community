@@ -24,13 +24,13 @@ public class JavacMain {
 
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-    "-d", "-classpath", "-cp", "-bootclasspath"
+    "-d", "-classpath", "-cp", "--class-path", "-bootclasspath", "--boot-class-path"
   )));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   )));
   private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-    "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "-s", "-d", "-h"
+    "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "--processor-path", "--processor-module-path", "-s", "-d", "-h"
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
@@ -99,7 +99,7 @@ public class JavacMain {
       if (!classpath.isEmpty()) {
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-          if (!usingJavac && !isOptionSet(options, "-processorpath")) {
+          if (!usingJavac && isAnnotationProcessingEnabled(_options) && !_options.contains("-processorpath")) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
             fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }
@@ -123,7 +123,7 @@ public class JavacMain {
 
       if (!upgradeModulePath.isEmpty()) {
         try {
-          setModulePath(fileManager, "UPGRADE_MODULE_PATH", upgradeModulePath);
+          setLocation(fileManager, "UPGRADE_MODULE_PATH", upgradeModulePath);
         }
         catch (IOException e) {
           fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -133,7 +133,11 @@ public class JavacMain {
 
       if (!modulePath.isEmpty()) {
         try {
-          setModulePath(fileManager, "MODULE_PATH", modulePath);
+          setLocation(fileManager, "MODULE_PATH", modulePath);
+          if (isAnnotationProcessingEnabled(_options) && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null) {
+            // default annotation processing discovery path to module path if not explicitly set
+            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", modulePath);
+          }
         }
         catch (IOException e) {
           fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -221,11 +225,16 @@ public class JavacMain {
     return false;
   }
 
-  private static void setModulePath(JpsJavacFileManager fileManager, String option, Collection<? extends File> path) throws IOException {
-    JavaFileManager.Location location = StandardLocation.locationFor(option);
+  private static void setLocation(JpsJavacFileManager fileManager, String locationId, Iterable<? extends File> path) throws IOException {
+    JavaFileManager.Location location = StandardLocation.locationFor(locationId);
     if (location != null) { // if this option is supported
       fileManager.setLocation(location, path);
     }
+  }
+
+  private static Iterable<? extends File> getLocation(JpsJavacFileManager fileManager, String locationId) {
+    final JavaFileManager.Location location = StandardLocation.locationFor(locationId);
+    return location != null? fileManager.getLocation(location) : null;
   }
 
   // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
@@ -275,21 +284,7 @@ public class JavacMain {
   }
 
   private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {
-    for (String option : options) {
-      if ("-proc:none".equals(option)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean isOptionSet(final Collection<String> options, String option) {
-    for (String opt : options) {
-      if (option.equals(opt)) {
-        return true;
-      }
-    }
-    return false;
+    return !options.contains("-proc:none");
   }
 
   private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
