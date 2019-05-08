@@ -376,7 +376,7 @@ public class IdeaApplication {
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
-      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
 
@@ -434,6 +434,7 @@ public class IdeaApplication {
     return myArgs;
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void disableProjectLoad() {
     myPerformProjectLoad = false;
   }
