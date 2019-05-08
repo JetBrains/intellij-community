@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.patterns.PlatformPatterns
@@ -638,10 +639,17 @@ class Foo {
   }
 
   void "test insert link to method"() {
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable())
     myFixture.configureByText 'a.java', "/** a. #fo<caret> */ interface Foo { void foo(int a); }}"
     myFixture.completeBasic()
     myFixture.type('\n')
+
+    myFixture.checkResult "/** a. {@link #foo<selection>(int)<caret></selection>} */ interface Foo { void foo(int a); }}"
+    assert TemplateManagerImpl.getTemplateState(myFixture.editor)
+
+    myFixture.type('\t')
     myFixture.checkResult "/** a. {@link #foo(int)}<caret> */ interface Foo { void foo(int a); }}"
+    assert !TemplateManagerImpl.getTemplateState(myFixture.editor)
   }
 
   void "test insert link to field"() {
@@ -692,4 +700,18 @@ interface Bar<T> extends Foo<T> {
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'foo', 'finalize'
   }
+
+  void "test allow to easily omit method parameters"() {
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable())
+    myFixture.configureByText 'a.java', "/** {@link #fo<caret>} */ interface Foo { void foo(int a); }}"
+    myFixture.completeBasic()
+
+    myFixture.checkResult "/** {@link #foo<selection>(int)<caret></selection>} */ interface Foo { void foo(int a); }}"
+    assert TemplateManagerImpl.getTemplateState(myFixture.editor)
+
+    myFixture.type('\b\n')
+    myFixture.checkResult "/** {@link #foo}<caret> */ interface Foo { void foo(int a); }}"
+    assert !TemplateManagerImpl.getTemplateState(myFixture.editor)
+  }
+
 }
