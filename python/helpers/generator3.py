@@ -170,7 +170,7 @@ def list_binaries(paths):
 
 def is_source_file(path):
     # Want to see that files regardless of their encoding.
-    if path.endswith(('.py', '-nspkg.pth', '.html')):
+    if path.endswith(('-nspkg.pth', '.html', '.pxd', '.py', '.pyi', '.pyx')):
         return True
     has_bad_extension = path.endswith((
             # plotlywidget/static/index.js.map is 8.7 MiB.
@@ -185,7 +185,7 @@ def is_source_file(path):
             '.rsp',
 
             # No need to read these files even if they are small.
-            '.pyc', '.pyo', '.so', '.dll',
+            '.dll', '.pyc', '.pyd', '.pyo', '.so',
     ))
     if has_bad_extension:
         return False
