@@ -119,7 +119,9 @@ public abstract class SliceNullnessAnalyzerBase {
     final Ref<NullAnalysisResult> leafExpressions = Ref.create(null);
     final Map<SliceNode, NullAnalysisResult> map = createMap();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(), "Expanding all nodes... (may very well take the whole day)", true) {
+    String encouragementPiece = " (may very well take the whole day)";
+    ProgressManager.getInstance().run(new Task.Backgroundable(
+      root.getProject(), "Expanding All Nodes..." + encouragementPiece, true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);
