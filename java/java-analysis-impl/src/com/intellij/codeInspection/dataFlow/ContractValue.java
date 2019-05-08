@@ -69,6 +69,10 @@ public abstract class ContractValue {
     return false;
   }
 
+  public ContractValue invert() {
+    return null;
+  }
+  
   /**
    * @return true if this contract value represents a bounds-checking condition
    */
@@ -377,7 +381,15 @@ public abstract class ContractValue {
           }
         }
       }
+      if (value instanceof Qualifier && call instanceof PsiMethodCallExpression) {
+        return ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
+      }
       return null;
+    }
+
+    @Override
+    public ContractValue invert() {
+      return new Condition(myLeft, myRelationType.getNegated(), myRight);
     }
 
     @Override

@@ -354,8 +354,10 @@ public enum SpecialField implements VariableDescriptor {
    * @param type a qualifier type
    * @return a special field; null if no special field is available for given type
    */
+  @Contract("null -> null")
   @Nullable
   public static SpecialField fromQualifierType(PsiType type) {
+    if (type == null) return null;
     for (SpecialField value : VALUES) {
       if (value.isMyQualifierType(type)) {
         return value;
