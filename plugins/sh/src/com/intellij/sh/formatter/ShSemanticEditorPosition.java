@@ -45,7 +45,7 @@ class ShSemanticEditorPosition {
   }
 
   int getStartOffset() {
-    return myIterator.getStart();
+    return !myIterator.atEnd() ? myIterator.getStart() : -1;
   }
 
   @NotNull

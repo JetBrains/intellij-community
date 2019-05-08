@@ -15,20 +15,21 @@ public class ShLineIndentProviderTest extends LightPlatformCodeInsightFixtureTes
     return new File("testData/formatter").getAbsolutePath();
   }
 
-  public void testShebang()           { doTest(); }
-  public void testEmptyFunction()     { doTest(); }
-  public void testFunctionWithBody()  { doTest(); }
-  public void testFunctionBodyEnd()   { doTest(); }
-  public void testEmptyIf()           { doTest(); }
-  public void testIfWithElif()        { doTest(); }
-  public void testIfWithElse()        { doTest(); }
-  public void testIfEnd()             { doTest(); }
-  public void testWhile()             { doTest(); }
-  public void testUntil()             { doTest(); }
-  public void testFor()               { doTest(); }
-  public void testCaseClause()        { doTest(); }
-  public void testCaseEnd()           { doTest(); }
-  public void testCasePattern()       { doTest(); }
+  public void testShebang()               { doTest(); }
+  public void testEmptyFunction()         { doTest(); }
+  public void testFunctionWithBody()      { doTest(); }
+  public void testFunctionBodyEnd()       { doTest(); }
+  public void testEmptyIf()               { doTest(); }
+  public void testIfWithElif()            { doTest(); }
+  public void testIfWithElse()            { doTest(); }
+  public void testIfEnd()                 { doTest(); }
+  public void testWhile()                 { doTest(); }
+  public void testUntil()                 { doTest(); }
+  public void testFor()                   { doTest(); }
+  public void testCaseClause()            { doTest(); }
+  public void testCaseEnd()               { doTest(); }
+  public void testCasePattern()           { doTest(); }
+  public void testIndentAtBeginOfFile()   { doTest(); }
 
   private void doTest() {
     String testName = getTestName(true);
