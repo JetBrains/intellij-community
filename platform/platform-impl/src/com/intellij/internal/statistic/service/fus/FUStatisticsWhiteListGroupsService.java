@@ -113,6 +113,7 @@ public class FUStatisticsWhiteListGroupsService {
     public final ArrayList<WLGroup> groups = new ArrayList<>();
     @Nullable public Map<String, Set<String>> globalEnums;
     @Nullable public WLRule rules;
+    @Nullable public String version;
   }
 
   public static class WLGroup {

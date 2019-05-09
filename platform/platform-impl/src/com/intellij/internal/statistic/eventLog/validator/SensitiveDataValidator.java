@@ -137,7 +137,7 @@ public class SensitiveDataValidator {
   protected String getWhiteListContent() {
     String content = FUStatisticsWhiteListGroupsService.getFUSWhiteListContent();
     if (StringUtil.isNotEmpty(content)) {
-      FUSWhiteListPersistence.cacheWhiteList(content);
+      if (shouldUpdateCache(content)) FUSWhiteListPersistence.cacheWhiteList(content);
       return content;
     }
     return FUSWhiteListPersistence.getCachedWhiteList();
@@ -154,5 +154,24 @@ public class SensitiveDataValidator {
     public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
       return context.eventData;
     }
+  }
+
+  public static boolean shouldUpdateCache(@NotNull String gsonWhiteListContent) {
+    int cachedVersion = getVersion(FUSWhiteListPersistence.getCachedWhiteList());
+
+    return cachedVersion == 0 || getVersion(gsonWhiteListContent) > cachedVersion;
+  }
+
+  private static int getVersion(@Nullable String whiteListContent) {
+    if (whiteListContent == null) return 0;
+    FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
+    if (groups == null) return 0;
+    String version = groups.version;
+    if (version == null) return 0;
+    try {
+      return Integer.parseInt(version);
+    } catch (Exception ignored) {
+    }
+    return 0;
   }
 }
