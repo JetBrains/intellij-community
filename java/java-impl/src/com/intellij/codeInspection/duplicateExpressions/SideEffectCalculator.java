@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -54,7 +54,7 @@ class SideEffectCalculator {
         expression instanceof PsiClassObjectAccessExpression) {
       return false;
     }
-    int c = myCache.get(expression, -1);
+    int c = myCache.get(expression);
     if (c < 0) {
       c = calculateSideEffect(expression) ? 1 : 0;
       myCache.put(expression, c);
