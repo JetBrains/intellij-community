@@ -32,7 +32,6 @@ public interface JavaTokenType extends TokenType {
   IElementType CATCH_KEYWORD = new IKeywordElementType("CATCH_KEYWORD");
   IElementType CHAR_KEYWORD = new IKeywordElementType("CHAR_KEYWORD");
   IElementType CLASS_KEYWORD = new IKeywordElementType("CLASS_KEYWORD");
-  IElementType CONST_KEYWORD = new IKeywordElementType("CONST_KEYWORD");
   IElementType CONTINUE_KEYWORD = new IKeywordElementType("CONTINUE_KEYWORD");
   IElementType DEFAULT_KEYWORD = new IKeywordElementType("DEFAULT_KEYWORD");
   IElementType DO_KEYWORD = new IKeywordElementType("DO_KEYWORD");

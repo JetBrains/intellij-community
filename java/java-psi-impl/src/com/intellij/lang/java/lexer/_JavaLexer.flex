@@ -108,7 +108,6 @@ STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
   "catch" { return JavaTokenType.CATCH_KEYWORD; }
   "char" { return JavaTokenType.CHAR_KEYWORD; }
   "class" { return JavaTokenType.CLASS_KEYWORD; }
-  "const" { return JavaTokenType.CONST_KEYWORD; }
   "continue" { return JavaTokenType.CONTINUE_KEYWORD; }
   "default" { return JavaTokenType.DEFAULT_KEYWORD; }
   "do" { return JavaTokenType.DO_KEYWORD; }
@@ -120,7 +119,6 @@ STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
   "finally" { return JavaTokenType.FINALLY_KEYWORD; }
   "float" { return JavaTokenType.FLOAT_KEYWORD; }
   "for" { return JavaTokenType.FOR_KEYWORD; }
-  "goto" { return JavaTokenType.GOTO_KEYWORD; }
   "if" { return JavaTokenType.IF_KEYWORD; }
   "implements" { return JavaTokenType.IMPLEMENTS_KEYWORD; }
   "import" { return JavaTokenType.IMPORT_KEYWORD; }
