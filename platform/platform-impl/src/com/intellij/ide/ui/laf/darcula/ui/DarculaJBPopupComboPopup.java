@@ -251,7 +251,8 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
                                                   boolean cellHasFocus) {
       //noinspection unchecked
       Component component = myComboBox.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
-      if (component instanceof JComponent) {
+      if (component instanceof JComponent &&
+          !(component instanceof JSeparator || component instanceof TitledSeparator)) {
         customizeListRendererComponent((JComponent)component);
       }
       return component;
