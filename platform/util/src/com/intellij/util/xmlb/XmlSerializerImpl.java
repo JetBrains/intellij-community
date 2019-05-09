@@ -4,6 +4,7 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.serialization.ClassUtil;
 import com.intellij.util.serialization.MutableAccessor;
 import com.intellij.util.serialization.SerializationException;
 import com.intellij.util.xmlb.annotations.CollectionBean;
@@ -15,7 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -26,12 +30,12 @@ public final class XmlSerializerImpl {
     @Override
     @Nullable
     public final Binding getBinding(@NotNull Type type) {
-      return getBinding(typeToClass(type), type, null);
+      return getBinding(ClassUtil.typeToClass(type), type, null);
     }
 
     @Nullable
     protected final Binding getBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
-      return isPrimitive(aClass) ? null : getClassBinding(aClass, originalType, accessor);
+      return ClassUtil.isPrimitive(aClass) ? null : getClassBinding(aClass, originalType, accessor);
     }
 
     @Nullable
@@ -44,7 +48,7 @@ public final class XmlSerializerImpl {
     @Override
     public final Binding getBinding(@NotNull MutableAccessor accessor) {
       Type type = accessor.getGenericType();
-      return getBinding(typeToClass(type), type, accessor);
+      return getBinding(ClassUtil.typeToClass(type), type, accessor);
     }
 
     @Override
@@ -151,35 +155,6 @@ public final class XmlSerializerImpl {
     catch (Exception e) {
       throw new XmlSerializationException("Can't serialize instance of " + object.getClass(), e);
     }
-  }
-
-  @NotNull
-  static Class<?> typeToClass(@NotNull Type type) {
-    if (type instanceof Class) {
-      return (Class<?>)type;
-    }
-    else if (type instanceof TypeVariable) {
-      Type bound = ((TypeVariable)type).getBounds()[0];
-      return bound instanceof Class ? (Class)bound : (Class<?>)((ParameterizedType)bound).getRawType();
-    }
-    else if (type instanceof WildcardType) {
-      return (Class<?>)((WildcardType) type).getUpperBounds()[0];
-    }
-    else {
-      return (Class<?>)((ParameterizedType)type).getRawType();
-    }
-  }
-
-  static boolean isPrimitive(@NotNull Class<?> aClass) {
-    return aClass.isPrimitive() ||
-        aClass == String.class ||
-        aClass == Integer.class ||
-        aClass == Long.class ||
-        aClass == Boolean.class ||
-        aClass == Double.class ||
-        aClass == Float.class ||
-        aClass.isEnum() ||
-        Date.class.isAssignableFrom(aClass);
   }
 
   @Nullable

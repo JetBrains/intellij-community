@@ -2,6 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.serialization.ClassUtil;
 import com.intellij.util.serialization.MutableAccessor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.util.*;
 
 class CollectionBinding extends AbstractCollectionBinding  {
   CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
-    super(XmlSerializerImpl.typeToClass(type.getActualTypeArguments()[0]), accessor);
+    super(ClassUtil.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
 
   private static boolean isMutableCollection(@Nullable Object object) {

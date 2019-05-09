@@ -55,16 +55,6 @@ abstract class BasePrimitiveBinding extends Binding {
 
   @Nullable
   protected final Converter<Object> getConverter() {
-    //Converter<Object> converter = myConverter;
-    //if (converter == null && o instanceof Converter) {
-    //  try {
-    //    //noinspection unchecked
-    //    converter = (Converter<Object>)o;
-    //  }
-    //  catch (Exception e) {
-    //    LOG.warn(e);
-    //  }
-    //}
     return myConverter;
   }
 }

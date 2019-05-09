@@ -108,11 +108,13 @@ final class FieldAccessor implements MutableAccessor {
     return myField.getName();
   }
 
+  @NotNull
   @Override
   public Class<?> getValueClass() {
     return myField.getType();
   }
 
+  @NotNull
   @Override
   public Type getGenericType() {
     return myField.getGenericType();

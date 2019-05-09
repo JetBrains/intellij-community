@@ -4,6 +4,7 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.serialization.ClassUtil;
 import com.intellij.util.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.XMap;
@@ -54,8 +55,8 @@ class MapBinding extends Binding implements MultiNodeBinding {
     ParameterizedType type = (ParameterizedType)originalType;
     Type[] typeArguments = type.getActualTypeArguments();
 
-    keyClass = XmlSerializerImpl.typeToClass(typeArguments[0]);
-    valueClass = XmlSerializerImpl.typeToClass(typeArguments[1]);
+    keyClass = ClassUtil.typeToClass(typeArguments[0]);
+    valueClass = ClassUtil.typeToClass(typeArguments[1]);
 
     keyBinding = serializer.getBinding(keyClass, typeArguments[0]);
     valueBinding = serializer.getBinding(valueClass, typeArguments[1]);

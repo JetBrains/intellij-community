@@ -17,10 +17,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   private final boolean myFlat;
   private final Property.Style beanStyle;
 
-  AccessorBindingWrapper(@NotNull MutableAccessor accessor,
-                                @NotNull Binding binding,
-                                boolean flat,
-                                Property.Style beanStyle) {
+  AccessorBindingWrapper(@NotNull MutableAccessor accessor, @NotNull Binding binding, boolean flat, Property.Style beanStyle) {
     super(accessor);
 
     myBinding = binding;

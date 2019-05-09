@@ -14,8 +14,10 @@ public interface Accessor {
   @NotNull
   String getName();
 
+  @NotNull
   Class<?> getValueClass();
 
+  @NotNull
   Type getGenericType();
 
   boolean isWritable();

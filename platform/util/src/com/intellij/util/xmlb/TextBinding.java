@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.util.serialization.ClassUtil;
 import com.intellij.util.serialization.MutableAccessor;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -13,7 +14,7 @@ class TextBinding extends Binding {
   TextBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
-    valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());
+    valueClass = ClassUtil.typeToClass(accessor.getGenericType());
   }
 
   @Nullable
