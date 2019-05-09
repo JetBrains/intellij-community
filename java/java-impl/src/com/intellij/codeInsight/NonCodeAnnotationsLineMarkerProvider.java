@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
@@ -30,7 +29,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +43,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
-  private static final Function<PsiElement, String> ourTooltipProvider = nameIdentifier -> {
+public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
+  private final Function<PsiElement, String> myTooltipProvider = nameIdentifier -> {
     PsiModifierListOwner owner = (PsiModifierListOwner)nameIdentifier.getParent();
 
     return XmlStringUtil.wrapInHtml(NonCodeAnnotationGenerator.getNonCodeHeader(NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values()) +
@@ -59,19 +57,17 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
 
-    boolean includeSourceInferred = CodeInsightSettings.getInstance().SHOW_SOURCE_INFERRED_ANNOTATIONS;
-    boolean hasAnnotationsToShow = ContainerUtil.exists(NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values(),
-                                                        a -> includeSourceInferred || !a.isInferredFromSource());
-    if (!hasAnnotationsToShow) {
+    if (!hasAnnotationsToShow(owner)) {
       return null;
     }
 
     return new LineMarkerInfo<>(element, element.getTextRange(),
                                 AllIcons.Gutter.ExtAnnotation,
-                                Pass.LINE_MARKERS,
-                                ourTooltipProvider, MyIconGutterHandler.INSTANCE,
+                                myTooltipProvider, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }
+
+  protected abstract boolean hasAnnotationsToShow(@NotNull PsiModifierListOwner owner);
 
   @Nullable
   static PsiModifierListOwner getAnnotationOwner(@Nullable PsiElement element) {
@@ -85,12 +81,6 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
     PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
     if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;
     return (PsiModifierListOwner)owner;
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return "External annotations";
   }
 
   @Nullable
@@ -184,7 +174,6 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
       return action instanceof AnnotateIntentionAction ||
              action instanceof DeannotateIntentionAction ||
              action instanceof EditContractIntention ||
-             action instanceof ToggleSourceInferredAnnotations ||
              action instanceof MakeInferredAnnotationExplicit ||
              action instanceof MakeExternalAnnotationExplicit;
     }
