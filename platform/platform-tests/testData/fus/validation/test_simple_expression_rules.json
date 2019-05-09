@@ -19,6 +19,14 @@
           ]
         }
       }
+    },  {
+      "id": "my.simple.enum.node.with.empty.value",
+      "builds": [{"from": "191.4811"}],
+      "rules": {
+        "event_id": [
+          "{enum:AAA|}foo"
+        ]
+      }
     }
   ]
 }

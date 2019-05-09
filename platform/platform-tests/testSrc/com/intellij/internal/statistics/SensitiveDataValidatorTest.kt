@@ -138,13 +138,20 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   fun test_simple_expression_rules() {
     // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_],xxx:{enum:AAA|BBB|CCC},zzz{enum#myEnum},yyy"
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_expression_rules.json"))
-    val elg = EventLogGroup("my.simple.expression", 1)
+    var elg = EventLogGroup("my.simple.expression", 1)
 
     assertSize(1, validator.getEventRules(elg))
 
     assertEventAccepted(validator, elg, "JUST_TEXT[_123456_],xxx:CCC,zzzREF_AAA,yyy")
     assertEventRejected(validator, elg, "JUST_TEXT[_FOO_],xxx:CCC,zzzREF_AAA,yyy")
     assertEventRejected(validator, elg, "")
+
+    //  {enum:AAA|}foo
+    elg = EventLogGroup("my.simple.enum.node.with.empty.value", 1)
+    assertEventAccepted(validator, elg, "AAAfoo")
+    assertEventAccepted(validator, elg, "foo")
+    assertEventRejected(validator, elg, " foo")
+    assertEventRejected(validator, elg, " AAA foo")
   }
 //  @Test
 //  fun test_simple_util_rules() {
