@@ -316,16 +316,11 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   private void deleteTrackedBranchInBackground() {
-    new Task.Backgroundable(myProject, "Deleting Remote Branch " + myBranchName + "...") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        GitBrancher brancher = GitBrancher.getInstance(getProject());
-        MultiMap<String, GitRepository> grouped = groupTrackedBranchesByName();
-        for (String remoteBranch : grouped.keySet()) {
-          brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(grouped.get(remoteBranch)));
-        }
-      }
-    }.queue();
+    GitBrancher brancher = GitBrancher.getInstance(myProject);
+    MultiMap<String, GitRepository> grouped = groupTrackedBranchesByName();
+    for (String remoteBranch : grouped.keySet()) {
+      brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(grouped.get(remoteBranch)));
+    }
   }
 
   @NotNull
