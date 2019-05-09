@@ -43,6 +43,7 @@ autorelease
 autorotate
 azul
 backend
+backport
 backref
 backtrace
 barcode
@@ -169,6 +170,7 @@ decompiles
 decompiling
 dedent
 deduplicate
+deduplication
 deferrable
 deferrer
 deque
@@ -884,6 +886,7 @@ ungrouping
 unhandled
 uninstall
 uniques
+unmarshal
 unmerged
 unpivot
 unprotect
