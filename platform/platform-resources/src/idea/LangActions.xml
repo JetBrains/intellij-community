@@ -38,7 +38,8 @@
       <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
-    <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
+    <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"
+            icon="AllIcons.Actions.IntentionBulbGrey"/>
 
     <group id="ShowIntentionsGroup" compact="true">
       <reference ref="ShowIntentionActions"/>
