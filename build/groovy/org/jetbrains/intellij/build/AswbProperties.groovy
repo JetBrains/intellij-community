@@ -41,8 +41,7 @@ class AswbProperties extends AndroidStudioProperties {
     "-Djdk.util.zip.ensureTrailingSlash=false " + // upstream bug IDEA-177278 is fixed in 2017.2
     "-Dnele.mock.data=false " + // b/70291946
     "-Dcaches.indexerThreadsCount=24 " +
-    "-Didea.max.image.filesize=0 " +
-    "-Drundebug.select.device.snapshot.combo.box.visible=false "
+    "-Didea.max.image.filesize=0 "
 
   String customJvmMemoryOptionsX64 = "-Xms1g -Xmx5g"
 
