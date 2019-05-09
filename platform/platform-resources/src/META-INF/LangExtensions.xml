@@ -1170,6 +1170,7 @@
                           order="last"/>
 
     <printHandler implementation="com.intellij.codeEditor.printing.TextPrintHandler"/>
+    <customFileDropHandler implementation="com.intellij.application.options.colors.EditorColorSchemeDropHandler"/>
 
     <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
 
