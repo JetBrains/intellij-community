@@ -135,7 +135,10 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     if (!myTrackedBranches.isEmpty() &&
         hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
         trackedBranchIsNotProtected()) {
-      notification.addAction(NotificationAction.createSimple(DELETE_TRACKED_BRANCH, () -> deleteTrackedBranchInBackground()));
+      notification.addAction(NotificationAction.createSimple(DELETE_TRACKED_BRANCH, () -> {
+        notification.hideBalloon();
+        deleteTrackedBranchInBackground();
+      }));
     }
     myNotifier.notify(notification);
   }
