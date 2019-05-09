@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.service.fus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
@@ -55,8 +54,8 @@ public class FUStatisticsWhiteListGroupsService {
   }
 
   @Nullable
-  public static String getFUSWhiteListContent() {
-    return getFUSWhiteListContent(EventLogExternalSettingsService.getFeatureUsageSettings().getWhiteListProductUrl());
+  public static String loadWhiteListFromServer(@NotNull EventLogExternalSettingsService settingsService) {
+    return getFUSWhiteListContent(settingsService.getWhiteListProductUrl());
   }
 
   @Nullable

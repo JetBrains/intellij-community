@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.validator;
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
+import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
@@ -31,6 +32,7 @@ public class SensitiveDataValidator {
   protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
   private final EventLogWhitelistPersistence myWhitelistPersistence;
+  private final EventLogExternalSettingsService mySettingsService;
 
   @NotNull
   public static SensitiveDataValidator getInstance(@NotNull String recorderId) {
@@ -44,6 +46,7 @@ public class SensitiveDataValidator {
     mySemaphore = new Semaphore();
     isWhiteListInitialized = new AtomicBoolean(false);
     myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
+    mySettingsService = new EventLogExternalSettingsService(recorderId);
     updateValidators(myWhitelistPersistence.getCachedWhiteList());
   }
 
@@ -140,7 +143,7 @@ public class SensitiveDataValidator {
   }
 
   protected String getWhiteListContent() {
-    String content = FUStatisticsWhiteListGroupsService.getFUSWhiteListContent();
+    String content = FUStatisticsWhiteListGroupsService.loadWhiteListFromServer(mySettingsService);
     if (StringUtil.isNotEmpty(content)) {
       if (shouldUpdateCache(content)) myWhitelistPersistence.cacheWhiteList(content);
       return content;
