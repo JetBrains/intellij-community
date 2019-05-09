@@ -359,9 +359,9 @@ public class PluginDescriptorStructureUtil {
       if (element instanceof GenericDomValue) {
         return ((GenericDomValue)element).getRawText();
       }
-      if (element instanceof ExtensionDomExtender.SimpleTagValue) {
-        return ((ExtensionDomExtender.SimpleTagValue)element).getTagValue();
-      }
+      /*if (element instanceof ExtensionDomExtender.SimpleTagValue) {
+        return ((ExtensionDomExtender.SimpleTagValue)element).getStringValue();
+      }*/
     }
 
     return null;
@@ -426,7 +426,7 @@ public class PluginDescriptorStructureUtil {
     return subTagDescription.getValues(element).stream()
       .filter(e -> e instanceof ExtensionDomExtender.SimpleTagValue)
       .map(e -> (ExtensionDomExtender.SimpleTagValue)e)
-      .map(ExtensionDomExtender.SimpleTagValue::getTagValue)
+      .map(ExtensionDomExtender.SimpleTagValue::getStringValue)
       .findAny()
       .orElse(null);
   }
