@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.move;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -37,6 +38,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
@@ -65,8 +67,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
   @Override
-  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
-    if (targetContainer != null && !super.canMove(elements, targetContainer)) {
+  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
+    if (targetContainer != null && !super.canMove(elements, targetContainer, reference)) {
       return false;
     }
     // Local function or method
@@ -211,4 +213,11 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
   private static boolean isLocalFunction(@Nullable PsiElement resolved) {
     return resolved instanceof PyFunction && PsiTreeUtil.getParentOfType(resolved, ScopeOwner.class, true) instanceof PyFunction;
   }
+
+
+  @Override
+  public boolean supportsLanguage(@NotNull Language language) {
+    return language.isKindOf(PythonLanguage.getInstance());
+  }
+
 }
