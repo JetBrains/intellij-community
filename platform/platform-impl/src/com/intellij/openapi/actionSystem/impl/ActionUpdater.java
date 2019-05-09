@@ -241,7 +241,7 @@ class ActionUpdater {
       if (hideDisabled && !hasEnabledChildren(actionGroup, strategy)) {
         return Collections.emptyList();
       }
-      if (actionGroup.isPopup()) { // popup menu has its own presentation
+      if (actionGroup.isPopup(myPlace)) { // popup menu has its own presentation
         if (actionGroup.disableIfNoVisibleChildren()) {
           boolean visibleChildren = hasVisibleChildren(actionGroup, strategy);
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
