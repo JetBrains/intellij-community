@@ -403,4 +403,10 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
     return local.getInitializer();
   }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement element) {
+    return REFACTORING_NAME;
+  }
 }

@@ -52,4 +52,9 @@ public abstract class InlineActionHandler {
   }
 
   public abstract void inlineElement(Project project, Editor editor, PsiElement element);
+
+  @Nullable
+  public String getActionName(PsiElement element) {
+    return null;
+  }
 }
