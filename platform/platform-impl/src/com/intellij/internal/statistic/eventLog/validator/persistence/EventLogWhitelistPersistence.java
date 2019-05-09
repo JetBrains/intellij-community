@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog.validator.persistence;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,29 +13,36 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 
-public class FUSWhiteListPersistence {
+public class EventLogWhitelistPersistence {
   private static final Logger
-    LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.persistence.FUSWhiteListPersistence");
+    LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence");
 
-  private static final String WHITE_LIST_DATA_FILE = "fus-white-list.json";
-  public static final String FUS_WHITELIST_PATH = "fus-whitelist";
+  private static final String WHITE_LIST_DATA_FILE = "white-list.json";
+  public static final String FUS_WHITELIST_PATH = "event-log-whitelist";
 
-  @Nullable
-  private static File getWhiteListCacheDirectory() {
-    return Paths.get(PathManager.getConfigPath()).resolve(FUS_WHITELIST_PATH + "/").toFile();
+  @NotNull
+  private final String myRecorderId;
+
+  public EventLogWhitelistPersistence(@NotNull String recorderId) {
+    myRecorderId = recorderId;
   }
 
   @NotNull
-  private static File getFileInWhiteListCacheDirectory(@NotNull String fileName) {
+  private File getWhiteListCacheDirectory() {
+    return Paths.get(PathManager.getConfigPath()).resolve(FUS_WHITELIST_PATH + "/" + StringUtil.toLowerCase(myRecorderId) + "/").toFile();
+  }
+
+  @NotNull
+  private File getFileInWhiteListCacheDirectory(@NotNull String fileName) {
     return new File(getWhiteListCacheDirectory(), "/" + fileName);
   }
 
   @NotNull
-  static File getWhiteListFile() {
+  File getWhiteListFile() {
     return getFileInWhiteListCacheDirectory(WHITE_LIST_DATA_FILE);
   }
 
-  public static void cacheWhiteList(@NotNull String gsonWhiteListContent) {
+  public void cacheWhiteList(@NotNull String gsonWhiteListContent) {
     File file = getWhiteListFile();
     try {
       FileUtil.writeToFile(file, gsonWhiteListContent);
@@ -44,7 +52,7 @@ public class FUSWhiteListPersistence {
   }
 
   @Nullable
-  public static String getCachedWhiteList() {
+  public String getCachedWhiteList() {
     File file = getWhiteListFile();
     if (file.exists()) {
       try {

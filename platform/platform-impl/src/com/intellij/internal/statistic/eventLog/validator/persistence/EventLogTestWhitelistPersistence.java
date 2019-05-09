@@ -18,24 +18,25 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-public class FUSTestWhiteListPersistence {
+public class EventLogTestWhitelistPersistence {
   private static final String TEST_RULE = "{util#fus_test_mode}";
 
-  public static void addTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) throws IOException {
-    final WLGroups whitelist = loadTestWhitelist();
+  public static void addTestGroup(@NotNull String recorderId, @NotNull String groupId, @NotNull Set<String> eventData) throws IOException {
+    final EventLogWhitelistPersistence persistence = new EventLogWhitelistPersistence(recorderId);
+    final WLGroups whitelist = loadTestWhitelist(persistence);
     final WLGroup group = createTestGroup(groupId, eventData);
 
     whitelist.groups.stream().
       filter(g -> StringUtil.equals(g.id, groupId)).findFirst().
       ifPresent(whitelist.groups::remove);
     whitelist.groups.add(group);
-    final File file = FUSWhiteListPersistence.getWhiteListFile();
+    final File file = persistence.getWhiteListFile();
     FileUtil.writeToFile(file, new Gson().toJson(whitelist));
   }
 
   @NotNull
-  private static WLGroups loadTestWhitelist() {
-    final String existing = FUSWhiteListPersistence.getCachedWhiteList();
+  private static WLGroups loadTestWhitelist(@NotNull EventLogWhitelistPersistence persistence) {
+    final String existing = persistence.getCachedWhiteList();
     if (StringUtil.isNotEmpty(existing)) {
       final WLGroups loaded = FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
       if (loaded != null) {

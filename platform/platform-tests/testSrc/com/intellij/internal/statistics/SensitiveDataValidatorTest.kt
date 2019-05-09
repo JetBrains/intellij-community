@@ -239,7 +239,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
 
-  internal inner class TestSensitiveDataValidator constructor(private val myContent: String) : SensitiveDataValidator() {
+  internal inner class TestSensitiveDataValidator constructor(private val myContent: String) : SensitiveDataValidator("TEST") {
     override fun getWhiteListContent(): String {
       return myContent
     }
