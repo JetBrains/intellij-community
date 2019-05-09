@@ -127,13 +127,6 @@ public class InferenceSession {
     return elementFactory.createType(parameter);
   }
 
-  void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
-    final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(getArgumentList(parent));
-    initExpressionConstraints(parameters, args,
-                              currentMethod != null ? currentMethod.getElement() : null, 
-                              currentMethod != null && currentMethod.isVarargs());
-  }
-
   public void initExpressionConstraints(PsiParameter[] parameters,
                                         PsiExpression[] args,
                                         PsiMethod method,
@@ -165,7 +158,7 @@ public class InferenceSession {
     }
   }
   
-  private static PsiExpressionList getArgumentList(PsiElement parent) {
+  static PsiExpressionList getArgumentList(PsiElement parent) {
     if (parent instanceof PsiCall) {
       return ((PsiCall)parent).getArgumentList();
     }
@@ -273,7 +266,7 @@ public class InferenceSession {
 
   @NotNull
   public PsiSubstitutor infer() {
-    return infer(null, null, null);
+    return infer(null, null, null, null);
   }
 
 
@@ -282,13 +275,6 @@ public class InferenceSession {
                                            @NotNull MethodCandidateInfo properties,
                                            @NotNull PsiSubstitutor psiSubstitutor) {
     return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor);
-  }
-
-  @NotNull
-  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
-                              @Nullable PsiExpression[] args,
-                              @Nullable PsiElement parent) {
-    return infer(parameters, args, parent, MethodCandidateInfo.getCurrentMethod(getArgumentList(parent)));
   }
 
   @NotNull

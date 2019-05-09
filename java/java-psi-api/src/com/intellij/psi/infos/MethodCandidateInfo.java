@@ -444,7 +444,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       Project project = method.getProject();
       JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
       return javaPsiFacade.getResolveHelper()
-        .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy,
+        .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, this, parent, policy,
                             myLanguageLevel);
     }, !includeReturnConstraint);
   }

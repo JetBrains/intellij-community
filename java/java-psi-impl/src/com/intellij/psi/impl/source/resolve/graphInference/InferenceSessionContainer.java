@@ -50,10 +50,11 @@ public class InferenceSessionContainer {
                               @NotNull PsiParameter[] parameters,
                               @NotNull PsiExpression[] arguments,
                               @NotNull PsiSubstitutor partialSubstitutor,
-                              @NotNull final PsiElement parent,
-                              @NotNull final ParameterTypeInferencePolicy policy) {
+                              @NotNull PsiElement parent,
+                              @NotNull ParameterTypeInferencePolicy policy, 
+                              @Nullable MethodCandidateInfo currentMethod) {
+    final PsiExpressionList argumentList = InferenceSession.getArgumentList(parent);
     if (parent instanceof PsiCall) {
-      final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
       //overload resolution can't depend on outer call => should not traverse to top
       if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
           //But overload resolution can depend on type of lambda parameter. As it can't depend on lambda body,
@@ -97,7 +98,6 @@ public class InferenceSessionContainer {
           }
 
           if (session != null) {
-            final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
             final PsiSubstitutor childSubstitutor = inferNested(parameters, arguments, (PsiCall)parent, currentMethod, session);
             if (childSubstitutor != null) return childSubstitutor;
           }
@@ -109,8 +109,10 @@ public class InferenceSessionContainer {
     }
 
     final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent);
-    return inferenceSession.infer(parameters, arguments, parent);
+    inferenceSession.initExpressionConstraints(parameters, arguments, 
+                                               currentMethod != null ? currentMethod.getElement() : null, 
+                                               currentMethod != null && currentMethod.isVarargs());
+    return inferenceSession.infer(parameters, arguments, parent, currentMethod);
   }
 
   private static PsiSubstitutor inferNested(@NotNull final PsiParameter[] parameters,

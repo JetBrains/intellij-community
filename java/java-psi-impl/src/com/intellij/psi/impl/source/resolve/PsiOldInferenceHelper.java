@@ -9,6 +9,7 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -186,7 +187,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                            @NotNull PsiParameter[] parameters,
                                            @NotNull PsiExpression[] arguments,
-                                           @NotNull PsiSubstitutor partialSubstitutor,
+                                           @Nullable MethodCandidateInfo currentMethod, @NotNull PsiSubstitutor partialSubstitutor,
                                            @NotNull PsiElement parent,
                                            @NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull LanguageLevel languageLevel) {
