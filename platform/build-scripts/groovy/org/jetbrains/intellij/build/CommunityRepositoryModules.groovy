@@ -53,6 +53,7 @@ class CommunityRepositoryModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
+    "intellij.platform.util.ex",
     "intellij.platform.credentialStore",
     "intellij.platform.diff.impl",
     "intellij.platform.vcs.dvcs.impl",

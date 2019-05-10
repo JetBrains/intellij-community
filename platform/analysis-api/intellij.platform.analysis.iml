@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.editor" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
   </component>
 </module>

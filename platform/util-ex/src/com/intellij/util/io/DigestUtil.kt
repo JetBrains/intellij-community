@@ -16,5 +16,6 @@ object DigestUtil {
   @JvmStatic
   fun sha256() = getMessageDigest("SHA-256")
 
-  private fun getMessageDigest(algorithm: String): MessageDigest = MessageDigest.getInstance(algorithm, sunSecurityProvider)
+  private fun getMessageDigest(algorithm: String): MessageDigest = MessageDigest.getInstance(algorithm,
+                                                                                             sunSecurityProvider)
 }

@@ -15,5 +15,7 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
   </component>
 </module>
