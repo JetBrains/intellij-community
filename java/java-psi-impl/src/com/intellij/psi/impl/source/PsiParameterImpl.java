@@ -28,6 +28,7 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -66,8 +67,8 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       if (parameterIndex > -1) {
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
-          final PsiType functionalInterfaceType = LambdaUtil.ourParameterGuard.doPreventingRecursion(param, false,
-                                                                                                     () -> LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true));
+          final PsiType functionalInterfaceType = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(param, false,
+                                                                                                              () -> LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true));
           PsiType type = lambdaExpression.getGroundTargetType(functionalInterfaceType);
           if (type instanceof PsiIntersectionType) {
             final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();

@@ -452,12 +452,6 @@ public class InferenceSession {
         return true;
       }
     }
-
-    for (PsiParameter parameter : LambdaUtil.ourParameterGuard.currentStack()) {
-      if (parameter.getDeclarationScope() == arg) {
-        return true;
-      }
-    }
     return false;
   }
 

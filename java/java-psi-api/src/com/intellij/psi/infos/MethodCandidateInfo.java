@@ -360,8 +360,7 @@ public class MethodCandidateInfo extends CandidateInfo{
           if (!stackStamp.mayCacheNow() ||
               isOverloadCheck() ||
               !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-              markerList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(markerList.getParent()) ||
-              LambdaUtil.isLambdaParameterCheck()
+              markerList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(markerList.getParent()) 
             ) {
             return inferredSubstitutor;
           }

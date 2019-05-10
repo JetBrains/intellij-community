@@ -71,7 +71,7 @@ public class InferenceSessionContainer {
 
           InferenceSession session;
           if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() ||
-              LambdaUtil.isLambdaParameterCheck() || !policy.equals(DefaultParameterTypeInferencePolicy.INSTANCE)) {
+              !policy.equals(DefaultParameterTypeInferencePolicy.INSTANCE)) {
             session = startTopLevelInference(topLevelCall, policy, currentMethod);
           }
           else {

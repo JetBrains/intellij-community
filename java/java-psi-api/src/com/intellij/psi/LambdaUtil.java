@@ -723,10 +723,6 @@ public class LambdaUtil {
     return null;
   }
 
-  public static boolean isLambdaParameterCheck() {
-    return !ourParameterGuard.currentStack().isEmpty();
-  }
-
   @Nullable
   public static PsiCall treeWalkUp(PsiElement context) {
     PsiCall top = null;
