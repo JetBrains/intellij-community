@@ -8,6 +8,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.channels.Channels
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
@@ -167,7 +168,15 @@ fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
 @Throws(IOException::class)
-fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
+fun Path.readChars(): CharSequence {
+  // channel is used to avoid Files.size() call
+  Files.newByteChannel(this).use { channel ->
+    val size = channel.size().toInt()
+    Channels.newReader(channel, Charsets.UTF_8.newDecoder(), size).use { reader ->
+      return reader.readCharSequence(channel.size().toInt())
+    }
+  }
+}
 
 @Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
@@ -208,7 +217,9 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
 @JvmOverloads
 @Throws(IOException::class)
 fun Path.write(data: String, createParentDirs: Boolean = true): Path {
-  if (createParentDirs) parent?.createDirectories()
+  if (createParentDirs) {
+    parent?.createDirectories()
+  }
   Files.write(this, data.toByteArray())
   return this
 }

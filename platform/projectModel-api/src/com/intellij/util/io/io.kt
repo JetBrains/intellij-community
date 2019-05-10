@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.util.SmartList
 import com.intellij.util.text.CharArrayCharSequence
-import java.io.InputStreamReader
+import java.io.Reader
 import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.*
 
-fun InputStreamReader.readCharSequence(length: Int): CharSequence {
+fun Reader.readCharSequence(length: Int): CharSequence {
   use {
     val chars = CharArray(length)
     var count = 0
@@ -27,7 +27,7 @@ fun InputStreamReader.readCharSequence(length: Int): CharSequence {
 /**
  * Think twice before use - consider to to specify length.
  */
-fun InputStreamReader.readCharSequence(): CharSequence {
+fun Reader.readCharSequence(): CharSequence {
   var chars = CharArray(DEFAULT_BUFFER_SIZE)
   var buffers: MutableList<CharArray>? = null
   var count = 0
