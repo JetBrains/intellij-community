@@ -28,13 +28,13 @@ import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
  */
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard<PsiElement> ourOverloadGuard = RecursionManager.createGuard("overload.guard");
-  private static final ThreadLocal<Map<PsiElement, MethodCandidateInfo>> CURRENT_CANDIDATE = ThreadLocal.withInitial(HashMap::new);
   @ApplicabilityLevelConstant private volatile int myApplicabilityLevel;
   @ApplicabilityLevelConstant private volatile int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;
@@ -154,7 +153,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     final PsiSubstitutor substitutor = getSubstitutor(false);
-    @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(() -> computeWithKnownTargetType(() -> {
+    final Computable<Integer> computable = () -> computeWithKnownTargetType(() -> {
       //arg types are calculated here without additional constraints:
       //non-pertinent to applicability arguments of arguments would be skipped
       //known target types are cached so poly method calls are able to retrieve that target type when type inference is done
@@ -170,7 +169,12 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return level1;
-    }, substitutor), true);
+    }, substitutor);
+    //arg types are calculated here without additional constraints:
+    //non-pertinent to applicability arguments of arguments would be skipped
+    //known target types are cached so poly method calls are able to retrieve that target type when type inference is done
+    //see InferenceSession#getTargetTypeFromParent
+    @ApplicabilityLevelConstant int level = ObjectUtils.assertNotNull(ourOverloadGuard.doPreventingRecursion(getMarkerList(), false, computable));
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -319,25 +323,6 @@ public class MethodCandidateInfo extends CandidateInfo{
     return ThreeState.YES;
   }
 
-  private <T> T computeForOverloadedCandidate(final Computable<T> computable,
-                                              boolean applicabilityCheck) {
-    Map<PsiElement, MethodCandidateInfo> map = CURRENT_CANDIDATE.get();
-    final PsiElement argumentList = getMarkerList();
-    final MethodCandidateInfo alreadyThere = map.put(argumentList, this);
-    try {
-      return applicabilityCheck
-             ? ourOverloadGuard.doPreventingRecursion(argumentList, false, computable) 
-             : computable.compute();
-    }
-    finally {
-      if (alreadyThere == null) {
-        map.remove(argumentList);
-      } else {
-        map.put(argumentList, alreadyThere);
-      }
-    }
-  }
-
   @NotNull
   public PsiSubstitutor getSiteSubstitutor() {
     PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
@@ -468,7 +453,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   public PsiSubstitutor inferTypeArguments(@NotNull final ParameterTypeInferencePolicy policy,
                                            @NotNull final PsiExpression[] arguments,
                                            boolean includeReturnConstraint) {
-    return computeForOverloadedCandidate(() -> {
+    final Computable<PsiSubstitutor> computable = () -> {
       final PsiMethod method = getElement();
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
@@ -483,7 +468,11 @@ public class MethodCandidateInfo extends CandidateInfo{
       return javaPsiFacade.getResolveHelper()
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, this, parent, policy,
                             myLanguageLevel);
-    }, !includeReturnConstraint);
+    };
+    PsiSubstitutor substitutor = !includeReturnConstraint
+                                 ? ourOverloadGuard.doPreventingRecursion(getMarkerList(), false, computable)
+                                 : computable.compute();
+    return ObjectUtils.assertNotNull(substitutor);
   }
 
   public boolean isRawSubstitution() {
@@ -505,11 +494,6 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myArgumentList != null && myArgumentList.isValid();
   }
 
-
-  public static MethodCandidateInfo getCurrentMethod(PsiElement context) {
-    final Map<PsiElement, MethodCandidateInfo> currentMethodCandidates = CURRENT_CANDIDATE.get();
-    return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
-  }
 
   @Nullable
   public PsiType[] getArgumentTypes() {
