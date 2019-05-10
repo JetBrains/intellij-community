@@ -71,7 +71,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
     final XmlTagPattern.Capture resourceBundleTagPattern =
       XmlPatterns.xmlTag().withLocalName("resource-bundle").
-        withParent(DomPatterns.tagWithDom("idea-plugin", IdeaPlugin.class));
+        withParent(DomPatterns.tagWithDom(IdeaPlugin.TAG_NAME, IdeaPlugin.class));
     registrar.registerReferenceProvider(resourceBundleTagPattern, bundleReferenceProvider);
 
     XmlAttributeValuePattern bundlePattern = extensionAttributePattern(EXTENSION_TAG_NAMES, "bundle", "groupBundle");
