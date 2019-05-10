@@ -84,7 +84,10 @@ class ProgressDialog implements Disposable {
   private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(), this);
   private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(), this);
 
-  ProgressDialog(@NotNull ProgressWindow progressWindow, boolean shouldShowBackground, String cancelText, @Nullable Window parentWindow) {
+  ProgressDialog(@NotNull ProgressWindow progressWindow,
+                 boolean shouldShowBackground,
+                 @Nullable String cancelText,
+                 @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;
     myParentWindow = parentWindow;
     myShouldShowBackground = shouldShowBackground;
