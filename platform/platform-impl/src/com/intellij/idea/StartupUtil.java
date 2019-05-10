@@ -157,7 +157,6 @@ public class StartupUtil {
 
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-
     System.setProperty("idea.ui.util.static.init.enabled", "false");
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
       // see note about UIUtil static init - it is required even if headless
@@ -307,6 +306,10 @@ public class StartupUtil {
           activity.end();
         });
 
+        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+        }
+
         AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
       }
     }));
@@ -316,7 +319,6 @@ public class StartupUtil {
     Activity activity = StartUpMeasurer.start(Phases.CONFIGURE_LOGGING);
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
-    System.setProperty("com.jetbrains.suppressWindowRaise", "true");
     try {
       org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
       if (!root.getAllAppenders().hasMoreElements()) {
