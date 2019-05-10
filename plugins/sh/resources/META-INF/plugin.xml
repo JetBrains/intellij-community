@@ -54,7 +54,7 @@
     <renameHandler implementation="com.intellij.sh.ShRenameHandler"/>
 
     <intentionAction>
-      <className>com.intellij.sh.rename.ShRenameIntention</className>
+      <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
       <category>Shell Script</category>
     </intentionAction>
     <intentionAction>

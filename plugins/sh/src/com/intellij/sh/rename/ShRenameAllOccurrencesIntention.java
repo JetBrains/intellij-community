@@ -12,7 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShRenameIntention extends BaseIntentionAction implements ShortcutProvider {
+public class ShRenameAllOccurrencesIntention extends BaseIntentionAction implements ShortcutProvider {
   @NotNull
   @Override
   public String getFamilyName() {
