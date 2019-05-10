@@ -18,6 +18,8 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.impl.source.tree.injected.changesHandler.*
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.util.SmartList
+import com.intellij.util.component1
+import com.intellij.util.component2
 import com.intellij.util.containers.ContainerUtil
 import kotlin.math.max
 
@@ -30,7 +32,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       override fun documentChanged(event: DocumentEvent) {
         if (UndoManager.getInstance(myProject).isUndoInProgress) {
           PsiDocumentManagerBase.addRunOnCommit(myHostDocument) {
-            rebuildMarkers(markersWholeRange(markers) ?: failAndReport("cant get marker range"))
+            rebuildMarkers(markersWholeRange(markers) ?: failAndReport("can't get marker range in undo", event))
           }
         }
       }
@@ -76,7 +78,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       workingRange = workingRange union TextRange.from(rangeInHost.startOffset, newText.length)
     }
 
-    workingRange = markersWholeRange(affectedMarkers) union workingRange ?: failAndReport("no workingRange", e)
+    workingRange = workingRange ?: failAndReport("no workingRange", e)
     psiDocumentManager.commitDocument(myHostDocument)
     if (markersToRemove.isNotEmpty()) {
       val remainingRange = removeHostsFromConcatenation(markersToRemove)
@@ -90,8 +92,11 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       }
 
     }
+
+    val wholeRange = markersWholeRange(affectedMarkers) union workingRange ?: failAndReport("no wholeRange", e)
+
     CodeStyleManager.getInstance(myProject).reformatRange(
-      hostPsiFile, workingRange.startOffset, workingRange.endOffset, true)
+      hostPsiFile, wholeRange.startOffset, wholeRange.endOffset, true)
 
     rebuildMarkers(workingRange)
 
@@ -126,23 +131,33 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val hostPsiFile = psiDocumentManager.getPsiFile(myHostDocument) ?: failAndReport("no psiFile $myHostDocument")
     val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
 
-    // kind of heuristics, strange things will happen if there are multiple injected files in one host
-    val injectedPsiFiles = getInjectionHostAtRange(hostPsiFile, contextRange)?.let { host ->
-      injectedLanguageManager.getInjectedPsiFiles(host)?.mapNotNull { it.first as? PsiFile }
-    }.orEmpty()
+    val newInjectedFile = getInjectionHostAtRange(hostPsiFile, contextRange)?.let { host ->
 
-    val newInjectedFile = injectedPsiFiles.firstOrNull()
-    if (newInjectedFile != null && newInjectedFile !== myInjectedFile) {
-      myInjectedFile = newInjectedFile
+      val injectionRange = run {
+        val hostRange = host.textRange
+        val contextRangeTrimmed = hostRange.intersection(contextRange) ?: hostRange
+        contextRangeTrimmed.shiftLeft(hostRange.startOffset)
+      }
+
+      injectedLanguageManager.getInjectedPsiFiles(host)
+        .orEmpty()
+        .asSequence()
+        .filter { (_, range) -> range.length > 0 && injectionRange.contains(range) }
+        .mapNotNull { it.first as? PsiFile }
+        .firstOrNull()
     }
 
-    markers.forEach { it.dispose() }
-    markers.clear()
+    if (newInjectedFile !== myInjectedFile) {
+      myInjectedFile = newInjectedFile ?: myInjectedFile
 
-    //some hostless shreds could exist for keeping guarded values
-    val hostfulShreds = InjectedLanguageUtil.getShreds(myInjectedFile).filter { it.host != null }
-    val markersFromShreds = getMarkersFromShreds(hostfulShreds)
-    markers.addAll(markersFromShreds)
+      markers.forEach { it.dispose() }
+      markers.clear()
+
+      //some hostless shreds could exist for keeping guarded values
+      val hostfulShreds = InjectedLanguageUtil.getShreds(myInjectedFile).filter { it.host != null }
+      val markersFromShreds = getMarkersFromShreds(hostfulShreds)
+      markers.addAll(markersFromShreds)
+    }
   }
 
 
