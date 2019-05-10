@@ -505,7 +505,7 @@
     <codeInsight.lineMarkerProvider language="Groovy"
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Groovy"
-                                    implementationClass="com.intellij.codeInsight.ExternalAnnotationsLineMarkerProvider"/>
+                                    implementationClass="com.intellij.codeInsight.ExternalAnnotationLineMarkerProvider"/>
     <codeInsight.gotoSuper language="Groovy"
                            implementationClass="org.jetbrains.plugins.groovy.codeInsight.navigation.actions.GroovyGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>

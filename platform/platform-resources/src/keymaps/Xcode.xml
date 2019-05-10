@@ -448,6 +448,7 @@
     <keyboard-shortcut first-keystroke="control 2"/>
     <keyboard-shortcut first-keystroke="control 3"/>
   </action>
+  <action id="SwitcherRecentEditedChangedToggleCheckBox"/>
   <action id="RecentChangedFiles" />
   <action id="ToggleLineBreakpoint">
     <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>

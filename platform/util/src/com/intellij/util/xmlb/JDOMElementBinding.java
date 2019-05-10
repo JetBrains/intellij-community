@@ -11,15 +11,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
+final class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding, NestedBinding {
   private final String myTagName;
+  private final MutableAccessor myAccessor;
 
   JDOMElementBinding(@NotNull MutableAccessor accessor) {
-    super(accessor);
+    myAccessor = accessor;
 
     Tag tag = myAccessor.getAnnotation(Tag.class);
     String tagName = tag == null ? null : tag.value();
     myTagName = StringUtil.isEmpty(tagName) ? myAccessor.getName() : tagName;
+  }
+
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return myAccessor;
   }
 
   @Override
@@ -45,7 +52,7 @@ class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeB
     throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (myAccessor.getValueClass().isArray()) {

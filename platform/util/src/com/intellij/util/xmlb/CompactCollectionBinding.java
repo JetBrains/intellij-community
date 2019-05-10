@@ -13,16 +13,22 @@ import java.util.List;
 /**
  * @see com.intellij.util.xmlb.annotations.CollectionBean
  */
-class CompactCollectionBinding extends NotNullDeserializeBinding {
+final class CompactCollectionBinding extends NotNullDeserializeBinding implements NestedBinding {
   private final String name;
+  private final MutableAccessor accessor;
 
-  protected CompactCollectionBinding(@NotNull MutableAccessor accessor) {
-    super(accessor);
-
-    name = myAccessor.getName();
+  CompactCollectionBinding(@NotNull MutableAccessor accessor) {
+    this.accessor = accessor;
+    name = accessor.getName();
   }
 
-  @Nullable
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return accessor;
+  }
+
+  @NotNull
   @Override
   public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Element result = new Element(name);

@@ -2,6 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.serialization.ClassUtil;
 import com.intellij.util.serialization.MutableAccessor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -10,29 +11,16 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
-class CollectionBinding extends AbstractCollectionBinding  {
+final class CollectionBinding extends AbstractCollectionBinding  {
   CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
-    super(XmlSerializerImpl.typeToClass(type.getActualTypeArguments()[0]), accessor);
-  }
-
-  private static boolean isMutableCollection(@Nullable Object object) {
-    if (object == Collections.emptyList() || object == Collections.emptySet()) {
-      return false;
-    }
-    else if (object instanceof Collection) {
-      String simpleName = object.getClass().getSimpleName();
-      return !simpleName.equals("EmptyList") && !simpleName.startsWith("Unmodifiable") && !simpleName.equals("EmptySet");
-    }
-    else {
-      return false;
-    }
+    super(ClassUtil.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
 
   @NotNull
   @Override
   protected Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     Collection result;
-    boolean isContextMutable = isMutableCollection(context);
+    boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
     if (isContextMutable) {
       result = (Collection)context;
       result.clear();

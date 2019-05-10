@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.LazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public class SchemeImporterEP <S extends Scheme> extends AbstractExtensionPointB
   public static final ExtensionPointName<SchemeImporterEP> EP_NAME = ExtensionPointName.create("com.intellij.schemeImporter");
 
   @Attribute("name")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String name;
 
   @Attribute("schemeClass")

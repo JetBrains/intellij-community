@@ -5,9 +5,9 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.InstalledPluginsManagerMain;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
@@ -313,7 +313,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           if (list != null && list.size() > 0) {
             InstalledPluginsManagerMain.PluginDropHandler pluginHandler = new InstalledPluginsManagerMain.PluginDropHandler();
             if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
-              MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+              ProjectUtil.tryOpenFileList(null, list, "WelcomeFrame");
             }
             e.dropComplete(true);
             return;

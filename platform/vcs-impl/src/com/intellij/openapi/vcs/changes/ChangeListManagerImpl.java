@@ -1303,7 +1303,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
   }
 
-  private void scheduleUnversionedUpdate() {
+  public void scheduleUnversionedUpdate() {
     Couple<Collection<VirtualFile>> couple = ReadAction.compute(() -> {
       synchronized (myDataLock) {
         Collection<VirtualFile> unversioned = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();

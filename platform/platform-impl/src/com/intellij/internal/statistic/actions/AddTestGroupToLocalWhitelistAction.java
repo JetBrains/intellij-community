@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
-import com.intellij.internal.statistic.eventLog.validator.persistence.FUSTestWhiteListPersistence;
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,18 +29,19 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
 
     final AddGroupToLocalWhitelistDialog dialog = new AddGroupToLocalWhitelistDialog(project);
     final boolean result = dialog.showAndGet();
-    if (!result || StringUtil.isEmpty(dialog.getGroupId())) {
+    if (!result || StringUtil.isEmpty(dialog.getGroupId()) || StringUtil.isEmpty(dialog.getRecorderId())) {
       return;
     }
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Adding Test Group and Updating Whitelist...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final SensitiveDataValidator validator = SensitiveDataValidator.getInstance();
+        final String recorderId = dialog.getRecorderId();
+        final SensitiveDataValidator validator = SensitiveDataValidator.getInstance(recorderId);
 
         validator.update();
         try {
-          FUSTestWhiteListPersistence.addTestGroup(dialog.getGroupId(), dialog.getEventData());
+          EventLogTestWhitelistPersistence.addTestGroup(recorderId, dialog.getGroupId(), dialog.getEventData());
           validator.reload();
           showNotification(project, e, MessageType.INFO, "Group '" + dialog.getGroupId() + "' was added to local whitelist");
         }

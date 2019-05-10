@@ -78,6 +78,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       public String getTextFor(T value) {
         Component component = myComboBox.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
         return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
+               component instanceof JLabel ? ((JLabel)component).getText() :
                component instanceof SimpleColoredComponent ?
                ((SimpleColoredComponent)component).getCharSequence(false).toString() : String.valueOf(value);
       }
@@ -250,7 +251,8 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
                                                   boolean cellHasFocus) {
       //noinspection unchecked
       Component component = myComboBox.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
-      if (component instanceof JComponent) {
+      if (component instanceof JComponent &&
+          !(component instanceof JSeparator || component instanceof TitledSeparator)) {
         customizeListRendererComponent((JComponent)component);
       }
       return component;

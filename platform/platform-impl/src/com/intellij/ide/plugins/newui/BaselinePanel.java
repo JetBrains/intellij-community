@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class BaselinePanel extends NonOpaquePanel {
   private Component myBaseComponent;
-  private final java.util.List<Component> myVersionComponents = new ArrayList<>();
+  private final List<Component> myVersionComponents = new ArrayList<>();
   private final List<Component> myButtonComponents = new ArrayList<>();
   private boolean[] myButtonEnableStates;
   private Component myProgressComponent;

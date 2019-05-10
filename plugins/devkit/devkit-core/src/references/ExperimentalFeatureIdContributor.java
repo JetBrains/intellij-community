@@ -12,11 +12,11 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 
 import java.util.Collections;
 import java.util.List;
@@ -93,10 +93,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       final DomFixedChildDescription description = extension.getGenericInfo().getFixedChildDescription("description");
       if (description == null) return null;
       final DomElement element = ContainerUtil.getFirstItem(description.getValues(extension));
-      if (element instanceof ExtensionDomExtender.SimpleTagValue) {
-        return ((ExtensionDomExtender.SimpleTagValue)element).getTagValue();
-      }
-      return null;
+      return element instanceof GenericDomValue ? ((GenericDomValue)element).getStringValue() : null;
     }
   }
 }

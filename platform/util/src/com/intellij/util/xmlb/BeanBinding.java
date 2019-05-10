@@ -4,11 +4,9 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.serialization.MutableAccessor;
 import com.intellij.util.serialization.PropertyCollector;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
 import org.jdom.Comment;
@@ -20,23 +18,23 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class BeanBinding extends NotNullDeserializeBinding {
-  private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.newConcurrentMap();
   private static final PropertyCollector PROPERTY_COLLECTOR = new XmlSerializerPropertyCollector();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  protected Binding[] myBindings;
+  protected NestedBinding[] myBindings;
 
   protected final Class<?> myBeanClass;
 
   ThreeState compareByFields = ThreeState.UNSURE;
 
-  public BeanBinding(@NotNull Class<?> beanClass, @Nullable MutableAccessor accessor) {
-    super(accessor);
-
+  public BeanBinding(@NotNull Class<?> beanClass) {
     assert !beanClass.isArray() : "Bean is an array: " + beanClass;
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
@@ -52,9 +50,9 @@ public class BeanBinding extends NotNullDeserializeBinding {
     Property classAnnotation = myBeanClass.getAnnotation(Property.class);
 
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
-    myBindings = new Binding[accessors.size()];
+    myBindings = new NestedBinding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
+      NestedBinding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
       binding.init(originalType, serializer);
       myBindings[i] = binding;
     }
@@ -72,9 +70,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @Nullable
   public Element serializeInto(@NotNull Object o, @Nullable Element element, @Nullable SerializationFilter filter) {
-    for (Binding binding : myBindings) {
-      Accessor accessor = binding.getAccessor();
-      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(accessor, o)) {
+    for (NestedBinding binding : myBindings) {
+      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(binding.getAccessor(), o)) {
         continue;
       }
 
@@ -84,7 +81,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @Nullable
-  protected final Element serializePropertyInto(@NotNull Binding binding,
+  protected final Element serializePropertyInto(@NotNull NestedBinding binding,
                                                 @NotNull Object o,
                                                 @Nullable Element element,
                                                 @Nullable SerializationFilter filter,
@@ -120,7 +117,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
         element.setAttribute((org.jdom.Attribute)node);
       }
       else {
-        addContent(element, node);
+        Binding.addContent(element, node);
       }
     }
     return element;
@@ -140,7 +137,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   final boolean equalByFields(@NotNull Object currentValue, @NotNull Object defaultValue, @NotNull SkipDefaultsSerializationFilter filter) {
-    for (Binding binding : myBindings) {
+    for (NestedBinding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
       if (!filter.equal(binding, accessor.read(currentValue), accessor.read(defaultValue))) {
         return false;
@@ -160,7 +157,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     weight = 0;
-    for (Binding binding : myBindings) {
+    for (NestedBinding binding : myBindings) {
       String name = binding.getAccessor().getName();
       if (!weights.containsKey(name)) {
         weights.put(name, weight);
@@ -189,7 +186,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
       if (StringUtil.isEmpty(attribute.getNamespaceURI())) {
-        for (Binding binding : myBindings) {
+        for (NestedBinding binding : myBindings) {
           if (binding instanceof AttributeBinding && ((AttributeBinding)binding).myName.equals(attribute.getName())) {
             if (accessorNameTracker != null) {
               accessorNameTracker.add(binding.getAccessor().getName());
@@ -201,14 +198,14 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
-    MultiMap<Binding, Element> data = null;
+    MultiMap<NestedBinding, Element> data = null;
     nextNode:
     for (Content content : element.getContent()) {
       if (content instanceof Comment) {
         continue;
       }
 
-      for (Binding binding : myBindings) {
+      for (NestedBinding binding : myBindings) {
         if (content instanceof org.jdom.Text) {
           if (binding instanceof TextBinding) {
             ((TextBinding)binding).set(result, content.getValue());
@@ -242,7 +239,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (data != null) {
-      for (Binding binding : data.keySet()) {
+      for (NestedBinding binding : data.keySet()) {
         if (accessorNameTracker != null) {
           accessorNameTracker.add(binding.getAccessor().getName());
         }
@@ -285,18 +282,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
-    List<MutableAccessor> accessors = ourAccessorCache.get(aClass);
-    if (accessors != null) {
-      return accessors;
-    }
-
-    accessors = PROPERTY_COLLECTOR.collect(aClass);
-    ourAccessorCache.put(aClass, accessors);
-
+    List<MutableAccessor> accessors = PROPERTY_COLLECTOR.collect(aClass);
     if (accessors.isEmpty() && !isAssertBindings(aClass)) {
       LOG.warn("no accessors for " + aClass);
     }
-
     return accessors;
   }
 
@@ -313,7 +302,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
     XmlSerializerPropertyCollector() {
-      super(/* collectAccessors = */ true);
+      super(PropertyCollector.COLLECT_ACCESSORS);
     }
 
     @Override
@@ -342,7 +331,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
+  private static NestedBinding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
     Attribute attribute = accessor.getAnnotation(Attribute.class);
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute);
@@ -360,7 +349,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
     Binding binding = serializer.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
-      return binding;
+      return ((JDOMElementBinding)binding);
     }
 
     Tag tag = accessor.getAnnotation(Tag.class);

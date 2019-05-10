@@ -51,7 +51,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-    final PsiModifierListOwner owner = ExternalAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
+    final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
     if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
@@ -73,7 +73,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-    final PsiModifierListOwner owner = ExternalAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
+    final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
     assert owner != null;
     final PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null;

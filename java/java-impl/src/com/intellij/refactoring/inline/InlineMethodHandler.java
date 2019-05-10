@@ -15,6 +15,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.function.Supplier;
@@ -171,5 +172,11 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
       }
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement element) {
+    return REFACTORING_NAME + "...";
   }
 }

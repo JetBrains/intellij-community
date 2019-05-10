@@ -60,19 +60,19 @@ abstract class RestService : HttpRequestHandler() {
     const val PREFIX = "api"
 
     @JvmStatic
-    protected fun activateLastFocusedFrame() {
+    fun activateLastFocusedFrame() {
       (IdeFocusManager.getGlobalInstance().lastFocusedFrame as? Window)?.toFront()
     }
 
     @JvmStatic
-    protected fun createJsonReader(request: FullHttpRequest): JsonReader {
+    fun createJsonReader(request: FullHttpRequest): JsonReader {
       val reader = JsonReader(ByteBufInputStream(request.content()).reader())
       reader.isLenient = true
       return reader
     }
 
     @JvmStatic
-    protected fun createJsonWriter(out: OutputStream): JsonWriter {
+    fun createJsonWriter(out: OutputStream): JsonWriter {
       val writer = JsonWriter(out.writer())
       writer.setIndent("  ")
       return writer
@@ -84,12 +84,12 @@ abstract class RestService : HttpRequestHandler() {
     }
 
     @JvmStatic
-    protected fun sendOk(request: FullHttpRequest, context: ChannelHandlerContext) {
+    fun sendOk(request: FullHttpRequest, context: ChannelHandlerContext) {
       sendStatus(HttpResponseStatus.OK, HttpUtil.isKeepAlive(request), context.channel())
     }
 
     @JvmStatic
-    protected fun sendStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
+    fun sendStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
       val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status)
       HttpUtil.setContentLength(response, 0)
       response.addCommonHeaders()
@@ -102,13 +102,13 @@ abstract class RestService : HttpRequestHandler() {
     }
 
     @JvmStatic
-    protected fun send(byteOut: BufferExposingByteArrayOutputStream, request: HttpRequest, context: ChannelHandlerContext) {
+    fun send(byteOut: BufferExposingByteArrayOutputStream, request: HttpRequest, context: ChannelHandlerContext) {
       val response = response("application/json", Unpooled.wrappedBuffer(byteOut.internalBuffer, 0, byteOut.size()))
       sendResponse(request, context, response)
     }
 
     @JvmStatic
-    protected fun sendResponse(request: HttpRequest, context: ChannelHandlerContext, response: HttpResponse) {
+    fun sendResponse(request: HttpRequest, context: ChannelHandlerContext, response: HttpResponse) {
       response.addNoCache()
       response.headers().set("X-Frame-Options", "Deny")
       response.send(context.channel(), request)
@@ -116,18 +116,18 @@ abstract class RestService : HttpRequestHandler() {
 
     @Suppress("SameParameterValue")
     @JvmStatic
-    protected fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? {
+    fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? {
       return urlDecoder.parameters().get(name)?.lastOrNull()
     }
 
     @JvmStatic
-    protected fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int {
+    fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int {
       return StringUtilRt.parseInt(getStringParameter(name, urlDecoder).nullize(nullizeSpaces = true), -1)
     }
 
     @JvmOverloads
     @JvmStatic
-    protected fun getBooleanParameter(name: String, urlDecoder: QueryStringDecoder, defaultValue: Boolean = false): Boolean {
+    fun getBooleanParameter(name: String, urlDecoder: QueryStringDecoder, defaultValue: Boolean = false): Boolean {
       val values = urlDecoder.parameters().get(name) ?: return defaultValue
       // if just name specified, so, true
       val value = values.lastOrNull() ?: return true

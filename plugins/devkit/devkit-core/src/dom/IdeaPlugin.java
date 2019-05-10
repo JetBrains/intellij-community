@@ -12,6 +12,9 @@ import java.util.List;
 @Presentation(icon = "AllIcons.Nodes.Plugin", typeName = "Plugin")
 @Stubbed
 public interface IdeaPlugin extends DomElement {
+
+  String TAG_NAME = "idea-plugin";
+
   @Nullable
   String getPluginId();
 

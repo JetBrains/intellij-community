@@ -391,10 +391,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     return false;
   }
 
-  public interface SimpleTagValue extends DomElement {
-    @SuppressWarnings("UnusedDeclaration")
-    @TagValue
-    String getTagValue();
+  public interface SimpleTagValue extends GenericDomValue<String> {
   }
 
   @SuppressWarnings("ClassExplicitlyAnnotation")

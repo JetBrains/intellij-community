@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-abstract class BasePrimitiveBinding extends Binding {
+abstract class BasePrimitiveBinding implements NestedBinding {
+  protected final MutableAccessor myAccessor;
   protected final String myName;
 
   @Nullable
@@ -20,11 +21,17 @@ abstract class BasePrimitiveBinding extends Binding {
   protected Binding myBinding;
 
   protected BasePrimitiveBinding(@NotNull MutableAccessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
-    super(accessor);
+    myAccessor = accessor;
 
     myName = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
     //noinspection unchecked
     myConverter = converterClass == null || converterClass == Converter.class ? null : ReflectionUtil.newInstance(converterClass);
+  }
+
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return myAccessor;
   }
 
   @Override
@@ -55,16 +62,6 @@ abstract class BasePrimitiveBinding extends Binding {
 
   @Nullable
   protected final Converter<Object> getConverter() {
-    //Converter<Object> converter = myConverter;
-    //if (converter == null && o instanceof Converter) {
-    //  try {
-    //    //noinspection unchecked
-    //    converter = (Converter<Object>)o;
-    //  }
-    //  catch (Exception e) {
-    //    LOG.warn(e);
-    //  }
-    //}
     return myConverter;
   }
 }

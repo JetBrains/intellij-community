@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
@@ -408,7 +408,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
       return true
     }
 
-    override fun hashCode(): Int = StringUtil.hashCode(content)
+    override fun hashCode(): Int = StringUtil.stringHashCode(content)
 
     private data class ChangeState(private val content: CharSequence,
                                    private val starts: Trio<Int>,
@@ -425,7 +425,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
         return true
       }
 
-      override fun hashCode(): Int = StringUtil.hashCode(content)
+      override fun hashCode(): Int = StringUtil.stringHashCode(content)
     }
   }
 }

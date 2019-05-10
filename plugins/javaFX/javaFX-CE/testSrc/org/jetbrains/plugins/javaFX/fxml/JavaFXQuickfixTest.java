@@ -36,7 +36,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      AbstractJavaFXTestCase.addJavaFxJarAsLibrary(module, model);
+      AbstractJavaFXTestCase.addJavaFxJarAsLibrary(model);
       PsiTestUtil.addLibrary(model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
       super.configureModule(module, model, contentEntry);
     }

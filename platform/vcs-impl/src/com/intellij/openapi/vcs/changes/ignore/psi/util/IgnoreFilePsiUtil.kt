@@ -5,6 +5,8 @@ import com.intellij.lang.ASTFactory
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.IgnoreSettingsType
@@ -34,6 +36,7 @@ fun updateIgnoreBlock(project: Project,
       updateIgnoreBlock(psiParserFacade, ignoreFilePsi, ignoredGroupDescription,
                         newEntries.map { it.toPsiElement(psiFactory, ignoreFilePsi) })
     }
+    ignoreFile.save()
   }
   return ignoreFilePsi
 }
@@ -52,6 +55,22 @@ fun addNewElementsToIgnoreBlock(project: Project,
                                     it.toPsiElement(psiFactory, ignoreFilePsi)
                                   })
     }
+    ignoreFile.save()
+  }
+  return ignoreFilePsi
+}
+
+fun addNewElements(project: Project, ignoreFile: VirtualFile, vararg newEntries: IgnoredFileDescriptor): PsiFile? {
+  val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
+  val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
+  invokeAndWaitIfNeeded {
+    runUndoTransparentWriteAction {
+      addNewElements(ignoreFilePsi,
+                     newEntries.map {
+                       it.toPsiElement(psiFactory, ignoreFilePsi)
+                     })
+    }
+    ignoreFile.save()
   }
   return ignoreFilePsi
 }
@@ -75,6 +94,15 @@ private fun updateIgnoreBlock(psiParserFacade: PsiParserFacade,
       lastElementInBlock = ignoreFilePsi.addAfter(newEntry, lastElementInBlock)
     }
     replacementCandidate = replacementCandidate.nextIgnoreGroupElement()
+  }
+}
+
+private fun addNewElements(ignoreFilePsi: PsiFile, newEntries: List<PsiElement>) {
+  with(ignoreFilePsi) {
+    if (!lastChild.isNewLine()) {
+      add(createNewline())
+    }
+    newEntries.forEach { add(it); add(createNewline()) }
   }
 }
 
@@ -165,3 +193,14 @@ private fun PsiElement?.nextIgnoreGroupElement(): PsiElement? {
 }
 
 private fun PsiElement?.isNewLine() = this?.text?.contains(NEWLINE) ?: false
+
+private fun VirtualFile.save() =
+  runWriteAction {
+    if (isDirectory || !isValid) {
+      return@runWriteAction
+    }
+    val documentManager = FileDocumentManager.getInstance()
+    if (documentManager.isFileModified(this)) {
+      documentManager.getDocument(this)?.let(documentManager::saveDocumentAsIs)
+    }
+  }

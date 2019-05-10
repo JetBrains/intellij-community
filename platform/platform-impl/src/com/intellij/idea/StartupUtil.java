@@ -51,10 +51,13 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+
+import static java.nio.file.attribute.PosixFilePermission.*;
 
 /**
  * @author yole
@@ -64,6 +67,8 @@ public class StartupUtil {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   public static final String IDEA_STARTUP_LISTENER_PROPERTY = "idea.startup.listener";
+
+  @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
 
@@ -152,7 +157,6 @@ public class StartupUtil {
 
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-
     System.setProperty("idea.ui.util.static.init.enabled", "false");
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
       // see note about UIUtil static init - it is required even if headless
@@ -302,6 +306,10 @@ public class StartupUtil {
           activity.end();
         });
 
+        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+        }
+
         AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
       }
     }));
@@ -311,7 +319,6 @@ public class StartupUtil {
     Activity activity = StartUpMeasurer.start(Phases.CONFIGURE_LOGGING);
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
-    System.setProperty("com.jetbrains.suppressWindowRaise", "true");
     try {
       org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
       if (!root.getAllAppenders().hasMoreElements()) {
@@ -375,12 +382,12 @@ public class StartupUtil {
   private static synchronized boolean checkSystemFolders() {
     String configPath = PathManager.getConfigPath();
     PathManager.ensureConfigFolderExists();
-    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, false)) {
+    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
       return false;
     }
 
     String systemPath = PathManager.getSystemPath();
-    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, false)) {
+    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, true, false)) {
       return false;
     }
 
@@ -392,62 +399,72 @@ public class StartupUtil {
       return false;
     }
 
-    return checkDirectory(PathManager.getLogPath(), "Log", PathManager.PROPERTY_LOG_PATH, false, false) &&
-           checkDirectory(PathManager.getTempPath(), "Temp", PathManager.PROPERTY_SYSTEM_PATH, false, SystemInfo.isXWindow);
+    String logPath = PathManager.getLogPath(), tempPath = PathManager.getTempPath();
+    return checkDirectory(logPath, "Log", PathManager.PROPERTY_LOG_PATH, !FileUtil.isAncestor(systemPath, logPath, true), false, false) &&
+           checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !FileUtil.isAncestor(systemPath, tempPath, true), false, SystemInfo.isXWindow);
   }
 
-  private static boolean checkDirectory(String path, String kind, String property, boolean checkLock, boolean checkExec) {
-    File directory = new File(path);
+  @SuppressWarnings("SSBasedInspection")
+  private static boolean checkDirectory(String path, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
+    String problem = null, reason = null;
+    Path tempFile = null;
 
-    if (!FileUtil.createDirectory(directory)) {
-      String message = kind + " directory '" + path + "' is invalid.\n\n" +
-                       "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.";
-      Main.showMessage("Invalid IDE Configuration", message, true);
+    try {
+      problem = "cannot create the directory";
+      reason = "path is incorrect";
+      Path directory = Paths.get(path);
+
+      if (!Files.isDirectory(directory)) {
+        problem = "cannot create the directory";
+        reason = "parent directory is read-only or the user lacks necessary permissions";
+        Files.createDirectories(directory);
+      }
+
+      if (checkWrite || checkLock || checkExec) {
+        problem = "cannot create a temporary file in the directory";
+        reason = "the directory is read-only or the user lacks necessary permissions";
+        tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
+        OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
+        Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
+
+        if (checkLock) {
+          problem = "cannot create a lock file in the directory";
+          reason = "the directory is located on a network disk";
+          try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
+            if (lock == null) throw new IOException("File is locked");
+          }
+        }
+        else if (checkExec) {
+          problem = "cannot execute a test script in the directory";
+          reason = "the partition is mounted with 'no exec' option";
+          Files.getFileAttributeView(tempFile, PosixFileAttributeView.class).setPermissions(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
+          int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
+          if (ec != 0) {
+            throw new IOException("Unexpected exit value: " + ec);
+          }
+        }
+      }
+
+      return true;
+    }
+    catch (Exception e) {
+      String title = "Invalid " + kind + " Directory";
+      String advice = SystemInfo.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
+                      ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
+                        "Please use Finder to move it to another location."
+                      : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
+                        "otherwise please re-install the IDE.";
+      String message = "The IDE " + problem + ".\nPossible reason: " + reason + ".\n\n" + advice +
+                       "\n\n-----\nLocation: " + path + "\n" + e.getClass().getName() + ": " + e.getMessage();
+      Main.showMessage(title, message, true);
       return false;
     }
-
-    String details = null;
-    File tempFile = new File(directory, "ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
-    OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
-
-    if (checkLock) {
-      try (FileChannel channel = FileChannel.open(tempFile.toPath(), options); FileLock lock = channel.tryLock()) {
-        if (lock == null) {
-          details = "cannot exclusively lock temporary file";
-        }
-      }
-      catch (IOException e) {
-        details = "cannot create exclusive file lock (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ')';
+    finally {
+      if (tempFile != null) {
+        try { Files.deleteIfExists(tempFile); }
+        catch (Exception ignored) { }
       }
     }
-    else if (checkExec) {
-      try {
-        Files.write(tempFile.toPath(), "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
-        if (!tempFile.setExecutable(true, true)) {
-          details = "cannot set executable permission";
-        }
-        else if (new ProcessBuilder(tempFile.getAbsolutePath()).start().waitFor() != 0) {
-          details = "cannot execute test script";
-        }
-      }
-      catch (IOException | InterruptedException e) {
-        details = e.getClass().getSimpleName() + ": " + e.getMessage();
-      }
-    }
-
-    FileUtil.delete(tempFile);
-
-    if (details != null) {
-      String message = kind + " path '" + path + "' cannot be used by the IDE.\n\n" +
-                       "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.\n\n" +
-                       "Reason: " + details;
-      Main.showMessage("Invalid IDE Configuration", message, true);
-      return false;
-    }
-
-    return true;
   }
 
   private enum ActivationResult { STARTED, ACTIVATED, FAILED }
