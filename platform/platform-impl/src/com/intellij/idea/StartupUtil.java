@@ -379,12 +379,12 @@ public class StartupUtil {
   private static synchronized boolean checkSystemFolders() {
     String configPath = PathManager.getConfigPath();
     PathManager.ensureConfigFolderExists();
-    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, false)) {
+    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
       return false;
     }
 
     String systemPath = PathManager.getSystemPath();
-    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, false)) {
+    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, true, false)) {
       return false;
     }
 
@@ -396,12 +396,13 @@ public class StartupUtil {
       return false;
     }
 
-    return checkDirectory(PathManager.getLogPath(), "Log", PathManager.PROPERTY_LOG_PATH, false, false) &&
-           checkDirectory(PathManager.getTempPath(), "Temp", PathManager.PROPERTY_SYSTEM_PATH, false, SystemInfo.isXWindow);
+    String logPath = PathManager.getLogPath(), tempPath = PathManager.getTempPath();
+    return checkDirectory(logPath, "Log", PathManager.PROPERTY_LOG_PATH, !FileUtil.isAncestor(systemPath, logPath, true), false, false) &&
+           checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !FileUtil.isAncestor(systemPath, tempPath, true), false, SystemInfo.isXWindow);
   }
 
   @SuppressWarnings("SSBasedInspection")
-  private static boolean checkDirectory(String path, String kind, String property, boolean checkLock, boolean checkExec) {
+  private static boolean checkDirectory(String path, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
     String problem = null, reason = null;
     Path tempFile = null;
 
@@ -416,27 +417,29 @@ public class StartupUtil {
         Files.createDirectories(directory);
       }
 
-      problem = "cannot create a temporary file in the directory";
-      reason = "the directory is read-only or the user lacks necessary permissions";
-      tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
-      OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
-      Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
+      if (checkWrite || checkLock || checkExec) {
+        problem = "cannot create a temporary file in the directory";
+        reason = "the directory is read-only or the user lacks necessary permissions";
+        tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
+        OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
+        Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
 
-      if (checkLock) {
-        problem = "cannot create a lock file in the directory";
-        reason = "the directory is located on a network disk";
-        try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
-          if (lock == null) throw new IOException("File is locked");
+        if (checkLock) {
+          problem = "cannot create a lock file in the directory";
+          reason = "the directory is located on a network disk";
+          try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
+            if (lock == null) throw new IOException("File is locked");
+          }
         }
-      }
-      else if (checkExec) {
-        problem = "cannot execute a test script in the directory";
-        reason = "the partition is mounted with 'no exec' option";
-        PosixFileAttributeView view = Files.getFileAttributeView(tempFile, PosixFileAttributeView.class);
-        view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
-        int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
-        if (ec != 0) {
-          throw new IOException("Unexpected exit value: " + ec);
+        else if (checkExec) {
+          problem = "cannot execute a test script in the directory";
+          reason = "the partition is mounted with 'no exec' option";
+          PosixFileAttributeView view = Files.getFileAttributeView(tempFile, PosixFileAttributeView.class);
+          view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
+          int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
+          if (ec != 0) {
+            throw new IOException("Unexpected exit value: " + ec);
+          }
         }
       }
 
