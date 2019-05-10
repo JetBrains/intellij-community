@@ -90,3 +90,31 @@ iml_module(
         "//tools/idea/.idea/libraries:http-client",
     ],
 )
+
+# managed by go/iml_to_build
+iml_module(
+    name = "intellij.tools.jps.buildScriptDependencies",
+    iml_files = ["intellij.tools.jps.buildScriptDependencies.iml"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
+    ],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/jps/standalone-builder:intellij.tools.jps.build.standalone",
+        "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
+        "//tools/idea/plugins/groovy/rt:intellij.groovy.rt",
+        "//tools/idea/plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
+        "//tools/idea/jps/antLayout:intellij.tools.jps.antTasks",
+        "//tools/idea/.idea/libraries:gant-groovy",
+        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/java/java-runtime:intellij.java.rt",
+    ],
+)

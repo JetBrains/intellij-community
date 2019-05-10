@@ -259,6 +259,7 @@ iml_project(
         "//tools/idea/platform/build-scripts/tests:intellij.platform.buildScripts.tests",
         "//tools/idea/platform/build-scripts:intellij.platform.buildScripts",
         "//tools/idea/platform/build-scripts:intellij.platform.images.build",
+        "//tools/idea/platform/build-scripts:intellij.tools.jps.buildScriptDependencies",
         "//tools/idea/platform/built-in-server-api:intellij.platform.builtInServer",
         "//tools/idea/platform/built-in-server/client/node-rpc-client:intellij.nodeRpcClient",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
