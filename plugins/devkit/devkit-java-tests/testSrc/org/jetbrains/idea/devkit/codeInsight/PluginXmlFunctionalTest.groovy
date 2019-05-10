@@ -541,6 +541,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                        "    return true;" +
                        "  }" +
                        "}")
+    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>")
     myFixture.testHighlighting()
   }
 

@@ -15,11 +15,14 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.spellchecker.xml.NoSpellchecking;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.KeymapConverter;
 
 public interface KeyboardShortcut extends DomElement {
 
@@ -29,8 +32,8 @@ public interface KeyboardShortcut extends DomElement {
   GenericAttributeValue<String> getFirstKeystroke();
 
   @NotNull
-  @Required
-  GenericAttributeValue<String> getKeymap();
+  @Convert(KeymapConverter.class)
+  GenericAttributeValue<XmlFile> getKeymap();
 
   @NotNull
   @NoSpellchecking
