@@ -52,11 +52,12 @@ import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+
+import static java.nio.file.attribute.PosixFilePermission.*;
 
 /**
  * @author yole
@@ -434,8 +435,7 @@ public class StartupUtil {
         else if (checkExec) {
           problem = "cannot execute a test script in the directory";
           reason = "the partition is mounted with 'no exec' option";
-          PosixFileAttributeView view = Files.getFileAttributeView(tempFile, PosixFileAttributeView.class);
-          view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
+          Files.getFileAttributeView(tempFile, PosixFileAttributeView.class).setPermissions(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
           int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
           if (ec != 0) {
             throw new IOException("Unexpected exit value: " + ec);
