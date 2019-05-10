@@ -77,7 +77,6 @@ internal class CollectionBinding(itemClass: Class<*>, context: BindingInitializa
   }
 }
 
-
 internal class ArrayBinding(private val itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
   override fun serialize(obj: Any, context: WriteContext) {
     val writer = context.writer

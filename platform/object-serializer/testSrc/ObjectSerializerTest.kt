@@ -15,6 +15,7 @@ import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 import java.nio.file.Paths
+import java.util.*
 
 private val testSnapshotDir = Paths.get(PlatformTestUtil.getCommunityPath(), "platform/object-serializer/testSnapshots")
 
@@ -28,11 +29,9 @@ class ObjectSerializerTestSuite {
   }
 }
 
-class ObjectSerializerTest {
-  companion object {
-    private val objectSerializer = ObjectSerializer()
-  }
+private val objectSerializer = ObjectSerializer.instance
 
+class ObjectSerializerTest {
   private fun test(bean: Any): String {
     val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
@@ -58,6 +57,13 @@ class ObjectSerializerTest {
   @Rule
   @JvmField
   val testName = TestName()
+
+  @Test
+  fun `same bean binding regardless of type parameters`() {
+    val bindingProducer = getBindingProducer(ObjectSerializer())
+    bindingProducer.getRootBinding(TestGenericBean::class.java)
+    assertThat(getBindingCount(bindingProducer)).isEqualTo(1)
+  }
 
   @Test
   fun `int and null string`() {
@@ -164,6 +170,13 @@ class ObjectSerializerTest {
   fun `array of objects`() {
     test(TestArrayBean(children = arrayOf(TestBean(foo = "foo"), TestBean(foo = "or bar"))))
   }
+
+  @Test
+  fun `byte array`() {
+    class TestByteArray(@JvmField var data: ByteArray? = null)
+
+    test(TestByteArray(data = Base64.getEncoder().encode("some data".toByteArray())))
+  }
 }
 
 private class TestArrayBean(
@@ -215,6 +228,11 @@ private class TestFloatBean {
   var double: Double = 9.2
   @JvmField
   var float: Float = 0.4f
+}
+
+private class TestGenericBean<T> {
+  @JvmField
+  var data: TestGenericBean<T>? = null
 }
 
 // for all our test beans null it is default value - to reduce snapshots, filter null out

@@ -23,6 +23,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       // for root resolved factory doesn't make sense because root bindings will be cached
       classToRootBindingFactory.put(java.lang.String::class.java) { StringBinding() }
       classToRootBindingFactory.put(Date::class.java) { DateBinding() }
+      classToRootBindingFactory.put(ByteArray::class.java) { ByteArrayBinding() }
 
       val map = classToNestedBindingFactory
       map.put(java.lang.Short.TYPE, resolved(ShortBinding()))
@@ -57,16 +58,45 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
   override val bindingProducer: BindingProducer<RootBinding>
     get() = this
 
-  override fun createRootBinding(aClass: Class<*>, type: Type, map: MutableMap<Type, RootBinding>): RootBinding {
+  override fun createCacheKey(aClass: Class<*>, originalType: Type): Type {
+    if (aClass !== originalType && !Collection::class.java.isAssignableFrom(aClass) && !classToRootBindingFactory.contains(aClass)) {
+      // type parameters for bean binding doesn't play any role, should be the only binding for such class
+      return aClass
+    }
+    else {
+      return originalType
+    }
+  }
+
+  override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, RootBinding>): RootBinding {
     val binding = if (Collection::class.java.isAssignableFrom(aClass)) {
       createCollectionBinding(type)
     }
     else {
-      classToRootBindingFactory.get(aClass)?.invoke() ?: BeanBinding(aClass)
+      val custom = classToRootBindingFactory.get(aClass)?.invoke()
+      @Suppress("IfThenToElvis")
+      if (custom == null) {
+        if (aClass.isArray) {
+          ArrayBinding(aClass.componentType, this)
+        }
+        else {
+          assert(cacheKey === aClass)
+          BeanBinding(aClass)
+        }
+      }
+      else {
+        custom
+      }
     }
 
-    map.put(type, binding)
-    binding.init(type, this)
+    map.put(cacheKey, binding)
+    try {
+      binding.init(type, this)
+    }
+    catch (e: Throwable) {
+      map.remove(type)
+      throw e
+    }
     return binding
   }
 
@@ -235,7 +265,7 @@ private class DateBinding : RootBinding {
   }
 
   override fun deserialize(context: ReadContext): Any {
-    return context.reader.timestampValue().dateValue()
+    return context.reader.dateValue()
   }
 }
 
@@ -262,5 +292,15 @@ internal inline fun read(hostObject: Any, property: MutableAccessor, context: Re
   }
   else {
     property.set(hostObject, context.reader.read())
+  }
+}
+
+private class ByteArrayBinding : RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeBlob(obj as ByteArray)
+  }
+
+  override fun deserialize(context: ReadContext): Any {
+    return context.reader.newBytes()
   }
 }
