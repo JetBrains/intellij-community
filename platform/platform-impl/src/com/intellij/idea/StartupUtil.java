@@ -51,6 +51,8 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -64,6 +66,8 @@ public class StartupUtil {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   public static final String IDEA_STARTUP_LISTENER_PROPERTY = "idea.startup.listener";
+
+  @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
 
@@ -396,58 +400,66 @@ public class StartupUtil {
            checkDirectory(PathManager.getTempPath(), "Temp", PathManager.PROPERTY_SYSTEM_PATH, false, SystemInfo.isXWindow);
   }
 
+  @SuppressWarnings("SSBasedInspection")
   private static boolean checkDirectory(String path, String kind, String property, boolean checkLock, boolean checkExec) {
-    File directory = new File(path);
+    String problem = null, reason = null;
+    Path tempFile = null;
 
-    if (!FileUtil.createDirectory(directory)) {
-      String message = kind + " directory '" + path + "' is invalid.\n\n" +
-                       "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.";
-      Main.showMessage("Invalid IDE Configuration", message, true);
+    try {
+      problem = "cannot create the directory";
+      reason = "path is incorrect";
+      Path directory = Paths.get(path);
+
+      if (!Files.isDirectory(directory)) {
+        problem = "cannot create the directory";
+        reason = "parent directory is read-only or the user lacks necessary permissions";
+        Files.createDirectories(directory);
+      }
+
+      problem = "cannot create a temporary file in the directory";
+      reason = "the directory is read-only or the user lacks necessary permissions";
+      tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
+      OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
+      Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
+
+      if (checkLock) {
+        problem = "cannot create a lock file in the directory";
+        reason = "the directory is located on a network disk";
+        try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
+          if (lock == null) throw new IOException("File is locked");
+        }
+      }
+      else if (checkExec) {
+        problem = "cannot execute a test script in the directory";
+        reason = "the partition is mounted with 'no exec' option";
+        PosixFileAttributeView view = Files.getFileAttributeView(tempFile, PosixFileAttributeView.class);
+        view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
+        int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
+        if (ec != 0) {
+          throw new IOException("Unexpected exit value: " + ec);
+        }
+      }
+
+      return true;
+    }
+    catch (Exception e) {
+      String title = "Invalid " + kind + " Directory";
+      String advice = SystemInfo.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
+                      ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
+                        "Please use Finder to move it to another location."
+                      : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
+                        "otherwise please re-install the IDE.";
+      String message = "The IDE " + problem + ".\nPossible reason: " + reason + ".\n\n" + advice +
+                       "\n\n-----\nLocation: " + path + "\n" + e.getClass().getName() + ": " + e.getMessage();
+      Main.showMessage(title, message, true);
       return false;
     }
-
-    String details = null;
-    File tempFile = new File(directory, "ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
-    OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
-
-    if (checkLock) {
-      try (FileChannel channel = FileChannel.open(tempFile.toPath(), options); FileLock lock = channel.tryLock()) {
-        if (lock == null) {
-          details = "cannot exclusively lock temporary file";
-        }
-      }
-      catch (IOException e) {
-        details = "cannot create exclusive file lock (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ')';
+    finally {
+      if (tempFile != null) {
+        try { Files.deleteIfExists(tempFile); }
+        catch (Exception ignored) { }
       }
     }
-    else if (checkExec) {
-      try {
-        Files.write(tempFile.toPath(), "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
-        if (!tempFile.setExecutable(true, true)) {
-          details = "cannot set executable permission";
-        }
-        else if (new ProcessBuilder(tempFile.getAbsolutePath()).start().waitFor() != 0) {
-          details = "cannot execute test script";
-        }
-      }
-      catch (IOException | InterruptedException e) {
-        details = e.getClass().getSimpleName() + ": " + e.getMessage();
-      }
-    }
-
-    FileUtil.delete(tempFile);
-
-    if (details != null) {
-      String message = kind + " path '" + path + "' cannot be used by the IDE.\n\n" +
-                       "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
-                       "otherwise please re-install the IDE.\n\n" +
-                       "Reason: " + details;
-      Main.showMessage("Invalid IDE Configuration", message, true);
-      return false;
-    }
-
-    return true;
   }
 
   private enum ActivationResult { STARTED, ACTIVATED, FAILED }
