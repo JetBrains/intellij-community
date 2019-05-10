@@ -154,10 +154,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       if (isRunning()) {
         if (myDialog != null) {
           final DialogWrapper popup = myDialog.myPopup;
-          if (popup != null) {
-            if (popup.isShowing()) {
-              myDialog.myWasShown = true;
-            }
+          if (popup != null && popup.isShowing()) {
+            myDialog.setWasShown();
           }
         }
         showDialog();
