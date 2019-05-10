@@ -55,6 +55,7 @@ public class InferenceSession {
 
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
   private PsiSubstitutor myRestoreNameSubstitution = PsiSubstitutor.EMPTY;
+  private MethodCandidateInfo myCurrentMethod;
 
   public InferenceSession(InitialInferenceState initialState) {
     myContext = initialState.getContext();
@@ -116,6 +117,14 @@ public class InferenceSession {
 
     initBounds(typeParams);
     myInferenceSessionContainer = new InferenceSessionContainer();
+  }
+
+  public MethodCandidateInfo getCurrentMethod(PsiExpressionList argumentList) {
+    return myCurrentMethod != null && myCurrentMethod.isOnArgumentList(argumentList) ? myCurrentMethod : null;
+  }
+
+  public void setCurrentMethod(MethodCandidateInfo currentMethod) {
+    myCurrentMethod = currentMethod;
   }
 
   public static PsiType createTypeParameterTypeWithUpperBound(@NotNull PsiType upperBound, @NotNull PsiElement place) {

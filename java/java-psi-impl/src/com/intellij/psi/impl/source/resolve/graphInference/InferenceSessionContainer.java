@@ -72,12 +72,12 @@ public class InferenceSessionContainer {
           InferenceSession session;
           if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() ||
               LambdaUtil.isLambdaParameterCheck() || !policy.equals(DefaultParameterTypeInferencePolicy.INSTANCE)) {
-            session = startTopLevelInference(topLevelCall, policy);
+            session = startTopLevelInference(topLevelCall, policy, currentMethod);
           }
           else {
             session = CachedValuesManager.getCachedValue(topLevelCall,
                                                          () -> new CachedValueProvider.Result<>(
-                                                           startTopLevelInference(topLevelCall, DefaultParameterTypeInferencePolicy.INSTANCE),
+                                                           startTopLevelInference(topLevelCall, DefaultParameterTypeInferencePolicy.INSTANCE, null),
                                                            PsiModificationTracker.MODIFICATION_COUNT));
 
             if (session != null) {
@@ -89,7 +89,7 @@ public class InferenceSessionContainer {
               if (childSession != null) {
                 for (PsiTypeParameter parameter : typeParameters) {
                   if (!childSession.getInferenceSubstitution().getSubstitutionMap().containsKey(parameter)) {
-                    session = startTopLevelInference(topLevelCall, policy);
+                    session = startTopLevelInference(topLevelCall, policy, currentMethod);
                     break;
                   }
                 }
@@ -224,7 +224,9 @@ public class InferenceSessionContainer {
   }
 
   @Nullable
-  private static InferenceSession startTopLevelInference(final PsiCall topLevelCall, final ParameterTypeInferencePolicy policy) {
+  private static InferenceSession startTopLevelInference(final PsiCall topLevelCall,
+                                                         final ParameterTypeInferencePolicy policy,
+                                                         MethodCandidateInfo currentMethod) {
     final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(topLevelCall);
     if (result instanceof MethodCandidateInfo) {
       final PsiMethod method = ((MethodCandidateInfo)result).getElement();
@@ -235,6 +237,7 @@ public class InferenceSessionContainer {
       return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(topLevelCall, true, () -> {
         final InferenceSession topLevelSession =
           new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
+        topLevelSession.setCurrentMethod(currentMethod);
         topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, method, ((MethodCandidateInfo)result).isVarargs());
         topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result));
         return topLevelSession;

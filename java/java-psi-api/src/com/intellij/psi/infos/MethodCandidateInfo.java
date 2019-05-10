@@ -173,6 +173,10 @@ public class MethodCandidateInfo extends CandidateInfo{
     return level;
   }
 
+  public boolean isOnArgumentList(PsiExpressionList argumentList) {
+    return getMarkerList() == argumentList;
+  }
+
   private static boolean checkFunctionalInterfaceAcceptance(PsiMethod method, PsiType left, PsiType right, boolean allowUncheckedConversion) {
     PsiFunctionalExpression fun = null;
     if (right instanceof PsiLambdaExpressionType) {
