@@ -466,11 +466,6 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         }
         return myExpressionTypes;
       }
-
-      @Override
-      protected PsiElement getMarkerList() {
-        return parent instanceof PsiNewExpression ? ((PsiNewExpression)parent).getArgumentList() : super.getMarkerList();
-      }
     };
   }
 

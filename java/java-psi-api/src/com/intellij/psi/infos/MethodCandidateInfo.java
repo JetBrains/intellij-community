@@ -170,11 +170,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       return level1;
     }, substitutor);
-    //arg types are calculated here without additional constraints:
-    //non-pertinent to applicability arguments of arguments would be skipped
-    //known target types are cached so poly method calls are able to retrieve that target type when type inference is done
-    //see InferenceSession#getTargetTypeFromParent
-    @ApplicabilityLevelConstant int level = ObjectUtils.assertNotNull(ourOverloadGuard.doPreventingRecursion(getMarkerList(), false, computable));
+    @ApplicabilityLevelConstant int level = ObjectUtils.assertNotNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -211,7 +207,7 @@ public class MethodCandidateInfo extends CandidateInfo{
  
   
   public boolean isOnArgumentList(PsiExpressionList argumentList) {
-    return getMarkerList() == argumentList;
+    return myArgumentList == argumentList;
   }
 
   private static boolean checkFunctionalInterfaceAcceptance(PsiMethod method, PsiType left, PsiType right, boolean allowUncheckedConversion) {
@@ -355,7 +351,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         myApplicabilityError.remove();
         try {
 
-          final PsiElement markerList = getMarkerList();
+          final PsiElement markerList = myArgumentList;
           final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
           if (!stackStamp.mayCacheNow() ||
               isOverloadCheck() ||
@@ -469,7 +465,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                             myLanguageLevel);
     };
     PsiSubstitutor substitutor = !includeReturnConstraint
-                                 ? ourOverloadGuard.doPreventingRecursion(getMarkerList(), false, computable)
+                                 ? ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable)
                                  : computable.compute();
     return ObjectUtils.assertNotNull(substitutor);
   }
@@ -483,10 +479,6 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
     }
     return false;
-  }
-
-  protected PsiElement getMarkerList() {
-    return myArgumentList;
   }
 
   public boolean isInferencePossible() {
