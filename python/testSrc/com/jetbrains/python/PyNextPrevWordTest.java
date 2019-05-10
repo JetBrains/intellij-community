@@ -2,20 +2,9 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.actions.CaretStopOptions;
-import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 public class PyNextPrevWordTest extends PyTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final CaretStopOptions originalCaretStopOptions = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
-    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT.toCaretStopOptions());
-    disposeOnTearDown(() -> EditorSettingsExternalizable.getInstance().setCaretStopOptions(originalCaretStopOptions));
-  }
-
   public void testLineBoundary() {
     myFixture.configureByText("test.py", "def blah():<caret>\n    pass");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
