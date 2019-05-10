@@ -94,10 +94,6 @@ class ProgressDialog implements Disposable {
     initDialog(cancelText);
   }
 
-  boolean shouldShowBackground() { return myShouldShowBackground; }
-
-  boolean wasShown() { return myWasShown; }
-
   void setWasShown() { myWasShown = true; }
 
   @NotNull
