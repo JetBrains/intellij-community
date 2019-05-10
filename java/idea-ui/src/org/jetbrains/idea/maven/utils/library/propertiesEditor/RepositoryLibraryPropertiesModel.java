@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.utils.library.propertiesEditor;
 
 import com.google.common.base.Strings;
+import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.aether.ArtifactKind;
 
@@ -26,7 +27,7 @@ import java.util.List;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;
-  private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.of(ArtifactKind.ARTIFACT);
+  private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.noneOf(ArtifactKind.class);
   private boolean includeTransitiveDependencies;
   private List<String> myExcludedDependencies;
 
@@ -36,7 +37,7 @@ public class RepositoryLibraryPropertiesModel {
 
   public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs,
                                           boolean includeTransitiveDependencies, List<String> excludedDependencies) {
-    this(version, ArtifactKind.kindsOf(downloadSources, downloadJavaDocs), includeTransitiveDependencies, excludedDependencies);
+    this(version, JarRepositoryManager.kindsOf(downloadSources, downloadJavaDocs), includeTransitiveDependencies, excludedDependencies);
   }
 
   public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,

@@ -64,15 +64,20 @@ class MavenArtifactsBuilder {
       modulesToPublish.each { aModule, artifactData ->
         dir(artifactData.coordinates.directoryPath) {
           ant.fileset(file: pomXmlFiles[aModule])
-          jar(artifactData.coordinates.getFileName("", "jar")) {
-            module(aModule.name)
+          def javaSourceRoots = aModule.getSourceRoots(JavaSourceRootType.SOURCE).toList()
+          def javaResourceRoots = aModule.getSourceRoots(JavaResourceRootType.RESOURCE).toList()
+          def hasSources = !(javaSourceRoots.isEmpty() && javaResourceRoots.isEmpty())
+          ant.jar(name: artifactData.coordinates.getFileName("", "jar"), duplicate: "fail", whenmanifestonly: "create") {
+            if (hasSources) {
+              module(aModule.name)
+            }
           }
-          if (publishSourcesFilter.test(aModule, buildContext)) {
+          if (publishSourcesFilter.test(aModule, buildContext) && hasSources) {
             zip(artifactData.coordinates.getFileName("sources", "jar")) {
-              aModule.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
+              javaSourceRoots.each { root ->
                 ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'))
               }
-              aModule.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
+              javaResourceRoots.each { root ->
                 ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath)
               }
             }

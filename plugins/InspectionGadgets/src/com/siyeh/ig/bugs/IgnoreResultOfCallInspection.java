@@ -285,11 +285,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     private boolean hasTrivialReturnValue(PsiMethod method) {
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
-      return !contracts.isEmpty() &&
-             contracts.stream()
-                      .map(MethodContract::getReturnValue)
-                      .allMatch(returnValue -> returnValue.equals(ContractReturnValue.returnThis()) ||
-                                               returnValue instanceof ContractReturnValue.ParameterReturnValue);
+      ContractReturnValue nonFailingReturnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
+      return nonFailingReturnValue != null &&
+             (nonFailingReturnValue.equals(ContractReturnValue.returnThis()) ||
+              nonFailingReturnValue instanceof ContractReturnValue.ParameterReturnValue);
     }
 
     private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {

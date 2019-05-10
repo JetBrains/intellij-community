@@ -5,8 +5,7 @@ def foo = {
 -----
 0(1) element: null
 1(2) WRITE it
-2(3) WRITE owner
-3(4) WRITE g
-4(5) READ g
-5(6) element: Generalized list MAYBE_RETURN
-6() element: null
+2(3) WRITE g
+3(4) READ g
+4(5) element: Generalized list MAYBE_RETURN
+5() element: null

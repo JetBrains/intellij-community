@@ -10,6 +10,15 @@ class AccessingProtectedMembersNotFromSubclass {
     new ProtectedConstructors() {};
     new ProtectedConstructors(1) {};
   }
+
+  void baz() {
+    class LocalSubclass extends ProtectedMembers {
+      void bar() {
+        method();
+        staticMethod();
+      }
+    }
+  }
 }
 
 class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
@@ -32,6 +41,13 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
         staticMethod();
       }
     };
+
+    class LocalClass {
+      void baz() {
+        method();
+        staticMethod();
+      }
+    }
   }
 
   public static class StaticInnerImpl1 extends ProtectedMembers.StaticInner {

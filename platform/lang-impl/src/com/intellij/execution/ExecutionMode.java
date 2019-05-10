@@ -15,10 +15,13 @@
  */
 package com.intellij.execution;
 
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +63,22 @@ public class ExecutionMode {
     return -1;
   }
 
+  /**
+   * Invoked on the {@code processHandler} waiting timeout by the execution helper.
+   *
+   * @param outputCollected output collected to the moment of timeout (if any)
+   * @see ExecutionHelper#createTimeLimitedExecutionProcess(com.intellij.execution.process.ProcessHandler, com.intellij.execution.ExecutionMode, java.lang.String)
+   */
+  public void onTimeout(@NotNull ProcessHandler processHandler,
+                        @NotNull String commandLineString,
+                        @NotNull ProcessOutput outputCollected) {
+  }
+
+  /**
+   * @deprecated override {@link #onTimeout(ProcessHandler, String, ProcessOutput)}  instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  @Deprecated
   @NotNull
   public PairConsumer<ExecutionMode, String> getTimeoutCallback() {
     return NOOP_CONSUMER;

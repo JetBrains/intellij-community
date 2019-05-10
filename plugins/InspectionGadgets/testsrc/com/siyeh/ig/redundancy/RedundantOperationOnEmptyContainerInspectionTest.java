@@ -20,6 +20,9 @@ public class RedundantOperationOnEmptyContainerInspectionTest extends LightInspe
   public void testMethodCallsOnEmptyContainer() {
     doTest();
   }
+  public void testStaticInitializer() {
+    doTest();
+  }
 
   @Nullable
   @Override

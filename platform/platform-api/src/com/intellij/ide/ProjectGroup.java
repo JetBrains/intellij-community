@@ -31,6 +31,7 @@ public class ProjectGroup {
   private @NotNull String myName = "";
   private String myProjectPaths = "";
   private boolean myExpanded = false;
+  private boolean myTutorials = false; //used in different places, i.e. closing tutorials group should hide all nested items too
 
   public ProjectGroup(@NotNull String name) {
     myName = name;
@@ -83,6 +84,14 @@ public class ProjectGroup {
 
   public void setExpanded(boolean expanded) {
     myExpanded = expanded;
+  }
+
+  public boolean isTutorials() {
+    return myTutorials;
+  }
+
+  public void setTutorials(boolean tutorials) {
+    myTutorials = tutorials;
   }
 
   @Override

@@ -78,7 +78,7 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.5.0'
+__version__ = '2.5.0'  # patched #836
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -534,9 +534,11 @@ def indentation(logical_line, previous_logical, indent_char,
     elif not indent_expect and indent_level > previous_indent_level:
         yield 0, tmpl % (3 + c, "unexpected indentation")
 
-    expected_indent_level = previous_indent_level + 4
-    if indent_expect and indent_level > expected_indent_level:
-        yield 0, tmpl % (7, 'over-indented')
+    if indent_expect:
+        expected_indent_amount = 8 if indent_char == '\t' else 4
+        expected_indent_level = previous_indent_level + expected_indent_amount
+        if indent_level > expected_indent_level:
+            yield 0, tmpl % (7, 'over-indented')
 
 
 @register_check

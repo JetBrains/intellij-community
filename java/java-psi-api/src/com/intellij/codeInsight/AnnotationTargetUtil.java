@@ -18,6 +18,9 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,6 +224,13 @@ public class AnnotationTargetUtil {
     if (!annotationType.isAnnotationType()) return null;
     PsiModifierList modifierList = annotationType.getModifierList();
     if (modifierList == null) return null;
+
+    return CachedValuesManager.getCachedValue(modifierList, () ->
+      CachedValueProvider.Result.create(calcAnnotationTargets(modifierList), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  private static Set<TargetType> calcAnnotationTargets(PsiModifierList modifierList) {
     PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
     if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
 

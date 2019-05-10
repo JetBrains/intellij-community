@@ -253,6 +253,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+    if (classReference instanceof PsiMethodReferenceExpression) return false;
     final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
       return qualifiesToTargetClasses((PsiJavaCodeReferenceElement)qualifier, targets) && classReference.resolve() instanceof PsiClass;

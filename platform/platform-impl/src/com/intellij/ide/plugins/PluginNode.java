@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.ComponentConfig;
@@ -184,11 +184,6 @@ public class PluginNode implements IdeaPluginDescriptor {
     myStatus = status;
   }
 
-  @Override
-  public String toString() {
-    return getName();
-  }
-
   public boolean isLoaded() {
     return myLoaded;
   }
@@ -247,16 +242,6 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public long getDate() {
     return date;
-  }
-
-  @Override
-  public int hashCode() {
-    return name.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    return object instanceof PluginNode && name.equals(((PluginNode)object).getName());
   }
 
   public List<PluginId> getDepends() {
@@ -444,5 +429,20 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public void setIncomplete(boolean incomplete) {
     myIncomplete = incomplete;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof PluginNode && id == ((PluginNode)o).id;
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 }

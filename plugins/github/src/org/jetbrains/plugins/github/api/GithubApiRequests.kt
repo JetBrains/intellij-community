@@ -331,6 +331,25 @@ object GithubApiRequests {
           Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
                             GithubReviewersCollectionRequest(reviewers, listOf<String>()))
       }
+
+      object Commits : Entity("/commits") {
+        @JvmStatic
+        fun pages(server: GithubServerPath, username: String, repoName: String, number: Long) =
+          GithubApiPagesLoader.Request(get(server, username, repoName, number), ::get)
+
+        @JvmStatic
+        fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
+
+        @JvmStatic
+        fun get(server: GithubServerPath, username: String, repoName: String, number: Long,
+                pagination: GithubRequestPagination? = null) =
+          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
+                     GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
+
+        @JvmStatic
+        fun get(url: String) = Get.jsonPage<GithubCommit>(url)
+          .withOperationName("get comments for pull request")
+      }
     }
   }
 

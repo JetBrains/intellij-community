@@ -87,14 +87,6 @@ final class WideSelectionListUI extends BasicListUI {
   }
 
   @Override
-  public int locationToIndex(JList list, Point location) {
-    if (location.y <= list.getPreferredSize().height) {
-      return super.locationToIndex(list, location);
-    }
-    return -1;
-  }
-
-  @Override
   public Rectangle getCellBounds(JList list, int index1, int index2) {
     Rectangle bounds = super.getCellBounds(list, index1, index2);
     if (bounds != null && index1 == index2 && list instanceof JBList && JList.VERTICAL == list.getLayoutOrientation()) {

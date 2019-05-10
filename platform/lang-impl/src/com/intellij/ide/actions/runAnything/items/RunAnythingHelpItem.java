@@ -4,6 +4,7 @@ package com.intellij.ide.actions.runAnything.items;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +25,15 @@ public class RunAnythingHelpItem extends RunAnythingItemBase {
 
   @NotNull
   @Override
-  public Component createComponent(boolean isSelected) {
-    SimpleColoredComponent component = new SimpleColoredComponent();
+  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+    JPanel component = (JPanel)super.createComponent(pattern, isSelected, hasFocus);
 
-    parseAndApplyStyleToParameters(component, myPlaceholder);
-    appendDescription(component, myDescription, isSelected);
-    setupIcon(component, myIcon);
+    SimpleColoredComponent simpleColoredComponent = new SimpleColoredComponent();
+    parseAndApplyStyleToParameters(simpleColoredComponent, myPlaceholder);
+    appendDescription(simpleColoredComponent, myDescription, UIUtil.getListForeground(isSelected, true));
+    setupIcon(simpleColoredComponent, myIcon);
+
+    component.add(simpleColoredComponent, BorderLayout.WEST);
 
     return component;
   }

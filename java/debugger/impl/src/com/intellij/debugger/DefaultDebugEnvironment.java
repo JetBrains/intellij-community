@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   }
 
   private static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
-    GlobalSearchScope scope = SearchScopeProvider.createSearchScope(project, runProfile);
+    GlobalSearchScope scope = GlobalSearchScopes.executionScope(project, runProfile);
     if (scope.equals(GlobalSearchScope.allScope(project))) {
       // prefer sources over class files
       return new DelegatingGlobalSearchScope(scope) {

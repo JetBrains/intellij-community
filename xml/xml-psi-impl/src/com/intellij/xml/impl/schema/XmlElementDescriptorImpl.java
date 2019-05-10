@@ -78,13 +78,8 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
 
         if (namespacePrefix != null && namespacePrefix.length() > 0) {
           final XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getRootTag();
-          String elementFormDefault;
-
-          if (rootTag != null && 
-              ( NONQUALIFIED_ATTR_VALUE.equals(elementFormDefault = rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT)) || elementFormDefault == null /*unqualified is default*/) &&
-              tag.getNamespaceByPrefix("").isEmpty()
-            && myDescriptorTag.getParentTag() != rootTag
-             ) {
+          if (!isQualifiedForm() && tag.getNamespaceByPrefix("").isEmpty()
+            && myDescriptorTag.getParentTag() != rootTag) {
             value = XmlUtil.findLocalNameByQualifiedName(value);
           } else {
             value = namespacePrefix + ":" + XmlUtil.findLocalNameByQualifiedName(value);
@@ -522,14 +517,19 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
 
   @Override
   public String getDefaultName() {
-    final PsiFile psiFile = myDescriptorTag.getContainingFile();
-    XmlTag rootTag = psiFile instanceof XmlFile ?((XmlFile)psiFile).getRootTag():null;
+    return isQualifiedForm() ? getQualifiedName() : getName();
+  }
 
-    if (rootTag != null && QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT))) {
-      return getQualifiedName();
+  private boolean isQualifiedForm() {
+    String value = myDescriptorTag.getAttributeValue("form");
+    if (value == null) {
+      final PsiFile psiFile = myDescriptorTag.getContainingFile();
+      XmlTag rootTag = psiFile instanceof XmlFile ?((XmlFile)psiFile).getRootTag():null;
+      if (rootTag != null) {
+        value = rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT);
+      }
     }
-
-    return getName();
+    return QUALIFIED_ATTR_VALUE.equals(value);
   }
 
   public boolean isAbstract() {

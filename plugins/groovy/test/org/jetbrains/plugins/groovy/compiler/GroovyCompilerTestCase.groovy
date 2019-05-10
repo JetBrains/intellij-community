@@ -82,7 +82,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     super.runTest()
   }
 
-  protected static void addGroovyLibrary(final Module to) {
+  protected void addGroovyLibrary(final Module to) {
     File jar = GroovyFacetUtil.getBundledGroovyJar()
     PsiTestUtil.addLibrary(to, "groovy", jar.getParent(), jar.getName())
   }

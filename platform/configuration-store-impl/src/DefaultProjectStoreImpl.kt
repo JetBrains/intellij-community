@@ -12,8 +12,10 @@ import java.nio.file.Paths
 private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
 private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
-  override val isUseVfsForWrite: Boolean
-    get() = false
+  override val configuration = object: FileBasedStorageConfiguration by defaultFileBasedStorageConfiguration {
+    override val isUseVfsForWrite: Boolean
+      get() = false
+  }
 
   public override fun loadLocalData(): Element? {
     val element = super.loadLocalData() ?: return null
@@ -61,7 +63,7 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
-  override val storageManager: StateStorageManager = object : StateStorageManager {
+  override val storageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
       get() = null
 
@@ -84,7 +86,7 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
   override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
-  fun getStateCopy(): Element? = storage.loadLocalData()
+  fun getStateCopy() = storage.loadLocalData()
 
   override fun getPathMacroManagerForDefaults() = pathMacroManager
 

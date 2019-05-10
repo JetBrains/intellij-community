@@ -39,7 +39,8 @@ public class MoveProjectToGroupActionGroup extends DefaultActionGroup implements
     final List<ProjectGroup> groups = new ArrayList<>(RecentProjectsManager.getInstance().getGroups());
     Collections.sort(groups, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (ProjectGroup group : groups) {
-      add(new MoveProjectToGroupAction(group));
+      if(!group.isTutorials())
+        add(new MoveProjectToGroupAction(group));
     }
     if (groups.size() > 0) {
       add(Separator.getInstance());

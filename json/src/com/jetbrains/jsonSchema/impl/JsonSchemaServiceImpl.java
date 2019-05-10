@@ -357,10 +357,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   private static boolean isSchemaProvider(JsonSchemaFileProvider provider) {
-    VirtualFile schemaFile = provider.getSchemaFile();
-    if (!(schemaFile instanceof HttpVirtualFile)) return false;
-    String url = schemaFile.getUrl();
-    return isSchemaUrl(url);
+    return isSchemaUrl(provider.getRemoteSource());
   }
 
   private static boolean isSchemaUrl(@Nullable String url) {

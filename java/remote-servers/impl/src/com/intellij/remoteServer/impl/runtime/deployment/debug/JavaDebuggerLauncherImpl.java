@@ -13,7 +13,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -23,6 +22,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugConnectionData;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugServerModeHandler;
@@ -115,7 +115,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
 
     RemoteServerDebugEnvironment(Project project, RemoteConnection remoteConnection, RunProfile runProfile) {
       myProject = project;
-      mySearchScope = SearchScopeProvider.createSearchScope(project, runProfile);
+      mySearchScope = GlobalSearchScopes.executionScope(project, runProfile);
       myRemoteConnection = remoteConnection;
       myRunProfile = runProfile;
     }

@@ -3,7 +3,6 @@ package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +44,7 @@ public abstract class RunAnythingGroupBase extends RunAnythingGroup {
                             @NotNull String textToMatch,
                             boolean isInsertionMode,
                             @NotNull RunAnythingItem item) {
-    if (!model.contains(item) && NameUtil.buildMatcher("*" + pattern).build().matches(textToMatch)) {
+    if (!model.contains(item) && RUN_ANYTHING_MATCHER_BUILDER.fun(pattern).build().matches(textToMatch)) {
       if (result.size() == (isInsertionMode ? getMaxItemsToInsert() : getMaxInitialItems())) {
         result.setNeedMore(true);
         return true;

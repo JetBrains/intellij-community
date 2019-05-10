@@ -45,6 +45,8 @@ public class SystemHealthMonitor implements BaseComponent {
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
+  private static final String IBUS_URL = "https://youtrack.jetbrains.com/issue/IDEA-78860";
+  private static final String SIGINT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360004770440";
 
   private final PropertiesComponent myProperties;
 
@@ -127,7 +129,7 @@ public class SystemHealthMonitor implements BaseComponent {
           if (m.find() && StringUtil.compareVersionNumbers(m.group(1), "1.5.11") < 0) {
             String fix = System.getenv("IBUS_ENABLE_SYNC_MODE");
             if (fix == null || fix.isEmpty() || fix.equals("0") || fix.equalsIgnoreCase("false")) {
-              showNotification("ibus.blocking.warn.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-78860"));
+              showNotification("ibus.blocking.warn.message", detailsAction(IBUS_URL));
             }
           }
         }
@@ -141,7 +143,7 @@ public class SystemHealthMonitor implements BaseComponent {
         Signal sigInt = new Signal("INT");
         SignalHandler oldInt = Signal.handle(sigInt, NO_OP_HANDLER);
         if (oldInt == SignalHandler.SIG_IGN) {
-          showNotification("ide.sigint.ignored.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-157989"));
+          showNotification("ide.sigint.ignored.message", detailsAction(SIGINT_URL));
         }
         else {
           Signal.handle(sigInt, oldInt);

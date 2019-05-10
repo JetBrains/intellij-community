@@ -56,8 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -69,6 +68,7 @@ import java.util.Set;
 public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
+  public static final String NORMAL_STATE_BOUNDS = "normalBounds";
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   private static boolean ourUpdatingTitle;
@@ -84,6 +84,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private IdeFrameDecorator myFrameDecorator;
   private boolean myRestoreFullScreen;
   private final LafManagerListener myLafListener;
+  private final ComponentListener resizedListener;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -93,6 +94,17 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
     AppUIUtil.updateWindowIcon(this);
+
+    resizedListener = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        if (getExtendedState() == Frame.NORMAL) {
+          getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
+        }
+      }
+    };
+
+    myRootPane.addComponentListener(resizedListener);
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
@@ -145,8 +157,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
-
-    if (IdeFrameDecorator.isCustomDecoration()) JdkEx.setHasCustomDecoration(this);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
@@ -265,7 +275,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @Override
   public void setExtendedState(int state) {
     if (getExtendedState() == Frame.NORMAL && (state & Frame.MAXIMIZED_BOTH) != 0) {
-      getRootPane().putClientProperty("normalBounds", getBounds());
+      getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
     }
     super.setExtendedState(state);
   }
@@ -330,6 +340,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     try {
       ourUpdatingTitle = true;
+
+      if(IdeFrameDecorator.isCustomDecoration()) {
+        frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
+      }
 
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
         frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
@@ -512,6 +526,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         myRootPane.removeNotify();
       }
+      myRootPane.removeComponentListener(resizedListener);
       setRootPane(new JRootPane());
       Disposer.dispose(myRootPane);
       myRootPane = null;

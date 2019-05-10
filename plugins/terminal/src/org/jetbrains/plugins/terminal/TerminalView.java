@@ -64,6 +64,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -247,6 +248,43 @@ public class TerminalView {
         DataContext dataContext = DataManager.getInstance().getDataContext(toolWindow.getComponent());
         AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
         action.actionPerformed(event);
+      }
+
+      @Override
+      public void moveTabRight() {
+        moveSelectedContent(true);
+      }
+
+      @Override
+      public void moveTabLeft() {
+        moveSelectedContent(false);
+      }
+
+      @Override
+      public boolean canMoveTabRight() {
+        ContentManager manager = toolWindow.getContentManager();
+        Content selectedContent = manager.getSelectedContent();
+        return selectedContent != null && manager.getIndexOfContent(selectedContent) < manager.getContentCount() - 1;
+      }
+
+      @Override
+      public boolean canMoveTabLeft() {
+        ContentManager manager = toolWindow.getContentManager();
+        Content selectedContent = manager.getSelectedContent();
+        return selectedContent != null && manager.getIndexOfContent(selectedContent) > 0;
+      }
+
+      private void moveSelectedContent(boolean right) {
+        ContentManager manager = toolWindow.getContentManager();
+        Content selectedContent = manager.getSelectedContent();
+        if (selectedContent != null) {
+          int selectedInd = manager.getIndexOfContent(selectedContent);
+          int anotherInd = right ? selectedInd + 1 : selectedInd - 1;
+          if (selectedInd >= 0 && anotherInd >= 0 && anotherInd < manager.getContentCount()) {
+            Content another = Objects.requireNonNull(manager.getContent(anotherInd));
+            manager.removeContent(another, false, false, false).doWhenDone(() -> manager.addContent(another, selectedInd));
+          }
+        }
       }
     });
 

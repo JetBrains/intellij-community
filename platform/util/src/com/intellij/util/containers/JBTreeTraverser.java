@@ -32,16 +32,36 @@ public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser
   }
 
   public JBTreeTraverser(Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
-    super(null, treeStructure);
+    super(Meta.create(treeStructure));
   }
 
-  protected JBTreeTraverser(Meta<T> meta, Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
-    super(meta, treeStructure);
+  protected JBTreeTraverser(Meta<T> meta) {
+    super(meta);
   }
 
   @NotNull
   @Override
-  protected JBTreeTraverser<T> newInstance(Meta<T> meta) {
-    return new JBTreeTraverser<>(meta, getTree());
+  protected JBTreeTraverser<T> newInstance(@NotNull Meta<T> meta) {
+    return meta == myMeta ? this : new JBTreeTraverser<>(meta);
+  }
+
+  /**
+   * Returns a {@code JBTreeTraverser} that applies {@code function} to each element of this traverser.
+   * A reverse transform is required if available, otherwise use {@link #map(Function)}.
+   */
+  @NotNull
+  public final <S> JBTreeTraverser<S> map(@NotNull Function<? super T, ? extends S> function,
+                                    @NotNull Function<? super S, ? extends T> reverse) {
+    return super.mapImpl(function, reverse);
+  }
+
+  /**
+   * Returns a {@code JBTreeTraverser} that applies {@code function} to each element of this traverser.
+   * The required reverse transform, a hash map, is built internally while traversing.
+   * Prefer {@link #map(Function, Function)} if a cheap reverse transform is available.
+   */
+  @NotNull
+  public final <S> JBTreeTraverser<S> map(@NotNull Function<? super T, ? extends S> function) {
+    return super.mapImpl(function);
   }
 }

@@ -16,10 +16,10 @@ class RunAnythingMore extends JPanel {
   }
 
   static RunAnythingMore get(boolean isSelected) {
-    instance.setBackground(UIUtil.getListBackground(isSelected));
+    instance.setBackground(UIUtil.getListBackground(isSelected, true));
     instance.label.setForeground(UIUtil.getLabelDisabledForeground());
     instance.label.setFont(RunAnythingUtil.getTitleFont());
-    instance.label.setBackground(UIUtil.getListBackground(isSelected));
+    instance.label.setBackground(UIUtil.getListBackground(isSelected, true));
     return instance;
   }
 }

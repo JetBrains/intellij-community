@@ -17,19 +17,11 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
-interface SchemeNameToFileName {
-  fun schemeNameToFileName(name: String): String
-}
+typealias SchemeNameToFileName = (name: String) -> String
 
-val OLD_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
-  override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, true)
-}
-val CURRENT_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
-  override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, false)
-}
-val MODERN_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
-  override fun schemeNameToFileName(name: String) = sanitizeFileName(name)
-}
+val OLD_NAME_CONVERTER: SchemeNameToFileName = { FileUtil.sanitizeFileName(it, true) }
+val CURRENT_NAME_CONVERTER: SchemeNameToFileName = { FileUtil.sanitizeFileName(it, false) }
+val MODERN_NAME_CONVERTER: SchemeNameToFileName = { sanitizeFileName(it) }
 
 interface SchemeDataHolder<in T> {
   /**
@@ -76,7 +68,7 @@ abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val 
   open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
 }
 
-class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
+private class DigestOutputStream(private val digest: MessageDigest) : OutputStream() {
   override fun write(b: Int) {
     digest.update(b.toByte())
   }
@@ -85,18 +77,29 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
     digest.update(b, off, len)
   }
 
+  override fun write(b: ByteArray) {
+    digest.update(b)
+  }
+
   override fun toString() = "[Digest Output Stream] $digest"
+
+  fun digest(): ByteArray = digest.digest()
 }
 
-private val sha1Provider = java.security.Security.getProvider("SUN")
+private val sha1MessageDigestThreadLocal = ThreadLocal.withInitial { MessageDigest.getInstance("SHA-1", java.security.Security.getProvider("SUN")) }
 
 // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
-fun createDataDigest(): MessageDigest = MessageDigest.getInstance("SHA-1", sha1Provider)
+fun createDataDigest(): MessageDigest {
+  val digest = sha1MessageDigestThreadLocal.get()
+  digest.reset()
+  return digest
+}
 
-fun Element.digest(): ByteArray {
-  val digest = createDataDigest()
-  serializeElementToBinary(this, DigestOutputStream(digest))
-  return digest.digest()
+@JvmOverloads
+fun Element.digest(messageDigest: MessageDigest = createDataDigest()): ByteArray {
+  val digestOut = DigestOutputStream(messageDigest)
+  serializeElementToBinary(this, digestOut)
+  return digestOut.digest()
 }
 
 abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {

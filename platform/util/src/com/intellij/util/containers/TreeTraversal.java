@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
@@ -67,7 +68,7 @@ public abstract class TreeTraversal {
 
   @NotNull
   public final <T> JBIterable<T> traversal(@Nullable final T root, @NotNull final Function<? super T, ? extends Iterable<? extends T>> tree) {
-    return traversal(ContainerUtil.createMaybeSingletonList(root), tree);
+    return traversal(JBIterable.of(root), tree);
   }
 
   @NotNull
@@ -95,24 +96,27 @@ public abstract class TreeTraversal {
 
       @NotNull
       @Override
-      public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
-                                      @NotNull final Function<? super T, ? extends Iterable<? extends T>> tree) {
-        class WrappedTree implements Condition<T>, Function<T, Iterable<? extends T>> {
+      public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
+                                        @NotNull final Function<? super TT, ? extends Iterable<? extends TT>> tree) {
+        class WrappedTree implements Condition<TT>, Function<TT, Iterable<? extends TT>> {
+          final Function<?, ?> inner = identity;
           java.util.HashSet<Object> visited;
 
           @Override
-          public boolean value(T e) {
+          public boolean value(TT e) {
             if (visited == null) visited = new java.util.HashSet<>();
             //noinspection unchecked
-            return visited.add(((Function<T, Object>)identity).fun(e));
+            return visited.add(((Function<TT, Object>)inner).fun(e));
           }
 
           @Override
-          public Iterable<? extends T> fun(T t) {
+          public Iterable<? extends TT> fun(TT t) {
             return JBIterable.from(tree.fun(t)).filter(this);
           }
         }
-        if (tree instanceof WrappedTree) return original.createIterator(roots, tree);
+        if (tree instanceof WrappedTree && Comparing.equal(identity, ((WrappedTree)tree).inner)) {
+          return original.createIterator(roots, tree);
+        }
         WrappedTree wrappedTree = new WrappedTree();
         return original.createIterator(JBIterable.from(roots).filter(wrappedTree), wrappedTree);
       }
@@ -132,19 +136,23 @@ public abstract class TreeTraversal {
     return new TreeTraversal(original.toString() + " (ON_RANGE)") {
       @NotNull
       @Override
-      public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
-                                      @NotNull final Function<? super T, ? extends Iterable<? extends T>> tree) {
-        final Condition<? super T> inRangeCondition = (Condition<? super T>)rangeCondition;
-        final Condition<? super T> notInRangeCondition = (Condition<? super T>)not(rangeCondition);
-        class WrappedTree implements Function<T, Iterable<? extends T>> {
+      public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
+                                        @NotNull final Function<? super TT, ? extends Iterable<? extends TT>> tree) {
+        final Condition<? super TT> inRangeCondition = (Condition<? super TT>)rangeCondition;
+        final Condition<? super TT> notInRangeCondition = (Condition<? super TT>)not(rangeCondition);
+        class WrappedTree implements Function<TT, Iterable<? extends TT>> {
+          final Condition<T> inner = rangeCondition;
+
           @Override
-          public Iterable<? extends T> fun(T t) {
+          public Iterable<? extends TT> fun(TT t) {
             return JBIterable.from(tree.fun(t))
               .skipWhile(notInRangeCondition)
               .takeWhile(inRangeCondition);
           }
         }
-        if (tree instanceof WrappedTree) return original.createIterator(roots, tree);
+        if (tree instanceof WrappedTree && Comparing.equal(rangeCondition, ((WrappedTree)tree).inner)) {
+          return original.createIterator(roots, tree);
+        }
         WrappedTree wrappedTree = new WrappedTree();
         return original.createIterator(JBIterable.from(roots).filter(inRangeCondition), wrappedTree);
       }
@@ -158,7 +166,8 @@ public abstract class TreeTraversal {
    *             May return null (useful for map representation).
    */
   @NotNull
-  public abstract <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree);
+  public abstract <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                           @NotNull Function<? super T, ? extends Iterable<? extends T>> tree);
 
   @Override
   public final String toString() {

@@ -135,8 +135,11 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
-        settings.withArgument("--info");
+      if (!settings.getArguments().contains("--quiet")) {
+        if (!settings.getArguments().contains("--debug")){
+          settings.withArgument("--info");
+        }
+        settings.withArgument("--stacktrace");
       }
     }
 
@@ -418,7 +421,7 @@ public class GradleExecutionHelper {
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory, projectDir);
           }
           break;
       }

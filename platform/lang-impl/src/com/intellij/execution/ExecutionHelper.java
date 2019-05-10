@@ -5,8 +5,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -23,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -348,10 +348,6 @@ public class ExecutionHelper {
       if (indicator != null && title2 != null) {
         indicator.setText2(title2);
       }
-      Application application = ApplicationManager.getApplication();
-      if (application.isDispatchThread() && application.isInternal() && !application.isHeadlessEnvironment()) {
-        LOG.warn("Synchronous execution on EDT: " + processHandler, new Throwable());
-      }
       process.run();
     }
   }
@@ -420,17 +416,33 @@ public class ExecutionHelper {
     };
   }
 
-  private static Runnable createTimeLimitedExecutionProcess(final ProcessHandler processHandler,
-                                                            final ExecutionMode mode,
+  private static Runnable createTimeLimitedExecutionProcess(@NotNull ProcessHandler processHandler,
+                                                            @NotNull ExecutionMode mode,
                                                             @NotNull final String presentableCmdline) {
+    ProcessOutput outputCollected = new ProcessOutput();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        String eventText = event.getText();
+        if (StringUtil.isNotEmpty(eventText)) {
+          if (ProcessOutputType.isStdout(outputType)) {
+            outputCollected.appendStdout(eventText);
+          }
+          else if (ProcessOutputType.isStderr(outputType)) {
+            outputCollected.appendStderr(eventText);
+          }
+        }
+      }
+    });
+
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
-      private final Runnable myProcessThread = () -> {
+      private final Runnable myProcessRunnable = () -> {
         try {
           final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
-            mode.getTimeoutCallback().consume(mode, presentableCmdline);
+            mode.onTimeout(processHandler, presentableCmdline, outputCollected);
             processHandler.destroyProcess();
           }
         }
@@ -442,7 +454,7 @@ public class ExecutionHelper {
       @Override
       public void run() {
         mySemaphore.down();
-        ApplicationManager.getApplication().executeOnPooledThread(myProcessThread);
+        ApplicationManager.getApplication().executeOnPooledThread(myProcessRunnable);
 
         mySemaphore.waitFor();
       }

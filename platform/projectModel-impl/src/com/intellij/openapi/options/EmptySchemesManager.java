@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +14,10 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   @NotNull
   public Collection<Object> loadSchemes() {
     return Collections.emptySet();
+  }
+
+  @Override
+  public void reload() {
   }
 
   @Override
@@ -66,6 +70,12 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   @Nullable
   @Override
   public Scheme getActiveScheme() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Object removeScheme(@NotNull String name) {
     return null;
   }
 }

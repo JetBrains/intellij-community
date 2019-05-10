@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,6 +36,7 @@ public final class JavaMethod implements AnnotatedElement {
   private final Class myDeclaringClass;
   private final Method myMethod;
   private volatile SmartFMap<Class, Object> myAnnotationsMap = SmartFMap.emptyMap();
+  private volatile List<Method> myHierarchy;
 
   private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
@@ -52,7 +54,11 @@ public final class JavaMethod implements AnnotatedElement {
   }
 
   public final List<Method> getHierarchy() {
-    return mySignature.getAllMethods(myDeclaringClass);
+    List<Method> hierarchy = myHierarchy;
+    if (hierarchy == null) {
+      myHierarchy = hierarchy = Collections.unmodifiableList(mySignature.getAllMethods(myDeclaringClass));
+    }
+    return hierarchy;
   }
 
   public String getMethodName() {
@@ -104,8 +110,11 @@ public final class JavaMethod implements AnnotatedElement {
 
   @NotNull
   private Object findAnnotation(Class<? extends Annotation> annotationClass) {
-    final Annotation annotation = mySignature.findAnnotation(annotationClass, myDeclaringClass);
-    return annotation == null ? NONE : annotation;
+    for (Method method : getHierarchy()) {
+      Annotation annotation = method.getAnnotation(annotationClass);
+      if (annotation != null) return annotation;
+    }
+    return NONE;
   }
 
   @Override

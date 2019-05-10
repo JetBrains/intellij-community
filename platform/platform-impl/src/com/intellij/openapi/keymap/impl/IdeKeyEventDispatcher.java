@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -74,6 +75,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
@@ -87,6 +89,8 @@ import java.util.*;
 public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
+  private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
+  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -173,6 +177,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
+      // remove AltGr modifier to show a shortcut without AltGr in Settings
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
       return false;
     }
     if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
@@ -412,18 +418,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
-  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<>(Arrays.asList(
-    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv", "sv"
-  ));
-
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
     boolean isModalContext = myContext.isModalContext();
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if (IdeEventQueue.JAVA_11_OR_LATER && SystemInfo.isWindows && e.isAltGraphDown()) return false; // don't search for shortcuts
-
+    if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e) && e.isControlDown()) {
+      myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
+      if (myFirstKeyStroke == null) return false;
+      setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
+      return true;
+    }
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
     if (isCandidateForAltGr) {
@@ -979,12 +985,64 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return SwingUtilities.getRootPane(component);
   }
 
+  public static boolean removeAltGraph(InputEvent e) {
+    if (e.isAltGraphDown()) {
+      try {
+        Field field = InputEvent.class.getDeclaredField("modifiers");
+        field.setAccessible(true);
+        field.setInt(e, ~InputEvent.ALT_GRAPH_MASK & ~InputEvent.ALT_GRAPH_DOWN_MASK & field.getInt(e));
+        return true;
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return false;
+  }
+
   public static boolean isAltGrLayout(Component component) {
     if (component == null) return false;
     InputContext context = component.getInputContext();
     if (context == null) return false;
     Locale locale = context.getLocale();
     if (locale == null) return false;
-    return ALT_GR_LAYOUTS.contains(locale.getLanguage());
+    String language = locale.getLanguage();
+    boolean contains = !"en".equals(language)
+                       ? ALT_GR_LANGUAGES.contains(language)
+                       : ALT_GR_COUNTRIES.contains(locale.getCountry());
+    LOG.debug("AltGr", contains ? "" : " not", " supported for ", locale);
+    return contains;
   }
+
+  // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
+  @NonNls private static final Set<String> ALT_GR_LANGUAGES = new HashSet<>(Arrays.asList(
+    "da", // Danish
+    "de", // German
+    "es", // Spanish
+    "et", // Estonian
+    "fi", // Finnish
+    "fr", // French
+    "hr", // Croatian
+    "hu", // Hungarian
+    "it", // Italian
+    "lv", // Latvian
+    "mk", // Macedonian
+    "nl", // Dutch
+    "no", // Norwegian
+    "pl", // Polish
+    "pt", // Portuguese
+    "ro", // Romanian
+    "sk", // Slovak
+    "sl", // Slovenian
+    "sr", // Serbian
+    "sv", // Swedish
+    "tr"  // Turkish
+  ));
+  @NonNls private static final Set<String> ALT_GR_COUNTRIES = new HashSet<>(Arrays.asList(
+    "DK", // Denmark
+    "DE", // Germany
+    "FI", // Finland
+    "NL", // Netherlands
+    "SL", // Slovenia
+    "SE"  // Sweden
+  ));
 }

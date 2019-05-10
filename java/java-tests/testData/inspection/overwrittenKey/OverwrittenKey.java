@@ -49,4 +49,15 @@ class OverwrittenKey {
     Map<String, String> map2 = Map.ofEntries(Map.entry("a", "a"), Map.entry(<warning descr="Duplicate Map key">"b"</warning>, "b"),
                                              Map.entry("c", "b"), Map.entry(<warning descr="Duplicate Map key">"b"</warning>, "d"));
   }
+  
+  void localClass() {
+    class X extends HashMap<String, String> {
+      class Y {
+        void test() {
+          put(<warning descr="Duplicate Map key">"a"</warning>, "b");
+          put(<warning descr="Duplicate Map key">"a"</warning>, "c");
+        }
+      }
+    }
+  }
 }

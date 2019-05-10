@@ -17,6 +17,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -120,7 +122,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   @Nullable
   @Override
   public GlobalSearchScope getSearchScope() {
-    return SearchScopeProvider.createSearchScope(getModules());
+    return GlobalSearchScopes.executionScope(Arrays.asList(getModules()));
   }
 
   @Nullable

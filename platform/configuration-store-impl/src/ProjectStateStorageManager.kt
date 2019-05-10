@@ -8,7 +8,9 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.vfs.VirtualFile
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 // extended in upsource
 open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
@@ -44,4 +46,23 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
 
   override val isExternalSystemStorageEnabled: Boolean
     get() = project.isExternalStorageEnabled
+
+  override val isUseVfsForRead: Boolean
+    get() = project is VirtualFileResolver
+
+  override fun resolveVirtualFile(path: String): VirtualFile? {
+    return when (project) {
+      is VirtualFileResolver -> project.resolveVirtualFile(path)
+      else -> super.resolveVirtualFile(path)
+    }
+  }
+}
+
+// for upsource
+@ApiStatus.Experimental
+interface VirtualFileResolver {
+  @JvmDefault
+  fun resolveVirtualFile(path: String): VirtualFile? {
+    return defaultFileBasedStorageConfiguration.resolveVirtualFile(path)
+  }
 }

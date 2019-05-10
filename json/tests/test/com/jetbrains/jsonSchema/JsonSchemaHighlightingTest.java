@@ -1140,4 +1140,26 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                        "  }\n" +
                        "}");
   }
+
+  public void testPropertyNamesRef() throws Exception {
+    doTest("{\n" +
+           "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+           "  \"definitions\": {\n" +
+           "    \"Ref\": {\n" +
+           "      \"enum\": [\"a\", \"b\", \"c\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"patternProperties\": {\n" +
+           "    \".*\": {\n" +
+           "      \"propertyNames\": {\n" +
+           "        \"$ref\": \"#/definitions/Ref\"\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"Name\": {\n" +
+                "    <warning>\"d\"</warning>: \"a\"\n" +
+                "  }\n" +
+                "}");
+  }
 }

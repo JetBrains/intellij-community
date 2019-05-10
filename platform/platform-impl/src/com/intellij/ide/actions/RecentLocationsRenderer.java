@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.FontUtil;
@@ -40,11 +41,16 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   @NotNull private final Project myProject;
   @NotNull private final SpeedSearch mySpeedSearch;
   @NotNull private final RecentLocationsDataModel myData;
+  @NotNull private final JBCheckBox myCheckBox;
 
-  RecentLocationsRenderer(@NotNull Project project, @NotNull SpeedSearch speedSearch, @NotNull RecentLocationsDataModel data) {
+  RecentLocationsRenderer(@NotNull Project project,
+                          @NotNull SpeedSearch speedSearch,
+                          @NotNull RecentLocationsDataModel data,
+                          @NotNull JBCheckBox checkBox) {
     myProject = project;
     mySpeedSearch = speedSearch;
     myData = data;
+    myCheckBox = checkBox;
   }
 
   @Override
@@ -59,7 +65,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    String breadcrumbs = myData.getBreadcrumbsMap(RecentLocationsAction.showChanged(myProject)).get(value.getInfo());
+    String breadcrumbs = myData.getBreadcrumbsMap(myCheckBox.isSelected()).get(value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
     if (index != 0) {
       panel.add(createSeparatorLine(colorsScheme));

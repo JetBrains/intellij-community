@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
+import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -187,8 +188,8 @@ public class LibraryScopeCache {
       united.add(myLibrariesOnlyScope);
     }
 
-    for (Module module : modulesWithLibrary) {
-      united.add(GlobalSearchScope.moduleWithDependentsScope(module));
+    if (!modulesWithLibrary.isEmpty()) {
+      united.add(new ModuleWithDependentsScope(myProject, modulesWithLibrary));
     }
 
     return GlobalSearchScope.union(united.toArray(GlobalSearchScope.EMPTY_ARRAY));

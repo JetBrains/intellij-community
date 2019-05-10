@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -90,12 +89,9 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     Document document = getDocument();
     final List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (!info.hasHint() || info.getSeverity() != HighlightSeverity.ERROR) {
-        return true;
+      if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.getFixTextRange().containsOffset(caretOffset)) {
+        infos.add(info);
       }
-      PsiReference reference = myFile.findReferenceAt(info.getActualStartOffset());
-      if (reference != null && reference.getElement().getTextRange().containsOffset(caretOffset)) return true;
-      infos.add(info);
       return true;
     });
 

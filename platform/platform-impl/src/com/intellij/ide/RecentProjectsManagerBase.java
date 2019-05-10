@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
@@ -580,6 +581,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   private static String readProjectName(@NotNull String path) {
+    if (!RecentProjectPanel.isFileSystemPath(path))
+      return path;
+
     final Path file = Paths.get(path);
     //noinspection SSBasedInspection
     if (!Files.isDirectory(file)) {
@@ -652,6 +656,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     synchronized (myStateLock) {
       if (!myState.groups.contains(group)) {
         myState.groups.add(group);
+        myModCounter.incrementAndGet();
       }
     }
   }
@@ -660,6 +665,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   public void removeGroup(@NotNull ProjectGroup group) {
     synchronized (myStateLock) {
       myState.groups.remove(group);
+      myModCounter.incrementAndGet();
     }
   }
 

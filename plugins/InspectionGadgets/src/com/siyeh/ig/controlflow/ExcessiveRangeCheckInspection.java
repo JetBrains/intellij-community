@@ -16,10 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.JavaPsiMathUtil;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +78,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
-      if (qualifier != null) {
+      if (qualifier != null && !SideEffectChecker.mayHaveSideEffects(qualifier)) {
         if (STRING_IS_EMPTY.matches(expression)) {
           return new RangeConstraint(textRange, qualifier, SpecialField.STRING_LENGTH, LongRangeSet.point(0));
         }
@@ -172,7 +169,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       }
     }
 
-    @NotNull
+    @Nullable
     static RangeConstraint create(TextRange textRange, PsiExpression expr, LongRangeSet set) {
       SpecialField field = null;
       PsiReferenceExpression ref = expr instanceof PsiReferenceExpression ? (PsiReferenceExpression)expr :
@@ -185,6 +182,9 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
             expr = qualifier;
           }
         }
+      }
+      if (SideEffectChecker.mayHaveSideEffects(expr)) {
+        return null;
       }
       return new RangeConstraint(textRange, expr, field, set);
     }

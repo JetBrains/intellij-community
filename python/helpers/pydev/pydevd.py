@@ -173,10 +173,22 @@ class CheckOutputThread(PyDBDaemonThread):
                 except:
                     traceback.print_exc()
 
+                self.wait_pydb_threads_to_finish()
+
                 self.killReceived = True
 
             self.py_db.check_output_redirect()
 
+    def wait_pydb_threads_to_finish(self, timeout=0.5):
+        pydev_log.debug("Waiting for pydb daemon threads to finish")
+        pydb_daemon_threads = self.created_pydb_daemon_threads
+        started_at = time.time()
+        while time.time() < started_at + timeout:
+            if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(self, None):
+                return
+            time.sleep(0.01)
+        pydev_log.debug("The following pydb threads may not finished correctly: %s"
+                        % ', '.join([t.getName() for t in pydb_daemon_threads if t is not self]))
 
     def do_kill_pydev_thread(self):
         self.killReceived = True
@@ -1311,6 +1323,9 @@ def _locked_settrace(
     global bufferStdOutToServer
     global bufferStdErrToServer
 
+    # Reset created PyDB daemon threads after fork - parent threads don't exist in a child process.
+    PyDBDaemonThread.created_pydb_daemon_threads = {}
+
     if not connected:
         pydevd_vm_type.setup_type()
 
@@ -1478,15 +1493,19 @@ class DispatchReader(ReaderThread):
             self.killReceived = True
 
 
-DISPATCH_APPROACH_NEW_CONNECTION = 1 # Used by PyDev
-DISPATCH_APPROACH_EXISTING_CONNECTION = 2 # Used by PyCharm
-DISPATCH_APPROACH = DISPATCH_APPROACH_NEW_CONNECTION
+def _should_use_existing_connection(setup):
+    '''
+    The new connection dispatch approach is used by PyDev when the `multiprocess` option is set,
+    the existing connection approach is used by PyCharm when the `multiproc` option is set.
+    '''
+    return setup.get('multiproc', False)
+
 
 def dispatch():
     setup = SetupHolder.setup
     host = setup['client']
     port = setup['port']
-    if DISPATCH_APPROACH == DISPATCH_APPROACH_EXISTING_CONNECTION:
+    if _should_use_existing_connection(setup):
         dispatcher = Dispatcher()
         try:
             dispatcher.connect(host, port)
@@ -1616,8 +1635,6 @@ def main():
 
         elif setup['multiproc']: # PyCharm
             pydev_log.debug("Started in multiproc mode\n")
-            global DISPATCH_APPROACH
-            DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION
 
             dispatcher = Dispatcher()
             try:

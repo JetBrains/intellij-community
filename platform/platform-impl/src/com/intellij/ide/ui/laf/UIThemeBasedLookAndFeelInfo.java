@@ -131,7 +131,9 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     String value = PropertiesComponent.getInstance().getValue("old." + IdeBackgroundUtil.EDITOR_PROP);
     PropertiesComponent.getInstance().unsetValue("old." + IdeBackgroundUtil.EDITOR_PROP);
     if (value == null) {
-      PropertiesComponent.getInstance().unsetValue(IdeBackgroundUtil.EDITOR_PROP);
+      if (myTheme.getBackground() != null) {
+        PropertiesComponent.getInstance().unsetValue(IdeBackgroundUtil.EDITOR_PROP);
+      }
     } else {
       PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, value);
     }

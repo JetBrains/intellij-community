@@ -32,6 +32,11 @@ public interface Function<Param, Result> {
     public Object fun(Object o) {
       return o;
     }
+
+    @Override
+    public String toString() {
+      return "Function.ID";
+    }
   };
 
   Function NULL = NullableFunction.NULL;
@@ -39,6 +44,11 @@ public interface Function<Param, Result> {
   Function TO_STRING = new Function() {
     public Object fun(Object o) {
       return String.valueOf(o);
+    }
+
+    @Override
+    public String toString() {
+      return "Function.TO_STRING";
     }
   };
 

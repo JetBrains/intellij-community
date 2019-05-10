@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntActionsUsagesCollector;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
@@ -54,6 +55,8 @@ public class RunTargetAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) return;
+
+    AntActionsUsagesCollector.trigger(getEventProject(e), this, e);
 
     ExecutionHandler.runBuild(
       antTarget.first, Collections.singletonList(antTarget.second.getName().getValue()),

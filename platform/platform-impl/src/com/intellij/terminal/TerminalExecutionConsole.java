@@ -71,6 +71,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private volatile boolean myLastCR = false;
   private final PendingTasksRunner myOnResizedRunner;
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
+  private boolean myEnableConsoleActions = true;
 
   private boolean myEnterKeyDefaultCodeEnabled = false; // TODO turn on by default in 2019.2
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
@@ -292,10 +293,17 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
+  public void enableConsoleActions(boolean enableConsoleActions) {
+    myEnableConsoleActions = enableConsoleActions;
+  }
+
   @NotNull
   @Override
   public AnAction[] createConsoleActions() {
-    return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
+    if (myEnableConsoleActions) {
+      return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
+    }
+    return AnAction.EMPTY_ARRAY;
   }
 
   @Override

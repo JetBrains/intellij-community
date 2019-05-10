@@ -32,6 +32,23 @@ class C {
     T reassignedLocal = null
     reassignedParam = reassignedLocal
     reassignedLocal = reassignedParam
+    {
+      Object param ->
+        param = ""
+        print param
+    } (1)
+    {
+      Object param -> param
+    } (2)
+
+    if (true) {
+      def a = 1
+      print a
+    } else {
+      def a = 2
+      a++
+      print a
+    }
   }
 
   void 'method with literal name'() {}

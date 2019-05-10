@@ -98,7 +98,7 @@ public class JarRepositoryManager {
     boolean includeTransitiveDependencies = dialog.getIncludeTransitiveDependencies();
     final String copyTo = dialog.getDirectoryPath();
 
-    final EnumSet<ArtifactKind> artifactKinds = kindsOf(attachSources, attachJavaDoc);
+    final EnumSet<ArtifactKind> artifactKinds = kindsOf(attachSources, attachJavaDoc, dialog.getPackaging());
     if (attachAnnotations) {
       artifactKinds.add(ArtifactKind.ANNOTATIONS);
     }
@@ -276,9 +276,9 @@ public class JarRepositoryManager {
     return repositories;
   }
 
-  protected static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc, String... artifactPackaging) {
+  public static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc, String... artifactPackaging) {
     final EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc);
-    if (artifactPackaging.length == 0) {
+    if (artifactPackaging.length == 0 || artifactPackaging.length == 1 && artifactPackaging[0] == null) {
       kinds.add(ArtifactKind.ARTIFACT);
     }
     else {

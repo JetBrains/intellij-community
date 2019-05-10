@@ -44,7 +44,7 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent != null) {
+    if (lastParent instanceof PsiExpressionList) {
       PsiSwitchBlock switchStatement = getEnclosingSwitchBlock();
       if (switchStatement != null) {
         PsiExpression expression = switchStatement.getExpression();

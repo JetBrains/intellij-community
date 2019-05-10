@@ -9,6 +9,7 @@ import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.plugins.InstalledPluginsManagerMain;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -27,8 +28,11 @@ import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameViewHolder;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
@@ -97,13 +101,23 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     setGlassPane(glassPane);
     glassPane.setVisible(false);
-    //setUndecorated(true);
-    setContentPane(myScreen.getWelcomePanel());
+
+    int defaultHeight = DEFAULT_HEIGHT;
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      CustomFrameViewHolder holder =
+        CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
+      setContentPane(holder.getContent());
+
+      defaultHeight+=holder.getHeaderHeight();
+    } else {
+      setContentPane(myScreen.getWelcomePanel());
+    }
+
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
-    // Android Studio: Changed default frame height to accommodate extra action.
-    getRootPane().setPreferredSize(new Dimension(JBUI.scale(width), Math.max(JBUI.scale(DEFAULT_HEIGHT), getMinimumSize().height)));
+
+    getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
     setResizable(false);
 
     Dimension size = getPreferredSize();
@@ -138,6 +152,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     Disposer.register(ApplicationManager.getApplication(), this);
 
     UIUtil.decorateWindowHeader(getRootPane());
+  }
+
+  @Override
+  public void addNotify() {
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      JdkEx.setHasCustomDecoration(this);
+    }
+    super.addNotify();
   }
 
   @Override

@@ -2,7 +2,7 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.TestScheme
-import com.intellij.configurationStore.TestSchemesProcessor
+import com.intellij.configurationStore.TestSchemeProcessor
 import com.intellij.configurationStore.save
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.configurationStore.serialize
@@ -30,7 +30,7 @@ class LoadTest : IcsTestCase() {
 
   @Suppress("UNCHECKED_CAST")
   private fun createSchemeManager(dirPath: String): SchemeManagerImpl<TestScheme, TestScheme> {
-    return icsManager.schemeManagerFactory.value.create(dirPath, TestSchemesProcessor(), streamProvider = provider) as SchemeManagerImpl<TestScheme, TestScheme>
+    return icsManager.schemeManagerFactory.value.create(dirPath, TestSchemeProcessor(), streamProvider = provider) as SchemeManagerImpl<TestScheme, TestScheme>
   }
 
   @Test fun `load scheme`() {

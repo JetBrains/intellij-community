@@ -828,6 +828,51 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testMultiprocessPool() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_pool.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForOutput("Done");
+        assertFalse(output().contains("KeyboardInterrupt"));
+      }
+    });
+  }
+
+  @Test
+  public void testPythonSubprocessWithCParameter() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_python_subprocess_with_c_parameter.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Hello!");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron", "-jython");
+      }
+    });
+  }
+
+  @Test
   public void testPyQtQThreadInheritor() {
     Assume.assumeFalse("Don't run under Windows",UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 

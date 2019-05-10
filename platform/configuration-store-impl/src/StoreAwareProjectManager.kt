@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
-import com.intellij.configurationStore.schemeManager.useSchemeLoader
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -71,11 +70,9 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
       runBatchUpdate(project.messageBus) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
-          useSchemeLoader { schemeLoaderRef ->
-            for ((tracker, files) in changedSchemes.entrySet()) {
-              LOG.runAndLogException {
-                tracker.reload(files, schemeLoaderRef)
-              }
+          for ((tracker, files) in changedSchemes.entrySet()) {
+            LOG.runAndLogException {
+              tracker.reload(files)
             }
           }
         }

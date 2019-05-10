@@ -17,6 +17,7 @@ LangString prompt_delete_settings ${LANG_ENGLISH} "${MUI_PRODUCT} will be uninst
 LangString text_delete_settings ${LANG_ENGLISH} "Please confirm if you would like to delete the caches and settings:"
 LangString confirm_delete_caches ${LANG_ENGLISH} "Delete ${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR} caches and local history"
 LangString confirm_delete_settings ${LANG_ENGLISH} "Delete ${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR} settings and installed plugins"
+LangString confirm_delete_rider_buildtools ${LANG_ENGLISH} "Delete ${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR} build tools frameworks"
 
 ; Installation message boxes
 LangString current_version_already_installed ${LANG_ENGLISH} "Current version of ${MUI_PRODUCT} is already installed. Do you wish to continue?"

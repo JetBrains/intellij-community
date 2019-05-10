@@ -17,7 +17,10 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * @author spleaner
@@ -27,6 +30,6 @@ public interface ModuleRunProfile extends RunProfileWithCompileBeforeLaunchOptio
   @Nullable
   @Override
   default GlobalSearchScope getSearchScope() {
-    return SearchScopeProvider.createSearchScope(getModules());
+    return GlobalSearchScopes.executionScope(Arrays.asList(getModules()));
   }
 }

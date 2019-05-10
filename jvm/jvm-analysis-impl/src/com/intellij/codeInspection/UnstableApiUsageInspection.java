@@ -18,6 +18,7 @@ import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.
 public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
   public final List<String> unstableApiAnnotations = new ExternalizableStringSet(
     "org.jetbrains.annotations.ApiStatus.Experimental",
+    "org.jetbrains.annotations.ApiStatus.Internal",
     "com.google.common.annotations.Beta",
     "io.reactivex.annotations.Beta",
     "io.reactivex.annotations.Experimental",

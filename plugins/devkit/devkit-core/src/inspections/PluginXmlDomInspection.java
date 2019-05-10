@@ -237,7 +237,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     checkMaxLength(ideaPlugin.getId(), 255, holder);
 
     checkTemplateText(ideaPlugin.getName(), "Plugin display name here", holder);
-    checkTemplateTextContains(ideaPlugin.getName(), "plugin", holder);
+    checkTemplateTextContainsWord(ideaPlugin.getName(), "plugin", holder);
     checkMaxLength(ideaPlugin.getName(), 255, holder);
 
 
@@ -751,6 +751,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     String text = domValue.getStringValue();
     if (text != null && StringUtil.containsIgnoreCase(text, containsText)) {
       holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", containsText));
+    }
+  }
+
+  private static void checkTemplateTextContainsWord(GenericDomValue<String> domValue,
+                                                    String templateWord,
+                                                    DomElementAnnotationHolder holder) {
+    String text = domValue.getStringValue();
+    if (text == null) return;
+    for (String word : StringUtil.getWordsIn(text)) {
+      if (StringUtil.equalsIgnoreCase(word, templateWord)) {
+        holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", templateWord));
+      }
     }
   }
 

@@ -338,8 +338,14 @@ public class ModelMergerImpl implements ModelMerger {
 
   @Nullable
   private static Method findPrimaryKeyAnnotatedMethod(final Method method, final Class aClass) {
-    return method.getReturnType() != void.class && method.getParameterTypes().length == 0 ? new JavaMethodSignature(method)
-      .findAnnotatedMethod(PrimaryKey.class, aClass) : null;
+    if (method.getReturnType() != void.class && method.getParameterTypes().length == 0) {
+      for (Method each : new JavaMethodSignature(method).getAllMethods(aClass)) {
+        if (each.getAnnotation(PrimaryKey.class) != null) {
+          return each;
+        }
+      }
+    }
+    return null;
   }
 
   private List<Object> getMergedImplementations(final Method method,

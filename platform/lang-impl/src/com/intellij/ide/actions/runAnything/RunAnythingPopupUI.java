@@ -179,6 +179,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
             myAlarm.cancelAllRequests();
 
             ApplicationManager.getApplication().invokeLater(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+
+            searchFinishedHandler.run();
           }
           finally {
             result.setDone();
@@ -371,7 +373,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
         myIsItemSelected = true;
 
         if (isMoreItem(myResultsList.getSelectedIndex())) {
-          mySearchField.setText(myLastInputText != null ? myLastInputText : "");
+          if (myLastInputText != null) {
+            mySearchField.setText(myLastInputText);
+          }
           return;
         }
 
@@ -543,7 +547,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final JLabel myTitle = new JLabel();
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
       Component cmp = null;
       if (isMoreItem(index)) {
         cmp = RunAnythingMore.get(isSelected);
@@ -551,12 +555,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(isSelected);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
-          p.setBackground(UIUtil.getListBackground(isSelected));
+          p.setBackground(UIUtil.getListBackground(isSelected, true));
           p.add(cmp, BorderLayout.CENTER);
           cmp = p;
         }
@@ -600,7 +604,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
   private class CalcThread implements Runnable {
     @NotNull private final Project myProject;
     @NotNull private final String myPattern;
@@ -608,7 +611,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private final ActionCallback myDone = new ActionCallback();
     @NotNull private final RunAnythingSearchListModel myListModel;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
+    private CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
       myProject = project;
       myPattern = pattern;
       RunAnythingSearchListModel model = getSearchingModel(myResultsList);
@@ -649,12 +652,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
         if (myPattern.trim().length() == 0) {
           buildGroups(true);
-          updatePopup();
           return;
         }
 
         if (isHelpMode(mySearchField.getText())) {
           buildHelpGroups(myListModel);
+          updatePopup();
           return;
         }
 
@@ -681,6 +684,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     private void buildGroups(boolean isRecent) {
       buildAllGroups(myPattern, () -> check(), isRecent);
+      updatePopup();
     }
 
     private void buildHelpGroups(@NotNull RunAnythingSearchListModel listModel) {
@@ -959,7 +963,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class RunAnythingShowFilterAction extends ShowFilterAction {
-    public RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
+    private RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
       super(parentDisposable, myProject);
     }
 

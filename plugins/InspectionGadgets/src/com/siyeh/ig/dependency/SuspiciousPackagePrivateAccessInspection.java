@@ -13,7 +13,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -222,7 +222,40 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     PsiElement sourcePsi = sourceNode.getSourcePsi();
     UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
     if (sourceClass == null) return false;
-    return JavaResolveUtil.canAccessProtectedMember(member, memberClass, accessObjectType, sourceClass.getJavaPsi(), member.hasModifierProperty(PsiModifier.STATIC));
+    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC),
+                                    sourceClass);
+  }
+
+  /**
+   * The implementation was copied from {@link com.intellij.psi.impl.source.resolve.JavaResolveUtil#canAccessProtectedMember} but uses UAST
+   * to find outer class as a workaround for bugs in Kotlin Light PSI (KT-30759, KT-30752)
+   */
+  private static boolean canAccessProtectedMember(@NotNull PsiMember member, @NotNull PsiClass memberClass,
+                                                  @Nullable PsiClass accessObjectClass, boolean isStatic, @Nullable UClass contextClass) {
+    while (contextClass != null) {
+      PsiClass javaPsiClass = contextClass.getJavaPsi();
+      if (InheritanceUtil.isInheritorOrSelf(javaPsiClass, memberClass, true)) {
+        if (member instanceof PsiClass || isStatic || accessObjectClass == null
+            || InheritanceUtil.isInheritorOrSelf(accessObjectClass, javaPsiClass, true)) {
+          return true;
+        }
+      }
+
+      contextClass = getOuterClass(contextClass);
+    }
+    return false;
+  }
+
+  private static UClass getOuterClass(@NotNull UClass aClass) {
+    UElement uastParent = aClass.getUastParent();
+    if (uastParent == null) return null;
+    PsiElement sourcePsi = uastParent.getSourcePsi();
+    while (sourcePsi == null) {
+      uastParent = uastParent.getUastParent();
+      if (uastParent == null) return null;
+      sourcePsi = uastParent.getSourcePsi();
+    }
+    return UastUtils.findContaining(sourcePsi, UClass.class);
   }
 
   private boolean isPackageLocalAccessSuspicious(Module sourceModule, Module targetModule) {

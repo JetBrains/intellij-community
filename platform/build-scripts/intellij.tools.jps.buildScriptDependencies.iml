@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.tools.jps.antTasks" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="gant-groovy" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="gson" level="project" />
+  </component>
+</module>
