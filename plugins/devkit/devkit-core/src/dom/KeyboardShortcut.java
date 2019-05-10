@@ -32,6 +32,7 @@ public interface KeyboardShortcut extends DomElement {
   GenericAttributeValue<String> getFirstKeystroke();
 
   @NotNull
+  @Required
   @Convert(KeymapConverter.class)
   GenericAttributeValue<XmlFile> getKeymap();
 
