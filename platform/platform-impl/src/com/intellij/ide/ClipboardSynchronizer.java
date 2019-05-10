@@ -67,12 +67,12 @@ public class ClipboardSynchronizer implements Disposable {
   }
 
   public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
-    return ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors), () -> false);
+    return ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors), false);
   }
 
   @Nullable
   public Transferable getContents() {
-    return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
+    return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, null);
   }
 
   @Nullable
@@ -85,7 +85,7 @@ public class ClipboardSynchronizer implements Disposable {
         LOG.debug(e);
         return null;
       }
-    }, () -> null);
+    }, null);
   }
 
   public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {

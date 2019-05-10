@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public class ClipboardUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
 
-  public static <E> E handleClipboardSafely(@NotNull Supplier<? extends E> supplier, @NotNull Supplier<? extends E> onFail) {
+  public static <E> E handleClipboardSafely(@NotNull Supplier<? extends E> supplier, E defaultValue) {
     try {
       return supplier.get();
     }
@@ -31,7 +31,8 @@ public class ClipboardUtil {
     catch (IllegalArgumentException e) {
       LOG.warn("Java bug #7173464", e);
     }
-    return onFail.get();
+
+    return defaultValue;
   }
 
   @Nullable
