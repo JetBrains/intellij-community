@@ -18,7 +18,7 @@ public class NextPrevWordTest extends LightPlatformCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final CaretStopOptions originalCaretStopOptions = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
-    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT_IDEA_BEFORE_192.toCaretStopOptions());
+    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT.toCaretStopOptions());
     disposeOnTearDown(() -> EditorSettingsExternalizable.getInstance().setCaretStopOptions(originalCaretStopOptions));
   }
 
@@ -55,7 +55,7 @@ public class NextPrevWordTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testNextWordAtGreaterThanEqualOperator() {
     myFixture.configureByText("Foo.java", "class Foo { boolean b = 1 <caret>>= 2; }");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
-    myFixture.checkResult("class Foo { boolean b = 1 >= <caret>2; }");
+    myFixture.checkResult("class Foo { boolean b = 1 >=<caret> 2; }");
   }
 
   public void testPrevNextWordWithFolding() {

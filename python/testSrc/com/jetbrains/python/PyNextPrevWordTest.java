@@ -12,13 +12,17 @@ public class PyNextPrevWordTest extends PyTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final CaretStopOptions originalCaretStopOptions = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
-    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT_IDEA_BEFORE_192.toCaretStopOptions());
+    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT.toCaretStopOptions());
     disposeOnTearDown(() -> EditorSettingsExternalizable.getInstance().setCaretStopOptions(originalCaretStopOptions));
   }
 
   public void testLineBoundary() {
     myFixture.configureByText("test.py", "def blah():<caret>\n    pass");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    myFixture.checkResult("def blah():\n<caret>    pass");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    myFixture.checkResult("def blah():\n    pass<caret>");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
     myFixture.checkResult("def blah():\n    <caret>pass");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
     myFixture.checkResult("def blah():<caret>\n    pass");
