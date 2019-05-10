@@ -2,13 +2,18 @@
 package com.intellij.util.serialization
 
 import com.intellij.util.containers.ObjectIntHashMap
+import org.objenesis.instantiator.ObjectInstantiator
 import software.amazon.ion.IonType
+import java.lang.reflect.Constructor
 import java.lang.reflect.Type
 
-internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), RootBinding {
+internal class BeanBinding(private val beanClass: Class<*>) : RootBinding {
   private lateinit var bindings: Array<NestedBinding>
   private lateinit var nameToBindingIndex: ObjectIntHashMap<String>
   private lateinit var accessors: List<MutableAccessor>
+
+  @Volatile
+  private var objectInstantiator: ObjectInstantiator<*>? = null
 
   override fun init(originalType: Type, context: BindingInitializationContext) {
     val list = context.propertyCollector.collect(beanClass)
@@ -51,6 +56,35 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     writer.stepOut()
   }
 
+  private fun newInstance(context: ReadContext): Any {
+    val objectInstantiator = objectInstantiator
+    if (objectInstantiator != null) {
+      return objectInstantiator.newInstance()
+    }
+
+    val constructor: Constructor<out Any>
+    try {
+      constructor = beanClass.getDeclaredConstructor()!!
+      try {
+        constructor.isAccessible = true
+      }
+      catch (ignored: SecurityException) {
+        return beanClass.newInstance()
+      }
+    }
+    catch (e: NoSuchMethodException) {
+      val instantiator = context.objenesis.getInstantiatorOf(beanClass)
+      val instance = instantiator.newInstance()
+      this.objectInstantiator = objectInstantiator
+      return instance
+    }
+
+    val instance = constructor.newInstance()
+    // cache only if constructor is valid and applicable
+    this.objectInstantiator = ObjectInstantiator { constructor.newInstance() }
+    return instance
+  }
+
   override fun deserialize(context: ReadContext): Any {
     val reader = context.reader
 
@@ -61,7 +95,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
     reader.stepIn()
 
-    val obj = newInstance()
+    val obj = newInstance(context)
     val nameToBindingIndex = nameToBindingIndex
     val bindings = bindings
     val accessors = accessors

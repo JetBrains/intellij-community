@@ -177,7 +177,14 @@ class ObjectSerializerTest {
 
     test(TestByteArray(data = Base64.getEncoder().encode("some data".toByteArray())))
   }
+
+  @Test
+  fun `no default constructor`() {
+    test(NoDefaultConstructorBean("foo"))
+  }
 }
+
+private class NoDefaultConstructorBean(@Suppress("UNUSED_PARAMETER") @JvmField val someParameter: String)
 
 private class TestArrayBean(
   @JvmField var list: Array<String>? = null,

@@ -2,6 +2,8 @@
 package com.intellij.util.serialization
 
 import com.intellij.util.ParameterizedTypeImpl
+import org.objenesis.Objenesis
+import org.objenesis.ObjenesisStd
 import software.amazon.ion.IonType
 import software.amazon.ion.system.IonBinaryWriterBuilder
 import software.amazon.ion.system.IonTextWriterBuilder
@@ -15,6 +17,11 @@ internal class IonObjectSerializer {
   private val propertyCollector = PropertyCollector(PropertyCollector.COLLECT_PRIVATE_FIELDS or PropertyCollector.COLLECT_FINAL_FIELDS)
 
   internal val bindingProducer = IonBindingProducer(propertyCollector)
+
+  private val objenesis = lazy {
+    // ObjectInstantiator is cached by BeanBinding
+    ObjenesisStd(/* useCache = */ false)
+  }
 
   fun write(obj: Any, outputStream: OutputStream, filter: SerializationFilter, binary: Boolean = true, originalType: Type? = null) {
     createIonWriterBuilder(binary).build(outputStream).use { ionWriter ->
@@ -30,7 +37,7 @@ internal class IonObjectSerializer {
         null -> throw SerializationException("empty input")
         else -> {
           @Suppress("UNCHECKED_CAST")
-          return bindingProducer.getRootBinding(objectClass).deserialize(ReadContext(reader, ObjectIdReader())) as T
+          return bindingProducer.getRootBinding(objectClass).deserialize(createReadContext(reader)) as T
         }
       }
     }
@@ -45,12 +52,21 @@ internal class IonObjectSerializer {
         else -> {
           val result = mutableListOf<Any?>()
           val binding = bindingProducer.getRootBinding(ArrayList::class.java, ParameterizedTypeImpl(ArrayList::class.java, itemClass)) as CollectionBinding
-          binding.readInto(result as MutableCollection<Any?>, ReadContext(reader, ObjectIdReader()))
+          binding.readInto(result as MutableCollection<Any?>, createReadContext(reader))
           return result as List<T>
         }
       }
     }
   }
+
+  private fun createReadContext(reader: ValueReader): ReadContext {
+    return ReadContextImpl(reader, ObjectIdReader(), objenesis)
+  }
+}
+
+private data class ReadContextImpl(override val reader: ValueReader, override val objectIdReader: ObjectIdReader, private val lazyObjenesis: Lazy<Objenesis>) : ReadContext {
+  override val objenesis: Objenesis
+    get() = lazyObjenesis.value
 }
 
 private fun createIonWriterBuilder(binary: Boolean): IonWriterBuilder {

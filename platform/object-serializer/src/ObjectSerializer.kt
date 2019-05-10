@@ -6,6 +6,7 @@ import com.intellij.util.ParameterizedTypeImpl
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.TIntObjectHashMap
 import gnu.trove.TObjectHashingStrategy
+import org.objenesis.Objenesis
 import software.amazon.ion.IonReader
 import software.amazon.ion.IonWriter
 import software.amazon.ion.system.IonReaderBuilder
@@ -80,8 +81,11 @@ data class WriteContext(val writer: ValueWriter,
                         val filter: SerializationFilter,
                         val objectIdWriter: ObjectIdWriter?)
 
-data class ReadContext(val reader: ValueReader,
-                       val objectIdReader: ObjectIdReader)
+interface ReadContext {
+  val reader: ValueReader
+  val objectIdReader: ObjectIdReader
+  val objenesis: Objenesis
+}
 
 class ObjectIdWriter {
   private val map: ObjectIntHashMap<Any> = ObjectIntHashMap(TObjectHashingStrategy.IDENTITY)
