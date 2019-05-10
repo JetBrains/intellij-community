@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
@@ -32,6 +33,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -152,9 +154,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     final PsiSubstitutor substitutor = getSubstitutor(false);
-    @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(() -> {
+    @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(() -> computeWithKnownTargetType(() -> {
       //arg types are calculated here without additional constraints:
       //non-pertinent to applicability arguments of arguments would be skipped
+      //known target types are cached so poly method calls are able to retrieve that target type when type inference is done
+      //see InferenceSession#getTargetTypeFromParent
       PsiType[] argumentTypes = getArgumentTypes();
       if (argumentTypes == null) {
         return ApplicabilityLevel.NOT_APPLICABLE;
@@ -166,13 +170,42 @@ public class MethodCandidateInfo extends CandidateInfo{
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return level1;
-    }, true);
+    }, substitutor), true);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
     return level;
   }
 
+  private <T> T computeWithKnownTargetType(final Computable<T> computable, PsiSubstitutor substitutor) {
+    if (myArgumentList instanceof PsiExpressionList) {
+      PsiExpressionList argumentList = (PsiExpressionList)myArgumentList;
+      PsiExpression[] expressions = Arrays.stream(argumentList.getExpressions())
+        .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
+        .filter(expression -> !(expression instanceof PsiFunctionalExpression))
+        .toArray(PsiExpression[]::new);
+      Map<PsiElement, PsiType> expressionTypes = LambdaUtil.getFunctionalTypeMap();
+      try {
+        PsiMethod method = getElement();
+        boolean varargs = isVarargs();
+        for (PsiExpression context : expressions) {
+          expressionTypes.put(context,
+                              PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
+        }
+        return computable.compute();
+      }
+      finally {
+        for (PsiExpression context : expressions) {
+          expressionTypes.remove(context);
+        }
+      }
+    }
+    else {
+      return computable.compute();
+    }
+  }
+ 
+  
   public boolean isOnArgumentList(PsiExpressionList argumentList) {
     return getMarkerList() == argumentList;
   }

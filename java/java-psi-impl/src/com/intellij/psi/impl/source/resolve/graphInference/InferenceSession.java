@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -804,10 +803,8 @@ public class InferenceSession {
       if (gParent instanceof PsiCall) {
         final PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
         if (argumentList != null) {
-          if (MethodCandidateInfo.isOverloadCheck(argumentList)) {//todo overload resolution on method without type parameters: infer argument type
-            final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
-            LOG.assertTrue(currentMethod != null);
-            return getTypeByMethod(context, argumentList, currentMethod.getElement(), currentMethod.isVarargs(), currentMethod.getSiteSubstitutor(), inferParent);
+          if (MethodCandidateInfo.isOverloadCheck(argumentList)) {
+            return LambdaUtil.getFunctionalTypeMap().get(context);
           }
 
           final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)gParent);
@@ -818,7 +815,7 @@ public class InferenceSession {
           }
           if (element instanceof PsiMethod && (inferParent || !((PsiMethod)element).hasTypeParameters())) {
             final boolean varargs = result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
-            return getTypeByMethod(context, argumentList, result.getElement(), varargs, result.getSubstitutor(), inferParent);
+            return PsiTypesUtil.getTypeByMethod(context, argumentList, result.getElement(), varargs, result.getSubstitutor(), inferParent);
           }
         }
       }
@@ -859,30 +856,6 @@ public class InferenceSession {
 
       return inferParent || !(PsiUtil.skipParenthesizedExprUp(lambdaExpression.getParent()) instanceof PsiExpressionList) 
              ? LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType()) : null;
-    }
-    return null;
-  }
-
-  private static PsiType getTypeByMethod(PsiElement context,
-                                         PsiExpressionList argumentList,
-                                         PsiElement parentMethod,
-                                         boolean varargs,
-                                         PsiSubstitutor substitutor,
-                                         boolean inferParent) {
-    if (parentMethod instanceof PsiMethod) {
-      final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
-      if (parameters.length == 0) return null;
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length && !inferParent) return null;
-      PsiElement arg = context;
-      while (arg.getParent() instanceof PsiParenthesizedExpression) {
-        arg = arg.getParent();
-      }
-      final int i = ArrayUtilRt.find(args, arg);
-      if (i < 0) return null;
-      final PsiType parameterType = getParameterType(parameters, i, substitutor, varargs);
-      final boolean isRaw = substitutor != null && PsiUtil.isRawSubstitutor((PsiMethod)parentMethod, substitutor);
-      return isRaw ? TypeConversionUtil.erasure(parameterType) : parameterType;
     }
     return null;
   }
