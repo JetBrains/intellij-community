@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ class VfsEventGenerationHelper {
     return myEvents;
   }
 
-  boolean checkDirty(@NotNull NewVirtualFile file) {
+  static boolean checkDirty(@NotNull NewVirtualFile file) {
     boolean fileDirty = file.isDirty();
     if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
     return fileDirty;
@@ -54,7 +55,7 @@ class VfsEventGenerationHelper {
                         @NotNull String childName,
                         @NotNull FileAttributes attributes,
                         @Nullable String symlinkTarget,
-                        @NotNull Runnable checkCanceled) {
+                        @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
     ChildInfo[] children;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
@@ -86,7 +87,7 @@ class VfsEventGenerationHelper {
 
   // scan all children of "root" (except excluded dirs) recursively and return them in the ChildInfo[] array
   @Nullable // null means error during scan
-  private static ChildInfo[] scanChildren(@NotNull Path root, @NotNull Path[] excluded, @NotNull Runnable checkCanceled) {
+  private static ChildInfo[] scanChildren(@NotNull Path root, @NotNull Path[] excluded, @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
     ChildInfo fakeRoot = new ChildInfo(ChildInfo.UNKNOWN_ID_YET, "", null, null, null);

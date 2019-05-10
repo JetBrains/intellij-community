@@ -139,7 +139,7 @@ class LocalFileSystemRefreshWorker {
   }
 
   private void processFile(@NotNull NewVirtualFile file, @NotNull RefreshContext refreshContext) {
-    if (!myHelper.checkDirty(file) || checkCancelled(file, refreshContext)) {
+    if (!VfsEventGenerationHelper.checkDirty(file) || isCancelled(file, refreshContext)) {
       return;
     }
 
@@ -156,7 +156,7 @@ class LocalFileSystemRefreshWorker {
       refreshFile(file, refreshContext);
     }
 
-    if (checkCancelled(file, refreshContext)) {
+    if (isCancelled(file, refreshContext)) {
       return;
     }
 
@@ -273,9 +273,9 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private boolean checkCancelled(@NotNull NewVirtualFile stopAt, @NotNull RefreshContext refreshContext) {
+  private boolean isCancelled(@NotNull NewVirtualFile stopAt, @NotNull RefreshContext refreshContext) {
     boolean requestedCancel = false;
-    if (myCancelled || (requestedCancel = ourCancellingCondition != null && ourCancellingCondition.fun(stopAt))) {
+    if (myCancelled || (requestedCancel = ourUnitTestCancellingCondition != null && ourUnitTestCancellingCondition.fun(stopAt))) {
       if (requestedCancel) myCancelled = true;
       refreshContext.filesToBecomeDirty.offer(stopAt);
       return true;
@@ -283,17 +283,21 @@ class LocalFileSystemRefreshWorker {
     return false;
   }
 
+  private void checkCancelled(@NotNull NewVirtualFile stopAt, @NotNull RefreshContext refreshContext) throws RefreshWorker.RefreshCancelledException {
+    if (isCancelled(stopAt, refreshContext)) throw new RefreshWorker.RefreshCancelledException();
+  }
+
   private static void forceMarkDirty(@NotNull NewVirtualFile file) {
     file.markClean();  // otherwise consequent markDirty() won't have any effect
     file.markDirty();
   }
 
-  private static Function<? super VirtualFile, Boolean> ourCancellingCondition;
+  private static Function<? super VirtualFile, Boolean> ourUnitTestCancellingCondition;
 
   @TestOnly
   static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ourCancellingCondition = condition;
+    ourUnitTestCancellingCondition = condition;
   }
 
   private class RefreshingFileVisitor extends SimpleFileVisitor<Path> {
@@ -362,11 +366,16 @@ class LocalFileSystemRefreshWorker {
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
 
         String symlinkTarget = isLink ? file.toRealPath().toString() : null;
-        myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs, isLink), symlinkTarget, ()->checkCancelled(myFileOrDir, myRefreshContext));
+        try {
+          myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs, isLink), symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
+        }
+        catch (RefreshWorker.RefreshCancelledException e) {
+          return FileVisitResult.TERMINATE;
+        }
         return FileVisitResult.CONTINUE;
       }
 
-      if (checkCancelled(child, myRefreshContext)) {
+      if (isCancelled(child, myRefreshContext)) {
         return FileVisitResult.TERMINATE;
       }
 
@@ -384,7 +393,12 @@ class LocalFileSystemRefreshWorker {
         myHelper.scheduleDeletion(child);
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
         String symlinkTarget = isLink ? file.toRealPath().toString() : null;
-        myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs, isLink), symlinkTarget, ()->checkCancelled(myFileOrDir, myRefreshContext));
+        try {
+          myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs, isLink), symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
+        }
+        catch (RefreshWorker.RefreshCancelledException e) {
+          return FileVisitResult.TERMINATE;
+        }
         // ignore everything else
         child.markClean();
         return FileVisitResult.CONTINUE;
