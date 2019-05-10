@@ -74,13 +74,15 @@ public class PropertyUtilBase {
 
   @NotNull
   public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass, final String propertyName) {
-    final String setterName = suggestSetterName(propertyName);
-    final PsiMethod[] psiMethods = psiClass.findMethodsByName(setterName, true);
-    final ArrayList<PsiMethod> list = new ArrayList<>(psiMethods.length);
-    for (PsiMethod method : psiMethods) {
-      if (filterMethods(method)) continue;
-      if (isSimplePropertySetter(method)) {
-        list.add(method);
+    final String[] names = suggestSetterNames(propertyName);
+    final ArrayList<PsiMethod> list = new ArrayList<>();
+    for (String name : names) {
+      final PsiMethod[] psiMethods = psiClass.findMethodsByName(name, true);
+      for (PsiMethod method : psiMethods) {
+        if (filterMethods(method)) continue;
+        if (isSimplePropertySetter(method)) {
+          list.add(method);
+        }
       }
     }
     return list;
@@ -399,7 +401,11 @@ public class PropertyUtilBase {
   @NonNls
   @NotNull
   public static String[] suggestGetterNames(@NotNull String propertyName) {
-    final String str = StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName));
+    String sanitized = StringUtil.sanitizeJavaIdentifier(propertyName);
+    final String str = StringUtil.capitalizeWithJavaBeanConvention(sanitized);
+    if (checkPrefix(sanitized, "is")) {
+      return new String[]{sanitized, GET_PREFIX + str, IS_PREFIX + str};
+    }
     return new String[]{IS_PREFIX + str, GET_PREFIX + str};
   }
 
@@ -438,6 +444,15 @@ public class PropertyUtilBase {
     @NonNls StringBuilder name = new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(sanitizeJavaIdentifier));
     name.insert(0, setterPrefix);
     return name.toString();
+  }
+
+  public static String[] suggestSetterNames(@NonNls @NotNull String propertyName) {
+    String sanitized = StringUtil.sanitizeJavaIdentifier(propertyName);
+    String str = StringUtil.capitalizeWithJavaBeanConvention(sanitized);
+    if (checkPrefix(sanitized, "is")) {
+      return new String[]{SET_PREFIX + str.substring(2), SET_PREFIX + str};
+    }
+    return new String[]{SET_PREFIX + str};
   }
 
   /**

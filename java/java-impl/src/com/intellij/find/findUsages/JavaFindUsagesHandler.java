@@ -167,6 +167,11 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                                                        ContainerUtil.iterate(containingClass.getMethods()));
         if (setter != null) accessors.add(setter);
         accessors.addAll(PropertyUtilBase.getAccessors(containingClass, fieldName));
+        if (!fieldName.equals(propertyName)) {
+          // getAccessors does not take code style into account. Search again using propertyName
+          // which does not contain field prefix/suffix
+          accessors.addAll(PropertyUtilBase.getAccessors(containingClass, propertyName));
+        }
         accessors.removeIf(accessor -> field != PropertyUtilBase.findPropertyFieldByMember(accessor));
         if (!accessors.isEmpty()) {
           boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
