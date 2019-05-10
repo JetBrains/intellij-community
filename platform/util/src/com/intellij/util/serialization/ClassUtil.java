@@ -7,6 +7,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 public final class ClassUtil {
@@ -40,5 +42,18 @@ public final class ClassUtil {
            aClass == Float.class ||
            aClass.isEnum() ||
            Date.class.isAssignableFrom(aClass);
+  }
+
+  public static boolean isMutableCollection(@NotNull Object object) {
+    if (object == Collections.emptyList() || object == Collections.emptySet()) {
+      return false;
+    }
+    else if (object instanceof Collection) {
+      String simpleName = object.getClass().getSimpleName();
+      return !simpleName.equals("EmptyList") && !simpleName.startsWith("Unmodifiable") && !simpleName.equals("EmptySet");
+    }
+    else {
+      return false;
+    }
   }
 }

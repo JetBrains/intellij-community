@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="ion" type="repository">
+    <properties maven-id="software.amazon.ion:ion-java:1.4.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.4.0/ion-java-1.4.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.4.0/ion-java-1.4.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

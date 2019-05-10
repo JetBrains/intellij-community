@@ -40,7 +40,7 @@ public class XmlSerializer {
   public static Element serializeIfNotDefault(@NotNull Object object, @Nullable SerializationFilter filter) {
     SerializationFilter filter1 = filter == null ? TRUE_FILTER : filter;
     Class<?> aClass = object.getClass();
-    return (Element)XmlSerializerImpl.serializer.getClassBinding(aClass).serialize(object, null, filter1);
+    return (Element)XmlSerializerImpl.serializer.getRootBinding(aClass).serialize(object, null, filter1);
   }
 
   @NotNull
@@ -52,7 +52,7 @@ public class XmlSerializer {
   @SuppressWarnings({"unchecked"})
   public static <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws SerializationException {
     try {
-      NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getClassBinding(aClass);
+      NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getRootBinding(aClass);
       return (T)binding.deserialize(null, element);
     }
     catch (SerializationException e) {
@@ -93,7 +93,7 @@ public class XmlSerializer {
   @ApiStatus.Experimental
   @NotNull
   public static BeanBinding getBeanBinding(@NotNull Object bean) {
-    return (BeanBinding)XmlSerializerImpl.serializer.getClassBinding(bean.getClass());
+    return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(bean.getClass());
   }
 
   public static void serializeInto(final Object bean, final Element element) {

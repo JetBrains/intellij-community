@@ -8,19 +8,25 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class TextBinding extends Binding {
+final class TextBinding implements NestedBinding {
   private final Class<?> valueClass;
+  private final MutableAccessor accessor;
 
   TextBinding(@NotNull MutableAccessor accessor) {
-    super(accessor);
-
+    this.accessor = accessor;
     valueClass = ClassUtil.typeToClass(accessor.getGenericType());
+  }
+
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return accessor;
   }
 
   @Nullable
   @Override
   public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = myAccessor.read(o);
+    Object value = accessor.read(o);
     return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
   }
 
@@ -30,6 +36,6 @@ class TextBinding extends Binding {
   }
 
   void set(@NotNull Object context, @NotNull String value) {
-    XmlSerializerImpl.doSet(context, value, myAccessor, valueClass);
+    XmlSerializerImpl.doSet(context, value, accessor, valueClass);
   }
 }

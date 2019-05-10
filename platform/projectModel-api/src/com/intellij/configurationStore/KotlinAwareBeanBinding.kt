@@ -5,19 +5,14 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.IntArrayList
-import com.intellij.util.serialization.MutableAccessor
+import com.intellij.util.serialization.BaseBeanBinding
 import com.intellij.util.serialization.PropertyAccessor
 import com.intellij.util.xmlb.BeanBinding
 import com.intellij.util.xmlb.SerializationFilter
 import org.jdom.Element
-import java.lang.reflect.Constructor
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.isAccessible
 
-internal class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAccessor? = null) : BeanBinding(beanClass, accessor) {
-  // kotlin data class constructor is never cached, because we have (and it is good) very limited number of such classes
-  @Volatile
-  private var constructor: Constructor<*>? = null
+internal class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
+  private val beanBinding = BaseBeanBinding(beanClass)
 
   // only for accessor, not field
   private fun findBindingIndex(name: String): Int {
@@ -77,45 +72,6 @@ internal class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcce
   }
 
   override fun newInstance(): Any {
-    var constructor = constructor
-    if (constructor != null) {
-      return constructor.newInstance()
-    }
-
-    val clazz = myBeanClass
-    try {
-      constructor = clazz.getDeclaredConstructor()!!
-      try {
-        constructor.isAccessible = true
-      }
-      catch (ignored: SecurityException) {
-        return clazz.newInstance()
-      }
-
-      val instance = constructor.newInstance()
-      // cache only if constructor is valid and applicable
-      this.constructor = constructor
-      return instance
-    }
-    catch (e: RuntimeException) {
-      return createUsingKotlin(clazz) ?: throw e
-    }
-    catch (e: NoSuchMethodException) {
-      return createUsingKotlin(clazz) ?: throw e
-    }
-  }
-
-  // ReflectionUtil uses another approach to do it - unreliable because located in util module, where Kotlin cannot be used.
-  // Here we use Kotlin reflection and this approach is more reliable because we are prepared for future Kotlin versions.
-  private fun createUsingKotlin(clazz: Class<*>): Any? {
-    // if cannot create data class
-    val kClass = clazz.kotlin
-    val kFunction = kClass.primaryConstructor ?: kClass.constructors.first()
-    try {
-      kFunction.isAccessible = true
-    }
-    catch (ignored: SecurityException) {
-    }
-    return kFunction.callBy(emptyMap())
+    return beanBinding.newInstance()
   }
 }

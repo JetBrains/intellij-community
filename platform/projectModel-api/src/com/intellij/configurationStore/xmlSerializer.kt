@@ -7,19 +7,16 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.io.URLUtil
+import com.intellij.util.serialization.BindingProducer
 import com.intellij.util.serialization.MutableAccessor
 import com.intellij.util.serialization.SerializationException
 import com.intellij.util.xmlb.*
-import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.reflect.Type
 import java.net.URL
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
 
@@ -46,7 +43,7 @@ fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
 fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
   try {
     val clazz = javaClass
-    val binding = serializer.getClassBinding(clazz)
+    val binding = serializer.getRootBinding(clazz)
     return if (binding is BeanBinding) {
       // top level expects not null (null indicates error, empty element will be omitted)
       binding.serialize(this, createElementIfEmpty, filter)
@@ -64,7 +61,7 @@ fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerialization
 }
 
 fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyNames: Collection<String>): Element? {
-  val binding = serializer.getClassBinding(state.javaClass) as KotlinAwareBeanBinding
+  val binding = serializer.getRootBinding(state.javaClass) as KotlinAwareBeanBinding
   return binding.serializeBaseStateInto(state, null, getDefaultSerializationFilter(), excludedPropertyNames)
 }
 
@@ -78,7 +75,7 @@ fun <T> Element.deserialize(clazz: Class<T>): T {
 
   @Suppress("UNCHECKED_CAST")
   try {
-    return (serializer.getClassBinding(clazz) as NotNullDeserializeBinding).deserialize(null, this) as T
+    return (serializer.getRootBinding(clazz) as NotNullDeserializeBinding).deserialize(null, this) as T
   }
   catch (e: SerializationException) {
     throw e
@@ -105,7 +102,7 @@ fun <T> deserialize(url: URL, aClass: Class<T>): T {
 
 fun Element.deserializeInto(bean: Any) {
   try {
-    (serializer.getClassBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
+    (serializer.getRootBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
   }
   catch (e: SerializationException) {
     throw e
@@ -145,57 +142,36 @@ fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter? = 
     return
   }
 
-  val beanBinding = serializer.getClassBinding(o.javaClass) as KotlinAwareBeanBinding
+  val beanBinding = serializer.getRootBinding(o.javaClass) as KotlinAwareBeanBinding
   beanBinding.serializeInto(o, target, filter ?: getDefaultSerializationFilter())
 }
 
-private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
-  private var bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
+private val serializer by lazy { MyXmlSerializer() }
 
-  private fun getOrCreateBindingCache(): MutableMap<BindingCacheKey, Binding> {
-    var map = bindingCache?.get()
-    if (map == null) {
-      map = THashMap()
-      bindingCache = SoftReference(map)
-    }
-    return map
-  }
+private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
+  val bindingProducer = object : BindingProducer<Binding>() {
+    override fun getNestedBinding(accessor: MutableAccessor) = throw IllegalStateException()
 
-  private val cacheLock = ReentrantReadWriteLock()
-
-  override fun getClassBinding(aClass: Class<*>, originalType: Type, accessor: MutableAccessor?): Binding {
-    val key = BindingCacheKey(originalType, accessor)
-    return cacheLock.read {
-      // create _bindingCache only under write lock
-      bindingCache?.get()?.get(key)
-    } ?: cacheLock.write {
-      val map = getOrCreateBindingCache()
-      map.get(key)?.let {
-        return it
-      }
-
-      val binding = createClassBinding(aClass, accessor, originalType) ?: KotlinAwareBeanBinding(aClass, accessor)
-      map.put(key, binding)
+    override fun createRootBinding(aClass: Class<*>, type: Type, map: MutableMap<Type, Binding>): Binding {
+      val binding = createClassBinding(aClass, null, type) ?: KotlinAwareBeanBinding(aClass)
+      map.put(type, binding)
       try {
-        binding.init(originalType, this)
+        binding.init(type, this@MyXmlSerializer)
       }
       catch (e: RuntimeException) {
-        map.remove(key)
+        map.remove(type)
         throw e
       }
       catch (e: Error) {
-        map.remove(key)
+        map.remove(type)
         throw e
       }
-      binding
+      return binding
     }
   }
 
-  @Suppress("unused")
-  fun clearBindingCache() {
-    cacheLock.write {
-      bindingCache?.clear()
-    }
+  override fun getRootBinding(aClass: Class<*>, originalType: Type): Binding {
+    return bindingProducer.getRootBinding(aClass, originalType)
   }
 }
 
@@ -203,7 +179,5 @@ private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
  * used by MPS. Do not use if not approved.
  */
 fun clearBindingCache() {
-  serializer.clearBindingCache()
+  serializer.bindingProducer.clearBindingCache()
 }
-
-private data class BindingCacheKey(val type: Type, val accessor: MutableAccessor?)

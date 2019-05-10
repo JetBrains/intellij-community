@@ -9,15 +9,17 @@ import java.lang.reflect.Type;
 
 public interface Serializer {
   @NotNull
-  Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor);
+  Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @NotNull MutableAccessor accessor);
 
-  Binding getClassBinding(@NotNull Class<?> aClass);
+  @NotNull
+  Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType);
+
+  default Binding getRootBinding(@NotNull Class<?> aClass) {
+    return getRootBinding(aClass, aClass);
+  }
 
   @Nullable
   Binding getBinding(@NotNull MutableAccessor accessor);
-
-  @Nullable
-  Binding getBinding(@NotNull Type type);
 
   @Nullable
   Binding getBinding(@NotNull Class<?> aClass, @NotNull Type type);

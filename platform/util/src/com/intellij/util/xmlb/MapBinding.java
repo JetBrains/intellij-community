@@ -21,7 +21,7 @@ import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
 
-class MapBinding extends Binding implements MultiNodeBinding {
+class MapBinding implements MultiNodeBinding, NestedBinding {
   private static final Comparator<Object> KEY_COMPARATOR = (o1, o2) -> {
     if (o1 instanceof Comparable && o2 instanceof Comparable) {
       Comparable c1 = (Comparable)o1;
@@ -42,12 +42,20 @@ class MapBinding extends Binding implements MultiNodeBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
+  protected final MutableAccessor myAccessor;
+
   MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
-    super(accessor);
+    myAccessor = accessor;
 
     oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
     annotation = accessor == null ? null : accessor.getAnnotation(XMap.class);
     this.mapClass = mapClass;
+  }
+
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return myAccessor;
   }
 
   @Override

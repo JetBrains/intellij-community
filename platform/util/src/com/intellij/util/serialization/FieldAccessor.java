@@ -28,6 +28,31 @@ final class FieldAccessor implements MutableAccessor {
   }
 
   @Override
+  public int readInt(@NotNull Object o) throws IllegalAccessException {
+    return myField.getInt(o);
+  }
+
+  @Override
+  public long readLong(@NotNull Object o) throws IllegalAccessException {
+    return myField.getLong(o);
+  }
+
+  @Override
+  public float readFloat(@NotNull Object o) throws IllegalAccessException {
+    return myField.getFloat(o);
+  }
+
+  @Override
+  public double readDouble(@NotNull Object o) throws IllegalAccessException {
+    return myField.getDouble(o);
+  }
+
+  @Override
+  public boolean readBoolean(@NotNull Object o) throws IllegalAccessException {
+    return myField.getBoolean(o);
+  }
+
+  @Override
   public void set(@NotNull Object host, @Nullable Object value) {
     try {
       myField.set(host, value);

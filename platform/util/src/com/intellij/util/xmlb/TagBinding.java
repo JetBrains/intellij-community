@@ -42,7 +42,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     else {
       Object node = myBinding.serialize(value, serialized, filter);
       if (node != null && node != serialized) {
-        addContent(serialized, node);
+        Binding.addContent(serialized, node);
       }
     }
     return serialized;

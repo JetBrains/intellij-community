@@ -19,6 +19,9 @@ class CommunityLibraryLicenses {
                        libraryName: 'org.eclipse.aether:aether-api', licenseUrl: "http://www.eclipse.org/legal/epl-v10.html",
                        additionalLibraryNames: ['org.eclipse.aether:aether-impl', 'org.eclipse.aether:aether-connector-basic',
                                                 'org.eclipse.aether:aether-transport-file', 'org.eclipse.aether:aether-transport-http']),
+
+    new LibraryLicense(name: "Amazon Ion Java", libraryName: "ion", license: "Apache 2.0", url: "https://github.com/amzn/ion-java"),
+
     new LibraryLicense(name: "Android Analytics", attachedTo: "intellij.android.core", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Crash", libraryName: "com.android.tools.analytics-library:crash",

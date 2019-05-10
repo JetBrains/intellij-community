@@ -2,6 +2,9 @@
 package com.intellij.util.serialization;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.util.BitUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,15 +16,37 @@ import java.util.*;
 
 @ApiStatus.Internal
 public class PropertyCollector {
-  private final boolean collectAccessors;
+  private final Map<Class, List<MutableAccessor>> accessorCache = ContainerUtil.newConcurrentMap();
 
-  public PropertyCollector(boolean collectAccessors) {
-    this.collectAccessors = collectAccessors;
+  private final boolean collectAccessors;
+  private final boolean collectPrivateFields;
+  private final boolean collectFinalFields;
+
+  public static final byte COLLECT_ACCESSORS = 0x01;
+  /**
+   * Annotated private field is collected regardless of this flag.
+   */
+  public static final byte COLLECT_PRIVATE_FIELDS = 0x02;
+  /**
+   * Annotated field, or if type is Collection or Map, is collected regardless of this flag.
+   */
+  public static final byte COLLECT_FINAL_FIELDS = 0x04;
+
+  public PropertyCollector(@MagicConstant(flags = {COLLECT_ACCESSORS, COLLECT_PRIVATE_FIELDS, COLLECT_FINAL_FIELDS}) byte flags) {
+    this.collectAccessors = BitUtil.isSet(flags, COLLECT_ACCESSORS);
+    this.collectPrivateFields = BitUtil.isSet(flags, COLLECT_PRIVATE_FIELDS);
+    this.collectFinalFields = BitUtil.isSet(flags, COLLECT_FINAL_FIELDS);
   }
 
   @NotNull
   public List<MutableAccessor> collect(@NotNull Class<?> aClass) {
-    List<MutableAccessor> accessors = new ArrayList<>();
+    return accessorCache.computeIfAbsent(aClass, this::doCollect);
+  }
+
+  @NotNull
+  private synchronized List<MutableAccessor> doCollect(@NotNull Class<?> aClass) {
+    List<MutableAccessor> accessors;
+    accessors = new ArrayList<>();
 
     Map<String, Couple<Method>> nameToAccessors;
     // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
@@ -65,11 +90,11 @@ public class PropertyCollector {
         }
 
         if (!hasStoreAnnotations(field)) {
-          if (!(Modifier.isPublic(modifiers))) {
+          if (!collectPrivateFields && !(Modifier.isPublic(modifiers))) {
             continue;
           }
 
-          if (Modifier.isFinal(modifiers)) {
+          if (!collectFinalFields && Modifier.isFinal(modifiers)) {
             Class<?> fieldType = field.getType();
             // we don't want to allow final fields of all types, but only supported
             if (!(Collection.class.isAssignableFrom(fieldType) || Map.class.isAssignableFrom(fieldType))) {

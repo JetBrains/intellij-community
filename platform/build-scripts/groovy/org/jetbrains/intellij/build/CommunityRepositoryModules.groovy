@@ -63,6 +63,7 @@ class CommunityRepositoryModules {
     "intellij.platform.lang.impl",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
+    "intellij.platform.objectSerializer",
     "intellij.platform.projectModel.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",

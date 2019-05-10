@@ -60,6 +60,31 @@ public final class PropertyAccessor implements MutableAccessor {
   }
 
   @Override
+  public int readInt(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
+    return (int)myReadMethod.invoke(o);
+  }
+
+  @Override
+  public long readLong(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
+    return (long)myReadMethod.invoke(o);
+  }
+
+  @Override
+  public float readFloat(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
+    return (float)myReadMethod.invoke(o);
+  }
+
+  @Override
+  public double readDouble(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
+    return (double)myReadMethod.invoke(o);
+  }
+
+  @Override
+  public boolean readBoolean(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
+    return (boolean)myReadMethod.invoke(o);
+  }
+
+  @Override
   public void set(@NotNull Object host, @Nullable Object value) {
     try {
       myWriteMethod.invoke(host, value);
@@ -133,11 +158,13 @@ public final class PropertyAccessor implements MutableAccessor {
     return myName;
   }
 
+  @NotNull
   @Override
   public Class<?> getValueClass() {
     return myType;
   }
 
+  @NotNull
   @Override
   public Type getGenericType() {
     return myGenericType;

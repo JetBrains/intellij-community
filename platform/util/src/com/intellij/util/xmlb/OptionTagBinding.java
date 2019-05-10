@@ -64,7 +64,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
       else {
         Object node = myBinding.serialize(value, targetElement, filter);
         if (node != null && targetElement != node) {
-          addContent(targetElement, node);
+          Binding.addContent(targetElement, node);
         }
       }
     }
