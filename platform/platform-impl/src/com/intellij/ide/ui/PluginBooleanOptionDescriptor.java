@@ -14,13 +14,13 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -87,11 +87,8 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     Runnable listener = new Runnable() {
       @Override
       public void run() {
-        Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
-        List<String> ids = ContainerUtil.map(switchedPlugins, PluginId::getIdString);
-        boolean notificationValid = enabled
-                                    ? ids.stream().noneMatch(disabledPlugins::contains)
-                                    : disabledPlugins.containsAll(ids);
+        Stream<String> ids = switchedPlugins.stream().map(PluginId::getIdString);
+        boolean notificationValid = enabled ? ids.noneMatch(PluginManagerCore::isDisabled) : ids.allMatch(PluginManagerCore::isDisabled);
         if (!notificationValid) {
           switchNotification.expire();
         }
@@ -113,12 +110,10 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   }
 
   private static void switchPlugins(Collection<PluginId> ids, boolean enabled) throws IOException {
-    Collection<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
-    if (enabled) {
-      ids.forEach(id -> disabledPlugins.remove(id.getIdString()));
-    }
-    else {
-      ids.forEach(id -> disabledPlugins.add(id.getIdString()));
+    Collection<String> disabledPlugins = new LinkedHashSet<>(PluginManagerCore.disabledPlugins());
+    for (PluginId id : ids) {
+      if (enabled) disabledPlugins.remove(id.getIdString());
+              else disabledPlugins.add(id.getIdString());
     }
     PluginManagerCore.saveDisabledPlugins(disabledPlugins, false);
 

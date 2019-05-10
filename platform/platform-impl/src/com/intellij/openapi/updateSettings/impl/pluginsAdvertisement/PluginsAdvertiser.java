@@ -197,9 +197,10 @@ public class PluginsAdvertiser implements StartupActivity {
 
   @Nullable
   static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
-    final Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     for (Plugin plugin : plugins) {
-      if (disabledPlugins.contains(plugin.myPluginId)) return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
+      if (PluginManagerCore.isDisabled(plugin.myPluginId)) {
+        return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
+      }
     }
     return null;
   }
@@ -309,11 +310,10 @@ public class PluginsAdvertiser implements StartupActivity {
             }
           }
 
-          final Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
           //include disabled plugins
           for (String id : ids.keySet()) {
             Plugin plugin = ids.get(id);
-            if (disabledPlugins.contains(id)) {
+            if (PluginManagerCore.isDisabled(id)) {
               final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(PluginId.getId(id));
               if (pluginDescriptor != null) {
                 myDisabledPlugins.put(plugin, pluginDescriptor);
@@ -324,9 +324,9 @@ public class PluginsAdvertiser implements StartupActivity {
           myBundledPlugin = hasBundledPluginToInstall(ids.values());
 
           for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-            final PluginId pluginId = loadedPlugin.getPluginId();
+            PluginId pluginId = loadedPlugin.getPluginId();
             if (ids.containsKey(pluginId.getIdString()) &&
-                !disabledPlugins.contains(pluginId.getIdString()) &&
+                !PluginManagerCore.isDisabled(pluginId.getIdString()) &&
                 !PluginManagerCore.isBrokenPlugin(loadedPlugin)) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
@@ -527,4 +527,3 @@ public class PluginsAdvertiser implements StartupActivity {
     }
   }
 }
-

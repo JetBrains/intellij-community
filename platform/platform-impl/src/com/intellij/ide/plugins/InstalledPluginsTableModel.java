@@ -101,8 +101,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   private void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor, boolean enabled) {
-    final PluginId pluginId = ideaPluginDescriptor.getPluginId();
-    if (!enabled && !PluginManagerCore.getDisabledPluginSet().contains(pluginId.toString())) {
+    PluginId pluginId = ideaPluginDescriptor.getPluginId();
+    if (!enabled && !PluginManagerCore.isDisabled(pluginId.toString())) {
       myEnabled.put(pluginId, null);
     }
     else {

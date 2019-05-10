@@ -310,7 +310,7 @@ object UpdateChecker {
     @Suppress("NAME_SHADOWING")
     var downloader = downloader
     val pluginId = downloader.pluginId
-    if (PluginManagerCore.getDisabledPluginSet().contains(pluginId)) return
+    if (PluginManagerCore.isDisabled(pluginId)) return
 
     val pluginVersion = downloader.pluginVersion
     val installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId))

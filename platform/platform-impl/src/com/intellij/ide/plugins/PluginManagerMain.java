@@ -715,7 +715,7 @@ public abstract class PluginManagerMain implements Disposable {
       }
 
       public boolean isDisabled(@NotNull String pluginId) {
-        return PluginManagerCore.getDisabledPluginSet().contains(pluginId);
+        return PluginManagerCore.isDisabled(pluginId);
       }
     }
 

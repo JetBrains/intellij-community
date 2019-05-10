@@ -1328,7 +1328,6 @@ public class PluginManagerConfigurableNewLayout
       return true;
     }
 
-    Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     int rowCount = myPluginModel.getRowCount();
 
     for (int i = 0; i < rowCount; i++) {
@@ -1336,7 +1335,7 @@ public class PluginManagerConfigurableNewLayout
       boolean enabledInTable = myPluginModel.isEnabled(descriptor);
 
       if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !disabledPlugins.contains(descriptor.getPluginId().getIdString())) {
+        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId().getIdString())) {
           continue; // was disabled automatically on startup
         }
         return true;
@@ -1345,7 +1344,7 @@ public class PluginManagerConfigurableNewLayout
 
     for (Map.Entry<PluginId, Boolean> entry : myPluginModel.getEnabledMap().entrySet()) {
       Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled && !disabledPlugins.contains(entry.getKey().getIdString())) {
+      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey().getIdString())) {
         return true;
       }
     }

@@ -90,9 +90,7 @@ public class PluginManagerCore {
   static final String ENABLE = "enable";
   static final String EDIT = "edit";
 
-  private static List<String> ourDisabledPlugins;
-  private static Set<String> ourDisabledPluginSet;
-
+  private static Set<String> ourDisabledPlugins;
   private static MultiMap<String, String> ourBrokenPluginVersions;
   private static final AtomicReference<IdeaPluginDescriptor[]> ourPlugins = new AtomicReference<>();
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
@@ -193,23 +191,58 @@ public class PluginManagerCore {
     }
   }
 
-  @NotNull
-  public static List<String> getDisabledPlugins() {
-    if (ourDisabledPlugins == null) {
-      List<String> result = new ArrayList<>();
-      ourDisabledPlugins = result;
-      if (System.getProperty("idea.ignore.disabled.plugins") == null) {
-        loadDisabledPlugins(PathManager.getConfigPath(), result);
+  /**
+   * @deprecated Bad API, sorry. Please use {@link #isDisabled(String)} to check plugin's state,
+   * {@link #enablePlugin(String)}/{@link #disablePlugin(String)} for state management,
+   * {@link #disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  public static @NotNull List<String> getDisabledPlugins() {
+    loadDisabledPlugins();
+    return new AbstractList<String>() {
+      //<editor-fold desc="Just a ist-like immutable wrapper over a set; move along.">
+      @Override
+      public boolean contains(Object o) {
+        return ourDisabledPlugins.contains(o);
       }
-      ourDisabledPluginSet = new THashSet<>(result);
+
+      @Override
+      public int size() {
+        return ourDisabledPlugins.size();
+      }
+
+      @Override
+      public String get(int index) {
+        if (index < 0 || index >= ourDisabledPlugins.size()) {
+          throw new IndexOutOfBoundsException("index=" + index + " size=" + ourDisabledPlugins.size());
+        }
+        Iterator<String> iterator = ourDisabledPlugins.iterator();
+        for (int i = 0; i < index; i++) iterator.next();
+        return iterator.next();
+      }
+      //</editor-fold>
+    };
+  }
+
+  private static void loadDisabledPlugins() {
+    if (ourDisabledPlugins == null) {
+      ourDisabledPlugins = new LinkedHashSet<>();  // to preserve the order of additions and removals
+      if (System.getProperty("idea.ignore.disabled.plugins") == null) {
+        loadDisabledPlugins(PathManager.getConfigPath(), ourDisabledPlugins);
+      }
     }
-    return ourDisabledPlugins;
   }
 
   @NotNull
-  public static Set<String> getDisabledPluginSet() {
-    getDisabledPlugins();
-    return ourDisabledPluginSet;
+  public static Collection<String> disabledPlugins() {
+    loadDisabledPlugins();
+    return Collections.unmodifiableCollection(ourDisabledPlugins);
+  }
+
+  public static boolean isDisabled(@NotNull String pluginId) {
+    loadDisabledPlugins();
+    return ourDisabledPlugins.contains(pluginId);
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
@@ -291,26 +324,16 @@ public class PluginManagerCore {
   }
 
   public static boolean disablePlugin(@NotNull String id) {
-    if (!getDisabledPluginSet().add(id)) {
-      return false;
-    }
-
-    List<String> disabledPlugins = getDisabledPlugins();
-    disabledPlugins.add(id);
-    return trySaveDisabledPlugins(disabledPlugins);
+    loadDisabledPlugins();
+    return ourDisabledPlugins.add(id) && trySaveDisabledPlugins(ourDisabledPlugins);
   }
 
   public static boolean enablePlugin(@NotNull String id) {
-    if (!getDisabledPluginSet().remove(id)) {
-      return false;
-    }
-
-    List<String> disabledPlugins = getDisabledPlugins();
-    disabledPlugins.remove(id);
-    return trySaveDisabledPlugins(disabledPlugins);
+    loadDisabledPlugins();
+    return ourDisabledPlugins.remove(id) && trySaveDisabledPlugins(ourDisabledPlugins);
   }
 
-  private static boolean trySaveDisabledPlugins(@NotNull List<String> disabledPlugins) {
+  private static boolean trySaveDisabledPlugins(Collection<String> disabledPlugins) {
     try {
       saveDisabledPlugins(disabledPlugins, false);
       return true;
@@ -1046,7 +1069,7 @@ public class PluginManagerCore {
               pluginName = descriptor.getName();
             }
 
-            boolean disabled = getDisabledPluginSet().contains(pluginId.getIdString());
+            boolean disabled = isDisabled(pluginId.getIdString());
             errors.add(IdeBundle.message(disabled ? "error.required.plugin.disabled" : "error.required.plugin.not.installed", name, pluginName));
           }
           it.remove();
@@ -1341,7 +1364,7 @@ public class PluginManagerCore {
       }
     }
     else {
-      reasonToNotLoad = getDisabledPluginSet().contains(idString) ? PLUGIN_IS_DISABLED_REASON : null;
+      reasonToNotLoad = isDisabled(idString) ? PLUGIN_IS_DISABLED_REASON : null;
     }
 
     if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl && isIncompatible(descriptor)) {
