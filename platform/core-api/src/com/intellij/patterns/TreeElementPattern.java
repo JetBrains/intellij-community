@@ -240,5 +240,37 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
       }
     });
   }
+
+  public Self beforeSiblingSkipping(@NotNull final ElementPattern skip, final ElementPattern<? extends ParentType> pattern) {
+    return with(new PatternCondition<T>("beforeSiblingSkipping") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        final ParentType parent = getParent(t);
+        if (parent == null) return false;
+        final ParentType[] children = getChildren(parent);
+        int i = Arrays.asList(children).indexOf(t);
+        while (++i < children.length) {
+          if (!skip.accepts(children[i], context)) {
+            return pattern.accepts(children[i], context);
+          }
+        }
+        return false;
+      }
+    });
+  }
+
+  public Self beforeSibling(final ElementPattern<? extends ParentType> pattern) {
+    return with(new PatternCondition<T>("beforeSibling") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        final ParentType parent = getParent(t);
+        if (parent == null) return false;
+        final ParentType[] children = getChildren(parent);
+        final int i = Arrays.asList(children).indexOf(t);
+        if (i + 1 >= children.length) return false;
+        return pattern.accepts(children[i + 1], context);
+      }
+    });
+  }
 }
 

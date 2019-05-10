@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.Iconable;
@@ -45,38 +46,84 @@ public class JavaGenerateMemberCompletionContributor {
     PsiElement position = parameters.getPosition();
     if (psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClass.class).
       andNot(JavaKeywordCompletion.AFTER_DOT).accepts(position)) {
+      int priority = -1;
+      boolean followedByWhitespace = psiElement()
+        .withSuperParent(
+          2, // Go to PsiTypeElement
+          psiElement().beforeSiblingSkipping(
+            psiElement(PsiErrorElement.class), // If no annotations are present, the Psi will contain a "identifier expected" node right after
+            psiElement(PsiWhiteSpace.class)
+              //.withText(StandardPatterns.string().matches("(?s) *\n *\n.*")) // Require line to be followed by empty line
+          )).accepts(position);
+      if (followedByWhitespace) {
+        priority = 50;
+      }
       PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(position);
       PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prevLeaf, PsiModifierList.class);
+
+      boolean hasOverrideAnnotation = false;
       if (modifierList != null) {
         String fileText = position.getContainingFile().getText();
+        String prefix = fileText.substring(modifierList.getTextRange().getStartOffset(), parameters.getOffset());
+        PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(modifierList, PsiAnnotation.class);
+        if (annotations != null) {
+          for (PsiAnnotation annotation : annotations) {
+            if (Override.class.getName().equals(annotation.getQualifiedName())) {
+              hasOverrideAnnotation = true;
+              break;
+            }
+          }
+        }
         result = result.withPrefixMatcher(new NoMiddleMatchesAfterSpace(
-          fileText.substring(modifierList.getTextRange().getStartOffset(), parameters.getOffset())));
+          prefix));
       }
-      suggestGeneratedMethods(result, position, modifierList);
+      suggestGeneratedMethods(result, position, modifierList, !hasOverrideAnnotation, priority, hasOverrideAnnotation, false);
     } else if (psiElement(PsiIdentifier.class)
-      .withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class, PsiClass.class).accepts(position)) {
+      .withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class).accepts(position)) {
+      // @Override<CURSOR>
+      // @Overr<CURSOR>
       PsiAnnotation annotation = ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class));
       int annoStart = annotation.getTextRange().getStartOffset();
       suggestGeneratedMethods(
         result.withPrefixMatcher(new NoMiddleMatchesAfterSpace(annotation.getText().substring(0, parameters.getOffset() - annoStart))),
         position,
-        (PsiModifierList)annotation.getParent());
+        (PsiModifierList)annotation.getParent(), false, 50, false, true);
     }
-
+    else if (psiElement(PsiIdentifier.class).withParents(PsiField.class).accepts(position)) {
+      PsiElement parent = position.getParent();
+      if (parent.getLastChild() instanceof PsiErrorElement && parent instanceof PsiField) {
+        // identifier identifier<caret> <no semicolon>
+        // Missing semicolon after field, so maybe the user wants to create an overload
+        PsiField field = (PsiField)parent;
+        int fieldStart = field.getTextRange().getStartOffset();
+        boolean hasOverrideAnnotation = field.hasAnnotation(Override.class.getName());
+        suggestGeneratedMethods(
+          result.withPrefixMatcher(new NoMiddleMatchesAfterSpace(field.getText().substring(0, parameters.getOffset() - fieldStart)))
+          , position, field.getModifierList(), !hasOverrideAnnotation, 50, hasOverrideAnnotation, false);
+      }
+    }
   }
 
-  private static void suggestGeneratedMethods(CompletionResultSet result, PsiElement position, @Nullable PsiModifierList modifierList) {
+  private static void suggestGeneratedMethods(CompletionResultSet result,
+                                              PsiElement position,
+                                              @Nullable PsiModifierList modifierList,
+                                              boolean includeGettersSetters, int priority, boolean forceOverrideAnnotation, boolean deprioritizeGenerated) {
     PsiClass parent = CompletionUtil.getOriginalElement(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiClass.class)));
     if (parent != null) {
       Set<MethodSignature> addedSignatures = new HashSet<>();
-      addGetterSetterElements(result, parent, addedSignatures);
+      if (includeGettersSetters) {
+        addGetterSetterElements(result, parent, addedSignatures, priority);
+      }
       boolean generateDefaultMethods = modifierList != null && modifierList.hasModifierProperty(PsiModifier.DEFAULT);
-      addSuperSignatureElements(parent, true, result, addedSignatures, generateDefaultMethods);
-      addSuperSignatureElements(parent, false, result, addedSignatures, generateDefaultMethods);
+
+      addSuperSignatureElements(parent, true, result, addedSignatures, generateDefaultMethods, priority, deprioritizeGenerated, forceOverrideAnnotation);
+      addSuperSignatureElements(parent, false, result, addedSignatures, generateDefaultMethods, priority, deprioritizeGenerated, forceOverrideAnnotation);
     }
   }
 
-  private static void addGetterSetterElements(CompletionResultSet result, PsiClass parent, Set<? super MethodSignature> addedSignatures) {
+  private static void addGetterSetterElements(CompletionResultSet result,
+                                              PsiClass parent,
+                                              Set<? super MethodSignature> addedSignatures, int priority) {
     int count = 0;
     for (PsiField field : parent.getFields()) {
       if (isConstant(field)) continue;
@@ -99,7 +146,7 @@ public class JavaGenerateMemberCompletionContributor {
 
               insertGenerationInfos(context, Collections.singletonList(new PsiGenerationInfo<>(prototype)));
             }
-          }, false, parent));
+          }, false, parent, priority, true));
 
           if (count++ > 100) return;
         }
@@ -116,20 +163,39 @@ public class JavaGenerateMemberCompletionContributor {
     context.commitDocument();
   }
 
-  private static void addSuperSignatureElements(PsiClass parent, boolean implemented, CompletionResultSet result, Set<? super MethodSignature> addedSignatures, boolean generateDefaultMethods) {
+  private static void addSuperSignatureElements(PsiClass parent,
+                                                boolean implemented,
+                                                CompletionResultSet result,
+                                                Set<? super MethodSignature> addedSignatures,
+                                                boolean generateDefaultMethods,
+                                                int priority,
+                                                boolean deprioritize,
+                                                boolean forceOverrideAnnotation) {
     for (CandidateInfo candidate : OverrideImplementExploreUtil.getMethodsToOverrideImplement(parent, implemented)) {
       PsiMethod baseMethod = (PsiMethod)candidate.getElement();
       PsiClass baseClass = baseMethod.getContainingClass();
       PsiSubstitutor substitutor = candidate.getSubstitutor();
       if (!baseMethod.isConstructor() && baseClass != null && addedSignatures.add(baseMethod.getSignature(substitutor))) {
-        result.addElement(createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent));
+        int priorityModifier = 0;
+        // Sort abstract methods above implemented methods
+        if (baseMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          priorityModifier = + 2;
+        }
+        result.addElement(createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent,
+                                                        priority + priorityModifier, deprioritize, forceOverrideAnnotation));
       }
     }
   }
 
   private static LookupElement createOverridingLookupElement(boolean implemented,
                                                              PsiMethod baseMethod,
-                                                             PsiClass baseClass, PsiSubstitutor substitutor, boolean generateDefaultMethods, PsiClass targetClass) {
+                                                             PsiClass baseClass,
+                                                             PsiSubstitutor substitutor,
+                                                             boolean generateDefaultMethods,
+                                                             PsiClass targetClass,
+                                                             int priority,
+                                                             boolean deprioritize,
+                                                             boolean forceOverrideAnnotation) {
 
     RowIcon icon = new RowIcon(baseMethod.getIcon(0), implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod);
     return createGenerateMethodElement(baseMethod, substitutor, icon, baseClass.getName(), new InsertHandler<LookupElement>() {
@@ -141,12 +207,12 @@ public class JavaGenerateMemberCompletionContributor {
         if (parent == null) return;
 
         try (AccessToken ignored = generateDefaultMethods ? forceDefaultMethodsInside() : AccessToken.EMPTY_ACCESS_TOKEN) {
-          List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(parent, baseMethod, false);
+          List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(parent, baseMethod, false, forceOverrideAnnotation);
           insertGenerationInfos(context, OverrideImplementUtil.convert2GenerationInfos(prototypes));
         }
       }
 
-    }, generateDefaultMethods, targetClass);
+    }, generateDefaultMethods, targetClass, priority, deprioritize);
   }
 
   private static AccessToken forceDefaultMethodsInside() {
@@ -182,7 +248,7 @@ public class JavaGenerateMemberCompletionContributor {
                                                            Icon icon,
                                                            String typeText, InsertHandler<LookupElement> insertHandler,
                                                            boolean generateDefaultMethod,
-                                                           PsiClass targetClass) {
+                                                           PsiClass targetClass, int priority, boolean deprioritize) {
     String methodName = prototype.getName();
 
     String visibility = VisibilityUtil.getVisibilityModifier(prototype.getModifierList());
@@ -198,15 +264,18 @@ public class JavaGenerateMemberCompletionContributor {
                                               p -> getShortParameterName(substitutor, p) + " " + p.getName(),
                                               ", ") + ")";
 
-    String overrideSignature = " @Override " + signature; // leading space to make it a middle match, under all annotation suggestions
-    LookupElementBuilder element = LookupElementBuilder.create(prototype, signature).withLookupString(methodName).
-      withLookupString(signature).withLookupString(overrideSignature).withInsertHandler(insertHandler).
+    String depriorizationPrefix = (deprioritize) ? " " : "";
+    String overrideSignature = depriorizationPrefix + "@Override " + signature; // leading space to make it a middle match, under all annotation suggestions
+    LookupElementBuilder element = LookupElementBuilder.create(prototype, " " + signature).
+      withPresentableText(signature).
+      withLookupString(overrideSignature).
+      withLookupString(" " + signature).withLookupString(methodName).withInsertHandler(insertHandler).
       appendTailText(parameters, false).appendTailText(" {...}", true).withTypeText(typeText).withIcon(icon);
     if (prototype.isDeprecated()) {
       element = element.withStrikeoutness(true);
     }
     element.putUserData(GENERATE_ELEMENT, true);
-    return PrioritizedLookupElement.withPriority(element, -1);
+    return PrioritizedLookupElement.withPriority(element, priority);
   }
 
   @NotNull
@@ -238,4 +307,5 @@ public class JavaGenerateMemberCompletionContributor {
              Character.isJavaIdentifierPart(signature.charAt(start - 1));
     }
   }
+
 }

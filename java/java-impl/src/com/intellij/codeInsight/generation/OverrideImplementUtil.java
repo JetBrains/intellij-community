@@ -75,14 +75,33 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
    * @return list of method prototypes
    */
   @NotNull
-  public static List<PsiMethod> overrideOrImplementMethod(@NotNull PsiClass aClass, @NotNull PsiMethod method, boolean toCopyJavaDoc) throws IncorrectOperationException {
+  public static List<PsiMethod> overrideOrImplementMethod(@NotNull PsiClass aClass,
+                                                          @NotNull PsiMethod method,
+                                                          boolean toCopyJavaDoc) throws IncorrectOperationException {
+    return overrideOrImplementMethod(aClass, method, toCopyJavaDoc, false);
+  }
+
+  /**
+   * generate methods (with bodies) corresponding to given method declaration
+   *  there are maybe two method implementations for one declaration
+   * (e.g. EJB' create() -> ejbCreate(), ejbPostCreate() )
+   * @param aClass context for method implementations
+   * @param method method to override or implement
+   * @param toCopyJavaDoc true if copy JavaDoc from method declaration
+   * @param forceOverrideAnnotation use code style if false
+   * @return list of method prototypes
+   */
+  @NotNull
+  public static List<PsiMethod> overrideOrImplementMethod(@NotNull PsiClass aClass,
+                                                          @NotNull PsiMethod method,
+                                                          boolean toCopyJavaDoc, boolean forceOverrideAnnotation) throws IncorrectOperationException {
     final PsiClass containingClass = method.getContainingClass();
     LOG.assertTrue(containingClass != null);
     PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true)
                                  ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)
                                  : PsiSubstitutor.EMPTY;
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc,
-                                     JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION);
+                                     forceOverrideAnnotation || JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION);
   }
 
   public static boolean isInsertOverride(@NotNull PsiMethod superMethod, @NotNull PsiClass targetClass) {

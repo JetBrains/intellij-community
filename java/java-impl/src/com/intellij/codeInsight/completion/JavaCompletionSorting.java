@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -67,7 +68,7 @@ public class JavaCompletionSorting {
     if (smart) {
       afterStats.add(new PreferDefaultTypeWeigher(expectedTypes, parameters, true));
     } else {
-      ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
+      ContainerUtil.addIfNotNull(afterStats, preferStatics(position, parameters, expectedTypes));
       if (!afterNew) {
         afterStats.add(new PreferExpected(false, expectedTypes, position));
       }
@@ -109,7 +110,9 @@ public class JavaCompletionSorting {
   }
 
   @Nullable
-  private static LookupElementWeigher preferStatics(PsiElement position, final ExpectedTypeInfo[] infos) {
+  private static LookupElementWeigher preferStatics(PsiElement position,
+                                                    CompletionParameters parameters,
+                                                    final ExpectedTypeInfo[] infos) {
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) {
       return null;
     }
@@ -132,7 +135,14 @@ public class JavaCompletionSorting {
         Object o = call != null ? call.getConstructedClass() : element.getObject();
 
         if (o instanceof PsiKeyword) return -3;
-        if (!(o instanceof PsiMember) || element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
+        if (!(o instanceof PsiMember)) {
+          return 0;
+        }
+        else if (element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
+          if (currentLineIsEmpty(parameters)) {
+            // Highest priority to generated members on empty lines
+            return -10;
+          }
           return 0;
         }
 
@@ -147,6 +157,32 @@ public class JavaCompletionSorting {
         return -5;
       }
     };
+  }
+
+
+
+  public static boolean currentLineIsEmpty(CompletionParameters parameters) {
+    if(parameters.getOriginalPosition() instanceof PsiWhiteSpace) {
+      PsiWhiteSpace whitespace = (PsiWhiteSpace)parameters.getOriginalPosition();
+      TextRange range = whitespace.getTextRange();
+      int offset = parameters.getOffset();
+      if (range.getEndOffset() == offset) {
+        // cannot have newline after current position
+        return false;
+      }
+      if (range.getStartOffset() == offset) {
+        // cannot have newline before current position
+        return false;
+      }
+      int relativeOffset = offset - range.getStartOffset();
+      if (relativeOffset > whitespace.getText().indexOf('\n')) {
+        // LHS of current line is "empty" because there's at least one newline preceding position in the same PsiWhiteSpace node
+        return true;
+
+      }
+      return false;
+    }
+    return false;
   }
 
   private static ExpectedTypeMatching getExpectedTypeMatching(LookupElement item, ExpectedTypeInfo[] expectedInfos, @Nullable String expectedMemberName) {
