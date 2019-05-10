@@ -39,6 +39,7 @@ public class RegexpWhiteListRule extends PerformanceCareRule implements FUSRegex
     myRegexp = regexp;
   }
 
+  @NotNull
   @Override
   public ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     Pattern pattern = myPattern.getValue();
