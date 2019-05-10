@@ -322,7 +322,7 @@
       <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
-    
+
     <group id="ParameterNameHints" popup="true">
       <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
       <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
@@ -330,7 +330,7 @@
       <separator/>
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
-    
+
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
     <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
@@ -1179,6 +1179,8 @@
     </group>
 
     <group id="ServiceViewTreeToolbar">
+      <action id="ExtractServiceAction" class="com.intellij.execution.services.ExtractServiceAction"
+              text="Extract" icon="AllIcons.Actions.Forward"/>
       <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
