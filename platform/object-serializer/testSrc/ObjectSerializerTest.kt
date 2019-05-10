@@ -36,17 +36,18 @@ class ObjectSerializerTest {
     val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
     // just to test binary
-    objectSerializer.write(bean, out, binary = true)
+    objectSerializer.write(bean, out, WriteConfiguration(binary = true))
     assertThat(out.size() > 0)
     out.reset()
 
-    objectSerializer.write(bean, out, binary = false, filter = FILTER)
+    val writeConfiguration = WriteConfiguration(binary = false, filter = FILTER)
+    objectSerializer.write(bean, out, writeConfiguration)
 
     val ionText = out.toString()
     out.reset()
 
     val deserializedBean = objectSerializer.read(bean.javaClass, ionText)
-    objectSerializer.write(deserializedBean, out, binary = false, filter = FILTER)
+    objectSerializer.write(deserializedBean, out, writeConfiguration)
     assertThat(out.toString()).isEqualTo(ionText)
 
     val result = if (SystemInfoRt.isWindows) StringUtilRt.convertLineSeparators(ionText.trim()) else ionText.trim()
@@ -152,7 +153,7 @@ class ObjectSerializerTest {
   fun `read root list`() {
     val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
-    objectSerializer.writeList(listOf("foo", "bar"), String::class.java, out, binary = false)
+    objectSerializer.writeList(listOf("foo", "bar"), String::class.java, out, WriteConfiguration(binary = false))
 
     val ionText = out.toString()
     out.reset()
@@ -173,7 +174,7 @@ class ObjectSerializerTest {
 
   @Test
   fun `byte array`() {
-    class TestByteArray(@JvmField var data: ByteArray? = null)
+    class TestByteArray(@Suppress("unused") @JvmField var data: ByteArray? = null)
 
     test(TestByteArray(data = Base64.getEncoder().encode("some data".toByteArray())))
   }
@@ -184,7 +185,7 @@ class ObjectSerializerTest {
   }
 }
 
-private class NoDefaultConstructorBean(@Suppress("UNUSED_PARAMETER") @JvmField val someParameter: String)
+private class NoDefaultConstructorBean(@Suppress("UNUSED_PARAMETER", "unused") @JvmField val someParameter: String)
 
 private class TestArrayBean(
   @JvmField var list: Array<String>? = null,

@@ -7,7 +7,7 @@ import software.amazon.ion.IonType
 import java.lang.reflect.Constructor
 import java.lang.reflect.Type
 
-internal class BeanBinding(private val beanClass: Class<*>) : RootBinding {
+internal data class BeanBinding(private val beanClass: Class<*>) : RootBinding {
   private lateinit var bindings: Array<NestedBinding>
   private lateinit var nameToBindingIndex: ObjectIntHashMap<String>
   private lateinit var accessors: List<MutableAccessor>
@@ -57,7 +57,7 @@ internal class BeanBinding(private val beanClass: Class<*>) : RootBinding {
   }
 
   private fun newInstance(context: ReadContext): Any {
-    val objectInstantiator = objectInstantiator
+    var objectInstantiator = objectInstantiator
     if (objectInstantiator != null) {
       return objectInstantiator.newInstance()
     }
@@ -73,8 +73,8 @@ internal class BeanBinding(private val beanClass: Class<*>) : RootBinding {
       }
     }
     catch (e: NoSuchMethodException) {
-      val instantiator = context.objenesis.getInstantiatorOf(beanClass)
-      val instance = instantiator.newInstance()
+      objectInstantiator = context.objenesis.getInstantiatorOf(beanClass)
+      val instance = objectInstantiator.newInstance()
       this.objectInstantiator = objectInstantiator
       return instance
     }
@@ -121,6 +121,10 @@ internal class BeanBinding(private val beanClass: Class<*>) : RootBinding {
     }
 
     reader.stepOut()
+
+    context.beanConstructed?.let {
+      return it(obj)
+    }
     return obj
   }
 }

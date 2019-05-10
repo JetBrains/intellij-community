@@ -16,6 +16,7 @@ import java.io.Reader
 
 internal typealias ValueReader = IonReader
 internal typealias ValueWriter = IonWriter
+typealias BeanConstructed = (instance: Any) -> Any
 
 class ObjectSerializer {
   companion object {
@@ -25,24 +26,25 @@ class ObjectSerializer {
 
   internal val serializer = IonObjectSerializer()
 
-  fun writeAsBytes(obj: Any): ByteArray {
+  @JvmOverloads
+  fun writeAsBytes(obj: Any, configuration: WriteConfiguration? = null): ByteArray {
     val out = BufferExposingByteArrayOutputStream()
-    write(obj, out)
+    serializer.write(obj, out, configuration)
     return out.toByteArray()
   }
 
   @JvmOverloads
-  fun write(obj: Any, outputStream: OutputStream, filter: SerializationFilter = DEFAULT_FILTER, binary: Boolean = true) {
-    serializer.write(obj, outputStream, filter, binary)
+  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration? = null) {
+    serializer.write(obj, outputStream, configuration)
   }
 
   @JvmOverloads
-  fun <T> writeList(obj: List<T>, itemClass: Class<T>, outputStream: OutputStream, filter: SerializationFilter = DEFAULT_FILTER, binary: Boolean = true) {
-    serializer.write(obj, outputStream, filter, binary, ParameterizedTypeImpl(ArrayList::class.java, itemClass))
+  fun <T> writeList(obj: Collection<T>, itemClass: Class<T>, outputStream: OutputStream, configuration: WriteConfiguration? = null) {
+    serializer.write(obj, outputStream, configuration, ParameterizedTypeImpl(Collection::class.java, itemClass))
   }
 
-  fun <T> read(objectClass: Class<T>, bytes: ByteArray): T {
-    return serializer.read(objectClass, createIonReaderBuilder().build(bytes))
+  fun <T> read(objectClass: Class<T>, bytes: ByteArray, beanConstructed: BeanConstructed? = null): T {
+    return serializer.read(objectClass, createIonReaderBuilder().build(bytes), beanConstructed)
   }
 
   fun <T> read(objectClass: Class<T>, inputStream: InputStream): T {
@@ -57,18 +59,22 @@ class ObjectSerializer {
     return serializer.read(objectClass, createIonReaderBuilder().build(text))
   }
 
-  fun <T> readList(itemClass: Class<T>, reader: Reader): List<T> {
-    return serializer.readList(itemClass, createIonReaderBuilder().build(reader))
+  fun <T> readList(itemClass: Class<T>, reader: Reader, beanConstructed: BeanConstructed? = null): List<T> {
+    return serializer.readList(itemClass, createIonReaderBuilder().build(reader), beanConstructed)
   }
 
-  fun <T> readList(itemClass: Class<T>, bytes: ByteArray): List<T> {
-    return serializer.readList(itemClass, createIonReaderBuilder().build(bytes))
+  @JvmOverloads
+  fun <T> readList(itemClass: Class<T>, bytes: ByteArray, beanConstructed: BeanConstructed? = null): List<T> {
+    return serializer.readList(itemClass, createIonReaderBuilder().build(bytes), beanConstructed)
+  }
+
+  @JvmOverloads
+  fun <T> readList(itemClass: Class<T>, input: InputStream, beanConstructed: BeanConstructed? = null): List<T> {
+    return serializer.readList(itemClass, createIonReaderBuilder().build(input), beanConstructed)
   }
 }
 
-private val DEFAULT_FILTER = object : SerializationFilter {
-  override fun isSkipped(value: Any?) = false
-}
+data class WriteConfiguration(val binary: Boolean = true, val filter: SerializationFilter? = null)
 
 private fun createIonReaderBuilder() = IonReaderBuilder.standard()
 
@@ -85,6 +91,8 @@ interface ReadContext {
   val reader: ValueReader
   val objectIdReader: ObjectIdReader
   val objenesis: Objenesis
+
+  val beanConstructed: BeanConstructed?
 }
 
 class ObjectIdWriter {

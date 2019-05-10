@@ -23,27 +23,27 @@ internal class IonObjectSerializer {
     ObjenesisStd(/* useCache = */ false)
   }
 
-  fun write(obj: Any, outputStream: OutputStream, filter: SerializationFilter, binary: Boolean = true, originalType: Type? = null) {
-    createIonWriterBuilder(binary).build(outputStream).use { ionWriter ->
+  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration?, originalType: Type? = null) {
+    createIonWriterBuilder(configuration?.binary ?: true).build(outputStream).use { ionWriter ->
       val aClass = obj.javaClass
-      bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, WriteContext(ionWriter, filter, ObjectIdWriter()))
+      bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, WriteContext(ionWriter, configuration?.filter ?: DEFAULT_FILTER, ObjectIdWriter()))
     }
   }
 
-  fun <T> read(objectClass: Class<T>, reader: ValueReader): T {
+  fun <T> read(objectClass: Class<T>, reader: ValueReader, beanConstructed: BeanConstructed? = null): T {
     reader.use {
       when (reader.next()) {
         IonType.NULL -> throw SerializationException("root value is null")
         null -> throw SerializationException("empty input")
         else -> {
           @Suppress("UNCHECKED_CAST")
-          return bindingProducer.getRootBinding(objectClass).deserialize(createReadContext(reader)) as T
+          return bindingProducer.getRootBinding(objectClass).deserialize(createReadContext(reader, beanConstructed)) as T
         }
       }
     }
   }
 
-  fun <T> readList(itemClass: Class<T>, reader: ValueReader): List<T> {
+  fun <T> readList(itemClass: Class<T>, reader: ValueReader, beanConstructed: BeanConstructed?): List<T> {
     reader.use {
       @Suppress("UNCHECKED_CAST")
       when (reader.next()) {
@@ -52,19 +52,26 @@ internal class IonObjectSerializer {
         else -> {
           val result = mutableListOf<Any?>()
           val binding = bindingProducer.getRootBinding(ArrayList::class.java, ParameterizedTypeImpl(ArrayList::class.java, itemClass)) as CollectionBinding
-          binding.readInto(result as MutableCollection<Any?>, createReadContext(reader))
+          binding.readInto(result as MutableCollection<Any?>, createReadContext(reader, beanConstructed))
           return result as List<T>
         }
       }
     }
   }
 
-  private fun createReadContext(reader: ValueReader): ReadContext {
-    return ReadContextImpl(reader, ObjectIdReader(), objenesis)
+  private fun createReadContext(reader: ValueReader, beanConstructed: BeanConstructed? = null): ReadContext {
+    return ReadContextImpl(reader, ObjectIdReader(), objenesis, beanConstructed)
   }
 }
 
-private data class ReadContextImpl(override val reader: ValueReader, override val objectIdReader: ObjectIdReader, private val lazyObjenesis: Lazy<Objenesis>) : ReadContext {
+private val DEFAULT_FILTER = object : SerializationFilter {
+  override fun isSkipped(value: Any?) = false
+}
+
+private data class ReadContextImpl(override val reader: ValueReader,
+                                   override val objectIdReader: ObjectIdReader,
+                                   private val lazyObjenesis: Lazy<Objenesis>,
+                                   override val beanConstructed: BeanConstructed?) : ReadContext {
   override val objenesis: Objenesis
     get() = lazyObjenesis.value
 }
