@@ -2842,11 +2842,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int hashCode(@NotNull CharSequence s) {
-    return stringHashCode(s);
-  }
-
-  @Contract(pure = true)
   public static boolean equals(@Nullable CharSequence s1, @Nullable CharSequence s2) {
     return StringUtilRt.equal(s1, s2, true);
   }
