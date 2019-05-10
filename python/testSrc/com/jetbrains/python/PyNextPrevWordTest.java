@@ -12,7 +12,7 @@ public class PyNextPrevWordTest extends PyTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final CaretStopOptions originalCaretStopOptions = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
-    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT_IDEA.toCaretStopOptions());
+    EditorSettingsExternalizable.getInstance().setCaretStopOptions(CaretStopOptionsTransposed.DEFAULT_IDEA_BEFORE_192.toCaretStopOptions());
     disposeOnTearDown(() -> EditorSettingsExternalizable.getInstance().setCaretStopOptions(originalCaretStopOptions));
   }
 
