@@ -69,11 +69,6 @@ data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
     val DEFAULT_UNIX = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
                                                   lineBoundary = CaretStopBoundary.NONE)
     @JvmField
-    @Deprecated("The default has been changed")
-    val DEFAULT_IDEA_BEFORE_192 = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.START,
-                                                             lineBoundary = CaretStopBoundary.END)
-
-    @JvmField
     val DEFAULT = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
                                              lineBoundary = CaretStopBoundary.NEIGHBOR)
 
