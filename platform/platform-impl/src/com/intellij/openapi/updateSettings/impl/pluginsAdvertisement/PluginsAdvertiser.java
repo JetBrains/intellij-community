@@ -37,7 +37,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,10 +47,10 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
-  @NonNls public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
+  public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
   public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate Edition";
   public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate Edition";
   public static final String CHECK_ULTIMATE_EDITION_TITLE = "Check " + IDEA_ULTIMATE_EDITION;
@@ -65,12 +64,9 @@ public class PluginsAdvertiser implements StartupActivity {
     final String featureType = unknownFeature.getFeatureType();
     final String implementationName = unknownFeature.getImplementationName();
     final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
-    return processFeatureRequest(ImmutableMap.of("featureType", featureType,
-                                                 "implementationName", implementationName,
-                                                 "build", buildNumber),
-                                 new HttpRequests.RequestProcessor<List<Plugin>>() {
-      @Override
-      public List<Plugin> process(@NotNull HttpRequests.Request request) throws IOException {
+    return processFeatureRequest(
+      ImmutableMap.of("featureType", featureType, "implementationName", implementationName, "build", buildNumber),
+      request -> {
         final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
@@ -85,20 +81,17 @@ public class PluginsAdvertiser implements StartupActivity {
                                 Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
         return result;
-      }
-    }, null, LOG);
+      });
   }
 
-  @Nullable
-  private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) {
+  private static void loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) {
     final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
-    return processFeatureRequest(ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
-                                 new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
-      @Override
-      public Map<String, Set<Plugin>> process(@NotNull HttpRequests.Request request) throws IOException {
+    processFeatureRequest(
+      ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
+      request -> {
         final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
@@ -130,28 +123,22 @@ public class PluginsAdvertiser implements StartupActivity {
             result.put(extension, pluginIds);
           }
           final JsonElement pluginNameElement = jsonObject.get("pluginName");
-          pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null, isBundled));
+          String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
+          pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginName, isBundled));
         }
         saveExtensions(result);
         return result;
-      }
-    }, null, LOG);
+      });
   }
 
-  private static <K> K processFeatureRequest(Map<String, String> params,
-                                             HttpRequests.RequestProcessor<K> requestProcessor,
-                                             K errorValue,
-                                             Logger log) {
+  private static <K> K processFeatureRequest(Map<String, String> params, HttpRequests.RequestProcessor<K> requestProcessor) {
     String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
     Url url = Urls.parseEncoded(baseUrl);
     if (url == null) {
-      log.error("Cannot parse URL: " + baseUrl);
-      return errorValue;
+      LOG.error("Cannot parse URL: " + baseUrl);
+      return null;
     }
-
-    return HttpRequests.request(url.addParameters(params))
-                       .productNameAsUserAgent()
-                       .connect(requestProcessor, errorValue, LOG);
+    return HttpRequests.request(url.addParameters(params)).productNameAsUserAgent().connect(requestProcessor, null, LOG);
   }
 
   public static void ensureDeleted() {
@@ -400,8 +387,7 @@ public class PluginsAdvertiser implements StartupActivity {
     public Map<String, PluginSet> myExtensions = new HashMap<>();
 
     @SuppressWarnings("unused")
-    public KnownExtensions() {
-    }
+    public KnownExtensions() { }
 
     public KnownExtensions(Map<String, Set<Plugin>> extensions) {
       for (String ext : extensions.keySet()) {
@@ -423,8 +409,7 @@ public class PluginsAdvertiser implements StartupActivity {
     public Set<Plugin> myPlugins = new HashSet<>();
 
     @SuppressWarnings("unused")
-    public PluginSet() {
-    }
+    public PluginSet() { }
 
     public PluginSet(Set<? extends Plugin> plugins) {
       myPlugins.addAll(plugins);

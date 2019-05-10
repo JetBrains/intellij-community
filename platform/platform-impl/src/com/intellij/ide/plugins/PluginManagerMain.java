@@ -42,7 +42,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,10 +73,9 @@ public abstract class PluginManagerMain implements Disposable {
 
   public static final Logger LOG = Logger.getInstance(PluginManagerMain.class);
 
-  @NonNls private static final String TEXT_SUFFIX = "</body></html>";
-
-  @NonNls private static final String HTML_PREFIX = "<a href=\"";
-  @NonNls private static final String HTML_SUFFIX = "</a>";
+  private static final String TEXT_SUFFIX = "</body></html>";
+  private static final String HTML_PREFIX = "<a href=\"";
+  private static final String HTML_SUFFIX = "</a>";
 
   private boolean requireShutdown;
 
@@ -145,7 +143,7 @@ public abstract class PluginManagerMain implements Disposable {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Color bg = UIUtil.getTableBackground(false);
+        Color bg = UIUtil.getTableBackground(false, true);
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, ColorUtil.shift(bg, 1.4), 0, getHeight(), ColorUtil.shift(bg, 0.9)));
         g.fillRect(0,0, getWidth(), getHeight());
       }

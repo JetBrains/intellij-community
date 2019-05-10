@@ -26,7 +26,6 @@ import java.util.stream.Stream;
  * @author Konstantin Bulenkov
  */
 public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
-
   private static final Logger LOG = Logger.getInstance(PluginBooleanOptionDescriptor.class);
 
   private static final NotificationGroup PLUGINS_LIST_CHANGED_GROUP =
