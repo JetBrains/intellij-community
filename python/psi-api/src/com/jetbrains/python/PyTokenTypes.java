@@ -186,4 +186,12 @@ public class PyTokenTypes {
   public static final PyElementType FSTRING_FRAGMENT_END = new PyElementType("FSTRING_FRAGMENT_END");
   public static final PyElementType FSTRING_FRAGMENT_FORMAT_START = new PyElementType("FSTRING_FRAGMENT_FORMAT_START");
   public static final PyElementType FSTRING_FRAGMENT_TYPE_CONVERSION = new PyElementType("FSTRING_FRAGMENT_TYPE_CONVERSION");
+
+  public static final TokenSet FSTRING_TOKENS = TokenSet.create(FSTRING_TEXT,
+                                                                FSTRING_START,
+                                                                FSTRING_END,
+                                                                FSTRING_FRAGMENT_START,
+                                                                FSTRING_FRAGMENT_END,
+                                                                FSTRING_FRAGMENT_FORMAT_START,
+                                                                FSTRING_FRAGMENT_TYPE_CONVERSION);
 }
