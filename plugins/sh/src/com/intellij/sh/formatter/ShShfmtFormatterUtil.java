@@ -1,9 +1,5 @@
 package com.intellij.sh.formatter;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -107,19 +103,22 @@ public class ShShfmtFormatterUtil {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
   }
 
-  public static boolean isValidPath(@NotNull String path) {
-    if (!new File(path).exists()) return false;
+  public static boolean isValidPath(@Nullable String path) {
+    if (path == null) return false;
+    File file = new File(path);
+    if (!file.canExecute()) return false;
+    return file.getName().contains("shfmt");
 
-    try {
-      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("-version");
-      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
-
-      return processOutput.getStdout().startsWith(ShShfmtFormatterUtil.SHFMT_VERSION);
-    }
-    catch (ExecutionException e) {
-      LOG.debug("Exception in process execution", e);
-    }
-    return false;
+//    try {
+//      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("-version");
+//      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
+//
+//      return processOutput.getStdout().startsWith(ShShfmtFormatterUtil.SHFMT_VERSION);
+//    }
+//    catch (ExecutionException e) {
+//      LOG.debug("Exception in process execution", e);
+//    }
+//    return false;
   }
 
   @NotNull

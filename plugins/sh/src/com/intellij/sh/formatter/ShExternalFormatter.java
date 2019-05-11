@@ -137,7 +137,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
           }
         }
       });
-      handler.startNotify();
+      ApplicationManager.getApplication().executeOnPooledThread(handler::startNotify);
     }
     catch (ExecutionException e) {
       showFailedNotification(e.getMessage());
