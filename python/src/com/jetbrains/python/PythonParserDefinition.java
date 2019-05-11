@@ -53,7 +53,7 @@ public class PythonParserDefinition implements ParserDefinition {
   @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
-    return TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.STRING_LITERAL_EXPRESSION));
+    return TokenSet.orSet(PyTokenTypes.STRING_NODES, PyTokenTypes.FSTRING_TOKENS);
   }
 
   @Override
