@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.serialization
 
+import com.amazon.ion.IonType
+import com.amazon.ion.Timestamp
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
-import software.amazon.ion.IonType
-import software.amazon.ion.Timestamp
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.*
@@ -25,6 +26,16 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       classToRootBindingFactory.put(Date::class.java) { DateBinding() }
       classToRootBindingFactory.put(ByteArray::class.java) { ByteArrayBinding() }
 
+      val numberFactory = ::NumberAsObjectBinding
+      classToRootBindingFactory.put(java.lang.Short::class.java, numberFactory)
+      classToRootBindingFactory.put(java.lang.Integer::class.java, numberFactory)
+      classToRootBindingFactory.put(java.lang.Long::class.java, numberFactory)
+
+      // java.lang.Float cannot be cast to java.lang.Double
+      classToRootBindingFactory.put(java.lang.Float::class.java) { FloatAsObjectBinding() }
+      classToRootBindingFactory.put(java.lang.Double::class.java) { DoubleAsObjectBinding() }
+      classToRootBindingFactory.put(java.lang.Boolean::class.java) { BooleanAsObjectBinding() }
+
       val map = classToNestedBindingFactory
       map.put(java.lang.Short.TYPE, resolved(ShortBinding()))
       map.put(Integer.TYPE, resolved(IntBinding()))
@@ -33,12 +44,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       map.put(java.lang.Float.TYPE, resolved(FloatBinding()))
       map.put(java.lang.Double.TYPE, resolved(DoubleBinding()))
 
-      // java.lang.Float cannot be cast to java.lang.Double
-      map.put(java.lang.Float::class.java, resolved(FloatAsObjectBinding()))
-      map.put(java.lang.Double::class.java, resolved(DoubleAsObjectBinding()))
-
       map.put(java.lang.Boolean.TYPE, resolved(BooleanBinding()))
-      map.put(java.lang.Boolean::class.java, resolved(BooleanAsObjectBinding()))
 
       val char: NestedBindingFactory = { throw UnsupportedOperationException("char is not supported") }
       map.put(Character.TYPE, char)
@@ -54,6 +60,8 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       }
     }
   }
+
+  override val isResolveConstructorOnInit = SystemProperties.`is`("idea.serializer.resolve.ctor.on.init")
 
   override val bindingProducer: BindingProducer<RootBinding>
     get() = this
@@ -115,7 +123,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     return when {
       Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
       aClass.isArray -> ArrayBinding(aClass.componentType, this)
-      java.lang.Number::class.java.isAssignableFrom(aClass) -> NumberAsObjectBinding()
+      java.lang.Number::class.java.isAssignableFrom(aClass) -> AccessorWrapperBinding(NumberAsObjectBinding())
       aClass.isEnum -> throw UnsupportedOperationException("enum is not supported")
       else -> AccessorWrapperBinding(getRootBinding(aClass, type))
     }
@@ -126,63 +134,45 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
   }
 }
 
-private class FloatAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeFloat((it as Float).toDouble())
-    }
+private class FloatAsObjectBinding : RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeFloat((obj as Float).toDouble())
   }
 
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      doubleValue().toFloat()
-    }
-  }
+  override fun deserialize(context: ReadContext) = context.reader.doubleValue().toFloat()
 }
 
-private class DoubleAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeFloat(it as Double)
-    }
+private class DoubleAsObjectBinding : RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeFloat(obj as Double)
   }
 
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      doubleValue()
-    }
-  }
+  override fun deserialize(context: ReadContext) = context.reader.doubleValue()
 }
 
-private class NumberAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeInt((it as Number).toLong())
-    }
+private class NumberAsObjectBinding : RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeInt((obj as Number).toLong())
   }
 
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      intValue()
-    }
-  }
+  override fun deserialize(context: ReadContext) = context.reader.intValue()
 }
 
-private class BooleanAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeBool(it as Boolean)
-    }
+private class BooleanAsObjectBinding : RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeBool(obj as Boolean)
   }
 
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      booleanValue()
-    }
-  }
+  override fun deserialize(context: ReadContext) = context.reader.booleanValue()
 }
 
-private class BooleanBinding : NestedBinding {
+private class BooleanBinding : NestedBinding, RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeBool(obj as Boolean)
+  }
+
+  override fun deserialize(context: ReadContext) = context.reader.booleanValue()
+
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     val writer = context.writer
     writer.setFieldName(property.name)
@@ -194,7 +184,13 @@ private class BooleanBinding : NestedBinding {
   }
 }
 
-private open class IntBinding : NestedBinding {
+private open class IntBinding : NestedBinding, RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeInt(obj as Long)
+  }
+
+  override fun deserialize(context: ReadContext) = context.reader.intValue()
+
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     val writer = context.writer
     writer.setFieldName(property.name)
@@ -212,7 +208,13 @@ private class ShortBinding : IntBinding() {
   }
 }
 
-private class LongBinding : NestedBinding {
+private class LongBinding : NestedBinding, RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeInt(obj as Long)
+  }
+
+  override fun deserialize(context: ReadContext) = context.reader.longValue()
+
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     val writer = context.writer
     writer.setFieldName(property.name)
@@ -224,7 +226,13 @@ private class LongBinding : NestedBinding {
   }
 }
 
-private class FloatBinding : NestedBinding {
+private class FloatBinding : NestedBinding, RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeFloat(obj as Double)
+  }
+
+  override fun deserialize(context: ReadContext) = context.reader.doubleValue()
+
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     val writer = context.writer
     writer.setFieldName(property.name)
@@ -236,7 +244,13 @@ private class FloatBinding : NestedBinding {
   }
 }
 
-private class DoubleBinding : NestedBinding {
+private class DoubleBinding : NestedBinding, RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeFloat(obj as Double)
+  }
+
+  override fun deserialize(context: ReadContext) = context.reader.doubleValue()
+
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     val writer = context.writer
     writer.setFieldName(property.name)

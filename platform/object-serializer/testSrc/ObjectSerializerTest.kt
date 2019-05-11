@@ -174,18 +174,19 @@ class ObjectSerializerTest {
 
   @Test
   fun `byte array`() {
-    class TestByteArray(@Suppress("unused") @JvmField var data: ByteArray? = null)
-
     test(TestByteArray(data = Base64.getEncoder().encode("some data".toByteArray())))
   }
 
   @Test
   fun `no default constructor`() {
-    test(NoDefaultConstructorBean("foo"))
+    test(NoDefaultConstructorBean("foo", arrayListOf(42, 21)))
   }
 }
 
-private class NoDefaultConstructorBean(@Suppress("UNUSED_PARAMETER", "unused") @JvmField val someParameter: String)
+private class TestByteArray @JvmOverloads constructor(@Suppress("unused") @JvmField var data: ByteArray? = null)
+
+private class NoDefaultConstructorBean @PropertyMapping(["someParameter", "intList"]) constructor(@Suppress("UNUSED_PARAMETER", "unused") @JvmField val someParameter: String,
+                                                                                                  @Suppress("UNUSED_PARAMETER", "unused") @JvmField val intList: List<Int>)
 
 private class TestArrayBean(
   @JvmField var list: Array<String>? = null,

@@ -2,6 +2,12 @@
 package com.intellij.util.serialization
 
 internal data class AccessorWrapperBinding(private val binding: RootBinding) : NestedBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    binding.serialize(obj, context)
+  }
+
+  override fun deserialize(context: ReadContext) = binding.deserialize(context)
+
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     write(hostObject, property, context) {
       binding.serialize(it, context)

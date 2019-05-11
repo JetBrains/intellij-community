@@ -1,27 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.serialization
 
+import com.amazon.ion.IonType
+import com.amazon.ion.system.IonBinaryWriterBuilder
+import com.amazon.ion.system.IonReaderBuilder
+import com.amazon.ion.system.IonTextWriterBuilder
+import com.amazon.ion.system.IonWriterBuilder
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
-import org.objenesis.Objenesis
-import org.objenesis.ObjenesisStd
-import software.amazon.ion.IonType
-import software.amazon.ion.system.IonBinaryWriterBuilder
-import software.amazon.ion.system.IonTextWriterBuilder
-import software.amazon.ion.system.IonWriterBuilder
 import java.io.OutputStream
 import java.lang.reflect.Type
 import kotlin.experimental.or
 
 internal class IonObjectSerializer {
+  val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
+
   // by default only fields (including private)
   private val propertyCollector = PropertyCollector(PropertyCollector.COLLECT_PRIVATE_FIELDS or PropertyCollector.COLLECT_FINAL_FIELDS)
 
   internal val bindingProducer = IonBindingProducer(propertyCollector)
-
-  private val objenesis = lazy {
-    // ObjectInstantiator is cached by BeanBinding
-    ObjenesisStd(/* useCache = */ false)
-  }
 
   fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration?, originalType: Type? = null) {
     createIonWriterBuilder(configuration?.binary ?: true).build(outputStream).use { ionWriter ->
@@ -60,7 +57,7 @@ internal class IonObjectSerializer {
   }
 
   private fun createReadContext(reader: ValueReader, beanConstructed: BeanConstructed? = null): ReadContext {
-    return ReadContextImpl(reader, ObjectIdReader(), objenesis, beanConstructed)
+    return ReadContextImpl(reader, ObjectIdReader(), beanConstructed)
   }
 }
 
@@ -70,10 +67,22 @@ private val DEFAULT_FILTER = object : SerializationFilter {
 
 private data class ReadContextImpl(override val reader: ValueReader,
                                    override val objectIdReader: ObjectIdReader,
-                                   private val lazyObjenesis: Lazy<Objenesis>,
                                    override val beanConstructed: BeanConstructed?) : ReadContext {
-  override val objenesis: Objenesis
-    get() = lazyObjenesis.value
+  private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
+
+  override fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream {
+    var result = byteArrayOutputStream
+    if (result == null) {
+      result = BufferExposingByteArrayOutputStream(8 * 1024)
+      byteArrayOutputStream = result
+    }
+    else {
+      result.reset()
+    }
+    return result
+  }
+
+  override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, beanConstructed)
 }
 
 private fun createIonWriterBuilder(binary: Boolean): IonWriterBuilder {

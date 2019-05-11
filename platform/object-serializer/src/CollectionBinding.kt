@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.serialization
 
+import com.amazon.ion.IonType
 import com.intellij.util.ArrayUtil
-import software.amazon.ion.IonType
 import java.util.function.Consumer
 
 internal abstract class BaseCollectionBinding(itemClass: Class<*>, context: BindingInitializationContext) : RootBinding, NestedBinding {

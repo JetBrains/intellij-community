@@ -1,15 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.serialization
 
+import com.amazon.ion.IonReader
+import com.amazon.ion.IonWriter
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.TIntObjectHashMap
 import gnu.trove.TObjectHashingStrategy
-import org.objenesis.Objenesis
-import software.amazon.ion.IonReader
-import software.amazon.ion.IonWriter
-import software.amazon.ion.system.IonReaderBuilder
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.Reader
@@ -18,11 +16,21 @@ internal typealias ValueReader = IonReader
 internal typealias ValueWriter = IonWriter
 typealias BeanConstructed = (instance: Any) -> Any
 
+/**
+ * Kotlin: `@PropertyMapping(["name", "name2"])`
+ * Java: `@PropertyMapping({"name", "name2"})`
+ */
+@Target(AnnotationTarget.CONSTRUCTOR)
+annotation class PropertyMapping(val value: Array<String>)
+
 class ObjectSerializer {
   companion object {
     @JvmStatic
     val instance = ObjectSerializer()
   }
+
+  private val readerBuilder
+    get() = serializer.readerBuilder
 
   internal val serializer = IonObjectSerializer()
 
@@ -44,39 +52,37 @@ class ObjectSerializer {
   }
 
   fun <T> read(objectClass: Class<T>, bytes: ByteArray, beanConstructed: BeanConstructed? = null): T {
-    return serializer.read(objectClass, createIonReaderBuilder().build(bytes), beanConstructed)
+    return serializer.read(objectClass, readerBuilder.build(bytes), beanConstructed)
   }
 
   fun <T> read(objectClass: Class<T>, inputStream: InputStream): T {
-    return serializer.read(objectClass, createIonReaderBuilder().build(inputStream))
+    return serializer.read(objectClass, readerBuilder.build(inputStream))
   }
 
   fun <T> read(objectClass: Class<T>, reader: Reader): T {
-    return serializer.read(objectClass, createIonReaderBuilder().build(reader))
+    return serializer.read(objectClass, readerBuilder.build(reader))
   }
 
   fun <T> read(objectClass: Class<T>, text: String): T {
-    return serializer.read(objectClass, createIonReaderBuilder().build(text))
+    return serializer.read(objectClass, readerBuilder.build(text))
   }
 
   fun <T> readList(itemClass: Class<T>, reader: Reader, beanConstructed: BeanConstructed? = null): List<T> {
-    return serializer.readList(itemClass, createIonReaderBuilder().build(reader), beanConstructed)
+    return serializer.readList(itemClass, readerBuilder.build(reader), beanConstructed)
   }
 
   @JvmOverloads
   fun <T> readList(itemClass: Class<T>, bytes: ByteArray, beanConstructed: BeanConstructed? = null): List<T> {
-    return serializer.readList(itemClass, createIonReaderBuilder().build(bytes), beanConstructed)
+    return serializer.readList(itemClass, readerBuilder.build(bytes), beanConstructed)
   }
 
   @JvmOverloads
   fun <T> readList(itemClass: Class<T>, input: InputStream, beanConstructed: BeanConstructed? = null): List<T> {
-    return serializer.readList(itemClass, createIonReaderBuilder().build(input), beanConstructed)
+    return serializer.readList(itemClass, readerBuilder.build(input), beanConstructed)
   }
 }
 
 data class WriteConfiguration(val binary: Boolean = true, val filter: SerializationFilter? = null)
-
-private fun createIonReaderBuilder() = IonReaderBuilder.standard()
 
 // not finished concept because not required for object graph serialization
 interface SerializationFilter {
@@ -90,9 +96,15 @@ data class WriteContext(val writer: ValueWriter,
 interface ReadContext {
   val reader: ValueReader
   val objectIdReader: ObjectIdReader
-  val objenesis: Objenesis
 
   val beanConstructed: BeanConstructed?
+
+  /**
+   * Each call will reset previously allocated result. For sub readers it is not a problem, because you must use [createSubContext] for this case.
+   */
+  fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream
+
+  fun createSubContext(reader: ValueReader): ReadContext
 }
 
 class ObjectIdWriter {
