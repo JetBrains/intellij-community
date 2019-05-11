@@ -84,12 +84,16 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       val custom = classToRootBindingFactory.get(aClass)?.invoke()
       @Suppress("IfThenToElvis")
       if (custom == null) {
-        if (aClass.isArray) {
-          ArrayBinding(aClass.componentType, this)
-        }
-        else {
-          assert(cacheKey === aClass)
-          BeanBinding(aClass)
+        when {
+          aClass.isArray -> ArrayBinding(aClass.componentType, this)
+          aClass.isEnum -> {
+            @Suppress("UNCHECKED_CAST")
+            EnumBinding(aClass as Class<out Enum<*>>)
+          }
+          else -> {
+            assert(cacheKey === aClass)
+            BeanBinding(aClass)
+          }
         }
       }
       else {
@@ -124,7 +128,6 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
       aClass.isArray -> ArrayBinding(aClass.componentType, this)
       java.lang.Number::class.java.isAssignableFrom(aClass) -> AccessorWrapperBinding(NumberAsObjectBinding())
-      aClass.isEnum -> throw UnsupportedOperationException("enum is not supported")
       else -> AccessorWrapperBinding(getRootBinding(aClass, type))
     }
   }
@@ -262,14 +265,33 @@ private class DoubleBinding : NestedBinding, RootBinding {
   }
 }
 
-// todo intern short strings?
 private class StringBinding : RootBinding {
   override fun deserialize(context: ReadContext): Any {
     return context.reader.stringValue()
   }
 
   override fun serialize(obj: Any, context: WriteContext) {
-    context.writer.writeString(obj as String)
+    val s = obj as String
+    if (s.length < 64) {
+      context.writer.writeSymbol(s)
+    }
+    else {
+      context.writer.writeString(s)
+    }
+  }
+}
+
+private class EnumBinding(private val valueClass: Class<out Enum<*>>) : RootBinding {
+  override fun deserialize(context: ReadContext): Any {
+    val enumConstants = valueClass.enumConstants
+    val value = context.reader.stringValue()
+    return enumConstants.firstOrNull { it.name == value }
+           ?: enumConstants.firstOrNull { it.name.equals(value, ignoreCase = true) }
+           ?: enumConstants.first()
+  }
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeSymbol((obj as Enum<*>).name)
   }
 }
 

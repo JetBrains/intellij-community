@@ -59,7 +59,12 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     this.nameToBindingIndex = nameToBindingIndex
 
     if (context.isResolveConstructorOnInit) {
-      resolveConstructor()
+      try {
+        resolveConstructor()
+      }
+      catch (e: NoSuchMethodException) {
+        propertyMapping.value
+      }
     }
   }
 

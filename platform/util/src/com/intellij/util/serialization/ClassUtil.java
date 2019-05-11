@@ -2,6 +2,7 @@
 package com.intellij.util.serialization;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -55,5 +56,23 @@ public final class ClassUtil {
     else {
       return false;
     }
+  }
+
+  @Nullable
+  public static Object stringToEnum(@NotNull String value, @NotNull Class<? extends Enum<?>> valueClass, boolean isAlwaysIgnoreCase) {
+    Enum<?>[] enumConstants = valueClass.getEnumConstants();
+    if (!isAlwaysIgnoreCase) {
+      for (Object enumConstant : enumConstants) {
+        if (enumConstant.toString().equals(value)) {
+          return enumConstant;
+        }
+      }
+    }
+    for (Object enumConstant : enumConstants) {
+      if (enumConstant.toString().equalsIgnoreCase(value)) {
+        return enumConstant;
+      }
+    }
+    return null;
   }
 }

@@ -181,6 +181,22 @@ class ObjectSerializerTest {
   fun `no default constructor`() {
     test(NoDefaultConstructorBean("foo", arrayListOf(42, 21)))
   }
+
+  @Test
+  fun enum() {
+    val bean = TestEnumBean()
+    bean.color = TestEnum.RED
+    test(bean)
+  }
+}
+
+private enum class TestEnum {
+  RED, GREEN, BLUE
+}
+
+private class TestEnumBean() {
+  @JvmField
+  var color: TestEnum = TestEnum.BLUE
 }
 
 private class TestByteArray @JvmOverloads constructor(@Suppress("unused") @JvmField var data: ByteArray? = null)

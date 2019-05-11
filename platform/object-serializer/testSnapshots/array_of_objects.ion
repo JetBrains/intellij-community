@@ -6,14 +6,14 @@
       short:4,
       long:9223372036854775807,
       counter:42,
-      foo:"foo"
+      foo:foo
     },
     {
       '@id':2,
       short:4,
       long:9223372036854775807,
       counter:42,
-      foo:"or bar"
+      foo:'or bar'
     }
   ]
 }

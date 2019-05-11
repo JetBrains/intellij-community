@@ -226,7 +226,7 @@ public final class XmlSerializerImpl {
     }
     else if (valueClass.isEnum()) {
       //noinspection unchecked
-      accessor.set(host, XmlSerializerUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
+      accessor.set(host, ClassUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
     }
     else if (Date.class.isAssignableFrom(valueClass)) {
       try {

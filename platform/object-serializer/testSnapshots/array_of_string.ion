@@ -1,8 +1,8 @@
 {
   '@id':0,
   list:[
-    "foo",
-    "bar"
+    foo,
+    bar
   ],
   children:[
   ]

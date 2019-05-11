@@ -4,7 +4,6 @@ package com.intellij.util.xmlb;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.serialization.MutableAccessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -35,23 +34,5 @@ public class XmlSerializerUtil {
   @NotNull
   public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     return BeanBinding.getAccessors(aClass);
-  }
-
-  @Nullable
-  public static Object stringToEnum(@NotNull String value, @NotNull Class<? extends Enum<?>> valueClass, boolean isAlwaysIgnoreCase) {
-    Enum<?>[] enumConstants = valueClass.getEnumConstants();
-    if (!isAlwaysIgnoreCase) {
-      for (Object enumConstant : enumConstants) {
-        if (enumConstant.toString().equals(value)) {
-          return enumConstant;
-        }
-      }
-    }
-    for (Object enumConstant : enumConstants) {
-      if (enumConstant.toString().equalsIgnoreCase(value)) {
-        return enumConstant;
-      }
-    }
-    return null;
   }
 }
