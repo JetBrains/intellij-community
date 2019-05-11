@@ -4,10 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -15,24 +12,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 /**
  * @author knisht
  */
-
-fun createParametrizedClosures(method: GrMethod,
-                               closureParameters: MutableMap<GrParameter, ParametrizedClosure>,
-                               processor: MethodParametersInferenceProcessor,
-                               generator: NameGenerator) {
-  val call = ReferencesSearch.search(method).mapNotNull { it.element.parent as? GrCall }.firstOrNull() ?: return
-  // todo: default-valued parameters
-  val argumentList = call.expressionArguments + call.closureArguments
-  argumentList.zip(method.parameters).filter { it.first is GrClosableBlock }.forEach { (argument, parameter) ->
-    val parametrizedClosure = ParametrizedClosure(parameter)
-    closureParameters[parameter] = parametrizedClosure
-    repeat((argument as GrClosableBlock).allParameters.size) {
-      val newTypeParameter = processor.createNewTypeParameter(generator)
-      method.typeParameterList!!.add(newTypeParameter)
-      parametrizedClosure.typeParameters.add(newTypeParameter)
-    }
-  }
-}
 
 
 fun setUpClosuresSignature(inferenceSession: GroovyInferenceSession,

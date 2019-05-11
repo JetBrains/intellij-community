@@ -6,6 +6,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil.getNonWildcardParameterization
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
@@ -14,6 +15,10 @@ import org.jetbrains.plugins.groovy.lang.sam.isSamConversionAllowed
 class FunctionalExpressionConstraint(private val expression: GrFunctionalExpression, private val leftType: PsiType) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+    if (session.propagateVariablesToNestedSessions) {
+      expression.allParameters
+      constraints.add(TypeConstraint(leftType, expression.type, expression))
+    }
     if (leftType !is PsiClassType) return true
     val returnType by lazy(LazyThreadSafetyMode.NONE) {
       expression.returnType
