@@ -114,7 +114,9 @@ class ShShellcheckUtil {
   }
 
   static boolean isValidPath(@Nullable String path) {
-    return path != null && new File(path).canExecute();
+    if (path == null) return false;
+    File file = new File(path);
+    return file.canExecute() && file.getName().contains("shellcheck");
 
 //    try {
 //      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
