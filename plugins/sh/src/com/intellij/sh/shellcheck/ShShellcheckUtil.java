@@ -115,6 +115,7 @@ class ShShellcheckUtil {
 
   static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
+    if (ShSettings.I_DO_MIND.equals(path)) return true;
     File file = new File(path);
     return file.canExecute() && file.getName().contains("shellcheck");
 

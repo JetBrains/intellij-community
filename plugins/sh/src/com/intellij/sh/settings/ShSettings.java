@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShSettings {
+  public static final String I_DO_MIND = "I do mind";
+
   private static final String SHELLCHECK_PATH = "SHELLCHECK.PATH";
 
   @NotNull

@@ -38,6 +38,10 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
           DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
         }
       }));
+      panel.createActionLabel("No, thanks", () -> {
+        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND);
+        EditorNotifications.getInstance(project).updateAllNotifications();
+      });
       return panel;
     }
     return null;
