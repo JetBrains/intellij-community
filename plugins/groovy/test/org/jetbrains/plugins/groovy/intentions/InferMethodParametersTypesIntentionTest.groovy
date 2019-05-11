@@ -158,4 +158,48 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testBasicClosure() {
+    doTest(true)
+  }
+
+  void testImplicitClosureParameter() {
+    doTest(true)
+  }
+
+  void testTypeParameterInClosureSignature() {
+    doTest(true)
+  }
+
+  void testClosureParameterDependsOnMethodParameter() {
+    doTest(true)
+  }
+
+  void testClosureParameterDependsOnMethodParameter2() {
+    doTest(true)
+  }
+
+  void testTwoClosuresAsArgument() {
+    doTest(true)
+  }
+
+  void testDeepClosureDependency() {
+    doTest(true)
+  }
+
+  void testParametrizedArray() {
+    doTest(true)
+  }
+
+  void testDifferentCallPlaces() {
+    doTest(true)
+  }
+
+  void testAuxiliaryStatements() {
+    doTest(true)
+  }
+
+  void testExplicitCallForClosureParameter() {
+    doTest(true)
+  }
+
 }

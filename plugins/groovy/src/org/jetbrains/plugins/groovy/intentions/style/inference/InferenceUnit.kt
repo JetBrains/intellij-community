@@ -66,6 +66,8 @@ class InferenceUnit private constructor(val initialTypeParameter: PsiTypeParamet
    */
   var flexible: Boolean = false
 
+  var forbidInstantiation: Boolean = false
+
   override fun toString(): String {
     return "Inference unit: " + initialTypeParameter.type().canonicalText
   }

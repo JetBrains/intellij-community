@@ -5,6 +5,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -46,7 +47,7 @@ class InferenceUnitRegistry {
     val map = BidirectionalMap<InferenceUnit, InferenceVariable>()
     for (variable in variables) {
       val unit = createUnit(variable.parameter)
-      unit.typeInstantiation = variable.instantiation
+      unit.typeInstantiation = variable.instantiation.run { if (this.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)) PsiType.NULL else this }
       map[unit] = variable
     }
     val entries = map.entries.sortedBy { (unit, _) -> unit.toString() }
@@ -98,7 +99,7 @@ class InferenceUnitRegistry {
     return units.joinToString()
   }
 
-  fun searchUnit(type: PsiType): InferenceUnit? {
+  fun searchUnit(type: PsiType?): InferenceUnit? {
     return units.firstOrNull { it.initialTypeParameter.type() == type }
   }
 }

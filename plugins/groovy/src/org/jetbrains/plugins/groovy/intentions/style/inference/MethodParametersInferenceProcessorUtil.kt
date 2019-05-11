@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 
 
@@ -71,4 +72,8 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superTypes: 
     throw IncorrectOperationException("type parameter text: $builder")
   }
 
+}
+
+fun isClosureType(type: PsiType?) : Boolean {
+  return (type as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
 }
