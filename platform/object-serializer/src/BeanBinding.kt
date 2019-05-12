@@ -108,10 +108,16 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
     // we cannot read all field values before creating instance because some field value can reference to parent - our instance,
     // so, first, create instance, and only then read rest of fields
+    var id = -1
     structReaderBuilder.build(out.internalBuffer, 0, out.size()).use { reader ->
       reader.next()
       val subReadContext = context.createSubContext(reader)
-      readStruct(reader) { fieldName, _ ->
+      readStruct(reader) { fieldName, type ->
+        if (type == IonType.INT && fieldName == ID_FIELD_NAME) {
+          id = reader.intValue()
+          return@readStruct
+        }
+
         val argIndex = names.indexOf(fieldName)
         if (argIndex == -1) {
           return@readStruct
@@ -128,10 +134,14 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     }
 
     val instance = constructorInfo.constructor.newInstance(*initArgs)
+    if (id != -1) {
+      context.objectIdReader.registerObject(instance, id)
+    }
+
     if (bindings.size > names.size) {
       structReaderBuilder.build(out.internalBuffer, 0, out.size()).use { reader ->
         reader.next()
-        readIntoObject(instance, context.createSubContext(reader)) { !names.contains(it) }
+        readIntoObject(instance, context.createSubContext(reader), checkId = false /* already registered */) { !names.contains(it) }
       }
     }
     return instance
@@ -168,13 +178,13 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     return context.beanConstructed?.let { it(instance) } ?: instance
   }
 
-  private fun readIntoObject(instance: Any, context: ReadContext, filter: ((fieldName: String) -> Boolean)? = null) {
+  private fun readIntoObject(instance: Any, context: ReadContext, checkId: Boolean = true, filter: ((fieldName: String) -> Boolean)? = null) {
     val nameToBindingIndex = nameToBindingIndex
     val bindings = bindings
     val accessors = accessors
     val reader = context.reader
     readStruct(reader) { fieldName, type ->
-      if (type == IonType.INT && fieldName == ID_FIELD_NAME) {
+      if (checkId && type == IonType.INT && fieldName == ID_FIELD_NAME) {
         val id = reader.intValue()
         context.objectIdReader.registerObject(instance, id)
         return@readStruct

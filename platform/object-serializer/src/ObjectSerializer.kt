@@ -126,7 +126,8 @@ class ObjectIdReader {
   private val map: TIntObjectHashMap<Any> = TIntObjectHashMap()
 
   fun getObject(id: Int): Any {
-    return map.get(id) ?: throw SerializationException("Cannot find object by id $id")
+    return map.get(id)
+           ?: throw SerializationException("Cannot find object by id $id")
   }
 
   fun registerObject(obj: Any, id: Int) {

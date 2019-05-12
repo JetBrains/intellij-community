@@ -1,63 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.serialization
+package com.intellij .serialization
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.FileUtil.sanitizeFileName
-import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.assertions.CleanupSnapshots
-import org.junit.ClassRule
+import com.intellij.util.serialization.ObjectSerializer
+import com.intellij.util.serialization.WriteConfiguration
+import com.intellij.util.serialization.getBindingCount
+import com.intellij.util.serialization.getBindingProducer
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
-import org.junit.runner.RunWith
-import org.junit.runners.Suite
-import java.nio.file.Paths
 import java.util.*
 
-private val testSnapshotDir = Paths.get(PlatformTestUtil.getCommunityPath(), "platform/object-serializer/testSnapshots")
-
-@RunWith(Suite::class)
-@Suite.SuiteClasses(ObjectSerializerTest::class)
-class ObjectSerializerTestSuite {
-  companion object {
-    @ClassRule
-    @JvmField
-    val cleanupSnapshots = CleanupSnapshots(testSnapshotDir)
-  }
-}
-
-private val objectSerializer = ObjectSerializer.instance
-
 class ObjectSerializerTest {
-  private fun test(bean: Any): String {
-    val out = BufferExposingByteArrayOutputStream(8 * 1024)
-
-    // just to test binary
-    objectSerializer.write(bean, out, WriteConfiguration(binary = true))
-    assertThat(out.size() > 0)
-    out.reset()
-
-    val writeConfiguration = WriteConfiguration(binary = false, filter = FILTER)
-    objectSerializer.write(bean, out, writeConfiguration)
-
-    val ionText = out.toString()
-    out.reset()
-
-    val deserializedBean = objectSerializer.read(bean.javaClass, ionText)
-    objectSerializer.write(deserializedBean, out, writeConfiguration)
-    assertThat(out.toString()).isEqualTo(ionText)
-
-    val result = if (SystemInfoRt.isWindows) StringUtilRt.convertLineSeparators(ionText.trim()) else ionText.trim()
-    assertThat(result).toMatchSnapshot(testSnapshotDir.resolve(sanitizeFileName(testName.methodName) + ".ion"))
-    return result
-  }
-
   @Rule
   @JvmField
   val testName = TestName()
+
+  private fun test(bean: Any) = test(bean, testName)
 
   @Test
   fun `same bean binding regardless of type parameters`() {
@@ -178,11 +138,6 @@ class ObjectSerializerTest {
   }
 
   @Test
-  fun `no default constructor`() {
-    test(NoDefaultConstructorBean("foo", arrayListOf(42, 21)))
-  }
-
-  @Test
   fun enum() {
     val bean = TestEnumBean()
     bean.color = TestEnum.RED
@@ -200,9 +155,6 @@ private class TestEnumBean() {
 }
 
 private class TestByteArray @JvmOverloads constructor(@Suppress("unused") @JvmField var data: ByteArray? = null)
-
-private class NoDefaultConstructorBean @PropertyMapping(["someParameter", "intList"]) constructor(@Suppress("UNUSED_PARAMETER", "unused") @JvmField val someParameter: String,
-                                                                                                  @Suppress("UNUSED_PARAMETER", "unused") @JvmField val intList: List<Int>)
 
 private class TestArrayBean(
   @JvmField var list: Array<String>? = null,
@@ -258,11 +210,4 @@ private class TestFloatBean {
 private class TestGenericBean<T> {
   @JvmField
   var data: TestGenericBean<T>? = null
-}
-
-// for all our test beans null it is default value - to reduce snapshots, filter null out
-private val FILTER = object : SerializationFilter {
-  override fun isSkipped(value: Any?): Boolean {
-    return value == null || (value is Collection<*> && value.isEmpty())
-  }
 }
