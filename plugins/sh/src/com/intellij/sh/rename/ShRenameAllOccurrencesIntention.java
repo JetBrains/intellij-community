@@ -32,13 +32,13 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file instanceof ShFile && ShSelectAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), null);
+    return file instanceof ShFile && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), null);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (file instanceof ShFile) {
-      ShSelectAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
+      ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
     }
   }
 

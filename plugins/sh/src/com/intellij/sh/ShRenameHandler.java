@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.sh.psi.ShFile;
-import com.intellij.sh.rename.ShSelectAllOccurrencesHandler;
+import com.intellij.sh.rename.ShRenameAllOccurrencesHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class ShRenameHandler implements RenameHandler {
@@ -24,7 +24,7 @@ public class ShRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    ShSelectAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
+    ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
   }
 
   @Override
