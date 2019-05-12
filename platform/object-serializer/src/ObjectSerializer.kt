@@ -82,7 +82,9 @@ class ObjectSerializer {
   }
 }
 
-data class WriteConfiguration(val binary: Boolean = true, val filter: SerializationFilter? = null)
+data class WriteConfiguration(val binary: Boolean = true,
+                              val filter: SerializationFilter? = null,
+                              val orderMapEntriesByKeys: Boolean = false)
 
 // not finished concept because not required for object graph serialization
 interface SerializationFilter {
@@ -91,7 +93,8 @@ interface SerializationFilter {
 
 data class WriteContext(val writer: ValueWriter,
                         val filter: SerializationFilter,
-                        val objectIdWriter: ObjectIdWriter?)
+                        val objectIdWriter: ObjectIdWriter?,
+                        val configuration: WriteConfiguration)
 
 interface ReadContext {
   val reader: ValueReader

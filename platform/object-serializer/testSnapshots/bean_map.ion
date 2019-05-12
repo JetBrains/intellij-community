@@ -1,0 +1,25 @@
+{
+  '@id':0,
+  beanMap:[
+    {
+      '@id':1,
+      map:[
+        A,
+        VB,
+        Z,
+        '123',
+        'a-A',
+        '123',
+        foo,
+        bar
+      ]
+    },
+    {
+      '@id':2,
+      map:[
+        'some key',
+        'some value'
+      ]
+    }
+  ]
+}

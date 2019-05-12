@@ -21,7 +21,8 @@ internal val objectSerializer
 
 @RunWith(Suite::class)
 @Suite.SuiteClasses(ObjectSerializerTest::class,
-                    NonDefaultConstructorTest::class)
+                    NonDefaultConstructorTest::class,
+                    MapTest::class)
 class ObjectSerializerTestSuite {
   companion object {
     @ClassRule
@@ -30,7 +31,7 @@ class ObjectSerializerTestSuite {
   }
 }
 
-internal fun test(bean: Any, testName: TestName): String {
+internal fun test(bean: Any, testName: TestName, _writeConfiguration: WriteConfiguration? = null): String {
   val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
   // just to test binary
@@ -38,7 +39,7 @@ internal fun test(bean: Any, testName: TestName): String {
   Assertions.assertThat(out.size() > 0)
   out.reset()
 
-  val writeConfiguration = WriteConfiguration(binary = false, filter = FILTER)
+  val writeConfiguration = _writeConfiguration ?: WriteConfiguration(binary = false, filter = FILTER)
   objectSerializer.write(bean, out, writeConfiguration)
 
   val ionText = out.toString()
@@ -54,8 +55,8 @@ internal fun test(bean: Any, testName: TestName): String {
 }
 
 // for all our test beans null it is default value - to reduce snapshots, filter null out
-private val FILTER = object : SerializationFilter {
+internal val FILTER = object : SerializationFilter {
   override fun isSkipped(value: Any?): Boolean {
-    return value == null || (value is Collection<*> && value.isEmpty())
+    return value == null || (value is Collection<*> && value.isEmpty()) || (value is Map<*, *> && value.isEmpty())
   }
 }

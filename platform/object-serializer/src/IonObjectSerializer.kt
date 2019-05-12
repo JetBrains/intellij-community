@@ -20,10 +20,11 @@ internal class IonObjectSerializer {
 
   internal val bindingProducer = IonBindingProducer(propertyCollector)
 
-  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration?, originalType: Type? = null) {
-    createIonWriterBuilder(configuration?.binary ?: true).build(outputStream).use { ionWriter ->
+  fun write(obj: Any, outputStream: OutputStream, _configuration: WriteConfiguration?, originalType: Type? = null) {
+    val configuration = _configuration ?: WriteConfiguration()
+    createIonWriterBuilder(configuration.binary).build(outputStream).use { ionWriter ->
       val aClass = obj.javaClass
-      bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, WriteContext(ionWriter, configuration?.filter ?: DEFAULT_FILTER, ObjectIdWriter()))
+      bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, WriteContext(ionWriter, configuration.filter ?: DEFAULT_FILTER, ObjectIdWriter(), configuration))
     }
   }
 

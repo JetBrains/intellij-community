@@ -126,6 +126,10 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     // CollectionBinding implements NestedBinding directly because can mutate property value directly
     return when {
       Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
+      Map::class.java.isAssignableFrom(aClass) -> {
+        val typeArguments = (type as ParameterizedType).actualTypeArguments
+        MapBinding(ClassUtil.typeToClass(typeArguments[0]), ClassUtil.typeToClass(typeArguments[1]), this)
+      }
       aClass.isArray -> ArrayBinding(aClass.componentType, this)
       java.lang.Number::class.java.isAssignableFrom(aClass) -> AccessorWrapperBinding(NumberAsObjectBinding())
       else -> AccessorWrapperBinding(getRootBinding(aClass, type))
