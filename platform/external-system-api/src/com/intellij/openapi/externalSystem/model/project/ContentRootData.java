@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,26 +13,20 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
-public class ContentRootData extends AbstractExternalEntityData {
+public final class ContentRootData extends AbstractExternalEntityData {
+  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();
 
-  private static final long serialVersionUID = 1L;
-
-  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> myData =
-    new HashMap<>();
-
-  @NotNull private final String myRootPath;
+  @NotNull private final String rootPath;
 
   /**
    * Creates new {@code GradleContentRootImpl} object.
    *
    * @param rootPath  path to the root directory
    */
+  @PropertyMapping({"owner", "rootPath"})
   public ContentRootData(@NotNull ProjectSystemId owner, @NotNull String rootPath) {
     super(owner);
-    myRootPath = ExternalSystemApiUtil.toCanonicalPath(rootPath);
+    this.rootPath = ExternalSystemApiUtil.toCanonicalPath(rootPath);
   }
 
   /**
@@ -40,7 +35,7 @@ public class ContentRootData extends AbstractExternalEntityData {
    */
   @NotNull
   public Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
-    final Collection<SourceRoot> result = myData.get(type);
+    final Collection<SourceRoot> result = data.get(type);
     return result == null ? Collections.emptyList() : result;
   }
 
@@ -59,9 +54,9 @@ public class ContentRootData extends AbstractExternalEntityData {
    */
   public void storePath(@NotNull ExternalSystemSourceType type, @NotNull String path, @Nullable String packagePrefix) throws IllegalArgumentException {
     if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
-      Collection<SourceRoot> paths = myData.get(type);
+      Collection<SourceRoot> paths = data.get(type);
       if (paths == null) {
-        myData.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
+        data.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
       }
       paths.add(new SourceRoot(
         ExternalSystemApiUtil.toCanonicalPath(path),
@@ -80,16 +75,16 @@ public class ContentRootData extends AbstractExternalEntityData {
 
   @NotNull
   public String getRootPath() {
-    return myRootPath;
+    return rootPath;
   }
 
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder("content root:");
-    for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : myData.entrySet()) {
+    for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : data.entrySet()) {
       buffer.append(entry.getKey().toString().toLowerCase(Locale.ENGLISH)).append("=").append(entry.getValue()).append("|");
     }
-    if (!myData.isEmpty()) {
+    if (!data.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     return buffer.toString();

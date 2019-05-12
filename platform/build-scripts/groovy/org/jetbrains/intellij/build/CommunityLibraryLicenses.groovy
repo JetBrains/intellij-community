@@ -202,9 +202,7 @@ class CommunityLibraryLicenses {
                        url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", version: "2.3.20", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
-    new LibraryLicense(name: "FST", libraryName: "de.ruedigermoeller:fst", version: "2.56", license: "Apache 2.0",
-                       url: "https://github.com/RuedigerMoeller/fast-serialization",
-                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+
     new LibraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant-groovy", license: "Apache 2.0",
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),
     new LibraryLicense(name: "Gherkin keywords", attachedTo: "intellij.gherkin", version: "2.12.2", license: "MIT",
