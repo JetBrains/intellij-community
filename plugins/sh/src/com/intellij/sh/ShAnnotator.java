@@ -27,10 +27,6 @@ public class ShAnnotator implements Annotator {
     else if (o instanceof ShGenericCommandDirective) {
       mark(o, holder, GENERIC_COMMAND);
     }
-    else if (o instanceof ShFunctionDefinition) {
-      PsiElement word = ((ShFunctionDefinition) o).getWord();
-      mark(word, holder, FUNCTION_DECLARATION);
-    }
     else if (o instanceof ShAssignmentCommand) {
       PsiElement literal = ((ShAssignmentCommand) o).getLiteral();
       mark(literal, holder, VARIABLE_DECLARATION);
@@ -48,8 +44,14 @@ public class ShAnnotator implements Annotator {
     }
     ASTNode node = o.getNode();
     IElementType elementType = node == null ? null : node.getElementType();
-    if (elementType == ShTypes.WORD && o.getParent() instanceof ShSimpleCommandElement) {
-      holder.createInfoAnnotation(node, null).setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
+    if (elementType == ShTypes.WORD) {
+      PsiElement parent = o.getParent();
+      if (parent instanceof ShSimpleCommandElement) {
+        holder.createInfoAnnotation(node, null).setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
+      }
+      if (parent instanceof ShFunctionDefinition) {
+        mark(o, holder, FUNCTION_DECLARATION);
+      }
     }
   }
 
