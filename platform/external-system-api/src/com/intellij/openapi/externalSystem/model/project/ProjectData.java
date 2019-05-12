@@ -7,7 +7,8 @@ import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
+// cannot be final because of ModuleModelDataServiceTest - mock is created for class
+public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
   @NotNull
   private final String linkedExternalProjectPath;
 
