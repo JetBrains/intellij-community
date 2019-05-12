@@ -24,10 +24,10 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainText
 import com.intellij.psi.search.*
+import com.intellij.serialization.SerializationException
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.*
 import com.intellij.util.Processor
-import com.intellij.util.serialization.SerializationException
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File

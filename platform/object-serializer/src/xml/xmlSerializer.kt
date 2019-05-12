@@ -6,10 +6,11 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
+import com.intellij.serialization.BindingProducer
+import com.intellij.serialization.MutableAccessor
+import com.intellij.serialization.SerializationException
+import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.util.io.URLUtil
-import com.intellij.util.serialization.BindingProducer
-import com.intellij.util.serialization.MutableAccessor
-import com.intellij.util.serialization.SerializationException
 import com.intellij.util.xmlb.*
 import org.jdom.Element
 import org.jdom.JDOMException

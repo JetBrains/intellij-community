@@ -8,9 +8,6 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.assertions.CleanupSnapshots
-import com.intellij.util.serialization.ObjectSerializer
-import com.intellij.util.serialization.SerializationFilter
-import com.intellij.util.serialization.WriteConfiguration
 import org.junit.ClassRule
 import org.junit.rules.TestName
 import org.junit.runner.RunWith

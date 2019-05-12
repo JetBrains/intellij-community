@@ -4,7 +4,7 @@ package com.intellij.configurationStore.properties
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.serialization.ClassUtil
+import com.intellij.serialization.ClassUtil
 import kotlin.reflect.KProperty
 
 abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
