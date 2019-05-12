@@ -66,6 +66,7 @@ public class ScopePanel extends JPanel {
     myModulesComboBox.setModules(Arrays.asList(allModules));
     if (allModules.length > 0) myModulesComboBox.setSelectedModule(allModules[0]);
     myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE, false));
+    myModulesComboBox.setMinimumAndPreferredWidth(JBUI.scale(300));
     myScopesComboBox.init(project, true, false, "", SCOPE_FILTER);
     myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED, false));
     Disposer.register(parent, myScopesComboBox);
