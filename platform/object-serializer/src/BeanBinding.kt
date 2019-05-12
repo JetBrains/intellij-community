@@ -144,7 +144,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
         readIntoObject(instance, context.createSubContext(reader), checkId = false /* already registered */) { !names.contains(it) }
       }
     }
-    return instance
+    return context.beanConstructed?.let { it(instance) } ?: instance
   }
 
   override fun deserialize(context: ReadContext): Any {
