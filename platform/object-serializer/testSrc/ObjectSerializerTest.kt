@@ -105,7 +105,33 @@ class ObjectSerializerTest {
     bean.color = TestEnum.RED
     test(bean)
   }
+
+  @Test
+  fun `interface type for field`() {
+    class TestInterfaceBean {
+      @JvmField
+      @field:Property(allowedTypes = [Circle::class, Rectangle::class])
+      var shape: Shape? = null
+    }
+
+    val bean = TestInterfaceBean()
+    bean.shape = Circle()
+    test(bean)
+  }
 }
+
+private interface Shape
+
+private class Circle : Shape {
+  @JvmField
+  var name: String? = null
+}
+
+private class Rectangle : Shape {
+  @JvmField
+  var length: Int = -1
+}
+
 
 internal enum class TestEnum {
   RED, GREEN, BLUE

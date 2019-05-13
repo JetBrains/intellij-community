@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
+import com.amazon.ion.IonException
 import com.amazon.ion.IonType
 import com.amazon.ion.IonWriter
 import com.amazon.ion.system.IonBinaryWriterBuilder
@@ -56,7 +57,15 @@ internal class IonObjectSerializer {
         LOG.debug { "$prefix version mismatch (file=$file, currentVersion: $currentVersion, expectedVersion=$expectedVersion, objectClass=$objectClass)" }
       }
 
-      reader.next()
+      try {
+        reader.next()
+      }
+      catch (e: IonException) {
+        // corrupted file
+        LOG.debug(e)
+        return null
+      }
+
       reader.stepIn()
       while (reader.next() != null) {
         when (val fieldName = reader.fieldName) {
@@ -103,7 +112,7 @@ internal class IonObjectSerializer {
 
   private fun doWrite(obj: Any, writer: IonWriter, configuration: WriteConfiguration, originalType: Type?) {
     val aClass = obj.javaClass
-    val writeContext = WriteContext(writer, configuration.filter ?: DEFAULT_FILTER, ObjectIdWriter(), configuration)
+    val writeContext = WriteContext(writer, configuration.filter ?: DEFAULT_FILTER, ObjectIdWriter(), configuration, bindingProducer)
     bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, writeContext)
   }
 
@@ -133,7 +142,7 @@ internal class IonObjectSerializer {
   }
 
   private fun createReadContext(reader: ValueReader, beanConstructed: BeanConstructed? = null): ReadContext {
-    return ReadContextImpl(reader, ObjectIdReader(), beanConstructed)
+    return ReadContextImpl(reader, ObjectIdReader(), bindingProducer, beanConstructed)
   }
 }
 
@@ -143,6 +152,7 @@ private val DEFAULT_FILTER = object : SerializationFilter {
 
 private data class ReadContextImpl(override val reader: ValueReader,
                                    override val objectIdReader: ObjectIdReader,
+                                   override val bindingProducer: BindingProducer<RootBinding>,
                                    override val beanConstructed: BeanConstructed?) : ReadContext {
   private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
 
@@ -158,7 +168,7 @@ private data class ReadContextImpl(override val reader: ValueReader,
     return result
   }
 
-  override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, beanConstructed)
+  override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, bindingProducer, beanConstructed)
 }
 
 private val binaryWriterBuilder by lazy { IonBinaryWriterBuilder.standard().immutable() }

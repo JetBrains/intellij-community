@@ -177,6 +177,6 @@ public final class PropertyAccessor implements MutableAccessor {
 
   @NonNls
   public String toString() {
-    return "PropertyAccessor[" + myReadMethod.getDeclaringClass().getName() + "." + getName() +"]";
+    return "PropertyAccessor(name=" + myName + ", class=" + myReadMethod.getDeclaringClass().getName() + ")";
   }
 }

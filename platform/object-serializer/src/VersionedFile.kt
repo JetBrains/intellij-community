@@ -13,8 +13,8 @@ data class VersionedFile(val file: Path, val version: Int) {
   }
 
   @Throws(IOException::class)
-  fun <T> readList(itemClass: Class<T>): List<T> {
+  fun <T> readList(itemClass: Class<T>): List<T>? {
     @Suppress("UNCHECKED_CAST")
-    return ObjectSerializer.instance.serializer.readVersioned(ArrayList::class.java, file, version, originalType = ParameterizedTypeImpl(ArrayList::class.java, itemClass)) as List<T>
+    return ObjectSerializer.instance.serializer.readVersioned(ArrayList::class.java, file, version, originalType = ParameterizedTypeImpl(ArrayList::class.java, itemClass)) as List<T>?
   }
 }

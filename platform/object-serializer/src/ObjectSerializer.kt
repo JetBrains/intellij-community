@@ -99,11 +99,13 @@ interface SerializationFilter {
 data class WriteContext(val writer: ValueWriter,
                         val filter: SerializationFilter,
                         val objectIdWriter: ObjectIdWriter?,
-                        val configuration: WriteConfiguration)
+                        val configuration: WriteConfiguration,
+                        val bindingProducer: BindingProducer<RootBinding>)
 
 interface ReadContext {
   val reader: ValueReader
   val objectIdReader: ObjectIdReader
+  val bindingProducer: BindingProducer<RootBinding>
 
   val beanConstructed: BeanConstructed?
 

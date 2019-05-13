@@ -55,7 +55,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       map.put(java.lang.Byte::class.java, byte)
 
       classToRootBindingFactory.forEachEntry { key, factory ->
-        map.put(key) { AccessorWrapperBinding(factory()) }
+        map.put(key) { PropertyBinding(factory()) }
         true
       }
     }
@@ -131,8 +131,20 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
         MapBinding(typeArguments[0], typeArguments[1], this)
       }
       aClass.isArray -> ArrayBinding(aClass.componentType, this)
-      java.lang.Number::class.java.isAssignableFrom(aClass) -> AccessorWrapperBinding(NumberAsObjectBinding())
-      else -> AccessorWrapperBinding(getRootBinding(aClass, type))
+      java.lang.Number::class.java.isAssignableFrom(aClass) -> PropertyBinding(NumberAsObjectBinding())
+      aClass.isInterface -> {
+        val annotation = accessor.getAnnotation(Property::class.java)
+                         ?: throw SerializationException("Allowed types are not specified", linkedMapOf("accessor" to accessor))
+        // even if annotation in Java, Kotlin forces to use Klass, so, use java bridge
+        val allowedTypes = PropertyAnnotationUtil.getAllowedClass(annotation)
+        if (allowedTypes.isEmpty()) {
+          throw SerializationException("Allowed types list is empty", linkedMapOf("accessor" to accessor))
+        }
+        InterfacePropertyBinding(allowedTypes)
+      }
+      else -> {
+        PropertyBinding(getRootBinding(aClass, type))
+      }
     }
   }
 

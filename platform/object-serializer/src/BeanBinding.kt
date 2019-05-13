@@ -28,22 +28,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
   private lateinit var accessors: List<MutableAccessor>
 
   private val propertyMapping: Lazy<NonDefaultConstructorInfo?> = lazy {
-    for (constructor in beanClass.declaredConstructors) {
-      val annotation = constructor.getAnnotation(PropertyMapping::class.java) ?: continue
-      try {
-        constructor.isAccessible = true
-      }
-      catch (ignore: SecurityException) {
-      }
-
-      if (constructor.parameterCount != annotation.value.size) {
-        throw SerializationException("PropertyMapping annotation specifies ${annotation.value.size} parameters, " +
-                                     "but constructor accepts ${constructor.parameterCount}")
-      }
-      return@lazy NonDefaultConstructorInfo(annotation.value, constructor)
-    }
-
-    null
+    computeNonDefaultConstructorInfo(beanClass)
   }
 
   override fun init(originalType: Type, context: BindingInitializationContext) {
@@ -97,8 +82,8 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
   }
 
   private fun createUsingCustomConstructor(context: ReadContext): Any {
-    val constructorInfo = propertyMapping.value ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping")
-
+    val constructorInfo = propertyMapping.value
+                          ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=$beanClass)")
     val names = constructorInfo.names
     val initArgs = arrayOfNulls<Any?>(names.size)
 
@@ -134,7 +119,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
           initArgs[argIndex] = binding.deserialize(subReadContext)
         }
         catch (e: Exception) {
-          LOG.error("Cannot deserialize value for parameter $fieldName (binding=$binding, valueType=${reader.type}, beanClass=${beanClass})", e)
+          LOG.error("Cannot deserialize value for parameter $fieldName (binding=$binding, valueType=${reader.type}, beanClass=$beanClass)", e)
         }
       }
     }
@@ -203,7 +188,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       val bindingIndex = nameToBindingIndex.get(fieldName)
       // ignore unknown field
       if (bindingIndex == -1) {
-        LOG.warn("Unknown field $fieldName (beanClass=${beanClass})")
+        LOG.warn("Unknown field: $fieldName (beanClass=${instance.javaClass})")
         return@readStruct
       }
 
@@ -212,7 +197,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
         binding.deserialize(instance, accessors[bindingIndex], context)
       }
       catch (e: Exception) {
-        LOG.error("Cannot deserialize value for field $fieldName (binding=$binding, valueType=${reader.type}, beanClass=${beanClass})", e)
+        LOG.error("Cannot deserialize value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${instance.javaClass})", e)
       }
     }
   }
@@ -228,3 +213,22 @@ private inline fun readStruct(reader: IonReader, read: (fieldName: String, type:
 }
 
 private class NonDefaultConstructorInfo(val names: Array<String>, val constructor: Constructor<*>)
+
+private fun computeNonDefaultConstructorInfo(beanClass: Class<*>): NonDefaultConstructorInfo? {
+  for (constructor in beanClass.declaredConstructors) {
+    val annotation = constructor.getAnnotation(PropertyMapping::class.java) ?: continue
+    try {
+      constructor.isAccessible = true
+    }
+    catch (ignore: SecurityException) {
+    }
+
+    if (constructor.parameterCount != annotation.value.size) {
+      throw SerializationException("PropertyMapping annotation specifies ${annotation.value.size} parameters, " +
+                                   "but constructor accepts ${constructor.parameterCount}")
+    }
+    return NonDefaultConstructorInfo(annotation.value, constructor)
+  }
+
+  return null
+}

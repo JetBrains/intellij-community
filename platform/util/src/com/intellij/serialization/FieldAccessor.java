@@ -152,6 +152,6 @@ final class FieldAccessor implements MutableAccessor {
 
   @NotNull
   public String toString() {
-    return "FieldAccessor[" + myField.getDeclaringClass() + "." + myField.getName() + "]";
+    return "FieldAccessor(name=" + myField.getName() + ", class=" + myField.getDeclaringClass() + ")";
   }
 }
