@@ -150,6 +150,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testDefaultValues2() {
+    doTest(true)
+  }
+
   void testDiamond() {
     doTest(true)
   }

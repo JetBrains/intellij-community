@@ -7,7 +7,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
@@ -19,7 +21,7 @@ class GroovyInferenceSession(
   context: PsiElement,
   val skipClosureBlock: Boolean = true,
   private val expressionPredicates: Set<ExpressionPredicate> = emptySet(),
-  private val propagateVariablesToNestedSessions: Boolean = false,
+  val propagateVariablesToNestedSessions: Boolean = false,
   private val parent: GroovyInferenceSession? = null
 ) : InferenceSession(typeParams, contextSubstitutor, context.manager, context) {
 
@@ -93,6 +95,13 @@ class GroovyInferenceSession(
     f(nestedSession)
     nestedSessions[result] = nestedSession
     this.propagateVariables(nestedSession)
+    if (propagateVariablesToNestedSessions) {
+      nestedSession.inferenceVariables.forEach {
+        mergeVariables(it, InferenceBound.LOWER)
+        mergeVariables(it, InferenceBound.UPPER)
+        mergeVariables(it, InferenceBound.EQ)
+      }
+    }
     for ((vars, rightType) in nestedSession.myIncorporationPhase.captures) {
       this.myIncorporationPhase.addCapture(vars, rightType)
     }
@@ -100,5 +109,12 @@ class GroovyInferenceSession(
 
   fun checkPredicates(expression: GrExpression) : Boolean {
     return expressionPredicates.all { it.invoke(expression) }
+  }
+
+  private fun mergeVariables(variable: InferenceVariable, bound: InferenceBound) {
+    variable.getBounds(bound).forEach {
+      InferenceVariable.addBound(substituteWithInferenceVariables(variable.parameter.type()), it, bound, this)
+    }
+
   }
 }

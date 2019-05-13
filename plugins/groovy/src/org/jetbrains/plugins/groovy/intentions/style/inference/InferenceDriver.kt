@@ -24,5 +24,8 @@ interface InferenceDriver {
 
   fun acceptFinalSubstitutor(resultSubstitutor: PsiSubstitutor)
 
-  fun createBoundedTypeParameterElement(name: String, representativeSubstitutor: PsiSubstitutor, advice: PsiType?): PsiTypeParameter
+  fun createBoundedTypeParameterElement(name: String,
+                                        representativeSubstitutor: PsiSubstitutor,
+                                        resultSubstitutor: PsiSubstitutor,
+                                        advice: PsiType?): PsiTypeParameter
 }

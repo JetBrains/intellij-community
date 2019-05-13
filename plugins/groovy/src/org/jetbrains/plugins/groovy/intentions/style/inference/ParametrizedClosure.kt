@@ -19,10 +19,10 @@ class ParametrizedClosure(val parameter: GrParameter) {
         .filter { it.importedName !in file.importStatements.map { importStatement -> importStatement.importedName } }
         .forEach { file.addImport(it) }
 
-    private const val CLOSURE_PARAMS_FQ: String = "groovy.transform.stc.ClosureParams"
-    private const val FROM_STRING_FQ = "groovy.transform.stc.FromString"
-    private val CLOSURE_PARAMS = CLOSURE_PARAMS_FQ.substringAfterLast(".")
-    private val FROM_STRING = FROM_STRING_FQ.substringAfterLast(".")
+    private const val CLOSURE_PARAMS = "ClosureParams"
+    private const val FROM_STRING = "FromString"
+    private const val CLOSURE_PARAMS_FQ: String = "groovy.transform.stc.$CLOSURE_PARAMS"
+    private const val FROM_STRING_FQ = "groovy.transform.stc.$FROM_STRING"
   }
 
   override fun toString(): String =

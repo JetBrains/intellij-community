@@ -300,10 +300,13 @@ class InferenceDriverImpl(private val method: GrMethod) : InferenceDriver {
 
   override fun createBoundedTypeParameterElement(name: String,
                                                  representativeSubstitutor: PsiSubstitutor,
+                                                 resultSubstitutor: PsiSubstitutor,
                                                  advice: PsiType?): PsiTypeParameter {
     val mappedSupertypes = when (advice) {
-      is PsiClassType -> arrayOf(representativeSubstitutor.substitute(advice) as PsiClassType)
-      is PsiIntersectionType -> advice.conjuncts.map { representativeSubstitutor.substitute(it) as PsiClassType }.toTypedArray()
+      is PsiClassType -> arrayOf(resultSubstitutor.substitute(representativeSubstitutor.substitute(advice)) as PsiClassType)
+      is PsiIntersectionType -> PsiIntersectionType.flatten(advice.conjuncts, mutableSetOf()).map {
+        resultSubstitutor.substitute(representativeSubstitutor.substitute(it)) as PsiClassType
+      }.toTypedArray()
       else -> emptyArray()
     }
     return elementFactory.createProperTypeParameter(name, mappedSupertypes).apply { defaultTypeParameterList.add(this) }

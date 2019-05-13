@@ -91,9 +91,10 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
       }
       else -> {
         val parent = unit.unitInstantiation
-        val advice = if (parent?.typeInstantiation == PsiType.NULL) parent?.type else parent?.typeInstantiation
+        val advice = parent?.type ?: graph.initialInstantiations[unit]!!
         val newTypeParam = driver.createBoundedTypeParameterElement(unit.initialTypeParameter.name!!, representativeSubstitutor,
-                                                                    advice ?: unit.typeInstantiation)
+                                                                    resultSubstitutor,
+                                                                    advice)
         return newTypeParam.type()
       }
     }

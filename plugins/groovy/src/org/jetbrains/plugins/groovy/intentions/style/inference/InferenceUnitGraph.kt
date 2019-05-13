@@ -17,7 +17,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
 
   private val representativeMap: MutableMap<InferenceUnit, InferenceUnit> = LinkedHashMap()
-  private val initialInstantiations: MutableMap<InferenceUnit, PsiType> = LinkedHashMap()
+  val initialInstantiations: MutableMap<InferenceUnit, PsiType> = LinkedHashMap()
 
   /**
    * Runs inference between nodes in the graph/
@@ -38,11 +38,11 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
    */
   private fun flushInstantiations(registry: InferenceUnitRegistry) {
     registry.getUnits().forEach {
-      initialInstantiations[it] = if (it.typeInstantiation == PsiType.NULL && it.initialTypeParameter.extendsList.referencedTypes.isNotEmpty()) {
+      initialInstantiations[it] = if (it.initialTypeParameter.extendsList.referencedTypes.size > 1) {
         PsiIntersectionType.createIntersection(it.initialTypeParameter.extendsList.referencedTypes.toList())
       }
       else {
-        it.typeInstantiation
+        it.initialTypeParameter.extendsList.referencedTypes.firstOrNull() ?: it.typeInstantiation
       }
       it.typeInstantiation = PsiType.NULL
     }
@@ -180,22 +180,22 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
     for (unit in order.filter { it.unitInstantiation == null && it.subtypes.isEmpty() }) {
       val validInstantiation =
         when {
-          unit.initialTypeParameter.extendsList.referencedTypes.isNotEmpty() -> createExtendsBoundForTypeParameter(unit.initialTypeParameter)
-          (unit.subtypes + unit.weakSubtypes + unit.weakSupertypes).isEmpty() -> initialInstantiations[unit]
-          else -> unit.typeInstantiation
+          unit.supertypes.isNotEmpty() -> createExtendsBoundForTypeParameter(unit.initialTypeParameter)
+          else -> initialInstantiations[unit]!!
         }
-      unit.typeInstantiation = instantiationSubstitutor.substitute(validInstantiation ?: PsiType.NULL)
+      unit.typeInstantiation = instantiationSubstitutor.substitute(validInstantiation)
       if (unit.typeInstantiation != PsiType.NULL) {
         instantiationSubstitutor = instantiationSubstitutor.put(unit.initialTypeParameter, unit.typeInstantiation)
       }
     }
   }
 
-  private fun createExtendsBoundForTypeParameter(typeParameter: PsiTypeParameter) : PsiType {
+  private fun createExtendsBoundForTypeParameter(typeParameter: PsiTypeParameter): PsiType {
     val supertypes = typeParameter.extendsList.referencedTypes
     if (supertypes.size > 1) {
       return PsiIntersectionType.createIntersection(*supertypes)
-    } else {
+    }
+    else {
       return supertypes[0]
     }
   }
