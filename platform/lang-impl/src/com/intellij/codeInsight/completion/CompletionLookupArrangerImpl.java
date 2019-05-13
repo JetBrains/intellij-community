@@ -51,8 +51,23 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
 
   private String myLastLookupPrefix;
 
+  /**
+   * If false, the lookup arranger will generate enough items to fill the visible area of the list and fill the rest with "Loading..."
+   * items. If true, it will produce up to {@link #myLimit} items and truncate the list afterwards.
+   */
+  private boolean myConsiderAllItemsVisible = ApplicationManager.getApplication().isUnitTestMode();
+
   public CompletionLookupArrangerImpl(CompletionProcessEx process) {
     myProcess = process;
+  }
+
+  public CompletionLookupArrangerImpl withAllItemsVisible() {
+    myConsiderAllItemsVisible = true;
+    return this;
+  }
+
+  public void setConsiderAllItemsVisible() {
+    myConsiderAllItemsVisible = true;
   }
 
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<LookupElement> source) {
@@ -76,7 +91,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   @NotNull
   @Override
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
-                                                                               boolean hideSingleValued) {
+                                                                            boolean hideSingleValued) {
     Map<LookupElement, List<Pair<String, Object>>> map = ContainerUtil.newIdentityHashMap();
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(items);
     int sorterNumber = 0;

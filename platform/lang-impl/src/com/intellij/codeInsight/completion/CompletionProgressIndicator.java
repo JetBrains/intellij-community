@@ -18,6 +18,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -135,11 +136,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || handler.isTestingMode() ? new SyncCompletion() : new AsyncCompletion();
+    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || handler.isTestingCompletionQualityMode() ? new SyncCompletion() : new AsyncCompletion();
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
     myArranger = new CompletionLookupArrangerImpl(this);
+    if (handler.isTestingCompletionQualityMode()) {
+      myArranger.setConsiderAllItemsVisible();
+    }
     myLookup.setArranger(myArranger);
 
     myLookup.addLookupListener(myLookupListener);
@@ -244,7 +248,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void advertiseTabReplacement(CompletionParameters parameters) {
     if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE) &&
-      myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myOffsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET)) {
+        myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myOffsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET)) {
       String shortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
       if (StringUtil.isNotEmpty(shortcut)) {
         addAdvertisement("Use " + shortcut + " to overwrite the current identifier with the chosen variant", null);
@@ -407,7 +411,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
-    if (!myHandler.isTestingMode()) {
+    if (isTestingMode()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
@@ -540,7 +544,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   boolean blockingWaitForFinish(int timeoutMs) {
-    if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
+    if (isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       if (!myFinishSemaphore.waitFor(100 * 1000)) {
         throw new AssertionError("Too long completion");
       }
@@ -714,7 +718,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @Override
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myHandler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
+    if (isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       new CodeCompletionHandlerBase(myCompletionType, false, false, true).invokeCompletion(getProject(), myEditor, myInvocationCount);
@@ -768,11 +772,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private String getNoSuggestionsMessage(CompletionParameters parameters) {
     String text = CompletionContributor.forParameters(parameters)
-                                       .stream()
-                                       .map(c -> c.handleEmptyLookup(parameters, getEditor()))
-                                       .filter(StringUtil::isNotEmpty)
-                                       .findFirst()
-                                       .orElse(LangBundle.message("completion.no.suggestions"));
+      .stream()
+      .map(c -> c.handleEmptyLookup(parameters, getEditor()))
+      .filter(StringUtil::isNotEmpty)
+      .findFirst()
+      .orElse(LangBundle.message("completion.no.suggestions"));
     return DumbService.isDumb(getProject()) ? text + "; results might be incomplete while indexing is in progress" : text;
   }
 
@@ -894,5 +898,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
+  }
+
+  private boolean isTestingMode() {
+    return ApplicationManager.getApplication().isUnitTestMode() || myHandler.isTestingCompletionQualityMode();
   }
 }
