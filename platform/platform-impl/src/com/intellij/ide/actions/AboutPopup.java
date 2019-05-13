@@ -447,7 +447,7 @@ public class AboutPopup {
         }
       }
 
-      public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
+      public void render(int indentX, int indentY, List<? extends AboutBoxLine> lines) throws OverflowException {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();

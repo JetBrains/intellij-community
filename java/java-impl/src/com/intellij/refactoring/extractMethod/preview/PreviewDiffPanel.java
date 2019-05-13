@@ -215,8 +215,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
                         @NotNull Document refactoredDocument,
                         @NotNull MethodNode methodNode,
                         @NotNull TextRange methodRange,
-                        @NotNull List<Duplicate> duplicateReplacements,
-                        @NotNull List<Duplicate> excludedDuplicates) {
+                        @NotNull List<? extends Duplicate> duplicateReplacements,
+                        @NotNull List<? extends Duplicate> excludedDuplicates) {
     PsiFile patternFile = pattern[0].getContainingFile();
     myPatternDocument = FileDocumentManager.getInstance().getDocument(patternFile.getViewProvider().getVirtualFile());
     if (myPatternDocument == null) {
@@ -262,9 +262,9 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   private void collectDiffRanges(@NotNull Document refactoredDocument,
-                                 @NotNull List<Range> diffRanges,
+                                 @NotNull List<? super Range> diffRanges,
                                  @NotNull Map<FragmentNode, Couple<TextRange>> linesBounds,
-                                 @NotNull List<Duplicate> duplicates) {
+                                 @NotNull List<? extends Duplicate> duplicates) {
     for (Duplicate duplicate : duplicates) {
       DuplicateNode duplicateNode = duplicate.myNode;
       TextRange patternRange = duplicateNode.getTextRange();
@@ -307,8 +307,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
 
-  private static List<Duplicate> collectExcludedRanges(@NotNull List<DuplicateNode> allNodes,
-                                                       @NotNull Set<DuplicateNode> selectedNodes,
+  private static List<Duplicate> collectExcludedRanges(@NotNull List<? extends DuplicateNode> allNodes,
+                                                       @NotNull Set<? extends DuplicateNode> selectedNodes,
                                                        @NotNull PsiFile copyFile) {
     List<Duplicate> excludedRanges = new ArrayList<>();
     for (DuplicateNode node : allNodes) {

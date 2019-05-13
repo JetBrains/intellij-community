@@ -213,7 +213,7 @@ public class CompilerReferenceIndex<Input> {
     LOG.error(e);
   }
 
-  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
+  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<? super Exception> exceptionProcessor) {
     try {
       index.dispose();
     }
@@ -222,7 +222,7 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  private static void close(Closeable closeable, Processor<Exception> exceptionProcessor) {
+  private static void close(Closeable closeable, Processor<? super Exception> exceptionProcessor) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (closeable) {
       try {

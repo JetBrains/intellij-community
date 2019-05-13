@@ -26,7 +26,7 @@ public class JsonDelegateContributor extends BuilderMethodsContributor {
                                 @NotNull PsiClass clazz,
                                 @NotNull String name,
                                 @NotNull PsiElement place,
-                                @NotNull Processor<PsiElement> processor) {
+                                @NotNull Processor<? super PsiElement> processor) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(place.getProject());
 
     GrLightMethodBuilder method;

@@ -112,7 +112,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
   protected boolean findAdditionalMembers(Set<UsageInfo> toMakeStatic) {return true;}
 
-  private static UsageInfo[] filterOverriding(UsageInfo[] usages, Set<UsageInfo> suggestToMakeStatic) {
+  private static UsageInfo[] filterOverriding(UsageInfo[] usages, Set<? super UsageInfo> suggestToMakeStatic) {
     ArrayList<UsageInfo> result = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof ChainedCallUsageInfo) {

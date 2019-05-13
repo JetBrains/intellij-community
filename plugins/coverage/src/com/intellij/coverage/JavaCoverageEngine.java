@@ -125,7 +125,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   private static void extractTests(final File traceFile,
                                    final DataInputStream in,
-                                   final Set<String> tests,
+                                   final Set<? super String> tests,
                                    final String classFQName,
                                    final int lineNumber) throws IOException {
     long traceSize = in.readInt();

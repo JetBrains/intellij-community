@@ -48,8 +48,7 @@ public abstract class HighlightManager {
    * Highlights a specified range of text in an editor. The highlighting is removed when the user presses the Esc key, and optionally
    * when the editor text is changed. If the highlighter added by this method needs to be removed
    * manually, {@link #removeSegmentHighlighter} must be used for that.
-   *
-   * @param editor           the editor in which the highlighting is performed.
+   *  @param editor           the editor in which the highlighting is performed.
    * @param startOffset      the start offset of the text range to highlight.
    * @param endOffset        the end offset of the text range to highlight.
    * @param attributes       the attributes to highlight the text with.
@@ -61,14 +60,13 @@ public abstract class HighlightManager {
                                          int endOffset,
                                          @NotNull TextAttributes attributes,
                                          boolean hideByTextChange,
-                                         @Nullable Collection<RangeHighlighter> outHighlighters);
+                                         @Nullable Collection<? super RangeHighlighter> outHighlighters);
 
   /**
    * Highlights a specified range of text in an editor. The highlighting is removed when the user presses the Esc key or (optionally)
    * any other key, and optionally when the editor text is changed. If the highlighter added by this method needs to be removed
    * manually, {@link #removeSegmentHighlighter} must be used for that.
-   *
-   * @param editor           the editor in which the highlighting is performed.
+   *  @param editor           the editor in which the highlighting is performed.
    * @param startOffset      the start offset of the text range to highlight.
    * @param endOffset        the end offset of the text range to highlight.
    * @param attributes       the attributes to highlight the text with.
@@ -82,7 +80,7 @@ public abstract class HighlightManager {
                                          @NotNull TextAttributes attributes,
                                          boolean hideByTextChange,
                                          boolean hideByAnyKey,
-                                         @Nullable Collection<RangeHighlighter> highlighters);
+                                         @Nullable Collection<? super RangeHighlighter> highlighters);
 
   /**
    * Removes a range highlighter added by {@link #addRangeHighlight} or another method in this class.
@@ -96,8 +94,7 @@ public abstract class HighlightManager {
   /**
    * Highlights the text ranges of the specified references in the specified editor. The highlighting is removed when the user presses
    * the Esc key, and optionally when the editor text is changed.
-   *
-   * @param editor           the editor in which the highlighting is performed.
+   *  @param editor           the editor in which the highlighting is performed.
    * @param occurrences      the references to highlight.
    * @param attributes       the attributes to highlight the text with.
    * @param hideByTextChange if true, the highlighting is removed automatically if the editor text is changed.
@@ -107,13 +104,12 @@ public abstract class HighlightManager {
                                                @NotNull PsiReference[] occurrences,
                                                @NotNull TextAttributes attributes,
                                                boolean hideByTextChange,
-                                               @Nullable Collection<RangeHighlighter> outHighlighters);
+                                               @Nullable Collection<? super RangeHighlighter> outHighlighters);
 
   /**
    * Highlights the text ranges of the specified elements in the specified editor. The highlighting is removed when the user presses
    * the Esc key, and optionally when the editor text is changed.
-   *
-   * @param editor           the editor in which the highlighting is performed.
+   *  @param editor           the editor in which the highlighting is performed.
    * @param elements         the elements to highlight.
    * @param attributes       the attributes to highlight the text with.
    * @param hideByTextChange if true, the highlighting is removed automatically if the editor text is changed.
@@ -123,19 +119,18 @@ public abstract class HighlightManager {
                                                @NotNull PsiElement[] elements,
                                                @NotNull TextAttributes attributes,
                                                boolean hideByTextChange,
-                                               @Nullable Collection<RangeHighlighter> outHighlighters);
+                                               @Nullable Collection<? super RangeHighlighter> outHighlighters);
 
   /**
    * Highlights a specified range of text in an editor and optionally adds a mark on the gutter. The highlighting is optionally removed
    * when the user presses the Esc key or any key, or when the editor text is changed. If the highlighter added by this method needs
    * to be removed manually, {@link #removeSegmentHighlighter} must be used for that.
-   *
-   * @param editor           the editor in which the highlighting is performed.
+   *  @param editor           the editor in which the highlighting is performed.
    * @param start            the start offset of the text range to highlight.
    * @param end              the end offset of the text range to highlight.
    * @param attributes       the attributes to highlight the text with.
    * @param flags            the flags specifying when the highlighting is removed (a combination of
-   *                         {@link #HIDE_BY_ESCAPE}, {@link #HIDE_BY_ANY_KEY} and {@link #HIDE_BY_TEXT_CHANGE}).
+*                         {@link #HIDE_BY_ESCAPE}, {@link #HIDE_BY_ANY_KEY} and {@link #HIDE_BY_TEXT_CHANGE}).
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} object is added to this collection.
    * @param scrollMarkColor  if not null, a gutter mark with the specified color is added in addition to the editor highlight.
    */
@@ -144,6 +139,6 @@ public abstract class HighlightManager {
                                               int end,
                                               TextAttributes attributes,
                                               @HideFlags int flags,
-                                              @Nullable Collection<RangeHighlighter> outHighlighters,
+                                              @Nullable Collection<? super RangeHighlighter> outHighlighters,
                                               @Nullable Color scrollMarkColor);
 }

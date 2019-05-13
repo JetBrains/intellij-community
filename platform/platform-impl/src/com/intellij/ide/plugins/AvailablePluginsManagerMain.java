@@ -162,7 +162,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
-  protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
+  protected void propagateUpdates(List<? extends IdeaPluginDescriptor> list) {
     installed.modifyPluginsList(list); //propagate updates
   }
 

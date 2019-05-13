@@ -213,7 +213,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @Nullable
-  protected List<T> buildExtensionsFromExplicitRegistration(@Nullable List<T> result, @NotNull Predicate<String> isMyBean) {
+  protected List<T> buildExtensionsFromExplicitRegistration(@Nullable List<T> result, @NotNull Predicate<? super String> isMyBean) {
     for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
       String key = entry.getKey();
       if (isMyBean.test(key)) {

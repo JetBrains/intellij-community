@@ -18,12 +18,12 @@ package com.intellij.openapi.vcs;
 import java.util.List;
 
 public abstract class AbstractFilterChildren<T> {
-  protected abstract void sortAscending(final List<T> list);
+  protected abstract void sortAscending(final List<? extends T> list);
   protected abstract boolean isAncestor(final T parent, final T child);
   protected void onRemove(final T t) {
   }
 
-  public void doFilter(final List<T> in) {
+  public void doFilter(final List<? extends T> in) {
     sortAscending(in);
 
     for (int i = 1; i < in.size(); i++) {

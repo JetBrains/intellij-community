@@ -78,7 +78,7 @@ fun hasImmutableAnnotation(owner: PsiModifierListOwner): Boolean {
          || owner.hasAnnotation(GROOVY_TRANSFORM_IMMUTABLE_BASE)
 }
 
-fun collectImmutableAnnotations(alias: GrAnnotation, list: MutableList<GrAnnotation>) {
+fun collectImmutableAnnotations(alias: GrAnnotation, list: MutableList<in GrAnnotation>) {
   val owner = alias.owner ?: return
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_IMMUTABLE_BASE, emptyMap()))
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_IMMUTABLE_OPTIONS, emptyMap()))

@@ -73,7 +73,7 @@ public class AntToolwindowRegistrar implements ProjectComponent {
     });
   }
 
-  private boolean initializeAndRun(CompileContext context, Processor<AntConfigurationBase> action) {
+  private boolean initializeAndRun(CompileContext context, Processor<? super AntConfigurationBase> action) {
     context.getProgressIndicator().pushState();
     try {
       context.getProgressIndicator().setText(AntBundle.message("loading.ant.config.progress"));

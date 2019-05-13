@@ -54,7 +54,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
   }
 
   @Override
-  public void setAllDependencies(@NotNull List<ProjectExternalDependency> dependencies) {
+  public void setAllDependencies(@NotNull List<? extends ProjectExternalDependency> dependencies) {
     myDependencies.clear();
     myDependencies.addAll(dependencies);
     Collections.sort(myDependencies, DEPENDENCY_COMPARATOR);

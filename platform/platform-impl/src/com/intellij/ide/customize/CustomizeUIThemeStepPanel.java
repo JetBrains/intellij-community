@@ -114,7 +114,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     SwingUtilities.invokeLater(() -> applyLaf(myDefaultTheme, this));
   }
 
-  protected void initThemes(Collection<ThemeInfo> result) {
+  protected void initThemes(Collection<? super ThemeInfo> result) {
     if (SystemInfo.isMac) {
       result.add(DARCULA);
       result.add(getDefaultLafOnMac());

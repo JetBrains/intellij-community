@@ -670,9 +670,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
   private static class EnumerationToIteratorAdapter<T> implements Iterator<T> {
 
-    private final Enumeration<T> myEnum;
+    private final Enumeration<? extends T> myEnum;
 
-    EnumerationToIteratorAdapter(Enumeration<T> enumeration) {
+    EnumerationToIteratorAdapter(Enumeration<? extends T> enumeration) {
       myEnum = enumeration;
     }
 

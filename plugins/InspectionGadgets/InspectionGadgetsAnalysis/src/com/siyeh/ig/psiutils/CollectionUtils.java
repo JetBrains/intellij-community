@@ -205,7 +205,7 @@ public class CollectionUtils {
    * class C extends C {}
    */
   private static boolean isCollectionClassOrInterface(
-    PsiClass aClass, Set<PsiClass> visitedClasses) {
+    PsiClass aClass, Set<? super PsiClass> visitedClasses) {
     if (!visitedClasses.add(aClass)) {
       return false;
     }

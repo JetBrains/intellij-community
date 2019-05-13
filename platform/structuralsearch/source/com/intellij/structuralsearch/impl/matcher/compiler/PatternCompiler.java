@@ -135,7 +135,7 @@ public class PatternCompiler {
     }
   }
 
-  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements)
+  private static void checkForUnknownVariables(final CompiledPattern pattern, List<? extends PsiElement> elements)
     throws MalformedPatternException {
 
     for (PsiElement element : elements) {

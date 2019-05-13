@@ -125,7 +125,7 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
   protected void updatePresentation(@NotNull Presentation presentation, @Nullable T node) {
   }
 
-  protected void doActionPerformed(@NotNull C content, @NotNull AnActionEvent e, List<T> nodes) {
+  protected void doActionPerformed(@NotNull C content, @NotNull AnActionEvent e, List<? extends T> nodes) {
     nodes.forEach(node -> doActionPerformed(content, e, node));
   }
 

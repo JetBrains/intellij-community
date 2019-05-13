@@ -42,7 +42,7 @@ public class AllOccurrencesMatcher extends MinusculeMatcher {
   }
 
   @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<? extends TextRange> fragments) {
     return delegate.matchingDegree(name, valueStartCaseMatch, fragments);
   }
 

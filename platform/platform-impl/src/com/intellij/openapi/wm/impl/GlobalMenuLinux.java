@@ -418,7 +418,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     return _findMenuItem(myRoots, uid);
   }
 
-  private static MenuItemInternal _findMenuItem(List<MenuItemInternal> kids, int uid) {
+  private static MenuItemInternal _findMenuItem(List<? extends MenuItemInternal> kids, int uid) {
     if (kids == null || kids.isEmpty())
       return null;
 

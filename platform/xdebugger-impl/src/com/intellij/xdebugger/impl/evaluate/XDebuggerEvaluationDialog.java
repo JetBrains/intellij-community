@@ -54,7 +54,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final XDebuggerTreePanel myTreePanel;
   private EvaluationInputComponent myInputComponent;
   private final XDebugSession mySession;
-  private final Supplier<XDebuggerEvaluator> myEvaluatorSupplier;
+  private final Supplier<? extends XDebuggerEvaluator> myEvaluatorSupplier;
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private EvaluationMode myMode;
@@ -80,7 +80,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private XDebuggerEvaluationDialog(@Nullable XDebugSession session,
-                                    @Nullable Supplier<XDebuggerEvaluator> evaluatorSupplier,
+                                    @Nullable Supplier<? extends XDebuggerEvaluator> evaluatorSupplier,
                                     @NotNull Project project,
                                     @NotNull XDebuggerEditorsProvider editorsProvider,
                                     @NotNull XExpression text,

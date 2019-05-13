@@ -75,7 +75,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
 
   private static boolean processPatternContext(@NotNull BaseInjection injection,
                                                @NotNull PsiFile file,
-                                               @NotNull Processor<PsiElement> processor) {
+                                               @NotNull Processor<? super PsiElement> processor) {
     return processor.process(getRootByClasses(file, InjectorUtils.getPatternClasses(injection.getSupportId())));
   }
 
@@ -97,7 +97,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     return map.get(classes);
   }
 
-  private static boolean processDevContext(final PsiFile file, Processor<PsiElement> processor) {
+  private static boolean processDevContext(final PsiFile file, Processor<? super PsiElement> processor) {
     final XmlTag tag = getTagByInjectedFile(file);
     final XmlTag parentTag = tag == null ? null : tag.getParentTag();
     final String parentTagName = parentTag == null ? null : parentTag.getName();
@@ -118,7 +118,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     return element instanceof XmlText ? ((XmlText)element).getParentTag() : null;
   }
 
-  private static boolean processRootsByClassNames(@NotNull PsiFile file, @Nullable String type, @NotNull Processor<PsiElement> processor) {
+  private static boolean processRootsByClassNames(@NotNull PsiFile file, @Nullable String type, @NotNull Processor<? super PsiElement> processor) {
     Project project = file.getProject();
     Set<String> classNames = collectDevPatternClassNames(project);
     if (!classNames.isEmpty()) {

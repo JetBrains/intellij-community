@@ -32,7 +32,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   @NotNull
   @Override
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                     @NotNull List<Couple<String>> classesAndMethods,
+                                                     @NotNull List<? extends Couple<String>> classesAndMethods,
                                                      byte frameworkId) {
     if (!ApplicationManager.getApplication().isInternal()) {
       return MultiMap.empty();
@@ -93,7 +93,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, byte frameworkId) throws IOException {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) throws IOException {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -258,7 +258,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   }
 
   @NotNull
-  private static List<String> executeQuery(@NotNull ThrowableComputable<List<String>, IOException> query, @NotNull Project project) throws IOException {
+  private static List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) throws IOException {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       List<String> result = ProgressManager.getInstance().run(
         new Task.WithResult<List<String>, IOException>(project,

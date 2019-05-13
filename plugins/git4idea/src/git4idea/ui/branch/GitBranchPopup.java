@@ -123,7 +123,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @NotNull
-  private static AnAction createWarningAction(@NotNull String text, @NotNull Consumer<AnActionEvent> actionEventConsumer) {
+  private static AnAction createWarningAction(@NotNull String text, @NotNull Consumer<? super AnActionEvent> actionEventConsumer) {
     AnAction updateBranchInfoWithAuthenticationAction = DumbAwareAction.create(text, actionEventConsumer);
     Presentation presentation = updateBranchInfoWithAuthenticationAction.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Warning);
@@ -171,7 +171,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @Nullable
-  private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<GitRepository> allRepositories,
+  private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<? extends GitRepository> allRepositories,
                                                                             @NotNull String branch) {
     List<GitRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
     return repositories.isEmpty()

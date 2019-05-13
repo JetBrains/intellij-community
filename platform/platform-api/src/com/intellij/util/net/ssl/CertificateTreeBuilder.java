@@ -50,7 +50,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     initRootNode();
   }
 
-  public void reset(@NotNull Collection<X509Certificate> certificates) {
+  public void reset(@NotNull Collection<? extends X509Certificate> certificates) {
     myCertificates.clear();
     for (X509Certificate certificate : certificates) {
       addCertificate(certificate);

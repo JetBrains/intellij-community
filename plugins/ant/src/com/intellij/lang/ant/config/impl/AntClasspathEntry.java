@@ -53,7 +53,7 @@ public interface AntClasspathEntry {
 
   void writeExternal(Element dataElement);
 
-  void addFilesTo(List<File> files);
+  void addFilesTo(List<? super File> files);
 
   CellAppearanceEx getAppearance();
 

@@ -107,7 +107,7 @@ public class DataNode<T> implements UserDataHolderEx {
    *
    * @param classLoaders  class loaders which are assumed to be able to build object of the target content class
    */
-  public void deserializeData(@NotNull Collection<ClassLoader> classLoaders) {
+  public void deserializeData(@NotNull Collection<? extends ClassLoader> classLoaders) {
     if (data != null) {
       return;
     }

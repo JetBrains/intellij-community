@@ -306,12 +306,12 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition) {
     return getBrowsers(condition, true);
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition, boolean onlyActive) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition, boolean onlyActive) {
     List<WebBrowser> result = new SmartList<>();
     for (ConfigurableWebBrowser browser : browsers) {
       if ((!onlyActive || browser.isActive()) && condition.value(browser)) {

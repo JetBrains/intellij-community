@@ -539,7 +539,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     public void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength) {}
 
     @Override
-    public void setChildren(final List<DebuggerTreeNode> children) {
+    public void setChildren(final List<? extends DebuggerTreeNode> children) {
       for (DebuggerTreeNode child : children) {
         if (child instanceof DebuggerTreeNodeImpl) {
           myChildren.add(((DebuggerTreeNodeImpl)child));

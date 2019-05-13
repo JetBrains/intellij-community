@@ -164,7 +164,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public final <T> JBIterator<T> map(@NotNull Function<? super E, T> function) {
+  public final <T> JBIterator<T> map(@NotNull Function<? super E, ? extends T> function) {
     return addOp(true, new TransformOp<E, T>(function));
   }
 
@@ -284,8 +284,8 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private static class TransformOp<E, T> extends Op<Function<? super E, T>> {
-    TransformOp(Function<? super E, T> function) {
+  private static class TransformOp<E, T> extends Op<Function<? super E, ? extends T>> {
+    TransformOp(Function<? super E, ? extends T> function) {
       super(function);
     }
 

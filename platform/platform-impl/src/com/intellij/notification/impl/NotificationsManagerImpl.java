@@ -807,7 +807,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     private Component myLastComponent;
 
-    public void addComponent(@NotNull Component component, @NotNull Function<Component, Rectangle> hover) {
+    public void addComponent(@NotNull Component component, @NotNull Function<? super Component, ? extends Rectangle> hover) {
       myComponents.add(Pair.create(component, hover));
     }
 
@@ -1168,7 +1168,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       return layoutSize(component -> component.getMinimumSize());
     }
 
-    private Dimension layoutSize(@NotNull Function<Component, Dimension> size) {
+    private Dimension layoutSize(@NotNull Function<? super Component, ? extends Dimension> size) {
       Dimension titleSize = myTitleComponent == null ? new Dimension() : size.fun(myTitleComponent);
       Dimension centeredSize = myCenteredComponent == null ? new Dimension() : size.fun(myCenteredComponent);
       Dimension actionSize = myActionPanel == null ? new Dimension() : size.fun(myActionPanel);

@@ -151,8 +151,8 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   @Nullable
   private static <T> T findOccurrence(@Nullable PsiElement start,
                                       @NotNull PsiLocalVariable variable,
-                                      @NotNull Function<PsiElement, PsiElement> advance,
-                                      @NotNull BiFunction<PsiElement, PsiLocalVariable, T> search) {
+                                      @NotNull Function<? super PsiElement, ? extends PsiElement> advance,
+                                      @NotNull BiFunction<? super PsiElement, ? super PsiLocalVariable, ? extends T> search) {
     PsiElement candidate = advance.apply(start);
     T result = search.apply(candidate, variable);
     if (result != null) {

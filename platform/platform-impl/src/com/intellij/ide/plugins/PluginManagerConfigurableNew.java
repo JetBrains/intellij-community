@@ -1430,10 +1430,10 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<List<IdeaPluginDescriptor>, Boolean, IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
@@ -1446,7 +1446,7 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull String name,
                         @NotNull String query,

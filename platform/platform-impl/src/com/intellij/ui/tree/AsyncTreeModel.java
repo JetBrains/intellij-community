@@ -166,7 +166,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
   @NotNull
-  private Promise<TreePath> resolve(Promise<TreePath> promise) {
+  private Promise<TreePath> resolve(Promise<? extends TreePath> promise) {
     if (promise == null && isValidThread()) {
       return rejectedPromise();
     }
@@ -181,7 +181,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return async;
   }
 
-  private void resolve(@NotNull AsyncPromise<TreePath> async, TreePath path) {
+  private void resolve(@NotNull AsyncPromise<? super TreePath> async, TreePath path) {
     LOG.debug("resolve path: ", path);
     if (path == null) {
       async.setError("path is null");

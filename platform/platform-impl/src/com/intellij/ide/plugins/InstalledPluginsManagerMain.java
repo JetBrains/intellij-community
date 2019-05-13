@@ -198,7 +198,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
-  protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
+  protected void propagateUpdates(List<? extends IdeaPluginDescriptor> list) {
   }
 
   private PluginManagerConfigurable createAvailableConfigurable(final String vendorFilter) {

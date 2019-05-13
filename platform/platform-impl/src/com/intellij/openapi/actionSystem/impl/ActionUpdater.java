@@ -270,7 +270,7 @@ class ActionUpdater {
     return presentation != null ? presentation : ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action));
   }
 
-  private static List<AnAction> removeUnnecessarySeparators(List<AnAction> visible) {
+  private static List<AnAction> removeUnnecessarySeparators(List<? extends AnAction> visible) {
     List<AnAction> result = new ArrayList<>();
     for (AnAction child : visible) {
       if (child instanceof Separator) {

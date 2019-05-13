@@ -90,7 +90,7 @@ public class SearchCommand {
     );
   }
 
-  public void findUsages(final Processor<Usage> processor) {
+  public void findUsages(final Processor<? super Usage> processor) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     progress.setIndeterminate(false);
 

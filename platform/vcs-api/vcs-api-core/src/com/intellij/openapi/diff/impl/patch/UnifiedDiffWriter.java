@@ -39,7 +39,7 @@ public class UnifiedDiffWriter {
   }
 
   public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
-                           final List<PatchEP> extensions, final CommitContext commitContext) throws IOException {
+                           final List<? extends PatchEP> extensions, final CommitContext commitContext) throws IOException {
     write(project, project == null ? null : project.getBasePath(), patches, writer, lineSeparator, extensions, commitContext);
   }
 
@@ -48,7 +48,7 @@ public class UnifiedDiffWriter {
                            Collection<? extends FilePatch> patches,
                            Writer writer,
                            final String lineSeparator,
-                           @NotNull final List<PatchEP> extensions,
+                           @NotNull final List<? extends PatchEP> extensions,
                            final CommitContext commitContext) throws IOException {
     for (FilePatch filePatch : patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;

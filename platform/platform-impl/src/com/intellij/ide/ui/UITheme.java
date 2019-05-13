@@ -76,7 +76,7 @@ public class UITheme {
   }
 
   public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider,
-                                     @NotNull Function<String, String> iconsMapper) throws IOException {
+                                     @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
     if (provider != null) {

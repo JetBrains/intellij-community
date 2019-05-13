@@ -391,7 +391,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, Consumer<LookupElement> result) {
+  private static void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, Consumer<? super LookupElement> result) {
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
         !JavaKeywordCompletion.AFTER_DOT.accepts(position) && !SmartCastProvider.shouldSuggestCast(parameters)) {
       addExpectedTypeMembers(parameters, result);
@@ -930,7 +930,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  private static void addExpectedTypeMembers(CompletionParameters parameters, final Consumer<LookupElement> result) {
+  private static void addExpectedTypeMembers(CompletionParameters parameters, final Consumer<? super LookupElement> result) {
     if (parameters.getInvocationCount() <= 1) { // on second completion, StaticMemberProcessor will suggest those
       for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
         new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(false, result);

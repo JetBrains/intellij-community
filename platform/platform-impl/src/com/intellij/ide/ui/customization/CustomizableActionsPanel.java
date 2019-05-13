@@ -187,7 +187,7 @@ public class CustomizableActionsPanel {
     TouchBarsManager.reloadAll();
   }
 
-  private void restorePathsAfterTreeOptimization(final List<TreePath> treePaths) {
+  private void restorePathsAfterTreeOptimization(final List<? extends TreePath> treePaths) {
     for (final TreePath treePath : treePaths) {
       myActionsTree.expandPath(CustomizationUtil.getPathByUserObjects(myActionsTree, treePath));
     }

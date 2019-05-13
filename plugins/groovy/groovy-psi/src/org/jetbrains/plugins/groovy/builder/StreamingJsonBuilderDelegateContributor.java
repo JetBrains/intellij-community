@@ -40,7 +40,7 @@ public class StreamingJsonBuilderDelegateContributor extends StreamingJsonBuilde
                                 @NotNull PsiClass clazz,
                                 @NotNull String name,
                                 @NotNull PsiElement place,
-                                @NotNull Processor<PsiElement> processor) {
+                                @NotNull Processor<? super PsiElement> processor) {
     GrLightMethodBuilder method;
 
     // (Object...)

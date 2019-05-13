@@ -82,7 +82,7 @@ public class JdkPopupAction extends AnAction {
   }
 
   private static void showPopupMenu(AnActionEvent e,
-                             final ArrayList<Pair<File, String>> jdkLocations,
+                             final ArrayList<? extends Pair<File, String>> jdkLocations,
                              boolean showInMiddle,
                              JComponent component) {
     ActionPopupMenu menu =

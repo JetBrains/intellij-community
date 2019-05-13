@@ -52,7 +52,7 @@ public class DescendantClassesEnumMacro extends Macro {
     return results[0];
   }
 
-  private static Result[] calculateResults(final List<PsiClass> classes) {
+  private static Result[] calculateResults(final List<? extends PsiClass> classes) {
     Result[] results = new Result[classes.size()];
     int i = 0;
 

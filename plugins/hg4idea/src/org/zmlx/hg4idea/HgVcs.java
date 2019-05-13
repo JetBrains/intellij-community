@@ -232,7 +232,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {

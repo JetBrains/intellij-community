@@ -96,7 +96,7 @@ public class TextAttributesEffectsBuilder {
   @NotNull
   private TextAttributesEffectsBuilder mutateBuilder(@Nullable EffectType effectType,
                                                      @Nullable Color effectColor,
-                                                     @NotNull BiConsumer<EffectSlot, EffectDescriptor> slotMutator) {
+                                                     @NotNull BiConsumer<? super EffectSlot, ? super EffectDescriptor> slotMutator) {
     if (effectColor != null && effectType != null) {
       EffectSlot slot = EFFECT_SLOTS_MAP.get(effectType);
       if (slot != null) {

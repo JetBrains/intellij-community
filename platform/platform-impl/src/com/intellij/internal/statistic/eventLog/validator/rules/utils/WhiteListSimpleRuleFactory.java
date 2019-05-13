@@ -192,7 +192,7 @@ public class WhiteListSimpleRuleFactory {
     return nodes;
   }
 
-  private static void addNonEmpty(@NotNull List<String> nodes, @Nullable String s) {
+  private static void addNonEmpty(@NotNull List<? super String> nodes, @Nullable String s) {
     if (StringUtil.isNotEmpty(s)) nodes.add(s);
   }
 

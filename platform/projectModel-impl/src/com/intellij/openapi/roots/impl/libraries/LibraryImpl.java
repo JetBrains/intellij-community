@@ -350,7 +350,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
   //
   @NotNull
-  private static List<OrderRootType> sortRootTypes(@NotNull Collection<OrderRootType> rootTypes) {
+  private static List<OrderRootType> sortRootTypes(@NotNull Collection<? extends OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<>(rootTypes);
     Collections.sort(allTypes, (o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;

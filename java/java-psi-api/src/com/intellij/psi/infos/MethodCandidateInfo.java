@@ -403,7 +403,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return isTypeArgumentsApplicable(() -> getSubstitutor(false));
   }
 
-  private boolean isTypeArgumentsApplicable(Computable<PsiSubstitutor> computable) {
+  private boolean isTypeArgumentsApplicable(Computable<? extends PsiSubstitutor> computable) {
     final PsiMethod psiMethod = getElement();
     PsiTypeParameter[] typeParams = psiMethod.getTypeParameters();
     if (myTypeArguments != null && typeParams.length != myTypeArguments.length && !PsiUtil.isLanguageLevel7OrHigher(psiMethod)){

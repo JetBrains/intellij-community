@@ -104,7 +104,7 @@ public class JavaColorProvider implements ElementColorProvider {
   }
 
   @Nullable
-  private static Color getColor(List<UExpression> args) {
+  private static Color getColor(List<? extends UExpression> args) {
     try {
       ColorConstructors type = args.isEmpty() ? null : getConstructorType(args.size(), args.get(0).getExpressionType());
       if (type != null) {

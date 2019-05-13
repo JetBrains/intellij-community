@@ -29,8 +29,8 @@ public class PluginUpdatesService {
 
   private Consumer<Integer> myTreeCallback;
   private Consumer<Integer> myTabCallback;
-  private Consumer<Collection<PluginDownloader>> myInstalledPanelCallback;
-  private Consumer<Collection<PluginDownloader>> myUpdatePanelCallback;
+  private Consumer<? super Collection<PluginDownloader>> myInstalledPanelCallback;
+  private Consumer<? super Collection<PluginDownloader>> myUpdatePanelCallback;
 
   @NotNull
   public static PluginUpdatesService connectTreeRenderer(@NotNull Consumer<Integer> callback) {
@@ -68,7 +68,7 @@ public class PluginUpdatesService {
     return service;
   }
 
-  public void connectInstalled(@NotNull Consumer<Collection<PluginDownloader>> callback) {
+  public void connectInstalled(@NotNull Consumer<? super Collection<PluginDownloader>> callback) {
     checkAccess();
     myInstalledPanelCallback = callback;
 
@@ -80,7 +80,7 @@ public class PluginUpdatesService {
     }
   }
 
-  public void calculateUpdates(@NotNull Consumer<Collection<PluginDownloader>> callback) {
+  public void calculateUpdates(@NotNull Consumer<? super Collection<PluginDownloader>> callback) {
     checkAccess();
     myUpdatePanelCallback = callback;
 

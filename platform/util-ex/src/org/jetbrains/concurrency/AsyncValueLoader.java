@@ -46,7 +46,7 @@ public abstract class AsyncValueLoader<T> {
     }
   }
 
-  private void rejectAndDispose(@NotNull AsyncPromise<T> asyncResult) {
+  private void rejectAndDispose(@NotNull AsyncPromise<? extends T> asyncResult) {
     if (asyncResult.setError("rejected")) {
       return;
     }

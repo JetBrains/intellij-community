@@ -180,7 +180,7 @@ public class EventLogStatisticsService implements StatisticsService {
     return Collections.emptyList();
   }
 
-  private static void cleanupFiles(@NotNull List<File> toRemove) {
+  private static void cleanupFiles(@NotNull List<? extends File> toRemove) {
     for (File file : toRemove) {
       if (!file.delete()) {
         LOG.warn("Failed deleting event log: " + file.getName());

@@ -174,7 +174,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return "Nothing found to insert";
   }
 
-  private static void runTemplates(final Project myProject, final Editor editor, final List<TemplateGenerationInfo> templates, final int index) {
+  private static void runTemplates(final Project myProject, final Editor editor, final List<? extends TemplateGenerationInfo> templates, final int index) {
     TemplateGenerationInfo info = templates.get(index);
     final Template template = info.getTemplate();
 

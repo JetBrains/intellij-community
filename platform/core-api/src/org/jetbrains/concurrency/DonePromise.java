@@ -62,7 +62,7 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
 
   @NotNull
   @Override
-  public Promise<T> onError(@NotNull Consumer<Throwable> handler) {
+  public Promise<T> onError(@NotNull Consumer<? super Throwable> handler) {
     if (value.error != null && !isHandlerObsolete(handler)) {
       handler.accept(value.error);
     }
@@ -87,7 +87,7 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
 
   @NotNull
   @Override
-  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done) {
+  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, ? extends Promise<SUB_RESULT>> done) {
     if (value.error == null) {
       return done.fun(value.result);
     }

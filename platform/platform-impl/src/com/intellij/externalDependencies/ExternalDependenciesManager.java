@@ -38,5 +38,5 @@ public abstract class ExternalDependenciesManager {
   @NotNull
   public abstract List<ProjectExternalDependency> getAllDependencies();
 
-  public abstract void setAllDependencies(@NotNull List<ProjectExternalDependency> dependencies);
+  public abstract void setAllDependencies(@NotNull List<? extends ProjectExternalDependency> dependencies);
 }

@@ -62,7 +62,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTe
   }
 
 
-  public PsiElement checkPatterns(ConfigurationContext context, LinkedHashSet<String> classes) {
+  public PsiElement checkPatterns(ConfigurationContext context, LinkedHashSet<? super String> classes) {
     PsiElement[] result;
     final DataContext dataContext = context.getDataContext();
     if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) {

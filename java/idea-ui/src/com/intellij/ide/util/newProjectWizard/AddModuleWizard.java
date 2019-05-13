@@ -139,7 +139,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
    *                to return {@code true} for the step to go to
    * @return        {@code true} if current wizard is navigated to the target step; {@code false} otherwise
    */
-  public boolean navigateToStep(@NotNull com.intellij.util.Function<Step, Boolean> filter) {
+  public boolean navigateToStep(@NotNull com.intellij.util.Function<? super Step, Boolean> filter) {
     for (int i = 0, myStepsSize = mySteps.size(); i < myStepsSize; i++) {
       ModuleWizardStep step = mySteps.get(i);
       if (filter.fun(step) != Boolean.TRUE) {

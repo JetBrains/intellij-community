@@ -269,7 +269,7 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginsModel.dependent(pluginDescriptor);
   }
 
-  void modifyPluginsList(@NotNull List<IdeaPluginDescriptor> list) {
+  void modifyPluginsList(@NotNull List<? extends IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
     pluginsModel.filter(myFilter.getFilter().toLowerCase());
@@ -356,7 +356,7 @@ public abstract class PluginManagerMain implements Disposable {
     });
   }
 
-  protected abstract void propagateUpdates(List<IdeaPluginDescriptor> list);
+  protected abstract void propagateUpdates(List<? extends IdeaPluginDescriptor> list);
 
   private void setDownloadStatus(boolean status) {
     pluginTable.setPaintBusy(status);

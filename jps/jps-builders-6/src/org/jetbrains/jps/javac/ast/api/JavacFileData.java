@@ -142,7 +142,7 @@ public class JavacFileData {
     return deserialized;
   }
 
-  private static void saveDefs(final DataOutput out, List<JavacDef> defs) throws IOException {
+  private static void saveDefs(final DataOutput out, List<? extends JavacDef> defs) throws IOException {
     DataInputOutputUtilRt.writeSeq(out, defs, new ThrowableConsumer<JavacDef, IOException>() {
       @Override
       public void consume(JavacDef def) throws IOException {
@@ -260,7 +260,7 @@ public class JavacFileData {
     return modifierList.isEmpty() ? Collections.<Modifier>emptySet() : EnumSet.copyOf(modifierList);
   }
 
-  private static void saveCasts(@NotNull final DataOutput output, @NotNull List<JavacTypeCast> casts) throws IOException {
+  private static void saveCasts(@NotNull final DataOutput output, @NotNull List<? extends JavacTypeCast> casts) throws IOException {
     DataInputOutputUtilRt.writeSeq(output, casts, new ThrowableConsumer<JavacTypeCast, IOException>() {
       @Override
       public void consume(JavacTypeCast cast) throws IOException {
@@ -290,7 +290,7 @@ public class JavacFileData {
     return result;
   }
 
-  private static void saveImplicitToString(@NotNull DataOutputStream out, @NotNull Set<JavacRef> refs) throws IOException {
+  private static void saveImplicitToString(@NotNull DataOutputStream out, @NotNull Set<? extends JavacRef> refs) throws IOException {
     DataInputOutputUtilRt.writeINT(out, refs.size());
     for (JavacRef ref : refs) {
       writeJavacRef(out, ref);

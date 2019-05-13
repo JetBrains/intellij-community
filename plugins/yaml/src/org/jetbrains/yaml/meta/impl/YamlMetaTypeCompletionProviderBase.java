@@ -200,15 +200,15 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
   }
 
   @NotNull
-  private static Collection<List<Field>> collectPaths(@NotNull final Collection<Field> fields, final int deepness) {
+  private static Collection<List<Field>> collectPaths(@NotNull final Collection<? extends Field> fields, final int deepness) {
     Collection<List<Field>> result = new ArrayList<>();
     doCollectPathsRec(fields, Collections.emptyList(), result, deepness);
     return result;
   }
 
-  private static void doCollectPathsRec(@NotNull final Collection<Field> fields,
-                                        @NotNull final List<Field> currentPath,
-                                        @NotNull final Collection<List<Field>> result, final int deepness) {
+  private static void doCollectPathsRec(@NotNull final Collection<? extends Field> fields,
+                                        @NotNull final List<? extends Field> currentPath,
+                                        @NotNull final Collection<? super List<Field>> result, final int deepness) {
     if (currentPath.size() >= deepness) {
       return;
     }
@@ -216,7 +216,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     fields.stream()
           .filter(field -> !field.isAnyNameAllowed())
           .forEach(field -> {
-      final List<Field> fieldPath = StreamEx.of(currentPath).append(field).toList();
+      final List<Field> fieldPath = StreamEx.<Field>of(currentPath).append(field).toList();
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
             if (metaType instanceof YamlMetaClass) {

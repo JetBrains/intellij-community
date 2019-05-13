@@ -114,7 +114,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
     return new MyComboBoxModel(infos);
   }
 
-  private static boolean isDuplicated(@NotNull FileType fileType, @NotNull List<FileType> types) {
+  private static boolean isDuplicated(@NotNull FileType fileType, @NotNull List<? extends FileType> types) {
     String description = fileType.getDescription();
     for (FileType type : types) {
       if (type != fileType && description.equals(type.getDescription())) {

@@ -100,7 +100,7 @@ public class ListUtil {
     getExtension(model).removeAll(model);
   }
 
-  public static <T> void addAllItems(@NotNull ListModel<T> model, @NotNull List<T> items) {
+  public static <T> void addAllItems(@NotNull ListModel<T> model, @NotNull List<? extends T> items) {
     getExtension(model).addAll(model, items);
   }
 
@@ -341,7 +341,7 @@ public class ListUtil {
     void set(ModelType model, int index, T item);
     void remove(ModelType model, int index);
     void removeAll(ModelType model);
-    void addAll(ModelType model, List<T> item);
+    void addAll(ModelType model, List<? extends T> item);
   }
 
   private static final ListModelExtension DEFAULT_MODEL = new ListModelExtension<Object, DefaultListModel<Object>>() {
@@ -349,7 +349,7 @@ public class ListUtil {
     @Override public void set(DefaultListModel<Object> model, int index, Object item) { model.set(index, item);}
     @Override public void remove(DefaultListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(DefaultListModel<Object> model) { model.removeAllElements();}
-    @Override public void addAll(DefaultListModel<Object> model, List<Object> item) { model.addElement(item);}
+    @Override public void addAll(DefaultListModel<Object> model, List<?> item) { model.addElement(item);}
   };
 
   private static final ListModelExtension COLLECTION_MODEL = new ListModelExtension<Object, CollectionListModel<Object>>() {
@@ -357,7 +357,7 @@ public class ListUtil {
     @Override public void set(CollectionListModel<Object> model, int index, Object item) { model.setElementAt(item, index);}
     @Override public void remove(CollectionListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(CollectionListModel<Object> model) { model.removeAll();}
-    @Override public void addAll(CollectionListModel<Object> model, List<Object> items) { model.addAll(model.getSize(), items);}
+    @Override public void addAll(CollectionListModel<Object> model, List<?> items) { model.addAll(model.getSize(), items);}
   };
 
   private static final ListModelExtension SORTED_MODEL = new ListModelExtension<Object, SortedListModel<Object>>() {
@@ -365,7 +365,7 @@ public class ListUtil {
     @Override public void set(SortedListModel<Object> model, int index, Object item) { model.remove(index); model.add(item);}
     @Override public void remove(SortedListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(SortedListModel<Object> model) { model.clear();}
-    @Override public void addAll(SortedListModel<Object> model, List<Object> items) { model.addAll(items);}
+    @Override public void addAll(SortedListModel<Object> model, List<?> items) { model.addAll(items);}
   };
 
   private static final ListModelExtension FILTERED_MODEL = new ListModelExtension<Object, FilteringListModel<Object>>() {
@@ -373,7 +373,7 @@ public class ListUtil {
     @Override public void set(FilteringListModel<Object> model, int index, Object item) { getExtension(model.getOriginalModel()).set(model.getOriginalModel(), index, item);}
     @Override public void remove(FilteringListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(FilteringListModel<Object> model) { model.replaceAll(Collections.emptyList());}
-    @Override public void addAll(FilteringListModel<Object> model, List<Object> items) { model.addAll(items);}
+    @Override public void addAll(FilteringListModel<Object> model, List<?> items) { model.addAll(items);}
   };
   //@formatter:on
 }

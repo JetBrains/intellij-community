@@ -93,7 +93,7 @@ public final class IconLoader {
     STRICT_GLOBAL = strict;
   }
   
-  private static void updateTransform(Function<IconTransform, IconTransform> updater) {
+  private static void updateTransform(Function<? super IconTransform, ? extends IconTransform> updater) {
     IconTransform prev, next;
     do {
       prev = ourTransform.get();
@@ -380,7 +380,7 @@ public final class IconLoader {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, @NotNull Supplier<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+  public static Icon filterIcon(@NotNull Icon icon, @NotNull Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     if (icon instanceof LazyIcon) icon = ((LazyIcon)icon).getOrComputeIcon();
     if (icon == null) return null;
 
@@ -507,7 +507,7 @@ public final class IconLoader {
     @NotNull private volatile IconTransform myTransform;
     private final boolean myUseCacheOnLoad;
 
-    @Nullable private final Supplier<RGBImageFilter> myLocalFilterSupplier;
+    @Nullable private final Supplier<? extends RGBImageFilter> myLocalFilterSupplier;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
 
     public CachedImageIcon(@NotNull URL url) {
@@ -528,7 +528,7 @@ public final class IconLoader {
                             @Nullable Boolean darkOverridden,
                             boolean useCacheOnLoad,
                             @NotNull IconTransform transform,
-                            @Nullable Supplier<RGBImageFilter> localFilterSupplier)
+                            @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier)
     {
       myOriginalPath = originalPath;
       myResolver = resolver;
@@ -687,7 +687,7 @@ public final class IconLoader {
     }
 
     @NotNull
-    private Icon createWithFilter(@NotNull Supplier<RGBImageFilter> filterSupplier) {
+    private Icon createWithFilter(@NotNull Supplier<? extends RGBImageFilter> filterSupplier) {
       return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myTransform, filterSupplier);
     }
     
@@ -883,7 +883,7 @@ public final class IconLoader {
 
       @Nullable
       @SuppressWarnings("DuplicateExpressions")
-      private static URL findURL(@NotNull String path, @NotNull Function<String, URL> urlProvider) {
+      private static URL findURL(@NotNull String path, @NotNull Function<? super String, URL> urlProvider) {
         URL url = urlProvider.fun(path);
         if (url != null) return url;
 

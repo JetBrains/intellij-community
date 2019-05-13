@@ -650,7 +650,7 @@ public class ExceptionUtil {
   private static List<PsiClassType> getUnhandledExceptions(@NotNull PsiMethod method,
                                                           PsiElement element,
                                                           PsiElement topElement,
-                                                          @NotNull Supplier<PsiSubstitutor> substitutor) {
+                                                          @NotNull Supplier<? extends PsiSubstitutor> substitutor) {
     if (isArrayClone(method, element)) {
       return Collections.emptyList();
     }

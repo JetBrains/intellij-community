@@ -150,7 +150,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   @Override
-  public void updatePluginsList(List<IdeaPluginDescriptor> list) {
+  public void updatePluginsList(List<? extends IdeaPluginDescriptor> list) {
     fireTableDataChanged();
   }
 

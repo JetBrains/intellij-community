@@ -477,9 +477,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   }
 
   private final class MyRoot extends CachingSimpleNode {
-    private final List<ConfigurableGroup> myGroups;
+    private final List<? extends ConfigurableGroup> myGroups;
 
-    private MyRoot(List<ConfigurableGroup> groups) {
+    private MyRoot(List<? extends ConfigurableGroup> groups) {
       super(null);
       myGroups = groups;
     }

@@ -261,10 +261,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   protected abstract Collection getDependencies(T entry);
 
   @Nullable
-  protected abstract T merge(List<T> entries);
+  protected abstract T merge(List<? extends T> entries);
 
   @Nullable
-  protected abstract T split(T entry, String newEntryName, Collection<File> extractedData);
+  protected abstract T split(T entry, String newEntryName, Collection<? extends File> extractedData);
 
   protected abstract Collection<File> getContent(T entry);
 

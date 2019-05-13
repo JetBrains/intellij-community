@@ -101,7 +101,7 @@ public class ArrangementStandardSettingsManager {
     return myDelegate;
   }
 
-  private void parseWidths(@NotNull Collection<CompositeArrangementSettingsToken> compositeTokens,
+  private void parseWidths(@NotNull Collection<? extends CompositeArrangementSettingsToken> compositeTokens,
                            @NotNull SimpleColoredComponent renderer)
   {
     int width = 0;
@@ -114,7 +114,7 @@ public class ArrangementStandardSettingsManager {
     }
   }
 
-  private void buildWeights(@NotNull Collection<CompositeArrangementSettingsToken> compositeTokens) {
+  private void buildWeights(@NotNull Collection<? extends CompositeArrangementSettingsToken> compositeTokens) {
     for (CompositeArrangementSettingsToken token : compositeTokens) {
       myWeights.put(token.getToken(), myWeights.size());
       buildWeights(token.getChildren());

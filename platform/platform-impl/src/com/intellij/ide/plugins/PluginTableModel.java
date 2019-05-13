@@ -115,7 +115,7 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     return list;
   }
 
-  public abstract void updatePluginsList(List<IdeaPluginDescriptor> list);
+  public abstract void updatePluginsList(List<? extends IdeaPluginDescriptor> list);
 
   protected void filter(String filter) {
     Set<String> search = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);

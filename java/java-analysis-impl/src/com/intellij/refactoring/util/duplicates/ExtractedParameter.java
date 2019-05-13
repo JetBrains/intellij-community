@@ -45,7 +45,7 @@ public class ExtractedParameter {
 
   public static boolean match(@NotNull ExtractableExpressionPart patternPart,
                               @NotNull ExtractableExpressionPart candidatePart,
-                              @NotNull List<ExtractedParameter> parameters) {
+                              @NotNull List<? super ExtractedParameter> parameters) {
     PsiType type = ExtractableExpressionPart.commonType(patternPart, candidatePart);
     if (type == null) {
       return false;

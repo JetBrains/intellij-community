@@ -28,13 +28,13 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
-  public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
+  public AsyncResult<T> doWhenDone(@NotNull final Handler<? super T> handler) {
     doWhenDone(() -> handler.run(myResult));
     return this;
   }
 
   @NotNull
-  public AsyncResult<T> doWhenDone(@NotNull final Consumer<T> consumer) {
+  public AsyncResult<T> doWhenDone(@NotNull final Consumer<? super T> consumer) {
     doWhenDone(() -> consumer.consume(myResult));
     return this;
   }

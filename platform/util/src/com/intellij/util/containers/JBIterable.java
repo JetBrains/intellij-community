@@ -345,7 +345,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   @NotNull
-  public final <T> JBIterable<E> append(@Nullable Iterable<T> other, @NotNull Function<? super T, ? extends Iterable<? extends E>> fun) {
+  public final <T> JBIterable<E> append(@Nullable Iterable<? extends T> other, @NotNull Function<? super T, ? extends Iterable<? extends E>> fun) {
     return other == null ? this :
            this == EMPTY ? from(other).flatten(fun) :
            append(from(other).flatten(fun));
@@ -410,7 +410,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns a {@code JBIterable} that applies {@code function} to each element of this iterable.
    */
   @NotNull
-  public final <T> JBIterable<T> map(@NotNull final Function<? super E, T> function) {
+  public final <T> JBIterable<T> map(@NotNull final Function<? super E, ? extends T> function) {
     return intercept(iterator -> JBIterator.from(iterator).map(Stateful.copy(function)));
   }
 
@@ -420,7 +420,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @see JBIterable#map(Function)
    */
   @NotNull
-  public final <T> JBIterable<T> transform(@NotNull Function<? super E, T> function) {
+  public final <T> JBIterable<T> transform(@NotNull Function<? super E, ? extends T> function) {
     return map(function);
   }
 
@@ -494,7 +494,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * The most generic iterator transformation.
    */
   @NotNull
-  public final <T, X extends Iterator<E>> JBIterable<T> intercept(@NotNull final Function<X, ? extends Iterator<T>> function) {
+  public final <T, X extends Iterator<E>> JBIterable<T> intercept(@NotNull final Function<? super X, ? extends Iterator<T>> function) {
     if (this == EMPTY) return empty();
     if (this instanceof Intercepted) {
       return new Intercepted<E, T, X>(
@@ -505,10 +505,10 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   private static final class Intercepted<E, T, X> extends JBIterable<T> {
-    final JBIterable<E> original;
+    final JBIterable<? extends E> original;
     private final Function<? super X, ? extends Iterator<T>> interceptor;
 
-    Intercepted(@NotNull JBIterable<E> original, Function<? super X, ? extends Iterator<T>> interceptor) {
+    Intercepted(@NotNull JBIterable<? extends E> original, Function<? super X, ? extends Iterator<T>> interceptor) {
       this.original = original;
       this.interceptor = interceptor;
     }
@@ -577,7 +577,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Perform calculation over this iterable.
    */
-  public final <T> T reduce(@Nullable T first, @NotNull PairFunction<T, ? super E, T> function) {
+  public final <T> T reduce(@Nullable T first, @NotNull PairFunction<? super T, ? super E, ? extends T> function) {
     T cur = first;
     for (E e : this) {
       cur = function.fun(cur, e);
@@ -588,7 +588,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Perform calculation over this iterable.
    */
-  public final E reduce(@NotNull PairFunction<E, ? super E, E> function) {
+  public final E reduce(@NotNull PairFunction<? super E, ? super E, ? extends E> function) {
     boolean first = true;
     E cur = null;
     for (E e : this) {
@@ -627,7 +627,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @see JBIterable#filter(Condition)
    */
   @NotNull
-  public final <T> JBIterable<T> filterMap(@NotNull Function<? super E, T> function) {
+  public final <T> JBIterable<T> filterMap(@NotNull Function<? super E, ? extends T> function) {
     return map(function).filter(Conditions.notNull());
   }
 

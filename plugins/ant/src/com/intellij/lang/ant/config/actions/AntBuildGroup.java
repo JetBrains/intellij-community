@@ -59,7 +59,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
   private static void addGroupOfTargets(final AntBuildFile buildFile,
                                         final AntBuildTarget[] targets,
-                                        final Set<String> addedTargetNames,
+                                        final Set<? super String> addedTargetNames,
                                         final DefaultActionGroup group) {
     final DefaultActionGroup subgroup = new DefaultActionGroup();
     for (final AntBuildTarget target : targets) {

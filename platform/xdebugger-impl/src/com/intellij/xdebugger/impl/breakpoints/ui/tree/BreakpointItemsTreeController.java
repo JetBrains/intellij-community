@@ -83,7 +83,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   protected void nodeStateWillChangeImpl(CheckedTreeNode node) {
   }
 
-  private void setGroupingRulesInternal(final Collection<XBreakpointGroupingRule> groupingRules) {
+  private void setGroupingRulesInternal(final Collection<? extends XBreakpointGroupingRule> groupingRules) {
     myGroupingRules = new ArrayList<>(groupingRules);
   }
 
@@ -150,12 +150,12 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     return groupNode;
   }
 
-  public void setGroupingRules(Collection<XBreakpointGroupingRule> groupingRules) {
+  public void setGroupingRules(Collection<? extends XBreakpointGroupingRule> groupingRules) {
     setGroupingRulesInternal(groupingRules);
     rebuildTree(new ArrayList<>(myNodes.keySet()));
   }
 
-  public void rebuildTree(Collection<BreakpointItem> items) {
+  public void rebuildTree(Collection<? extends BreakpointItem> items) {
     List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints(false);
     TreePath path = myTreeView.getSelectionPath();
     buildTree(items);

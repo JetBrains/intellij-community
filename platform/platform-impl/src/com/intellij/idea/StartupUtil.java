@@ -269,7 +269,7 @@ public class StartupUtil {
     return log;
   }
 
-  private static void addInitUiTasks(@NotNull List<Future<?>> futures,
+  private static void addInitUiTasks(@NotNull List<? super Future<?>> futures,
                                      @NotNull ExecutorService executorService,
                                      @NotNull Logger log,
                                      @NotNull Future<?> initLafTask) {

@@ -476,7 +476,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   @Nullable
-  private PsiStatement hasCommonInitializer(PsiStatement commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<PsiElement> statementsToRemove) {
+  private PsiStatement hasCommonInitializer(PsiStatement commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<? super PsiElement> statementsToRemove) {
     final PsiCodeBlock body = subConstructor.getBody();
     if (body == null) return null;
     final PsiStatement[] statements = body.getStatements();
@@ -555,7 +555,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     return commonInitializerCandidate;
   }
 
-  private static void collectPsiStatements(PsiElement root, Set<PsiStatement> collected) {
+  private static void collectPsiStatements(PsiElement root, Set<? super PsiStatement> collected) {
     if (root instanceof PsiStatement){
       collected.add((PsiStatement)root);
     }

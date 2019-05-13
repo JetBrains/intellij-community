@@ -202,7 +202,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
   private void inlineExpressionUsage(PsiExpression expr,
                                      PsiExpression initializer1,
-                                     Set<PsiAssignmentExpression> assignments) throws IncorrectOperationException {
+                                     Set<? super PsiAssignmentExpression> assignments) throws IncorrectOperationException {
     if (expr instanceof PsiLiteralExpression) {
       // Possible reflective usage
       return;

@@ -66,7 +66,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }, hasErrorHandler)
   }
 
-  override fun onError(rejected: Consumer<Throwable>): Promise<T> {
+  override fun onError(rejected: Consumer<in Throwable>): Promise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
@@ -105,7 +105,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler)
   }
 
-  override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
+  override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
     val convert: (T) -> CompletableFuture<SUB_RESULT> = {
       val promise = doneF.`fun`(it)
       val future = CompletableFuture<SUB_RESULT>()

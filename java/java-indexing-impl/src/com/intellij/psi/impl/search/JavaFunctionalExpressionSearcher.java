@@ -136,7 +136,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static void processIndexValues(List<? extends SamDescriptor> descriptors,
                                          VirtualFile inFile,
-                                         FileBasedIndex.ValueProcessor<Map<Integer, FunExprOccurrence>> processor) {
+                                         FileBasedIndex.ValueProcessor<? super Map<Integer, FunExprOccurrence>> processor) {
     for (SamDescriptor descriptor : descriptors) {
       GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope);
       for (FunctionalExpressionKey key : descriptor.keys) {

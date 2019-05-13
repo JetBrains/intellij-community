@@ -120,7 +120,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
   }
 
   @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<? extends TextRange> fragments) {
     if (fragments == null) return Integer.MIN_VALUE;
     if (fragments.isEmpty()) return 0;
 
@@ -210,8 +210,8 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     return fragments != null && isStartMatch(fragments);
   }
 
-  public static boolean isStartMatch(@NotNull Iterable<TextRange> fragments) {
-    Iterator<TextRange> iterator = fragments.iterator();
+  public static boolean isStartMatch(@NotNull Iterable<? extends TextRange> fragments) {
+    Iterator<? extends TextRange> iterator = fragments.iterator();
     return !iterator.hasNext() || iterator.next().getStartOffset() == 0;
   }
 

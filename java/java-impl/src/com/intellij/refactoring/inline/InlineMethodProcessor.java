@@ -341,7 +341,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
    * @param usages
    * @param elementToInline
    */
-  private static Map<PsiMember, Set<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements,
+  private static Map<PsiMember, Set<PsiMember>> getInaccessible(HashSet<? extends PsiMember> referencedElements,
                                                                 UsageInfo[] usages,
                                                                 PsiElement elementToInline) {
     final Map<PsiMember, Set<PsiMember>> result = new HashMap<>();
@@ -1390,7 +1390,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return refsVector.toArray(new PsiReferenceExpression[0]);
   }
 
-  private void inlineEnumConstantParameter(final List<PsiReferenceExpression> refsVector,
+  private void inlineEnumConstantParameter(final List<? super PsiReferenceExpression> refsVector,
                                            final PsiReferenceExpression ref) throws IncorrectOperationException {
     PsiExpression expr = getSimpleReturnedExpression(myMethod);
     if (expr != null) {
@@ -1429,7 +1429,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return ((PsiReturnStatement) statement).getReturnValue();
   }
 
-  private static void addMarkedElements(final List<PsiReferenceExpression> array, PsiElement scope) {
+  private static void addMarkedElements(final List<? super PsiReferenceExpression> array, PsiElement scope) {
     scope.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override public void visitElement(PsiElement element) {
         if (element.getCopyableUserData(MARK_KEY) != null) {

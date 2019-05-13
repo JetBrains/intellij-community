@@ -82,7 +82,7 @@ public abstract class SearchPopupController {
   }
 
   @NotNull
-  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<Integer> startPosition) {
+  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<? super Integer> startPosition) {
     int index = end - 1;
     String value = null;
 

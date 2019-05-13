@@ -201,7 +201,7 @@ public class BuildOperations {
     }
   }
 
-  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<? super File> parentDirs) {
+  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<? super String> deletedPaths, @Nullable Set<? super File> parentDirs) {
     File file = new File(path);
     boolean deleted = deleteRecursively(file, deletedPaths);
     if (deleted && parentDirs != null) {
@@ -213,7 +213,7 @@ public class BuildOperations {
     return deleted;
   }
 
-  private static boolean deleteRecursively(final File file, final Collection<String> deletedPaths) {
+  private static boolean deleteRecursively(final File file, final Collection<? super String> deletedPaths) {
     try {
       Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
         @Override

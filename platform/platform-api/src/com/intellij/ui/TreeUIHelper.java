@@ -39,8 +39,8 @@ public abstract class TreeUIHelper {
 
   public abstract void installTreeSpeedSearch(JTree tree);
   public abstract void installListSpeedSearch(JList<?> list);
-  public abstract void installTreeSpeedSearch(JTree tree, Convertor<TreePath, String> convertor, boolean canExpand);
-  public abstract <T> void installListSpeedSearch(JList<T> list, Convertor<T, String> convertor);
+  public abstract void installTreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> convertor, boolean canExpand);
+  public abstract <T> void installListSpeedSearch(JList<T> list, Convertor<? super T, String> convertor);
 
   public abstract void installEditSourceOnEnterKeyHandler(JTree tree);
 

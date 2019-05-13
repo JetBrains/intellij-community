@@ -109,7 +109,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @NotNull
-  private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<FileEditor> editors) {
+  private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<? extends FileEditor> editors) {
     List<Provider> providers = DumbService.getDumbAwareExtensions(myProject, EP_PROJECT);
     List<Runnable> updates = new SmartList<>();
     for (FileEditor editor : editors) {

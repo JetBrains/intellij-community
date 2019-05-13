@@ -67,7 +67,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     }
   }
 
-  private void showAutoSwitchNotification(Collection<PluginId> autoSwitchedIds, boolean enabled) {
+  private void showAutoSwitchNotification(Collection<? extends PluginId> autoSwitchedIds, boolean enabled) {
     Collection<PluginId> switchedPlugins = new ArrayList<>(autoSwitchedIds);
     switchedPlugins.add(myId);
 
@@ -108,7 +108,7 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     return '"' + optionalDescriptor(id).map(IdeaPluginDescriptor::getName).orElse(id.getIdString()) + '"';
   }
 
-  private static void switchPlugins(Collection<PluginId> ids, boolean enabled) throws IOException {
+  private static void switchPlugins(Collection<? extends PluginId> ids, boolean enabled) throws IOException {
     Collection<String> disabledPlugins = new LinkedHashSet<>(PluginManagerCore.disabledPlugins());
     for (PluginId id : ids) {
       if (enabled) disabledPlugins.remove(id.getIdString());
@@ -158,10 +158,10 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   private static class UndoPluginsSwitchAction extends NotificationAction {
 
-    private final Collection<PluginId> myIds;
+    private final Collection<? extends PluginId> myIds;
     private final boolean myEnabled;
 
-    UndoPluginsSwitchAction(Collection<PluginId> ids, boolean enabled) {
+    UndoPluginsSwitchAction(Collection<? extends PluginId> ids, boolean enabled) {
       super(IdeBundle.message("plugins.auto.switch.action.name"));
       myIds = ids;
       myEnabled = enabled;

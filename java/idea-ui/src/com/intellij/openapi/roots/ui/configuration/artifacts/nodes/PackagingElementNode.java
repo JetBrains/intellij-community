@@ -121,7 +121,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     return SimpleTextAttributes.fromTextAttributes(textAttributes);
   }
 
-  void addElement(PackagingElement<?> element, CompositePackagingElement parentElement, Collection<PackagingNodeSource> nodeSource) {
+  void addElement(PackagingElement<?> element, CompositePackagingElement parentElement, Collection<? extends PackagingNodeSource> nodeSource) {
     doAddElement((E)element);
     myParentElements.put(element, parentElement);
     myNodeSources.putAll(element, nodeSource);
@@ -157,7 +157,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
   }
 
 
-  public List<PackagingElementNode<?>> getNodesByPath(List<PackagingElement<?>> pathToPlace) {
+  public List<PackagingElementNode<?>> getNodesByPath(List<? extends PackagingElement<?>> pathToPlace) {
     List<PackagingElementNode<?>> result = new ArrayList<>();
     PackagingElementNode<?> current = this;
     int i = 0;

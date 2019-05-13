@@ -132,7 +132,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   @NotNull
   protected List<Repo> filterRepositoriesNotOnThisBranch(@NotNull final String branch,
-                                                         @NotNull List<Repo> allRepositories) {
+                                                         @NotNull List<? extends Repo> allRepositories) {
     return ContainerUtil.filter(allRepositories, repository -> !branch.equals(repository.getCurrentBranchName()));
   }
 

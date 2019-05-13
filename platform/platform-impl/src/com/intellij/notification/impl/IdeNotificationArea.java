@@ -123,7 +123,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     }
   }
 
-  private LayeredIcon createIconWithNotificationCount(ArrayList<Notification> notifications) {
+  private LayeredIcon createIconWithNotificationCount(ArrayList<? extends Notification> notifications) {
     return createIconWithNotificationCount(this, getMaximumType(notifications), notifications.size());
   }
 
@@ -161,7 +161,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   }
 
   @Nullable
-  private static NotificationType getMaximumType(List<Notification> notifications) {
+  private static NotificationType getMaximumType(List<? extends Notification> notifications) {
     NotificationType result = null;
     for (Notification notification : notifications) {
       if (NotificationType.ERROR == notification.getType()) {

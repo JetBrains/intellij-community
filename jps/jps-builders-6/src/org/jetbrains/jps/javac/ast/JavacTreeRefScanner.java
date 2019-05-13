@@ -397,7 +397,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     return strElement == string && element != string;
   }
 
-  private static void visitTypeHierarchy(TypeElement element, Set<TypeElement> collector, Types typeUtility) {
+  private static void visitTypeHierarchy(TypeElement element, Set<? super TypeElement> collector, Types typeUtility) {
     if (collector.add(element)) {
       TypeMirror superclass = element.getSuperclass();
       Element superClass = typeUtility.asElement(superclass);

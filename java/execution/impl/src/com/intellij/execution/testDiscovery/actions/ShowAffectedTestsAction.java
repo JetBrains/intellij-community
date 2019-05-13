@@ -123,7 +123,7 @@ public class ShowAffectedTestsAction extends AnAction {
     }
   }
 
-  private static void showDiscoveredTestsByFile(@NotNull Project project, @NotNull List<VirtualFile> files, @NotNull AnActionEvent e) {
+  private static void showDiscoveredTestsByFile(@NotNull Project project, @NotNull List<? extends VirtualFile> files, @NotNull AnActionEvent e) {
     VirtualFile projectBasePath = getBasePathAsVirtualFile(project);
     if (projectBasePath == null) return;
     DiscoveredTestsTree tree = showTree(project, e.getDataContext(), createTitle(files));
@@ -143,7 +143,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   @NotNull
-  private static String createTitle(@NotNull List<VirtualFile> files) {
+  private static String createTitle(@NotNull List<? extends VirtualFile> files) {
     if (files.isEmpty()) return "Empty Selection";
     String firstName = files.get(0).getName();
     if (files.size() == 1) return firstName;

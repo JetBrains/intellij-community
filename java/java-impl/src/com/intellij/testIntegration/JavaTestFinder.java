@@ -102,7 +102,7 @@ public class JavaTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithProximities, true);
   }
 
-  private void collectTests(PsiClass klass, Processor<Pair<? extends PsiNamedElement, Integer>> processor) {
+  private void collectTests(PsiClass klass, Processor<? super Pair<? extends PsiNamedElement, Integer>> processor) {
     GlobalSearchScope scope = getSearchScope(klass, false);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());

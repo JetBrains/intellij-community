@@ -337,7 +337,7 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel = new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
                                                                    PluginManagerConfigurableNewLayout.this.mySearchListener,
@@ -414,13 +414,13 @@ public class PluginManagerConfigurableNewLayout
       }
 
       @Override
-      protected void updateMainSelection(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         selectionListener.accept(myMarketplacePanel);
       }
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
@@ -749,7 +749,7 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel = new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
                                                      PluginManagerConfigurableNewLayout.this.mySearchListener,
@@ -848,7 +848,7 @@ public class PluginManagerConfigurableNewLayout
       }
 
       @Override
-      protected void updateMainSelection(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         selectionListener.accept(myInstalledPanel);
       }
 
@@ -864,7 +864,7 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
@@ -1028,7 +1028,7 @@ public class PluginManagerConfigurableNewLayout
     }
   }
 
-  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginDownloader> updates) {
+  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<? extends PluginDownloader> updates) {
     for (PluginDownloader downloader : updates) {
       IdeaPluginDescriptor descriptor = downloader.getDescriptor();
       for (UIPluginGroup group : panel.getGroups()) {
@@ -1275,10 +1275,10 @@ public class PluginManagerConfigurableNewLayout
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<List<IdeaPluginDescriptor>, Boolean, IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
@@ -1292,7 +1292,7 @@ public class PluginManagerConfigurableNewLayout
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull String name,
                         @NotNull String query,

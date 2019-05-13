@@ -65,7 +65,7 @@ public class JavaNullMethodArgumentUtil {
   private static void processCallsWithNullArguments(@NotNull PsiMethod method,
                                                     int argumentIdx,
                                                     @NotNull Processor<? super PsiExpression> nullArgumentProcessor,
-                                                    Collection<VirtualFile> candidateFiles) {
+                                                    Collection<? extends VirtualFile> candidateFiles) {
     if (candidateFiles.isEmpty()) return;
 
     GlobalSearchScope scope = GlobalSearchScope.filesScope(method.getProject(), candidateFiles);

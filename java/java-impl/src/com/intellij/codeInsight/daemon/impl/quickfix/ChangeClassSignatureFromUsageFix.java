@@ -87,8 +87,8 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
 
   @NotNull
   private static List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
-                                                                  @NotNull List<PsiTypeParameter> classTypeParameters,
-                                                                  @NotNull List<PsiTypeElement> typeElements) {
+                                                                  @NotNull List<? extends PsiTypeParameter> classTypeParameters,
+                                                                  @NotNull List<? extends PsiTypeElement> typeElements) {
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
     List<TypeParameterInfoView> result = new ArrayList<>();

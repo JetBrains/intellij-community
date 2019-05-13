@@ -306,7 +306,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @param list   a list of errors
    * @param action an action
    */
-  public void showErrors(@NotNull List<VcsException> list, @NotNull String action) {
+  public void showErrors(@NotNull List<? extends VcsException> list, @NotNull String action) {
     if (list.size() > 0) {
       StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
@@ -344,7 +344,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
