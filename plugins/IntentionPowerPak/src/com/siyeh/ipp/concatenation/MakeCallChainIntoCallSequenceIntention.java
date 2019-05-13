@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.HighlightUtil;
@@ -69,7 +71,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(toReplace.getParent());
     
     // By default we introduce new variable and assign it to builder 
-    String targetText = "x";
+    String targetText = new VariableNameGenerator(root, VariableKind.LOCAL_VARIABLE).byExpression(root).generate(true);
     boolean introduceVariable = true;
     boolean keepLastStatement = true;
     final String variableText = rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
