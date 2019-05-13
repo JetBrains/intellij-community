@@ -1361,10 +1361,6 @@ public class AbstractPopup implements JBPopup {
     return myProject;
   }
 
-  public void setProject(Project project) {
-    myProject = project;
-  }
-
   @Override
   public void dispose() {
     if (myState == State.SHOWN) {
