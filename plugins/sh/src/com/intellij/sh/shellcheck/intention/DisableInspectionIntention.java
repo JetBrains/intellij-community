@@ -17,15 +17,17 @@ import javax.swing.*;
 
 public class DisableInspectionIntention implements IntentionAction, LowPriorityAction, Iconable {
   private String myInspectionCode;
+  private String myMessage;
 
-  public DisableInspectionIntention(String inspectionCode) {
+  public DisableInspectionIntention(String message, String inspectionCode) {
     myInspectionCode = inspectionCode;
+    myMessage = message;
   }
 
   @NotNull
   @Override
   public String getText() {
-    return "Disable inspection " + myInspectionCode;
+    return "Disable inspection " + myMessage;
   }
 
   @NotNull

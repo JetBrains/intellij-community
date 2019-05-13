@@ -103,8 +103,10 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
               "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
               "</html>";
       Annotation annotation = holder.createAnnotation(severity(result.level), range, message, html);
-      annotation.registerFix(new SuppressInspectionIntention(message, scCode, startOffset));
-      annotation.registerFix(new DisableInspectionIntention(scCode));
+
+      String formattedMessage = getMessage(message);
+      annotation.registerFix(new SuppressInspectionIntention(formattedMessage, scCode, startOffset));
+      annotation.registerFix(new DisableInspectionIntention(formattedMessage, scCode));
     }
   }
 
@@ -148,6 +150,12 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
     catch (IOException e) {
       throw new IOException("Failed to write file content to stdin\n\n" + content, e);
     }
+  }
+
+  @NotNull
+  private static String getMessage(@NotNull String originalMessage) {
+    String m = originalMessage.endsWith(".") ? originalMessage.substring(0, originalMessage.length() - 1) : originalMessage;
+    return "'" + StringUtil.first(m, 60, true) + "'";
   }
 
   @NotNull

@@ -4,7 +4,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -24,7 +23,7 @@ public class SuppressInspectionIntention implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Suppress " + getMessage();
+    return "Suppress " + myMessage;
   }
 
   @NotNull
@@ -49,11 +48,5 @@ public class SuppressInspectionIntention implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
-  }
-
-  @NotNull
-  private String getMessage() {
-    String m = myMessage.endsWith(".") ? myMessage.substring(0, myMessage.length() - 1) : myMessage;
-    return "'" + StringUtil.first(m, 60, true) + "'";
   }
 }
