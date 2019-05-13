@@ -192,5 +192,5 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
 
   private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && isRename
 
-  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation", true)
+  private fun needProcessIgnoredFiles() = ApplicationManager.getApplication().isInternal || Registry.`is`("vcs.ignorefile.generation", true)
 }
