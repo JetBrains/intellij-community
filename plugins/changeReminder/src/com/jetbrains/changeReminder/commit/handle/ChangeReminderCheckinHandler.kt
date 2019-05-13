@@ -52,7 +52,7 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
     return BooleanCommitOption(
       panel,
-      "Predict forgotten files",
+      "Remind about related files",
       true,
       { userSettings.isTurnedOn },
       Consumer { userSettings.isTurnedOn = it }
