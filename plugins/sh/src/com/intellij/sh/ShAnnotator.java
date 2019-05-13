@@ -6,7 +6,6 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.sh.lexer.ShTokenTypes;
@@ -49,18 +48,6 @@ public class ShAnnotator implements Annotator {
         mark(o, holder, FUNCTION_DECLARATION);
       }
     }
-  }
-
-  private static void highlightVariables(@NotNull PsiElement container, @NotNull AnnotationHolder holder) {
-    new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof ShVariable) {
-          mark(element, holder, VARIABLE);
-        }
-        super.visitElement(element);
-      }
-    }.visitElement(container);
   }
 
   private static void mark(@Nullable PsiElement o, @NotNull AnnotationHolder holder, @NotNull TextAttributesKey key) {
