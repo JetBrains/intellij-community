@@ -49,8 +49,8 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  public static String getCondaPython() {
-    final String conda = getSystemCondaExecutable();
+  public String getCondaPython() {
+    final String conda = StringUtil.defaultIfEmpty(PREFERRED_CONDA_PATH, getSystemCondaExecutable());
     if (conda != null) {
       final String python = getCondaBasePython(conda);
       if (python != null) return python;
@@ -215,10 +215,11 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @NotNull
-  private static String runCondaPackagingHelper(@NotNull String... args) throws ExecutionException {
+  private String runCondaPackagingHelper(@NotNull String... args) throws ExecutionException {
     final List<String> commandArgs = new ArrayList<>();
     commandArgs.add(PythonHelpersLocator.getHelperPath("conda_packaging_tool.py"));
     commandArgs.addAll(Arrays.asList(args));
+    // "conda" module required for conda_packaging_tool.py is available only in a base interpreter 
     final String condaPython = getCondaPython();
     if (condaPython == null) {
       throw new PyExecutionException("Cannot find Python executable for conda",
