@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -29,6 +30,7 @@ public abstract class AbstractExternalSystemSettings<
   SS extends AbstractExternalSystemSettings<SS, PS, L>,
   PS extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<PS>>
+  implements Disposable
 {
 
   @NotNull private final Topic<L> myChangesTopic;
@@ -42,6 +44,11 @@ public abstract class AbstractExternalSystemSettings<
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
     myProject = project;
+  }
+
+  @Override
+  public void dispose() {
+    
   }
 
   @NotNull
