@@ -48,10 +48,10 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
           }
         }
       }
-      titledRow("Excluded directory management policy") {
+      titledRow(message("ignored.file.excluded.settings.title")) {
         row {
           cell {
-            checkBox("Add excluded directories to ignore file", ::selectedMarkExcludedAsIgnored)
+            checkBox(message("ignored.file.excluded.to.ignored.label"), ::selectedMarkExcludedAsIgnored)
           }
         }
       }
