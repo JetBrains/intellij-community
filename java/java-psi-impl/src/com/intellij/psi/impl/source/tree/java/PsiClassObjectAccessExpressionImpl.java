@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -109,7 +110,9 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
   @NotNull
   public Icon getElementIcon(final int flags) {
     final RowIcon rowIcon = ElementBase.createLayeredIcon(this, PlatformIcons.FIELD_ICON, 0);
-    rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);
+    if (Registry.is("ide.completion.show.visibility.icon")) {
+      rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);
+    }
     return rowIcon;
   }
 }
