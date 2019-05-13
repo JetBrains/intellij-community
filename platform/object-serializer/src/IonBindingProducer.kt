@@ -6,8 +6,11 @@ import com.amazon.ion.Timestamp
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
+import java.io.File
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import java.nio.file.FileSystems
+import java.nio.file.Path
 import java.util.*
 
 private typealias NestedBindingFactory = (accessor: MutableAccessor) -> NestedBinding
@@ -23,6 +26,8 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     init {
       // for root resolved factory doesn't make sense because root bindings will be cached
       classToRootBindingFactory.put(java.lang.String::class.java) { StringBinding() }
+      classToRootBindingFactory.put(File::class.java) { FileBinding() }
+      classToRootBindingFactory.put(Path::class.java) { PathBinding() }
       classToRootBindingFactory.put(Date::class.java) { DateBinding() }
       classToRootBindingFactory.put(ByteArray::class.java) { ByteArrayBinding() }
 
@@ -294,6 +299,26 @@ private class StringBinding : RootBinding {
     else {
       context.writer.writeString(s)
     }
+  }
+}
+
+private class FileBinding : RootBinding {
+  override fun deserialize(context: ReadContext): Any {
+    return File(context.reader.stringValue())
+  }
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeSymbol((obj as File).path)
+  }
+}
+
+private class PathBinding : RootBinding {
+  override fun deserialize(context: ReadContext): Any {
+    return FileSystems.getDefault().getPath(context.reader.stringValue())
+  }
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeSymbol((obj as Path).toString())
   }
 }
 

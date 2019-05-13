@@ -1,10 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
+import java.io.File
+import java.nio.file.Paths
 import java.util.*
 
 class ObjectSerializerTest {
@@ -104,6 +108,21 @@ class ObjectSerializerTest {
     val bean = TestEnumBean()
     bean.color = TestEnum.RED
     test(bean)
+  }
+
+  @Test
+  fun `file and path`() {
+    assumeTrue(!SystemInfoRt.isWindows)
+
+    class TestBean {
+      @JvmField
+      var f = File("/foo")
+
+      @JvmField
+      var p = Paths.get("/bar")
+    }
+
+    test(TestBean())
   }
 
   @Test
