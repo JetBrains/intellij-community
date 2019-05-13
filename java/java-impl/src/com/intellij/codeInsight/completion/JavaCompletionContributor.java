@@ -286,7 +286,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     addAllClasses(parameters, result, session);
 
     if (position instanceof PsiIdentifier) {
-      FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, false, true, result.getPrefixMatcher(), result);
+      FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, true, result.getPrefixMatcher(), result);
     }
 
     if (position instanceof PsiIdentifier &&
@@ -350,7 +350,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       new TypeArgumentCompletionProvider(false, session).addTypeArgumentVariants(parameters, items::add, matcher);
     }
 
-    FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, false, false, matcher, items::add);
+    FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, false, matcher, items::add);
 
     if (MethodReturnTypeProvider.IN_METHOD_RETURN_TYPE.accepts(position)) {
       MethodReturnTypeProvider.addProbableReturnTypes(parameters, element -> {
