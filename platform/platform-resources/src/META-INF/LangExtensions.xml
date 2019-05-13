@@ -390,7 +390,7 @@
                          dynamic="true"
                          groupWeight="1"/>
 
-    <projectService serviceImplementation="com.intellij.codeInsight.hints.InlayHintsSettings"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.hints.InlayHintsSettings"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.parameter.NewParameterHintsProviderFactory"/>
 
