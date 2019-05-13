@@ -6,7 +6,7 @@ SHELL_SCRIPT
           GENERIC_COMMAND_DIRECTIVE
             STRING
               PsiElement(OPEN_QUOTE)('"')
-              PsiElement(word)(''')
+              PsiElement(STRING_CONTENT)(''')
               PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           NUMBER
@@ -14,7 +14,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)(''')
+            PsiElement(STRING_CONTENT)(''')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -32,8 +32,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a')
-            PsiElement($)('$')
+            PsiElement(STRING_CONTENT)('a$')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -57,7 +56,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('abc')
+            PsiElement(STRING_CONTENT)('abc')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -67,11 +66,11 @@ SHELL_SCRIPT
           GENERIC_COMMAND_DIRECTIVE
             STRING
               PsiElement(OPEN_QUOTE)('"')
-              PsiElement(word)('abc')
+              PsiElement(STRING_CONTENT)('abc')
               PsiElement(CLOSE_QUOTE)('"')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('abc')
+            PsiElement(STRING_CONTENT)('abc')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -80,7 +79,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('\.')
+            PsiElement(STRING_CONTENT)('\.')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -89,7 +88,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('\n')
+            PsiElement(STRING_CONTENT)('\n')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -98,7 +97,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)(' ')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -137,9 +136,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('b\"')
+            PsiElement(STRING_CONTENT)('a b\"')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -155,16 +152,12 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('b')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('\"')
+            PsiElement(STRING_CONTENT)('a b \"')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a')
+            PsiElement(STRING_CONTENT)('a')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
@@ -176,8 +169,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a')
-            PsiElement($)('$')
+            PsiElement(STRING_CONTENT)('a$')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -195,9 +187,7 @@ SHELL_SCRIPT
                     GENERIC_COMMAND_DIRECTIVE
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('hey')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('there')
+                        PsiElement(STRING_CONTENT)('hey there')
                         PsiElement(CLOSE_QUOTE)('"')
               PsiElement())(')')
             PsiElement(CLOSE_QUOTE)('"')
@@ -359,18 +349,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('s/.*\(iphoneos')
-            PsiElement(()('(')
-            PsiElement(()('(')
-            PsiElement([)('[')
-            PsiElement(word)('0-9')
-            PsiElement(])(']')
-            PsiElement(|)('|')
-            PsiElement(word)('.')
-            PsiElement())(')')
-            PsiElement(word)('+')
-            PsiElement())(')')
-            PsiElement(word)('\).*/\1/')
+            PsiElement(STRING_CONTENT)('s/.*\(iphoneos(([0-9]|.)+)\).*/\1/')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# "$("s/(/")" #todo check s/(')
@@ -409,7 +388,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(||)('||')
+            PsiElement(STRING_CONTENT)('||')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -418,7 +397,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(&&)('&&')
+            PsiElement(STRING_CONTENT)('&&')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiComment(Comment)('#"$(&&)"  # todo: michail')
@@ -564,7 +543,7 @@ SHELL_SCRIPT
             PsiElement($)('$')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('abc')
+            PsiElement(STRING_CONTENT)('abc')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -591,14 +570,10 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(()('(')
-            PsiElement(()('(')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)('(( ')
             VARIABLE
               PsiElement(var)('$1')
-            PsiWhiteSpace(' ')
-            PsiElement())(')')
-            PsiElement())(')')
+            PsiElement(STRING_CONTENT)(' ))')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -607,11 +582,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a')
-            PsiElement(\n)('\n')
-            PsiElement(word)('b')
-            PsiElement(\n)('\n')
-            PsiElement(word)('c')
+            PsiElement(STRING_CONTENT)('a\nb\nc')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -620,7 +591,7 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(\n)('\n')
+            PsiElement(STRING_CONTENT)('\n')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST

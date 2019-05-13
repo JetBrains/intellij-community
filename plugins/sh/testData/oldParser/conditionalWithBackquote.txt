@@ -26,7 +26,7 @@ SHELL_SCRIPT
             LITERAL_CONDITION
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('SunOS')
+                PsiElement(STRING_CONTENT)('SunOS')
                 PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
@@ -59,7 +59,7 @@ SHELL_SCRIPT
             LITERAL_CONDITION
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('SunOS')
+                PsiElement(STRING_CONTENT)('SunOS')
                 PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           PsiElement(])(']')

@@ -13,9 +13,7 @@ SHELL_SCRIPT
             PATTERN
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('a')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('b')
+                PsiElement(STRING_CONTENT)('a b')
                 PsiElement(CLOSE_QUOTE)('"')
             PsiElement())(')')
             PsiWhiteSpace(' ')

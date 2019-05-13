@@ -180,6 +180,7 @@ public interface ShTypes {
   IElementType SHIFT_LEFT_ASSIGN = new ShTokenType("<<=");
   IElementType SHIFT_RIGHT = new ShTokenType(">>");
   IElementType SHIFT_RIGHT_ASSIGN = new ShTokenType(">>=");
+  IElementType STRING_CONTENT = new ShTokenType("STRING_CONTENT");
   IElementType THEN = new ShTokenType("then");
   IElementType TIME = new ShTokenType("time");
   IElementType TRAP = new ShTokenType("trap");

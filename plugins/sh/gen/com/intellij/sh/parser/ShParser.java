@@ -2371,7 +2371,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (OPEN_QUOTE (word | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING
+  // (OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
     if (!nextTokenIs(b, "<string>", OPEN_QUOTE, RAW_STRING)) return false;
@@ -2383,7 +2383,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // OPEN_QUOTE (word | vars | <<notQuote>>)* CLOSE_QUOTE
+  // OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE
   private static boolean string_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0")) return false;
     boolean r, p;
@@ -2396,7 +2396,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (word | vars | <<notQuote>>)*
+  // (STRING_CONTENT | vars | <<notQuote>>)*
   private static boolean string_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0_1")) return false;
     while (true) {
@@ -2407,12 +2407,12 @@ public class ShParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // word | vars | <<notQuote>>
+  // STRING_CONTENT | vars | <<notQuote>>
   private static boolean string_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string_0_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, WORD);
+    r = consumeToken(b, STRING_CONTENT);
     if (!r) r = vars(b, l + 1);
     if (!r) r = notQuote(b, l + 1);
     exit_section_(b, m, null, r);

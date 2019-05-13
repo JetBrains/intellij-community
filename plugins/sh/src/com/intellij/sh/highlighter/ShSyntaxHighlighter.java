@@ -19,6 +19,7 @@ import static com.intellij.sh.lexer.ShTokenTypes.*;
  */
 public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
 
+  private static final TokenSet stringSet = TokenSet.create(OPEN_QUOTE, STRING_CONTENT, CLOSE_QUOTE);
   private static final TokenSet bracesSet = TokenSet.create(LEFT_CURLY, RIGHT_CURLY);
   private static final TokenSet backQuoteSet = TokenSet.create(OPEN_BACKQUOTE, CLOSE_BACKQUOTE);
   private static final TokenSet numberSet = TokenSet.create(NUMBER, OCTAL, HEX, INT);
@@ -41,6 +42,7 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
     map.put(HEREDOC_MARKER_START, ShHighlighterColors.HERE_DOC_START);
     map.put(LET, ShHighlighterColors.LET_COMMAND);
     map.put(BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+    fillMap(map, stringSet, ShHighlighterColors.STRING);
     fillMap(map, bracesSet, ShHighlighterColors.BRACE);
     fillMap(map, backQuoteSet, ShHighlighterColors.BACKQUOTE);
     fillMap(map, keywords, ShHighlighterColors.KEYWORD);

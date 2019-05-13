@@ -9,7 +9,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('executable')
+            PsiElement(STRING_CONTENT)('executable')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           NUMBER

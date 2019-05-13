@@ -180,7 +180,7 @@ SHELL_SCRIPT
                       PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$output')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)(' ')
                       PsiElement($)('$')
                       SUBSHELL_COMMAND
                         PsiElement(()('(')

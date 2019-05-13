@@ -38,7 +38,7 @@ SHELL_SCRIPT
                   LITERAL_EXPRESSION
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('x')
+                      PsiElement(STRING_CONTENT)('x')
                       PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
                 PsiElement(=)('=')

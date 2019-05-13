@@ -21,8 +21,6 @@ SHELL_SCRIPT
                       PsiWhiteSpace(' ')
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('ZZ')
-                        PsiElement(=)('=')
-                        PsiElement(int)('1')
+                        PsiElement(STRING_CONTENT)('ZZ=1')
                         PsiElement(CLOSE_QUOTE)('"')
               PsiElement())(')')

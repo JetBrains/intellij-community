@@ -26,9 +26,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Hello')
-            PsiWhiteSpace('      ')
-            PsiElement(word)('World')
+            PsiElement(STRING_CONTENT)('Hello      World')
             PsiElement(CLOSE_QUOTE)('"')
   PsiWhiteSpace('       ')
   PsiComment(Comment)('# This is a comment, too!')
@@ -43,9 +41,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Hello')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('World')
+            PsiElement(STRING_CONTENT)('Hello World')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -58,11 +54,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Hello')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('*')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('World')
+            PsiElement(STRING_CONTENT)('Hello * World')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -106,7 +98,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Hello')
+            PsiElement(STRING_CONTENT)('Hello')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
@@ -125,7 +117,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiWhiteSpace('     ')
+            PsiElement(STRING_CONTENT)('     ')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
@@ -141,7 +133,7 @@ SHELL_SCRIPT
           PsiElement(=)('=')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('foo')
+            PsiElement(STRING_CONTENT)('foo')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -155,7 +147,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Message')
+            PsiElement(STRING_CONTENT)('Message')
             PsiElement(CLOSE_QUOTE)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
@@ -178,7 +170,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Message')
+            PsiElement(STRING_CONTENT)('Message')
             PsiElement(CLOSE_QUOTE)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
@@ -201,7 +193,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Message')
+            PsiElement(STRING_CONTENT)('Message')
             PsiElement(CLOSE_QUOTE)('"')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
@@ -240,10 +232,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('disk')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('report')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)('disk report ')
             COMMAND_SUBSTITUTION_COMMAND
               PsiElement(OPEN_BACKQUOTE)('`')
               COMPOUND_LIST
@@ -499,15 +488,13 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Hello')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)('Hello ')
             PsiElement(CLOSE_QUOTE)('"')
           LITERAL
             PsiElement(word)('*')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('World')
+            PsiElement(STRING_CONTENT)(' World')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -960,7 +947,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('*~')
+            PsiElement(STRING_CONTENT)('*~')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL
@@ -1088,7 +1075,7 @@ SHELL_SCRIPT
           PsiElement(=)('=')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('current_line.txt')
+            PsiElement(STRING_CONTENT)('current_line.txt')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST

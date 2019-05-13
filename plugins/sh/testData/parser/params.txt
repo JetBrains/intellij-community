@@ -491,7 +491,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Example')
+                      PsiElement(STRING_CONTENT)('Example')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -530,14 +530,13 @@ SHELL_SCRIPT
           PsiElement(=)('=')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Entering')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)('Entering ')
             VARIABLE
               PsiElement(var)('$funcname')
-            PsiElement(()('(')
+            PsiElement(STRING_CONTENT)('(')
             VARIABLE
               PsiElement(var)('$args')
-            PsiElement())(')')
+            PsiElement(STRING_CONTENT)(')')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
@@ -577,7 +576,7 @@ SHELL_SCRIPT
           PsiElement(=)('=')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('http://repo.labs.intellij.net/cache/')
+            PsiElement(STRING_CONTENT)('http://repo.labs.intellij.net/cache/')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
@@ -652,15 +651,13 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('export')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)('export ')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('NAME^^')
               PsiElement(})('}')
-            PsiElement(word)('_HOME')
-            PsiElement(=)('=')
+            PsiElement(STRING_CONTENT)('_HOME=')
             VARIABLE
               PsiElement(var)('$DIR')
             PsiElement(CLOSE_QUOTE)('"')
@@ -787,7 +784,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('http://repo.labs.intellij.net/download/oracle/')
+                      PsiElement(STRING_CONTENT)('http://repo.labs.intellij.net/download/oracle/')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
@@ -807,17 +804,10 @@ SHELL_SCRIPT
           PsiElement(=)('=')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('--install')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('/usr/bin/java')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('java')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)('--install /usr/bin/java java ')
             VARIABLE
               PsiElement(var)('$JAVA_HOME')
-            PsiElement(word)('/bin/java')
-            PsiWhiteSpace(' ')
-            PsiElement(int)('100')
+            PsiElement(STRING_CONTENT)('/bin/java 100')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -857,19 +847,16 @@ SHELL_SCRIPT
                       PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$ARGS')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('--slave')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('/usr/bin/')
+                      PsiElement(STRING_CONTENT)(' --slave /usr/bin/')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)(' ')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)(' ')
                       VARIABLE
                         PsiElement(var)('$JAVA_HOME')
-                      PsiElement(word)('/bin/')
+                      PsiElement(STRING_CONTENT)('/bin/')
                       VARIABLE
                         PsiElement(var)('$i')
                       PsiElement(CLOSE_QUOTE)('"')
@@ -980,7 +967,7 @@ SHELL_SCRIPT
                           LITERAL_EXPRESSION
                             STRING
                               PsiElement(OPEN_QUOTE)('"')
-                              PsiElement(int)('11')
+                              PsiElement(STRING_CONTENT)('11')
                               PsiElement(CLOSE_QUOTE)('"')
                           PsiElement(])(']')
                         PsiElement(=)('=')
@@ -988,14 +975,14 @@ SHELL_SCRIPT
                           LITERAL_EXPRESSION
                             STRING
                               PsiElement(OPEN_QUOTE)('"')
-                              PsiElement(word)('3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e')
+                              PsiElement(STRING_CONTENT)('3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e')
                               PsiElement(CLOSE_QUOTE)('"')
                           PsiWhiteSpace(' \\n        ')
                           PsiElement([)('[')
                           LITERAL_EXPRESSION
                             STRING
                               PsiElement(OPEN_QUOTE)('"')
-                              PsiElement(word)('9.0.4')
+                              PsiElement(STRING_CONTENT)('9.0.4')
                               PsiElement(CLOSE_QUOTE)('"')
                           PsiElement(])(']')
                       PsiElement(=)('=')
@@ -1003,21 +990,21 @@ SHELL_SCRIPT
                         LITERAL_EXPRESSION
                           STRING
                             PsiElement(OPEN_QUOTE)('"')
-                            PsiElement(word)('39362fb9bfb341fcc802e55e8ea59f4664ca58fd821ce956d48e1aa4fb3d2dec')
+                            PsiElement(STRING_CONTENT)('39362fb9bfb341fcc802e55e8ea59f4664ca58fd821ce956d48e1aa4fb3d2dec')
                             PsiElement(CLOSE_QUOTE)('"')
                         PsiWhiteSpace(' \\n        ')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
                           STRING
                             PsiElement(OPEN_QUOTE)('"')
-                            PsiElement(int)('10')
+                            PsiElement(STRING_CONTENT)('10')
                             PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(])(']')
                     PsiElement(=)('=')
                     LITERAL_EXPRESSION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435')
+                        PsiElement(STRING_CONTENT)('c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435')
                         PsiElement(CLOSE_QUOTE)('"')
                 PsiElement())(')')
   PsiElement(\n)('\n')
@@ -1037,8 +1024,7 @@ SHELL_SCRIPT
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('SHA256MAP[$VERSION]')
               PsiElement(})('}')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('/tmp/')
+            PsiElement(STRING_CONTENT)(' /tmp/')
             VARIABLE
               PsiElement(var)('$FILE')
             PsiElement(CLOSE_QUOTE)('"')
@@ -1116,9 +1102,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('type')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('name')
+                      PsiElement(STRING_CONTENT)('type name')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiElement(\n)('\n')
@@ -1232,10 +1216,10 @@ SHELL_SCRIPT
                                 PsiWhiteSpace(' ')
                                 STRING
                                   PsiElement(OPEN_QUOTE)('"')
-                                  PsiWhiteSpace(' ')
+                                  PsiElement(STRING_CONTENT)(' ')
                                   VARIABLE
                                     PsiElement(var)('$name')
-                                  PsiElement(()('(')
+                                  PsiElement(STRING_CONTENT)('(')
                                   PsiElement(CLOSE_QUOTE)('"')
                         PsiElement())(')')
                       PsiElement(CLOSE_QUOTE)('"')
@@ -1276,25 +1260,10 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('An')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('entry')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('with')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('name')
-                                PsiWhiteSpace(' ')
+                                PsiElement(STRING_CONTENT)('An entry with name ')
                                 VARIABLE
                                   PsiElement(var)('$name')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('is')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('already')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('present')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('in')
-                                PsiWhiteSpace(' ')
+                                PsiElement(STRING_CONTENT)(' is already present in ')
                                 VARIABLE
                                   PsiElement(var)('$usrcff')
                                 PsiElement(CLOSE_QUOTE)('"')
@@ -1342,7 +1311,7 @@ SHELL_SCRIPT
                               LITERAL_CONDITION
                                 STRING
                                   PsiElement(OPEN_QUOTE)('"')
-                                  PsiElement(word)('host')
+                                  PsiElement(STRING_CONTENT)('host')
                                   PsiElement(CLOSE_QUOTE)('"')
                             PsiWhiteSpace(' ')
                             LITERAL_CONDITION
@@ -1361,7 +1330,7 @@ SHELL_SCRIPT
                               LITERAL_CONDITION
                                 STRING
                                   PsiElement(OPEN_QUOTE)('"')
-                                  PsiElement(word)('guest')
+                                  PsiElement(STRING_CONTENT)('guest')
                                   PsiElement(CLOSE_QUOTE)('"')
                             PsiWhiteSpace(' ')
                             PsiElement(])(']')
@@ -1480,25 +1449,10 @@ SHELL_SCRIPT
                                         PsiWhiteSpace(' ')
                                         STRING
                                           PsiElement(OPEN_QUOTE)('"')
-                                          PsiElement(word)('An')
-                                          PsiWhiteSpace(' ')
-                                          PsiElement(word)('entry')
-                                          PsiWhiteSpace(' ')
-                                          PsiElement(word)('with')
-                                          PsiWhiteSpace(' ')
-                                          PsiElement(word)('addr')
-                                          PsiWhiteSpace(' ')
+                                          PsiElement(STRING_CONTENT)('An entry with addr ')
                                           VARIABLE
                                             PsiElement(var)('$addr')
-                                          PsiWhiteSpace(' ')
-                                          PsiElement(word)('is')
-                                          PsiWhiteSpace(' ')
-                                          PsiElement(word)('already')
-                                          PsiWhiteSpace(' ')
-                                          PsiElement(word)('present')
-                                          PsiWhiteSpace(' ')
-                                          PsiElement(word)('in')
-                                          PsiWhiteSpace(' ')
+                                          PsiElement(STRING_CONTENT)(' is already present in ')
                                           VARIABLE
                                             PsiElement(var)('$usrcff')
                                           PsiElement(CLOSE_QUOTE)('"')
@@ -1536,7 +1490,7 @@ SHELL_SCRIPT
                       PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$addConfEntry')
-                      PsiElement(word)('\n')
+                      PsiElement(STRING_CONTENT)('\n')
                       PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -1559,12 +1513,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Successfully')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('added')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('entry')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('Successfully added entry ')
                       VARIABLE
                         PsiElement(var)('$*')
                       PsiElement(CLOSE_QUOTE)('"')

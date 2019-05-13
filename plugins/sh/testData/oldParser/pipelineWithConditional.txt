@@ -19,7 +19,7 @@ SHELL_SCRIPT
           LITERAL_CONDITION
             STRING
               PsiElement(OPEN_QUOTE)('"')
-              PsiElement(word)('hi')
+              PsiElement(STRING_CONTENT)('hi')
               PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
@@ -62,7 +62,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('hi')
+                        PsiElement(STRING_CONTENT)('hi')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(])(']')

@@ -53,7 +53,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('cmd_')
+            PsiElement(STRING_CONTENT)('cmd_')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
@@ -87,16 +87,7 @@ SHELL_SCRIPT
                     PsiElement(OPEN_QUOTE)('"')
                     VARIABLE
                       PsiElement(var)('$ACTION')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('is')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('not')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('a')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('valid')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('command')
+                    PsiElement(STRING_CONTENT)(' is not a valid command')
                     PsiElement(CLOSE_QUOTE)('"')
             PsiElement(;)(';')
             PsiElement(\n)('\n')

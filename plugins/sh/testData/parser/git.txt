@@ -29,10 +29,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('***')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('GIT:')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('*** GIT: ')
                       VARIABLE
                         PsiElement(var)('$repo')
                       PsiElement(CLOSE_QUOTE)('"')
@@ -49,7 +46,7 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$repo')
-                        PsiElement(word)('/')
+                        PsiElement(STRING_CONTENT)('/')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -61,7 +58,7 @@ SHELL_SCRIPT
                           PsiElement(OPEN_QUOTE)('"')
                           VARIABLE
                             PsiElement(var)('$ROOT')
-                          PsiElement(word)('/authors-rewrite-table')
+                          PsiElement(STRING_CONTENT)('/authors-rewrite-table')
                           PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     LITERAL
@@ -205,7 +202,7 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('branches/')
+                                PsiElement(STRING_CONTENT)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
                                 PsiElement(CLOSE_QUOTE)('"')
@@ -226,7 +223,7 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('branches/')
+                                PsiElement(STRING_CONTENT)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
                                 PsiElement(CLOSE_QUOTE)('"')
@@ -313,7 +310,7 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('branches/')
+                                PsiElement(STRING_CONTENT)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
                                 PsiElement(CLOSE_QUOTE)('"')
@@ -334,7 +331,7 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('branches/')
+                                PsiElement(STRING_CONTENT)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
                                 PsiElement(CLOSE_QUOTE)('"')
@@ -421,7 +418,7 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('branches/')
+                                PsiElement(STRING_CONTENT)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
                                 PsiElement(CLOSE_QUOTE)('"')
@@ -442,7 +439,7 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('branches/')
+                                PsiElement(STRING_CONTENT)('branches/')
                                 VARIABLE
                                   PsiElement(var)('$branchname')
                                 PsiElement(CLOSE_QUOTE)('"')
@@ -460,9 +457,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Available')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('branches:')
+                      PsiElement(STRING_CONTENT)('Available branches:')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')

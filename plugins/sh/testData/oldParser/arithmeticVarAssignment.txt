@@ -48,12 +48,10 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Welcome')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('Welcome ')
                       VARIABLE
                         PsiElement(var)('$c')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('times...')
+                      PsiElement(STRING_CONTENT)(' times...')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')

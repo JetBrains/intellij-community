@@ -45,7 +45,7 @@ SHELL_SCRIPT
                         PsiElement({)('{')
                         PsiElement(parameter_expansion_body)('XCODE_VERSION')
                         PsiElement(})('}')
-                      PsiElement(word)('.0')
+                      PsiElement(STRING_CONTENT)('.0')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -102,7 +102,7 @@ SHELL_SCRIPT
                           LITERAL_CONDITION
                             STRING
                               PsiElement(OPEN_QUOTE)('"')
-                              PsiElement(word)('a')
+                              PsiElement(STRING_CONTENT)('a')
                               PsiElement(CLOSE_QUOTE)('"')
                       PsiElement())(')')
                   PsiWhiteSpace(' ')
@@ -123,7 +123,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('pong')
+                      PsiElement(STRING_CONTENT)('pong')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

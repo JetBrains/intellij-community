@@ -31,7 +31,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(int)('1')
+            PsiElement(STRING_CONTENT)('1')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

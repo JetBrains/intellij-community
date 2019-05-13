@@ -72,7 +72,7 @@ SHELL_SCRIPT
           PsiElement(=)('=')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a.env')
+            PsiElement(STRING_CONTENT)('a.env')
             PsiElement(CLOSE_QUOTE)('"')
     PsiElement(;)(';')
   PsiElement(\n)('\n')

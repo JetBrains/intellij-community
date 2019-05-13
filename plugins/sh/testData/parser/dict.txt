@@ -76,7 +76,7 @@ SHELL_SCRIPT
                       LITERAL_EXPRESSION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
-                          PsiElement(word)('a')
+                          PsiElement(STRING_CONTENT)('a')
                           PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                     PsiElement(=)('=')
@@ -89,7 +89,7 @@ SHELL_SCRIPT
                       LITERAL_EXPRESSION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
-                          PsiElement(word)('aa')
+                          PsiElement(STRING_CONTENT)('aa')
                           PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                   PsiElement(=)('=')
@@ -102,7 +102,7 @@ SHELL_SCRIPT
                     LITERAL_EXPRESSION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(int)('2')
+                        PsiElement(STRING_CONTENT)('2')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                 PsiElement(=)('=')
@@ -131,7 +131,7 @@ SHELL_SCRIPT
                     LITERAL_EXPRESSION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('aa')
+                        PsiElement(STRING_CONTENT)('aa')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                   PsiElement(=)('=')
@@ -144,7 +144,7 @@ SHELL_SCRIPT
                     LITERAL_EXPRESSION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(int)('2')
+                        PsiElement(STRING_CONTENT)('2')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                 PsiElement(=)('=')
@@ -195,7 +195,7 @@ SHELL_SCRIPT
                   LITERAL_EXPRESSION
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('a')
+                      PsiElement(STRING_CONTENT)('a')
                       PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
                 PsiElement(=)('=')
@@ -223,7 +223,7 @@ SHELL_SCRIPT
                       LITERAL_EXPRESSION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
-                          PsiElement(word)('a')
+                          PsiElement(STRING_CONTENT)('a')
                           PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                     PsiElement(=)('=')
@@ -236,7 +236,7 @@ SHELL_SCRIPT
                       LITERAL_EXPRESSION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
-                          PsiElement(word)('aa')
+                          PsiElement(STRING_CONTENT)('aa')
                           PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                   PsiElement(=)('=')
@@ -249,7 +249,7 @@ SHELL_SCRIPT
                     LITERAL_EXPRESSION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(int)('2')
+                        PsiElement(STRING_CONTENT)('2')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                 PsiElement(=)('=')

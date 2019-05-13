@@ -12,11 +12,7 @@ SHELL_SCRIPT
               PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('CREATE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('DATABASE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('dev')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
                 PsiElement(CLOSE_QUOTE)('"')
     PsiWhiteSpace(' ')
     PsiElement(||)('||')
@@ -44,11 +40,7 @@ SHELL_SCRIPT
               PsiElement(<<<)('<<<')
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('CREATE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('DATABASE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('dev')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
                 PsiElement(CLOSE_QUOTE)('"')
     PsiElement(||)('||')
     PIPELINE_COMMAND
@@ -100,11 +92,7 @@ SHELL_SCRIPT
               PsiElement(<<<)('<<<')
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('CREATE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('DATABASE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('dev')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
                 PsiElement(CLOSE_QUOTE)('"')
     PsiElement(||)('||')
     PIPELINE_COMMAND
@@ -130,11 +118,7 @@ SHELL_SCRIPT
               PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('CREATE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('DATABASE')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('dev')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
                 PsiElement(CLOSE_QUOTE)('"')
     PsiWhiteSpace(' ')
     PsiElement(&&)('&&')

@@ -55,14 +55,10 @@ SHELL_SCRIPT
             PsiElement(OPEN_QUOTE)('"')
             VARIABLE
               PsiElement(var)('$x')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('+')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)(' + ')
             VARIABLE
               PsiElement(var)('$y')
-            PsiWhiteSpace(' ')
-            PsiElement(=)('=')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)(' = ')
             VARIABLE
               PsiElement(var)('$ans')
             PsiElement(CLOSE_QUOTE)('"')
@@ -396,11 +392,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(ARITH_SQUARE_LEFT)('$[')
-            PsiElement(int)('1')
-            PsiElement(+)('+')
-            PsiElement(int)('2')
-            PsiElement(ARITH_SQUARE_RIGHT)(']')
+            PsiElement(STRING_CONTENT)('$[1+2]')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST

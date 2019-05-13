@@ -37,7 +37,7 @@ SHELL_SCRIPT
                       PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('abc')
+                      PsiElement(STRING_CONTENT)('abc')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiErrorElement:'&', '&&', ';', '\n' or '||' expected
                 <empty list>

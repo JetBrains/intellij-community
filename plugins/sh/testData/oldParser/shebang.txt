@@ -39,9 +39,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('#')
-            PsiElement(!)('!')
-            PsiElement(word)('/bin/sh\n')
+            PsiElement(STRING_CONTENT)('#!/bin/sh\n')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -52,10 +50,10 @@ SHELL_SCRIPT
                 PsiElement(OPEN_QUOTE)('"')
                 VARIABLE
                   PsiElement(var)('$usrcfd')
-                PsiElement(word)('/tmp/session.tell.')
+                PsiElement(STRING_CONTENT)('/tmp/session.tell.')
                 VARIABLE
                   PsiElement(var)('$nametmp')
-                PsiElement(word)('.sh')
+                PsiElement(STRING_CONTENT)('.sh')
                 PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   PsiWhiteSpace('    ')

@@ -13,7 +13,7 @@ SHELL_SCRIPT
               PsiWhiteSpace(' ')
               STRING
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('x')
+                PsiElement(STRING_CONTENT)('x')
                 PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST

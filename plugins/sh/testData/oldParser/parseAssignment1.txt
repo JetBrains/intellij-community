@@ -78,7 +78,7 @@ SHELL_SCRIPT
               LITERAL_EXPRESSION
                 STRING
                   PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(word)('a')
+                  PsiElement(STRING_CONTENT)('a')
                   PsiElement(CLOSE_QUOTE)('"')
             PsiElement())(')')
   PsiElement(\n)('\n')
@@ -97,7 +97,7 @@ SHELL_SCRIPT
                 PsiWhiteSpace(' ')
                 STRING
                   PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(word)('a')
+                  PsiElement(STRING_CONTENT)('a')
                   PsiElement(CLOSE_QUOTE)('"')
             PsiElement())(')')
   PsiElement(\n)('\n')
@@ -116,12 +116,12 @@ SHELL_SCRIPT
                 PsiWhiteSpace(' ')
                 STRING
                   PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(word)('a')
+                  PsiElement(STRING_CONTENT)('a')
                   PsiElement(CLOSE_QUOTE)('"')
                 PsiWhiteSpace(' ')
                 STRING
                   PsiElement(OPEN_QUOTE)('"')
-                  PsiElement(word)('b')
+                  PsiElement(STRING_CONTENT)('b')
                   PsiElement(CLOSE_QUOTE)('"')
                 PsiWhiteSpace(' ')
                 PsiElement(word)('c')

@@ -217,8 +217,7 @@ SHELL_SCRIPT
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('SHA256MAP[$VERSION]')
               PsiElement(})('}')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('/tmp/')
+            PsiElement(STRING_CONTENT)(' /tmp/')
             VARIABLE
               PsiElement(var)('$FILE')
             PsiElement(CLOSE_QUOTE)('"')

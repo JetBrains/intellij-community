@@ -15,8 +15,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiWhiteSpace('   ')
-            PsiElement(word)('Language:')
+            PsiElement(STRING_CONTENT)('   Language:')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           LITERAL

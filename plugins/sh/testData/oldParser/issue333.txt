@@ -17,7 +17,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('ech')
+            PsiElement(STRING_CONTENT)('ech')
             VARIABLE
               PsiElement(var)('$a')
             PsiElement(CLOSE_QUOTE)('"')

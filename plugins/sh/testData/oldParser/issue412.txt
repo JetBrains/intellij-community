@@ -40,7 +40,7 @@ SHELL_SCRIPT
                           LITERAL_CONDITION
                             STRING
                               PsiElement(OPEN_QUOTE)('"')
-                              PsiElement(word)('a')
+                              PsiElement(STRING_CONTENT)('a')
                               PsiElement(CLOSE_QUOTE)('"')
                         PsiWhiteSpace(' ')
                         PsiElement(||)('||')
@@ -73,7 +73,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('pong')
+                      PsiElement(STRING_CONTENT)('pong')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

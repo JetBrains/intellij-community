@@ -75,7 +75,7 @@ SHELL_SCRIPT
                       PsiWhiteSpace(' ')
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
+                        PsiElement(STRING_CONTENT)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
                         PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT

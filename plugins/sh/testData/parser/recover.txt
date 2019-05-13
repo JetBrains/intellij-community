@@ -135,7 +135,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('sdfs')
+                      PsiElement(STRING_CONTENT)('sdfs')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -198,7 +198,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('sdfs')
+                      PsiElement(STRING_CONTENT)('sdfs')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -373,7 +373,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('text')
+                      PsiElement(STRING_CONTENT)('text')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
@@ -408,7 +408,7 @@ SHELL_SCRIPT
                 PsiElement(word)('echo')
                 PsiWhiteSpace(' ')
                 PsiElement(OPEN_QUOTE)('"')
-                PsiElement(word)('text')
+                PsiElement(STRING_CONTENT)('text')
                 PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace('  ')
@@ -429,7 +429,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('text')
+                      PsiElement(STRING_CONTENT)('text')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiWhiteSpace('  ')

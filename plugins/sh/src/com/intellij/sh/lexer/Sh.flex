@@ -76,7 +76,6 @@ InputCharacter           = [^\r\n]
 LineTerminator           = \r\n | \r | \n
 LineContinuation         = "\\" {LineTerminator}
 WhiteSpace               = [ \t\f] {LineContinuation}*
-EscapedWhiteSpace        = "\\ "
 
 Shebang                  = #\! {InputCharacter}* {LineTerminator}?
 Comment                  = # {InputCharacter}*
@@ -120,6 +119,8 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 
+StringContent            = [^$\"`(] | {EscapedChar}
+
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
@@ -147,9 +148,15 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 
 <STRING_EXPRESSION> {
     {Quote}                       { popState(); return CLOSE_QUOTE; }
-    {RawString}                   |
-    {UnclosedRawString}           { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }
-                                    else return RAW_STRING; }
+    "$(("                         { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
+    "(("                          { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
+                                        pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
+                                    else return STRING_CONTENT; }
+    "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
+    "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+    "`"                           { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); return OPEN_BACKQUOTE; }
+    {Variable}                    { return VAR; }
+    "$" | "(" | {StringContent}+  { return STRING_CONTENT; }
 }
 
 <LET_EXPRESSION> {
@@ -292,22 +299,20 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     "let"                         { pushState(LET_EXPRESSION); return LET; }
 }
 
-<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION,
-  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
+<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION,
+  CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
     /***** Conditional statements *****/
-    "$(("                         { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
-    "(("                          { if (yystate() == STRING_EXPRESSION && !isArithmeticExpansion) { pushParentheses(PARENTHESES);
-                                           yypushback(1); isArithmeticExpansion = false; return LEFT_PAREN;}
-                                    else { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES);
-                                           isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; } }
+    "$(("                         { yypushback(2); return DOLLAR; }
+    "(("                          { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES);
+                                    return LEFT_DOUBLE_PAREN; }
     "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
     "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
-    "[["                          { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
-    "["                           { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
+    "[["                          { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
+    "["                           { pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) {
                                       if (yystate() == PARENTHESES_COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
@@ -352,10 +357,10 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     ">|"                          { return REDIRECT_GREATER_BAR; }
 
     "<<<" {WhiteSpace}*           { pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
-    "<<-"                         { if (yystate() != HERE_DOC_PIPELINE && yystate() != STRING_EXPRESSION)
+    "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
                                     { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }
-    "<<"                          { if (yystate() != HERE_DOC_PIPELINE && yystate() != STRING_EXPRESSION)
+    "<<"                          { if (yystate() != HERE_DOC_PIPELINE)
                                     { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }
     ">>"                          { return SHIFT_RIGHT; }
@@ -367,7 +372,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     {OctalIntegerLiteral}         { return OCTAL; }
 
     ^{Shebang}                    { if (getTokenStart() == 0) return SHEBANG; else return COMMENT; }
-    {Comment}                     { if (yystate() == STRING_EXPRESSION) { yypushback(yylength() - 1); return WORD; } return COMMENT; }
+    {Comment}                     { return COMMENT; }
 
     {WhiteSpace}+                 |
     {LineContinuation}+           { return WHITESPACE; }
@@ -380,7 +385,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     {UnclosedRawString}           { return RAW_STRING; }
 }
 
-<YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
+<YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
   OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
     {Word}                        { return WORD; }
 }

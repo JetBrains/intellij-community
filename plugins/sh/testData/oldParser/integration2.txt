@@ -56,7 +56,7 @@ SHELL_SCRIPT
                     PsiElement(=)('=')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('none')
+                      PsiElement(STRING_CONTENT)('none')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
@@ -83,7 +83,7 @@ SHELL_SCRIPT
                     PsiElement(=)('=')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('none')
+                      PsiElement(STRING_CONTENT)('none')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

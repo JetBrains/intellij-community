@@ -1,20 +1,24 @@
 package com.intellij.sh.lexer;
 
 import com.intellij.lexer.FlexAdapter;
+import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergeFunction;
 import com.intellij.lexer.MergingLexerAdapterBase;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class ShLexer extends MergingLexerAdapterBase implements ShTokenTypes {
   private static final MergeFunction FUNCTION = (type, lexer) -> {
-    if (type != HEREDOC_CONTENT) return type;
+    if (type != HEREDOC_CONTENT && type != STRING_CONTENT) return type;
 
-    IElementType current = lexer.getTokenType();
-    while (current == HEREDOC_CONTENT) {
-      lexer.advance();
-      current = lexer.getTokenType();
+    if (type == HEREDOC_CONTENT) {
+      advanceLexerWhile(lexer, HEREDOC_CONTENT);
+      return HEREDOC_CONTENT;
     }
-    return HEREDOC_CONTENT;
+    else {
+      advanceLexerWhile(lexer, STRING_CONTENT);
+      return STRING_CONTENT;
+    }
   };
 
   public ShLexer() {
@@ -31,5 +35,13 @@ public class ShLexer extends MergingLexerAdapterBase implements ShTokenTypes {
   @Override
   public MergeFunction getMergeFunction() {
     return FUNCTION;
+  }
+
+  private static void advanceLexerWhile(@NotNull Lexer lexer, @NotNull IElementType condition) {
+    IElementType current = lexer.getTokenType();
+    while (current == condition) {
+      lexer.advance();
+      current = lexer.getTokenType();
+    }
   }
 }

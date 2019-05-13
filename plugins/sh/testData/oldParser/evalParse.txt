@@ -20,9 +20,7 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('a')
-            PsiElement(=)('=')
-            PsiElement(int)('1')
+            PsiElement(STRING_CONTENT)('a=1')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -35,12 +33,12 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('echo')
+            PsiElement(STRING_CONTENT)('echo')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('abc')
+            PsiElement(STRING_CONTENT)('abc')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           STRING

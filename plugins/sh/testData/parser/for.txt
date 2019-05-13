@@ -42,12 +42,10 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Welcome')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('Welcome ')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('times')
+                      PsiElement(STRING_CONTENT)(' times')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -102,12 +100,10 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Welcome')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('Welcome ')
                       VARIABLE
                         PsiElement(var)('$c')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('times')
+                      PsiElement(STRING_CONTENT)(' times')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -343,9 +339,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Dummy')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('text')
+                      PsiElement(STRING_CONTENT)('Dummy text')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -409,13 +403,10 @@ SHELL_SCRIPT
                       PsiElement(OPEN_QUOTE)('"')
                       VARIABLE
                         PsiElement(var)('$name')
-                      PsiElement(word)('.git')
-                      PsiWhiteSpace(' ')
-                      PsiElement(=)('=')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('.git = ')
                       VARIABLE
                         PsiElement(var)('$name')
-                      PsiElement(word)('.git')
+                      PsiElement(STRING_CONTENT)('.git')
                       PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -479,12 +470,10 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Welcome')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('Welcome ')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('times')
+                      PsiElement(STRING_CONTENT)(' times')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -500,16 +489,13 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Bash')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('version')
-            PsiWhiteSpace(' ')
+            PsiElement(STRING_CONTENT)('Bash version ')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('BASH_VERSION')
               PsiElement(})('}')
-            PsiElement(word)('...')
+            PsiElement(STRING_CONTENT)('...')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -543,12 +529,10 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Welcome')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('Welcome ')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('times')
+                      PsiElement(STRING_CONTENT)(' times')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -601,12 +585,10 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Welcome')
-                      PsiWhiteSpace(' ')
+                      PsiElement(STRING_CONTENT)('Welcome ')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('times')
+                      PsiElement(STRING_CONTENT)(' times')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -771,13 +753,10 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('aSOFTWARE_INSTALL_STATE')
-                      PsiElement([)('[')
+                      PsiElement(STRING_CONTENT)('aSOFTWARE_INSTALL_STATE[')
                       VARIABLE
                         PsiElement(var)('$i')
-                      PsiElement(])(']')
-                      PsiElement(=)('=')
-                      PsiElement(int)('0')
+                      PsiElement(STRING_CONTENT)(']=0')
                       PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT

@@ -19,12 +19,8 @@ import static com.intellij.sh.highlighter.ShHighlighterColors.*;
 public class ShAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement o, @NotNull AnnotationHolder holder) {
-    if (o instanceof ShString) {
-      mark(o, holder, STRING);
-      highlightVariables(o, holder);
-    }
     // todo comment in case of poor performance because of the issue with EditorGutterComponentImpl#updateSize()
-    else if (o instanceof ShGenericCommandDirective) {
+    if (o instanceof ShGenericCommandDirective) {
       mark(o, holder, GENERIC_COMMAND);
     }
     else if (o instanceof ShAssignmentCommand) {

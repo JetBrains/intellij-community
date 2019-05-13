@@ -147,7 +147,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(int)('1')
+                        PsiElement(STRING_CONTENT)('1')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(==)('==')
@@ -155,7 +155,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(int)('1')
+                        PsiElement(STRING_CONTENT)('1')
                         PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
@@ -196,7 +196,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('foo')
+                        PsiElement(STRING_CONTENT)('foo')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=)('=')
@@ -204,7 +204,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('foo')
+                        PsiElement(STRING_CONTENT)('foo')
                         PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
@@ -245,7 +245,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('foo')
+                        PsiElement(STRING_CONTENT)('foo')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=)('=')
@@ -253,7 +253,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('foo')
+                        PsiElement(STRING_CONTENT)('foo')
                         PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
@@ -376,23 +376,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Usage:')
-                      PsiWhiteSpace(' ')
-                      PsiElement([)('[')
-                      PsiElement(word)('vmlinux')
-                      PsiElement(])(']')
-                      PsiWhiteSpace(' ')
-                      PsiElement([)('[')
-                      PsiElement(word)('base')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('path')
-                      PsiElement(])(']')
-                      PsiWhiteSpace(' ')
-                      PsiElement([)('[')
-                      PsiElement(word)('modules')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('path')
-                      PsiElement(])(']')
+                      PsiElement(STRING_CONTENT)('Usage: [vmlinux] [base path] [modules path]')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -438,23 +422,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Usage:')
-                      PsiWhiteSpace(' ')
-                      PsiElement([)('[')
-                      PsiElement(word)('vmlinux')
-                      PsiElement(])(']')
-                      PsiWhiteSpace(' ')
-                      PsiElement([)('[')
-                      PsiElement(word)('base')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('path')
-                      PsiElement(])(']')
-                      PsiWhiteSpace(' ')
-                      PsiElement([)('[')
-                      PsiElement(word)('modules')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('path')
-                      PsiElement(])(']')
+                      PsiElement(STRING_CONTENT)('Usage: [vmlinux] [base path] [modules path]')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -489,7 +457,7 @@ SHELL_SCRIPT
                       LITERAL_CONDITION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
-                          PsiElement(word)('true')
+                          PsiElement(STRING_CONTENT)('true')
                           PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                     PsiWhiteSpace('      ')
@@ -558,7 +526,7 @@ SHELL_SCRIPT
                       LITERAL_CONDITION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
-                          PsiElement(word)('true')
+                          PsiElement(STRING_CONTENT)('true')
                           PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(&&)('&&')
@@ -649,19 +617,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(word)('Executing')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('\\e')
-                      PsiElement([)('[')
-                      PsiElement(word)('32m/sbin/init\\e')
-                      PsiElement([)('[')
-                      PsiElement(word)('0m')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('as')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('PID')
-                      PsiWhiteSpace(' ')
-                      PsiElement(word)('1.')
+                      PsiElement(STRING_CONTENT)('Executing \\e[32m/sbin/init\\e[0m as PID 1.')
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
@@ -710,7 +666,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('virtualbox')
+                        PsiElement(STRING_CONTENT)('virtualbox')
                         PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
@@ -979,7 +935,7 @@ SHELL_SCRIPT
                     LITERAL_CONDITION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('10.12.6')
+                        PsiElement(STRING_CONTENT)('10.12.6')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(=)('=')

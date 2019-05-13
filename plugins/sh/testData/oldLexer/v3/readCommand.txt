@@ -1,7 +1,7 @@
 word ('read')
 WHITE_SPACE (' ')
 OPEN_QUOTE ('"')
-word ('var:')
+STRING_CONTENT ('var:')
 CLOSE_QUOTE ('"')
 WHITE_SPACE (' ')
 word ('v')

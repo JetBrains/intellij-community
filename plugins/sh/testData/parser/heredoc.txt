@@ -34,13 +34,13 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('/etc/systemd/system/')
+            PsiElement(STRING_CONTENT)('/etc/systemd/system/')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('MAIN_SERVICE')
               PsiElement(})('}')
-            PsiElement(word)('.service.d')
+            PsiElement(STRING_CONTENT)('.service.d')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -53,13 +53,13 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('/etc/systemd/system/')
+            PsiElement(STRING_CONTENT)('/etc/systemd/system/')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('MAIN_SERVICE')
               PsiElement(})('}')
-            PsiElement(word)('.service.d/add-localhost.conf')
+            PsiElement(STRING_CONTENT)('.service.d/add-localhost.conf')
             PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -466,14 +466,10 @@ SHELL_SCRIPT
                       PsiWhiteSpace(' ')
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('Warning:')
-                        PsiWhiteSpace(' ')
+                        PsiElement(STRING_CONTENT)('Warning: ')
                         VARIABLE
                           PsiElement(var)('$account')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('Exceeds')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('Quota')
+                        PsiElement(STRING_CONTENT)(' Exceeds Quota')
                         PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' ')
                       VARIABLE
@@ -604,11 +600,7 @@ SHELL_SCRIPT
                       PsiWhiteSpace(' ')
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('Couldn')
-                        PsiElement(word)(''')
-                        PsiElement(word)('t')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('cat')
+                        PsiElement(STRING_CONTENT)('Couldn't cat')
                         PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('android_sdk_repository(\n    name = "androidsdk",\n    path = "/fake/path",\n    api_level = 23,\n    build_tools_version="23.0.0"\n)\n')
@@ -641,9 +633,7 @@ SHELL_SCRIPT
                       PsiWhiteSpace(' ')
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('execution')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('failed')
+                        PsiElement(STRING_CONTENT)('execution failed')
                         PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('#!/bin/sh\necho "Hello World"\n')

@@ -49,7 +49,6 @@ public class ShColorPage implements ColorSettingsPage {
   static {
     TAG_DESCRIPTOR_MAP.put("var", ShHighlighterColors.VARIABLE_DECLARATION);
     TAG_DESCRIPTOR_MAP.put("composed_var", ShHighlighterColors.COMPOSED_VARIABLE);
-    TAG_DESCRIPTOR_MAP.put("string", ShHighlighterColors.STRING);
     TAG_DESCRIPTOR_MAP.put("generic", ShHighlighterColors.GENERIC_COMMAND);
     TAG_DESCRIPTOR_MAP.put("function", ShHighlighterColors.FUNCTION_DECLARATION);
     TAG_DESCRIPTOR_MAP.put("subshell", ShHighlighterColors.SUBSHELL_COMMAND);
@@ -99,7 +98,7 @@ public class ShColorPage implements ColorSettingsPage {
         "\n" +
         "#Sample comment\n" +
         "let \"a=16 << 2\";\n" +
-        "<var>b</var>=<string>\"Sample text\"</string>;\n" +
+        "<var>b</var>=\"Sample text\";\n" +
         "\n" +
         "function <function>foo</function>() {\n" +
         "  if [ $string1 == $string2 ]; then\n" +
@@ -110,7 +109,7 @@ public class ShColorPage implements ColorSettingsPage {
         "}\n" +
         "\n" +
         "<generic>rm</generic> -f $<subshell>(</subshell>find / -name core<subshell>)</subshell> &> /dev/null\n" +
-        "<generic>mkdir</generic> -p <string>\"${<composed_var>AGENT_USER_HOME_</composed_var>${<composed_var>PLATFORM</composed_var>}}\"</string>\n" +
+        "<generic>mkdir</generic> -p \"${<composed_var>AGENT_USER_HOME_</composed_var>${<composed_var>PLATFORM</composed_var>}}\"\n" +
         "\n" +
         "<var>multiline</var>='first line\n" +
         "           second line\n" +

@@ -72,7 +72,7 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('Exiting.')
+                                PsiElement(STRING_CONTENT)('Exiting.')
                                 PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('          ')
@@ -102,17 +102,13 @@ SHELL_SCRIPT
                               PsiWhiteSpace(' ')
                               STRING
                                 PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(word)('You')
-                                PsiWhiteSpace(' ')
-                                PsiElement(word)('picked')
-                                PsiWhiteSpace(' ')
+                                PsiElement(STRING_CONTENT)('You picked ')
                                 VARIABLE
                                   PsiElement(var)('$FILENAME')
-                                PsiWhiteSpace(' ')
-                                PsiElement(()('(')
+                                PsiElement(STRING_CONTENT)(' (')
                                 VARIABLE
                                   PsiElement(var)('$REPLY')
-                                PsiElement())(')')
+                                PsiElement(STRING_CONTENT)(')')
                                 PsiElement(CLOSE_QUOTE)('"')
                         PsiElement(\n)('\n')
                     PsiWhiteSpace('          ')
@@ -161,7 +157,5 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(word)('Example')
-            PsiWhiteSpace(' ')
-            PsiElement(word)('text')
+            PsiElement(STRING_CONTENT)('Example text')
             PsiElement(CLOSE_QUOTE)('"')

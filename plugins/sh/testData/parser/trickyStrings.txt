@@ -40,10 +40,10 @@ SHELL_SCRIPT
                       PsiWhiteSpace(' ')
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiWhiteSpace(' ')
+                        PsiElement(STRING_CONTENT)(' ')
                         VARIABLE
                           PsiElement(var)('$name')
-                        PsiElement(()('(')
+                        PsiElement(STRING_CONTENT)('(')
                         PsiElement(CLOSE_QUOTE)('"')
               PsiElement())(')')
             PsiElement(CLOSE_QUOTE)('"')
@@ -72,7 +72,7 @@ SHELL_SCRIPT
                         PsiElement(OPEN_QUOTE)('"')
                         VARIABLE
                           PsiElement(var)('$members')
-                        PsiElement(word)('\n')
+                        PsiElement(STRING_CONTENT)('\n')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     PsiElement(|)('|')
@@ -127,7 +127,7 @@ SHELL_SCRIPT
                       PsiWhiteSpace(' ')
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
-                        PsiElement(word)('\$')
+                        PsiElement(STRING_CONTENT)('\$')
                         VARIABLE
                           PsiElement(var)('$varname')
                         PsiElement(CLOSE_QUOTE)('"')
