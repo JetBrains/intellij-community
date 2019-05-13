@@ -574,11 +574,14 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (PsiUtil.canBeOverridden(method)) return;
 
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
-    if (info == null || info.getNullability() != Nullability.NULLABLE || !info.getAnnotation().isPhysical()) return;
+    if (info == null || info.getNullability() != Nullability.NULLABLE) return;
 
-    PsiJavaCodeReferenceElement annoName = info.getAnnotation().getNameReferenceElement();
+    PsiAnnotation annotation = info.getAnnotation();
+    if (!annotation.isPhysical() || alsoAppliesToInternalSubType(annotation, method)) return;
+
+    PsiJavaCodeReferenceElement annoName = annotation.getNameReferenceElement();
     assert annoName != null;
-    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(info.getAnnotation()) +
+    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(annotation) +
                  " method '" + method.getName() + "' always returns a non-null value";
     LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method)};
     if (holder.isOnTheFly()) {
@@ -589,6 +592,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                                                  false));
     }
     holder.registerProblem(annoName, msg, fixes);
+  }
+
+  private static boolean alsoAppliesToInternalSubType(PsiAnnotation annotation, PsiMethod method) {
+    return AnnotationTargetUtil.isTypeAnnotation(annotation) && method.getReturnType() instanceof PsiArrayType;
   }
 
   private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
