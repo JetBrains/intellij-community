@@ -13,7 +13,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBDimension
-import com.jetbrains.changeReminder.predict.PredictedChange
 import com.jetbrains.changeReminder.predict.PredictedFile
 import java.awt.BorderLayout
 import javax.swing.Action
@@ -63,24 +62,19 @@ internal class ChangeReminderDialog(private val project: Project, private val fi
     return panel
   }
 
-  private fun createForgottenFilesString() = buildString {
-    val modifiedFilesCount = files.filterIsInstance<PredictedChange>().size
-    val unmodifiedFilesCount = files.size - modifiedFilesCount
-    if (modifiedFilesCount > 0) {
-      append("commit ")
+  private fun createRelatedFilesPrefix() = buildString {
+    append("Following ${StringUtil.pluralize("file", files.size)} ")
+    if (files.size == 1) {
+      append("is")
     }
-    if (modifiedFilesCount > 0 && unmodifiedFilesCount > 0) {
-      append("or ")
+    else {
+      append("are")
     }
-    if (unmodifiedFilesCount > 0) {
-      append("modify ")
-    }
-    append("${StringUtil.pluralize("this", files.size)} ${StringUtil.pluralize("file", files.size)}")
   }
 
   override fun createCenterPanel() = panel {
     row {
-      JBLabel("You might have forgotten to ${createForgottenFilesString()}:")()
+      JBLabel("${createRelatedFilesPrefix()} usually committed with files from commit:")()
     }
     row {
       createTreePanel()(grow, push)
