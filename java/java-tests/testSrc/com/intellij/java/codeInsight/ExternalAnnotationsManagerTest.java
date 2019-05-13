@@ -51,6 +51,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
       String toolsPath = home + "/lib/tools.jar!/";
       VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
+      assertNotNull("tools.jar not found: " + toolsPath, toolsJar);
 
       Sdk plusTools = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
 
