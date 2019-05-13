@@ -147,10 +147,11 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   public JComponent getComponent() {
     if (myPanel == null) {
-      myPanel = myDecorator
-        .setAddAction(createAddAction())
-        .setRemoveAction(createRemoveAction())
-        .disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
+      myDecorator.setAddAction(createAddAction()).setRemoveAction(createRemoveAction());
+      if(!isUpDownSupported())
+        myDecorator.disableUpDownActions();
+      myDecorator.addExtraActions(createExtraActions());
+      myPanel = myDecorator.createPanel();
 
       AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myPanel);
       if (removeButton != null) {
@@ -239,6 +240,10 @@ public abstract class ListTableWithButtons<T> extends Observable {
       myElements.add(cloneElement(envVariable));
     }
     myTableView.getTableViewModel().setItems(myElements);
+  }
+
+  protected boolean isUpDownSupported() {
+    return false;
   }
 
   protected abstract T cloneElement(T variable);
