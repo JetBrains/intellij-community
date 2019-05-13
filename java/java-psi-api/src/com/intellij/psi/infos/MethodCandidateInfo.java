@@ -182,7 +182,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiExpressionList argumentList = (PsiExpressionList)myArgumentList;
       PsiExpression[] expressions = Arrays.stream(argumentList.getExpressions())
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-        .filter(expression -> !(expression instanceof PsiFunctionalExpression))
+        .filter(expression -> expression != null && !(expression instanceof PsiFunctionalExpression))
         .toArray(PsiExpression[]::new);
       Map<PsiElement, PsiType> expressionTypes = LambdaUtil.getFunctionalTypeMap();
       try {

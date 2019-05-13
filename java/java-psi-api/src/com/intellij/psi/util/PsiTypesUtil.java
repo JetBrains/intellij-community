@@ -461,7 +461,7 @@ public class PsiTypesUtil {
     return (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(explicitTypeElement);
   }
 
-  public static PsiType getTypeByMethod(PsiElement context,
+  public static PsiType getTypeByMethod(@NotNull PsiElement context,
                                         PsiExpressionList argumentList,
                                         PsiElement parentMethod,
                                         boolean varargs,
