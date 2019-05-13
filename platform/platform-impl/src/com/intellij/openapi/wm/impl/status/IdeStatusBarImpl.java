@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,6 +24,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -336,7 +336,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       boolean before;
       if (!anchor.equals("__AUTODETECT__")) {
         final List<String> parts = StringUtil.split(anchor, " ");
-        if (parts.size() < 2 || !myWidgetMap.keySet().contains(parts.get(1))) {
+        if (parts.size() < 2 || !myWidgetMap.containsKey(parts.get(1))) {
           wid = IdeNotificationArea.WIDGET_ID;
           before = true;
         }
@@ -498,7 +498,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {
-    if (widget instanceof CustomStatusBarWidget) return ((CustomStatusBarWidget)widget).getComponent();
+    if (widget instanceof CustomStatusBarWidget) {
+      return addHoverMouseListener(((CustomStatusBarWidget)widget).getComponent());
+    }
     final StatusBarWidget.WidgetPresentation presentation =
       widget.getPresentation(SystemInfoRt.isMac ? StatusBarWidget.PlatformType.MAC : StatusBarWidget.PlatformType.DEFAULT);
     assert presentation != null : "Presentation should not be null!";
@@ -518,8 +520,32 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     else {
       throw new IllegalArgumentException("Unable to find a wrapper for presentation: " + presentation.getClass().getSimpleName());
     }
+    wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
+    return addHoverMouseListener(wrapper);
+  }
 
-    return wrapper;
+  private static JComponent addHoverMouseListener(JComponent component) {
+    component.addMouseListener(new MouseEventHandler() {
+      @Override
+      protected void handle(MouseEvent event) {
+        if (!event.isConsumed()) {
+          if (!component.isEnabled()) {
+            return;
+          }
+          switch (event.getID()) {
+            case MouseEvent.MOUSE_MOVED:
+            case MouseEvent.MOUSE_ENTERED:
+            case MouseEvent.MOUSE_EXITED:
+              component.setBackground(insideComponent(event, component) ? JBUI.CurrentTheme.ActionButton.hoverBackground() : null);
+          }
+        }
+      }
+
+      private boolean insideComponent(MouseEvent e, JComponent component) {
+        return new Rectangle(component.getWidth(), component.getHeight()).contains(e.getX(), e.getY());
+      }
+    });
+    return component;
   }
 
   @Override
@@ -546,19 +572,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   protected Graphics getComponentGraphics(Graphics g) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
   }
-
-  //@Override
-  //protected void paintChildren(final Graphics g) {
-  //  if (getUI() instanceof MacStatusBarUI && !MacStatusBarUI.isActive(this)) {
-  //    final Graphics2D g2d = (Graphics2D)g.create();
-  //    //g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.4f));
-  //    super.paintChildren(g2d);
-  //    g2d.dispose();
-  //  }
-  //  else {
-  //    super.paintChildren(g);
-  //  }
-  //}
 
   public StatusBarUI getUI() {
     return (StatusBarUI)ui;
@@ -646,9 +659,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
       myPresentation = presentation;
-
-      putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
-      setToolTipText(presentation.getTooltipText());
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -660,8 +670,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
           return true;
         }
       }.installOn(this);
-
-      setIconOnTheRight(true);
     }
 
     @Override
@@ -675,7 +683,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       String value = myPresentation.getSelectedValue();
       if (value != null) {
         append(value);
-        setIcon(AllIcons.Ide.Statusbar_arrows);
       }
     }
 
@@ -693,12 +700,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
       myPresentation = presentation;
       myClickConsumer = myPresentation.getClickConsumer();
-
       setTextAlignment(presentation.getAlignment());
-
-      putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
-      setToolTipText(presentation.getTooltipText());
-
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
@@ -706,17 +708,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
             myClickConsumer.consume(e);
           }
         }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-        }
       });
-
-      setOpaque(false);
     }
 
     @Override
@@ -727,24 +719,21 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     @Override
     public void beforeUpdate() {
-      setText(myPresentation.getText());
+      String text = myPresentation.getText();
+      setText(text);
+      setEnabled(!text.isEmpty());
     }
   }
 
-  private static final class IconPresentationWrapper extends JLabel implements StatusBarWrapper {
+  private static final class IconPresentationWrapper extends TextPanel.WithIconAndArrows implements StatusBarWrapper {
     private final StatusBarWidget.IconPresentation myPresentation;
     private final Consumer<MouseEvent> myClickConsumer;
-    private Icon myIcon;
 
     private IconPresentationWrapper(@NotNull final StatusBarWidget.IconPresentation presentation) {
       myPresentation = presentation;
       myClickConsumer = myPresentation.getClickConsumer();
-      myIcon = myPresentation.getIcon();
-      setIcon(myIcon);
-
-      putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
-      setToolTipText(presentation.getTooltipText());
-
+      setTextAlignment(Component.CENTER_ALIGNMENT);
+      setIcon(myPresentation.getIcon());
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
@@ -753,13 +742,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
           }
         }
       });
-
-      setOpaque(false);
-    }
-
-    @Override
-    public void beforeUpdate() {
-      myIcon = myPresentation.getIcon();
     }
 
     @Override
@@ -769,27 +751,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
 
     @Override
-    protected void paintComponent(final Graphics g) {
-      final Rectangle bounds = getBounds();
-      final Insets insets = JBUI.insets(getInsets());
-
-      if (myIcon != null) {
-        final int iconWidth = myIcon.getIconWidth();
-        final int iconHeight = myIcon.getIconHeight();
-
-        myIcon.paintIcon(this, g, insets.left + (bounds.width - insets.left - insets.right - iconWidth) / 2,
-                         insets.top + (bounds.height - insets.top - insets.bottom - iconHeight) / 2);
-      }
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return JBUI.size(24, MIN_ICON_HEIGHT);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return getMinimumSize();
+    public void beforeUpdate() {
+      setIcon(myPresentation.getIcon());
+      setEnabled(hasIcon());
     }
   }
 

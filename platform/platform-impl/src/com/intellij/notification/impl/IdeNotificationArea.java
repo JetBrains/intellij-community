@@ -47,7 +47,8 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
         return true;
       }
     }.installOn(this);
-
+    setOpaque(true);
+    setHorizontalAlignment(CENTER);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED,
                                                                                 () -> ApplicationManager.getApplication()
                                                                                                         .invokeLater(() -> updateStatus()));
@@ -92,6 +93,10 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     int count = notifications.size();
     setToolTipText(count > 0 ? String.format("%s notification%s pending", count, count == 1 ? "" : "s") : "No new notifications");
 
+    int height = myStatusBar.getComponent().getHeight();
+    Dimension size = new Dimension(Math.max(height, (int)getPreferredSize().getWidth()), height);
+    setPreferredSize(size);
+    setMaximumSize(size);
     myStatusBar.updateWidget(ID());
   }
 
