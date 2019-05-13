@@ -50,10 +50,11 @@ public abstract class NotNullVerifyingInstrumenterTest {
   public static class MembersTargetTest extends NotNullVerifyingInstrumenterTest { }
 
   @TestDirectory("types")
-  public static class TypesTargetTest extends NotNullVerifyingInstrumenterTest { }
+  public static class TypesTargetTest extends WithTypeUse { }
 
   @TestDirectory("mixed")
-  public static class MixedTargetTest extends NotNullVerifyingInstrumenterTest { }
+  public static class MixedTargetTest extends WithTypeUse {
+  }
 
   private static final String TEST_DATA_PATH = "/compiler/notNullVerification/";
 
@@ -64,10 +65,12 @@ public abstract class NotNullVerifyingInstrumenterTest {
     public Statement apply(Statement base, Description description) {
       TestDirectory annotation = description.getAnnotation(TestDirectory.class);
       if (annotation == null) throw new IllegalArgumentException("Class " + description.getTestClass() + " misses @TestDirectory annotation");
-      File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value() + "/NotNull.java");
-      if (!source.isFile()) throw new IllegalArgumentException("Cannot find annotation file at " + source);
+      File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value());
+      if (!source.isDirectory() || source.listFiles().length == 0) throw new IllegalArgumentException("Cannot find annotation file at " + source);
       classes = IoTestUtil.createTestDir("test-notNullInstrumenter-" + annotation.value());
-      IdeaTestUtil.compileFile(source, classes);
+      for (File file : source.listFiles()) {
+        IdeaTestUtil.compileFile(file, classes);
+      }
       return super.apply(base, description);
     }
 
@@ -286,6 +289,22 @@ public abstract class NotNullVerifyingInstrumenterTest {
 
     assertEquals(1, returnType.getAnnotations().length);
     assertEquals(1, returnType.getAnnotatedReturnType().getAnnotations().length);
+  }
+
+  public static abstract class WithTypeUse extends NotNullVerifyingInstrumenterTest {
+    @Test
+    public void testTypeUseAndMemberAnnotationsOnArrays() throws Exception {
+      Class<?> test = prepareTest();
+      Object instance = test.newInstance();
+
+      Object[] singleNullArg = {null};
+      verifyCallThrowsException("Argument 0 for @NotNull parameter of TypeUseAndMemberAnnotationsOnArrays.notNullArray must not be null", instance, test.getMethod("notNullArray", String[].class), singleNullArg);
+      test.getMethod("nullableArray", String[].class).invoke(instance, singleNullArg);
+
+      verifyCallThrowsException("@NotNull method TypeUseAndMemberAnnotationsOnArrays.notNullReturn must not return null", instance, test.getMethod("notNullReturn"));
+      assertNull(test.getMethod("nullableReturn").invoke(instance));
+    }
+
   }
 
   @Test
